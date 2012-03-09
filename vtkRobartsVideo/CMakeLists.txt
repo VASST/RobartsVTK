@@ -10,8 +10,13 @@ SET ( Kit_SRCS
 vtkVisionSenseVideoSource.cxx
 vtkVisionSenseNetworkSource.cxx
 vtkTestECGVideoSource.cxx
-
+vtkEpiphanVideoSource.cxx
 )
+
+find_library(FRMGRAB frmgrab ${RobartsVideo_SOURCE_DIR}/frmgrab)
+#find_library(V2U_LIB v2u_lib ${RobartsVideo_SOURCE_DIR}/v2u_lib)
+
+SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
 
 
 OPTION (VTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)

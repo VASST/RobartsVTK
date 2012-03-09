@@ -13,7 +13,7 @@
 
 
 #ifdef _WIN32
-  #include <winsock2.h>           //ws2_32.lib must be linked in
+  #include <winsock.h>           //ws2_32.lib must be linked in
 
 #elif defined(__FreeBSD__) || defined(__linux__) || defined(sgi)
   #include <sys/types.h>
