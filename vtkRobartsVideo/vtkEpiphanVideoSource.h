@@ -50,6 +50,7 @@ public:
   void Stop();
 
   void SetFrameRate(float rate);
+  void SetOutputFormat(int format);
 
   void Pause();
   void UnPause();

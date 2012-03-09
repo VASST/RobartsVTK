@@ -74,7 +74,7 @@ vtkEpiphanVideoSource::vtkEpiphanVideoSource()
   this->cropRect = new V2URect;
 
   this->FrameBufferBitsPerPixel = 24;
-  this->vtkVideoSource::SetOutputFormat(VTK_RGBA);
+  this->vtkVideoSource::SetOutputFormat(VTK_RGB);
   this->vtkVideoSource::SetFrameBufferSize( 100 );
   this->vtkVideoSource::SetFrameRate( 25.0f );
 
@@ -167,8 +167,18 @@ void vtkEpiphanVideoSource::InternalGrab()
   this->cropRect->height = this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1;
   
   //imgu *IA;
+  V2U_GrabFrame2 * frame = NULL;
+  if (this->OutputFormat == VTK_LUMINANCE) {
+	 frame= FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_YUY2, cropRect);
+  } else if (this->OutputFormat == VTK_RGB) {
+	frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_RGB24, cropRect);
+  } else if (this->OutputFormat == VTK_RGBA) {
+	frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_ARGB32, cropRect);
+  } else {
+	  // no clue what format to grab, you can add more.
+	  return;
+  }
 
-  V2U_GrabFrame2 * frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_RGB24, cropRect);
   if (frame == NULL || frame->imagelen <= 0) {
 	  this->FrameBufferMutex->Unlock();
 	  this->Stop();
@@ -449,4 +459,44 @@ void vtkEpiphanVideoSource::SetFrameRate(float rate) {
 	if (this->fg) {
 		FrmGrab_SetMaxFps(this->fg, rate);
 	}
+}
+
+void vtkEpiphanVideoSource::SetOutputFormat(int format)
+{
+  if (format == this->OutputFormat)
+    {
+    return;
+    }
+
+  
+
+  // convert color format to number of scalar components
+  int numComponents = 1;
+
+  switch (format)
+    {
+    case VTK_RGBA:
+      numComponents = 4;
+    case VTK_RGB:
+      numComponents = 3;
+    default:
+      vtkErrorMacro(<< "SetOutputFormat: Unrecognized color format.");
+      break;
+    }
+
+  this->OutputFormat = format;
+
+  this->NumberOfScalarComponents = numComponents;
+  if (this->FrameBufferBitsPerPixel != numComponents*8)
+    {
+    this->FrameBufferMutex->Lock();
+    this->FrameBufferBitsPerPixel = numComponents*8;
+    if (this->Initialized)
+      {
+      this->UpdateFrameBuffer();
+      }
+    this->FrameBufferMutex->Unlock();
+    }
+
+  this->Modified();
 }
