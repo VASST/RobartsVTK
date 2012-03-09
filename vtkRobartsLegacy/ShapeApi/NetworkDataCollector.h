@@ -9,7 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "winsock2.h"
+#include "winsock.h"
 #include "tapeAPI.h"
 
 #define MAXBUFFERSIZE 32768
