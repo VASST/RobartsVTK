@@ -66,76 +66,6 @@ vtkEpiphanVideoSource* vtkEpiphanVideoSource::New()
 //----------------------------------------------------------------------------
 vtkEpiphanVideoSource::vtkEpiphanVideoSource()
 {
-  int i;
-  
-  this->Initialized = 0;
-
-  this->AutoAdvance = 1;
-
-  this->FrameSize[0] = 320;
-  this->FrameSize[1] = 240;
-  this->FrameSize[2] = 1;
-
-  for (i = 0; i < 6; i++)
-    {
-    this->FrameBufferExtent[i] = 0;
-    }
-  
-  this->Playing = 0;
-  this->Recording = 0;
-
-  this->SetFrameRate(30);
-
-  this->FrameCount = 0;
-  this->FrameIndex = -1;
-
-  this->StartTimeStamp = 0;
-  this->FrameTimeStamp = 0;
-
-  this->OutputNeedsInitialization = 1;
-
-  this->OutputFormat = VTK_LUMINANCE;
-  this->NumberOfScalarComponents = 1;
-
-  this->NumberOfOutputFrames = 1;
-
-  this->Opacity = 1.0;
-
-  for (i = 0; i < 3; i++)
-    {
-    this->ClipRegion[i*2] = 0;
-    this->ClipRegion[i*2+1] = VTK_INT_MAX;
-    this->OutputWholeExtent[i*2] = 0;
-    this->OutputWholeExtent[i*2+1] = -1;
-    this->DataSpacing[i] = 1.0;
-    this->DataOrigin[i] = 0.0;
-    }
-
-  for (i = 0; i < 6; i++)
-    {
-    this->LastOutputExtent[i] = 0;
-    }
-  this->LastNumberOfScalarComponents = 0;
-
-  this->FlipFrames = 0;
-
-  this->PlayerThreader = vtkMultiThreader::New();
-  //this->PlayerThreader->SingleMethodExecute();
-  this->PlayerThreadId = -1;
-
-  this->FrameBufferMutex = vtkCriticalSection::New();
-
-  this->FrameBufferSize = 0;
-  this->FrameBuffer = NULL;
-  this->FrameBufferTimeStamps = NULL;
-  this->FrameBufferIndex = 0;
-  this->SetFrameBufferSize(1);
-
-  this->FrameBufferBitsPerPixel = 8;
-  this->FrameBufferRowAlignment = 1;
-
-  this->SetNumberOfInputPorts(0);
-
 
   this->Initialized = 0;
   this->pauseFeed = 0;
@@ -143,15 +73,24 @@ vtkEpiphanVideoSource::vtkEpiphanVideoSource()
   this->fg = NULL;
   this->cropRect = new V2URect;
 
+  this->FrameBufferBitsPerPixel = 24;
+  this->vtkVideoSource::SetOutputFormat(VTK_RGBA);
+  this->vtkVideoSource::SetFrameBufferSize( 100 );
+  this->vtkVideoSource::SetFrameRate( 25.0f );
+
   for (unsigned int i =0; i < 15; i++){
 	  this->serialNumber[i] ='\0';
   }
+  
 }
 
 //----------------------------------------------------------------------------
 vtkEpiphanVideoSource::~vtkEpiphanVideoSource()
 {
   this->vtkEpiphanVideoSource::ReleaseSystemResources();
+  if (this->fg) {
+	  FrmGrab_Deinit(); // not sure if this stops all devices??
+  }
 }  
 
 //----------------------------------------------------------------------------
@@ -167,10 +106,7 @@ void vtkEpiphanVideoSource::Initialize()
   {
     return;
   }
-
-  // Setup some needed values
-  vtkVideoSource::SetOutputFormat(VTK_RGB);
-
+  
   FrmGrabNet_Init();
 
   char input[15];
@@ -190,11 +126,20 @@ void vtkEpiphanVideoSource::Initialize()
 	  vtkErrorMacro(<<"Epiphan Device Not found");
 	  return;
   }
+
+  V2U_VideoMode vm;
+  if (FrmGrab_DetectVideoMode(this->fg,&vm) && vm.width && vm.height) {
+	  this->SetFrameSize(vm.width,vm.height,1);
+	  //this->SetFrameRate((vm.vfreq+50)/1000);
+  } else {
+	vtkErrorMacro(<<"No signal detected");
+  }
+
   FrmGrab_SetMaxFps(this->fg, 25.0);
 
   // Initialization worked
   this->Initialized = 1;
-
+  
   // Update frame buffer  to reflect any changes
   this->UpdateFrameBuffer();
 }  
@@ -215,20 +160,24 @@ void vtkEpiphanVideoSource::InternalGrab()
   this->FrameBufferMutex->Lock();
 
   // Get pointer to data from the network source
-
-  this->cropRect->x = this->ClipRegion[0];
-  this->cropRect->width = this->ClipRegion[1]-this->ClipRegion[0];
-  this->cropRect->y = this->ClipRegion[2];
-  this->cropRect->height = this->ClipRegion[3]-this->ClipRegion[2];
+  
+  this->cropRect->x = this->FrameBufferExtent[0];
+  this->cropRect->width = this->FrameBufferExtent[1]-this->FrameBufferExtent[0]+1;
+  this->cropRect->y = this->FrameBufferExtent[2];
+  this->cropRect->height = this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1;
+  
+  //imgu *IA;
 
   V2U_GrabFrame2 * frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_RGB24, cropRect);
-  if (frame == NULL) {
+  if (frame == NULL || frame->imagelen <= 0) {
 	  this->FrameBufferMutex->Unlock();
+	  this->Stop();
 	  return;
   }
   if (frame->retcode != V2UERROR_OK) { 
 	  cout << "Error: " << frame->retcode << endl;
 	  this->FrameBufferMutex->Unlock();
+	  this->Stop();
 	  return;
   } 
 
@@ -248,13 +197,15 @@ void vtkEpiphanVideoSource::InternalGrab()
     index += this->FrameBufferSize;
     }
 
+  //imguAllocate(&IA, frame->mode.width, frame->mode.height,3);
+
   char *buffer = (char *)frame->pixbuf;
   
   // Get a pointer to the location of the frame buffer
   char *ptr = (char *) reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
   
   // Copy image into frame buffer
-  memcpy(ptr, buffer, frame->pixbuflen);
+  memcpy(ptr, buffer, frame->imagelen);
 
   FrmGrab_Release(this->fg, frame);
   this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
@@ -491,4 +442,11 @@ void vtkEpiphanVideoSource::Pause() {
 }
 void vtkEpiphanVideoSource::UnPause() {
 	this->pauseFeed = 0;
+}
+
+void vtkEpiphanVideoSource::SetFrameRate(float rate) {
+	vtkVideoSource::SetFrameRate(rate);
+	if (this->fg) {
+		FrmGrab_SetMaxFps(this->fg, rate);
+	}
 }
