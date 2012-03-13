@@ -168,16 +168,21 @@ void vtkEpiphanVideoSource::InternalGrab()
   
   //imgu *IA;
   V2U_GrabFrame2 * frame = NULL;
+
+  V2U_UINT32 format = V2U_GRABFRAME_BOTTOM_UP_FLAG; // seems to be needed to orientate correctly.
+
   if (this->OutputFormat == VTK_LUMINANCE) {
-	 frame= FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_YUY2, cropRect);
+	format |= V2U_GRABFRAME_FORMAT_YUY2;
   } else if (this->OutputFormat == VTK_RGB) {
-	frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_RGB24, cropRect);
+	format |= V2U_GRABFRAME_FORMAT_RGB24;
   } else if (this->OutputFormat == VTK_RGBA) {
-	frame = FrmGrab_Frame(this->fg, V2U_GRABFRAME_FORMAT_ARGB32, cropRect);
+	format |= V2U_GRABFRAME_FORMAT_ARGB32;
   } else {
 	  // no clue what format to grab, you can add more.
 	  return;
   }
+
+  frame= FrmGrab_Frame(this->fg, format, cropRect);
 
   if (frame == NULL || frame->imagelen <= 0) {
 	  this->FrameBufferMutex->Unlock();
