@@ -266,7 +266,7 @@ void vtkEpiphanVideoSource::UpdateFrameBuffer()
     }
 
   // total number of bytes required for the framebuffer
-  int bytesPerRow = ext[0]*(this->FrameBufferBitsPerPixel/8);
+  int bytesPerRow = (ext[0]*this->FrameBufferBitsPerPixel+7)/8;
   bytesPerRow = ((bytesPerRow + this->FrameBufferRowAlignment - 1) /
                  this->FrameBufferRowAlignment)*this->FrameBufferRowAlignment;
   int totalSize = bytesPerRow * ext[1] * ext[2];
@@ -482,11 +482,16 @@ void vtkEpiphanVideoSource::SetOutputFormat(int format)
     {
     case VTK_RGBA:
       numComponents = 4;
+	  break;
     case VTK_RGB:
       numComponents = 3;
+	  break;
+	case VTK_LUMINANCE:
+	  numComponents = 2;
+	  break;
     default:
       vtkErrorMacro(<< "SetOutputFormat: Unrecognized color format.");
-      break;
+      return;
     }
 
   this->OutputFormat = format;
@@ -504,4 +509,21 @@ void vtkEpiphanVideoSource::SetOutputFormat(int format)
     }
 
   this->Modified();
+}
+
+//----------------------------------------------------------------------------
+void vtkEpiphanVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, int z0, int z1)
+{
+  x0 = int(x0/4)*4;
+  x1 = (int((x1+1)/4)*4)-1;
+  y0 = int(y0/4)*4;
+  y1 = (int((y1+1)/4)*4)-1;
+
+  int difference = ((x1-x0)*(y1-y0));
+  if ((difference > -200 ) && (difference < 200)) {
+	vtkErrorMacro(<<"Epiphan Device must have a size of minimum 200 pixels");
+	return;
+  }
+
+  vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);
 }

@@ -13,6 +13,7 @@
 
 #include "vtkVideoSource.h"  
 
+
 #include "vtkMultiThreader.h"
 
 #include "epiphan/frmgrab.h"
@@ -51,6 +52,7 @@ public:
 
   void SetFrameRate(float rate);
   void SetOutputFormat(int format);
+  void SetClipRegion(int x0, int x1, int y0, int y1, int z0, int z1);
 
   void Pause();
   void UnPause();
