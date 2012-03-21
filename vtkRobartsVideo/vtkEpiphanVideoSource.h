@@ -41,7 +41,7 @@ public:
   
   // Internal use only
   void ReleaseSystemResources();
-  void UpdateFrameBuffer();
+  //void UpdateFrameBuffer();
   void InternalGrab();
 
   void SetSerialNumber(char * serial);

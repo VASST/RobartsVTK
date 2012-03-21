@@ -234,7 +234,7 @@ void vtkEpiphanVideoSource::InternalGrab()
 
   this->FrameBufferMutex->Unlock();
 }
-
+/*
 void vtkEpiphanVideoSource::UpdateFrameBuffer()
 {
   int i, oldExt;
@@ -287,7 +287,7 @@ void vtkEpiphanVideoSource::UpdateFrameBuffer()
       }
     }
 }
-
+*/
 void vtkEpiphanVideoSource::SetSerialNumber(char * serial) {
 	strncpy_s(this->serialNumber, serial, 15);
 }
@@ -518,6 +518,8 @@ void vtkEpiphanVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, int z0
   x1 = (int((x1+1)/4)*4)-1;
   y0 = int(y0/4)*4;
   y1 = (int((y1+1)/4)*4)-1;
+
+  // Factor of 4 for clipping extents... NO clue why but device defaults.
 
   int difference = ((x1-x0)*(y1-y0));
   if ((difference > -200 ) && (difference < 200)) {
