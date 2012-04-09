@@ -7,21 +7,17 @@ SET(KIT_LIBS vtkHybrid)
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS
-vtkVisionSenseVideoSource.cxx
-vtkVisionSenseNetworkSource.cxx
-vtkTestECGVideoSource.cxx
-vtkEpiphanVideoSource.cxx
+	vtkVisionSenseVideoSource.cxx
+	vtkVisionSenseNetworkSource.cxx
+	vtkTestECGVideoSource.cxx
 )
 
-find_library(FRMGRAB frmgrab ${RobartsVideo_SOURCE_DIR}/frmgrab)
-#find_library(V2U_LIB v2u_lib ${RobartsVideo_SOURCE_DIR}/v2u_lib)
-
-SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
 
 
 OPTION (VTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)
 IF (WIN32)
   OPTION (VTK_USE_DIRECTSHOW "Enable DirectShow Video Source Classes" OFF)
+  OPTION (VTK_USE_EPIPHAN    "Enable Epiphan Video Source Classes" ON)
 ENDIF (WIN32)
 
 IF (VTK_USE_DIRECTSHOW)
@@ -57,9 +53,18 @@ IF (VTK_USE_DIRECTSHOW)
 
         SET(KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${DIRECTSHOW_BASECLASS_LIBRARY} ${DIRECTX_LIBRARY})
         INCLUDE_DIRECTORIES( "${DIRECTSHOW_PATH}/baseclasses/"  "${DIRECTSHOW_PATH}/common/" ${DIRECTX_PATH} ${WINDOWS_SDK_PATH})
-
-
 ENDIF (VTK_USE_DIRECTSHOW)
+
+IF (VTK_USE_EPIPHAN)
+  SET (Kit_SRCS ${Kit_SRCS} 
+       vtkEpiphanVideoSource.cxx
+       vtkEpiphanDualVideoSource.cxx 
+  )
+  find_library(FRMGRAB frmgrab ${RobartsVideo_SOURCE_DIR}/frmgrab)
+
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
+ENDIF (VTK_USE_EPIPHAN)
+
 
 IF (VTK_USE_VIDEOSOURCE2)
   SET (Kit_SRCS ${Kit_SRCS} 

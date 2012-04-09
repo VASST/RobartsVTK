@@ -47,7 +47,6 @@
 #include "vtkCriticalSection.h"
 #include "vtkUnsignedCharArray.h"
 #include "vtkMutexLock.h"
-#include "vtkVisionSenseNetworkSource.h"
 
 #include <vtkstd/string> 
 
