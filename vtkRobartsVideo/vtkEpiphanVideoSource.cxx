@@ -119,9 +119,7 @@ void vtkEpiphanVideoSource::Initialize()
 	vtkErrorMacro(<<"Epiphan Device with set serial number not found, looking for any available device instead");
   }
 
-  if (this->fg != NULL) {
-	  this->Initialized = 1;
-  } else {
+  if (this->fg == NULL) {
 	  vtkErrorMacro(<<"Epiphan Device Not found");
 	  return;
   }
