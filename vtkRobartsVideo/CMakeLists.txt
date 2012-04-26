@@ -9,7 +9,8 @@ SET(KIT_EXTRA_LIBS)
 SET ( Kit_SRCS
 	vtkVisionSenseVideoSource.cxx
 	vtkVisionSenseNetworkSource.cxx
-	vtkTestECGVideoSource.cxx
+	#vtkTestECGVideoSource.cxx
+	vtkReplayImageVideoSource.cxx
 )
 
 
