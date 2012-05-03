@@ -231,60 +231,7 @@ void vtkEpiphanVideoSource::InternalGrab()
 
   this->FrameBufferMutex->Unlock();
 }
-/*
-void vtkEpiphanVideoSource::UpdateFrameBuffer()
-{
-  int i, oldExt;
-  int ext[3];
-  vtkDataArray *buffer;
 
-  // clip the ClipRegion with the FrameSize
-  for (i = 0; i < 3; i++)
-    {
-    oldExt = this->FrameBufferExtent[2*i+1] - this->FrameBufferExtent[2*i] + 1;
-    this->FrameBufferExtent[2*i] = ((this->ClipRegion[2*i] > 0) 
-                             ? this->ClipRegion[2*i] : 0);  
-    this->FrameBufferExtent[2*i+1] = ((this->ClipRegion[2*i+1] < 
-                                       this->FrameSize[i]-1) 
-                             ? this->ClipRegion[2*i+1] : this->FrameSize[i]-1);
-
-    ext[i] = this->FrameBufferExtent[2*i+1] - this->FrameBufferExtent[2*i] + 1;
-    if (ext[i] < 0)
-      {
-      this->FrameBufferExtent[2*i] = 0;
-      this->FrameBufferExtent[2*i+1] = -1;
-      ext[i] = 0;
-      }
-
-    if (oldExt > ext[i])
-      { // dimensions of framebuffer changed
-      this->OutputNeedsInitialization = 1;
-      }
-    }
-
-  // total number of bytes required for the framebuffer
-  int bytesPerRow = (ext[0]*this->FrameBufferBitsPerPixel+7)/8;
-  bytesPerRow = ((bytesPerRow + this->FrameBufferRowAlignment - 1) /
-                 this->FrameBufferRowAlignment)*this->FrameBufferRowAlignment;
-  int totalSize = bytesPerRow * ext[1] * ext[2];
-  i = this->FrameBufferSize;
-
-  while (--i >= 0)
-    {
-    buffer = reinterpret_cast<vtkDataArray *>(this->FrameBuffer[i]);
-    if (buffer->GetDataType() != VTK_UNSIGNED_CHAR ||
-        buffer->GetNumberOfComponents() != 1 ||
-        buffer->GetNumberOfTuples() != totalSize)
-      {
-      buffer->Delete();
-      buffer = vtkUnsignedCharArray::New();
-      this->FrameBuffer[i] = buffer;
-      buffer->SetNumberOfComponents(1);
-      buffer->SetNumberOfTuples(totalSize);
-      }
-    }
-}
-*/
 void vtkEpiphanVideoSource::SetSerialNumber(char * serial) {
 	strncpy_s(this->serialNumber, serial, 15);
 }

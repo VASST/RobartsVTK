@@ -25,8 +25,8 @@ IF (VTK_USE_SHAPETAPE)
                       ${VTKSHAPEAPI_BINARY_DIR})
 
   #SUBDIRS(vtkShapeApi vtkRobartsLegacy)
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkAtamaiTracking)
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkAtamaiTrackingPython)
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTracking)
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTrackingPython)
   SUBDIR_DEPENDS(vtkRobartsLegacy ShapeApi)
   SUBDIRS(ShapeApi)
 

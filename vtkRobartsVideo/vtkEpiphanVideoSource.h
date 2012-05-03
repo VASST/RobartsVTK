@@ -44,7 +44,9 @@ public:
   //void UpdateFrameBuffer();
   void InternalGrab();
 
+  //BTX
   void SetSerialNumber(char * serial);
+  //ETX
 
   void Record();
   void Play();

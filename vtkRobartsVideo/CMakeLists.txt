@@ -61,7 +61,7 @@ IF (VTK_USE_EPIPHAN)
        vtkEpiphanVideoSource.cxx
        vtkEpiphanDualVideoSource.cxx 
   )
-  find_library(FRMGRAB frmgrab ${RobartsVideo_SOURCE_DIR}/frmgrab)
+  find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/)
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
 ENDIF (VTK_USE_EPIPHAN)
@@ -98,6 +98,8 @@ IF (VTK_USE_OPENCV_VIDEOSOURCE)
   FIND_PACKAGE( OpenCV REQUIRED )
   SET (Kit_SRCS ${Kit_SRCS} 
 	vtkOpenCVVideoSource.cxx )
+
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} OpenCV)
 
 ENDIF (VTK_USE_OPENCV_VIDEOSOURCE)
 

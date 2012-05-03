@@ -8,7 +8,7 @@ SET(KIT_EXTRA_LIBS)
 ###### Base signal box ######
 SET ( Kit_SRCS ${Kit_SRCS}
     vtkSignalBox.cxx
-    vtkTestECGSignalBox.cxx
+    #vtkTestECGSignalBox.cxx
 )
 
 

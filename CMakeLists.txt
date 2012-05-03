@@ -12,10 +12,10 @@ IF (VTK_FOUND)
 ENDIF (VTK_FOUND)
 
 # Look for a AtamaiVTK build directory)
-FIND_PACKAGE(AtamaiVTK)
-IF (AtamaiVTK_FOUND)
-  INCLUDE (${AtamaiVTK_USE_FILE})
-ENDIF (AtamaiVTK_FOUND)
+FIND_PACKAGE(AIGS)
+IF (AIGS_FOUND)
+  INCLUDE (${AIGS_USE_FILE})
+ENDIF (AIGS_FOUND)
 
 # Choose static or shared libraries.
 OPTION(BUILD_SHARED_LIBS "Build shared libraries." OFF)
@@ -135,7 +135,7 @@ INCLUDE(${VTK_SOURCE_DIR}/CMake/vtkThirdParty.cmake)
 # Start listing the RobartsVTK kits
 
 # vtkRobartsHaptics
-OPTION (VTK_USE_ROBARTSHAPTICS "Build the vtkRobartsHaptics module" ON)
+OPTION (VTK_USE_ROBARTSHAPTICS "Build the vtkRobartsHaptics module" OFF)
 IF (VTK_USE_ROBARTSHAPTICS)
   ADD_SUBDIRECTORY(vtkRobartsHaptics)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsHaptics )
@@ -143,7 +143,7 @@ IF (VTK_USE_ROBARTSHAPTICS)
 ENDIF (VTK_USE_ROBARTSHAPTICS)
 
 # vtkRobartsLegacy
-OPTION (VTK_USE_ROBARTSLEGACY "Build the vtkRobartsLegacy module" ON)
+OPTION (VTK_USE_ROBARTSLEGACY "Build the vtkRobartsLegacy module" OFF)
 IF (VTK_USE_ROBARTSLEGACY)
   SUBDIRS(vtkRobartsLegacy)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsLegacy )
@@ -154,8 +154,6 @@ ENDIF (VTK_USE_ROBARTSLEGACY)
 OPTION (VTK_USE_ROBARTSECG "Build the vtkRobartsECG module" ON)
 IF (VTK_USE_ROBARTSECG)
   SUBDIRS(vtkRobartsECG)
-#  SUBDIRS(vtkRobartsECGUtils vtkRobartsECG)
-  #SUBDIR_DEPENDS(vtkRobartsECG vtkRobartsECGUtils)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsECG)
 ENDIF (VTK_USE_ROBARTSECG)
@@ -185,7 +183,7 @@ IF (VTK_USE_ANIS)
 ENDIF (VTK_USE_ANIS)
 
 # vtkCuda
-OPTION (VTK_USE_CUDA "Build the vtkAnis module" OFF)
+OPTION (VTK_USE_CUDA "Build the CUDA module" OFF)
 IF (VTK_USE_CUDA)
   SUBDIRS(vtkCuda)
   SUBDIRS(vtkCudaApps)
@@ -201,38 +199,6 @@ IF (VTK_USE_ROBARTSULTRASOUND)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUltrasound)
 ENDIF (VTK_USE_ROBARTSULTRASOUND)
 
-#############
-# IF ITK IS NEEDED FOR ANY PROJECTS
-#############
-#IF(RobartsVTK_USE_ITK AND ITK_DIR)
-#
-#  # vtkITKRegistration
-#  OPTION (VTK_USE_ITKREGISTRATION "Build the vtkITKRegistration module" ON)
-#  IF (VTK_USE_ITKREGISTRATION)
-#    SUBDIRS(vtkITKRegistration)
-#  ENDIF (VTK_USE_ITKREGISTRATION)
-
-#  # vtkITKSegmentation
-#  IF (${VTK_MAJOR_VERSION} GREATER 4)
-#    OPTION (VTK_USE_ITKSEGMENTATION "Build the vtkITKSegmentation module" ON)
-#    IF (VTK_USE_ITKSEGMENTATION)
-#      SUBDIRS(vtkITKSegmentation)
-#    ENDIF (VTK_USE_ITKSEGMENTATION)
-#  ENDIF (${VTK_MAJOR_VERSION} GREATER 4)
-  
-#ENDIF(RobartsVTK_USE_ITK AND ITK_DIR)
-
-# Build Testing
-#OPTION(BUILD_TESTING "Build the examples" ON)
-#IF(BUILD_TESTING)
-#   SUBDIRS(Testing)
-#ENDIF(BUILD_TESTING)
-
-# Build Examples
-#OPTION(BUILD_EXAMPLES "Build the examples" ON)
-#IF (BUILD_EXAMPLES)
-#   SUBDIRS(Examples)
-#ENDIF (BUILD_EXAMPLES)
 
 # Add RobartsVTK.py.in file.  On Win32, this has to go into
 # all config 

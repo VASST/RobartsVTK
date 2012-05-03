@@ -28,12 +28,10 @@ IF (VTK_USE_FREEDOM6S)
   INCLUDE_DIRECTORIES(${VTK_SOURCE_DIR}
                       ${VTK_BINARY_DIR})
 
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkAtamaiTracking)
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkAtamaiTrackingPython)
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTracking)
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTrackingPython)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsHaptics/Freedom6S/freedom6s)
 
-  #TARGET_LINK_LIBRARIES (vtkRobartsHaptics ${AtamaiVTK_LIBRARIES})
-  #TARGET_LINK_LIBRARIES (vtkRobartsHaptics  ${VTK_SOURCE_DIR}/vtkRobartsHaptics/Freedom6S/freedom6s)
 ENDIF (VTK_USE_FREEDOM6S)
 
 
