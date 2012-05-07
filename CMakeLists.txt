@@ -185,10 +185,16 @@ ENDIF (VTK_USE_ANIS)
 # vtkCuda
 OPTION (VTK_USE_CUDA "Build the CUDA module" OFF)
 IF (VTK_USE_CUDA)
-  SUBDIRS(vtkCuda)
-  SUBDIRS(vtkCudaApps)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCuda ${RobartsVTK_SOURCE_DIR}/vtkCudaApps)
-  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaApps vtkCuda)
+  
+  # Look for CUDA facilities
+  FIND_PACKAGE(CUDA REQUIRED)
+  
+  # Add Robart's CUDA libraries
+  SUBDIRS(vtkCudaCommon)
+  SUBDIRS(vtkCudaVisualization)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon vtkCudaVisualization)
 ENDIF (VTK_USE_CUDA)
 
 # vtkRobartsUltrasound - contains new freehand ultrasound code
