@@ -17,16 +17,6 @@ IF (AIGS_FOUND)
   INCLUDE (${AIGS_USE_FILE})
 ENDIF (AIGS_FOUND)
 
-# Choose static or shared libraries.
-OPTION(BUILD_SHARED_LIBS "Build shared libraries." OFF)
-SET (AIGS_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-IF (BUILD_SHARED_LIBS)
-  SET (BUILD_SHARED_LIBS_CONFIG 1)
-ELSE (BUILD_SHARED_LIBS)
-  SET (BUILD_SHARED_LIBS_CONFIG 0)
-ENDIF (BUILD_SHARED_LIBS)
-
-
 #FIND_PACKAGE(PythonLibs)
 #INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 
@@ -135,56 +125,56 @@ INCLUDE(${VTK_SOURCE_DIR}/CMake/vtkThirdParty.cmake)
 # Start listing the RobartsVTK kits
 
 # vtkRobartsHaptics
-OPTION (VTK_USE_ROBARTSHAPTICS "Build the vtkRobartsHaptics module" OFF)
-IF (VTK_USE_ROBARTSHAPTICS)
+OPTION (RobartsVTK_USE_ROBARTSHAPTICS "Build the vtkRobartsHaptics module" OFF)
+IF (RobartsVTK_USE_ROBARTSHAPTICS)
   ADD_SUBDIRECTORY(vtkRobartsHaptics)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsHaptics )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsHaptics)
-ENDIF (VTK_USE_ROBARTSHAPTICS)
+ENDIF (RobartsVTK_USE_ROBARTSHAPTICS)
 
 # vtkRobartsLegacy
-OPTION (VTK_USE_ROBARTSLEGACY "Build the vtkRobartsLegacy module" OFF)
-IF (VTK_USE_ROBARTSLEGACY)
+OPTION (RobartsVTK_USE_ROBARTSLEGACY "Build the vtkRobartsLegacy module" OFF)
+IF (RobartsVTK_USE_ROBARTSLEGACY)
   SUBDIRS(vtkRobartsLegacy)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsLegacy )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsLegacy)
-ENDIF (VTK_USE_ROBARTSLEGACY)
+ENDIF (RobartsVTK_USE_ROBARTSLEGACY)
 
 # vtkRobartsECG
-OPTION (VTK_USE_ROBARTSECG "Build the vtkRobartsECG module" ON)
-IF (VTK_USE_ROBARTSECG)
+OPTION (RobartsVTK_USE_ROBARTSECG "Build the vtkRobartsECG module" ON)
+IF (RobartsVTK_USE_ROBARTSECG)
   SUBDIRS(vtkRobartsECG)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsECG)
-ENDIF (VTK_USE_ROBARTSECG)
+ENDIF (RobartsVTK_USE_ROBARTSECG)
 
 # vtkRobartsVideo
-OPTION (VTK_USE_ROBARTSVIDEO "Build the vtkRobartsVideo module" ON)
-IF (VTK_USE_ROBARTSVIDEO)
+OPTION (RobartsVTK_USE_ROBARTSVIDEO "Build the vtkRobartsVideo module" ON)
+IF (RobartsVTK_USE_ROBARTSVIDEO)
   SUBDIRS(vtkRobartsVideo)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVideo)
-ENDIF (VTK_USE_ROBARTSVIDEO)
+ENDIF (RobartsVTK_USE_ROBARTSVIDEO)
 
 # vtkMwierz
-OPTION (VTK_USE_MWIERZ "Build the vtkMwierz module" OFF)
-IF (VTK_USE_MWIERZ)
+OPTION (RobartsVTK_USE_MWIERZ "Build the vtkMwierz module" OFF)
+IF (RobartsVTK_USE_MWIERZ)
   SUBDIRS(vtkMwierz)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkMwierz )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkMwierz)
-ENDIF (VTK_USE_MWIERZ)
+ENDIF (RobartsVTK_USE_MWIERZ)
 
 # vtkAnix
-OPTION (VTK_USE_ANIS "Build the vtkAnis module" OFF)
-IF (VTK_USE_ANIS)
+OPTION (RobartsVTK_USE_ANIS "Build the vtkAnis module" OFF)
+IF (RobartsVTK_USE_ANIS)
   SUBDIRS(vtkAnis)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkAnis )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkAnis)
-ENDIF (VTK_USE_ANIS)
+ENDIF (RobartsVTK_USE_ANIS)
 
 # vtkCuda
-OPTION (VTK_USE_CUDA "Build the CUDA module" OFF)
-IF (VTK_USE_CUDA)
+OPTION (RobartsVTK_USE_CUDA "Build the CUDA module" OFF)
+IF (RobartsVTK_USE_CUDA)
   
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
@@ -195,15 +185,15 @@ IF (VTK_USE_CUDA)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon vtkCudaVisualization)
-ENDIF (VTK_USE_CUDA)
+ENDIF (RobartsVTK_USE_CUDA)
 
 # vtkRobartsUltrasound - contains new freehand ultrasound code
-OPTION (VTK_USE_ROBARTSULTRASOUND "Build the vtkRobartsUltrasound module" OFF)
-IF (VTK_USE_ROBARTSULTRASOUND)
+OPTION (RobartsVTK_USE_ROBARTSULTRASOUND "Build the vtkRobartsUltrasound module" OFF)
+IF (RobartsVTK_USE_ROBARTSULTRASOUND)
   SUBDIRS (vtkRobartsUltrasound)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCuda ${RobartsVTK_SOURCE_DIR}/vtkRobartsUltrasound)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUltrasound)
-ENDIF (VTK_USE_ROBARTSULTRASOUND)
+ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
 
 
 # Add RobartsVTK.py.in file.  On Win32, this has to go into
