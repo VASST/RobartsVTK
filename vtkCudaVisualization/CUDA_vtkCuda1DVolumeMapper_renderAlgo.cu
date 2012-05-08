@@ -103,17 +103,14 @@ __device__ void CUDAkernel_CastRays1D(float3& rayStart,
 			//determine which kind of step to make
 			backStep = skipStep;
 			skipStep = false;
+			
+			//move to the next sample point (may involve moving backward)
+			rayStart.x = rayStart.x + (backStep ? -rayInc.x : rayInc.x);
+			rayStart.y = rayStart.y + (backStep ? -rayInc.y : rayInc.y);
+			rayStart.z = rayStart.z + (backStep ? -rayInc.z : rayInc.z);
+			maxSteps = maxSteps + (backStep ? -1 : 1);
 
-			//if we are making a backwards step, decrement the sample point by one
-			if(backStep){
-				rayStart.x -= rayInc.x;
-				rayStart.y -= rayInc.y;
-				rayStart.z -= rayInc.z;
-				maxSteps++;
-
-			//else, we can sample
-			}else{
-
+			if(!backStep){
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
@@ -121,13 +118,6 @@ __device__ void CUDAkernel_CastRays1D(float3& rayStart,
 				outputVal.x += multiplier * tex1D(colorR_texture_1D, tempIndex);
 				outputVal.y += multiplier * tex1D(colorG_texture_1D, tempIndex);
 				outputVal.z += multiplier * tex1D(colorB_texture_1D, tempIndex);
-				
-				//move to the next sample point
-				rayStart.x += rayInc.x;
-				rayStart.y += rayInc.y;
-				rayStart.z += rayInc.z;
-				maxSteps--;
-				
 			}
 			
 			//determine whether or not we've hit an opacity where further sampling becomes neglible
@@ -135,7 +125,6 @@ __device__ void CUDAkernel_CastRays1D(float3& rayStart,
 				outputVal.w = 0.0f;
 				break;
 			}
-
 
 		}else{
 
