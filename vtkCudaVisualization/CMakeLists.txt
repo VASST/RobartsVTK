@@ -1,11 +1,6 @@
 PROJECT(vtkCudaVisualization)
 
-SET(CUDA_DIR "C:/CUDA" )
-SET(CUDA_LIB_PATH "${CUDA_DIR}/lib" )
-SET(CUDA_INC_PATH "${CUDA_DIR}/include" )
-SET(CUDA_BIN_PATH "${CUDA_DIR}/bin" )
-
-INCLUDE_DIRECTORIES(${CUDA_INC_PATH} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon)
+INCLUDE_DIRECTORIES(${vtkCudaCommon_SOURCE_DIR})
 
 SET(KIT vtkCudaVisualization)
 SET(UKIT vtkCudaVisualization)

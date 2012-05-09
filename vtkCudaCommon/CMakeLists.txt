@@ -1,11 +1,5 @@
 PROJECT(vtkCudaCommon)
 
-SET(CUDA_DIR "C:/CUDA" )
-SET(CUDA_LIB_PATH "${CUDA_DIR}/lib" )
-SET(CUDA_INC_PATH "${CUDA_DIR}/include" )
-SET(CUDA_BIN_PATH "${CUDA_DIR}/bin" )
-
-INCLUDE_DIRECTORIES(${CUDA_INC_PATH})
 
 SET(KIT vtkCudaCommon)
 SET(UKIT vtkCudaCommon)

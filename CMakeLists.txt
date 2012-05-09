@@ -178,11 +178,12 @@ IF (RobartsVTK_USE_CUDA)
   
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
-  
+
+  INCLUDE(FindCUDA)
   # Add Robart's CUDA libraries
   SUBDIRS(vtkCudaCommon)
   SUBDIRS(vtkCudaVisualization)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon vtkCudaVisualization)
 ENDIF (RobartsVTK_USE_CUDA)

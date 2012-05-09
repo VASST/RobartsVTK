@@ -17,7 +17,7 @@ SET ( Kit_SRCS ${Kit_SRCS}
 
 ###### Heart signal box ######
 OPTION (RobartsVTK_USE_HEARTSIGNALBOX "Enable Heart Signal Box" ON)
-  IF (VTK_USE_HEARTSIGNALBOX)
+IF (RobartsVTK_USE_HEARTSIGNALBOX)
     SET (Kit_SRCS ${Kit_SRCS}
          vtkHeartSignalBox.cxx
         )
@@ -27,7 +27,7 @@ ENDIF (RobartsVTK_USE_HEARTSIGNALBOX)
 
 ###### Data box ######
 OPTION (RobartsVTK_USE_DATABOX "Enable Data Acquisition Box" ON)
-  IF (RobartsVTK_USE_DATABOX)
+IF (RobartsVTK_USE_DATABOX)
     SET (Kit_SRCS ${Kit_SRCS}
           vtkDataBox.cxx
           vtkDataBoxBuffer.cxx
