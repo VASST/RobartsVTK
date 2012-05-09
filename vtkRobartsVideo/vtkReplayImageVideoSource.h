@@ -31,9 +31,7 @@ public:
   void ReleaseSystemResources();
   //void UpdateFrameBuffer();
   void InternalGrab();
-
-  void SetSerialNumber(char * serial);
-
+  
   void Record();
   void Play();
   void Stop();

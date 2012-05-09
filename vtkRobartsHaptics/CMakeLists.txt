@@ -20,8 +20,8 @@ vtkForceFeedback
 ABSTRACT
 )
 
-OPTION (VTK_USE_FREEDOM6S "Enable Freedom6S Device" OFF)
-IF (VTK_USE_FREEDOM6S)
+OPTION (RobartsVTK_USE_FREEDOM6S "Enable Freedom6S Device" OFF)
+IF (RobartsVTK_USE_FREEDOM6S)
   SET ( Kit_SRCS ${Kit_SRCS}
         vtkHapticsFreedom6S.cxx
 	)
@@ -32,7 +32,7 @@ IF (VTK_USE_FREEDOM6S)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTrackingPython)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsHaptics/Freedom6S/freedom6s)
 
-ENDIF (VTK_USE_FREEDOM6S)
+ENDIF (RobartsVTK_USE_FREEDOM6S)
 
 
 SET(Kit_EXTRA_SRCS)

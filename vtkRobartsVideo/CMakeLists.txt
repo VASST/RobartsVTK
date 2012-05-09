@@ -15,13 +15,13 @@ SET ( Kit_SRCS
 
 
 
-OPTION (VTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)
+OPTION (RobartsVTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)
 IF (WIN32)
-  OPTION (VTK_USE_DIRECTSHOW "Enable DirectShow Video Source Classes" OFF)
-  OPTION (VTK_USE_EPIPHAN    "Enable Epiphan Video Source Classes" ON)
+  OPTION (RobartsVTK_USE_DIRECTSHOW "Enable DirectShow Video Source Classes" OFF)
+  OPTION (RobartsVTK_USE_EPIPHAN    "Enable Epiphan Video Source Classes" ON)
 ENDIF (WIN32)
 
-IF (VTK_USE_DIRECTSHOW)
+IF (RobartsVTK_USE_DIRECTSHOW)
   SET (Kit_SRCS ${Kit_SRCS} 
        vtkDirectShowVideoSource.cxx )
 
@@ -54,9 +54,9 @@ IF (VTK_USE_DIRECTSHOW)
 
         SET(KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${DIRECTSHOW_BASECLASS_LIBRARY} ${DIRECTX_LIBRARY})
         INCLUDE_DIRECTORIES( "${DIRECTSHOW_PATH}/baseclasses/"  "${DIRECTSHOW_PATH}/common/" ${DIRECTX_PATH} ${WINDOWS_SDK_PATH})
-ENDIF (VTK_USE_DIRECTSHOW)
+ENDIF (RobartsVTK_USE_DIRECTSHOW)
 
-IF (VTK_USE_EPIPHAN)
+IF (RobartsVTK_USE_EPIPHAN)
   SET (Kit_SRCS ${Kit_SRCS} 
        vtkEpiphanVideoSource.cxx
        vtkEpiphanDualVideoSource.cxx 
@@ -64,10 +64,10 @@ IF (VTK_USE_EPIPHAN)
   find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/)
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
-ENDIF (VTK_USE_EPIPHAN)
+ENDIF (RobartsVTK_USE_EPIPHAN)
 
 
-IF (VTK_USE_VIDEOSOURCE2)
+IF (RobartsVTK_USE_VIDEOSOURCE2)
   SET (Kit_SRCS ${Kit_SRCS} 
        vtkVideoBuffer2.cxx
        vtkVideoFrame2.cxx
@@ -91,17 +91,17 @@ IF (VTK_USE_VIDEOSOURCE2)
       # Include directory needed for vtkMILVideoSource.cxx.
     ENDIF (VTK_USE_MATROX_IMAGING)
   ENDIF (WIN32)
-ENDIF (VTK_USE_VIDEOSOURCE2)
+ENDIF (RobartsVTK_USE_VIDEOSOURCE2)
 
-OPTION (VTK_USE_OPENCV_VIDEOSOURCE "Enable the OpenCV Video Source Modules" OFF)
-IF (VTK_USE_OPENCV_VIDEOSOURCE)
+OPTION (RobartsVTK_USE_OPENCV_VIDEOSOURCE "Enable the OpenCV Video Source Modules" OFF)
+IF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
   FIND_PACKAGE( OpenCV REQUIRED )
   SET (Kit_SRCS ${Kit_SRCS} 
 	vtkOpenCVVideoSource.cxx )
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} OpenCV)
 
-ENDIF (VTK_USE_OPENCV_VIDEOSOURCE)
+ENDIF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
 
 
 

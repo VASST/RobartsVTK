@@ -16,18 +16,18 @@ SET ( Kit_SRCS ${Kit_SRCS}
                       ${ROBARTSVIDEO_SOURCE_DIR} )
 
 ###### Heart signal box ######
-OPTION (VTK_USE_HEARTSIGNALBOX "Enable Heart Signal Box" ON)
-  IF (VTK_USE_HEARTSIGNALBOX)
+OPTION (RobartsVTK_USE_HEARTSIGNALBOX "Enable Heart Signal Box" ON)
+IF (RobartsVTK_USE_HEARTSIGNALBOX)
     SET (Kit_SRCS ${Kit_SRCS}
          vtkHeartSignalBox.cxx
         )
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/Inpout/inpout32.lib)
-ENDIF (VTK_USE_HEARTSIGNALBOX)
+ENDIF (RobartsVTK_USE_HEARTSIGNALBOX)
 
 ###### Data box ######
-OPTION (VTK_USE_DATABOX "Enable Data Acquisition Box" ON)
-  IF (VTK_USE_DATABOX)
+OPTION (RobartsVTK_USE_DATABOX "Enable Data Acquisition Box" ON)
+IF (RobartsVTK_USE_DATABOX)
     SET (Kit_SRCS ${Kit_SRCS}
           vtkDataBox.cxx
           vtkDataBoxBuffer.cxx
@@ -35,21 +35,21 @@ OPTION (VTK_USE_DATABOX "Enable Data Acquisition Box" ON)
     SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}	${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox/Graph32.lib
                                           ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox//oldaapi32.lib
                                           ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox//OLMEM32.lib )
-ENDIF (VTK_USE_DATABOX)
+ENDIF (RobartsVTK_USE_DATABOX)
 
 ###### USB Signal box ######
-OPTION (VTK_USE_USBECGBOX "Enable USB ECG Signal Box" ON)
+OPTION (RobartsVTK_USE_USBECGBOX "Enable USB ECG Signal Box" ON)
 
-IF (VTK_USE_USBECGBOX)
+IF (RobartsVTK_USE_USBECGBOX)
   SET ( Kit_SRCS ${Kit_SRCS}
         vtkUSBECGBox.cxx
       )
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}	${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/cbw/cbw32.lib )
-ENDIF (VTK_USE_USBECGBOX)
+ENDIF (RobartsVTK_USE_USBECGBOX)
 
 ###### Lego signal box ######
-OPTION (VTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
-  IF (VTK_USE_LEGO)
+OPTION (RobartsVTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
+  IF (RobartsVTK_USE_LEGO)
     SET ( Kit_SRCS ${Kit_SRCS}
           vtkLegoSignalBox.cxx
 	  )
@@ -80,7 +80,7 @@ OPTION (VTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
 
   SUBDIRS(LegoFiles)
 
-ENDIF (VTK_USE_LEGO)
+ENDIF (RobartsVTK_USE_LEGO)
 
 SET(Kit_EXTRA_SRCS)
 SET(Kit_EXTRA_CMDS)
