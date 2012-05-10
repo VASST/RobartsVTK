@@ -113,7 +113,12 @@ public:
 	 *
 	 *  @pre n is a non-negative integer less than 100
 	 */
-	void SetNumberOfFrames(int n) {this->numFrames = n;}
+	void SetNumberOfFrames(int n);
+
+	/** @brief Fetches the total number of frames being rendered (the number of 3D frames in the 4D sequence)
+	 *
+	 */
+	int GetNumberOfFrames() {return this->numFrames;}
 	
 	/** @brief Gets a 2D image data consisting of the output of the most current render
 	 *

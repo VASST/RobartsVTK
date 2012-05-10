@@ -317,6 +317,7 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunc
 	colorB_texture_1D.filterMode = cudaFilterModeLinear;
 	colorB_texture_1D.addressMode[0] = cudaAddressModeClamp;
 	cudaBindTextureToArray(colorB_texture_1D, colorBTransferArray1D);
+
 }
 
 extern "C"

@@ -255,6 +255,10 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	cudaThreadSynchronize();
 	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads >>>();
 	cudaThreadSynchronize();
+	
+	printf( "2D Rendering Error Status: " );
+	printf( cudaGetErrorString( cudaGetLastError() ) );
+	printf( "\n" );
 
 	return;
 }
@@ -271,7 +275,10 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame){
 
 	// bind array to 3D texture
 	cudaBindTextureToArray(input_texture, sourceDataArray[frame], channelDesc);
-
+	
+	printf( "Change Frame Status: " );
+	printf( cudaGetErrorString( cudaGetLastError() ) );
+	printf( "\n" );
 }
 
 extern "C"
@@ -329,6 +336,10 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunc
 	colorB_texture_2D.addressMode[0] = cudaAddressModeClamp;
 	colorB_texture_2D.addressMode[1] = cudaAddressModeClamp;
 	cudaBindTextureToArray(colorB_texture_2D, colorBTransferArray2D, channelDesc);
+
+	printf( "Bind transfer functions: " );
+	printf( cudaGetErrorString( cudaGetLastError() ) );
+	printf( "\n" );
 }
 
 extern "C"
@@ -359,6 +370,10 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 	copyParams.extent   = volumeSize;
 	copyParams.kind     = cudaMemcpyHostToDevice;
 	cudaMemcpy3D(&copyParams);
+
+	printf( "Load volume information: " );
+	printf( cudaGetErrorString( cudaGetLastError() ) );
+	printf( "\n" );
 
 }
 

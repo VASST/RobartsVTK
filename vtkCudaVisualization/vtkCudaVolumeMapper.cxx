@@ -16,6 +16,9 @@
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 
+// This is the maximum number of frames, may need to be set
+#define VTKCUDAVOLUMEMAPPER_UPPER_BOUND 30
+
 vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {
 	this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
@@ -296,6 +299,11 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 	randoms[255] = 0.71302;
 	CUDA_vtkCudaVolumeMapper_renderAlgo_loadRandoms(randoms);
 
+}
+
+void vtkCudaVolumeMapper::SetNumberOfFrames(int n) {
+	if( n > 0 && n <= VTKCUDAVOLUMEMAPPER_UPPER_BOUND )
+		this->numFrames = n;
 }
 
 vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
