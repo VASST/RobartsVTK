@@ -11,7 +11,7 @@
 __constant__ cudaVolumeInformation				volInfo;
 __constant__ cudaRendererInformation			renInfo;
 __constant__ cudaOutputImageInformation			outInfo;
-__constant__ float random[BLOCK_DIM2D*BLOCK_DIM2D];
+__constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 
 //texture element information for the ZBuffer
 texture<float, 2, cudaReadModeElementType> zbuffer_texture;
@@ -442,8 +442,8 @@ void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 
 //load in a random 16x16 noise array to deartefact the image in real time
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadRandoms(const float* randoms){
-	cudaMemcpyToSymbolAsync(random, randoms, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
+void CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets){
+	cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
 }
 
 #endif

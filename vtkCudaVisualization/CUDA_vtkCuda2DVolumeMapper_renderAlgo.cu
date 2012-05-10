@@ -51,7 +51,7 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 	__syncthreads();
 
 	//apply a randomized offset to the ray
-	retDepth = random[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
+	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
 	rayStart.x += retDepth*rayInc.x;
 	rayStart.y += retDepth*rayInc.y;
