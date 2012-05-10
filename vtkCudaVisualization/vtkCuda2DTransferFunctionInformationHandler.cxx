@@ -88,11 +88,6 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 
-	memset( (void*) LocalColorRedTransferFunction, 0.0f, sizeof(float) * this->FunctionSize * this->FunctionSize);
-	memset( (void*) LocalColorGreenTransferFunction, 0.0f, sizeof(float) * this->FunctionSize * this->FunctionSize);
-	memset( (void*) LocalColorBlueTransferFunction, 0.0f, sizeof(float) * this->FunctionSize * this->FunctionSize);
-	memset( (void*) LocalAlphaTransferFunction, 0.0f, sizeof(float) * this->FunctionSize * this->FunctionSize);
-
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, minGradient, maxGradient, gradientOffset);

@@ -72,10 +72,11 @@ double vtkCuda2DTransferFunction::getMinIntensity(){
 
 void vtkCuda2DTransferFunction::GetClassifyTable(	short* outputTable, int sizeI, int sizeG,
 															   float lowI, float highI, float lowG, float highG, float offsetG){
+	//return if we don't have a proper table to populate
+	if(!outputTable) return;
 
 	//clear the table
-	for(unsigned int i = 0; i < sizeI*sizeG; i++)
-		outputTable[i] = 0;
+	memset( (void*) outputTable, 0.0f, sizeof(short) * sizeI * sizeG);
 
 	//iterate over each object, letting them contribute to the table
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
@@ -87,12 +88,10 @@ void vtkCuda2DTransferFunction::GetTransferTable(	float* outputRTable, float* ou
 															   int sizeI, int sizeG, float lowI, float highI, float lowG, float highG, float offsetG){
 
 	//clear the table
-	for(unsigned int i = 0; i < sizeI*sizeG; i++){
-		outputRTable[i] = 0.0f;
-		outputGTable[i] = 0.0f;
-		outputBTable[i] = 0.0f;
-		outputATable[i] = 0.0f;
-	}
+	if(outputRTable) memset( (void*) outputRTable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputGTable) memset( (void*) outputGTable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputBTable) memset( (void*) outputBTable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputATable) memset( (void*) outputATable, 0.0f, sizeof(float) * sizeI * sizeG);
 
 	//iterate over each object, letting them contribute to the table
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
