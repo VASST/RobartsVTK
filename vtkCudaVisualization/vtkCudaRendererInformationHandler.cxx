@@ -116,97 +116,27 @@ void vtkCudaRendererInformationHandler::SetVoxelsToWorldMatrix(vtkMatrix4x4* mat
 }
 
 void vtkCudaRendererInformationHandler::SetClippingPlanes(vtkPlaneCollection* planes){
-
-	int numberOfPlanes = 0;
-	if(planes){
-		numberOfPlanes = planes->GetNumberOfItems();
-		if(planes->GetMTime() == this->clipModified){
-			return;
-		}else{
-			this->clipModified = planes->GetMTime();
-		}
-	}
-
-	//if we don't have a good number of planes, act as if we have none
-	if( numberOfPlanes != 6 ){
-		this->RendererInfo.NumberOfClippingPlanes = 0;
+	
+	//see if we need to refigure the clipping planes
+	if(!planes || planes->GetMTime() < this->clipModified){
 		return;
-	}
-
-	double worldNormal[3];
-	double worldOrigin[3];
-	double volumeOrigin[4];
-
-	//set the number of planes in the information sent to CUDA
-	this->RendererInfo.NumberOfClippingPlanes = numberOfPlanes;
-
-	//load the planes into the local buffer and then into the CUDA buffer, providing the required pointer at the end
-	float* clippingPlane = this->RendererInfo.ClippingPlanes;
-	for(int i = 0; i < numberOfPlanes; i++){
-		vtkPlane* onePlane = planes->GetItem(i);
-		
-		onePlane->GetNormal(worldNormal);
-		onePlane->GetOrigin(worldOrigin);
-
-		clippingPlane[4*i] = worldNormal[0]*VoxelsToWorldMatrix[0]  + worldNormal[1]*VoxelsToWorldMatrix[4]  + worldNormal[2]*VoxelsToWorldMatrix[8];
-		clippingPlane[4*i+1] = worldNormal[0]*VoxelsToWorldMatrix[1]  + worldNormal[1]*VoxelsToWorldMatrix[5]  + worldNormal[2]*VoxelsToWorldMatrix[9];
-		clippingPlane[4*i+2] = worldNormal[0]*VoxelsToWorldMatrix[2]  + worldNormal[1]*VoxelsToWorldMatrix[6]  + worldNormal[2]*VoxelsToWorldMatrix[10];
-
-		volumeOrigin[0] = worldOrigin[0]*WorldToVoxelsMatrix[0]  + worldOrigin[1]*WorldToVoxelsMatrix[1]  + worldOrigin[2]*WorldToVoxelsMatrix[2]  + WorldToVoxelsMatrix[3];
-		volumeOrigin[1] = worldOrigin[0]*WorldToVoxelsMatrix[4]  + worldOrigin[1]*WorldToVoxelsMatrix[5]  + worldOrigin[2]*WorldToVoxelsMatrix[6]  + WorldToVoxelsMatrix[7];
-		volumeOrigin[2] = worldOrigin[0]*WorldToVoxelsMatrix[8]  + worldOrigin[1]*WorldToVoxelsMatrix[9]  + worldOrigin[2]*WorldToVoxelsMatrix[10] + WorldToVoxelsMatrix[11];
-		volumeOrigin[3] = worldOrigin[0]*WorldToVoxelsMatrix[12] + worldOrigin[1]*WorldToVoxelsMatrix[13] + worldOrigin[2]*WorldToVoxelsMatrix[14] + WorldToVoxelsMatrix[15];
-		if ( volumeOrigin[3] != 1.0 ) { volumeOrigin[0] /= volumeOrigin[3]; volumeOrigin[1] /= volumeOrigin[3]; volumeOrigin[2] /= volumeOrigin[3]; }
-
-		clippingPlane[4*i+3] = -(clippingPlane[4*i]*volumeOrigin[0] + clippingPlane[4*i+1]*volumeOrigin[1] + clippingPlane[4*i+2]*volumeOrigin[2]);
+	}else{
+		this->clipModified = planes->GetMTime();
+		this->FigurePlanes(planes, this->RendererInfo.ClippingPlanes,
+							&(this->RendererInfo.NumberOfClippingPlanes) );
 	}
 
 }
 
 void vtkCudaRendererInformationHandler::SetKeyholePlanes(vtkPlaneCollection* planes){
 
-	int numberOfPlanes = 0;
-	if(planes){
-		numberOfPlanes = planes->GetNumberOfItems();
-		if(planes->GetMTime() == this->clipModified){
-			return;
-		}else{
-			this->clipModified = planes->GetMTime();
-		}
-	}
-	
-	//if we don't have a good number of planes, act as if we have none
-	if( numberOfPlanes != 6 ){
-		this->RendererInfo.NumberOfKeyholePlanes = 0;
+	//see if we need to refigure the keyhole planes
+	if(!planes || planes->GetMTime() < this->clipModified){
 		return;
-	}
-
-	double worldNormal[3];
-	double worldOrigin[3];
-	double volumeOrigin[4];
-
-	//set the number of planes in the information sent to CUDA
-	this->RendererInfo.NumberOfKeyholePlanes = numberOfPlanes;
-
-	//load the planes into the local buffer and then into the CUDA buffer, providing the required pointer at the end
-	float* keyholePlane = this->RendererInfo.KeyholePlanes;
-	for(int i = 0; i < numberOfPlanes; i++){
-		vtkPlane* onePlane = planes->GetItem(i);
-		
-		onePlane->GetNormal(worldNormal);
-		onePlane->GetOrigin(worldOrigin);
-
-		keyholePlane[4*i] = worldNormal[0]*VoxelsToWorldMatrix[0]  + worldNormal[1]*VoxelsToWorldMatrix[4]  + worldNormal[2]*VoxelsToWorldMatrix[8];
-		keyholePlane[4*i+1] = worldNormal[0]*VoxelsToWorldMatrix[1]  + worldNormal[1]*VoxelsToWorldMatrix[5]  + worldNormal[2]*VoxelsToWorldMatrix[9];
-		keyholePlane[4*i+2] = worldNormal[0]*VoxelsToWorldMatrix[2]  + worldNormal[1]*VoxelsToWorldMatrix[6]  + worldNormal[2]*VoxelsToWorldMatrix[10];
-
-		volumeOrigin[0] = worldOrigin[0]*WorldToVoxelsMatrix[0]  + worldOrigin[1]*WorldToVoxelsMatrix[1]  + worldOrigin[2]*WorldToVoxelsMatrix[2]  + WorldToVoxelsMatrix[3];
-		volumeOrigin[1] = worldOrigin[0]*WorldToVoxelsMatrix[4]  + worldOrigin[1]*WorldToVoxelsMatrix[5]  + worldOrigin[2]*WorldToVoxelsMatrix[6]  + WorldToVoxelsMatrix[7];
-		volumeOrigin[2] = worldOrigin[0]*WorldToVoxelsMatrix[8]  + worldOrigin[1]*WorldToVoxelsMatrix[9]  + worldOrigin[2]*WorldToVoxelsMatrix[10] + WorldToVoxelsMatrix[11];
-		volumeOrigin[3] = worldOrigin[0]*WorldToVoxelsMatrix[12] + worldOrigin[1]*WorldToVoxelsMatrix[13] + worldOrigin[2]*WorldToVoxelsMatrix[14] + WorldToVoxelsMatrix[15];
-		if ( volumeOrigin[3] != 1.0 ) { volumeOrigin[0] /= volumeOrigin[3]; volumeOrigin[1] /= volumeOrigin[3]; volumeOrigin[2] /= volumeOrigin[3]; }
-
-		keyholePlane[4*i+3] = -(keyholePlane[4*i]*volumeOrigin[0] + keyholePlane[4*i+1]*volumeOrigin[1] + keyholePlane[4*i+2]*volumeOrigin[2]);
+	}else{
+		this->clipModified = planes->GetMTime();
+		this->FigurePlanes(planes, this->RendererInfo.KeyholePlanes,
+							&(this->RendererInfo.NumberOfKeyholePlanes) );
 	}
 
 }
@@ -224,5 +154,43 @@ void vtkCudaRendererInformationHandler::LoadZBuffer(){
 	if(this->ZBuffer) delete this->ZBuffer;
 	this->ZBuffer = this->Renderer->GetRenderWindow()->GetZbufferData(x1,y1,x2,y2);
 	CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y );
+
+}
+
+void vtkCudaRendererInformationHandler::FigurePlanes(vtkPlaneCollection* planes, float* planesArray, int* numberOfPlanes){
+
+	//figure out the number of planes
+	*numberOfPlanes = 0;
+	if(planes) *numberOfPlanes = planes->GetNumberOfItems();
+	
+	//if we don't have a good number of planes, act as if we have none
+	if( *numberOfPlanes != 6 ){
+		*numberOfPlanes = 0;
+		return;
+	}
+
+	double worldNormal[3];
+	double worldOrigin[3];
+	double volumeOrigin[4];
+
+	//load the planes into the local buffer and then into the CUDA buffer, providing the required pointer at the end
+	for(int i = 0; i < *numberOfPlanes; i++){
+		vtkPlane* onePlane = planes->GetItem(i);
+		
+		onePlane->GetNormal(worldNormal);
+		onePlane->GetOrigin(worldOrigin);
+
+		planesArray[4*i] = worldNormal[0]*VoxelsToWorldMatrix[0]  + worldNormal[1]*VoxelsToWorldMatrix[4]  + worldNormal[2]*VoxelsToWorldMatrix[8];
+		planesArray[4*i+1] = worldNormal[0]*VoxelsToWorldMatrix[1]  + worldNormal[1]*VoxelsToWorldMatrix[5]  + worldNormal[2]*VoxelsToWorldMatrix[9];
+		planesArray[4*i+2] = worldNormal[0]*VoxelsToWorldMatrix[2]  + worldNormal[1]*VoxelsToWorldMatrix[6]  + worldNormal[2]*VoxelsToWorldMatrix[10];
+
+		volumeOrigin[0] = worldOrigin[0]*WorldToVoxelsMatrix[0]  + worldOrigin[1]*WorldToVoxelsMatrix[1]  + worldOrigin[2]*WorldToVoxelsMatrix[2]  + WorldToVoxelsMatrix[3];
+		volumeOrigin[1] = worldOrigin[0]*WorldToVoxelsMatrix[4]  + worldOrigin[1]*WorldToVoxelsMatrix[5]  + worldOrigin[2]*WorldToVoxelsMatrix[6]  + WorldToVoxelsMatrix[7];
+		volumeOrigin[2] = worldOrigin[0]*WorldToVoxelsMatrix[8]  + worldOrigin[1]*WorldToVoxelsMatrix[9]  + worldOrigin[2]*WorldToVoxelsMatrix[10] + WorldToVoxelsMatrix[11];
+		volumeOrigin[3] = worldOrigin[0]*WorldToVoxelsMatrix[12] + worldOrigin[1]*WorldToVoxelsMatrix[13] + worldOrigin[2]*WorldToVoxelsMatrix[14] + WorldToVoxelsMatrix[15];
+		if ( volumeOrigin[3] != 1.0 ) { volumeOrigin[0] /= volumeOrigin[3]; volumeOrigin[1] /= volumeOrigin[3]; volumeOrigin[2] /= volumeOrigin[3]; }
+
+		planesArray[4*i+3] = -(planesArray[4*i]*volumeOrigin[0] + planesArray[4*i+1]*volumeOrigin[1] + planesArray[4*i+2]*volumeOrigin[2]);
+	}
 
 }

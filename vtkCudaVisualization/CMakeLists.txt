@@ -54,13 +54,15 @@ SET ( Kit_SRCS
   CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DVolumeMapper_renderAlgo.h
 
-  #2D transfer function rendering with inclusion/exclusion logic
+  #2D transfer function rendering with inclusion/exclusion logic with slicing planes
   vtkCuda2DInExLogicVolumeMapper.cxx
   vtkCuda2DInExLogicVolumeMapper.h
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h
   vtkCuda2DInExLogicTransferFunctionInformationHandler.cxx
   vtkCuda2DInExLogicTransferFunctionInformationHandler.h
+  CUDA_containerSlicePlanesInformation.h
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaVisualization ${Kit_SRCS} )

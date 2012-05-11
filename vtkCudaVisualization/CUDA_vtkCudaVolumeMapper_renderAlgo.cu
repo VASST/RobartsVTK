@@ -41,7 +41,7 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
 	excludeStart = 1.0f;
 	excludeEnd = -1.0f;
 
-	// loop through all 6 clipping planes
+	// loop through all provided clipping planes
 	if(!numPlanes) return;
 	int flag = 0;
 	#pragma unroll 1

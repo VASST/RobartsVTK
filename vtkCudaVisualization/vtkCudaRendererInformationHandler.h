@@ -103,6 +103,14 @@ public:
 	 */
 	void SetKeyholePlanes(vtkPlaneCollection* planes);
 	
+	/** @brief Figures out how to translate information from the set of planes to the arrays used in rendering
+	 *
+	 *  @param planes A set of 6 planes
+	 *
+	 *  @pre The 6 planes can be split into three groups, where each plane is parallel to those in the group, and orthogonal to all those not in the group
+	 */
+	void FigurePlanes(vtkPlaneCollection* planes, float* planesArray, int* numberOfPlanes);
+
 	/** @brief Updates the various available rendering parameters, repopulating the information container
 	 *
 	 */
