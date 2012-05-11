@@ -2,7 +2,7 @@ PROJECT(ROBARTSECG)
 
 SET(KIT RobartsECG)
 SET(UKIT ROBARTSECG)
-SET(KIT_LIBS vtkHybrid vtkRobartsVideo)
+SET(KIT_LIBS vtkHybrid)
 SET(KIT_EXTRA_LIBS)
 
 ###### Base signal box ######
@@ -55,16 +55,9 @@ OPTION (RobartsVTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
 	  )
 
   # include the libusb directory
-#  INCLUDE(FindUSB.cmake)
   SET(USB_INCLUDE_DIR ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/LegoFiles/include/ )
   SET(USB_LIBRARIES ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/LegoFiles/lib/msvc/libusb.lib )
-#  IF(NOT USB_FOUND)
-#    MESSAGE("This project requires the libusb library.
 
-#    Enter the directories for:
-#    USB_INCLUDE_DIR \(example: ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/legousb/include/\)
-#    USB_LIBRARY \(example: ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/legousb/lib/msvc/libusb.lib\)")
-#  ENDIF(NOT USB_FOUND)
 
   SET(CMAKE_CXX_FLAGS
     "-funsigned-char"

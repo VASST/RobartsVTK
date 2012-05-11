@@ -81,7 +81,12 @@ IF (RobartsVTK_USE_VIDEOSOURCE2)
     ENDIF (VTK_VFW_SUPPORTS_CAPTURE)
 
     IF (VTK_USE_MATROX_IMAGING)
-      SET(KIT_LIBS ${KIT_LIBS} ${MIL_LIBRARY})
+	  FIND_LIBRARY(MIL_LIBRARY MIL
+		"C:/Program Files/Matrox Imaging/mil/library/winnt/msc/dll"
+		"C:/Program Files/Matrox Imaging/mil/library/windows/msc/dll"
+	  )
+
+      SET(KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${MIL_LIBRARY})
       IF (MIL_INCLUDE_PATH)
       ELSE (MIL_INCLUDE_PATH)
       FIND_PATH(MIL_INCLUDE_PATH mil.h "C:/Program Files/Matrox Imaging/mil/include" )
@@ -95,15 +100,16 @@ ENDIF (RobartsVTK_USE_VIDEOSOURCE2)
 
 OPTION (RobartsVTK_USE_OPENCV_VIDEOSOURCE "Enable the OpenCV Video Source Modules" OFF)
 IF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
-  FIND_PACKAGE( OpenCV REQUIRED )
+  
   SET (Kit_SRCS ${Kit_SRCS} 
 	vtkOpenCVVideoSource.cxx )
 
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} OpenCV)
+  FIND_PACKAGE( OpenCV REQUIRED )
+  INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS} ${OpenCV_LIB_DIR} )
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${OpenCV_LIBS} )
+  LINK_DIRECTORIES(${OpenCV_LIB_DIR}/../3rdparty/lib )
 
 ENDIF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
-
-
 
 SET(Kit_EXTRA_SRCS)
 SET(Kit_EXTRA_CMDS)
