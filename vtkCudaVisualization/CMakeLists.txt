@@ -21,7 +21,7 @@ SET ( Kit_SRCS
   CUDA_containerRendererInformation.h
   CUDA_containerVolumeInformation.h
   CUDA_containerOutputImageInformation.h
-  CUDA_vtkCudaVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaVolumeMapper_renderAlgo.cu
   CUDA_vtkCudaVolumeMapper_renderAlgo.h
 
   #2D Transfer function definition
@@ -42,7 +42,7 @@ SET ( Kit_SRCS
   vtkCuda1DTransferFunctionInformationHandler.cxx
   vtkCuda1DTransferFunctionInformationHandler.h
   CUDA_container1DTransferFunctionInformation.h
-  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cu
+  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda1DVolumeMapper_renderAlgo.h
 
   #2D Transfer function rendering subclass
@@ -51,13 +51,13 @@ SET ( Kit_SRCS
   vtkCuda2DTransferFunctionInformationHandler.cxx
   vtkCuda2DTransferFunctionInformationHandler.h
   CUDA_container2DTransferFunctionInformation.h
-  CUDA_vtkCuda2DVolumeMapper_renderAlgo.cu
+  CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DVolumeMapper_renderAlgo.h
 
   #2D transfer function rendering with inclusion/exclusion logic
   vtkCuda2DInExLogicVolumeMapper.cxx
   vtkCuda2DInExLogicVolumeMapper.h
-  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cu
+  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h
   vtkCuda2DInExLogicTransferFunctionInformationHandler.cxx
   vtkCuda2DInExLogicTransferFunctionInformationHandler.h
