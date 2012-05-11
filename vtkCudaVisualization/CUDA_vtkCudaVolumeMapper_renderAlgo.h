@@ -32,14 +32,12 @@ void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
  *
- *  @param randoms A 16x16 array (in 1 dimension, so 256 elements) of random numbers
+ *  @param randomRayOffsets A 16x16 array (in 1 dimension, so 256 elements) of random numbers
  *
- *  @pre Each number in randoms is between 0.0f and 1.0f inclusive
+ *  @pre Each number in randomRayOffsets is between 0.0f and 1.0f inclusive
  *
  */
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadRandoms(const float* randoms);
-
-
+void CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets);
 
 #endif

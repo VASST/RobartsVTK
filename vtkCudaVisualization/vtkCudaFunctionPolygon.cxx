@@ -183,10 +183,10 @@ void vtkCudaFunctionPolygon::PopulatePortionOfTransferTable(	int IntensitySize, 
 
 			if( inside ){
 				int tableIndex = i + g * IntensitySize;
-				rTable[tableIndex] = this->colourRed;
-				gTable[tableIndex] = this->colourGreen;
-				bTable[tableIndex] = this->colourBlue;
-				aTable[tableIndex] = this->opacity;
+				if(rTable) rTable[tableIndex] = this->colourRed;
+				if(gTable) gTable[tableIndex] = this->colourGreen;
+				if(bTable) bTable[tableIndex] = this->colourBlue;
+				if(aTable) aTable[tableIndex] = this->opacity;
 			}
 		}
 	}

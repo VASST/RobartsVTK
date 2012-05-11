@@ -4,18 +4,17 @@
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include <cuda.h>
 
-//This is the side length of the square that the output image is broken up into
-#define BLOCK_DIM2D 16 // this must be set to 4 or more, 16 is optimal
+#define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 
 //execution parameters and general information
 __constant__ cudaVolumeInformation				volInfo;
 __constant__ cudaRendererInformation			renInfo;
 __constant__ cudaOutputImageInformation			outInfo;
-__constant__ float random[BLOCK_DIM2D*BLOCK_DIM2D];
+__constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 
 //texture element information for the ZBuffer
-texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 cudaArray* ZBufferArray = 0;
+texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
 //channel for loading input data and transfer functions
 cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
@@ -442,8 +441,12 @@ void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 
 //load in a random 16x16 noise array to deartefact the image in real time
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadRandoms(const float* randoms){
-	cudaMemcpyToSymbolAsync(random, randoms, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
+void CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets){
+	cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
 }
+
+#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
+#include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh"
+#include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh"
 
 #endif

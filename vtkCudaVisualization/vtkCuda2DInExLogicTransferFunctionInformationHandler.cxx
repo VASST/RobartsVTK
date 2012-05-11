@@ -1,4 +1,4 @@
-#include "vtkCuda2DTransferFunctionInformationHandler.h"
+#include "vtkCuda2DInExLogicTransferFunctionInformationHandler.h"
 #include "vtkObjectFactory.h"
 #include "vtkMatrix4x4.h"
 
@@ -8,12 +8,12 @@
 #include "vtkCuda2DTransferFunction.h"
 
 extern "C" {
-#include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.h"
+#include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
 }
 
-vtkStandardNewMacro(vtkCuda2DTransferFunctionInformationHandler);
+vtkStandardNewMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler);
 
-vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformationHandler(){
+vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransferFunctionInformationHandler(){
 	this->function = NULL;
 
 	this->FunctionSize = 512;
@@ -24,11 +24,11 @@ vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformatio
 	this->InputData = NULL;
 }
 
-vtkCuda2DTransferFunctionInformationHandler::~vtkCuda2DTransferFunctionInformationHandler(){
+vtkCuda2DInExLogicTransferFunctionInformationHandler::~vtkCuda2DInExLogicTransferFunctionInformationHandler(){
 	this->SetInputData(NULL, 0);
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::SetInputData(vtkImageData* inputData, int index){
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetInputData(vtkImageData* inputData, int index){
 	if (inputData == NULL)
 	{
 		this->InputData = NULL;
@@ -40,20 +40,32 @@ void vtkCuda2DTransferFunctionInformationHandler::SetInputData(vtkImageData* inp
 	}
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::SetTransferFunction(vtkCuda2DTransferFunction* f){
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetVisualizationTransferFunction(vtkCuda2DTransferFunction* f){
 	this->function = f;
 	this->lastModifiedTime = 0;
 	this->Modified();
 }
 
-vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetTransferFunction(){
+vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler::GetVisualizationTransferFunction(){
 	return this->function;
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
-	//if we don't need to update the transfer function, don't
-	if(this->function->GetMTime() <= lastModifiedTime) return;
-	lastModifiedTime = this->function->GetMTime();
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetInExLogicTransferFunction(vtkCuda2DTransferFunction* f){
+	this->inExFunction = f;
+	this->lastModifiedTime = 0;
+	this->Modified();
+}
+
+vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler::GetInExLogicTransferFunction(){
+	return this->inExFunction;
+}
+
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunction(){
+	//if we don't need to update the transfer functions, don't
+	if(this->function->GetMTime() <= lastModifiedTime ||
+		this->inExFunction->GetMTime() <= lastModifiedTime) return;
+	lastModifiedTime = (this->function->GetMTime() < this->inExFunction->GetMTime()) ?
+		this->inExFunction->GetMTime() : this->function->GetMTime();
 	
 	//calculate the gradient (to get max gradient values)
 	double gradRange[2];
@@ -71,6 +83,8 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	double maxIntensity = (this->InputData->GetScalarRange()[1] < this->function->getMaxIntensity() ) ? this->InputData->GetScalarRange()[1] : this->function->getMaxIntensity();
 	double minGradient = (this->LowGradient > this->function->getMinGradient() ) ? this->LowGradient : this->function->getMinGradient();
 	double maxGradient = (this->HighGradient < this->function->getMaxGradient() ) ? this->HighGradient : this->function->getMaxGradient();
+	minGradient = (minGradient > this->inExFunction->getMinGradient() ) ? minGradient : this->inExFunction->getMinGradient();
+	maxGradient = (maxGradient < this->inExFunction->getMaxGradient() ) ? maxGradient : this->inExFunction->getMaxGradient();
 	double gradientOffset = this->HighGradient * 0.8;
 	maxGradient = (log(maxGradient*maxGradient+gradientOffset) - log(gradientOffset) )/ log(2.0) + 1.0;
 	minGradient = (log(minGradient*minGradient+gradientOffset) - log(gradientOffset) )/ log(2.0);
@@ -87,32 +101,37 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	float* LocalColorGreenTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalInExTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, minGradient, maxGradient, gradientOffset);
+	this->inExFunction->GetTransferTable(0, 0, 0, LocalInExTransferFunction,
+		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, minGradient, maxGradient, gradientOffset);
 
 	//map the trasfer functions to textures for fast access
 	this->TransInfo.functionSize = this->FunctionSize;
-	CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
+	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
 		LocalColorRedTransferFunction,
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
-		LocalAlphaTransferFunction);
+		LocalAlphaTransferFunction,
+		LocalInExTransferFunction);
 
 	//clean up the garbage
 	delete LocalColorRedTransferFunction;
 	delete LocalColorGreenTransferFunction;
 	delete LocalColorBlueTransferFunction;
 	delete LocalAlphaTransferFunction;
+	delete LocalInExTransferFunction;
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::Update(){
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::Update(){
 	if(this->InputData){
 		this->InputData->Update();
 		this->Modified();
 	}
-	if(this->function){
+	if(this->function && this->inExFunction){
 		this->UpdateTransferFunction();
 		this->Modified();
 	}

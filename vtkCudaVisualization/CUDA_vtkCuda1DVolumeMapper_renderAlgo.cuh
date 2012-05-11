@@ -1,28 +1,27 @@
-#include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.h"
+#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
-#include "CUDA_vtkCudaVolumeMapper_renderAlgo.cuh"
 #include <cuda.h>
 
 //execution parameters and general information
-__constant__ cuda2DTransferFunctionInformation	trfInfo;
+__constant__ cuda1DTransferFunctionInformation	CUDA_vtkCuda1DVolumeMapper_trfInfo;
 
 //transfer function as read-only textures
-texture<float, 2, cudaReadModeElementType> alpha_texture_2D;
-texture<float, 2, cudaReadModeElementType> colorR_texture_2D;
-texture<float, 2, cudaReadModeElementType> colorG_texture_2D;
-texture<float, 2, cudaReadModeElementType> colorB_texture_2D;
+texture<float, 1, cudaReadModeElementType> alpha_texture_1D;
+texture<float, 1, cudaReadModeElementType> colorR_texture_1D;
+texture<float, 1, cudaReadModeElementType> colorG_texture_1D;
+texture<float, 1, cudaReadModeElementType> colorB_texture_1D;
 
 //opague memory back for the transfer function
-cudaArray* alphaTransferArray2D = 0;
-cudaArray* colorRTransferArray2D = 0;
-cudaArray* colorGTransferArray2D = 0;
-cudaArray* colorBTransferArray2D = 0;
+cudaArray* alphaTransferArray1D = 0;
+cudaArray* colorRTransferArray1D = 0;
+cudaArray* colorGTransferArray1D = 0;
+cudaArray* colorBTransferArray1D = 0;
 
 //3D input data (read-only texture with corresponding opague device memory back)
-texture<float, 3, cudaReadModeElementType> input_texture;
-cudaArray* sourceDataArray[100];
+texture<float, 3, cudaReadModeElementType> CUDA_vtkCuda1DVolumeMapper_input_texture;
+cudaArray* CUDA_vtkCuda1DVolumeMapper_sourceDataArray[100];
 
-__device__ void CUDAkernel_CastRays2D(float3& rayStart,
+__device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStart,
 									const float& numSteps,
 									float& excludeStart,
 									float& excludeEnd,
@@ -38,11 +37,8 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 		
 	//fetch the required information about the size and range of the transfer function from memory to registers
 	__syncthreads();
-	const float functRangeLow = trfInfo.intensityLow;
-	const float functRangeMulti = trfInfo.intensityMultiplier;
-	const float gradRangeLow = trfInfo.gradientLow;
-	const float gradRangeMulti = trfInfo.gradientMultiplier;
-	const float gradRangeOffset = trfInfo.gradientOffset;
+	const float functRangeLow = CUDA_vtkCuda1DVolumeMapper_trfInfo.intensityLow;
+	const float functRangeMulti = CUDA_vtkCuda1DVolumeMapper_trfInfo.intensityMultiplier;
 	const float spaceX = volInfo.SpacingReciprocal.x;
 	const float spaceY = volInfo.SpacingReciprocal.y;
 	const float spaceZ = volInfo.SpacingReciprocal.z;
@@ -51,7 +47,7 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 	__syncthreads();
 
 	//apply a randomized offset to the ray
-	retDepth = random[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
+	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
 	rayStart.x += retDepth*rayInc.x;
 	rayStart.y += retDepth*rayInc.y;
@@ -80,24 +76,22 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 		}
 
 		// fetching the intensity index into the transfer function
-		const float tempIndex = functRangeMulti * (tex3D(input_texture, rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
+		const float tempIndex = functRangeMulti * (tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
 			
 		//fetching the gradient index into the transfer function
 		float3 gradient;
-		gradient.x = ( tex3D(input_texture, rayStart.x+1.0f, rayStart.y, rayStart.z)
-					 - tex3D(input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * spaceX;
-		gradient.y = ( tex3D(input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z)
-					 - tex3D(input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * spaceY;
-		gradient.z = ( tex3D(input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f)
-					 - tex3D(input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * spaceZ;
-		const float gradMag = gradRangeMulti * (__log2f(gradient.x*gradient.x+gradient.y*gradient.y
-														+gradient.z*gradient.z+gradRangeOffset) + gradRangeLow);
+		gradient.x = ( tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x+1.0f, rayStart.y, rayStart.z)
+					 - tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * spaceX;
+		gradient.y = ( tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z)
+					 - tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * spaceY;
+		gradient.z = ( tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f)
+					 - tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * spaceZ;
 	
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
-		float alpha = tex2D(alpha_texture_2D, tempIndex, gradMag);
+		float alpha = tex1D(alpha_texture_1D, tempIndex);
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
+		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f){
 
 			//collect the alpha difference (if we sample now) as well as the colour multiplier (with photorealistic shading)
 			float multiplier = outputVal.w * alpha *
@@ -108,31 +102,21 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 			//determine which kind of step to make
 			backStep = skipStep;
 			skipStep = false;
+			
+			//move to the next sample point (may involve moving backward)
+			rayStart.x = rayStart.x + (backStep ? -rayInc.x : rayInc.x);
+			rayStart.y = rayStart.y + (backStep ? -rayInc.y : rayInc.y);
+			rayStart.z = rayStart.z + (backStep ? -rayInc.z : rayInc.z);
+			maxSteps = maxSteps + (backStep ? -1 : 1);
 
-			//if we are making a backwards step, decrement the sample point by one
-			if(backStep){
-				rayStart.x -= rayInc.x;
-				rayStart.y -= rayInc.y;
-				rayStart.z -= rayInc.z;
-				maxSteps++;
-
-			//else, we can sample
-			}else{
-
+			if(!backStep){
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
 				//accumulate the colour information from this sample point
-				outputVal.x += multiplier * tex2D(colorR_texture_2D, tempIndex, gradMag);
-				outputVal.y += multiplier * tex2D(colorG_texture_2D, tempIndex, gradMag);
-				outputVal.z += multiplier * tex2D(colorB_texture_2D, tempIndex, gradMag);
-				
-				//move to the next sample point
-				rayStart.x += rayInc.x;
-				rayStart.y += rayInc.y;
-				rayStart.z += rayInc.z;
-				maxSteps--;
-				
+				outputVal.x += multiplier * tex1D(colorR_texture_1D, tempIndex);
+				outputVal.y += multiplier * tex1D(colorG_texture_1D, tempIndex);
+				outputVal.z += multiplier * tex1D(colorB_texture_1D, tempIndex);
 			}
 			
 			//determine whether or not we've hit an opacity where further sampling becomes neglible
@@ -140,7 +124,6 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 				outputVal.w = 0.0f;
 				break;
 			}
-
 
 		}else{
 
@@ -172,7 +155,7 @@ __device__ void CUDAkernel_CastRays2D(float3& rayStart,
 
 }
 
-__global__ void CUDAkernel_renderAlgo_Composite( ) {
+__global__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite( ) {
 	
 	//index in the output image (2D)
 	int2 index;
@@ -212,7 +195,7 @@ __global__ void CUDAkernel_renderAlgo_Composite( ) {
 	__syncthreads();
 
 	// trace along the ray (composite)
-	CUDAkernel_CastRays2D(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
+	CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
 
 	//convert output to uchar, adjusting it to be valued from [0,256) rather than [0,1]
 	uchar4 temp;
@@ -230,22 +213,20 @@ __global__ void CUDAkernel_renderAlgo_Composite( ) {
 	outInfo.depthBuffer[outindex + outInfo.resolution.x] = outputDepth;
 }
 
-#include <stdio.h>
-
 extern "C"
 //pre: the resolution of the image has been processed such that it's x and y size are both multiples of 16 (enforced automatically) and y > 256 (enforced automatically)
 //post: the OutputImage pointer will hold the ray casted information
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo)
+							 const cuda1DTransferFunctionInformation& transInfo)
 {
 
 	// setup execution parameters - staggered to improve parallelism
 	cudaMemcpyToSymbolAsync(volInfo, &volumeInfo, sizeof(cudaVolumeInformation));
 	cudaMemcpyToSymbolAsync(renInfo, &rendererInfo, sizeof(cudaRendererInformation));
 	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation));
-	cudaMemcpyToSymbolAsync(trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation));
+	cudaMemcpyToSymbolAsync(CUDA_vtkCuda1DVolumeMapper_trfInfo, &transInfo, sizeof(cuda1DTransferFunctionInformation));
 	
 	//create the necessary execution amount parameters from the block sizes and calculate th volume rendering integral
 	int blockX = outputInfo.resolution.x / BLOCK_DIM2D ;
@@ -255,7 +236,7 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 	cudaThreadSynchronize();
 	CUDAkernel_renderAlgo_formRays <<< grid, threads >>>();
-	CUDAkernel_renderAlgo_Composite <<< grid, threads >>>();
+	CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite <<< grid, threads >>>();
 
 	//shade the image
 	grid.x = outputInfo.resolution.x*outputInfo.resolution.y / 256;
@@ -270,86 +251,84 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 }
 
 extern "C"
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame){
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(const int frame){
 
 	// set the texture to the correct image
-	input_texture.normalized = false;						// access with unnormalized texture coordinates
-	input_texture.filterMode = cudaFilterModeLinear;		// linear interpolation
-	input_texture.addressMode[0] = cudaAddressModeClamp;	// wrap texture coordinates
-	input_texture.addressMode[1] = cudaAddressModeClamp;
-	input_texture.addressMode[2] = cudaAddressModeClamp;
+	CUDA_vtkCuda1DVolumeMapper_input_texture.normalized = false;					// access with unnormalized texture coordinates
+	CUDA_vtkCuda1DVolumeMapper_input_texture.filterMode = cudaFilterModeLinear;		// linear interpolation
+	CUDA_vtkCuda1DVolumeMapper_input_texture.addressMode[0] = cudaAddressModeClamp;	// wrap texture coordinates
+	CUDA_vtkCuda1DVolumeMapper_input_texture.addressMode[1] = cudaAddressModeClamp;
+	CUDA_vtkCuda1DVolumeMapper_input_texture.addressMode[2] = cudaAddressModeClamp;
 
 	// bind array to 3D texture
-	cudaBindTextureToArray(input_texture, sourceDataArray[frame], channelDesc);
+	cudaBindTextureToArray(CUDA_vtkCuda1DVolumeMapper_input_texture,
+							CUDA_vtkCuda1DVolumeMapper_sourceDataArray[frame], channelDesc);
 
 }
 
 extern "C"
 //pre: the transfer functions are all of type float and are all of size FunctionSize
-//post: the alpha, colorR, G and B 2D textures will map to each transfer function
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
+//post: the alpha, colorR, G and B 1D textures will map to each transfer function
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF){
 
 	//retrieve the size of the transer functions
 	size_t size = sizeof(float) * transInfo.functionSize;
 	
-	if(alphaTransferArray2D)
-		cudaFreeArray(alphaTransferArray2D);
-	if(colorRTransferArray2D)
-		cudaFreeArray(colorRTransferArray2D);
-	if(colorGTransferArray2D)
-		cudaFreeArray(colorGTransferArray2D);
-	if(colorBTransferArray2D)
-		cudaFreeArray(colorBTransferArray2D);
+	if(alphaTransferArray1D)
+		cudaFreeArray(alphaTransferArray1D);
+	if(colorRTransferArray1D)
+		cudaFreeArray(colorRTransferArray1D);
+	if(colorGTransferArray1D)
+		cudaFreeArray(colorGTransferArray1D);
+	if(colorBTransferArray1D)
+		cudaFreeArray(colorBTransferArray1D);
 		
 	//allocate space for the arrays
-	cudaMallocArray( &alphaTransferArray2D, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorRTransferArray2D, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorGTransferArray2D, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorBTransferArray2D, &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMallocArray( &alphaTransferArray1D, &channelDesc, transInfo.functionSize, 1);
+	cudaMallocArray( &colorRTransferArray1D, &channelDesc, transInfo.functionSize, 1);
+	cudaMallocArray( &colorGTransferArray1D, &channelDesc, transInfo.functionSize, 1);
+	cudaMallocArray( &colorBTransferArray1D, &channelDesc, transInfo.functionSize, 1);
 		
 	//define the texture mapping for the alpha component after copying information from host to device array
-	cudaMemcpyToArray(alphaTransferArray2D, 0, 0, alphaTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
-	alpha_texture_2D.normalized = true;
-	alpha_texture_2D.filterMode = cudaFilterModePoint;
-	alpha_texture_2D.addressMode[0] = cudaAddressModeClamp;
-	alpha_texture_2D.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(alpha_texture_2D, alphaTransferArray2D, channelDesc);
+	cudaMemcpyToArray(alphaTransferArray1D, 0, 0, alphaTF, size, cudaMemcpyHostToDevice);
+	alpha_texture_1D.normalized = true;
+	alpha_texture_1D.filterMode = cudaFilterModeLinear;
+	alpha_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(alpha_texture_1D, alphaTransferArray1D);
 		
 	//define the texture mapping for the red component after copying information from host to device array
-	cudaMemcpyToArray(colorRTransferArray2D, 0, 0, redTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
-	colorR_texture_2D.normalized = true;
-	colorR_texture_2D.filterMode = cudaFilterModePoint;
-	colorR_texture_2D.addressMode[0] = cudaAddressModeClamp;
-	colorR_texture_2D.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorR_texture_2D, colorRTransferArray2D, channelDesc);
+	cudaMemcpyToArray(colorRTransferArray1D, 0, 0, redTF, size, cudaMemcpyHostToDevice);
+	colorR_texture_1D.normalized = true;
+	colorR_texture_1D.filterMode = cudaFilterModeLinear;
+	colorR_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorR_texture_1D, colorRTransferArray1D);
 	
 	//define the texture mapping for the green component after copying information from host to device array
-	cudaMemcpyToArray(colorGTransferArray2D, 0, 0, greenTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
-	colorG_texture_2D.normalized = true;
-	colorG_texture_2D.filterMode = cudaFilterModePoint;
-	colorG_texture_2D.addressMode[0] = cudaAddressModeClamp;
-	colorG_texture_2D.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorG_texture_2D, colorGTransferArray2D, channelDesc);
+	cudaMemcpyToArray(colorGTransferArray1D, 0, 0, greenTF, size, cudaMemcpyHostToDevice);
+	colorG_texture_1D.normalized = true;
+	colorG_texture_1D.filterMode = cudaFilterModeLinear;
+	colorG_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorG_texture_1D, colorGTransferArray1D);
 	
 	//define the texture mapping for the blue component after copying information from host to device array
-	cudaMemcpyToArray(colorBTransferArray2D, 0, 0, blueTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
-	colorB_texture_2D.normalized = true;
-	colorB_texture_2D.filterMode = cudaFilterModePoint;
-	colorB_texture_2D.addressMode[0] = cudaAddressModeClamp;
-	colorB_texture_2D.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorB_texture_2D, colorBTransferArray2D, channelDesc);
+	cudaMemcpyToArray(colorBTransferArray1D, 0, 0, blueTF, size, cudaMemcpyHostToDevice);
+	colorB_texture_1D.normalized = true;
+	colorB_texture_1D.filterMode = cudaFilterModeLinear;
+	colorB_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorB_texture_1D, colorBTransferArray1D);
+
 }
 
 extern "C"
 //pre:	the data has been preprocessed by the volumeInformationHandler such that it is float data
 //		the index is between 0 and 100
 //post: the input_texture will map to the source data in voxel coordinate space
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, const int index){
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, const int index){
 
 	// if the array is already populated with information, free it to prevent leaking
-	if(sourceDataArray[index]){
-		cudaFreeArray(sourceDataArray[index]);
+	if(CUDA_vtkCuda1DVolumeMapper_sourceDataArray[index]){
+		cudaFreeArray(CUDA_vtkCuda1DVolumeMapper_sourceDataArray[index]);
 	}
 	
 	//define the size of the data, retrieved from the volume information
@@ -359,13 +338,13 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 	volumeSize.depth = volumeInfo.VolumeSize.z;
 	
 	// create 3D array to store the image data in
-	cudaMalloc3DArray(&(sourceDataArray[index]), &channelDesc, volumeSize);
+	cudaMalloc3DArray(&(CUDA_vtkCuda1DVolumeMapper_sourceDataArray[index]), &channelDesc, volumeSize);
 
 	// copy data to 3D array
 	cudaMemcpy3DParms copyParams = {0};
 	copyParams.srcPtr   = make_cudaPitchedPtr( (void*) data, volumeSize.width*sizeof(float),
 												volumeSize.width, volumeSize.height);
-	copyParams.dstArray = sourceDataArray[index];
+	copyParams.dstArray = CUDA_vtkCuda1DVolumeMapper_sourceDataArray[index];
 	copyParams.extent   = volumeSize;
 	copyParams.kind     = cudaMemcpyHostToDevice;
 	cudaMemcpy3D(&copyParams);
@@ -373,22 +352,21 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 }
 
 extern "C"
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(){
-	for(int i = 0; i < 100; i++){
-		sourceDataArray[i] = 0;
-	}
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_initImageArray(){
+	for(int i = 0; i < 100; i++)
+		CUDA_vtkCuda1DVolumeMapper_sourceDataArray[i] = 0;
 }
 
 extern "C"
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(){
+void CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(){
 	for(int i = 0; i < 100; i++){
 		
 		// if the array is already populated with information, free it to prevent leaking
-		if(sourceDataArray[i]){
-			cudaFreeArray(sourceDataArray[i]);
+		if(CUDA_vtkCuda1DVolumeMapper_sourceDataArray[i]){
+			cudaFreeArray(CUDA_vtkCuda1DVolumeMapper_sourceDataArray[i]);
 		}
 		
 		//null the pointer
-		sourceDataArray[i] = 0;
+		CUDA_vtkCuda1DVolumeMapper_sourceDataArray[i] = 0;
 	}
 }
