@@ -214,6 +214,15 @@ IF(VTK_WRAP_PYTHON)
 ENDIF(VTK_WRAP_PYTHON)
 
 #-----------------------------------------------------------------------------
+# Build structure for examples, segregated by other options
+OPTION(RobartsVTK_BUILD_EXAMPLES "Build RobartsVTK examples." OFF)
+IF(RobartsVTK_BUILD_EXAMPLES)
+  IF(RobartsVTK_USE_CUDA)
+    ADD_SUBDIRECTORY(CudaExamples)
+  ENDIF(RobartsVTK_USE_CUDA)
+ENDIF(RobartsVTK_BUILD_EXAMPLES)
+
+#-----------------------------------------------------------------------------
 # The commands in this directory are intended to be executed as
 # the end of the whole configuration process, as a "last step".
 # This directory is typically the last SUBDIRS in the main CMakeLists.txt.
