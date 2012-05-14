@@ -84,7 +84,8 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	}
 
 	//load data onto the GPU and clean up the CPU
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index);
+	if(!this->erroredOut)
+		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index);
 	if(input->GetScalarType() != VTK_FLOAT) delete buffer;
 
 	//inform transfer function handler of the data
@@ -92,7 +93,8 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 }
 
 void vtkCuda1DVolumeMapper::ChangeFrameInternal(unsigned int frame){
-		CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(frame);
+	if(!this->erroredOut)
+		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(frame);
 }
 
 void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
@@ -105,7 +107,7 @@ void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 	this->transferFunctionInfoHandler->Update();
 
 	//perform the render
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
+	this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
 		this->transferFunctionInfoHandler->GetTransferFunctionInfo() );
 
 }

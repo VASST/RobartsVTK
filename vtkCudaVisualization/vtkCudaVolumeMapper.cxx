@@ -26,6 +26,7 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 	this->OutputInfoHandler = vtkCudaOutputImageInformationHandler::New();
 	
 	this->KeyholePlanes = NULL;
+	erroredOut = false;
 
 	this->ViewToVoxelsMatrix = vtkMatrix4x4::New();
 	this->WorldToVoxelsMatrix = vtkMatrix4x4::New();
@@ -400,13 +401,18 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 	this->OutputInfoHandler->Prepare();
 
 	//pass the actual rendering process to the subclass
-	try{
-	this->InternalRender(renderer, volume, 
-						 this->RendererInfoHandler->GetRendererInfo(),
-						 this->VolumeInfoHandler->GetVolumeInfo(),
-						 this->OutputInfoHandler->GetOutputImageInfo() );
-	}catch(...){
-		vtkErrorMacro(<< "Internal rendering error - cause unknown - MARKER 2");
+	if( erroredOut ){
+		vtkErrorMacro(<< "Error propogation in rendering - cause error flag previously set - MARKER 3");
+	}else{
+		try{
+			this->InternalRender(renderer, volume, 
+								 this->RendererInfoHandler->GetRendererInfo(),
+								 this->VolumeInfoHandler->GetVolumeInfo(),
+								 this->OutputInfoHandler->GetOutputImageInfo() );
+		}catch(...){
+			erroredOut = true;
+			vtkErrorMacro(<< "Internal rendering error - cause unknown - MARKER 2");
+		}
 	}
 
 	//display the rendered results

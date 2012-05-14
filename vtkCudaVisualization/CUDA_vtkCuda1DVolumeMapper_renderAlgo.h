@@ -27,7 +27,7 @@
  *
  */
 extern "C"
-void CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
 							 const cuda1DTransferFunctionInformation& transInfo );
@@ -40,7 +40,7 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
  *
  */
 extern "C"
-void CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(const int frame);
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(const int frame);
 
 /** @brief Prepares the container for the frame at the initialization of the renderer
  *
@@ -67,7 +67,7 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray();
  *
  */
 extern "C"
-void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunctionInformation& transInfo,
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
@@ -79,6 +79,6 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunc
  *
  */
 extern "C"
-void CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index);
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index);
 
 #endif

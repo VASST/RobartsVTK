@@ -28,7 +28,7 @@
  *
  */
 extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
 							 const cuda2DTransferFunctionInformation& transInfo,
@@ -42,7 +42,7 @@ void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
  *
  */
 extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame);
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame);
 
 /** @brief Prepares the container for the frame at the initialization of the renderer
  *
@@ -69,7 +69,7 @@ void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_clearImageArray();
  *
  */
 extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* inExTF);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
@@ -81,6 +81,6 @@ void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
  *
  */
 extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index);
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index);
 
 #endif

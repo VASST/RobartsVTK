@@ -415,16 +415,13 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade()
 	
 	__syncthreads();
 	outInfo.deviceOutputImage[outindex] = colour;
-	
-	return;
 }
 
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY){
 
-	if(ZBufferArray){
+	if(ZBufferArray)
 		cudaFreeArray(ZBufferArray);
-	}
 
 	//load the zBuffer from the host to the array
 	cudaMallocArray(&ZBufferArray, &channelDesc, zBufferSizeX, zBufferSizeY);
@@ -436,13 +433,16 @@ void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 	zbuffer_texture.addressMode[0] = cudaAddressModeClamp;
 	zbuffer_texture.addressMode[1] = cudaAddressModeClamp;
 	cudaBindTextureToArray(zbuffer_texture, ZBufferArray, channelDesc);
+	
+	return (cudaGetLastError() == 0);
 
 }
 
 //load in a random 16x16 noise array to deartefact the image in real time
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets){
 	cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
+	return (cudaGetLastError() == 0);
 }
 
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"

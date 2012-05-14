@@ -28,7 +28,7 @@
  *
  */
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY);
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
  *
@@ -38,6 +38,6 @@ void CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
  *
  */
 extern "C"
-void CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets);
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets);
 
 #endif

@@ -197,6 +197,8 @@ protected:
 	vtkTransform	*VoxelsToViewTransform;						/**< Temporary storage of the voxels to view transformation used to speed the process of switching/recalculating matrices*/
 	vtkTransform	*NextVoxelsToViewTransform;					/**< Temporary storage of the next voxels to view transformation used to speed the process of switching/recalculating matrices */
 
+	bool			erroredOut;									/**< Boolean to describe whether it is safe to render */
+
 private:
 
 };

@@ -83,7 +83,7 @@ void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int 
 	}
 
 	//load data onto the GPU and clean up the CPU
-	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index);
+	this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index);
 	if(input->GetScalarType() != VTK_FLOAT) delete buffer;
 
 	//inform transfer function handler of the data
@@ -91,7 +91,8 @@ void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int 
 }
 
 void vtkCuda2DInExLogicVolumeMapper::ChangeFrameInternal(unsigned int frame){
-		CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(frame);
+	if(!this->erroredOut)
+		this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(frame);
 }
 
 void vtkCuda2DInExLogicVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
@@ -105,7 +106,7 @@ void vtkCuda2DInExLogicVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolum
 											&(this->sliceInfo.NumberOfSlicingPlanes) );
 
 	//perform the render
-	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
+	this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
 		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->sliceInfo );
 
 }
