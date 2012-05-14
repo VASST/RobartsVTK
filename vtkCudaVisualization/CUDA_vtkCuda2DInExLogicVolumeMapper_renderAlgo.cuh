@@ -40,7 +40,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	outputVal.x = 0.0f; //R
 	outputVal.y = 0.0f; //G
 	outputVal.z = 0.0f; //B
-	outputVal.w = 1.0f; //A
+	outputVal.w = 1.0f; //remaining A
 		
 	//fetch the required information about the size and range of the transfer function from memory to registers
 	__syncthreads();
@@ -97,20 +97,6 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
 		float inEx = tex2D(inExLogic_texture_2DInex, tempIndex, gradMag);
 		float alpha = tex2D(alpha_texture_2DInex, tempIndex, gradMag);
-
-		if( inEx > 0.25f && skipStep ){
-			backStep = skipStep;
-			skipStep = false;
-			rayStart.x -= rayInc.x;
-			rayStart.y -= rayInc.y;
-			rayStart.z -= rayInc.z;
-			continue;
-		}
-
-		if( ( includeStart >= maxSteps && includeEnd <= maxSteps ) &&
-			( excludeStart >= maxSteps && excludeEnd <= maxSteps ) && inEx <= 0.25f  ){
-					special = true;
-		}
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
 		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
@@ -185,6 +171,55 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	//if we have some alpha information, make the background black and opague
 	outputVal.w = (outputVal.w < 1.0f - 0.03125f) ? 1.0f : 0.0f;
 	
+}
+
+__global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade()
+{
+	//index in the output image
+	int outindex = threadIdx.x + blockDim.x * blockIdx.x; // index of result image
+	
+	//get the depth information from the buffer and the colour information from the output image
+	float2 depthDiffX;
+	float2 depthDiffY;
+
+	__syncthreads();
+	depthDiffY.y = outInfo.depthBuffer[outindex+outInfo.resolution.x];
+	__syncthreads();
+	depthDiffY.x = outInfo.depthBuffer[outindex];
+	__syncthreads();
+	depthDiffX.y = outInfo.depthBuffer[outindex+1];
+	__syncthreads();
+	depthDiffX.x = depthDiffY.x;
+
+	//compute the gradient magnitude
+	float gradMag = __fsqrt_rz( (depthDiffX.y - depthDiffX.x)*(depthDiffX.y - depthDiffX.x) +
+								(depthDiffY.y - depthDiffY.x)*(depthDiffY.y - depthDiffY.x) );
+	
+	//grab shading parameters
+	__syncthreads();
+	float darkness = renInfo.darkness;
+	float a = renInfo.a;
+	float b = renInfo.b;
+	float c = renInfo.computedShift;
+	__syncthreads();
+	
+	//multiply by the depth factor
+	gradMag = (c + darkness / ( 1.0f + __expf(a - b * gradMag ) ) );
+	
+	uchar4 colour;
+	__syncthreads();
+	colour = outInfo.deviceOutputImage[outindex];
+	__syncthreads();
+
+	colour.x = gradMag * ((float) colour.x);
+	colour.y = gradMag * ((float) colour.y);
+	colour.z = gradMag * ((float) colour.z);
+	colour.w = (colour.w > 0) ? colour.w : (char) (255.0f - 255.0f * gradMag);
+	
+	__syncthreads();
+	outInfo.deviceOutputImage[outindex] = colour;
+	
+	return;
 }
 
 __device__ void CUDA_vtkCuda2DInExVolumeMapper_FindSlicingValues(float3 rayStart, float3 rayInc,
@@ -372,7 +407,7 @@ void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
 	threads.x = 256;
 	threads.y = 1;
 	cudaThreadSynchronize();
-	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads >>>();
+	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade <<< grid, threads >>>();
 	cudaThreadSynchronize();
 	
 	printf( "2D Rendering Error Status: " );
