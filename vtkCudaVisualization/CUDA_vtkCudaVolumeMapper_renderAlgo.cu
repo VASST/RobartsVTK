@@ -96,7 +96,7 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
 	rayEnd.z -= oldRayStart.z;
 	
 	//if the ray is not inside the clipping planes, make the ray zero length
-	excludeStart = flag ?  1.0f : rayStart.x * rayInc.x +
+	excludeStart = flag ? -1.0f : rayStart.x * rayInc.x +
 								  rayStart.y * rayInc.y +
 								  rayStart.z * rayInc.z - 0.1f;
 	excludeEnd = flag ?  -1.0f : rayEnd.x * rayInc.x +

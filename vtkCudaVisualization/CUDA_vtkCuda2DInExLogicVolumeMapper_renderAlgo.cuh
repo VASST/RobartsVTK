@@ -68,14 +68,17 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	int maxSteps = __float2int_rd(numSteps);
 	bool skipStep = false;
 	bool backStep = false;
+	bool special = false;
 
 	//reformat the exclusion indices to use the same ordering (counting downwards rather than upwards)
 	excludeStart = maxSteps - excludeStart;
 	excludeEnd = maxSteps - excludeEnd;
+	includeStart = maxSteps - includeStart;
+	includeEnd = maxSteps - includeEnd;
 
 	//loop as long as we are still *roughly* in the range of the clipped and cropped volume
 	while( maxSteps > 0 ){
-
+	
 		// fetching the intensity index into the transfer function
 		const float tempIndex = functRangeMulti * (tex3D(CUDA_vtkCuda2DInExVolumeMapper_input_texture,
 							 rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
@@ -94,6 +97,20 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
 		float inEx = tex2D(inExLogic_texture_2DInex, tempIndex, gradMag);
 		float alpha = tex2D(alpha_texture_2DInex, tempIndex, gradMag);
+
+		if( inEx > 0.25f && skipStep ){
+			backStep = skipStep;
+			skipStep = false;
+			rayStart.x -= rayInc.x;
+			rayStart.y -= rayInc.y;
+			rayStart.z -= rayInc.z;
+			continue;
+		}
+
+		if( ( includeStart >= maxSteps && includeEnd <= maxSteps ) &&
+			( excludeStart >= maxSteps && excludeEnd <= maxSteps ) && inEx <= 0.25f  ){
+					special = true;
+		}
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
 		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
@@ -118,19 +135,20 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 
 				//if we are being excluded, leave before accumulating the sample
 				if( outputVal.w > 1.0f - 0.03125f && !( excludeStart >= maxSteps && excludeEnd <= maxSteps )
-						&& inEx > 0.5 ) break;
+						&& inEx > 0.25f ) break;
+						
+				//if we are in the exclusion area, leave
+				if( ( includeStart >= maxSteps && includeEnd <= maxSteps ) ){
+					//accumulate the opacity for this sample point
+					outputVal.w *= alpha;
 
-				//if we are not explicitly included, set the alpha and multiplier to zero
-				alpha = !(includeEnd < 0.0f || (includeStart >= maxSteps && includeEnd <= maxSteps) ) ? alpha : 0.0f;
-				multiplier = !(includeEnd < 0.0f || (includeStart >= maxSteps && includeEnd <= maxSteps) ) ? multiplier : 0.0f;
+					//accumulate the colour information from this sample point
+					outputVal.x += multiplier * tex2D(colorR_texture_2DInex, tempIndex, gradMag);
+					outputVal.y += multiplier * tex2D(colorG_texture_2DInex, tempIndex, gradMag);
+					outputVal.z += multiplier * tex2D(colorB_texture_2DInex, tempIndex, gradMag);
 
-				//accumulate the opacity for this sample point
-				outputVal.w *= alpha;
+				}
 
-				//accumulate the colour information from this sample point
-				outputVal.x += multiplier * tex2D(colorR_texture_2DInex, tempIndex, gradMag);
-				outputVal.y += multiplier * tex2D(colorG_texture_2DInex, tempIndex, gradMag);
-				outputVal.z += multiplier * tex2D(colorB_texture_2DInex, tempIndex, gradMag);
 			}
 			
 			//determine whether or not we've hit an opacity where further sampling becomes neglible
@@ -305,10 +323,10 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 
 	//convert output to uchar, adjusting it to be valued from [0,256) rather than [0,1]
 	uchar4 temp;
-	temp.x = 255.0f * outputVal.x;
-	temp.y = 255.0f * outputVal.y;
-	temp.z = 255.0f * outputVal.z;
-	temp.w = 255.0f * outputVal.w;
+	temp.x = 255.0f * saturate(outputVal.x);
+	temp.y = 255.0f * saturate(outputVal.y);
+	temp.z = 255.0f * saturate(outputVal.z);
+	temp.w = 255.0f * saturate(outputVal.w);
 	
 	//place output in the image buffer
 	__syncthreads();

@@ -72,10 +72,10 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 
 		//if we are in the exclusion area, leave
 		if( excludeStart >= maxSteps && excludeEnd <= maxSteps ){
-			rayStart.x += (excludeEnd-maxSteps) * rayInc.x;
-			rayStart.y += (excludeEnd-maxSteps) * rayInc.y;
-			rayStart.z += (excludeEnd-maxSteps) * rayInc.z;
-			maxSteps = excludeEnd;
+			rayStart.x += rayInc.x;
+			rayStart.y += rayInc.y;
+			rayStart.z += rayInc.z;
+			maxSteps--;
 			continue;
 		}
 
