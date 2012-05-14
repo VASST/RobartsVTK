@@ -63,7 +63,7 @@ IF (RobartsVTK_USE_EPIPHAN)
   )
   find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/)
 
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} )
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} comsuppw.lib )
 ENDIF (RobartsVTK_USE_EPIPHAN)
 
 

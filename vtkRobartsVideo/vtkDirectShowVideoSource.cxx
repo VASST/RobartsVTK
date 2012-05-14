@@ -19,6 +19,7 @@
 #include "vtkUnsignedCharArray.h"
 #include "vtkCriticalSection.h"
 #include "vtkTimerLog.h"
+#include "vtkMultiThreader.h"
 
 #include "windows.h"
 #include "dshow.h"
@@ -77,7 +78,6 @@ public:
 		this->majorType = MEDIATYPE_Video;
 		
 		lastTime = -100;
-		first = true;
 	}
 
 	vtkDirectShowVideoSource*	parent;
@@ -98,7 +98,8 @@ public:
 	GUID					majorType;
 
 	double					lastTime;
-	bool					first;
+
+	std::vector<IBaseFilter*>	deviceArray;
 
 	// Fake referance counting methods.
 	STDMETHODIMP_(ULONG) AddRef() { return 1; }
@@ -131,9 +132,9 @@ public:
     STDMETHODIMP BufferCB(double Time, BYTE *pBuffer, long BufferLen)
     {
 
-		if( (Time - lastTime) * this->parent->FrameRate < 0.9 ) return S_OK;
+		if( (Time - lastTime) * this->parent->FrameRate < 0.95 ) return S_OK;
+		if( !this->parent->Recording ) return S_OK;
 		lastTime = Time;
-		first = false;
 
 		//switch from BGR to RGB
 		char* switchPtr = (char*) pBuffer;
@@ -146,12 +147,9 @@ public:
 
 		//copy over buffers and mark the video source as modified
 		this->parent->medialBufferMutex->Lock();
-		//std::cerr << "Loaded from DirectShow to medial buffer: " << Time << " " << this->parent->FrameRate << std::endl;
-		memcpy(this->parent->output->GetScalarPointer(), (void*) pBuffer, (size_t) BufferLen);
+		memcpy((void*) this->parent->output, (void*) pBuffer, (size_t) BufferLen);
 		this->parent->medialBufferMutex->Unlock();
 
-		this->parent->InternalGrab();
-		this->parent->GetOutput()->Modified();
 		this->parent->Modified();
 
         return S_OK;    
@@ -176,12 +174,14 @@ vtkDirectShowVideoSource::vtkDirectShowVideoSource()
 	this->vtkVideoSource::SetOutputFormat(VTK_RGB);
 	this->vtkVideoSource::SetFrameBufferSize( 100 );
 
-	//set the output image to something
-	this->output = vtkImageData::New();
+	//set the output image to a null buffer
+	this->output = 0;
 	this->medialBufferMutex = vtkMutexLock::New();
 
 
 	this->Initialized = 0;
+	
+	this->EnumerateVideoSources();
 }
 
 //----------------------------------------------------------------------------
@@ -200,17 +200,18 @@ void vtkDirectShowVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkDirectShowVideoSource::SetVideoSourceNumber(unsigned int n){
 	
-	if( n > 10 ){
-		vtkErrorMacro(<<"Cannot use that video source number. Must be between 0 and 10 inclusive.");
+	if( n >= this->devices.size() ){
+		vtkErrorMacro(<<"Cannot use that video source number. Must be in the array.");
 		return;
 	}
 
 	//if we haven't already initialized, we will use this dialog anyway
-	this->videoSourceNumber = n;
-	if( this->Initialized ){
-		ReleaseSystemResources();
-		Initialize();
+	if( n != this->videoSourceNumber && this->Initialized ){
+		this->videoSourceNumber = n;
+		this->ReleaseSystemResources();
+		this->Initialize();
 	}
+	this->videoSourceNumber = n;
 
 }
 
@@ -226,7 +227,7 @@ void vtkDirectShowVideoSource::SetFrameRate(float rate){
 
 //----------------------------------------------------------------------------
 void vtkDirectShowVideoSource::SetFrameSize(int x, int y, int z) {
-	vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the frame size.");
+	vtkErrorMacro(<<"Size is determined by device and cannot be set.");
 }
 
 void vtkDirectShowVideoSource::SetOutputFormat(int format) {
@@ -236,62 +237,7 @@ void vtkDirectShowVideoSource::SetOutputFormat(int format) {
 //----------------------------------------------------------------------------
 void vtkDirectShowVideoSource::VideoFormatDialog(){
 
-	//if we haven't already initialized, we will use this dialog anyway
-	if( !this->Initialized ){
-		Initialize();
-		return;
-	}
-
-	//load up a format source page
-	IAMStreamConfig* pConfig = 0;
-	ISpecifyPropertyPages* pSpec = 0;
-	HRESULT hr = this->Internal->pBuilder->FindInterface(&PIN_CATEGORY_CAPTURE,
-		&MEDIATYPE_Video, this->Internal->pSourceFilter, IID_IAMStreamConfig, (void **)&pConfig);
-	hr = pConfig->QueryInterface(IID_ISpecifyPropertyPages, (void **)&pSpec);
-	if (SUCCEEDED(hr)){
-		// Get the filter's name and IUnknown pointer.
-		FILTER_INFO FilterInfo;
-		hr = this->Internal->pSourceFilter->QueryFilterInfo(&FilterInfo);
-		//IUnknown *pFilterUnk;
-		//pCap->QueryInterface(IID_IUnknown, (void **)&pFilterUnk);
-
-		// Show the page.
-		CAUUID caGUID;
-		pSpec->GetPages(&caGUID);
-		//pSpec->Release();
-		hr = OleCreatePropertyFrame(
-			NULL,                   // Parent window
-			0, 0,                   // Reserved
-			FilterInfo.achName,     // Caption for the dialog box
-			1,                      // Number of objects (just the filter)
-			(IUnknown**) &pConfig/*pSpec*//*pFilterUnk*/,            // Array of object pointers.
-			caGUID.cElems,          // Number of property pages
-			caGUID.pElems,          // Array of property page CLSIDs
-			0,                      // Locale identifier
-			0, NULL                 // Reserved
-		);
-	}
-
-	//grab the frame rate and frame size from the settings page
-	AM_MEDIA_TYPE mt;
-	hr = this->Internal->pGrabber->GetConnectedMediaType( &mt );
-	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*) mt.pbFormat;
-	this->FrameSize[0] = vih->bmiHeader.biWidth;
-	this->FrameSize[1] = vih->bmiHeader.biHeight;
-	this->ImageSize = 3 * this->FrameSize[0] * this->FrameSize[1];
-	this->FrameSize[2] = 1;
-	//this->vtkVideoSource::SetFrameRate( 9500000.0f / (float) vih->AvgTimePerFrame );
-
-	//create the VTK output buffer
-	this->medialBufferMutex->Lock();
-	this->output->ReleaseData();
-	this->output->SetExtent(0, this->FrameSize[0]-1, 0, this->FrameSize[1]-1, 0, 0);
-	this->output->SetScalarTypeToUnsignedChar();
-	this->output->SetNumberOfScalarComponents(3);
-	this->output->AllocateScalars();
-	this->output->Modified();
-	this->output->Update();
-	this->medialBufferMutex->Unlock();
+	//TODO if warranted
 
 }
 
@@ -375,6 +321,9 @@ void vtkDirectShowVideoSource::Initialize()
     }
 
 	//set the media type on the grabber
+	VIDEOINFOHEADER * vih = new VIDEOINFOHEADER();
+	vih->AvgTimePerFrame = 10000000.0 / this->FrameRate;
+	this->Internal->mediaType.pbFormat = (BYTE*) vih;
 	hr = this->Internal->pGrabber->SetMediaType(&(this->Internal->mediaType));
 	if (FAILED(hr)){
 		vtkErrorMacro(<<"Could not set sample grabber to RGB24 media type.");
@@ -383,8 +332,8 @@ void vtkDirectShowVideoSource::Initialize()
     }
 
 	//create the source filter and set it to the graph
-	hr = FindCaptureDevice(&(this->Internal->pSourceFilter), this->videoSourceNumber+1);
-    hrAdd = this->Internal->pGraph->AddFilter(this->Internal->pSourceFilter, L"Video Capture");
+	this->Internal->pSourceFilter = this->Internal->deviceArray.at(this->videoSourceNumber);
+	hrAdd = this->Internal->pGraph->AddFilter(this->Internal->pSourceFilter, L"Video Capture");
 	if (FAILED(hr)||FAILED(hrAdd)){
 		vtkErrorMacro(<<"Could not create source filter or add it to the graph.");
 		this->ReleaseSystemResources();
@@ -409,53 +358,19 @@ void vtkDirectShowVideoSource::Initialize()
 		return;
 	}
 
-	//load up a format source page
-	IAMStreamConfig* pConfig = 0;
-	ISpecifyPropertyPages* pSpec = 0;
-	hr = this->Internal->pBuilder->FindInterface(&PIN_CATEGORY_CAPTURE,
-		&MEDIATYPE_Video, this->Internal->pSourceFilter, IID_IAMStreamConfig, (void **)&pConfig);
-	hr = pConfig->QueryInterface(IID_ISpecifyPropertyPages, (void **)&pSpec);
-	if (SUCCEEDED(hr)){
-		// Get the filter's name and IUnknown pointer.
-		FILTER_INFO FilterInfo;
-		hr = this->Internal->pSourceFilter->QueryFilterInfo(&FilterInfo);
-		//IUnknown *pFilterUnk;
-		//pCap->QueryInterface(IID_IUnknown, (void **)&pFilterUnk);
-
-		// Show the page.
-		CAUUID caGUID;
-		pSpec->GetPages(&caGUID);
-		//pSpec->Release();
-		hr = OleCreatePropertyFrame(
-			NULL,                   // Parent window
-			0, 0,                   // Reserved
-			FilterInfo.achName,     // Caption for the dialog box
-			1,                      // Number of objects (just the filter)
-			(IUnknown**) &pConfig/*pSpec*//*pFilterUnk*/,            // Array of object pointers.
-			caGUID.cElems,          // Number of property pages
-			caGUID.pElems,          // Array of property page CLSIDs
-			0,                      // Locale identifier
-			0, NULL                 // Reserved
-		);
-	}
-
 	//grab the frame rate and frame size from the settings page
-	AM_MEDIA_TYPE mt;
-	hr = this->Internal->pGrabber->GetConnectedMediaType( &mt );
-	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*) mt.pbFormat;
+	AM_MEDIA_TYPE* mt = &(this->Internal->mediaType);
+	hr = this->Internal->pGrabber->GetConnectedMediaType( mt );
+	vih = (VIDEOINFOHEADER*) mt->pbFormat;
 	this->FrameSize[0] = vih->bmiHeader.biWidth;
 	this->FrameSize[1] = vih->bmiHeader.biHeight;
 	this->ImageSize = 3 * this->FrameSize[0] * this->FrameSize[1];
 	this->FrameSize[2] = 1;
-	//this->vtkVideoSource::SetFrameRate( 9500000.0f / (float) vih->AvgTimePerFrame );
 
 	//create the VTK output buffer
 	this->medialBufferMutex->Lock();
-	this->output->ReleaseData();
-	this->output->SetExtent(0, this->FrameSize[0]-1, 0, this->FrameSize[1]-1, 0, 0);
-	this->output->SetScalarTypeToUnsignedChar();
-	this->output->SetNumberOfScalarComponents(3);
-	this->output->AllocateScalars();
+	if(this->output) delete[] this->output;
+	this->output = new char[this->ImageSize];
 	this->medialBufferMutex->Unlock();
 
 	//create the null renderer
@@ -522,6 +437,10 @@ void vtkDirectShowVideoSource::ReleaseSystemResources()
 	//cleans up the COM library, which is the final step is releasing the
 	//system resources
 	CoUninitialize();
+	
+	//clean up the median buffer
+	delete[] this->output;
+	this->output = 0;
 
 	this->Initialized = 0;
 }
@@ -602,17 +521,18 @@ void vtkDirectShowVideoSource::InternalGrab()
     {
     index += this->FrameBufferSize;
     }
-
-  // Get pointer to data from the network source
-  char *buffer = (char*) this->output->GetScalarPointer();
   
   // Get a pointer to the location of the frame buffer
   char *ptr = (char *) reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
 
   // Copy image into frame buffer
   this->medialBufferMutex->Lock();
-  //std::cerr << "Loaded from medial buffer to frame buffers: " << index << std::endl;
-  memcpy(ptr, buffer, this->ImageSize);
+	  for( int i = 0; i <= this->FrameBufferExtent[3] - this->FrameBufferExtent[2]; i++ ){
+		  size_t copySize = 3 * sizeof(char) * (this->FrameBufferExtent[1] - this->FrameBufferExtent[0] + 1);
+		  char* startPtr = this->output + 3 * (i * this->FrameSize[0] + this->FrameBufferExtent[0]);
+		  char* destPtr = ptr + 3 * i * (this->FrameBufferExtent[1] - this->FrameBufferExtent[0] + 1);
+		  memcpy(destPtr, startPtr, copySize);
+	  }
   this->medialBufferMutex->Unlock();
 
   this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
@@ -625,4 +545,65 @@ void vtkDirectShowVideoSource::InternalGrab()
   this->Modified();
 
   this->FrameBufferMutex->Unlock();
+}
+
+#include "WTypes.h"
+#include "comutil.h"
+
+
+const char* vtkDirectShowVideoSource::GetDeviceName(int d){
+	if( d < this->devices.size() )
+		return this->devices.at(d).c_str();
+	return 0;
+}
+
+void vtkDirectShowVideoSource::EnumerateVideoSources(){
+
+	// Create the System Device Enumerator.
+	HRESULT hr;
+	hr = CoInitialize(NULL);
+	ICreateDevEnum *pSysDevEnum = NULL;
+	IBaseFilter *pSrc = NULL;
+	hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+		IID_ICreateDevEnum, (void **)&pSysDevEnum);
+	if (FAILED(hr))
+	{
+		return;
+	}
+
+	// Obtain a class enumerator for the video compressor category.
+	IEnumMoniker *pEnumCat = NULL;
+	hr = pSysDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnumCat, 0);
+
+	if (hr == S_OK) 
+	{
+		// Enumerate the monikers.
+		IMoniker *pMoniker = NULL;
+		ULONG cFetched;
+		while(pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK)
+		{
+			IPropertyBag *pPropBag;
+			hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, 
+				(void **)&pPropBag);
+			if (SUCCEEDED(hr))
+			{
+				// To retrieve the filter's friendly name, do the following:
+				VARIANT varName;
+				VariantInit(&varName);
+				hr = pPropBag->Read(L"FriendlyName", &varName, 0);
+				if (SUCCEEDED(hr))
+				{
+					std::string videoName = _com_util::ConvertBSTRToString(varName.bstrVal);
+					this->devices.push_back(videoName);
+					hr = pMoniker->BindToObject(0,0,IID_IBaseFilter, (void**)&pSrc);
+					this->Internal->deviceArray.push_back(pSrc);
+				}
+				VariantClear(&varName);
+			}
+			pMoniker->Release();
+		}
+		pEnumCat->Release();
+	}
+	pSysDevEnum->Release();
+
 }

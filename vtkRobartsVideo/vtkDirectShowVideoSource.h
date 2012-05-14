@@ -29,6 +29,7 @@
 #include "vtkVideoSource.h"
 #include "vtkImageData.h"
 #include "vtkMutexLock.h"
+#include <vector>
 
 class vtkDirectShowVideoSourceInternal;
 
@@ -77,17 +78,24 @@ public:
   // destructor).
   void ReleaseSystemResources();
 
+  int GetNumberOfDevices(){ return devices.size(); };
+  const char* GetDeviceName(int device);
+
 protected:
   vtkDirectShowVideoSource();
   ~vtkDirectShowVideoSource();
 
   vtkDirectShowVideoSourceInternal *Internal;
-  vtkImageData* output;
+  char* output;
 
   unsigned int videoSourceNumber;
   unsigned int ImageSize;
 
   vtkMutexLock* medialBufferMutex;
+  
+  void EnumerateVideoSources();
+
+  std::vector<std::string> devices;
 
 private:
   vtkDirectShowVideoSource(const vtkDirectShowVideoSource&);  // Not implemented.

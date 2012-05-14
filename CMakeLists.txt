@@ -220,6 +220,9 @@ IF(RobartsVTK_BUILD_EXAMPLES)
   IF(RobartsVTK_USE_CUDA)
     ADD_SUBDIRECTORY(CudaExamples)
   ENDIF(RobartsVTK_USE_CUDA)
+  IF(RobartsVTK_USE_ROBARTSVIDEO AND RobartsVTK_USE_DIRECTSHOW)
+    ADD_SUBDIRECTORY(DirectShowExamples)
+  ENDIF(RobartsVTK_USE_CUDA)
 ENDIF(RobartsVTK_BUILD_EXAMPLES)
 
 #-----------------------------------------------------------------------------
