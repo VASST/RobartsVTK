@@ -19,8 +19,8 @@ int main(int argc, char** argv){
 	for( int i = 0; i < videoSource->GetNumberOfDevices(); i++ ){
 		std::cout << videoSource->GetDeviceName(i) << std::endl;
 	}
-	videoSource->SetVideoSourceNumber(2);
-	videoSource->SetFrameRate(20);
+	videoSource->SetVideoSourceNumber(1);
+	videoSource->SetFrameRate(30);
 	videoSource->SetFrameBufferSize(100);
 	videoSource->Initialize();
 	videoSource->Record();

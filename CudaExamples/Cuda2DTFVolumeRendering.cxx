@@ -4,7 +4,7 @@
 #include "vtkCudaFunctionPolygonReader.h"
 
 //For ray-caster
-#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCuda2DInExLogicVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPiecewiseFunction.h"
@@ -37,18 +37,18 @@ public:
         {
         vtkPlanes *planes = vtkPlanes::New();
         widget->GetPlanes(planes);
-        this->Mapper->SetClippingPlanes(planes);
+        this->Mapper->SetKeyholePlanes(planes);
         planes->Delete();
         }
     }
-  void SetMapper(vtkCuda2DVolumeMapper* m) 
+  void SetMapper(vtkCuda2DInExLogicVolumeMapper* m) 
     { this->Mapper = m; }
 
 protected:
   vtkBoxWidgetCallback() 
     { this->Mapper = 0; }
 
-  vtkCuda2DVolumeMapper *Mapper;
+  vtkCuda2DInExLogicVolumeMapper *Mapper;
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -76,9 +76,10 @@ int main(int argc, char** argv){
 	viz->Modified();
 
 	//assemble the ray caster
-	vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
+	vtkCuda2DInExLogicVolumeMapper* mapper = vtkCuda2DInExLogicVolumeMapper::New();
 	mapper->SetInput( imReader->GetOutput() );
-	mapper->SetFunction( viz );
+	mapper->SetVisualizationFunction( viz );
+	mapper->SetInExLogicFunction( viz );
 
 	//assemble the VTK pipeline
 	vtkVolume* volume = vtkVolume::New();

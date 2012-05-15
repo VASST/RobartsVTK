@@ -30,8 +30,6 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 									const float& numSteps,
 									float& excludeStart,
 									float& excludeEnd,
-									float& includeStart,
-									float& includeEnd,
 									const float3& rayInc,
 									float4& outputVal,
 									float& retDepth) {
@@ -73,8 +71,6 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	//reformat the exclusion indices to use the same ordering (counting downwards rather than upwards)
 	excludeStart = maxSteps - excludeStart;
 	excludeEnd = maxSteps - excludeEnd;
-	includeStart = maxSteps - includeStart;
-	includeEnd = maxSteps - includeEnd;
 
 	//loop as long as we are still *roughly* in the range of the clipped and cropped volume
 	while( maxSteps > 0 ){
@@ -123,17 +119,13 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 				if( outputVal.w > 1.0f - 0.03125f && !( excludeStart >= maxSteps && excludeEnd <= maxSteps )
 						&& inEx > 0.25f ) break;
 						
-				//if we are in the exclusion area, leave
-				if( ( includeStart >= maxSteps && includeEnd <= maxSteps ) ){
-					//accumulate the opacity for this sample point
-					outputVal.w *= alpha;
+				//accumulate the opacity for this sample point
+				outputVal.w *= alpha;
 
-					//accumulate the colour information from this sample point
-					outputVal.x += multiplier * tex2D(colorR_texture_2DInex, tempIndex, gradMag);
-					outputVal.y += multiplier * tex2D(colorG_texture_2DInex, tempIndex, gradMag);
-					outputVal.z += multiplier * tex2D(colorB_texture_2DInex, tempIndex, gradMag);
-
-				}
+				//accumulate the colour information from this sample point
+				outputVal.x += multiplier * tex2D(colorR_texture_2DInex, tempIndex, gradMag);
+				outputVal.y += multiplier * tex2D(colorG_texture_2DInex, tempIndex, gradMag);
+				outputVal.z += multiplier * tex2D(colorB_texture_2DInex, tempIndex, gradMag);
 
 			}
 			
@@ -323,8 +315,6 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	float numSteps; //maximum number of samples along this ray
 	float excludeStart; //where to start excluding
 	float excludeEnd; //where to end excluding
-	float includeStart; //where to start excluding
-	float includeEnd; //where to end excluding
 	float4 outputVal; //rgba value of this ray (calculated in castRays, used in WriteData)
 	float outputDepth; //depth to put in the cel shading array
 
@@ -350,11 +340,11 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	__syncthreads();
 
 	//find the area to actually render
-	CUDA_vtkCuda2DInExVolumeMapper_FindSlicingValues(rayStart, rayInc, numSteps, includeStart, includeEnd );
+	//CUDA_vtkCuda2DInExVolumeMapper_FindSlicingValues(rayStart, rayInc, numSteps, includeStart, includeEnd );
 
 	// trace along the ray (composite)
 	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(rayStart, numSteps, excludeStart, excludeEnd,
-														includeStart, includeEnd, rayInc, outputVal, outputDepth);
+														rayInc, outputVal, outputDepth);
 
 	//convert output to uchar, adjusting it to be valued from [0,256) rather than [0,1]
 	uchar4 temp;
