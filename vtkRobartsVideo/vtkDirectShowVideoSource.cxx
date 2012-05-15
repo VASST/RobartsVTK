@@ -180,7 +180,7 @@ vtkDirectShowVideoSource::vtkDirectShowVideoSource()
 
 
 	this->Initialized = 0;
-	
+	this->Enumerated = false;
 	this->EnumerateVideoSources();
 }
 
@@ -245,170 +245,178 @@ void vtkDirectShowVideoSource::VideoFormatDialog(){
 void vtkDirectShowVideoSource::Initialize()
 {
 	// if we are already initialized, do not initialize again
-	if (this->Initialized){
+	if (this->Initialized)
 		return;
-	}
 
-	HRESULT hr = S_OK;
-	HRESULT hrAdd = S_OK;
+	//if we need to re-enumerate the set of video sources, do so
+	if( !this->Enumerated )
+		this->EnumerateVideoSources();
 
-	//initializes the COM library which DirectShow runs partially on top of
-	hr = CoInitialize(NULL);
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"The Microsoft COM library could not be initialized.");
-		return;
-	}
+	try{
+		HRESULT hr = S_OK;
+		HRESULT hrAdd = S_OK;
 
-	//create the GraphBuilder (other name is Filter Graph Manager)
-	//this will oversee the creation and management of the filters making up the DShow pipeline
-		// CLSID_FilterGraph is the class identifier (tells what class the void** is)
-		// CLSCTX_INPROC_SERVER is the communication type, which is just interprocess (as opposed to network)
-	hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **) &(this->Internal->pGraph));
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not create filter graph manager.");
-		this->ReleaseSystemResources();
-		return;
-	}
+		//initializes the COM library which DirectShow runs partially on top of
+		hr = CoInitialize(NULL);
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"The Microsoft COM library could not be initialized.");
+			return;
+		}
 
-	//query the graph manager for interfaces enabling video capture events
-	hr = this->Internal->pGraph->QueryInterface( IID_PPV_ARGS(&(this->Internal->pMediaControl)) );
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Unsucessful query for media control interfaces.");
-		this->ReleaseSystemResources();
-		return;
-	}
-	hr = this->Internal->pGraph->QueryInterface( IID_PPV_ARGS(&this->Internal->pMediaEvent) );
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Unsucessful query for media event interfaces.");
-		this->ReleaseSystemResources();
-		return;
-	}
+		//create the GraphBuilder (other name is Filter Graph Manager)
+		//this will oversee the creation and management of the filters making up the DShow pipeline
+			// CLSID_FilterGraph is the class identifier (tells what class the void** is)
+			// CLSCTX_INPROC_SERVER is the communication type, which is just interprocess (as opposed to network)
+		hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **) &(this->Internal->pGraph));
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not create filter graph manager.");
+			this->ReleaseSystemResources();
+			return;
+		}
 
-	//create the Capture Graph Builder which manages the pipeline for actual video capture
-	hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, IID_ICaptureGraphBuilder2, (void **) &(this->Internal->pBuilder));
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not create capture graph manager.");
-		this->ReleaseSystemResources();
-		return;
-	}
+		//query the graph manager for interfaces enabling video capture events
+		hr = this->Internal->pGraph->QueryInterface( IID_PPV_ARGS(&(this->Internal->pMediaControl)) );
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Unsucessful query for media control interfaces.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		hr = this->Internal->pGraph->QueryInterface( IID_PPV_ARGS(&this->Internal->pMediaEvent) );
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Unsucessful query for media event interfaces.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//create the Capture Graph Builder which manages the pipeline for actual video capture
+		hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER, IID_ICaptureGraphBuilder2, (void **) &(this->Internal->pBuilder));
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not create capture graph manager.");
+			this->ReleaseSystemResources();
+			return;
+		}
 	
-	//Set the filter graph used by the capturing mechanism
-	hr = this->Internal->pBuilder->SetFiltergraph( this->Internal->pGraph );
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not link graph to capture builder.");
+		//Set the filter graph used by the capturing mechanism
+		hr = this->Internal->pBuilder->SetFiltergraph( this->Internal->pGraph );
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not link graph to capture builder.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//create the sample grabber and it's filter
+		hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS( &(this->Internal->pGrabberFilter) ));
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not create sample grabber filter.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		hr = this->Internal->pGraph->AddFilter(this->Internal->pGrabberFilter, L"Sample Grabber");
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not link sample grabber filter to graph.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		hr = this->Internal->pGrabberFilter->QueryInterface(IID_PPV_ARGS(&(this->Internal->pGrabber)));
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not link sample grabber to its filter.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//set the media type on the grabber
+		VIDEOINFOHEADER * vih = new VIDEOINFOHEADER();
+		vih->AvgTimePerFrame = 10000000.0 / this->FrameRate;
+		this->Internal->mediaType.pbFormat = (BYTE*) vih;
+		hr = this->Internal->pGrabber->SetMediaType(&(this->Internal->mediaType));
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not set sample grabber to RGB24 media type.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//create the source filter and set it to the graph
+		this->Internal->pSourceFilter = this->Internal->deviceArray.at(this->videoSourceNumber);
+		hr = this->Internal->pGraph->AddFilter(this->Internal->pSourceFilter, L"Video Capture");
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not create source filter or add it to the graph.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		hr = this->Internal->pSourceFilter->EnumPins(&(this->Internal->pEnum));
+		if (FAILED(hr)) {
+			vtkErrorMacro(<<"Could not enumerate over source pins.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		IPin* pPin = 0;
+		unsigned int count = 0;
+		while ( this->Internal->pEnum->Next(1, &pPin, NULL) == S_OK ){
+			hr = ConnectFilters(this->Internal->pGraph, pPin, this->Internal->pGrabberFilter);
+			SAFE_RELEASE(pPin);
+			if (SUCCEEDED(hr))  break;
+		}
+		if(!SUCCEEDED(hr)){
+			vtkErrorMacro(<<"Could not link source to the grabber.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//grab the frame rate and frame size from the settings page
+		AM_MEDIA_TYPE* mt = &(this->Internal->mediaType);
+		hr = this->Internal->pGrabber->GetConnectedMediaType( mt );
+		vih = (VIDEOINFOHEADER*) mt->pbFormat;
+		this->FrameSize[0] = vih->bmiHeader.biWidth;
+		this->FrameSize[1] = vih->bmiHeader.biHeight;
+		this->ImageSize = 3 * this->FrameSize[0] * this->FrameSize[1];
+		this->FrameSize[2] = 1;
+
+		//create the VTK output buffer
+		this->medialBufferMutex->Lock();
+		if(this->output) delete[] this->output;
+		this->output = new char[this->ImageSize];
+		this->medialBufferMutex->Unlock();
+
+		//create the null renderer
+		hr = CoCreateInstance (CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void **) &(this->Internal->pNullRenderer));
+		hrAdd = this->Internal->pGraph->AddFilter ( this->Internal->pNullRenderer, L"Null Renderer");
+		if (FAILED(hr) || FAILED(hrAdd) ){
+			vtkErrorMacro(<<"Could not create and add null renderer.");
+			this->ReleaseSystemResources();
+			return;
+		}
+		hr = ConnectFilters(this->Internal->pGraph, this->Internal->pGrabberFilter, this->Internal->pNullRenderer);
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not link null renderer to graph.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//set the call-back mechanism (note that 2nd param = 1 sends the buffer with the callback)
+		hr = this->Internal->pGrabber->SetCallback(this->Internal, 1);
+		if( FAILED(hr) ){
+			vtkErrorMacro(<<"Could not set the grabber callback method.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		//start the graph previewing (TODO: Determine if this should be in a separate play method?)
+		hr = this->Internal->pMediaControl->Run();
+		if (FAILED(hr)){
+			vtkErrorMacro(<<"Could not run graph.");
+			this->ReleaseSystemResources();
+			return;
+		}
+
+		// Initialization worked
+		this->Initialized = 1;
+
+		// Update frame buffer  to reflect any changes
+		this->UpdateFrameBuffer();
+	}catch(...){
+		vtkErrorMacro(<<"Could not initialize due to gross error. Likely cause - previous error propogation.");
 		this->ReleaseSystemResources();
-		return;
 	}
-
-	//create the sample grabber and it's filter
-	hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS( &(this->Internal->pGrabberFilter) ));
-    if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not create sample grabber filter.");
-		this->ReleaseSystemResources();
-		return;
-    }
-	hr = this->Internal->pGraph->AddFilter(this->Internal->pGrabberFilter, L"Sample Grabber");
-    if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not link sample grabber filter to graph.");
-		this->ReleaseSystemResources();
-		return;
-    }
-	hr = this->Internal->pGrabberFilter->QueryInterface(IID_PPV_ARGS(&(this->Internal->pGrabber)));
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not link sample grabber to its filter.");
-		this->ReleaseSystemResources();
-		return;
-    }
-
-	//set the media type on the grabber
-	VIDEOINFOHEADER * vih = new VIDEOINFOHEADER();
-	vih->AvgTimePerFrame = 10000000.0 / this->FrameRate;
-	this->Internal->mediaType.pbFormat = (BYTE*) vih;
-	hr = this->Internal->pGrabber->SetMediaType(&(this->Internal->mediaType));
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not set sample grabber to RGB24 media type.");
-		this->ReleaseSystemResources();
-		return;
-    }
-
-	//create the source filter and set it to the graph
-	this->Internal->pSourceFilter = this->Internal->deviceArray.at(this->videoSourceNumber);
-	hrAdd = this->Internal->pGraph->AddFilter(this->Internal->pSourceFilter, L"Video Capture");
-	if (FAILED(hr)||FAILED(hrAdd)){
-		vtkErrorMacro(<<"Could not create source filter or add it to the graph.");
-		this->ReleaseSystemResources();
-		return;
-	}
-	hr = this->Internal->pSourceFilter->EnumPins(&(this->Internal->pEnum));
-    if (FAILED(hr)) {
-		vtkErrorMacro(<<"Could not enumerate over source pins.");
-		this->ReleaseSystemResources();
-		return;
-    }
-	IPin* pPin = 0;
-	unsigned int count = 0;
-	while ( this->Internal->pEnum->Next(1, &pPin, NULL) == S_OK ){
-		hr = ConnectFilters(this->Internal->pGraph, pPin, this->Internal->pGrabberFilter);
-		SAFE_RELEASE(pPin);
-		if (SUCCEEDED(hr))  break;
-	}
-	if(FAILED(hr)){
-		vtkErrorMacro(<<"Could not link source to the grabber.");
-		this->ReleaseSystemResources();
-		return;
-	}
-
-	//grab the frame rate and frame size from the settings page
-	AM_MEDIA_TYPE* mt = &(this->Internal->mediaType);
-	hr = this->Internal->pGrabber->GetConnectedMediaType( mt );
-	vih = (VIDEOINFOHEADER*) mt->pbFormat;
-	this->FrameSize[0] = vih->bmiHeader.biWidth;
-	this->FrameSize[1] = vih->bmiHeader.biHeight;
-	this->ImageSize = 3 * this->FrameSize[0] * this->FrameSize[1];
-	this->FrameSize[2] = 1;
-
-	//create the VTK output buffer
-	this->medialBufferMutex->Lock();
-	if(this->output) delete[] this->output;
-	this->output = new char[this->ImageSize];
-	this->medialBufferMutex->Unlock();
-
-	//create the null renderer
-	hr = CoCreateInstance (CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void **) &(this->Internal->pNullRenderer));
-	hrAdd = this->Internal->pGraph->AddFilter ( this->Internal->pNullRenderer, L"Null Renderer");
-	if (FAILED(hr) || FAILED(hrAdd) ){
-		vtkErrorMacro(<<"Could not create and add null renderer.");
-		this->ReleaseSystemResources();
-		return;
-	}
-	hr = ConnectFilters(this->Internal->pGraph, this->Internal->pGrabberFilter, this->Internal->pNullRenderer);
-    if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not link null renderer to graph.");
-		this->ReleaseSystemResources();
-		return;
-    }
-
-	//set the call-back mechanism (note that 2nd param = 1 sends the buffer with the callback)
-	hr = this->Internal->pGrabber->SetCallback(this->Internal, 1);
-	if( FAILED(hr) ){
-		vtkErrorMacro(<<"Could not set the grabber callback method.");
-		this->ReleaseSystemResources();
-		return;
-	}
-
-	//start the graph previewing (TODO: Determine if this should be in a separate play method?)
-	hr = this->Internal->pMediaControl->Run();
-	if (FAILED(hr)){
-		vtkErrorMacro(<<"Could not run graph.");
-		this->ReleaseSystemResources();
-		return;
-	}
-
-	// Initialization worked
-	this->Initialized = 1;
-
-	// Update frame buffer  to reflect any changes
-	this->UpdateFrameBuffer();
 }  
 
 //----------------------------------------------------------------------------
@@ -425,8 +433,8 @@ void vtkDirectShowVideoSource::ReleaseSystemResources()
 	SAFE_RELEASE( this->Internal->pMediaControl );
 
 	//clean up the filter that grabs the source
+	this->DeEnumerateVideoSources();
 	SAFE_RELEASE( this->Internal->pEnum );
-	SAFE_RELEASE( this->Internal->pSourceFilter );
 
 	//cleans up the capture graph builder
 	SAFE_RELEASE( this->Internal->pBuilder );
@@ -547,9 +555,9 @@ void vtkDirectShowVideoSource::InternalGrab()
   this->FrameBufferMutex->Unlock();
 }
 
-#include "WTypes.h"
+//----------------------------------------------------------------------------
+// Methods for figuring out the number, type and name of potential video sources
 #include "comutil.h"
-
 
 const char* vtkDirectShowVideoSource::GetDeviceName(int d){
 	if( d < this->devices.size() )
@@ -606,4 +614,132 @@ void vtkDirectShowVideoSource::EnumerateVideoSources(){
 	}
 	pSysDevEnum->Release();
 
+	this->Enumerated = true;
+
+}
+
+void vtkDirectShowVideoSource::DeEnumerateVideoSources(){
+
+	while( !this->Internal->deviceArray.empty() ){
+		this->Internal->pSourceFilter = this->Internal->deviceArray.back();
+		this->Internal->deviceArray.pop_back();
+		SAFE_RELEASE( this->Internal->pSourceFilter );
+	}
+	this->devices.clear();
+
+	this->Enumerated = false;
+
+}
+
+//----------------------------------------------------------------------------
+// platform-independent sleep function
+static inline void vtkSleep(double duration)
+{
+  duration = duration; // avoid warnings
+  // sleep according to OS preference
+#ifdef _WIN32
+  Sleep((int)(1000*duration));
+#elif defined(__FreeBSD__) || defined(__linux__) || defined(sgi)
+  struct timespec sleep_time, dummy;
+  sleep_time.tv_sec = (int)duration;
+  sleep_time.tv_nsec = (int)(1000000000*(duration-sleep_time.tv_sec));
+  nanosleep(&sleep_time,&dummy);
+#endif
+}
+
+//----------------------------------------------------------------------------
+// Sleep until the specified absolute time has arrived.
+// You must pass a handle to the current thread.  
+// If '0' is returned, then the thread was aborted before or during the wait.
+static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
+{
+  // loop either until the time has arrived or until the thread is ended
+  for (int i = 0;; i++)
+    {
+    double remaining = time - vtkTimerLog::GetUniversalTime();
+
+    // check to see if we have reached the specified time
+    if (remaining <= 0)
+      {
+      if (i == 0)
+        {
+        vtkGenericWarningMacro("Dropped a video frame.");
+        }
+      return 1;
+      }
+    // check the ActiveFlag at least every 0.1 seconds
+    if (remaining > 0.1)
+      {
+      remaining = 0.1;
+      }
+
+    // check to see if we are being told to quit 
+    data->ActiveFlagLock->Lock();
+    int activeFlag = *(data->ActiveFlag);
+    data->ActiveFlagLock->Unlock();
+
+    if (activeFlag == 0)
+      {
+      break;
+      }
+
+    vtkSleep(remaining);
+    }
+
+  return 0;
+}
+
+//----------------------------------------------------------------------------
+// this function runs in an alternate thread to asyncronously grab frames
+static void *vtkDirectShowVideoSourceThread(vtkMultiThreader::ThreadInfo *data)
+{
+  vtkVideoSource *self = (vtkVideoSource *)(data->UserData);
+  
+  double startTime = vtkTimerLog::GetUniversalTime();
+  double rate = self->GetFrameRate();
+  int frame = 0;
+
+  do
+    {
+    self->InternalGrab();
+    frame++;
+    }
+  while (vtkThreadSleep(data, startTime + frame/rate));
+
+  return NULL;
+}
+
+//----------------------------------------------------------------------------
+// Set the source to grab frames continuously.
+// You should override this as appropriate for your device. 
+void vtkDirectShowVideoSource::Record()
+{
+  if (this->Playing)
+    {
+    this->Stop();
+    }
+
+  if (!this->Recording)
+    {
+	//initialize the video source
+    this->Initialize();
+	if(!this->Initialized){
+		vtkErrorMacro(<<"Could not record due to initialization failure.");
+		return;
+	}
+
+	//if we initialized ok, we can start recording
+    this->Recording = 1;
+    this->FrameCount = 0;
+    this->Modified();
+    this->PlayerThreadId = 
+      this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
+                                &vtkDirectShowVideoSourceThread,this);
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkDirectShowVideoSource::Update(){
+	if( this->Initialized )
+		this->vtkVideoSource::Update();
 }
