@@ -116,9 +116,14 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 			if(!backStep){
 
 				//if we are being excluded, leave before accumulating the sample
-				if( outputVal.w > 1.0f - 0.03125f && !( excludeStart >= maxSteps && excludeEnd <= maxSteps )
-						&& inEx > 0.25f ) break;
-						
+				if( !special && !( excludeStart >= maxSteps && excludeEnd <= maxSteps )
+						&& inEx > 0.5f ) break;
+				special = true;
+
+				//determine if we should sample here or move on
+				if( excludeStart >= maxSteps && excludeEnd <= maxSteps )
+					continue;
+
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
