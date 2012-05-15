@@ -19,9 +19,9 @@ int main(int argc, char** argv){
 	for( int i = 0; i < videoSource->GetNumberOfDevices(); i++ ){
 		std::cout << videoSource->GetDeviceName(i) << std::endl;
 	}
-	videoSource->SetVideoSourceNumber(1);
+	videoSource->SetVideoSourceNumber(2);
 	videoSource->SetFrameRate(20);
-	videoSource->Update();
+	videoSource->SetFrameBufferSize(100);
 	videoSource->Initialize();
 	videoSource->Record();
 
@@ -46,16 +46,7 @@ int main(int argc, char** argv){
 	interactor->Initialize();
 	interactor->Start();
 	videoSource->Stop();
-	int region[6];
-	region[0] = 100;
-	region[1] = 539;
-	region[2] = 100;
-	region[3] = 379;
-	region[4] = 0;
-	region[5] = 0;
-	//videoSource->SetClipRegion(region);
-	videoSource->SetOutputWholeExtent(region);
-	videoSource->Record();
+	videoSource->Play();
 	interactor->Initialize();
 	interactor->Start();
 
