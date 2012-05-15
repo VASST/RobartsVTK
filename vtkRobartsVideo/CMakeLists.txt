@@ -19,7 +19,22 @@ OPTION (RobartsVTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)
 IF (WIN32)
   OPTION (RobartsVTK_USE_DIRECTSHOW "Enable DirectShow Video Source Classes" OFF)
   OPTION (RobartsVTK_USE_EPIPHAN    "Enable Epiphan Video Source Classes" ON)
+  OPTION (RobartsVTK_USE_SONIX 	    "Enable UltraSonix Video Source" OFF)
 ENDIF (WIN32)
+
+IF ( RobartsVTK_USE_SONIX )
+  SET (Kit_SRCS ${Kit_SRCS} 
+       vtkSonixVideoSource.cxx )
+
+	SET (ULTERIUS_ROOT "${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/ulterius-2.0/")
+	MESSAGE( STATUS "RobartsVideo_SOURCE_DIR:         " ${ULTERIUS_ROOT} )
+	FIND_PATH(ULTERIUS_INCLUDE_DIR "ulterius.h" "${ULTERIUS_ROOT}/inc")
+	SET( CMAKE_FIND_LIBRARY_SUFFIXES .lib )
+	FIND_LIBRARY(ULTERIUS_LIBRARY ulterius "${ULTERIUS_ROOT}/lib/")
+	SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${ULTERIUS_ROOT}/lib/ulterius.lib)
+	INCLUDE_DIRECTORIES(${ULTERIUS_INCLUDE_DIR})
+ENDIF (	RobartsVTK_USE_SONIX )
+
 
 IF (RobartsVTK_USE_DIRECTSHOW)
   SET (Kit_SRCS ${Kit_SRCS} 
@@ -62,7 +77,7 @@ ENDIF (RobartsVTK_USE_DIRECTSHOW)
 IF (RobartsVTK_USE_EPIPHAN)
   SET (Kit_SRCS ${Kit_SRCS} 
        vtkEpiphanVideoSource.cxx
-       vtkEpiphanDualVideoSource.cxx 
+       #vtkEpiphanDualVideoSource.cxx 
   )
   find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/)
 
