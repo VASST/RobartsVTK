@@ -15,7 +15,6 @@
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_container2DTransferFunctionInformation.h"
-#include "CUDA_containerSlicePlanesInformation.h"
 
 /** @brief Compute the image of the volume taking into account occluding isosurfaces returning it in a CUDA-OpenGL compatible texture
  *
@@ -31,8 +30,7 @@ extern "C"
 bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo,
-							 const cudaSlicePlanesInformation& sliceInfo);
+							 const cuda2DTransferFunctionInformation& transInfo);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
  *

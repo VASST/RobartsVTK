@@ -21,8 +21,6 @@ vtkCuda2DInExLogicVolumeMapper::vtkCuda2DInExLogicVolumeMapper()
 {
 	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_initImageArray();
 	this->transferFunctionInfoHandler = vtkCuda2DInExLogicTransferFunctionInformationHandler::New();
-	this->sliceInfo.NumberOfSlicingPlanes = 0;
-	this->SlicingPlanes = 0;
 }
 
 vtkCuda2DInExLogicVolumeMapper::~vtkCuda2DInExLogicVolumeMapper(){
@@ -102,12 +100,9 @@ void vtkCuda2DInExLogicVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolum
 	//handle the transfer function changes
 	this->transferFunctionInfoHandler->Update();
 
-	this->RendererInfoHandler->FigurePlanes(this->SlicingPlanes, this->sliceInfo.SlicingPlanes,
-											&(this->sliceInfo.NumberOfSlicingPlanes) );
-
 	//perform the render
 	this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
-		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->sliceInfo );
+		this->transferFunctionInfoHandler->GetTransferFunctionInfo() );
 
 }
 
@@ -133,42 +128,4 @@ void vtkCuda2DInExLogicVolumeMapper::SetInExLogicFunction(vtkCuda2DTransferFunct
 //collect the function from the transfer function handler
 vtkCuda2DTransferFunction* vtkCuda2DInExLogicVolumeMapper::GetInExLogicFunction(){
 	return this->transferFunctionInfoHandler->GetInExLogicTransferFunction();
-}
-
-vtkCxxSetObjectMacro(vtkCuda2DInExLogicVolumeMapper,SlicingPlanes,vtkPlaneCollection);
-
-void vtkCuda2DInExLogicVolumeMapper::AddSlicingPlane(vtkPlane *plane){
-  if (this->SlicingPlanes == NULL){
-    this->SlicingPlanes = vtkPlaneCollection::New();
-    this->SlicingPlanes->Register(this);
-    this->SlicingPlanes->Delete();
-  }
-
-  this->SlicingPlanes->AddItem(plane);
-  this->Modified();
-}
-
-void vtkCuda2DInExLogicVolumeMapper::RemoveSlicingPlane(vtkPlane *plane){
-  if (this->SlicingPlanes == NULL) vtkErrorMacro(<< "Cannot remove Slicing plane: mapper has none");
-  this->SlicingPlanes->RemoveItem(plane);
-  this->Modified();
-}
-
-void vtkCuda2DInExLogicVolumeMapper::RemoveAllSlicingPlanes(){
-  if ( this->SlicingPlanes ) this->SlicingPlanes->RemoveAllItems();
-}
-
-void vtkCuda2DInExLogicVolumeMapper::SetSlicingPlanes(vtkPlanes *planes){
-  vtkPlane *plane;
-  if (!planes) return;
-
-  int numPlanes = planes->GetNumberOfPlanes();
-
-  this->RemoveAllSlicingPlanes();
-  for (int i=0; i<numPlanes && i<6; i++){
-    plane = vtkPlane::New();
-    planes->GetPlane(i, plane);
-    this->AddSlicingPlane(plane);
-    plane->Delete();
-  }
 }

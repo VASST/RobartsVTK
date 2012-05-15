@@ -1,12 +1,10 @@
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "CUDA_container2DTransferFunctionInformation.h"
-#include "CUDA_containerSlicePlanesInformation.h"
 #include <cuda.h>
 
 //execution parameters and general information
 __constant__ cuda2DTransferFunctionInformation	CUDA_vtkCuda2DInExVolumeMapper_trfInfo;
-__constant__ cudaSlicePlanesInformation			CUDA_vtkCuda2DInExVolumeMapper_slcInfo;
 
 //transfer function as read-only textures
 texture<float, 2, cudaReadModeElementType> alpha_texture_2DInex;
@@ -120,10 +118,6 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 						&& inEx > 0.5f ) break;
 				special = true;
 
-				//determine if we should sample here or move on
-				if( excludeStart >= maxSteps && excludeEnd <= maxSteps )
-					continue;
-
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
@@ -219,92 +213,6 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade()
 	return;
 }
 
-__device__ void CUDA_vtkCuda2DInExVolumeMapper_FindSlicingValues(float3 rayStart, float3 rayInc,
-											 float& numSteps, float& includeStart, float& includeEnd ){
-	
-	__syncthreads();
-	const int numPlanes = CUDA_vtkCuda2DInExVolumeMapper_slcInfo.NumberOfSlicingPlanes;
-	__syncthreads();
-	
-	//create a rayEnd holder
-	float3 oldRayStart = rayStart;
-	float3 rayDir;
-	rayDir.x = numSteps * rayInc.x;
-	rayDir.y = numSteps * rayInc.y;
-	rayDir.z = numSteps * rayInc.z;
-	float3 rayEnd;
-	rayEnd.x = rayStart.x + rayDir.x;
-	rayEnd.y = rayStart.y + rayDir.y;
-	rayEnd.z = rayStart.z + rayDir.z;
-
-	//default to some safe values
-	includeStart = 1.0f;
-	includeEnd = -1.0f;
-
-	// loop through all provided slicing planes
-	if(!numPlanes) return;
-	int flag = 0;
-	#pragma unroll 1
-	for ( int i = 0; i < numPlanes; i++ ){
-		
-		//refine the ray direction to account for any changes in starting or ending position
-		rayDir.x = rayEnd.x - rayStart.x;
-		rayDir.y = rayEnd.y - rayStart.y;
-		rayDir.z = rayEnd.z - rayStart.z;
-		
-		//collect all the information about the current clipping plane
-		float4 SlicingPlane;
-		__syncthreads();
-		SlicingPlane.x	= CUDA_vtkCuda2DInExVolumeMapper_slcInfo.SlicingPlanes[4*i];
-		SlicingPlane.y	= CUDA_vtkCuda2DInExVolumeMapper_slcInfo.SlicingPlanes[4*i+1];
-		SlicingPlane.z	= CUDA_vtkCuda2DInExVolumeMapper_slcInfo.SlicingPlanes[4*i+2];
-		SlicingPlane.w	= CUDA_vtkCuda2DInExVolumeMapper_slcInfo.SlicingPlanes[4*i+3];
-		__syncthreads();
-		
-		const float dp = SlicingPlane.x*rayDir.x +
-						 SlicingPlane.y*rayDir.y +
-						 SlicingPlane.z*rayDir.z;
-		const float t = -(SlicingPlane.x*rayStart.x +
-						SlicingPlane.y*rayStart.y + 
-						SlicingPlane.z*rayStart.z + 
-						SlicingPlane.w) / dp;
-
-		const float point0 = rayStart.x + t*rayDir.x;
-		const float point1 = rayStart.y + t*rayDir.y;
-		const float point2 = rayStart.z + t*rayDir.z;
-
-		//if the ray intersects the plane, set the start or end point to the intersection point
-		if ( t > 0.0f && t < 1.0f ){
-			
-			dp > 0.0f ? rayStart.x = point0 : rayEnd.x = point0;
-			dp > 0.0f ? rayStart.y = point1 : rayEnd.y = point1;
-			dp > 0.0f ? rayStart.z = point2 : rayEnd.z = point2;
-
-		}
-
-		//flag this ray if it is outside the plane entirely
-		flag |= (dp > 0.0f && t > 1.0f);
-		flag |= (dp < 0.0f && t < 0.0f);
-				
-	}//for
-	
-	rayStart.x -= oldRayStart.x;
-	rayStart.y -= oldRayStart.y;
-	rayStart.z -= oldRayStart.z;
-	rayEnd.x -= oldRayStart.x;
-	rayEnd.y -= oldRayStart.y;
-	rayEnd.z -= oldRayStart.z;
-	
-	//if the ray is not inside the clipping planes, make the ray zero length
-	includeStart = flag ?  1.0f : rayStart.x * rayInc.x +
-								  rayStart.y * rayInc.y +
-								  rayStart.z * rayInc.z - 0.1f;
-	includeEnd = flag ?  -1.0f : rayEnd.x * rayInc.x +
-								 rayEnd.y * rayInc.y +
-								 rayEnd.z * rayInc.z + 0.1f;
-
-}
-
 __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	
 	//index in the output image (2D)
@@ -344,9 +252,6 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	excludeEnd = outInfo.excludeEnd[outindex];
 	__syncthreads();
 
-	//find the area to actually render
-	//CUDA_vtkCuda2DInExVolumeMapper_FindSlicingValues(rayStart, rayInc, numSteps, includeStart, includeEnd );
-
 	// trace along the ray (composite)
 	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(rayStart, numSteps, excludeStart, excludeEnd,
 														rayInc, outputVal, outputDepth);
@@ -375,8 +280,7 @@ extern "C"
 bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo,
-							 const cudaSlicePlanesInformation& sliceInfo)
+							 const cuda2DTransferFunctionInformation& transInfo)
 {
 
 	// setup execution parameters - staggered to improve parallelism
@@ -384,8 +288,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
 	cudaMemcpyToSymbolAsync(renInfo, &rendererInfo, sizeof(cudaRendererInformation));
 	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation));
 	cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DInExVolumeMapper_trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation));
-	cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DInExVolumeMapper_slcInfo, &sliceInfo, sizeof(cudaSlicePlanesInformation));
-	
+
 	//create the necessary execution amount parameters from the block sizes and calculate th volume rendering integral
 	int blockX = outputInfo.resolution.x / BLOCK_DIM2D ;
 	int blockY = outputInfo.resolution.y / BLOCK_DIM2D ;
