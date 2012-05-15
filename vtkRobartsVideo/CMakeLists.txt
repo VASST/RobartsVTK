@@ -130,6 +130,16 @@ IF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
 
 ENDIF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
 
+#manage the vuzix base AR classes
+OPTION (RobartsVTK_USE_VUZIX_UTILITIES "Enable the stereo utilities for Vuzix AR Applications" OFF)
+IF (RobartsVTK_USE_VUZIX_UTILITIES)
+  
+  SET (Kit_SRCS ${Kit_SRCS} 
+	vtkVuzixARCamera.h vtkVuzixARCamera.cxx
+	vtkVuzixARScene.h  vtkVuzixARScene.cxx )
+
+ENDIF (RobartsVTK_USE_VUZIX_UTILITIES)
+
 SET(Kit_EXTRA_SRCS)
 SET(Kit_EXTRA_CMDS)
 SET(Kit_TCL_EXTRA_SRCS)
