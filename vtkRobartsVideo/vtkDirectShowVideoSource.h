@@ -54,6 +54,15 @@ public:
   //
   void UpdateFrameBuffer();
   void InternalGrab();
+  
+  // Description:
+  // Record incoming video at the specified FrameRate.  The recording
+  // continues indefinitely until Stop() is called. 
+  void Record();
+  
+  // Description:
+  // Update updates the information in the video source
+  void Update();
 
   // Description:
   // Request a particular output format (default: VTK_RGB).
@@ -94,6 +103,8 @@ protected:
   vtkMutexLock* medialBufferMutex;
   
   void EnumerateVideoSources();
+  bool Enumerated;
+  void DeEnumerateVideoSources();
 
   std::vector<std::string> devices;
 
