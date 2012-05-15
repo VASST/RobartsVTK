@@ -32,7 +32,7 @@
 #define __IDxtAlphaSetter_INTERFACE_DEFINED__
 #define __IDxtJpeg_INTERFACE_DEFINED__
 #define __IDxtKey_INTERFACE_DEFINED__
-#include "C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include\qedit.h"
+#include "qedit.h"
 
 #include <vtkstd/string> 
 #include <ctype.h>

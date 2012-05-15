@@ -12,7 +12,7 @@
 #define __IDxtAlphaSetter_INTERFACE_DEFINED__
 #define __IDxtJpeg_INTERFACE_DEFINED__
 #define __IDxtKey_INTERFACE_DEFINED__
-#include "C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\Include\qedit.h"
+#include "qedit.h"
 
 #define SAFE_RELEASE(x) { if (x) x->Release(); x = NULL; }
 
