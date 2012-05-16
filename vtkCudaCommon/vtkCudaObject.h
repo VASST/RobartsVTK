@@ -6,8 +6,6 @@
 #include "vector_types.h"
 #include "cuda.h"
 
-typedef void (* kernelFunction ) ( void* );
-
 class vtkCudaObject : public vtkObject
 {
 public:
@@ -16,8 +14,9 @@ public:
 	void SetDevice( int d );
 	int GetDevice(){ return this->DeviceNumber; };
 	
-	void CallKernel( kernelFunction* k, dim3 grid, dim3 threads, bool synchronized );
+	void ReserveGPU( );
 	void CallSyncThreads( );
+	cudaStream_t* vtkCudaObject::GetStream( );
 
 protected:
 	vtkCudaObject();

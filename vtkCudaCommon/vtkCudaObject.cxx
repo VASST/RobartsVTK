@@ -11,6 +11,7 @@ vtkCudaObject::vtkCudaObject(){
 
 vtkCudaObject::~vtkCudaObject(){
 	//synchronize remainder of stream
+	this->CallSyncThreads();
 }
 
 void vtkCudaObject::SetDevice( int d ){
@@ -63,8 +64,15 @@ void vtkCudaObject::SetDevice( int d ){
 	}
 }
 
-void vtkCudaObject::CallKernel( kernelFunction* k, dim3 grid, dim3 threads, bool synchronized ){
-
+void vtkCudaObject::ReserveGPU( ){
+	if( this->DeviceNumber == -1 ){
+		vtkErrorMacro(<<"No device set selected does not exist.");
+		return;
+	}
+	if(this->DeviceManager->ReserveGPU(&(this->DeviceStream))){
+		vtkErrorMacro(<<"Error REserving GPU");
+		return;
+	}
 }
 
 void vtkCudaObject::CallSyncThreads( ){
@@ -72,5 +80,12 @@ void vtkCudaObject::CallSyncThreads( ){
 		vtkErrorMacro(<<"No device set selected does not exist.");
 		return;
 	}
-	this->DeviceManager->SynchronizeStream(&(this->DeviceStream));
+	if(this->DeviceManager->SynchronizeStream(&(this->DeviceStream))){
+		vtkErrorMacro(<<"Error Synchronizing Streams");
+		return;
+	}
+}
+
+cudaStream_t* vtkCudaObject::GetStream( ){
+	return &(this->DeviceStream);
 }

@@ -5,7 +5,6 @@
 #include "vtkMutexLock.h"
 #include "vector_types.h"
 #include <map>
-#include <vector>
 
 typedef void (* kernelFunction ) ( void* );
 
@@ -23,6 +22,10 @@ public:
 	bool ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
 
 	bool SynchronizeStream( cudaStream_t* stream );
+	bool ReserveGPU( cudaStream_t* stream );
+	
+	int QueryDeviceForObject( vtkCudaObject* object );
+	int QueryDeviceForStream( cudaStream_t* stream );
 
 protected:
 
@@ -33,12 +36,11 @@ private:
 	vtkCudaDeviceManager(const vtkCudaDeviceManager&); /**< not implemented */
 	
 	std::map<cudaStream_t*,int> StreamToDeviceMap;
-	std::map<vtkCudaObject*,int> ObjectToDeviceMap;
+	std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
 
 	static vtkCudaDeviceManager singletonManager;
 
 	vtkMutexLock* regularLock;
-	std::vector<vtkMutexLock*> deviceLocks;
 
 };
 #endif /* __VTKCUDADEVICEMANAGER_H__ */
