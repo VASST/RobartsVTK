@@ -40,7 +40,7 @@ void vtkCudaRendererInformationHandler::Deinitialize(int withData){
 }
 
 void vtkCudaRendererInformationHandler::Reinitialize(int withData){
-	//TODO
+	//nothing to do - ZBuffer handled when run
 }
 
 vtkRenderer* vtkCudaRendererInformationHandler::GetRenderer(){

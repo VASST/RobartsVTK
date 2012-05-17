@@ -27,14 +27,14 @@ vtkCuda1DVolumeMapper::vtkCuda1DVolumeMapper()
 }
 
 void vtkCuda1DVolumeMapper::Deinitialize(int withData){
-	this->vtkCudaVolumeMapper::Deinitialize();
+	this->vtkCudaVolumeMapper::Deinitialize(withData);
 	this->ReserveGPU();
 	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
 }
 
 void vtkCuda1DVolumeMapper::Reinitialize(int withData){
-	this->vtkCudaVolumeMapper::Reinitialize();
-	this->transferFunctionInfoHandler->ReplicateObject(this);
+	this->vtkCudaVolumeMapper::Reinitialize(withData);
+	this->transferFunctionInfoHandler->ReplicateObject(this, withData);
 	this->ReserveGPU();
 	CUDA_vtkCuda1DVolumeMapper_renderAlgo_initImageArray(this->GetStream());
 	CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(this->currFrame, this->GetStream());

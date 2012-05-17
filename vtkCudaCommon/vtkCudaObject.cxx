@@ -40,7 +40,7 @@ vtkCudaObject::~vtkCudaObject(){
 	this->DeviceManager->ReturnDevice( this, this->DeviceNumber );
 }
 
-void vtkCudaObject::SetDevice( int d ){
+void vtkCudaObject::SetDevice( int d, int withData ){
 	int numberOfDevices = this->DeviceManager->GetNumberOfDevices();
 
 	if( d < 0 || d >= numberOfDevices ){
@@ -64,7 +64,7 @@ void vtkCudaObject::SetDevice( int d ){
 			this->DeviceNumber = -1;
 			return;
 		}
-		this->Reinitialize();
+		this->Reinitialize(withData);
 
 	//if we are currently using that device, don't change anything
 	}else if(this->DeviceNumber == d){
@@ -72,7 +72,7 @@ void vtkCudaObject::SetDevice( int d ){
 
 	//finish all device business and set up a new device
 	}else{
-		this->Deinitialize();
+		this->Deinitialize(withData);
 		this->DeviceManager->ReturnStream(this, this->DeviceStream, this->DeviceNumber );
 		this->DeviceStream = 0;
 		this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
@@ -90,7 +90,7 @@ void vtkCudaObject::SetDevice( int d ){
 			this->DeviceNumber = -1;
 			return;
 		}
-		this->Reinitialize();
+		this->Reinitialize(withData);
 	}
 }
 
@@ -120,9 +120,9 @@ cudaStream_t* vtkCudaObject::GetStream( ){
 	return this->DeviceStream;
 }
 
-void vtkCudaObject::ReplicateObject( vtkCudaObject* object ){
+void vtkCudaObject::ReplicateObject( vtkCudaObject* object, int withData ){
 	int oldDeviceNumber = this->DeviceNumber;
-	this->SetDevice( object->DeviceNumber );
+	this->SetDevice( object->DeviceNumber, withData );
 	if(	this->DeviceStream != object->DeviceStream ){
 		this->CallSyncThreads();
 		this->DeviceManager->ReturnStream(this, this->DeviceStream, oldDeviceNumber);

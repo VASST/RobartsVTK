@@ -62,7 +62,7 @@ void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
 
 void vtkCudaOutputImageInformationHandler::Reinitialize(int withData){	
 	this->MemoryTexture = vtkCudaMemoryTexture::New();
-	this->MemoryTexture->ReplicateObject(this);
+	this->MemoryTexture->ReplicateObject(this, withData);
 }
 
 void vtkCudaOutputImageInformationHandler::SetRenderOutputScaleFactor(float scaleFactor) {

@@ -51,9 +51,9 @@ void vtkCudaVolumeMapper::Deinitialize(int withData){
 }
 
 void vtkCudaVolumeMapper::Reinitialize(int withData){
-	this->VolumeInfoHandler->ReplicateObject(this);
-	this->RendererInfoHandler->ReplicateObject(this);
-	this->OutputInfoHandler->ReplicateObject(this);
+	this->VolumeInfoHandler->ReplicateObject(this, withData);
+	this->RendererInfoHandler->ReplicateObject(this, withData);
+	this->OutputInfoHandler->ReplicateObject(this, withData);
 
 	//initialize the random ray denoising buffer
 	float randomRayOffsets[256];
@@ -188,9 +188,10 @@ void vtkCudaVolumeMapper::Reinitialize(int withData){
 	CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(randomRayOffsets,this->GetStream());
 
 	//re-copy the image data if any
-	for( std::map<int,vtkImageData*>::iterator it = this->inputImages.begin();
-		 it != this->inputImages.end(); it++ )
-		this->SetInputInternal(it->second, it->first);
+	if( withData )
+		for( std::map<int,vtkImageData*>::iterator it = this->inputImages.begin();
+			 it != this->inputImages.end(); it++ )
+			this->SetInputInternal(it->second, it->first);
 
 }
 

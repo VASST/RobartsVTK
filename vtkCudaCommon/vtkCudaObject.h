@@ -11,14 +11,14 @@ class vtkCudaObject
 public:
 	static vtkCudaObject* New();
 
-	void SetDevice( int d );
+	void SetDevice( int d, int withData = 0 );
 	int GetDevice(){ return this->DeviceNumber; };
 	
 	void ReserveGPU( );
 	void CallSyncThreads( );
 	cudaStream_t* vtkCudaObject::GetStream( );
 
-	void ReplicateObject( vtkCudaObject* object );
+	void ReplicateObject( vtkCudaObject* object, int withData = 0  );
 
 protected:
 	vtkCudaObject();
@@ -33,6 +33,8 @@ private:
 	cudaStream_t* DeviceStream;
 
 	vtkCudaDeviceManager* DeviceManager;
+
+	int withDataStatus;
 
 };
 #endif /* __VTKCUDAOBJECT_H__ */
