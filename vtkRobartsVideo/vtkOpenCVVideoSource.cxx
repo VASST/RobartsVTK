@@ -63,7 +63,8 @@ vtkOpenCVVideoSource::vtkOpenCVVideoSource()
 	this->videoSourceNumber = 0;
 	this->FrameBufferBitsPerPixel = 24;
 	this->vtkVideoSource::SetOutputFormat(VTK_RGB);
-
+	
+	this->EnumerateSources();
 	this->Initialized = false;
 }
 
@@ -83,10 +84,23 @@ void vtkOpenCVVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+void vtkOpenCVVideoSource::EnumerateSources(){
+	this->maxSource = 0;
+	bool stillLooking = true;
+	while( stillLooking ){
+		if( !cvCreateCameraCapture( this->maxSource ) ){
+			stillLooking = false;
+		}
+		this->maxSource++;
+	}
+}
+
+//----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::SetVideoSourceNumber(unsigned int n){
 	
-	if( n > 10 ){
-		vtkErrorMacro(<<"Cannot use that video source number. Must be between 0 and 10 inclusive.");
+	//determine is source is available
+	if( n < 0 || n > maxSource ){
+		vtkErrorMacro(<<"Cannot use that video source number. Must be an available source");
 		return;
 	}
 

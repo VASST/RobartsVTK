@@ -29,6 +29,7 @@
 #include "vtkVideoSource.h"
 #include "vtkImageData.h"
 #include "vtkMutexLock.h"
+#include <vector>
 
 class vtkOpenCVVideoSourceInternal;
 
@@ -68,6 +69,14 @@ public:
   // Free the driver (this is called automatically inside the
   // destructor).
   void ReleaseSystemResources();
+  
+  // Description:
+  // Find available sources
+  void EnumerateSources();
+
+  // Description:
+  // Find available sources
+  int GetNumberOfSources(){ return this->maxSource+1; }
 
 protected:
   vtkOpenCVVideoSource();
@@ -78,6 +87,7 @@ protected:
   vtkMutexLock* OpenCVFirstBufferLock;
   vtkMutexLock* OpenCVSecondBufferLock;
 
+  unsigned int maxSource;
   unsigned int videoSourceNumber;
   unsigned int ImageSize;
 
