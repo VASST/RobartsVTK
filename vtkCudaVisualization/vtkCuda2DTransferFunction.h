@@ -43,7 +43,7 @@ public:
 	 *  @note The responsibility for both allocation and deallocation of the buffer is given to the caller
 	 */
 	void GetClassifyTable(	short* outputTable, int sizeI, int sizeG,
-							float lowI, float highI, float lowG, float highG, float offsetG);
+							float lowI, float highI, float offsetI, float lowG, float highG, float offsetG, int logUsed);
 
 	/** @brief Given a buffer for each of the RGBA, fill these buffers with the colour and opacity values defined by the function objects in the transfer function (the buffer becomes a lookup table for the transfer function)
 	 *
@@ -67,7 +67,7 @@ public:
 	 *  @note The responsibility for both allocation and deallocation of the buffers is given to the caller
 	 */
 	void GetTransferTable(	float* outputRTable, float* outputGTable, float* outputBTable, float* outputATable,
-							int sizeI, int sizeG, float lowI, float highI, float lowG, float highG, float offsetG);
+							int sizeI, int sizeG, float lowI, float offsetI, float highI, float lowG, float highG, float offsetG, int logUsed);
 	
 	/** @brief Gets the maximum number of classifications this transfer function currently has
 	 *

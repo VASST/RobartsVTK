@@ -102,7 +102,8 @@ void vtkCudaOutputImageInformationHandler::Prepare(){
 
 void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRenderer* renderer){
 	
-	cudaThreadSynchronize();
+	this->ReserveGPU();
+	cudaStreamSynchronize(*(this->GetStream()));
 
 	//do the actual rendering
 	if(this->OutputImageInfo.renderType == 0){
@@ -139,6 +140,7 @@ void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRendere
 		this->MemoryTexture->UnbindTexture();
 
 		// Leave the 2D Mode again.
+		this->ReserveGPU();
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
@@ -147,7 +149,7 @@ void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRendere
 
 	//if desired, render using the fulling compatible displayer tool
 	}else if(this->OutputImageInfo.renderType == 1){
-		cudaMemcpy( this->hostOutputImage, this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x*this->OutputImageInfo.resolution.y, cudaMemcpyDeviceToHost);
+		cudaMemcpyAsync( this->hostOutputImage, this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x*this->OutputImageInfo.resolution.y, cudaMemcpyDeviceToHost, *(this->GetStream()));
 		int imageMemorySize[2];
 		imageMemorySize[0] = this->OutputImageInfo.resolution.x;
 		imageMemorySize[1] = this->OutputImageInfo.resolution.y;
@@ -155,13 +157,14 @@ void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRendere
 		this->Displayer->RenderTexture(volume,renderer,imageMemorySize,imageMemorySize,imageMemorySize,imageOrigin,0.001,(unsigned char*) this->hostOutputImage);
 
 	}else if(this->OutputImageInfo.renderType == 2){
-		cudaMemcpy( this->hostOutputImage, this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x*this->OutputImageInfo.resolution.y, cudaMemcpyDeviceToHost);
+		cudaMemcpyAsync( this->hostOutputImage, this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x*this->OutputImageInfo.resolution.y, cudaMemcpyDeviceToHost, *(this->GetStream()));
 		
 	}else{
 		//error
 	}
-
-	cudaThreadSynchronize();
+	
+	this->ReserveGPU();
+	cudaStreamSynchronize(*(this->GetStream()));
 
 }
 

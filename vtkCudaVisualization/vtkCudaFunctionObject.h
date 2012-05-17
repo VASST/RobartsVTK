@@ -96,9 +96,10 @@ public:
 	 *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
 	 */
 	virtual void	PopulatePortionOfTransferTable(	int IntensitySize, int GradientSize,
-											float IntensityLow, float IntensityHigh,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
 											float GradientLow, float GradientHigh, float GradientOffset,
-											float* rTable, float* gTable, float* bTable, float* aTable) = 0;
+											float* rTable, float* gTable, float* bTable, float* aTable,
+											int logUsed ) = 0;
 	
 	/** @brief Method that, given a table to house the classification function, applies the identifer to the parts of the table that are within the object
 	 *
@@ -116,9 +117,9 @@ public:
 	 *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
 	 */
 	virtual void	PopulatePortionOfClassifyTable(	int IntensitySize, int GradientSize,
-											float IntensityLow, float IntensityHigh,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
 											float GradientLow, float GradientHigh, float GradientOffset,
-											short* table) = 0;
+											short* table, int logUsed) = 0;
 
 	/** @brief Calculates largest gradient (not logarithmically scaled) which this particular object includes.
 	 *

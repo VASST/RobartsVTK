@@ -99,7 +99,7 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
-		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, minGradient, maxGradient, gradientOffset);
+		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
 
 	//map the trasfer functions to textures for fast access
 	this->TransInfo.functionSize = this->FunctionSize;

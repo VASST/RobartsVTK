@@ -46,9 +46,10 @@ public:
 	 *
 	 */
 	virtual void	PopulatePortionOfTransferTable(	int IntensitySize, int GradientSize,
-											float IntensityLow, float IntensityHigh,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
 											float GradientLow, float GradientHigh, float GradientOffset,
-											float* rTable, float* gTable, float* bTable, float* aTable);
+											float* rTable, float* gTable, float* bTable, float* aTable,
+											int logUsed );
 
 	/** @brief Method that, given a table to house the classification function, applies the identifer to the parts of the table that are within the object reimplemented from vtkCudaFunctionObject
 	 *
@@ -67,9 +68,9 @@ public:
 	 *
 	 */
 	virtual void	PopulatePortionOfClassifyTable(	int IntensitySize, int GradientSize,
-											float IntensityLow, float IntensityHigh,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
 											float GradientLow, float GradientHigh, float GradientOffset,
-											short* table);
+											short* table, int logUsed);
 
 	/** @brief Calculates largest gradient (not logarithmically scaled) which this particular object includes.
 	 *

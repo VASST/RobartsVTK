@@ -71,7 +71,9 @@ double vtkCuda2DTransferFunction::getMinIntensity(){
 }
 
 void vtkCuda2DTransferFunction::GetClassifyTable(	short* outputTable, int sizeI, int sizeG,
-															   float lowI, float highI, float lowG, float highG, float offsetG){
+													float lowI, float highI, float offsetI,
+													float lowG, float highG, float offsetG,
+													int logUsed ){
 	//return if we don't have a proper table to populate
 	if(!outputTable) return;
 
@@ -80,12 +82,15 @@ void vtkCuda2DTransferFunction::GetClassifyTable(	short* outputTable, int sizeI,
 
 	//iterate over each object, letting them contribute to the table
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
-		(*it)->PopulatePortionOfClassifyTable(sizeI, sizeG, lowI, highI, lowG, highG, offsetG, outputTable);
+		(*it)->PopulatePortionOfClassifyTable(sizeI, sizeG, lowI, highI, offsetI, lowG, highG, offsetG, outputTable, logUsed);
 	}
 }
 
 void vtkCuda2DTransferFunction::GetTransferTable(	float* outputRTable, float* outputGTable, float* outputBTable, float* outputATable,
-															   int sizeI, int sizeG, float lowI, float highI, float lowG, float highG, float offsetG){
+													int sizeI, int sizeG,
+													float lowI, float highI, float offsetI,
+													float lowG, float highG, float offsetG,
+													int logUsed ){
 
 	//clear the table
 	if(outputRTable) memset( (void*) outputRTable, 0.0f, sizeof(float) * sizeI * sizeG);
@@ -95,7 +100,7 @@ void vtkCuda2DTransferFunction::GetTransferTable(	float* outputRTable, float* ou
 
 	//iterate over each object, letting them contribute to the table
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
-		(*it)->PopulatePortionOfTransferTable(sizeI, sizeG, lowI, highI, lowG, highG, offsetG, outputRTable, outputGTable, outputBTable, outputATable);
+		(*it)->PopulatePortionOfTransferTable(sizeI, sizeG, lowI, highI, offsetI, lowG, highG, offsetG, outputRTable, outputGTable, outputBTable, outputATable, logUsed);
 	}
 
 }
