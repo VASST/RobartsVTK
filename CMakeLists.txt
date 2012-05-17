@@ -193,7 +193,7 @@ ENDIF (RobartsVTK_USE_CUDA)
 OPTION (RobartsVTK_USE_ROBARTSULTRASOUND "Build the vtkRobartsUltrasound module" OFF)
 IF (RobartsVTK_USE_ROBARTSULTRASOUND)
   SUBDIRS (vtkRobartsUltrasound)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCuda ${RobartsVTK_SOURCE_DIR}/vtkRobartsUltrasound)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsUltrasound)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUltrasound)
 ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
 
