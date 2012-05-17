@@ -254,6 +254,10 @@ void vtkCudaVolumeMapper::SetCelShadingConstants(float darkness, float a, float 
 	this->RendererInfoHandler->SetCelShadingConstants(darkness, a, b);
 }
 
+void vtkCudaVolumeMapper::SetDistanceShadingConstants(float darkness, float a, float b){
+	this->RendererInfoHandler->SetDistanceShadingConstants(darkness, a, b);
+}
+
 void vtkCudaVolumeMapper::SetGradientShadingConstants(float darkness){
 	this->RendererInfoHandler->SetGradientShadingConstants(darkness);
 }

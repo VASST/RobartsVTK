@@ -23,8 +23,9 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 	this->RendererInfo.actualResolution.x = this->RendererInfo.actualResolution.y = 0;
 	this->RendererInfo.NumberOfClippingPlanes = 0;
 	this->RendererInfo.NumberOfKeyholePlanes = 0;
-
-	SetCelShadingConstants( 0.70f, 17.3f, 0.2629f );
+	
+	SetCelShadingConstants( 0.70f, 0.002f, 0.005f );
+	SetDistanceShadingConstants( 0.25f, 0.45f, 0.6f );
 	SetGradientShadingConstants(0.605f);
 	
 	this->ZBuffer = 0;
@@ -54,12 +55,19 @@ void vtkCudaRendererInformationHandler::SetRenderer(vtkRenderer* renderer){
 
 void vtkCudaRendererInformationHandler::SetCelShadingConstants(float darkness, float a, float b){
 	if(darkness >= 0.0f && darkness <= 1.0f ){
-		a = a * b;
-		this->RendererInfo.a = a;
-		this->RendererInfo.b = b;
-		double r = 1.0 / ( 1.0 - 1.0 / (1.0 + exp(a) ) );
-		this->RendererInfo.darkness = -1.0f * darkness * r;
-		this->RendererInfo.computedShift = r + (1.0 - darkness) * ( 1.0 - r );
+		this->RendererInfo.cela = a;
+		this->RendererInfo.celb = b;
+		this->RendererInfo.celr = darkness;
+		this->RendererInfo.celc = 1.0 / (b-a);
+	}
+}
+
+void vtkCudaRendererInformationHandler::SetDistanceShadingConstants(float darkness, float a, float b){
+	if(darkness >= 0.0f && darkness <= 1.0f ){
+		this->RendererInfo.disa = a;
+		this->RendererInfo.disb = b;
+		this->RendererInfo.disr = darkness;
+		this->RendererInfo.disc = 1.0 / (b-a);
 	}
 }
 

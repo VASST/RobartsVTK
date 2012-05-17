@@ -18,6 +18,7 @@ vtkCudaOutputImageInformationHandler::vtkCudaOutputImageInformationHandler(){
 	this->OutputImageInfo.resolution.x = this->OutputImageInfo.resolution.y = 0;
 	this->oldResolution.x = this->oldResolution.y = 0;
 	this->OutputImageInfo.depthBuffer = this->OutputImageInfo.numSteps = 0;
+	this->OutputImageInfo.maxDepthBuffer = this->OutputImageInfo.minDepthBuffer = 0;
 	this->OutputImageInfo.excludeStart = this->OutputImageInfo.excludeEnd = 0;
 	this->OutputImageInfo.rayIncX = this->OutputImageInfo.rayStartX = 0;
 	this->OutputImageInfo.rayIncY = this->OutputImageInfo.rayStartY = 0;
@@ -41,6 +42,8 @@ void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
 	if(this->OutputImageInfo.excludeStart) cudaFree(this->OutputImageInfo.excludeStart);
 	if(this->OutputImageInfo.excludeEnd) cudaFree(this->OutputImageInfo.excludeEnd);
 	if(this->OutputImageInfo.depthBuffer) cudaFree(this->OutputImageInfo.depthBuffer);
+	if(this->OutputImageInfo.maxDepthBuffer) cudaFree(this->OutputImageInfo.maxDepthBuffer);
+	if(this->OutputImageInfo.minDepthBuffer) cudaFree(this->OutputImageInfo.minDepthBuffer);
 	if(this->OutputImageInfo.rayIncX) cudaFree(this->OutputImageInfo.rayIncX);
 	if(this->OutputImageInfo.rayIncY) cudaFree(this->OutputImageInfo.rayIncY);
 	if(this->OutputImageInfo.rayIncZ) cudaFree(this->OutputImageInfo.rayIncZ);
@@ -52,6 +55,7 @@ void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
 	this->OutputImageInfo.resolution.x = this->OutputImageInfo.resolution.y = 0;
 	this->oldResolution.x = this->oldResolution.y = 0;
 	this->OutputImageInfo.depthBuffer = this->OutputImageInfo.numSteps = 0;
+	this->OutputImageInfo.maxDepthBuffer = this->OutputImageInfo.minDepthBuffer = 0;
 	this->OutputImageInfo.excludeStart = this->OutputImageInfo.excludeEnd = 0;
 	this->OutputImageInfo.rayIncX = this->OutputImageInfo.rayStartX = 0;
 	this->OutputImageInfo.rayIncY = this->OutputImageInfo.rayStartY = 0;
@@ -178,11 +182,10 @@ void vtkCudaOutputImageInformationHandler::Update(){
 	this->OutputImageInfo.resolution.y = size[1] / this->RenderOutputScaleFactor;
 
 	//make it such that every thread fits within the solid for optimal access coalescing
-	this->OutputImageInfo.resolution.x += (this->OutputImageInfo.resolution.x % 16) ? 16-(this->OutputImageInfo.resolution.x % 16) : 0 ;
+	this->OutputImageInfo.resolution.x += (this->OutputImageInfo.resolution.x % 16) ? 16-(this->OutputImageInfo.resolution.x % 16) : 0;
 	this->OutputImageInfo.resolution.y += (this->OutputImageInfo.resolution.y % 16) ?16-(this->OutputImageInfo.resolution.y % 16): 0;
-	if(this->OutputImageInfo.resolution.y < 256) {
-		this->OutputImageInfo.resolution.y = 256;
-	}
+	if(this->OutputImageInfo.resolution.y < 256) this->OutputImageInfo.resolution.y = 256;
+	if(this->OutputImageInfo.resolution.x < 256) this->OutputImageInfo.resolution.x = 256;
 
 	//if our image size hasn't changed, we don't have to reallocate any buffers, so we can just leave
 	if(this->OutputImageInfo.resolution.x == this->oldResolution.x && this->OutputImageInfo.resolution.y == this->oldResolution.y)
@@ -192,15 +195,20 @@ void vtkCudaOutputImageInformationHandler::Update(){
 	this->oldResolution = this->OutputImageInfo.resolution;
 
 	//allocate the buffers used for intermediate output results in rendering
+	this->ReserveGPU();
 	if(this->OutputImageInfo.numSteps) cudaFree(this->OutputImageInfo.numSteps);
 	cudaMalloc( (void**) &this->OutputImageInfo.numSteps, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
 	if(this->OutputImageInfo.excludeStart) cudaFree(this->OutputImageInfo.excludeStart);
 	cudaMalloc( (void**) &this->OutputImageInfo.excludeStart, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
 	if(this->OutputImageInfo.excludeEnd) cudaFree(this->OutputImageInfo.excludeEnd);
 	cudaMalloc( (void**) &this->OutputImageInfo.excludeEnd, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
-
+	
 	if(this->OutputImageInfo.depthBuffer) cudaFree(this->OutputImageInfo.depthBuffer);
 	cudaMalloc( (void**) &this->OutputImageInfo.depthBuffer, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
+	if(this->OutputImageInfo.maxDepthBuffer) cudaFree(this->OutputImageInfo.maxDepthBuffer);
+	cudaMalloc( (void**) &this->OutputImageInfo.maxDepthBuffer, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
+	if(this->OutputImageInfo.minDepthBuffer) cudaFree(this->OutputImageInfo.minDepthBuffer);
+	cudaMalloc( (void**) &this->OutputImageInfo.minDepthBuffer, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
 	if(this->OutputImageInfo.rayIncX) cudaFree(this->OutputImageInfo.rayIncX);
 	cudaMalloc( (void**) &this->OutputImageInfo.rayIncX, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
 	if(this->OutputImageInfo.rayIncY) cudaFree(this->OutputImageInfo.rayIncY);
@@ -220,6 +228,7 @@ void vtkCudaOutputImageInformationHandler::Update(){
 		this->MemoryTexture->SetSize(this->OutputImageInfo.resolution.x, this->OutputImageInfo.resolution.y);
 	}else{
 		//allocate the buffers
+		this->ReserveGPU();
 		if(this->deviceOutputImage) cudaFree(this->deviceOutputImage);
 		cudaMalloc( (void**) &this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
 		if(this->hostOutputImage) delete this->hostOutputImage;

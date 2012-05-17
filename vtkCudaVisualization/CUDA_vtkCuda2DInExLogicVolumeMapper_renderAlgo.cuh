@@ -183,19 +183,29 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade()
 	depthDiffX.x = depthDiffY.x;
 
 	//compute the gradient magnitude
-	float gradMag = __fsqrt_rz( (depthDiffX.y - depthDiffX.x)*(depthDiffX.y - depthDiffX.x) +
+	float gradMag = ( (depthDiffX.y - depthDiffX.x)*(depthDiffX.y - depthDiffX.x) +
 								(depthDiffY.y - depthDiffY.x)*(depthDiffY.y - depthDiffY.x) );
 	
-	//grab shading parameters
+	
+	//grab cel shading parameters
 	__syncthreads();
-	float darkness = renInfo.darkness;
-	float a = renInfo.a;
-	float b = renInfo.b;
-	float c = renInfo.computedShift;
+	float darkness = renInfo.celr;
+	float a = renInfo.cela;
+	float c = renInfo.celc;
 	__syncthreads();
 	
 	//multiply by the depth factor
-	gradMag = (c + darkness / ( 1.0f + __expf(a - b * gradMag ) ) );
+	gradMag = 1.0f - darkness * saturate( (gradMag - a) * c );
+	
+	//grab distance shading parameters
+	__syncthreads();
+	darkness = renInfo.disr;
+	a = renInfo.disa;
+	c = renInfo.disc;
+	__syncthreads();
+	
+	//multiply by the depth factor
+	gradMag = 1.0f - darkness * saturate( (depthDiffX.x - a) * c );
 	
 	uchar4 colour;
 	__syncthreads();
@@ -318,6 +328,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
 	grid.y = 1;
 	threads.x = 256;
 	threads.y = 1;
+	CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
 	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION

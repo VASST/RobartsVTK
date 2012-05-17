@@ -160,8 +160,8 @@ void vtkCudaFunctionPolygon::PopulatePortionOfTransferTable(	int IntensitySize, 
 		minG = (log(minG*minG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 		maxG = (log(maxG*maxG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 	}else{
-		minI = (log(minI*minI + GradientOffset) - log(IntensityOffset) ) / log(2.0);
-		maxI = (log(maxI*maxI + GradientOffset) - log(IntensityOffset) ) / log(2.0);
+		minI = (log(minI*minI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
+		maxI = (log(maxI*maxI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 	}
 
 	//find the bounding co-ordinates
@@ -231,8 +231,8 @@ void vtkCudaFunctionPolygon::PopulatePortionOfClassifyTable(	int IntensitySize, 
 		minG = (log(minG*minG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 		maxG = (log(maxG*maxG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 	}else{
-		minI = (log(minI*minI + GradientOffset) - log(IntensityOffset) ) / log(2.0);
-		maxI = (log(maxI*maxI + GradientOffset) - log(IntensityOffset) ) / log(2.0);
+		minI = (log(minI*minI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
+		maxI = (log(maxI*maxI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 	}
 
 	//find the bounding co-ordinates

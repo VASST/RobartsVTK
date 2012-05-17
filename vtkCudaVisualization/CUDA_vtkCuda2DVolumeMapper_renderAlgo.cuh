@@ -51,7 +51,7 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 	__syncthreads();
 
 	//apply a randomized offset to the ray
-	//retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
+	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
 
 	rayStart.x += retDepth*rayInc.x;
@@ -266,6 +266,7 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	grid.y = 1;
 	threads.x = 256;
 	threads.y = 1;
+	CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
 	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION

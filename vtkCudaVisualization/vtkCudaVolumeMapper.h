@@ -84,10 +84,18 @@ public:
 	/** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
 	 *
 	 *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
-	 *  @param a The shading offset, which determines how big the edges should be before they are shaded
-	 *  @param b The shading sensitivity, which determines how widely and how gradually to shade edges
+	 *  @param a The shading start value
+	 *  @param b The shading stop value
 	 */
 	void SetCelShadingConstants(float darkness, float a, float b);
+
+	/** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
+	 *
+	 *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
+	 *  @param a The shading start value
+	 *  @param b The shading stop value
+	 */
+	void SetDistanceShadingConstants(float darkness, float a, float b);
 
 	/** @brief Set the strength of the photorealistic shading model which is given to the renderer information handler
 	 *

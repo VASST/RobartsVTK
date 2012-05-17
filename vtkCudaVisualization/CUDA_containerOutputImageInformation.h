@@ -23,8 +23,10 @@ typedef struct
 	uchar4*			deviceOutputImage;		/**< The texture/image that will be textured to the screen on device memory */
 
 	unsigned int	renderType;				/**< Whether to render to a CUDA-OpenGL texture (0), or to a display helper (1), or to vtkImageData (2) */
-
+	
 	float*			depthBuffer;			/**< The ray termination depth buffer */
+	float*			maxDepthBuffer;			/**< The maximum depth buffer used for normalizing depth */
+	float*			minDepthBuffer;			/**< The minimum depth buffer used for normalizing depth */
 	float*			rayStartX;				/**< The ray starting location buffer (x component) */
 	float*			rayStartY;				/**< The ray starting location buffer (y component) */
 	float*			rayStartZ;				/**< The ray starting location buffer (z component) */

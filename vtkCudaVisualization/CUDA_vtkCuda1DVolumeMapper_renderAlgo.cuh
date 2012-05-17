@@ -257,6 +257,7 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	grid.y = 1;
 	threads.x = 256;
 	threads.y = 1;
+	CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
 	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION

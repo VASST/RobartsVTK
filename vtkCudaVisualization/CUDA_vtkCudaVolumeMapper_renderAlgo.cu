@@ -14,7 +14,7 @@
 __constant__ cudaVolumeInformation				volInfo;
 __constant__ cudaRendererInformation			renInfo;
 __constant__ cudaOutputImageInformation			outInfo;
-__device__ float* dRandomRayOffsets;
+__constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 
 //texture element information for the ZBuffer
 cudaArray* ZBufferArray = 0;
@@ -253,11 +253,6 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
 		rayEnd.y += rayDir.y * diffE;
 		rayEnd.z += rayDir.z * diffE;
 	}
-
-	//refine the ray's length and direction to reflect any changes in the starting and ending co-ordinates
-	rayDir.x = rayEnd.x - rayStart.x;
-	rayDir.y = rayEnd.y - rayStart.y;
-	rayDir.z = rayEnd.z - rayStart.z;
 	
 	// If the voxel still isn't inside the volume, then this ray
 	// doesn't really intersect the volume, thus, make it all zero
@@ -273,19 +268,20 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
 		rayStart.x < bounds0 - 1.0f || 
 		rayStart.y < bounds2 - 1.0f || 
 		rayStart.z < bounds4 - 1.0f ){
-		rayDir.x = 0.0f;
-		rayDir.y = 0.0f;
-		rayDir.z = 0.0f;
+		rayStart = rayEnd;
 	}
+
+	//refine the ray's length and direction to reflect any changes in the starting and ending co-ordinates
+	rayDir.x = rayEnd.x - rayStart.x;
+	rayDir.y = rayEnd.y - rayStart.y;
+	rayDir.z = rayEnd.z - rayStart.z;
 
 }
 
-__device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float3& rayDir) {
+__device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float3& rayDir, const int& outIndex) {
 	//set the original estimates of the starting and ending co-ordinates in the co-ordinates of the view (not voxels)
 	//note: viewRayZ = 0 for start and viewRayZ = 1 for end
 	__syncthreads();
-	//float viewRayX =  1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
-	//float viewRayY =  ( ((float) index.y + 0.5f) / (float) outInfo.resolution.y );
 	float viewRayX =  1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
 	float viewRayY =  ( ((float) index.y) / (float) outInfo.resolution.y );
 	__syncthreads();
@@ -301,10 +297,16 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
 	//multiply the equivalent for the end ray, noting that much of the pre-normalized computation is the same as the start ray
 	__syncthreads();
 	float3 rayEnd;
+	float3 rayFull;
 	rayEnd.x = rayStart.x + endDepth*renInfo.ViewToVoxelsMatrix[2];
 	rayEnd.y = rayStart.y + endDepth*renInfo.ViewToVoxelsMatrix[6];
 	rayEnd.z = rayStart.z + endDepth*renInfo.ViewToVoxelsMatrix[10];
 	float endNorm = startNorm + endDepth*renInfo.ViewToVoxelsMatrix[14];
+	__syncthreads();
+	rayFull.x = rayStart.x + renInfo.ViewToVoxelsMatrix[2];
+	rayFull.y = rayStart.y + renInfo.ViewToVoxelsMatrix[6];
+	rayFull.z = rayStart.z + renInfo.ViewToVoxelsMatrix[10];
+	float fullNorm = startNorm + renInfo.ViewToVoxelsMatrix[14];
 	__syncthreads();
 	
 	//normalize (and ergo finish) the start ray's matrix multiplication
@@ -316,12 +318,33 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
 	rayEnd.x /= endNorm;
 	rayEnd.y /= endNorm;
 	rayEnd.z /= endNorm;
+	rayFull.x /= fullNorm;
+	rayFull.y /= fullNorm;
+	rayFull.z /= fullNorm;
 	
+	//put the maximum depth in the buffer
+	float3 oldStart = rayStart;
+	rayDir.x = rayFull.x - rayStart.x;
+	rayDir.y = rayFull.y - rayStart.y;
+	rayDir.z = rayFull.z - rayStart.z;
+	__syncthreads();
+	float maxDepth = __fsqrt_rz( rayDir.x*rayDir.x + rayDir.y*rayDir.y + rayDir.z*rayDir.z );
+	outInfo.maxDepthBuffer[outIndex] = maxDepth;
+	__syncthreads();
+
 	//refine the ray to only include areas that are both within the volume, and within the clipping planes of said volume
 	//note that ClipRayAgainstVolume calculate the ray's correct length and direction and returns it in rayInc
 	CUDAkernel_ClipRayAgainstClippingPlanes(rayStart, rayEnd, rayDir);
 	CUDAkernel_ClipRayAgainstVolume(rayStart, rayEnd, rayDir);
 	
+	//put the maximum depth in the buffer
+	__syncthreads();
+	float rayLength = __fsqrt_rz( rayDir.x*rayDir.x + rayDir.y*rayDir.y + rayDir.z*rayDir.z );
+	float minDepth = __fsqrt_rz( (rayStart.x-oldStart.x)*(rayStart.x-oldStart.x) +
+					 (rayStart.y-oldStart.y)*(rayStart.y-oldStart.y) +
+					 (rayStart.z-oldStart.z)*(rayStart.z-oldStart.z) );
+	outInfo.minDepthBuffer[outIndex] = (rayLength > 0.0f) ? minDepth : maxDepth;
+	__syncthreads();
 }
 
 __global__ void CUDAkernel_renderAlgo_formRays( ) {
@@ -339,7 +362,7 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
 	float numSteps; //maximum number of samples along this ray
 
 	// Calculate the starting and ending points of the ray, as well as the direction vector
-	CUDAkernel_SetRayEnds(index, rayStart, rayInc);
+	CUDAkernel_SetRayEnds(index, rayStart, rayInc, outindex);
 
 	//determine the maximum number of steps the ray should sample and determine the length of each step
 	numSteps = __fsqrt_ru(rayInc.x*rayInc.x+rayInc.y*rayInc.y+rayInc.z*rayInc.z) ;
@@ -375,7 +398,16 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
 	__syncthreads();
 }
 
-__global__ void CUDAkernel_shadeAlgo_doCelShade()
+__global__ void CUDAkernel_shadeAlgo_normBuffer( ){
+	int outIndex = threadIdx.x + blockDim.x * blockIdx.x; // index of result image
+	float curr = outInfo.depthBuffer[outIndex];
+	float max = outInfo.maxDepthBuffer[outIndex];
+	float min = outInfo.minDepthBuffer[outIndex];
+	curr = (curr + min) / max;
+	outInfo.depthBuffer[outIndex] = curr;
+}
+
+__global__ void CUDAkernel_shadeAlgo_doCelShade( )
 {
 	//index in the output image
 	int outindex = threadIdx.x + blockDim.x * blockIdx.x; // index of result image
@@ -397,17 +429,26 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade()
 	float gradMag = __fsqrt_rz( (depthDiffX.y - depthDiffX.x)*(depthDiffX.y - depthDiffX.x) +
 								(depthDiffY.y - depthDiffY.x)*(depthDiffY.y - depthDiffY.x) );
 	
-	//grab shading parameters
+	//grab cel shading parameters
 	__syncthreads();
-	float darkness = renInfo.darkness;
-	float a = renInfo.a;
-	float b = renInfo.b;
-	float c = renInfo.computedShift;
+	float darkness = renInfo.celr;
+	float a = renInfo.cela;
+	float c = renInfo.celc;
 	__syncthreads();
 	
 	//multiply by the depth factor
-	gradMag = (c + darkness / ( 1.0f + __expf(a - b * gradMag ) ) );
+	gradMag = 1.0f - darkness * saturate( (gradMag - a) * c );
 	
+	//grab distance shading parameters
+	__syncthreads();
+	darkness = renInfo.disr;
+	a = renInfo.disa;
+	c = renInfo.disc;
+	__syncthreads();
+	
+	//multiply by the depth factor
+	gradMag = 1.0f - darkness * saturate( (depthDiffX.x - a) * c );
+
 	uchar4 colour;
 	__syncthreads();
 	colour = outInfo.deviceOutputImage[outindex];
@@ -416,7 +457,7 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade()
 	colour.x = gradMag * ((float) colour.x);
 	colour.y = gradMag * ((float) colour.y);
 	colour.z = gradMag * ((float) colour.z);
-	
+
 	__syncthreads();
 	outInfo.deviceOutputImage[outindex] = colour;
 }
@@ -466,8 +507,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream){
 //load in a random 16x16 noise array to deartefact the image in real time
 bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets, cudaStream_t* stream){
 	
-	cudaMalloc(&(dRandomRayOffsets), BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
-	cudaMemcpyAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float), cudaMemcpyHostToDevice, *stream);
+	cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float), 0, cudaMemcpyHostToDevice, *stream);
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
@@ -480,9 +520,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* rando
 }
 
 bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* stream){
-	if(dRandomRayOffsets) cudaFree(dRandomRayOffsets);
-	dRandomRayOffsets = 0;
-	
+
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
 		printf( "Unload ray offsets: " );

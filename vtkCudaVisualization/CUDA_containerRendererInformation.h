@@ -34,10 +34,16 @@ typedef struct __align__(16)
 	float gradShadeShift;			/**< Additive constant for the flat-like shading of the volume */
 
 	//Cel shading constants
-	float darkness;					/**< Multiplicative constant for Cel shading of the volume */
-	float a;						/**< Additive constant for the sigmoid function determining which detected edges to shade (sensitivity) */
-	float b;						/**< Multiplicative constant for the sigmoid function determining which detected edges to shade (inclusion) */
-	float computedShift;			/**< Additive constant for the Cel shading of the volume */
+	float celr;						/**< Multiplicative constant for Cel shading of the volume */
+	float cela;						/**< Start */
+	float celb;						/**< Stop */
+	float celc;						/**< Additive constant for the Cel shading of the volume */
+	
+	//Distance shading constants
+	float disr;						/**< Multiplicative constant for distance shading of the volume */
+	float disa;						/**< Start */
+	float disb;						/**< Stop */
+	float disc;						/**< Additive constant for the distance shading of the volume */
 
 } cudaRendererInformation;
 
