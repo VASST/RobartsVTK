@@ -47,6 +47,8 @@ protected:
 	 *
 	 */
 	~vtkCuda1DVolumeMapper();
+	virtual void Reinitialize();
+	virtual void Deinitialize();
 	
 	vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 

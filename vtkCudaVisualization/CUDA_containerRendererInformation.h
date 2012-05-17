@@ -17,7 +17,6 @@
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the renderer.
  *
  */
-extern "C"
 typedef struct __align__(16)
 {
 	uint2 actualResolution;			/**< The resolution of the rendering screen */

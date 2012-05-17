@@ -274,20 +274,20 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 
 #include <stdio.h>
 
-extern "C"
 //pre: the resolution of the image has been processed such that it's x and y size are both multiples of 16 (enforced automatically) and y > 256 (enforced automatically)
 //post: the OutputImage pointer will hold the ray casted information
 bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo)
+							 const cuda2DTransferFunctionInformation& transInfo,
+							 cudaStream_t* stream)
 {
 
 	// setup execution parameters - staggered to improve parallelism
-	cudaMemcpyToSymbolAsync(volInfo, &volumeInfo, sizeof(cudaVolumeInformation));
-	cudaMemcpyToSymbolAsync(renInfo, &rendererInfo, sizeof(cudaRendererInformation));
-	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation));
-	cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DInExVolumeMapper_trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation));
+	cudaMemcpyToSymbolAsync(volInfo, &volumeInfo, sizeof(cudaVolumeInformation), 0, cudaMemcpyHostToDevice, *stream);
+	cudaMemcpyToSymbolAsync(renInfo, &rendererInfo, sizeof(cudaRendererInformation), 0, cudaMemcpyHostToDevice, *stream);
+	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation), 0, cudaMemcpyHostToDevice, *stream);
+	cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DInExVolumeMapper_trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation), 0, cudaMemcpyHostToDevice, *stream);
 
 	//create the necessary execution amount parameters from the block sizes and calculate th volume rendering integral
 	int blockX = outputInfo.resolution.x / BLOCK_DIM2D ;
@@ -295,21 +295,34 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
 
 	dim3 grid(blockX, blockY, 1);
 	dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
-	cudaThreadSynchronize();
-	CUDAkernel_renderAlgo_formRays <<< grid, threads >>>();
-	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite <<< grid, threads >>>();
+	CUDAkernel_renderAlgo_formRays <<< grid, threads, 0, *stream >>>();
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "2D Rendering Error Status 1: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite <<< grid, threads, 0, *stream >>>();
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "2D Rendering Error Status 2: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
 
 	//shade the image
 	grid.x = outputInfo.resolution.x*outputInfo.resolution.y / 256;
 	grid.y = 1;
 	threads.x = 256;
 	threads.y = 1;
-	cudaThreadSynchronize();
-	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade <<< grid, threads >>>();
-	cudaThreadSynchronize();
+	CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
-		printf( "2D Rendering Error Status: " );
+		cudaThreadSynchronize();
+		printf( "2D Rendering Error Status 3: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -317,8 +330,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputIma
 	return (cudaGetLastError() == 0);
 }
 
-extern "C"
-bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame){
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStream_t* stream){
 
 	// set the texture to the correct image
 	CUDA_vtkCuda2DInExVolumeMapper_input_texture.normalized = false;						// access with unnormalized texture coordinates
@@ -332,6 +344,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame)
 							CUDA_vtkCuda2DInExVolumeMapper_sourceDataArray[frame], channelDesc);
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
 		printf( "Change Frame Status: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
@@ -340,35 +353,19 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(const int frame)
 	return (cudaGetLastError() == 0);
 }
 
-extern "C"
 //pre: the transfer functions are all of type float and are all of size FunctionSize
 //post: the alpha, colorR, G and B 2D textures will map to each transfer function
 bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* inExTF){
+								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* inExTF, cudaStream_t* stream){
 
 	//retrieve the size of the transer functions
 	size_t size = sizeof(float) * transInfo.functionSize;
 	
+	//define the texture mapping for the alpha component after copying information from host to device array
 	if(alphaTransferArray2DInex)
 		cudaFreeArray(alphaTransferArray2DInex);
-	if(colorRTransferArray2DInex)
-		cudaFreeArray(colorRTransferArray2DInex);
-	if(colorGTransferArray2DInex)
-		cudaFreeArray(colorGTransferArray2DInex);
-	if(colorBTransferArray2DInex)
-		cudaFreeArray(colorBTransferArray2DInex);
-	if(inExLogicTransferArray2DInex)
-		cudaFreeArray(colorBTransferArray2DInex);
-		
-	//allocate space for the arrays
 	cudaMallocArray( &alphaTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorRTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorGTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &colorBTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-	cudaMallocArray( &inExLogicTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
-		
-	//define the texture mapping for the alpha component after copying information from host to device array
-	cudaMemcpyToArray(alphaTransferArray2DInex, 0, 0, alphaTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
+	cudaMemcpyToArrayAsync(alphaTransferArray2DInex, 0, 0, alphaTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 	alpha_texture_2DInex.normalized = true;
 	alpha_texture_2DInex.filterMode = cudaFilterModePoint;
 	alpha_texture_2DInex.addressMode[0] = cudaAddressModeClamp;
@@ -376,7 +373,10 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	cudaBindTextureToArray(alpha_texture_2DInex, alphaTransferArray2DInex, channelDesc);
 		
 	//define the texture mapping for the red component after copying information from host to device array
-	cudaMemcpyToArray(colorRTransferArray2DInex, 0, 0, redTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
+	if(colorRTransferArray2DInex)
+		cudaFreeArray(colorRTransferArray2DInex);
+	cudaMallocArray( &colorRTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(colorRTransferArray2DInex, 0, 0, redTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 	colorR_texture_2DInex.normalized = true;
 	colorR_texture_2DInex.filterMode = cudaFilterModePoint;
 	colorR_texture_2DInex.addressMode[0] = cudaAddressModeClamp;
@@ -384,7 +384,10 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	cudaBindTextureToArray(colorR_texture_2DInex, colorRTransferArray2DInex, channelDesc);
 	
 	//define the texture mapping for the green component after copying information from host to device array
-	cudaMemcpyToArray(colorGTransferArray2DInex, 0, 0, greenTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
+	if(colorGTransferArray2DInex)
+		cudaFreeArray(colorGTransferArray2DInex);
+	cudaMallocArray( &colorGTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(colorGTransferArray2DInex, 0, 0, greenTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 	colorG_texture_2DInex.normalized = true;
 	colorG_texture_2DInex.filterMode = cudaFilterModePoint;
 	colorG_texture_2DInex.addressMode[0] = cudaAddressModeClamp;
@@ -392,7 +395,10 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	cudaBindTextureToArray(colorG_texture_2DInex, colorGTransferArray2DInex, channelDesc);
 	
 	//define the texture mapping for the blue component after copying information from host to device array
-	cudaMemcpyToArray(colorBTransferArray2DInex, 0, 0, blueTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
+	if(colorBTransferArray2DInex)
+		cudaFreeArray(colorGTransferArray2DInex);
+	cudaMallocArray( &colorBTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(colorBTransferArray2DInex, 0, 0, blueTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 	colorB_texture_2DInex.normalized = true;
 	colorB_texture_2DInex.filterMode = cudaFilterModePoint;
 	colorB_texture_2DInex.addressMode[0] = cudaAddressModeClamp;
@@ -400,7 +406,10 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	cudaBindTextureToArray(colorB_texture_2DInex, colorBTransferArray2DInex, channelDesc);
 	
 	//define the texture mapping for the blue component after copying information from host to device array
-	cudaMemcpyToArray(inExLogicTransferArray2DInex, 0, 0, inExTF, size*transInfo.functionSize, cudaMemcpyHostToDevice);
+	if(inExLogicTransferArray2DInex)
+		cudaFreeArray(colorBTransferArray2DInex);
+	cudaMallocArray( &inExLogicTransferArray2DInex, &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(inExLogicTransferArray2DInex, 0, 0, inExTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 	inExLogic_texture_2DInex.normalized = true;
 	inExLogic_texture_2DInex.filterMode = cudaFilterModePoint;
 	inExLogic_texture_2DInex.addressMode[0] = cudaAddressModeClamp;
@@ -408,6 +417,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	cudaBindTextureToArray(inExLogic_texture_2DInex, inExLogicTransferArray2DInex, channelDesc);
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
 		printf( "Bind transfer functions: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
@@ -416,11 +426,47 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTra
 	return (cudaGetLastError() == 0);
 }
 
-extern "C"
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(cudaStream_t* stream){
+	
+	//define the texture mapping for the alpha component after copying information from host to device array
+	if(alphaTransferArray2DInex)
+		cudaFreeArray(alphaTransferArray2DInex);
+	alphaTransferArray2DInex = 0;
+		
+	//define the texture mapping for the red component after copying information from host to device array
+	if(colorRTransferArray2DInex)
+		cudaFreeArray(colorRTransferArray2DInex);
+	colorRTransferArray2DInex = 0;
+	
+	//define the texture mapping for the green component after copying information from host to device array
+	if(colorGTransferArray2DInex)
+		cudaFreeArray(colorGTransferArray2DInex);
+	colorGTransferArray2DInex = 0;
+	
+	//define the texture mapping for the blue component after copying information from host to device array
+	if(colorBTransferArray2DInex)
+		cudaFreeArray(colorGTransferArray2DInex);
+	colorGTransferArray2DInex = 0;
+	
+	//define the texture mapping for the blue component after copying information from host to device array
+	if(inExLogicTransferArray2DInex)
+		cudaFreeArray(colorBTransferArray2DInex);
+	colorBTransferArray2DInex = 0;
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Bind transfer functions: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	return (cudaGetLastError() == 0);
+}
+
 //pre:	the data has been preprocessed by the volumeInformationHandler such that it is float data
 //		the index is between 0 and 100
 //post: the input_texture will map to the source data in voxel coordinate space
-bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, const int index){
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, const int index, cudaStream_t* stream){
 
 	// if the array is already populated with information, free it to prevent leaking
 	if(CUDA_vtkCuda2DInExVolumeMapper_sourceDataArray[index])
@@ -442,9 +488,10 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* d
 	copyParams.dstArray = CUDA_vtkCuda2DInExVolumeMapper_sourceDataArray[index];
 	copyParams.extent   = volumeSize;
 	copyParams.kind     = cudaMemcpyHostToDevice;
-	cudaMemcpy3D(&copyParams);
+	cudaMemcpy3DAsync(&copyParams, *stream);
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
 		printf( "Load volume information: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
@@ -454,14 +501,12 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* d
 
 }
 
-extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_initImageArray(){
+void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream){
 	for(int i = 0; i < 100; i++)
 		CUDA_vtkCuda2DInExVolumeMapper_sourceDataArray[i] = 0;
 }
 
-extern "C"
-void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_clearImageArray(){
+void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream){
 	for(int i = 0; i < 100; i++){
 		
 		// if the array is already populated with information, free it to prevent leaking

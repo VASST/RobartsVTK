@@ -7,9 +7,7 @@
 #include "vtkImageGradientMagnitude.h"
 #include "vtkCuda2DTransferFunction.h"
 
-extern "C" {
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.h"
-}
 
 vtkStandardNewMacro(vtkCuda2DTransferFunctionInformationHandler);
 
@@ -25,7 +23,18 @@ vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformatio
 }
 
 vtkCuda2DTransferFunctionInformationHandler::~vtkCuda2DTransferFunctionInformationHandler(){
+	this->Deinitialize();
 	this->SetInputData(NULL, 0);
+}
+
+void vtkCuda2DTransferFunctionInformationHandler::Deinitialize(){
+	this->ReserveGPU();
+	CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(this->GetStream());
+}
+
+void vtkCuda2DTransferFunctionInformationHandler::Reinitialize(){
+	this->lastModifiedTime = 0;
+	this->UpdateTransferFunction();
 }
 
 void vtkCuda2DTransferFunctionInformationHandler::SetInputData(vtkImageData* inputData, int index){
@@ -52,7 +61,7 @@ vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetTrans
 
 void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer function, don't
-	if(this->function->GetMTime() <= lastModifiedTime) return;
+	if(!this->function || this->function->GetMTime() <= lastModifiedTime) return;
 	lastModifiedTime = this->function->GetMTime();
 	
 	//calculate the gradient (to get max gradient values)
@@ -94,11 +103,13 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 
 	//map the trasfer functions to textures for fast access
 	this->TransInfo.functionSize = this->FunctionSize;
+	this->ReserveGPU();
 	CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
 		LocalColorRedTransferFunction,
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
-		LocalAlphaTransferFunction);
+		LocalAlphaTransferFunction,
+		this->GetStream());
 
 	//clean up the garbage
 	delete LocalColorRedTransferFunction;

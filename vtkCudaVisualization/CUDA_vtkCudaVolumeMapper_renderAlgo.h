@@ -27,17 +27,23 @@
  *  @pre The zBuffer consists only of numbers between 0.0f and 1.0f inclusive
  *
  */
-extern "C"
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY);
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX,
+													 const int zBufferSizeY, cudaStream_t* stream);
 
-/** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
+/** @brief Loads an random image into a 2D CUDA array for de-artifacting
  *
  *  @param randomRayOffsets A 16x16 array (in 1 dimension, so 256 elements) of random numbers
  *
  *  @pre Each number in randomRayOffsets is between 0.0f and 1.0f inclusive
  *
  */
-extern "C"
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets);
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets,
+															  cudaStream_t* stream);
+
+
+/** @brief Unloads the random image from the 2D CUDA array set before
+ *
+ */
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* stream);
 
 #endif

@@ -6,7 +6,7 @@
 #include "vector_types.h"
 #include "cuda.h"
 
-class vtkCudaObject : public vtkObject
+class vtkCudaObject
 {
 public:
 	static vtkCudaObject* New();
@@ -18,16 +18,19 @@ public:
 	void CallSyncThreads( );
 	cudaStream_t* vtkCudaObject::GetStream( );
 
+	void ReplicateObject( vtkCudaObject* object );
+
 protected:
 	vtkCudaObject();
 	~vtkCudaObject();
+	
+	virtual void Reinitialize() = 0;
+	virtual void Deinitialize() = 0;
 
 private:
-	vtkCudaObject operator=(const vtkCudaObject&); /**< not implemented */
-	vtkCudaObject(const vtkCudaObject&); /**< not implemented */
 
 	int DeviceNumber;
-	cudaStream_t DeviceStream;
+	cudaStream_t* DeviceStream;
 
 	vtkCudaDeviceManager* DeviceManager;
 

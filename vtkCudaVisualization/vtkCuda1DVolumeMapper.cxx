@@ -22,11 +22,26 @@ vtkStandardNewMacro(vtkCuda1DVolumeMapper);
 
 vtkCuda1DVolumeMapper::vtkCuda1DVolumeMapper()
 {
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_initImageArray();
 	this->transferFunctionInfoHandler = vtkCuda1DTransferFunctionInformationHandler::New();
+	this->Reinitialize();
+}
+
+void vtkCuda1DVolumeMapper::Deinitialize(){
+	this->vtkCudaVolumeMapper::Deinitialize();
+	this->ReserveGPU();
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
+}
+
+void vtkCuda1DVolumeMapper::Reinitialize(){
+	this->vtkCudaVolumeMapper::Reinitialize();
+	this->transferFunctionInfoHandler->ReplicateObject(this);
+	this->ReserveGPU();
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_initImageArray(this->GetStream());
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(this->currFrame, this->GetStream());
 }
 
 vtkCuda1DVolumeMapper::~vtkCuda1DVolumeMapper(){
+	this->Deinitialize();
 	this->transferFunctionInfoHandler->Delete();
 }
 
@@ -84,8 +99,10 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	}
 
 	//load data onto the GPU and clean up the CPU
-	if(!this->erroredOut)
-		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index);
+	if(!this->erroredOut){
+		this->ReserveGPU();
+		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index, this->GetStream());
+	}
 	if(input->GetScalarType() != VTK_FLOAT) delete buffer;
 
 	//inform transfer function handler of the data
@@ -93,8 +110,10 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 }
 
 void vtkCuda1DVolumeMapper::ChangeFrameInternal(unsigned int frame){
-	if(!this->erroredOut)
-		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(frame);
+	if(!this->erroredOut){
+		this->ReserveGPU();
+		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());
+	}
 }
 
 void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
@@ -107,11 +126,13 @@ void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 	this->transferFunctionInfoHandler->Update();
 
 	//perform the render
+	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
-		this->transferFunctionInfoHandler->GetTransferFunctionInfo() );
+		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream());
 
 }
 
 void vtkCuda1DVolumeMapper::ClearInputInternal(){
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray();
+	this->ReserveGPU();
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
 }

@@ -17,7 +17,6 @@
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the volume being renderered.
  *
  */
-extern "C"
 typedef struct __align__(16) {
 	// The scale and shift to transform intensity and gradient to indices in the transfer functions
 	float			intensityLow;			/**< Minimum intensity of the image */

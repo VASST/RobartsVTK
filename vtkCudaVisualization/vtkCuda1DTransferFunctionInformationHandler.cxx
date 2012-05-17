@@ -7,9 +7,7 @@
 #include "vtkColorTransferFunction.h"
 #include "vtkImageData.h"
 
-extern "C" {
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
-}
 
 vtkStandardNewMacro(vtkCuda1DTransferFunctionInformationHandler);
 
@@ -21,10 +19,22 @@ vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformatio
 	this->lastModifiedTime = 0;
 
 	this->InputData = NULL;
+	this->Reinitialize();
 }
 
 vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformationHandler(){
+	this->Deinitialize();
 	this->SetInputData(NULL, 0);
+}
+
+void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(){
+	this->ReserveGPU();
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures( this->GetStream() );
+}
+
+void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(){
+	lastModifiedTime = 0;
+	UpdateTransferFunction();
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::SetInputData(vtkImageData* inputData, int index){
@@ -54,8 +64,9 @@ void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtk
 
 void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer function, don't
-	if(this->colourFunction->GetMTime() <= lastModifiedTime &&
-		this->opacityFunction->GetMTime() <= lastModifiedTime ) return;
+	if(this->colourFunction || this->opacityFunction ||
+		(this->colourFunction->GetMTime() <= lastModifiedTime &&
+		this->opacityFunction->GetMTime() <= lastModifiedTime) ) return;
 	lastModifiedTime = (this->colourFunction->GetMTime() > this->opacityFunction->GetMTime()) ?
 		this->colourFunction->GetMTime() : this->opacityFunction->GetMTime();
 
@@ -88,7 +99,6 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 		LocalAlphaTransferFunction );
 	this->colourFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
 		LocalColorWholeTransferFunction );
-	double low;
 	for( int i = 0; i < this->FunctionSize; i++ ){
 		LocalColorRedTransferFunction[i] = LocalColorWholeTransferFunction[3*i];
 		LocalColorGreenTransferFunction[i] = LocalColorWholeTransferFunction[3*i+1];
@@ -98,11 +108,13 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//map the trasfer functions to textures for fast access
 	this->TransInfo.functionSize = this->FunctionSize;
 
+	this->ReserveGPU();
 	CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
 		LocalColorRedTransferFunction,
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
-		LocalAlphaTransferFunction);
+		LocalAlphaTransferFunction,
+		this->GetStream() );
 
 	//clean up the garbage
 	delete LocalColorRedTransferFunction;

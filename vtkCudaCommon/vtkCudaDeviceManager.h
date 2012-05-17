@@ -13,12 +13,12 @@ class vtkCudaObject;
 class vtkCudaDeviceManager : public vtkObject
 {
 public:
-	static vtkCudaDeviceManager* Singleton(){ return &(vtkCudaDeviceManager::singletonManager); };
+	static vtkCudaDeviceManager* Singleton();
 
 	int GetNumberOfDevices();
 	bool GetDevice(vtkCudaObject* caller, int device);
 	bool ReturnDevice(vtkCudaObject* caller, int device);
-	bool GetStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
+	bool GetStream(vtkCudaObject* caller, cudaStream_t** stream, int device);
 	bool ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
 
 	bool SynchronizeStream( cudaStream_t* stream );
@@ -35,12 +35,16 @@ private:
 	vtkCudaDeviceManager operator=(const vtkCudaDeviceManager&); /**< not implemented */
 	vtkCudaDeviceManager(const vtkCudaDeviceManager&); /**< not implemented */
 	
+	void DestroyEmptyStream( cudaStream_t* stream );
+
 	std::map<cudaStream_t*,int> StreamToDeviceMap;
 	std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
+	std::multimap<cudaStream_t*, vtkCudaObject*> StreamToObjectMap;
 
-	static vtkCudaDeviceManager singletonManager;
+	static vtkCudaDeviceManager* singletonManager;
 
 	vtkMutexLock* regularLock;
 
 };
+
 #endif /* __VTKCUDADEVICEMANAGER_H__ */

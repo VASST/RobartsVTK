@@ -69,6 +69,9 @@ protected:
 	 *
 	 */
 	~vtkCuda2DInExLogicVolumeMapper();
+
+	virtual void Reinitialize();
+	virtual void Deinitialize();
 	
 	vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
 

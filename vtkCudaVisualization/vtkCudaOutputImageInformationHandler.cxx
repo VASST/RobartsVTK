@@ -48,6 +48,14 @@ vtkCudaOutputImageInformationHandler::~vtkCudaOutputImageInformationHandler(){
 	if(this->deviceOutputImage) cudaFree(this->deviceOutputImage);
 }
 
+void vtkCudaOutputImageInformationHandler::Deinitialize(){
+	//TODO
+}
+
+void vtkCudaOutputImageInformationHandler::Reinitialize(){
+	//TODO
+}
+
 void vtkCudaOutputImageInformationHandler::SetRenderOutputScaleFactor(float scaleFactor) {
 	this->RenderOutputScaleFactor = (scaleFactor > 1.0) ? scaleFactor : 1.0;
 	this->Update();

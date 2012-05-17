@@ -17,7 +17,6 @@
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the volume being renderered.
  *
  */
-extern "C"
 typedef struct __align__(16) {
 	// The size and spacing of the volume
 	int3			VolumeSize;				/**< Size of the volume in X, Y and Z */

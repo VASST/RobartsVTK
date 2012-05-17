@@ -4,7 +4,7 @@
 #include "vtkCudaFunctionPolygonReader.h"
 
 //For ray-caster
-#include "vtkCuda2DInExLogicVolumeMapper.h"
+#include "vtkCuda2DVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPiecewiseFunction.h"
@@ -41,14 +41,14 @@ public:
         planes->Delete();
         }
     }
-  void SetMapper(vtkCuda2DInExLogicVolumeMapper* m) 
+  void SetMapper(vtkCuda2DVolumeMapper* m) 
     { this->Mapper = m; }
 
 protected:
   vtkBoxWidgetCallback() 
     { this->Mapper = 0; }
 
-  vtkCuda2DInExLogicVolumeMapper *Mapper;
+  vtkCuda2DVolumeMapper *Mapper;
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -58,14 +58,16 @@ int main(int argc, char** argv){
 	//retrieve the image
 	std::cout << "Enter META image filename" << std::endl;
 	std::string filename = "";
-	std::getline(std::cin, filename);
+	//std::getline(std::cin, filename);
+	filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
 	vtkMetaImageReader* imReader = vtkMetaImageReader::New();
 	imReader->SetFileName(filename.c_str());
 	imReader->Update();
 
 	//create the transfer function (or load from file for 2D)
 	std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
-	std::getline(std::cin, filename);
+	//std::getline(std::cin, filename);
+	filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
 	vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
 	vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
 	vizReader->SetFileName(filename.c_str());
@@ -76,10 +78,11 @@ int main(int argc, char** argv){
 	viz->Modified();
 
 	//assemble the ray caster
-	vtkCuda2DInExLogicVolumeMapper* mapper = vtkCuda2DInExLogicVolumeMapper::New();
+	vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
+	mapper->SetDevice(0);
 	mapper->SetInput( imReader->GetOutput() );
-	mapper->SetVisualizationFunction( viz );
-	mapper->SetInExLogicFunction( viz );
+	mapper->SetFunction( viz );
+	mapper->SetFunction( viz );
 
 	//assemble the VTK pipeline
 	vtkVolume* volume = vtkVolume::New();
@@ -90,6 +93,9 @@ int main(int argc, char** argv){
 	renderer->SetBackground(1.0,1.0,1.0);
 	vtkRenderWindow* window = vtkRenderWindow::New();
 	window->AddRenderer( renderer );
+	mapper->SetDevice(0);
+	mapper->SetInput( imReader->GetOutput() );
+	mapper->ChangeFrame(0);
 	window->Render();
 
 	//apply keyhole planes widget and interactor

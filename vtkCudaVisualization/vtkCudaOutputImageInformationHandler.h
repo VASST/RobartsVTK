@@ -17,11 +17,12 @@
 #include "vtkRayCastImageDisplayHelper.h"
 #include "vtkImageData.h"
 #include "vtkCudaMemoryTexture.h"
+#include "vtkCudaObject.h"
 
 /** @brief vtkCudaOutputImageInformationHandler handles all output image, buffering, texturing and OpenGL related information on behalf of the CUDA volume mapper to facilitate the rendering and display process
  *
  */
-class vtkCudaOutputImageInformationHandler : public vtkObject {
+class vtkCudaOutputImageInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 
 	/** @brief VTK compatible constructor method
@@ -94,6 +95,9 @@ protected:
 	 *
 	 */
 	~vtkCudaOutputImageInformationHandler();
+	
+	void Deinitialize();
+	void Reinitialize();
 
 private:
 	vtkCudaOutputImageInformationHandler& operator=(const vtkCudaOutputImageInformationHandler&); /**< not implemented */

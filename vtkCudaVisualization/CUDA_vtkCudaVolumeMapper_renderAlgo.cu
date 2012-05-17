@@ -4,13 +4,17 @@
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include <cuda.h>
 
+#include <stdio.h>
+
+#define DEBUG_VTKCUDAVISUALIZATION
+
 #define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 
 //execution parameters and general information
 __constant__ cudaVolumeInformation				volInfo;
 __constant__ cudaRendererInformation			renInfo;
 __constant__ cudaOutputImageInformation			outInfo;
-__constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
+__device__ float* dRandomRayOffsets;
 
 //texture element information for the ZBuffer
 cudaArray* ZBufferArray = 0;
@@ -417,15 +421,14 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade()
 	outInfo.deviceOutputImage[outindex] = colour;
 }
 
-extern "C"
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY, cudaStream_t* stream){
 
 	if(ZBufferArray)
 		cudaFreeArray(ZBufferArray);
 
 	//load the zBuffer from the host to the array
 	cudaMallocArray(&ZBufferArray, &channelDesc, zBufferSizeX, zBufferSizeY);
-	cudaMemcpyToArray(ZBufferArray, 0, 0, zBuffer, sizeof(float)*zBufferSizeX*zBufferSizeY, cudaMemcpyHostToDevice);
+	cudaMemcpyToArrayAsync(ZBufferArray, 0, 0, zBuffer, sizeof(float)*zBufferSizeX*zBufferSizeY, cudaMemcpyHostToDevice, *stream);
 
 	//define the texture parameters and bind the texture to the array
 	zbuffer_texture.normalized = true;
@@ -434,14 +437,44 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 	zbuffer_texture.addressMode[1] = cudaAddressModeClamp;
 	cudaBindTextureToArray(zbuffer_texture, ZBufferArray, channelDesc);
 	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Load Z-Buffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+		
 	return (cudaGetLastError() == 0);
 
 }
 
 //load in a random 16x16 noise array to deartefact the image in real time
-extern "C"
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets){
-	cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets, cudaStream_t* stream){
+	
+	cudaMalloc(&(dRandomRayOffsets), BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float));
+	cudaMemcpyAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float), cudaMemcpyHostToDevice, *stream);
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Load ray offsets: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+	
+	return (cudaGetLastError() == 0);
+}
+
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* stream){
+	if(dRandomRayOffsets) cudaFree(dRandomRayOffsets);
+	dRandomRayOffsets = 0;
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Unload ray offsets: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
 	return (cudaGetLastError() == 0);
 }
 

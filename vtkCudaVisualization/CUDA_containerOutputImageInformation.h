@@ -17,7 +17,6 @@
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the output image.
  *
  */
-extern "C"
 typedef struct
 {
 	uint2			resolution;				/**< The resolution of the texture/image that will be textured to the screen */

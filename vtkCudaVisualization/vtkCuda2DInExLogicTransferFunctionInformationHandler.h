@@ -13,11 +13,12 @@
 #include "vtkImageData.h"
 #include "CUDA_container2DTransferFunctionInformation.h"
 #include "vtkCuda2DTransferFunction.h"
+#include "vtkCudaObject.h"
 
 /** @brief vtkCuda2DInExLogicTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject {
+class vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 	
 	/** @brief VTK compatible constructor method
@@ -96,6 +97,9 @@ protected:
 	 *
 	 */
 	void UpdateTransferFunction();
+	
+	void Deinitialize();
+	void Reinitialize();
 
 private:
 	vtkCuda2DInExLogicTransferFunctionInformationHandler& operator=(const vtkCuda2DInExLogicTransferFunctionInformationHandler&); /**< Not implemented */

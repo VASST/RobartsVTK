@@ -2,23 +2,49 @@
 #include "vtkObjectFactory.h"
 #include "cuda_runtime_api.h"
 
-vtkStandardNewMacro(vtkCudaObject);
+void errorOut(vtkCudaObject* self, const char* message){
+	if (vtkObject::GetGlobalWarningDisplay())                    
+		 {                                                          
+		 vtkOStreamWrapper::EndlType endl;                          
+		 vtkOStreamWrapper::UseEndl(endl);                          
+		 vtkOStrStreamWrapper vtkmsg;                               
+		 vtkmsg << "ERROR: In " __FILE__ ", line " << __LINE__      
+				<< "\n" << "vtkCudaObject" << " (" << self     
+				<< "): " << message << "\n\n";                                          
+		 vtkmsg.rdbuf()->freeze(0); vtkObject::BreakOnError();      
+		 }                                                          
+}
 
 vtkCudaObject::vtkCudaObject(){
-	DeviceNumber = -1;
-	DeviceManager = vtkCudaDeviceManager::Singleton();
+	this->DeviceManager = vtkCudaDeviceManager::Singleton();
+	this->DeviceStream = 0;
+	this->DeviceNumber = 0;
+	bool result = this->DeviceManager->GetDevice(this, this->DeviceNumber);
+	if(result){
+		errorOut(this,"Device selected cannot be retrieved.");
+		this->DeviceNumber = -1;
+		return;
+	}
+	result = this->DeviceManager->GetStream(this, &(this->DeviceStream), this->DeviceNumber );
+	if(result){
+		errorOut(this,"Device selected cannot be retrieved.");
+		this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
+		this->DeviceNumber = -1;
+		return;
+	}
 }
 
 vtkCudaObject::~vtkCudaObject(){
-	//synchronize remainder of stream
+	//synchronize remainder of stream and return control of the device
 	this->CallSyncThreads();
+	this->DeviceManager->ReturnDevice( this, this->DeviceNumber );
 }
 
 void vtkCudaObject::SetDevice( int d ){
 	int numberOfDevices = this->DeviceManager->GetNumberOfDevices();
 
 	if( d < 0 || d >= numberOfDevices ){
-		vtkErrorMacro(<<"Device selected does not exist.");
+		errorOut(this,"Device selected does not exist.");
 		return;
 	}
 
@@ -27,17 +53,18 @@ void vtkCudaObject::SetDevice( int d ){
 		this->DeviceNumber = d;
 		bool result = this->DeviceManager->GetDevice(this, this->DeviceNumber);
 		if(result){
-			vtkErrorMacro(<<"Device selected cannot be retrieved.");
+			errorOut(this,"Device selected cannot be retrieved.");
 			this->DeviceNumber = -1;
 			return;
 		}
 		result = this->DeviceManager->GetStream(this, &(this->DeviceStream), this->DeviceNumber );
 		if(result){
-			vtkErrorMacro(<<"Device selected cannot be retrieved.");
+			errorOut(this,"Device selected cannot be retrieved.");
 			this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
 			this->DeviceNumber = -1;
 			return;
 		}
+		this->Reinitialize();
 
 	//if we are currently using that device, don't change anything
 	}else if(this->DeviceNumber == d){
@@ -45,47 +72,62 @@ void vtkCudaObject::SetDevice( int d ){
 
 	//finish all device business and set up a new device
 	}else{
-		this->DeviceManager->ReturnStream(this, &(this->DeviceStream), this->DeviceNumber );
+		this->Deinitialize();
+		this->DeviceManager->ReturnStream(this, this->DeviceStream, this->DeviceNumber );
+		this->DeviceStream = 0;
 		this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
 		this->DeviceNumber = d;
 		bool result = this->DeviceManager->GetDevice(this, this->DeviceNumber);
 		if(result){
-			vtkErrorMacro(<<"Device selected cannot be retrieved.");
+			errorOut(this,"Device selected cannot be retrieved.");
 			this->DeviceNumber = -1;
 			return;
 		}
 		result = this->DeviceManager->GetStream(this, &(this->DeviceStream), this->DeviceNumber );
 		if(result){
-			vtkErrorMacro(<<"Device selected cannot be retrieved.");
+			errorOut(this,"Device selected cannot be retrieved.");
 			this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
 			this->DeviceNumber = -1;
 			return;
 		}
+		this->Reinitialize();
 	}
 }
 
 void vtkCudaObject::ReserveGPU( ){
 	if( this->DeviceNumber == -1 ){
-		vtkErrorMacro(<<"No device set selected does not exist.");
+		errorOut(this,"No device set selected does not exist.");
 		return;
 	}
-	if(this->DeviceManager->ReserveGPU(&(this->DeviceStream))){
-		vtkErrorMacro(<<"Error REserving GPU");
+	if(this->DeviceManager->ReserveGPU(this->DeviceStream)){
+		errorOut(this,"Error REserving GPU");
 		return;
 	}
 }
 
 void vtkCudaObject::CallSyncThreads( ){
 	if( this->DeviceNumber == -1 ){
-		vtkErrorMacro(<<"No device set selected does not exist.");
+		errorOut(this,"No device set selected does not exist.");
 		return;
 	}
-	if(this->DeviceManager->SynchronizeStream(&(this->DeviceStream))){
-		vtkErrorMacro(<<"Error Synchronizing Streams");
+	if(this->DeviceManager->SynchronizeStream(this->DeviceStream)){
+		errorOut(this,"Error Synchronizing Streams");
 		return;
 	}
 }
 
 cudaStream_t* vtkCudaObject::GetStream( ){
-	return &(this->DeviceStream);
+	return this->DeviceStream;
+}
+
+void vtkCudaObject::ReplicateObject( vtkCudaObject* object ){
+	int oldDeviceNumber = this->DeviceNumber;
+	this->SetDevice( object->DeviceNumber );
+	if(	this->DeviceStream != object->DeviceStream ){
+		this->CallSyncThreads();
+		this->DeviceManager->ReturnStream(this, this->DeviceStream, oldDeviceNumber);
+		this->DeviceStream = 0;
+		this->DeviceStream = object->DeviceStream;
+		this->DeviceManager->GetStream( this, &(object->DeviceStream), object->DeviceNumber );
+	}
 }

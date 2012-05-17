@@ -13,11 +13,12 @@
 #include "vtkVolume.h"
 #include "vtkImageData.h"
 #include "CUDA_containerVolumeInformation.h"
+#include "vtkCudaObject.h"
 
 /** @brief vtkCudaVolumeInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCudaVolumeInformationHandler : public vtkObject {
+class vtkCudaVolumeInformationHandler : public vtkObject, public vtkCudaObject  {
 public:
 	
 	/** @brief VTK compatible constructor method
@@ -91,6 +92,9 @@ protected:
 	 *  @pre index is less than 100
 	 */
 	void UpdateImageData(int index);
+	
+	void Deinitialize();
+	void Reinitialize();
 
 private:
 	vtkCudaVolumeInformationHandler& operator=(const vtkCudaVolumeInformationHandler&); /**< Not implemented */

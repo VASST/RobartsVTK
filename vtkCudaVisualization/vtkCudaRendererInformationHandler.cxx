@@ -34,6 +34,14 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 	
 }
 
+void vtkCudaRendererInformationHandler::Deinitialize(){
+	//TODO
+}
+
+void vtkCudaRendererInformationHandler::Reinitialize(){
+	//TODO
+}
+
 vtkRenderer* vtkCudaRendererInformationHandler::GetRenderer(){
 	return this->Renderer;
 }
@@ -153,7 +161,7 @@ void vtkCudaRendererInformationHandler::LoadZBuffer(){
 	//remove old zBuffer and get a new one
 	if(this->ZBuffer) delete this->ZBuffer;
 	this->ZBuffer = this->Renderer->GetRenderWindow()->GetZbufferData(x1,y1,x2,y2);
-	CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y );
+	CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y, this->GetStream() );
 
 }
 

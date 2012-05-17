@@ -14,11 +14,12 @@
 #include "CUDA_container1DTransferFunctionInformation.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
+#include "vtkCudaObject.h"
 
 /** @brief vtkCuda1DTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda1DTransferFunctionInformationHandler : public vtkObject {
+class vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 	
 	/** @brief VTK compatible constructor method
@@ -87,6 +88,9 @@ protected:
 	 *
 	 */
 	void UpdateTransferFunction();
+	
+	void Deinitialize();
+	void Reinitialize();
 
 private:
 	vtkCuda1DTransferFunctionInformationHandler& operator=(const vtkCuda1DTransferFunctionInformationHandler&); /**< Not implemented */

@@ -26,11 +26,11 @@
  *  @pre CUDA-OpenGL interoperability is functional (ie. Only 1 OpenGL context which corresponds solely to the singular renderer/window)
  *
  */
-extern "C"
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo );
+							 const cuda2DTransferFunctionInformation& transInfo,
+							 cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
  *
@@ -39,20 +39,17 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
  *  @pre frame is less than the total number of frames and is non-negative
  *
  */
-extern "C"
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame);
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStream_t* stream);
 
 /** @brief Prepares the container for the frame at the initialization of the renderer
  *
  */
-extern "C"
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray();
+void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream);
 
 /** @brief Deallocates the frames and clears the container (needed for ray caster deallocation)
  *
  */
-extern "C"
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray();
+void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream);
 
 /** @brief Loads the RGBA 2D transfer functions into texture memory
  *
@@ -66,9 +63,9 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray();
  *  @pre Each transfer function is square with the intensities separated by 1, and gradients by FunctionSize
  *
  */
-extern "C"
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF);
+								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, cudaStream_t* stream);
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
  *
@@ -78,7 +75,6 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunc
  *  @pre index is between 0 and 99 inclusive
  *
  */
-extern "C"
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index);
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index, cudaStream_t* stream);
 
 #endif

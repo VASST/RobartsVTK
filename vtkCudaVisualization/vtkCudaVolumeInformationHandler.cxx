@@ -19,6 +19,13 @@ vtkCudaVolumeInformationHandler::~vtkCudaVolumeInformationHandler(){
 	this->SetInputData(NULL, 0);
 }
 
+void vtkCudaVolumeInformationHandler::Deinitialize(){
+	//TODO
+}
+
+void vtkCudaVolumeInformationHandler::Reinitialize(){
+	//TODO
+}
 
 vtkVolume* vtkCudaVolumeInformationHandler::GetVolume(){
 	return this->Volume;
