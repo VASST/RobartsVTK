@@ -197,6 +197,13 @@ IF (RobartsVTK_USE_ROBARTSULTRASOUND)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUltrasound)
 ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
 
+# vtkRobartsUtilies - contains random utilities like a Read-Write lock and Image Pipe over TCI/IP
+OPTION (RobartsVTK_USE_ROBARTSUTILITIES "Build the vtkRobartsUltrasound module" OFF)
+IF (RobartsVTK_USE_ROBARTSUTILITIES)
+  SUBDIRS (vtkRobartsUtilities)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsUtilities)
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUtilities)
+ENDIF (RobartsVTK_USE_ROBARTSUTILITIES)
 
 # Add RobartsVTK.py.in file.  On Win32, this has to go into
 # all config 
