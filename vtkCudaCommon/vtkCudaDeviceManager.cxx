@@ -81,11 +81,15 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device){
 
 	//find if that is a valid mapping
 	bool found = false;
+	bool emptyDevice = true;
 	std::multimap<vtkCudaObject*,int>::iterator it = this->ObjectToDeviceMap.begin();
+	std::multimap<vtkCudaObject*,int>::iterator eraseIt = this->ObjectToDeviceMap.begin();
 	for( ; it != this->ObjectToDeviceMap.end(); it++ ){
 		if( it->first == caller && it->second == device ){
 			found = true;
-			break;
+			eraseIt = it;
+		}else if(it->second == device){
+			emptyDevice = false;
 		}
 	}
 	if( !found ){
@@ -107,7 +111,14 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device){
 			this->ReturnStream(caller, *it, device );
 
 	//remove that part of the mapping
-	this->ObjectToDeviceMap.erase(it);
+	this->ObjectToDeviceMap.erase(eraseIt);
+	if( emptyDevice ){
+		int oldDevice = 0;
+		cudaGetDevice( &oldDevice );
+		if( device != oldDevice ) cudaSetDevice( device );
+		cudaDeviceReset();
+		if( device != oldDevice ) cudaSetDevice( oldDevice );
+	}
 	this->regularLock->Unlock();
 	return false;
 }

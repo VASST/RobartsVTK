@@ -28,6 +28,7 @@
 
 #include "vtkRenderer.h"
 #include "vtkVolume.h"
+#include <map>
 
 /** @brief vtkCudaVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
@@ -173,8 +174,8 @@ protected:
 	 */
 	virtual ~vtkCudaVolumeMapper();
 
-	virtual void Reinitialize();
-	virtual void Deinitialize();
+	virtual void Reinitialize(int withData = 0);
+	virtual void Deinitialize(int withData = 0);
 
 	vtkCudaRendererInformationHandler* RendererInfoHandler;		/**< The handler for any renderer/camera/geometry/clipping information */
 	vtkCudaVolumeInformationHandler* VolumeInfoHandler;			/**< The handler for any volume/transfer function information */
@@ -202,6 +203,8 @@ protected:
 	vtkTransform	*NextVoxelsToViewTransform;					/**< Temporary storage of the next voxels to view transformation used to speed the process of switching/recalculating matrices */
 
 	bool			erroredOut;									/**< Boolean to describe whether it is safe to render */
+
+	std::map<int, vtkImageData*>	inputImages;				/**< Map of the frame number to it's CPU-based buffer */
 
 private:
 

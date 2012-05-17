@@ -26,12 +26,17 @@ vtkCudaOutputImageInformationHandler::vtkCudaOutputImageInformationHandler(){
 	this->deviceOutputImage = 0;
 	this->OutputImageInfo.renderType = 1;
 	this->oldRenderType = 1;
-	this->MemoryTexture = vtkCudaMemoryTexture::New();
-
+	this->Reinitialize();
 }
 
 
 vtkCudaOutputImageInformationHandler::~vtkCudaOutputImageInformationHandler(){
+	this->Deinitialize();
+	this->Displayer->Delete();
+}
+
+void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){	
+	this->MemoryTexture->Delete();
 	if(this->OutputImageInfo.numSteps) cudaFree(this->OutputImageInfo.numSteps);
 	if(this->OutputImageInfo.excludeStart) cudaFree(this->OutputImageInfo.excludeStart);
 	if(this->OutputImageInfo.excludeEnd) cudaFree(this->OutputImageInfo.excludeEnd);
@@ -42,18 +47,22 @@ vtkCudaOutputImageInformationHandler::~vtkCudaOutputImageInformationHandler(){
 	if(this->OutputImageInfo.rayStartX) cudaFree(this->OutputImageInfo.rayStartX);
 	if(this->OutputImageInfo.rayStartY) cudaFree(this->OutputImageInfo.rayStartY);
 	if(this->OutputImageInfo.rayStartZ) cudaFree(this->OutputImageInfo.rayStartZ);
-	this->Displayer->Delete();
-	this->MemoryTexture->Delete();
 	if(this->hostOutputImage) delete this->hostOutputImage;
 	if(this->deviceOutputImage) cudaFree(this->deviceOutputImage);
+	this->OutputImageInfo.resolution.x = this->OutputImageInfo.resolution.y = 0;
+	this->oldResolution.x = this->oldResolution.y = 0;
+	this->OutputImageInfo.depthBuffer = this->OutputImageInfo.numSteps = 0;
+	this->OutputImageInfo.excludeStart = this->OutputImageInfo.excludeEnd = 0;
+	this->OutputImageInfo.rayIncX = this->OutputImageInfo.rayStartX = 0;
+	this->OutputImageInfo.rayIncY = this->OutputImageInfo.rayStartY = 0;
+	this->OutputImageInfo.rayIncZ = this->OutputImageInfo.rayStartZ = 0;
+	this->hostOutputImage = 0;
+	this->deviceOutputImage = 0;
 }
 
-void vtkCudaOutputImageInformationHandler::Deinitialize(){
-	//TODO
-}
-
-void vtkCudaOutputImageInformationHandler::Reinitialize(){
-	//TODO
+void vtkCudaOutputImageInformationHandler::Reinitialize(int withData){	
+	this->MemoryTexture = vtkCudaMemoryTexture::New();
+	this->MemoryTexture->ReplicateObject(this);
 }
 
 void vtkCudaOutputImageInformationHandler::SetRenderOutputScaleFactor(float scaleFactor) {

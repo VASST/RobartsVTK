@@ -2,10 +2,11 @@
 #define __VTKCUDAMEMORYTEXTURE_H__
 
 #include "vtkObject.h"
+#include "vtkCudaObject.h"
 #include "vtkImageData.h"
 #include "vector_types.h"
 
-class vtkCudaMemoryTexture : public vtkObject
+class vtkCudaMemoryTexture : public vtkObject, public vtkCudaObject
 {
 public:
 	static vtkCudaMemoryTexture* New();
@@ -39,6 +40,8 @@ public:
 protected:
 	vtkCudaMemoryTexture();
 	~vtkCudaMemoryTexture();
+	void Reinitialize(int withData = 0);
+	void Deinitialize(int withData = 0);
 
 private:
 	void Initialize();

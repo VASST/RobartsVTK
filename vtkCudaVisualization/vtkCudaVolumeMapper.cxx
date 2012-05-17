@@ -46,11 +46,16 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 	this->Reinitialize();
 }
 
-void vtkCudaVolumeMapper::Deinitialize(){
+void vtkCudaVolumeMapper::Deinitialize(int withData){
 	CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(this->GetStream());
 }
 
-void vtkCudaVolumeMapper::Reinitialize(){
+void vtkCudaVolumeMapper::Reinitialize(int withData){
+	this->VolumeInfoHandler->ReplicateObject(this);
+	this->RendererInfoHandler->ReplicateObject(this);
+	this->OutputInfoHandler->ReplicateObject(this);
+
+	//initialize the random ray denoising buffer
 	float randomRayOffsets[256];
 	randomRayOffsets[0] = 0.70554; 	randomRayOffsets[1] = 0.53342;
 	randomRayOffsets[2] = 0.57951;	randomRayOffsets[3] = 0.28956;
@@ -181,6 +186,12 @@ void vtkCudaVolumeMapper::Reinitialize(){
 	randomRayOffsets[252] = 0.746;	randomRayOffsets[253] = 0.08855;
 	randomRayOffsets[254] = 0.63457;	randomRayOffsets[255] = 0.71302;
 	CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(randomRayOffsets,this->GetStream());
+
+	//re-copy the image data if any
+	for( std::map<int,vtkImageData*>::iterator it = this->inputImages.begin();
+		 it != this->inputImages.end(); it++ )
+		this->SetInputInternal(it->second, it->first);
+
 }
 
 void vtkCudaVolumeMapper::SetNumberOfFrames(int n) {
@@ -204,9 +215,11 @@ vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
 }
 
 void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
+
 	//set information at this level
 	this->vtkVolumeMapper::SetInput(input);
 	this->VolumeInfoHandler->SetInputData(input, 0);
+	this->inputImages.insert( std::pair<int,vtkImageData*>(0,input) );
 	
 	//pass down to subclass
 	this->SetInputInternal( input, 0 );
@@ -220,6 +233,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 	//set information at this level
 	this->vtkVolumeMapper::SetInput(input);
 	this->VolumeInfoHandler->SetInputData(input, index);
+	this->inputImages.insert( std::pair<int,vtkImageData*>(index,input) );
 
 	//pass down to subclass
 	this->SetInputInternal(input, index);
@@ -229,6 +243,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 void vtkCudaVolumeMapper::ClearInput(){
 	//clear information at this class level
 	this->VolumeInfoHandler->ClearInput();
+	this->inputImages.clear();
 
 	//pass down to subclass
 	this->ClearInputInternal();

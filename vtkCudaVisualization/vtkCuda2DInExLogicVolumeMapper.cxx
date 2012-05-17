@@ -27,7 +27,7 @@ vtkCuda2DInExLogicVolumeMapper::~vtkCuda2DInExLogicVolumeMapper(){
 	this->transferFunctionInfoHandler->Delete();
 }
 
-void vtkCuda2DInExLogicVolumeMapper::Reinitialize(){
+void vtkCuda2DInExLogicVolumeMapper::Reinitialize(int withData){
 	this->vtkCudaVolumeMapper::Reinitialize();
 	this->transferFunctionInfoHandler->ReplicateObject(this);
 	this->ReserveGPU();
@@ -35,7 +35,7 @@ void vtkCuda2DInExLogicVolumeMapper::Reinitialize(){
 	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(this->currFrame, this->GetStream());
 }
 
-void vtkCuda2DInExLogicVolumeMapper::Deinitialize(){
+void vtkCuda2DInExLogicVolumeMapper::Deinitialize(int withData){
 	this->ReserveGPU();
 	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
 }

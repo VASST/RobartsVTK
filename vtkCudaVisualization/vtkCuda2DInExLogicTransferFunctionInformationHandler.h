@@ -98,8 +98,8 @@ protected:
 	 */
 	void UpdateTransferFunction();
 	
-	void Deinitialize();
-	void Reinitialize();
+	void Deinitialize(int withData = 0);
+	void Reinitialize(int withData = 0);
 
 private:
 	vtkCuda2DInExLogicTransferFunctionInformationHandler& operator=(const vtkCuda2DInExLogicTransferFunctionInformationHandler&); /**< Not implemented */

@@ -124,8 +124,8 @@ protected:
 	 */
 	vtkCudaRendererInformationHandler();
 	
-	void Deinitialize();
-	void Reinitialize();
+	void Deinitialize(int withData = 0);
+	void Reinitialize(int withData = 0);
 
 private:
 	vtkCudaRendererInformationHandler& operator=(const vtkCudaRendererInformationHandler&); /**< not implemented */

@@ -24,8 +24,8 @@ protected:
 	vtkCudaObject();
 	~vtkCudaObject();
 	
-	virtual void Reinitialize() = 0;
-	virtual void Deinitialize() = 0;
+	virtual void Reinitialize(int withData = 0) = 0;
+	virtual void Deinitialize(int withData = 0) = 0;
 
 private:
 

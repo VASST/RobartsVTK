@@ -27,12 +27,12 @@ vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformati
 	this->SetInputData(NULL, 0);
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(){
+void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
 	CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures( this->GetStream() );
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(){
+void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(int withData){
 	lastModifiedTime = 0;
 	UpdateTransferFunction();
 }

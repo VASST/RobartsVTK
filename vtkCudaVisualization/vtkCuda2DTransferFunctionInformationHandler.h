@@ -85,8 +85,8 @@ protected:
 	 */
 	void UpdateTransferFunction();
 	
-	void Deinitialize();
-	void Reinitialize();
+	void Deinitialize(int withData = 0);
+	void Reinitialize(int withData = 0);
 
 private:
 	vtkCuda2DTransferFunctionInformationHandler& operator=(const vtkCuda2DTransferFunctionInformationHandler&); /**< Not implemented */

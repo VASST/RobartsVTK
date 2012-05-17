@@ -12,19 +12,35 @@
 
 vtkStandardNewMacro(vtkCudaMemoryTexture);
 
-vtkCudaMemoryTexture::vtkCudaMemoryTexture()
-{
+vtkCudaMemoryTexture::vtkCudaMemoryTexture(){
 	this->Initialize();
 }
 
-vtkCudaMemoryTexture::~vtkCudaMemoryTexture()
-{
+vtkCudaMemoryTexture::~vtkCudaMemoryTexture(){
+	this->Deinitialize();
+}
+
+void vtkCudaMemoryTexture::Deinitialize(int withData){
+	
+	this->ReserveGPU();
+	if(this->CudaOutputData) cudaFree( (void*) this->CudaOutputData );
+	this->CudaOutputData = 0;
+
 	if (this->TextureID == 0 || !glIsTexture(this->TextureID))
 		glGenTextures(1, &this->TextureID);
 
 	if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == true)
 		if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
 			vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
+}
+
+void vtkCudaMemoryTexture::Reinitialize(int withData){
+	this->Initialize();
+	if(!this->CudaOutputData){
+		this->ReserveGPU();
+		cudaMalloc( (void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height );
+		this->RebuildBuffer();
+	}
 }
 
 bool  vtkCudaMemoryTexture::GLBufferObjectsAvailiable = false;
@@ -64,7 +80,8 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
 
 		this->Width = width;
 		this->Height = height;
-
+		
+		this->ReserveGPU();
 		if(this->CudaOutputData) cudaFree( (void*) this->CudaOutputData );
 		if(this->LocalOutputData) delete this->LocalOutputData;
 
@@ -78,6 +95,7 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
 void vtkCudaMemoryTexture::RebuildBuffer()
 {
 	// TEXTURE CODE
+	this->ReserveGPU();
 	glEnable(GL_TEXTURE_2D);
 	if (this->TextureID != 0 && glIsTexture(this->TextureID))
 		glDeleteTextures(1, &this->TextureID);
@@ -93,6 +111,7 @@ void vtkCudaMemoryTexture::RebuildBuffer()
 	if (this->CurrentRenderMode == RenderToTexture)
 	{
 		// OpenGL Buffer Code
+		this->ReserveGPU();
 		if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
 			vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
 		vtkgl::GenBuffersARB(1, &this->BufferObjectID);
@@ -103,12 +122,9 @@ void vtkCudaMemoryTexture::RebuildBuffer()
 }
 void vtkCudaMemoryTexture::SetRenderMode(int mode)
 {
-	if (mode == RenderToTexture && vtkCudaMemoryTexture::GLBufferObjectsAvailiable)
-	{
+	if (mode == RenderToTexture && vtkCudaMemoryTexture::GLBufferObjectsAvailiable){
 		this->CurrentRenderMode = mode;
-	}
-	else
-	{
+	}else{
 		this->CurrentRenderMode = RenderToMemory;
 	}
 	this->RebuildBuffer();
@@ -116,6 +132,7 @@ void vtkCudaMemoryTexture::SetRenderMode(int mode)
 
 void vtkCudaMemoryTexture::BindTexture()
 {
+	this->ReserveGPU();
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, this->TextureID);
@@ -125,12 +142,13 @@ void vtkCudaMemoryTexture::BindBuffer()
 {
 	if (this->CurrentRenderMode == RenderToTexture)
 	{
+		this->ReserveGPU();
 		cudaGLRegisterBufferObject(this->BufferObjectID) ;
-		cudaThreadSynchronize();
+		cudaStreamSynchronize(*(this->GetStream()));
 
 		vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
 		cudaGLMapBufferObject((void**)&this->RenderDestination, this->BufferObjectID);
-		cudaThreadSynchronize();
+		cudaStreamSynchronize(*(this->GetStream()));
 	}
 	else
 	{
@@ -142,22 +160,25 @@ void vtkCudaMemoryTexture::UnbindBuffer()
 {
 	if (this->CurrentRenderMode == RenderToTexture)
 	{
+		this->ReserveGPU();
 		cudaGLUnmapBufferObject(this->BufferObjectID);
-		cudaThreadSynchronize();
+		cudaStreamSynchronize(*(this->GetStream()));
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
 		cudaGLUnregisterBufferObject(this->BufferObjectID) ;
-		cudaThreadSynchronize();
+		cudaStreamSynchronize(*(this->GetStream()));
 		vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
 	}
 	else // (this->CurrentRenderMode == RenderToMemory)
 	{
-		cudaMemcpy( this->LocalOutputData, this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost);
+		this->ReserveGPU();
+		cudaMemcpyAsync( this->LocalOutputData, this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()) );
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (void*) LocalOutputData );
 	}
 	this->RenderDestination = NULL;
 }
 void vtkCudaMemoryTexture::UnbindTexture()
 {
+	this->ReserveGPU();
 	glPopAttrib();
 }
 
@@ -172,8 +193,10 @@ bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
 		0, 1 - 1);
 	data->SetNumberOfScalarComponents(4);
 	data->AllocateScalars();
-
-	cudaMemcpy( (void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost );
+	
+	this->ReserveGPU();
+	cudaMemcpyAsync( (void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));
+	cudaStreamSynchronize( *(this->GetStream()) );
 
 	return true;
 }

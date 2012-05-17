@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#define DEBUG_VTKCUDAVISUALIZATION
+//#define DEBUG_VTKCUDAVISUALIZATION
 
 #define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 
@@ -446,6 +446,21 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 		
 	return (cudaGetLastError() == 0);
 
+}
+
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream){
+	if(ZBufferArray)
+		cudaFreeArray(ZBufferArray);
+	ZBufferArray = 0;
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Unload Z-Buffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	return (cudaGetLastError() == 0);
 }
 
 //load in a random 16x16 noise array to deartefact the image in real time

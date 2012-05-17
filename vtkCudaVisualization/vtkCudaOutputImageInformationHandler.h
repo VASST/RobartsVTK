@@ -96,8 +96,8 @@ protected:
 	 */
 	~vtkCudaOutputImageInformationHandler();
 	
-	void Deinitialize();
-	void Reinitialize();
+	void Deinitialize(int withData = 0);
+	void Reinitialize(int withData = 0);
 
 private:
 	vtkCudaOutputImageInformationHandler& operator=(const vtkCudaOutputImageInformationHandler&); /**< not implemented */

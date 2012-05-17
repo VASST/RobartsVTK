@@ -29,12 +29,12 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::~vtkCuda2DInExLogicTransfe
 	this->SetInputData(NULL, 0);
 }
 
-void vtkCuda2DInExLogicTransferFunctionInformationHandler::Deinitialize(){
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
 	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(this->GetStream());
 }
 
-void vtkCuda2DInExLogicTransferFunctionInformationHandler::Reinitialize(){
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::Reinitialize(int withData){
 	this->lastModifiedTime = 0;
 	this->UpdateTransferFunction();
 }

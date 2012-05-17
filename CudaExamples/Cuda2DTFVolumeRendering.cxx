@@ -94,8 +94,8 @@ int main(int argc, char** argv){
 	vtkRenderWindow* window = vtkRenderWindow::New();
 	window->AddRenderer( renderer );
 	mapper->SetDevice(0);
-	mapper->SetInput( imReader->GetOutput() );
-	mapper->ChangeFrame(0);
+	//mapper->SetInput( imReader->GetOutput() );
+	//mapper->ChangeFrame(0);
 	window->Render();
 
 	//apply keyhole planes widget and interactor
