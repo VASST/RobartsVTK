@@ -53,16 +53,16 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 	//apply a randomized offset to the ray
 	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
-
+	int maxSteps = __float2int_rd(numSteps) - retDepth;
 	rayStart.x += retDepth*rayInc.x;
 	rayStart.y += retDepth*rayInc.y;
 	rayStart.z += retDepth*rayInc.z;
-	retDepth += __float2int_rd(numSteps);
+	retDepth = maxSteps;
 
-	//calculate the number of times this can go through the loop
-	int maxSteps = __float2int_rd(numSteps);
-	bool skipStep = false;
-	bool backStep = false;
+	//allocate flags
+	char2 step;
+	step.x = 0;
+	step.y = 0;
 
 	//reformat the exclusion indices to use the same ordering (counting downwards rather than upwards)
 	excludeStart = maxSteps - excludeStart;
@@ -72,11 +72,13 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 	while( maxSteps > 0 ){
 
 		//if we are in the exclusion area, leave
-		if( excludeStart >= maxSteps && excludeEnd <= maxSteps ){
-			rayStart.x += rayInc.x;
-			rayStart.y += rayInc.y;
-			rayStart.z += rayInc.z;
-			maxSteps--;
+		if( excludeStart > maxSteps && excludeEnd < maxSteps ){
+			rayStart.x += (maxSteps-excludeEnd) * rayInc.x;
+			rayStart.y += (maxSteps-excludeEnd) * rayInc.y;
+			rayStart.z += (maxSteps-excludeEnd) * rayInc.z;
+			maxSteps = excludeEnd;
+			step.x = 0;
+			step.y = 0;
 			continue;
 		}
 
@@ -92,39 +94,41 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 					 - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * spaceY;
 		gradient.z = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f)
 					 - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * spaceZ;
-		const float gradMag = gradRangeMulti * (__log2f(gradient.x*gradient.x+gradient.y*gradient.y
-														+gradient.z*gradient.z+gradRangeOffset) + gradRangeLow);
-	
+		float gradMag = gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z;
+		const float gradMagIndex = gradRangeMulti * (__log2f(gradMag+gradRangeOffset) + gradRangeLow);
+
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
-		float alpha = tex2D(alpha_texture_2D, tempIndex, gradMag);
+		float alpha = tex2D(alpha_texture_2D, tempIndex, gradMagIndex);
+		
+		//determine the colour multiplier (with photorealistic shading)
+		const float multiplier = outputVal.w * alpha *
+						(shadeShift + shadeMultiplier * abs(gradient.x*rayInc.x + gradient.y*rayInc.y + gradient.z*rayInc.z)
+						* rsqrtf(gradMag) );
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
+		if(alpha > 0.0f){
 
-			//collect the alpha difference (if we sample now) as well as the colour multiplier (with photorealistic shading)
-			float multiplier = outputVal.w * alpha *
-								(shadeShift + shadeMultiplier * abs(gradient.x*rayInc.x + gradient.y*rayInc.y + gradient.z*rayInc.z)
-								* rsqrtf(gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z));
+			//collect the alpha difference (if we sample now)
 			alpha = (1.0f - alpha);
 
 			//determine which kind of step to make
-			backStep = skipStep;
-			skipStep = false;
+			step.x = step.y;
+			step.y = 0;
 
 			//move to the next sample point (may involve moving backward)
-			rayStart.x = rayStart.x + (backStep ? -rayInc.x : rayInc.x);
-			rayStart.y = rayStart.y + (backStep ? -rayInc.y : rayInc.y);
-			rayStart.z = rayStart.z + (backStep ? -rayInc.z : rayInc.z);
-			maxSteps = maxSteps + (backStep ? -1 : 1);
+			rayStart.x = rayStart.x + (step.x ? -rayInc.x : rayInc.x);
+			rayStart.y = rayStart.y + (step.x ? -rayInc.y : rayInc.y);
+			rayStart.z = rayStart.z + (step.x ? -rayInc.z : rayInc.z);
+			maxSteps = maxSteps + (step.x ? -1 : 1);
 
-			if(!backStep){
+			if(!step.x){
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
 				//accumulate the colour information from this sample point
-				outputVal.x += multiplier * tex2D(colorR_texture_2D, tempIndex, gradMag);
-				outputVal.y += multiplier * tex2D(colorG_texture_2D, tempIndex, gradMag);
-				outputVal.z += multiplier * tex2D(colorB_texture_2D, tempIndex, gradMag);
+				outputVal.x += multiplier * tex2D(colorR_texture_2D, tempIndex, gradMagIndex);
+				outputVal.y += multiplier * tex2D(colorG_texture_2D, tempIndex, gradMagIndex);
+				outputVal.z += multiplier * tex2D(colorB_texture_2D, tempIndex, gradMagIndex);
 			}
 			
 			//determine whether or not we've hit an opacity where further sampling becomes neglible
@@ -137,20 +141,20 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 		}else{
 
 			//if we aren't backstepping, we can skip a sample
-			if(!backStep){
+			if(!step.x){
 				rayStart.x += rayInc.x;
 				rayStart.y += rayInc.y;
 				rayStart.z += rayInc.z;
 				maxSteps--;
 			}
-			skipStep = !(backStep);
+			step.y = !(step.x);
 
 			//move to the next sample
 			rayStart.x += rayInc.x;
 			rayStart.y += rayInc.y;
 			rayStart.z += rayInc.z;
 			maxSteps--;
-			backStep = false;
+			step.x = 0;
 
 		}
 		
