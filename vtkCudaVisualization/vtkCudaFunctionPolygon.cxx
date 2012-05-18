@@ -159,7 +159,8 @@ void vtkCudaFunctionPolygon::PopulatePortionOfTransferTable(	int IntensitySize, 
 	if( logUsed & 2 ){
 		minG = (log(minG*minG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 		maxG = (log(maxG*maxG + GradientOffset) - log(GradientOffset) ) / log(2.0);
-	}else{
+	}
+	if( logUsed & 1 ){
 		minI = (log(minI*minI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 		maxI = (log(maxI*maxI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 	}
@@ -230,7 +231,8 @@ void vtkCudaFunctionPolygon::PopulatePortionOfClassifyTable(	int IntensitySize, 
 	if( logUsed & 2 ){
 		minG = (log(minG*minG + GradientOffset) - log(GradientOffset) ) / log(2.0);
 		maxG = (log(maxG*maxG + GradientOffset) - log(GradientOffset) ) / log(2.0);
-	}else{
+	}
+	if( logUsed & 1 ){
 		minI = (log(minI*minI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 		maxI = (log(maxI*maxI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
 	}

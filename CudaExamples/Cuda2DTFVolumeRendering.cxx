@@ -4,7 +4,7 @@
 #include "vtkCudaFunctionPolygonReader.h"
 
 //For ray-caster
-#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPiecewiseFunction.h"
@@ -15,6 +15,7 @@
 
 //general use
 #include "vtkImageData.h"
+#include "vtkImageAppendComponents.h"
 #include "vtkMetaImageReader.h"
 #include "vtkActor.h"
 #include "vtkRenderer.h"
@@ -37,18 +38,18 @@ public:
         {
         vtkPlanes *planes = vtkPlanes::New();
         widget->GetPlanes(planes);
-        this->Mapper->SetKeyholePlanes(planes);
+        this->Mapper->SetClippingPlanes(planes);
         planes->Delete();
         }
     }
-  void SetMapper(vtkCuda2DVolumeMapper* m) 
+  void SetMapper(vtkCudaDualImageVolumeMapper* m) 
     { this->Mapper = m; }
 
 protected:
   vtkBoxWidgetCallback() 
     { this->Mapper = 0; }
 
-  vtkCuda2DVolumeMapper *Mapper;
+  vtkCudaDualImageVolumeMapper *Mapper;
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -59,17 +60,30 @@ int main(int argc, char** argv){
 	std::cout << "Enter META image filename" << std::endl;
 	std::string filename = "";
 	//std::getline(std::cin, filename);
-	filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
+	//filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\JTM45-flip-p01.mhd";
-	vtkMetaImageReader* imReader = vtkMetaImageReader::New();
-	imReader->SetFileName(filename.c_str());
-	imReader->Update();
+	
+	filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
+	vtkMetaImageReader* imReader1 = vtkMetaImageReader::New();
+	imReader1->SetFileName(filename.c_str());
+	imReader1->Update();
+	
+	filename = "E:\\jbaxter\\data\\brain\\t2undiffused.mhd";
+	vtkMetaImageReader* imReader2 = vtkMetaImageReader::New();
+	imReader2->SetFileName(filename.c_str());
+	imReader2->Update();
+
+	vtkImageAppendComponents* appender = vtkImageAppendComponents::New();
+	appender->SetInput(0,imReader1->GetOutput());
+	appender->SetInput(1,imReader2->GetOutput());
+	appender->Update();
 
 	//create the transfer function (or load from file for 2D)
 	std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
 	//std::getline(std::cin, filename);
-	filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
+	//filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\heart.2tf";
+	filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
 	vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
 	vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
 	vizReader->SetFileName(filename.c_str());
@@ -80,9 +94,9 @@ int main(int argc, char** argv){
 	viz->Modified();
 
 	//assemble the ray caster
-	vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
+	vtkCudaDualImageVolumeMapper* mapper = vtkCudaDualImageVolumeMapper::New();
 	mapper->SetDevice(0);
-	mapper->SetInput( imReader->GetOutput() );
+	mapper->SetInput( appender->GetOutput() );
 	mapper->SetFunction( viz );
 	mapper->SetFunction( viz );
 
@@ -92,7 +106,7 @@ int main(int argc, char** argv){
 	vtkRenderer* renderer = vtkRenderer::New();
 	renderer->AddVolume( volume );
 	renderer->ResetCamera();
-	renderer->SetBackground(0.0,0.0,0.0);
+	renderer->SetBackground(1.0,1.0,1.0);
 	vtkRenderWindow* window = vtkRenderWindow::New();
 	window->AddRenderer( renderer );
 	window->Render();
@@ -103,7 +117,7 @@ int main(int argc, char** argv){
 	vtkBoxWidget* clippingPlanes = vtkBoxWidget::New();
 	clippingPlanes->SetInteractor( interactor );
 	clippingPlanes->SetPlaceFactor(1.01);
-	clippingPlanes->SetInput( imReader->GetOutput() );
+	clippingPlanes->SetInput( appender->GetOutput() );
 	clippingPlanes->SetDefaultRenderer(renderer);
 	clippingPlanes->InsideOutOn();
 	clippingPlanes->PlaceWidget();
@@ -127,7 +141,9 @@ int main(int argc, char** argv){
 	mapper->Delete();
 	viz->Delete();
 	vizReader->Delete();
-	imReader->Delete();
+	appender->Delete();
+	imReader1->Delete();
+	imReader2->Delete();
 
 
 }

@@ -62,6 +62,14 @@ SET ( Kit_SRCS
   vtkCuda2DInExLogicTransferFunctionInformationHandler.cxx
   vtkCuda2DInExLogicTransferFunctionInformationHandler.h
 
+  #Dual image rendering subclass
+  vtkCudaDualImageVolumeMapper.cxx
+  vtkCudaDualImageVolumeMapper.h
+  vtkCudaDualImageTransferFunctionInformationHandler.cxx
+  vtkCudaDualImageTransferFunctionInformationHandler.h
+  CUDA_containerDualImageTransferFunctionInformation.h
+  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h
 )
 
 CUDA_ADD_LIBRARY( vtkCudaVisualization ${Kit_SRCS} )

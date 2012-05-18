@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-//#define DEBUG_VTKCUDAVISUALIZATION
+#define DEBUG_VTKCUDAVISUALIZATION
 
 #define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 
@@ -22,6 +22,7 @@ texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
 //channel for loading input data and transfer functions
 cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
+cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float2>();
 
 __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
 											 float& numSteps, float& excludeStart, float& excludeEnd ){
@@ -534,5 +535,6 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* st
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh"
+#include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"
 
 #endif
