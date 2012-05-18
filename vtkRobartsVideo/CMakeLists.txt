@@ -65,7 +65,16 @@ IF (RobartsVTK_USE_EPIPHAN)
        vtkEpiphanVideoSource.cxx
        #vtkEpiphanDualVideoSource.cxx 
   )
-  find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/)
+  set(bitness 32)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  	set(bitness 64)
+  endif()
+
+  IF (bitness EQUAL 32)
+	  find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/Win32)
+  ELSE (bitness EQUAL 64)
+	  find_library(FRMGRAB frmgrab ${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/epiphan/x64)
+  ENDIF()
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${FRMGRAB} comsuppw.lib )
 ENDIF (RobartsVTK_USE_EPIPHAN)
