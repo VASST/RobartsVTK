@@ -60,6 +60,7 @@ int main(int argc, char** argv){
 	std::string filename = "";
 	//std::getline(std::cin, filename);
 	filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
+	//filename = "E:\\jbaxter\\data\\4D Heart\\JTM45-flip-p01.mhd";
 	vtkMetaImageReader* imReader = vtkMetaImageReader::New();
 	imReader->SetFileName(filename.c_str());
 	imReader->Update();
@@ -68,6 +69,7 @@ int main(int argc, char** argv){
 	std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
 	//std::getline(std::cin, filename);
 	filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
+	//filename = "E:\\jbaxter\\data\\4D Heart\\heart.2tf";
 	vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
 	vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
 	vizReader->SetFileName(filename.c_str());
@@ -90,7 +92,7 @@ int main(int argc, char** argv){
 	vtkRenderer* renderer = vtkRenderer::New();
 	renderer->AddVolume( volume );
 	renderer->ResetCamera();
-	renderer->SetBackground(1.0,1.0,1.0);
+	renderer->SetBackground(0.0,0.0,0.0);
 	vtkRenderWindow* window = vtkRenderWindow::New();
 	window->AddRenderer( renderer );
 	window->Render();

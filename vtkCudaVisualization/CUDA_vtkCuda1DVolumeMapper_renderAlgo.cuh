@@ -49,15 +49,16 @@ __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStar
 	//apply a randomized offset to the ray
 	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
+	int maxSteps = __float2int_rd(numSteps) - retDepth;
 	rayStart.x += retDepth*rayInc.x;
 	rayStart.y += retDepth*rayInc.y;
 	rayStart.z += retDepth*rayInc.z;
-	retDepth += __float2int_rd(numSteps);
+	retDepth = maxSteps;
 
-	//calculate the number of times this can go through the loop
-	int maxSteps = __float2int_rd(numSteps);
-	bool skipStep = false;
-	bool backStep = false;
+	//allocate flags
+	char2 step;
+	step.x = 0;
+	step.y = 0;
 
 	//reformat the exclusion indices to use the same ordering (counting downwards rather than upwards)
 	excludeStart = maxSteps - excludeStart;
@@ -67,11 +68,13 @@ __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStar
 	while( maxSteps > 0 ){
 
 		//if we are in the exclusion area, leave
-		if( excludeStart >= maxSteps && excludeEnd <= maxSteps ){
-			rayStart.x += rayInc.x;
-			rayStart.y += rayInc.y;
-			rayStart.z += rayInc.z;
-			maxSteps--;
+		if( excludeStart > maxSteps && excludeEnd < maxSteps ){
+			rayStart.x += (maxSteps-excludeEnd) * rayInc.x;
+			rayStart.y += (maxSteps-excludeEnd) * rayInc.y;
+			rayStart.z += (maxSteps-excludeEnd) * rayInc.z;
+			maxSteps = excludeEnd;
+			step.x = 0;
+			step.y = 0;
 			continue;
 		}
 
@@ -88,28 +91,30 @@ __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStar
 					 - tex3D(CUDA_vtkCuda1DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * spaceZ;
 	
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
+		// as well as the colour multiplier (with photorealistic shading)
 		float alpha = tex1D(alpha_texture_1D, tempIndex);
+		float multiplier = outputVal.w * alpha *
+					(shadeShift + shadeMultiplier * abs(gradient.x*rayInc.x + gradient.y*rayInc.y + gradient.z*rayInc.z)
+					* rsqrtf(gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z));
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f){
+		if(alpha > 0.0f){
 
-			//collect the alpha difference (if we sample now) as well as the colour multiplier (with photorealistic shading)
-			float multiplier = outputVal.w * alpha *
-								(shadeShift + shadeMultiplier * abs(gradient.x*rayInc.x + gradient.y*rayInc.y + gradient.z*rayInc.z)
-								* rsqrtf(gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z));
+			//collect the alpha difference (if we sample now) 
+
 			alpha = (1.0f - alpha);
-
+			
 			//determine which kind of step to make
-			backStep = skipStep;
-			skipStep = false;
+			step.x = step.y;
+			step.y = 0;
 			
 			//move to the next sample point (may involve moving backward)
-			rayStart.x = rayStart.x + (backStep ? -rayInc.x : rayInc.x);
-			rayStart.y = rayStart.y + (backStep ? -rayInc.y : rayInc.y);
-			rayStart.z = rayStart.z + (backStep ? -rayInc.z : rayInc.z);
-			maxSteps = maxSteps + (backStep ? -1 : 1);
+			rayStart.x = rayStart.x + (step.x ? -rayInc.x : rayInc.x);
+			rayStart.y = rayStart.y + (step.x ? -rayInc.y : rayInc.y);
+			rayStart.z = rayStart.z + (step.x ? -rayInc.z : rayInc.z);
+			maxSteps = maxSteps + (step.x ? -1 : 1);
 
-			if(!backStep){
+			if(!step.x){
 				//accumulate the opacity for this sample point
 				outputVal.w *= alpha;
 
@@ -128,20 +133,20 @@ __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStar
 		}else{
 
 			//if we aren't backstepping, we can skip a sample
-			if(!backStep){
+			if(!step.x){
 				rayStart.x += rayInc.x;
 				rayStart.y += rayInc.y;
 				rayStart.z += rayInc.z;
 				maxSteps--;
 			}
-			skipStep = !(backStep);
+			step.y = !(step.x);
 
 			//move to the next sample
 			rayStart.x += rayInc.x;
 			rayStart.y += rayInc.y;
 			rayStart.z += rayInc.z;
 			maxSteps--;
-			backStep = false;
+			step.x = 0;
 
 		}
 		
