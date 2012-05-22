@@ -96,6 +96,9 @@ vtkEpiphanVideoSource::~vtkEpiphanVideoSource()
 void vtkEpiphanVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent); 
+  os << indent << "SerialNumber: "<< this->serialNumber << "\n";
+  os << indent << "Status: "<< this->status << "\n";
+  os << indent << "Grabber: " << this->fg << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -208,9 +211,7 @@ void vtkEpiphanVideoSource::InternalGrab()
     {
     index += this->FrameBufferSize;
     }
-
-  //imguAllocate(&IA, frame->mode.width, frame->mode.height,3);
-
+  
   char *buffer = (char *)frame->pixbuf;
   
   // Get a pointer to the location of the frame buffer
@@ -416,8 +417,6 @@ void vtkEpiphanVideoSource::SetOutputFormat(int format)
     {
     return;
     }
-
-  
 
   // convert color format to number of scalar components
   int numComponents = 1;
