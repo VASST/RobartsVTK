@@ -1,6 +1,6 @@
 //For video capture
 #include "vtkDirectShowVideoSource.h"
-#include "vtkVideoSource2.h"
+#include "vtkVuzixARScene.h"
 
 //general use
 #include "vtkImageData.h"
@@ -15,27 +15,32 @@
 int main(int argc, char** argv){
 
 	//set up the video source for capturing
-	vtkDirectShowVideoSource* videoSource = vtkDirectShowVideoSource::New();
-	for( int i = 0; i < videoSource->GetNumberOfDevices(); i++ ){
-		std::cout << videoSource->GetDeviceName(i) << std::endl;
-	}
-	videoSource->SetVideoSourceNumber(1);
-	videoSource->SetFrameRate(30);
-	videoSource->SetFrameBufferSize(100);
-	videoSource->Initialize();
-	videoSource->Record();
+	vtkDirectShowVideoSource* videoSourceLeft = vtkDirectShowVideoSource::New();
+	videoSourceLeft->SetVideoSourceNumber(0);
+	videoSourceLeft->SetFrameRate(20);
+	videoSourceLeft->SetFrameBufferSize(10);
+	videoSourceLeft->Initialize();
+	videoSourceLeft->Record();
+	vtkDirectShowVideoSource* videoSourceRight = vtkDirectShowVideoSource::New();
+	videoSourceRight->SetVideoSourceNumber(1);
+	videoSourceRight->SetFrameRate(20);
+	videoSourceRight->SetFrameBufferSize(10);
+	videoSourceRight->Initialize();
+	videoSourceRight->Record();
 
 	//set up a texture to display in the renderer
-	vtkTexture* background = vtkTexture::New();
-	background->SetInput( videoSource->GetOutput() );
+	vtkVuzixARScene* arScene = vtkVuzixARScene::New();
+	arScene->SetLeftEyeSource( videoSourceLeft->GetOutput() );
+	arScene->SetRightEyeSource( videoSourceRight->GetOutput() );
+	vtkRenderer* renderLeft = arScene->GetLeftEyeView();
+	vtkRenderer* renderRight = arScene->GetRightEyeView();
+	renderLeft->SetViewport(0,0,0.5,1);
+	renderRight->SetViewport(0.5,0,1,1);
 
 	//set up the remainder of the VTK pipeline
-	vtkRenderer* renderer = vtkRenderer::New();
-	renderer->ResetCamera();
-	renderer->SetBackgroundTexture(background);
-	renderer->SetTexturedBackground(true);
 	vtkRenderWindow* window = vtkRenderWindow::New();
-	window->AddRenderer( renderer );
+	window->AddRenderer(renderLeft);
+	window->AddRenderer(renderRight);
 	window->Render();
 
 	//apply keyhole planes widget and interactor
@@ -45,16 +50,18 @@ int main(int argc, char** argv){
 	//start the process
 	interactor->Initialize();
 	interactor->Start();
-	videoSource->Stop();
-	videoSource->Play();
+	videoSourceLeft->Stop();
+	videoSourceRight->Stop();
+	videoSourceLeft->Play();
+	videoSourceRight->Play();
 	interactor->Initialize();
 	interactor->Start();
 
 	//clean up pipeline
 	interactor->Delete();
 	window->Delete();
-	renderer->Delete();
-	background->Delete();
-	videoSource->Delete();
+	arScene->Delete();
+	videoSourceLeft->Delete();
+	videoSourceRight->Delete();
 
 }

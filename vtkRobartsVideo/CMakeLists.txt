@@ -26,7 +26,7 @@ IF (RobartsVTK_USE_DIRECTSHOW)
        vtkDirectShowVideoSource.cxx )
 
 	FIND_LIBRARY(STRMIIDS strmiids "C:/WinDDK/7600.16385.1/lib/win7/")
-	SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} strmiids)
+	SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} strmiids comsuppw.lib)
 
  	FIND_LIBRARY(DIRECTSHOW_BASECLASS_LIBRARY strmbase
 	    "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses/x64/Release"
