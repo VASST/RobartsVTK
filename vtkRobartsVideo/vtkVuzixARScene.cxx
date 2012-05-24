@@ -35,47 +35,61 @@ vtkVuzixARScene::vtkVuzixARScene(){
 	rightEyePose = vtkTransform::New();
 	rightEyePose->PostMultiply();
 
+	//allocate space for the temporary variables
+	leftFocalPoint = vtkTransform::New();
+	leftFocalPoint->PostMultiply();
+	rightFocalPoint = vtkTransform::New();
+	rightFocalPoint->PostMultiply();
+
 }
 
 vtkVuzixARScene::~vtkVuzixARScene(){
+	leftEyeTexture->Delete();
+	rightEyeTexture->Delete();
 	leftEyeRenderer->Delete();
 	rightEyeRenderer->Delete();
+	leftEyeCamera->Delete();
+	rightEyeCamera->Delete();
 	leftEyePose->Delete();
 	rightEyePose->Delete();
+	leftFocalPoint->Delete();
+	rightFocalPoint->Delete();
+	deviceToLeftEye->Delete();
+	deviceToRightEye->Delete();
 }
 
 
 void vtkVuzixARScene::Update(){
 
 	//compute the new camera poses
-	leftEyePose->Identity();
-	rightEyePose->Identity();
-	leftEyePose->Concatenate(deviceToLeftEye);
-	rightEyePose->Concatenate(deviceToRightEye);
+	leftEyePose->DeepCopy(deviceToLeftEye);
+	rightEyePose->DeepCopy(deviceToRightEye);
 	leftEyePose->Concatenate(trackedDevice);
 	rightEyePose->Concatenate(trackedDevice);
 
+	//use a reasonable value for the focal length (only matters for 
+	//resolution of the volume mapper)
 	double focalLength = 1.0;
 
-	vtkTransform* leftFocalPoint = vtkTransform::New();
+	//find the focal point of the left camera
 	leftFocalPoint->Identity();
-	leftFocalPoint->PostMultiply();
 	leftFocalPoint->Translate( 0, 0, focalLength );
 	leftFocalPoint->Concatenate( leftEyePose );
 	
+	//find the viewUp vector and position of the left camera
 	double* leftViewUp = leftEyePose->TransformDoublePoint(0,-1,0);
 	double leftPosition[3];
 	leftEyePose->GetPosition(leftPosition);
 	leftViewUp[0] -= leftPosition[0];
 	leftViewUp[1] -= leftPosition[1];
 	leftViewUp[2] -= leftPosition[2];
-
-	vtkTransform* rightFocalPoint = vtkTransform::New();
+	
+	//find the focal point of the right camera
 	rightFocalPoint->Identity();
-	rightFocalPoint->PostMultiply();
 	rightFocalPoint->Translate( 0, 0, focalLength );
 	rightFocalPoint->Concatenate( rightEyePose );
-
+	
+	//find the viewUp vector and position of the right camera
 	double* rightViewUp = rightEyePose->TransformDoublePoint(0,-1,0);
 	double rightPosition[3];
 	rightEyePose->GetPosition(rightPosition);
@@ -90,6 +104,10 @@ void vtkVuzixARScene::Update(){
 	rightEyeCamera->SetViewUp( rightViewUp );
 	leftEyeCamera->SetFocalPoint( leftFocalPoint->GetPosition() );
 	rightEyeCamera->SetFocalPoint( rightFocalPoint->GetPosition() );
+
+	//remove temporary variables
+	delete leftViewUp;
+	delete rightViewUp;
 
 	UpdateFrameSizes();
 
@@ -117,16 +135,6 @@ vtkRenderer* vtkVuzixARScene::GetLeftEyeView(){
 
 vtkRenderer* vtkVuzixARScene::GetRightEyeView(){
 	return rightEyeRenderer;
-}
-
-void vtkVuzixARScene::AddViewProp( vtkProp* p ){
-	leftEyeRenderer->AddViewProp(p);
-	rightEyeRenderer->AddViewProp(p);
-}
-
-void vtkVuzixARScene::RemoveViewProp( vtkProp* p ){
-	leftEyeRenderer->RemoveViewProp(p);
-	rightEyeRenderer->RemoveViewProp(p);
 }
 
 void vtkVuzixARScene::SetLeftEyeSource( vtkImageData* eye ){

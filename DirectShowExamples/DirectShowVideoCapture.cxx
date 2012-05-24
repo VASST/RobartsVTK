@@ -65,3 +65,38 @@ int main(int argc, char** argv){
 	videoSourceRight->Delete();
 
 }
+
+//#include "vtkTexture.h"
+//#include "vtkOpenCVVideoSource.h"
+//#include "vtkRenderer.h"
+//#include "vtkRenderWindow.h"
+//#include "vtkRenderWindowInteractor.h"
+//
+//#include <iostream>
+//using namespace std;
+//
+//int main ()
+//{
+//	//creats a new inputfeed object
+//	vtkOpenCVVideoSource *InputFeed = vtkOpenCVVideoSource::New();
+//	vtkTexture *texture = vtkTexture::New();//creats texture, which works as a background
+//	vtkRenderer *ren1 = vtkRenderer::New();//use to control what happens in the window
+//	vtkRenderWindow *renwin = vtkRenderWindow::New();//the window itself
+//	vtkRenderWindowInteractor *interact=vtkRenderWindowInteractor::New();//an interactor for the mouse
+//
+//	InputFeed->SetVideoSourceNumber(0);//Sets the video input to the first thing it sees
+//	InputFeed->Initialize();
+//	InputFeed->Record();
+//
+//	texture->SetInput(InputFeed->GetOutput());
+//	ren1->SetBackgroundTexture(texture);
+//	ren1->SetTexturedBackground(true);
+//	
+//	renwin->AddRenderer(ren1);
+//	renwin->SetInteractor(interact);
+//	renwin->Render();
+//	interact->Start();
+//
+//	InputFeed->Stop();
+//
+//} 

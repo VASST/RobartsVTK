@@ -24,10 +24,6 @@ public:
 	//methods for grabbing the renderers (to add to a render window)
 	vtkRenderer*	GetLeftEyeView();
 	vtkRenderer*	GetRightEyeView();
-
-	//methods for adding objects to scenes
-	void			AddViewProp( vtkProp* );
-	void			RemoveViewProp( vtkProp* );
 	
 	//methods for setting the source of the video feeds
 	void			SetLeftEyeSource( vtkImageData* );
@@ -35,9 +31,9 @@ public:
 
 	//method for setting the tracked device and rigid transforms from
 	//tracked device to camera
-	void			SetTrackedTransform( vtkTransform* );
-	void			SetLeftEyeTransform( vtkTransform* );
-	void			SetRightEyeTransform( vtkTransform* );
+	void			SetTrackedTransform( vtkTransform* ); //no assumptions about constancy
+	void			SetLeftEyeTransform( vtkTransform* ); //assumes landmark transform is constant
+	void			SetRightEyeTransform( vtkTransform* ); //assumes landmark transform is constant
 	void			SetLeftEyePixelwiseIntrinsicParameters( double fx,
 															double fy,
 															double cx,
@@ -70,6 +66,10 @@ private:
 	vtkTransform*	deviceToRightEye;
 	vtkTransform*	leftEyePose;
 	vtkTransform*	rightEyePose;
+
+	//temporary transforms used
+	vtkTransform*	leftFocalPoint;
+	vtkTransform*	rightFocalPoint;
 
 };
 
