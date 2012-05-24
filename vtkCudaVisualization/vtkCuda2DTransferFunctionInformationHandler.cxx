@@ -18,6 +18,11 @@ vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformatio
 	this->LowGradient = 0;
 	this->HighGradient = 10;
 	this->lastModifiedTime = 0;
+	
+	this->TransInfo.alphaTransferArray2D = 0;
+	this->TransInfo.colorRTransferArray2D = 0;
+	this->TransInfo.colorGTransferArray2D = 0;
+	this->TransInfo.colorBTransferArray2D = 0;
 
 	this->InputData = NULL;
 }
@@ -29,7 +34,7 @@ vtkCuda2DTransferFunctionInformationHandler::~vtkCuda2DTransferFunctionInformati
 
 void vtkCuda2DTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
-	CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(this->GetStream());
+	CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(this->TransInfo, this->GetStream());
 }
 
 void vtkCuda2DTransferFunctionInformationHandler::Reinitialize(int withData){

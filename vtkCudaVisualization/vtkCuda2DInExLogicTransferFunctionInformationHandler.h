@@ -11,7 +11,7 @@
 
 #include "vtkObject.h"
 #include "vtkImageData.h"
-#include "CUDA_container2DTransferFunctionInformation.h"
+#include "CUDA_container2DInExTransferFunctionInformation.h"
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaObject.h"
 
@@ -48,7 +48,7 @@ public:
 	/** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
 	 *
 	 */
-	const cuda2DTransferFunctionInformation& GetTransferFunctionInfo() const { return (this->TransInfo); }
+	const cuda2DInExTransferFunctionInformation& GetTransferFunctionInfo() const { return (this->TransInfo); }
 
 	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process
 	 *
@@ -107,8 +107,8 @@ private:
 
 private:
 	
-	vtkImageData*						InputData;		/**< The 3D image data currently being renderered */
-	cuda2DTransferFunctionInformation	TransInfo;		/**< The CUDA specific structure holding the required volume related information for rendering */
+	vtkImageData*							InputData;		/**< The 3D image data currently being renderered */
+	cuda2DInExTransferFunctionInformation	TransInfo;		/**< The CUDA specific structure holding the required volume related information for rendering */
 
 	vtkCuda2DTransferFunction* function;	/**< The 2 dimensional transfer function used to colour the volume during rendering */
 	vtkCuda2DTransferFunction* inExFunction;	/**< The 2 dimensional transfer function used for inclusion/exclusion logic */

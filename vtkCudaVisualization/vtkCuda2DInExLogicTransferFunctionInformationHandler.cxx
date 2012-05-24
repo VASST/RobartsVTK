@@ -21,6 +21,12 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransfer
 
 	this->InputData = NULL;
 
+	this->TransInfo.alphaTransferArray2D = 0;
+	this->TransInfo.colorRTransferArray2D = 0;
+	this->TransInfo.colorGTransferArray2D = 0;
+	this->TransInfo.colorBTransferArray2D = 0;
+	this->TransInfo.inExLogicTransferArray2D = 0;
+
 	this->Reinitialize();
 }
 
@@ -31,7 +37,7 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::~vtkCuda2DInExLogicTransfe
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
-	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(this->GetStream());
+	CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(this->TransInfo, this->GetStream());
 }
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::Reinitialize(int withData){

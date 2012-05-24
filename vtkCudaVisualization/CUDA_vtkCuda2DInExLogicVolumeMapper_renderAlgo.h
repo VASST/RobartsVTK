@@ -14,7 +14,7 @@
 #include "CUDA_containerRendererInformation.h"
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"
-#include "CUDA_container2DTransferFunctionInformation.h"
+#include "CUDA_container2DInExTransferFunctionInformation.h"
 
 /** @brief Compute the image of the volume taking into account occluding isosurfaces returning it in a CUDA-OpenGL compatible texture
  *
@@ -29,7 +29,7 @@
 bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo,
+							 const cuda2DInExTransferFunctionInformation& transInfo,
 							 cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
@@ -63,9 +63,9 @@ void CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_clearImageArray(cudaStream_t
  *  @pre Each transfer function is square with the intensities separated by 1, and gradients by FunctionSize
  *
  */
-bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(const cuda2DTransferFunctionInformation& transInfo,
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(cuda2DInExTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* inExTF, cudaStream_t* stream);
-bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(cudaStream_t* stream);
+bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(cuda2DInExTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
  *

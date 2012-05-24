@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef __CUDA2DTRANSFERFUNCTIONINFORMATION_H__
-#define __CUDA2DTRANSFERFUNCTIONINFORMATION_H__
+#ifndef __CUDA2DINEXTRANSFERFUNCTIONINFORMATION_H__
+#define __CUDA2DINEXTRANSFERFUNCTIONINFORMATION_H__
 
 #include "vector_types.h"
 
@@ -31,7 +31,8 @@ typedef struct __align__(16) {
 	cudaArray* colorRTransferArray2D;
 	cudaArray* colorGTransferArray2D;
 	cudaArray* colorBTransferArray2D;
+	cudaArray* inExLogicTransferArray2D;
 
-} cuda2DTransferFunctionInformation;
+} cuda2DInExTransferFunctionInformation;
 
 #endif

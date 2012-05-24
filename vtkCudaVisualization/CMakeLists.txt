@@ -59,6 +59,7 @@ SET ( Kit_SRCS
   vtkCuda2DInExLogicVolumeMapper.h
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h
+  CUDA_container2DInExTransferFunctionInformation.h
   vtkCuda2DInExLogicTransferFunctionInformationHandler.cxx
   vtkCuda2DInExLogicTransferFunctionInformationHandler.h
 
