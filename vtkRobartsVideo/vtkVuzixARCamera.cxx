@@ -6,7 +6,7 @@ vtkStandardNewMacro(vtkVuzixARCamera);
 
 //----------------------------------------------------------------------------
 vtkVuzixARCamera::vtkVuzixARCamera(){
-	fx = 854.067993;
+	fx = 854.067993; //Hmmmm...Are we sure about this?
 	fy = 856.185364;
 	cx = 307.904205;
 	cy = 249.460327;

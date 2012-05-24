@@ -174,7 +174,7 @@ IF (RobartsVTK_USE_ANIS)
 ENDIF (RobartsVTK_USE_ANIS)
 
 # vtkCuda
-OPTION (RobartsVTK_USE_CUDA "Build the CUDA module" OFF)
+OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
   
   # Look for CUDA facilities
@@ -183,10 +183,19 @@ IF (RobartsVTK_USE_CUDA)
   INCLUDE(FindCUDA)
   # Add Robart's CUDA libraries
   SUBDIRS(vtkCudaCommon)
-  SUBDIRS(vtkCudaVisualization)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon)
+  
+  # Add the CUDA Visualization Libraries
+  SUBDIRS(vtkCudaVisualization)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
-  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon vtkCudaVisualization)
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaVisualization)
+  
+  # Add the CUDA Analytics Libraries
+  SUBDIRS(vtkCudaImageAnalytics)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaImageAnalytics)
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaImageAnalytics)
+
 ENDIF (RobartsVTK_USE_CUDA)
 
 # vtkRobartsUltrasound - contains new freehand ultrasound code
