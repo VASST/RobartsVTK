@@ -62,8 +62,10 @@ vtkVuzixARScene::~vtkVuzixARScene(){
 void vtkVuzixARScene::Update(){
 
 	//compute the new camera poses
-	leftEyePose->DeepCopy(deviceToLeftEye);
-	rightEyePose->DeepCopy(deviceToRightEye);
+	leftEyePose->Identity();
+	rightEyePose->Identity();
+	leftEyePose->Concatenate(deviceToLeftEye);
+	rightEyePose->Concatenate(deviceToRightEye);
 	leftEyePose->Concatenate(trackedDevice);
 	rightEyePose->Concatenate(trackedDevice);
 
@@ -104,10 +106,6 @@ void vtkVuzixARScene::Update(){
 	rightEyeCamera->SetViewUp( rightViewUp );
 	leftEyeCamera->SetFocalPoint( leftFocalPoint->GetPosition() );
 	rightEyeCamera->SetFocalPoint( rightFocalPoint->GetPosition() );
-
-	//remove temporary variables
-	delete leftViewUp;
-	delete rightViewUp;
 
 	UpdateFrameSizes();
 
