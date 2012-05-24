@@ -55,7 +55,7 @@ void vtkVuzixARScene::Update(){
 	leftEyePose->Concatenate(trackedDevice);
 	rightEyePose->Concatenate(trackedDevice);
 
-	double focalLength = 1000.0;
+	double focalLength = 1.0;
 
 	vtkTransform* leftFocalPoint = vtkTransform::New();
 	leftFocalPoint->Identity();
