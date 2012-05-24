@@ -63,6 +63,7 @@ protected:
 	
 	vtkCuda2DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
+	static vtkMutexLock* tfLock;
 private:
 	vtkCuda2DVolumeMapper operator=(const vtkCuda2DVolumeMapper&); /**< not implemented */
 	vtkCuda2DVolumeMapper(const vtkCuda2DVolumeMapper&); /**< not implemented */

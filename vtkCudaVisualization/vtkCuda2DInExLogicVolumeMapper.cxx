@@ -17,6 +17,7 @@
 
 vtkStandardNewMacro(vtkCuda2DInExLogicVolumeMapper);
 
+vtkMutexLock* vtkCuda2DInExLogicVolumeMapper::tfLock = vtkMutexLock::New();
 vtkCuda2DInExLogicVolumeMapper::vtkCuda2DInExLogicVolumeMapper(){
 	this->transferFunctionInfoHandler = vtkCuda2DInExLogicTransferFunctionInformationHandler::New();
 	this->Reinitialize();
@@ -118,9 +119,11 @@ void vtkCuda2DInExLogicVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolum
 	this->transferFunctionInfoHandler->Update();
 
 	//perform the render
+	this->tfLock->Lock();
 	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
 		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream() );
+	this->tfLock->Unlock();
 
 }
 

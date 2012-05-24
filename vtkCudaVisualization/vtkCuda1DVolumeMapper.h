@@ -52,6 +52,8 @@ protected:
 	
 	vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
+	static vtkMutexLock* tfLock;
+
 private:
 	vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&); /**< not implemented */
 	vtkCuda1DVolumeMapper(const vtkCuda1DVolumeMapper&); /**< not implemented */

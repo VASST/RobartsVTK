@@ -63,10 +63,10 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream)
  *  @pre Each transfer function is square with the intensities separated by 1, and gradients by FunctionSize
  *
  */
-bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunctionInformation& transInfo,
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(cuda1DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
 								  cudaStream_t* stream);
-bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cudaStream_t* stream);
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
  *

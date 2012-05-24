@@ -75,6 +75,8 @@ protected:
 	
 	vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
+	static vtkMutexLock* tfLock;
+
 private:
 	vtkCuda2DInExLogicVolumeMapper operator=(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
 	vtkCuda2DInExLogicVolumeMapper(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */

@@ -24,6 +24,13 @@ typedef struct __align__(16) {
 	float			intensity2Low;			/**< Minimum intensity of the second component of the image */
 	float			intensity2Multiplier;	/**< Scale factor to normalize second intensities to between 0 and 1 */
 	unsigned int	functionSize;			/**< The size of the lookup table */
+	
+	//opague memory back for the transfer function
+	cudaArray* alphaTransferArrayDualImage;
+	cudaArray* colorRTransferArrayDualImage;
+	cudaArray* colorGTransferArrayDualImage;
+	cudaArray* colorBTransferArrayDualImage;
+
 } cudaDualImageTransferFunctionInformation;
 
 #endif

@@ -17,6 +17,11 @@ vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformatio
 
 	this->FunctionSize = 512;
 	this->lastModifiedTime = 0;
+	
+	this->TransInfo.alphaTransferArray1D = 0;
+	this->TransInfo.colorRTransferArray1D = 0;
+	this->TransInfo.colorGTransferArray1D = 0;
+	this->TransInfo.colorBTransferArray1D = 0;
 
 	this->InputData = NULL;
 	this->Reinitialize();
@@ -29,7 +34,7 @@ vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformati
 
 void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures( this->GetStream() );
+	CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures( this->TransInfo, this->GetStream() );
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(int withData){

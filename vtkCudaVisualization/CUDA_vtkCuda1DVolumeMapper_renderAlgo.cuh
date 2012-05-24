@@ -11,12 +11,6 @@ texture<float, 1, cudaReadModeElementType> colorR_texture_1D;
 texture<float, 1, cudaReadModeElementType> colorG_texture_1D;
 texture<float, 1, cudaReadModeElementType> colorB_texture_1D;
 
-//opague memory back for the transfer function
-cudaArray* alphaTransferArray1D = 0;
-cudaArray* colorRTransferArray1D = 0;
-cudaArray* colorGTransferArray1D = 0;
-cudaArray* colorBTransferArray1D = 0;
-
 //3D input data (read-only texture with corresponding opague device memory back)
 texture<float, 3, cudaReadModeElementType> CUDA_vtkCuda1DVolumeMapper_input_texture;
 cudaArray* CUDA_vtkCuda1DVolumeMapper_sourceDataArray[100];
@@ -233,6 +227,25 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation));
 	cudaMemcpyToSymbolAsync(CUDA_vtkCuda1DVolumeMapper_trfInfo, &transInfo, sizeof(cuda1DTransferFunctionInformation));
 	
+	//map the texture for the transfer function
+	alpha_texture_1D.normalized = true;
+	alpha_texture_1D.filterMode = cudaFilterModeLinear;
+	alpha_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(alpha_texture_1D, transInfo.alphaTransferArray1D);
+	colorR_texture_1D.normalized = true;
+	colorR_texture_1D.filterMode = cudaFilterModeLinear;
+	colorR_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorR_texture_1D, transInfo.colorRTransferArray1D);
+	colorG_texture_1D.normalized = true;
+	colorG_texture_1D.filterMode = cudaFilterModeLinear;
+	colorG_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorG_texture_1D, transInfo.colorGTransferArray1D);
+	colorB_texture_1D.normalized = true;
+	colorB_texture_1D.filterMode = cudaFilterModeLinear;
+	colorB_texture_1D.addressMode[0] = cudaAddressModeClamp;
+	cudaBindTextureToArray(colorB_texture_1D, transInfo.colorBTransferArray1D);
+
+
 	//create the necessary execution amount parameters from the block sizes and calculate th volume rendering integral
 	int blockX = outputInfo.resolution.x / BLOCK_DIM2D ;
 	int blockY = outputInfo.resolution.y / BLOCK_DIM2D ;
@@ -301,7 +314,7 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStre
 
 //pre: the transfer functions are all of type float and are all of size FunctionSize
 //post: the alpha, colorR, G and B 1D textures will map to each transfer function
-bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunctionInformation& transInfo,
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(cuda1DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
 								  cudaStream_t* stream){
 
@@ -309,63 +322,47 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(const cuda1DTransferFunc
 	size_t size = sizeof(float) * transInfo.functionSize;
 		
 	//define the texture mapping for the alpha component after copying information from host to device array
-	if(alphaTransferArray1D)
-		cudaFreeArray(alphaTransferArray1D);
-	cudaMallocArray( &alphaTransferArray1D, &channelDesc, transInfo.functionSize, 1);
-	cudaMemcpyToArrayAsync(alphaTransferArray1D, 0, 0, alphaTF, size, cudaMemcpyHostToDevice, *stream);
-	alpha_texture_1D.normalized = true;
-	alpha_texture_1D.filterMode = cudaFilterModeLinear;
-	alpha_texture_1D.addressMode[0] = cudaAddressModeClamp;
-	cudaBindTextureToArray(alpha_texture_1D, alphaTransferArray1D);
+	if(transInfo.alphaTransferArray1D)
+		cudaFreeArray(transInfo.alphaTransferArray1D);
+	cudaMallocArray( &(transInfo.alphaTransferArray1D), &channelDesc, transInfo.functionSize, 1);
+	cudaMemcpyToArrayAsync(transInfo.alphaTransferArray1D, 0, 0, alphaTF, size, cudaMemcpyHostToDevice, *stream);
 		
 	//define the texture mapping for the red component after copying information from host to device array
-	if(colorRTransferArray1D)
-		cudaFreeArray(colorRTransferArray1D);
-	cudaMallocArray( &colorRTransferArray1D, &channelDesc, transInfo.functionSize, 1);
-	cudaMemcpyToArrayAsync(colorRTransferArray1D, 0, 0, redTF, size, cudaMemcpyHostToDevice, *stream);
-	colorR_texture_1D.normalized = true;
-	colorR_texture_1D.filterMode = cudaFilterModeLinear;
-	colorR_texture_1D.addressMode[0] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorR_texture_1D, colorRTransferArray1D);
+	if(transInfo.colorRTransferArray1D)
+		cudaFreeArray(transInfo.colorRTransferArray1D);
+	cudaMallocArray( &(transInfo.colorRTransferArray1D), &channelDesc, transInfo.functionSize, 1);
+	cudaMemcpyToArrayAsync(transInfo.colorRTransferArray1D, 0, 0, redTF, size, cudaMemcpyHostToDevice, *stream);
 	
 	//define the texture mapping for the green component after copying information from host to device array
-	if(colorGTransferArray1D)
-		cudaFreeArray(colorGTransferArray1D);
-	cudaMallocArray( &colorGTransferArray1D, &channelDesc, transInfo.functionSize, 1);
-	cudaMemcpyToArrayAsync(colorGTransferArray1D, 0, 0, greenTF, size, cudaMemcpyHostToDevice, *stream);
-	colorG_texture_1D.normalized = true;
-	colorG_texture_1D.filterMode = cudaFilterModeLinear;
-	colorG_texture_1D.addressMode[0] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorG_texture_1D, colorGTransferArray1D);
+	if(transInfo.colorGTransferArray1D)
+		cudaFreeArray(transInfo.colorGTransferArray1D);
+	cudaMallocArray( &(transInfo.colorGTransferArray1D), &channelDesc, transInfo.functionSize, 1);
+	cudaMemcpyToArrayAsync(transInfo.colorGTransferArray1D, 0, 0, greenTF, size, cudaMemcpyHostToDevice, *stream);
 	
 	//define the texture mapping for the blue component after copying information from host to device array
-	if(colorBTransferArray1D)
-		cudaFreeArray(colorBTransferArray1D);
-	cudaMallocArray( &colorBTransferArray1D, &channelDesc, transInfo.functionSize, 1);
-	cudaMemcpyToArrayAsync(colorBTransferArray1D, 0, 0, blueTF, size, cudaMemcpyHostToDevice, *stream);
-	colorB_texture_1D.normalized = true;
-	colorB_texture_1D.filterMode = cudaFilterModeLinear;
-	colorB_texture_1D.addressMode[0] = cudaAddressModeClamp;
-	cudaBindTextureToArray(colorB_texture_1D, colorBTransferArray1D);
+	if(transInfo.colorBTransferArray1D)
+		cudaFreeArray(transInfo.colorBTransferArray1D);
+	cudaMallocArray( &(transInfo.colorBTransferArray1D), &channelDesc, transInfo.functionSize, 1);
+	cudaMemcpyToArrayAsync(transInfo.colorBTransferArray1D, 0, 0, blueTF, size, cudaMemcpyHostToDevice, *stream);
 
 	return (cudaGetLastError() == 0);
 
 }
 
-bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cudaStream_t* stream){
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunctionInformation& transInfo, cudaStream_t* stream){
 
-	if(colorRTransferArray1D)
-		cudaFreeArray(colorRTransferArray1D);
-	colorRTransferArray1D = 0;
-	if(colorGTransferArray1D)
-		cudaFreeArray(colorGTransferArray1D);
-	colorGTransferArray1D = 0;
-	if(colorBTransferArray1D)
-		cudaFreeArray(colorBTransferArray1D);
-	colorBTransferArray1D = 0;
-	if(alphaTransferArray1D)
-		cudaFreeArray(alphaTransferArray1D);
-	alphaTransferArray1D = 0;
+	if(transInfo.colorRTransferArray1D)
+		cudaFreeArray(transInfo.colorRTransferArray1D);
+	transInfo.colorRTransferArray1D = 0;
+	if(transInfo.colorGTransferArray1D)
+		cudaFreeArray(transInfo.colorGTransferArray1D);
+	transInfo.colorGTransferArray1D = 0;
+	if(transInfo.colorBTransferArray1D)
+		cudaFreeArray(transInfo.colorBTransferArray1D);
+	transInfo.colorBTransferArray1D = 0;
+	if(transInfo.alphaTransferArray1D)
+		cudaFreeArray(transInfo.alphaTransferArray1D);
+	transInfo.alphaTransferArray1D = 0;
 
 	return (cudaGetLastError() == 0);
 }

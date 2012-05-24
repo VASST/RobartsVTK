@@ -16,6 +16,11 @@ vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunc
 
 	this->FunctionSize = 512;
 	this->lastModifiedTime = 0;
+	
+	this->TransInfo.alphaTransferArrayDualImage = 0;
+	this->TransInfo.colorRTransferArrayDualImage = 0;
+	this->TransInfo.colorGTransferArrayDualImage = 0;
+	this->TransInfo.colorBTransferArrayDualImage = 0;
 
 	this->InputData = NULL;
 }
@@ -27,7 +32,7 @@ vtkCudaDualImageTransferFunctionInformationHandler::~vtkCudaDualImageTransferFun
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Deinitialize(int withData){
 	this->ReserveGPU();
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(this->GetStream());
+	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(this->TransInfo, this->GetStream());
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Reinitialize(int withData){

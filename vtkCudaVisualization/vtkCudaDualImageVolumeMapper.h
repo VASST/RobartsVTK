@@ -63,6 +63,8 @@ protected:
 	
 	vtkCudaDualImageTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
+	static vtkMutexLock* tfLock;
+
 private:
 	vtkCudaDualImageVolumeMapper operator=(const vtkCudaDualImageVolumeMapper&); /**< not implemented */
 	vtkCudaDualImageVolumeMapper(const vtkCudaDualImageVolumeMapper&); /**< not implemented */

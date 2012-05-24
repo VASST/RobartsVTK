@@ -16,6 +16,7 @@
 
 vtkStandardNewMacro(vtkCudaDualImageVolumeMapper);
 
+vtkMutexLock* vtkCudaDualImageVolumeMapper::tfLock = vtkMutexLock::New();
 vtkCudaDualImageVolumeMapper::vtkCudaDualImageVolumeMapper()
 {
 	this->transferFunctionInfoHandler = vtkCudaDualImageTransferFunctionInformationHandler::New();
@@ -120,9 +121,11 @@ void vtkCudaDualImageVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume*
 	this->transferFunctionInfoHandler->Update();
 
 	//perform the render
+	this->tfLock->Lock();
 	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
 		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream() );
+	this->tfLock->Unlock();
 
 }
 

@@ -6,6 +6,7 @@
 #include "vtkVolume.h"
 #include "vtkImageData.h"
 
+
 // Rendering
 #include "vtkCamera.h"
 #include "vtkRenderer.h"
@@ -20,6 +21,7 @@
 
 vtkStandardNewMacro(vtkCuda1DVolumeMapper);
 
+vtkMutexLock* vtkCuda1DVolumeMapper::tfLock = vtkMutexLock::New();
 vtkCuda1DVolumeMapper::vtkCuda1DVolumeMapper()
 {
 	this->transferFunctionInfoHandler = vtkCuda1DTransferFunctionInformationHandler::New();
@@ -126,9 +128,11 @@ void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 	this->transferFunctionInfoHandler->Update();
 
 	//perform the render
+	this->tfLock->Lock();
 	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
 		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream());
+	this->tfLock->Unlock();
 
 }
 

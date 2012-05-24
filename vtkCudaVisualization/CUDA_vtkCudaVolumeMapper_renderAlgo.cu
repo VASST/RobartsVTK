@@ -448,7 +448,7 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
 	__syncthreads();
 	
 	//multiply by the depth factor
-	gradMag = 1.0f - darkness * saturate( (depthDiffX.x - a) * c );
+	gradMag *= 1.0f - darkness * saturate( (depthDiffX.x - a) * c );
 
 	uchar4 colour;
 	__syncthreads();
