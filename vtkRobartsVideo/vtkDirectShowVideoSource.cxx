@@ -221,8 +221,8 @@ unsigned int vtkDirectShowVideoSource::GetVideoSourceNumber(){
 
 //----------------------------------------------------------------------------
 void vtkDirectShowVideoSource::SetFrameRate(float rate){
-	this->vtkVideoSource::SetFrameRate(rate);
-	//vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the frame rate.");
+	if( rate > 0.0f )
+		this->vtkVideoSource::SetFrameRate(rate);
 }
 
 //----------------------------------------------------------------------------
