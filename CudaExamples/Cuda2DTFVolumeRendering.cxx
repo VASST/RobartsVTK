@@ -60,9 +60,9 @@ int main(int argc, char** argv){
 	std::cout << "Enter META image filename" << std::endl;
 	std::string filename = "";
 	//std::getline(std::cin, filename);
-	filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
+	//filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\JTM45-flip-p01.mhd";
-	
+	filename = "E:\\jbaxter\\4J\\Tumor2_hyperintense.mhd";
 	//filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
 	vtkMetaImageReader* imReader1 = vtkMetaImageReader::New();
 	imReader1->SetFileName(filename.c_str());
@@ -81,9 +81,10 @@ int main(int argc, char** argv){
 	//create the transfer function (or load from file for 2D)
 	std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
 	//std::getline(std::cin, filename);
-	filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
+	//filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\heart.2tf";
 	//filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
+	filename = "E:\\jbaxter\\4J\\Tumour.2tf";
 	vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
 	vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
 	vizReader->SetFileName(filename.c_str());
@@ -93,13 +94,27 @@ int main(int argc, char** argv){
 	}
 	viz->Modified();
 
+	//create the transfer function (or load from file for 2D)
+	std::cout << "Enter 2D INEX transfer function (.2tf) filename" << std::endl;
+	//std::getline(std::cin, filename);
+	filename = "E:\\jbaxter\\4J\\J-WholeHead.2tf";
+	vtkCuda2DTransferFunction* inex = vtkCuda2DTransferFunction::New();
+	vtkCudaFunctionPolygonReader* inexReader = vtkCudaFunctionPolygonReader::New();
+	inexReader->SetFileName(filename.c_str());
+	inexReader->Read();
+	for(int i = 0; i < inexReader->GetNumberOfOutputs(); i++){
+		inexReader->GetOutput(i)->SetOpacity(1);
+		inex->AddFunctionObject( inexReader->GetOutput(i) );
+	}
+	inex->Modified();
+
 	//assemble the ray caster
 	vtkCuda2DInExLogicVolumeMapper* mapper = vtkCuda2DInExLogicVolumeMapper::New();
 	mapper->SetDevice(0);
 	mapper->SetInput( imReader1->GetOutput() );
 	mapper->SetDistanceShadingConstants(0.0,0.0,1.0);
 	mapper->SetVisualizationFunction( viz );
-	mapper->SetInExLogicFunction( viz );
+	mapper->SetInExLogicFunction( inex );
 
 	//assemble the VTK pipeline
 	vtkVolume* volume = vtkVolume::New();

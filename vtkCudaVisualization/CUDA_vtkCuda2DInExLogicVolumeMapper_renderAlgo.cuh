@@ -86,7 +86,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 		float alpha = tex2D(alpha_texture_2DInEx, tempIndex, gradMag);
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-		if(alpha > 0.0f && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
+		if((inEx > 0.0f || alpha > 0.0f) && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
 
 			//collect the alpha difference (if we sample now) as well as the colour multiplier (with photorealistic shading)
 			float multiplier = outputVal.w * alpha *
