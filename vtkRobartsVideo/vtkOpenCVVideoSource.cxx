@@ -231,22 +231,12 @@ void vtkOpenCVVideoSource::UpdateFrameBuffer()
 
 void vtkOpenCVVideoSource::InternalGrab()
 {
-	
-  //attempt the find the processed buffer
-  char* buffer = 0;
-  try{ buffer = this->Internal->cvProcImage->imageData; } catch(...){ };
-  
-  //if we can't find the buffer, error and return
-  if( !buffer ){
-	  vtkErrorMacro(<<"Could not access OpenCV buffer.");
-	  return;
-  }
 
   //get a lock on the OpenCV buffer and fetch the images
   this->OpenCVFirstBufferLock->Lock();
   this->Internal->cvRawImage = cvQueryFrame( this->Internal->capture );
   this->OpenCVSecondBufferLock->Lock();
-  cvConvertImage( this->Internal->cvRawImage, this->Internal->cvProcImage, CV_CVTIMG_FLIP + CV_CVTIMG_SWAP_RB );
+  if( this->Internal->cvRawImage ) cvConvertImage( this->Internal->cvRawImage, this->Internal->cvProcImage, CV_CVTIMG_FLIP + CV_CVTIMG_SWAP_RB );
   this->OpenCVFirstBufferLock->Unlock();
   //unlock 2nd buffer lock after final memcpy to framebuffer
 
@@ -267,13 +257,19 @@ void vtkOpenCVVideoSource::InternalGrab()
 
   // Get a pointer to the location of the frame buffer
   char *ptr = (char *) reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
-  if( ptr == NULL ){
-	  this->OpenCVSecondBufferLock->Unlock();
-	  return;
+  
+  //attempt the find the processed buffer
+  char* buffer = 0;
+  if( this->Internal->cvProcImage ) buffer = this->Internal->cvProcImage->imageData;
+  
+  //if we can't find the buffer, error and return
+  if( !buffer || !ptr ){
+	  vtkErrorMacro(<<"Could not access both buffers.");
+  }else{
+	  memcpy(ptr, buffer, this->ImageSize);
   }
 
   // Copy image into frame buffer and release the old image
-  memcpy(ptr, buffer, this->ImageSize);
   this->OpenCVSecondBufferLock->Unlock();
 
   this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
