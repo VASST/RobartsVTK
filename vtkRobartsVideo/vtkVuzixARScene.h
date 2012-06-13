@@ -4,7 +4,7 @@
 
 #include "vtkRenderer.h"
 #include "vtkTransform.h"
-#include "vtkCamera.h"
+#include "vtkVuzixARCamera.h"
 #include "vtkTexture.h"
 #include "vtkImageData.h"
 #include "vtkActor.h"
@@ -53,8 +53,8 @@ private:
 	//renderer information for the two views
 	vtkRenderer*	leftEyeRenderer;
 	vtkRenderer*	rightEyeRenderer;
-	vtkCamera*		leftEyeCamera;
-	vtkCamera*		rightEyeCamera;
+	vtkVuzixARCamera*	leftEyeCamera;
+	vtkVuzixARCamera*	rightEyeCamera;
 	vtkTexture*		leftEyeTexture;
 	vtkTexture*		rightEyeTexture;
 	vtkImageData*	leftEyePhysicalWorld;
@@ -70,17 +70,6 @@ private:
 	//temporary transforms used
 	vtkTransform*	leftFocalPoint;
 	vtkTransform*	rightFocalPoint;
-	vtkTransform*	leftScreenScale;
-	vtkTransform*	rightScreenScale;
-	
-	int IdealScreenSizeLeft[2];
-	int IdealScreenSizeRight[2];
-	int ActualScreenSizeLeft[2];
-	int ActualScreenSizeRight[2];
-	double leftIdealFocus;
-	double rightIdealFocus;
-	double leftPrinciplePoint[2];
-	double rightPrinciplePoint[2];
 
 };
 

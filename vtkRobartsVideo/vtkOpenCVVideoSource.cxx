@@ -126,6 +126,7 @@ void vtkOpenCVVideoSource::SetFrameSize(int x, int y, int z) {
 }
 
 void vtkOpenCVVideoSource::SetOutputFormat(int format) {
+	
 	//vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the output format.");
 }
 
