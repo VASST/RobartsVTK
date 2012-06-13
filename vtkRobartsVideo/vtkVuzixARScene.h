@@ -68,6 +68,9 @@ private:
 	//temporary transforms used
 	vtkTransform*	leftFocalPoint;
 	vtkTransform*	rightFocalPoint;
+	
+	double IdealLeftFocus;
+	double IdealRightFocus;
 
 };
 
