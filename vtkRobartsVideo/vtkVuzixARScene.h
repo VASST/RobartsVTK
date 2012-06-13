@@ -64,8 +64,6 @@ private:
 	vtkTransform*	trackedDevice;
 	vtkTransform*	deviceToLeftEye;
 	vtkTransform*	deviceToRightEye;
-	vtkTransform*	leftEyePose;
-	vtkTransform*	rightEyePose;
 
 	//temporary transforms used
 	vtkTransform*	leftFocalPoint;
