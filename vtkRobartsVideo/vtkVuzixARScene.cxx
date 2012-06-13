@@ -36,7 +36,8 @@ vtkVuzixARScene::vtkVuzixARScene(){
 	leftFocalPoint->PostMultiply();
 	rightFocalPoint = vtkTransform::New();
 	rightFocalPoint->PostMultiply();
-	
+
+	//give default values to the focal parameters
 	IdealLeftFocus = 1.0;
 	IdealRightFocus = 1.0;
 
@@ -115,11 +116,19 @@ void vtkVuzixARScene::SetLeftEyeTransform( vtkTransform* t){
 	leftFocalPoint->Identity();
 	leftFocalPoint->Translate( 0, 0, IdealLeftFocus );
 	leftFocalPoint->Concatenate( deviceToLeftEye );
+	
+	//find the viewUp vector and position of the left camera
+	double* leftViewUp = deviceToLeftEye->TransformDoublePoint(0,-1,0);
+	double leftPosition[3];
+	deviceToLeftEye->GetPosition(leftPosition);
+	leftViewUp[0] -= leftPosition[0];
+	leftViewUp[1] -= leftPosition[1];
+	leftViewUp[2] -= leftPosition[2];
 
 	//apply the poses to the camera
-	leftEyeCamera->SetPosition( deviceToLeftEye->GetPosition() );
+	leftEyeCamera->SetPosition( leftPosition );
+	leftEyeCamera->SetViewUp( leftViewUp );
 	leftEyeCamera->SetFocalPoint( leftFocalPoint->GetPosition() );
-	leftEyeCamera->OrthogonalizeViewUp();
 
 }
 
@@ -132,10 +141,18 @@ void vtkVuzixARScene::SetRightEyeTransform( vtkTransform* t){
 	rightFocalPoint->Translate( 0, 0, IdealRightFocus );
 	rightFocalPoint->Concatenate( deviceToRightEye );
 	
+	//find the viewUp vector and position of the right camera
+	double* rightViewUp = deviceToRightEye->TransformDoublePoint(0,-1,0);
+	double rightPosition[3];
+	deviceToRightEye->GetPosition(rightPosition);
+	rightViewUp[0] -= rightPosition[0];
+	rightViewUp[1] -= rightPosition[1];
+	rightViewUp[2] -= rightPosition[2];
+
 	//apply the poses to the camera
-	rightEyeCamera->SetPosition( deviceToRightEye->GetPosition() );
+	rightEyeCamera->SetPosition( rightPosition );
+	rightEyeCamera->SetViewUp( rightViewUp );
 	rightEyeCamera->SetFocalPoint( rightFocalPoint->GetPosition() );
-	rightEyeCamera->OrthogonalizeViewUp();
 }
 
 void vtkVuzixARScene::SetLeftEyePixelwiseIntrinsicParameters(	double fx,
@@ -143,17 +160,25 @@ void vtkVuzixARScene::SetLeftEyePixelwiseIntrinsicParameters(	double fx,
 																double cx,
 																double cy ){
 	this->leftEyeCamera->SetPixelwiseIntrinsicParameters(fx,fy,cx,cy);
-	IdealLeftFocus = 0.5 * (fx + fy);
+	IdealLeftFocus = 0.5 * (fx+fy);
 
 	//find the focal point of the left camera
 	leftFocalPoint->Identity();
 	leftFocalPoint->Translate( 0, 0, IdealLeftFocus );
 	leftFocalPoint->Concatenate( deviceToLeftEye );
+	
+	//find the viewUp vector and position of the left camera
+	double* leftViewUp = deviceToLeftEye->TransformDoublePoint(0,-1,0);
+	double leftPosition[3];
+	deviceToLeftEye->GetPosition(leftPosition);
+	leftViewUp[0] -= leftPosition[0];
+	leftViewUp[1] -= leftPosition[1];
+	leftViewUp[2] -= leftPosition[2];
 
 	//apply the poses to the camera
-	leftEyeCamera->SetPosition( deviceToLeftEye->GetPosition() );
+	leftEyeCamera->SetPosition( leftPosition );
+	leftEyeCamera->SetViewUp( leftViewUp );
 	leftEyeCamera->SetFocalPoint( leftFocalPoint->GetPosition() );
-	leftEyeCamera->OrthogonalizeViewUp();
 }
 
 void vtkVuzixARScene::SetRightEyePixelwiseIntrinsicParameters(	double fx,
@@ -161,15 +186,24 @@ void vtkVuzixARScene::SetRightEyePixelwiseIntrinsicParameters(	double fx,
 																double cx,
 																double cy ){
 	this->rightEyeCamera->SetPixelwiseIntrinsicParameters(fx,fy,cx,cy);
-	IdealRightFocus = 0.5 * (fx + fy);
+	IdealRightFocus = 0.5 * (fx+fy);
 
 	//find the focal point of the right camera
 	rightFocalPoint->Identity();
 	rightFocalPoint->Translate( 0, 0, IdealRightFocus );
 	rightFocalPoint->Concatenate( deviceToRightEye );
 	
+	//find the viewUp vector and position of the right camera
+	double* rightViewUp = deviceToRightEye->TransformDoublePoint(0,-1,0);
+	double rightPosition[3];
+	deviceToRightEye->GetPosition(rightPosition);
+	rightViewUp[0] -= rightPosition[0];
+	rightViewUp[1] -= rightPosition[1];
+	rightViewUp[2] -= rightPosition[2];
+
 	//apply the poses to the camera
-	rightEyeCamera->SetPosition( deviceToRightEye->GetPosition() );
+	rightEyeCamera->SetPosition( rightPosition );
+	rightEyeCamera->SetViewUp( rightViewUp );
 	rightEyeCamera->SetFocalPoint( rightFocalPoint->GetPosition() );
-	rightEyeCamera->OrthogonalizeViewUp();
+
 }
