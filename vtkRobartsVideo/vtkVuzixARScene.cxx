@@ -148,7 +148,10 @@ void vtkVuzixARScene::Update(){
 		//update camera scale matrix for anisotropic scaling (adjusting for screen size and principle point)
 		//TODO Add logic for the principle point
 		leftScreenScale->Identity();
-		leftScreenScale->Scale( idealAspectRatio / aspectRatio, 1, 1);
+		if( idealAspectRatio < aspectRatio )
+			rightScreenScale->Scale( idealAspectRatio / aspectRatio, 1, 1);
+		else
+			rightScreenScale->Scale( 1, idealAspectRatio / aspectRatio, 1);
 	}
 
 	//update the right camera scaling
@@ -165,7 +168,10 @@ void vtkVuzixARScene::Update(){
 		//update camera scale matrix for anisotropic scaling (adjusting for screen size and principle point)
 		//TODO Add logic for the principle point
 		rightScreenScale->Identity();
-		rightScreenScale->Scale( idealAspectRatio / aspectRatio, 1, 1);
+		if( idealAspectRatio < aspectRatio )
+			rightScreenScale->Scale( idealAspectRatio / aspectRatio, 1, 1);
+		else
+			rightScreenScale->Scale( 1, idealAspectRatio / aspectRatio, 1);
 	}
 
 }
