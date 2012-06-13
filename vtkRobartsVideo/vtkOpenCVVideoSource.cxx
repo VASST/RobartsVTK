@@ -122,7 +122,7 @@ unsigned int vtkOpenCVVideoSource::GetVideoSourceNumber(){
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::SetFrameSize(int x, int y, int z) {
-	//vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the frame size.");
+	vtkErrorMacro(<<"Frame size cannot be set, but is automatically determined by OpenCV.");
 }
 
 void vtkOpenCVVideoSource::SetOutputFormat(int format) {
