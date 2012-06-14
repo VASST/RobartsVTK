@@ -1,3 +1,12 @@
+/** @file vtkCudaDeviceManager.h
+ *
+ *  @brief Header file defining a singleton class to manage cards and stream interleaving
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on June 12, 2012
+ *
+ */
+
 #ifndef __VTKCUDADEVICEMANAGER_H__
 #define __VTKCUDADEVICEMANAGER_H__
 
@@ -5,8 +14,6 @@
 #include "vtkMutexLock.h"
 #include "vector_types.h"
 #include <map>
-
-typedef void (* kernelFunction ) ( void* );
 
 class vtkCudaObject;
 

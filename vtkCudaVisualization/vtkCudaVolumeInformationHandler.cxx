@@ -1,3 +1,12 @@
+/** @file vtkCudaVolumeInformationHandler.cxx
+ *
+ *  @brief An internal class for vtkCudaVolumeMapper which manages information regarding the volume and transfer function
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on March 28, 2011
+ *
+ */
+
 #include "vtkCudaVolumeInformationHandler.h"
 #include "vtkObjectFactory.h"
 #include "vtkMatrix4x4.h"

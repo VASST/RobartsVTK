@@ -1,3 +1,12 @@
+/** @file vtkCudaDeviceManager.cxx
+ *
+ *  @brief A singleton class to manage cards and stream interleaving
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on June 12, 2012
+ *
+ */
+
 #include "vtkCudaDeviceManager.h"
 #include "vtkObjectFactory.h"
 #include "cuda_runtime_api.h"

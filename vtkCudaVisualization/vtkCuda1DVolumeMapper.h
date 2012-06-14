@@ -1,14 +1,14 @@
-/** @file vtkVolumeMapper.h
+/** @file vtkCudaVolumeMapper.h
  *
  *  @brief Header file defining a volume mapper (ray caster) using CUDA kernels for parallel ray calculation
  *
  *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
- *  @note First documented on March 29, 2011
+ *  @note First documented on May 12, 2012
  *
  */
 
-#ifndef __VTKCUDA2DVOLUMEMAPPER_H
-#define __VTKCUDA2DVOLUMEMAPPER_H
+#ifndef __VTKCUDA1DVOLUMEMAPPER_H
+#define __VTKCUDA1DVOLUMEMAPPER_H
 
 #include "vtkCudaVolumeMapper.h"
 
@@ -18,7 +18,7 @@
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_container1DTransferFunctionInformation.h"
 
-/** @brief vtkCuda2DVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
+/** @brief vtkCuda1DVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
  */
 class vtkCuda1DVolumeMapper : public vtkCudaVolumeMapper {

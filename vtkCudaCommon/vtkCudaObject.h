@@ -1,3 +1,13 @@
+/** @file vtkCudaObject.h
+ *
+ *  @brief Header file defining an abstract class which uses CUDA
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on June 12, 2012
+ *
+ *  @note Interacts primarily with the vtkCudaDeviceManager
+ */
+
 #ifndef __VTKCUDAOBJECT_H__
 #define __VTKCUDAOBJECT_H__
 

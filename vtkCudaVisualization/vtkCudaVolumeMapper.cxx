@@ -1,16 +1,21 @@
-// Type
+/** @file vtkCudaVolumeMapper.cxx
+ *
+ *  @brief Header file defining a volume mapper (ray caster) using CUDA kernels for parallel ray calculation
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on March 29, 2011
+ *
+ */
+
 #include "vtkCudaVolumeMapper.h"
 #include "vtkObjectFactory.h"
 
-// Volume
 #include "vtkVolume.h"
 #include "vtkImageData.h"
 
-// Rendering
 #include "vtkCamera.h"
 #include "vtkRenderer.h"
 
-// VTKCUDA
 #include "CUDA_containerRendererInformation.h"
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"

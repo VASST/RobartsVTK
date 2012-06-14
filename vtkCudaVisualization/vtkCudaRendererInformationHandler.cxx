@@ -1,3 +1,12 @@
+/** @file vtkCudaRendererInformationHandler.cxx
+ *
+ *  @brief An internal class for vtkCudaVolumeMapper which manages information regarding the renderer, camera, shading model and other objects
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on March 29, 2011
+ *
+ */
+
 #include "vtkCudaRendererInformationHandler.h"
 
 #include <vector>

@@ -1,4 +1,4 @@
-/** @file vtkVolumeMapper.h
+/** @file vtkCudaVolumeMapper.h
  *
  *  @brief Header file defining a volume mapper (ray caster) using CUDA kernels for parallel ray calculation
  *
