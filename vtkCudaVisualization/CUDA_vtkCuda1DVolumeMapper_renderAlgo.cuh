@@ -1,3 +1,12 @@
+/** @file CUDA_vtkCuda1DVolumeMapper_renderAlgo.cu
+ *
+ *  @brief Underlying CUDA implementation specific to the 1D volume ray caster
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @note First documented on May 6, 2012
+ *
+ */
+
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include <cuda.h>
