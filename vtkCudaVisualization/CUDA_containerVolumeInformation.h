@@ -22,6 +22,8 @@ typedef struct __align__(16) {
 	int3			VolumeSize;				/**< Size of the volume in X, Y and Z */
 	float			Bounds[6];				/**< The bounds of the volume in X, Y and Z */
 	float3			SpacingReciprocal;		/**< The reciprocal of the spacing between pixels in the volume in the X, Y and Z directions */
+	float3			Spacing;
+	float			MinSpacing;
 
 } cudaVolumeInformation;
 

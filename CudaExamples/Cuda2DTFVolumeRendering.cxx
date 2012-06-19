@@ -4,7 +4,7 @@
 #include "vtkCudaFunctionPolygonReader.h"
 
 //For ray-caster
-#include "vtkCuda2DInExLogicVolumeMapper.h"
+#include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPiecewiseFunction.h"
@@ -42,14 +42,14 @@ public:
         planes->Delete();
         }
     }
-  void SetMapper(vtkCuda2DInExLogicVolumeMapper* m) 
+  void SetMapper(vtkCudaDualImageVolumeMapper* m) 
     { this->Mapper = m; }
 
 protected:
   vtkBoxWidgetCallback() 
     { this->Mapper = 0; }
 
-  vtkCuda2DInExLogicVolumeMapper *Mapper;
+  vtkCudaDualImageVolumeMapper *Mapper;
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -62,8 +62,8 @@ int main(int argc, char** argv){
 	//std::getline(std::cin, filename);
 	//filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\JTM45-flip-p01.mhd";
-	filename = "E:\\jbaxter\\4J\\Tumor2_hyperintense.mhd";
-	//filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
+	//filename = "E:\\jbaxter\\4J\\Tumor2_hyperintense.mhd";
+	filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
 	vtkMetaImageReader* imReader1 = vtkMetaImageReader::New();
 	imReader1->SetFileName(filename.c_str());
 	imReader1->Update();
@@ -83,8 +83,8 @@ int main(int argc, char** argv){
 	//std::getline(std::cin, filename);
 	//filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
 	//filename = "E:\\jbaxter\\data\\4D Heart\\heart.2tf";
-	//filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
-	filename = "E:\\jbaxter\\4J\\Tumour.2tf";
+	filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
+	//filename = "E:\\jbaxter\\4J\\Tumour.2tf";
 	vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
 	vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
 	vizReader->SetFileName(filename.c_str());
@@ -109,12 +109,14 @@ int main(int argc, char** argv){
 	inex->Modified();
 
 	//assemble the ray caster
-	vtkCuda2DInExLogicVolumeMapper* mapper = vtkCuda2DInExLogicVolumeMapper::New();
+	vtkCudaDualImageVolumeMapper* mapper = vtkCudaDualImageVolumeMapper::New();
 	mapper->SetDevice(0);
-	mapper->SetInput( imReader1->GetOutput() );
+	mapper->SetInput( appender->GetOutput() );
+	//mapper->SetInput( imReader1->GetOutput() );
 	mapper->SetDistanceShadingConstants(0.0,0.0,1.0);
-	mapper->SetVisualizationFunction( viz );
-	mapper->SetInExLogicFunction( inex );
+	mapper->SetFunction( viz );
+	//mapper->SetVisualizationFunction( viz );
+	//mapper->SetInExLogicFunction( inex );
 
 	//assemble the VTK pipeline
 	vtkVolume* volume = vtkVolume::New();

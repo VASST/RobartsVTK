@@ -181,12 +181,12 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
 	
 	//collect the information about the bounds of the volume in voxels from the volume information
 	__syncthreads();
-	const float bounds0 = volInfo.Bounds[0];
-	const float bounds1 = volInfo.Bounds[1];
-	const float bounds2 = volInfo.Bounds[2];
-	const float bounds3 = volInfo.Bounds[3];
-	const float bounds4 = volInfo.Bounds[4];
-	const float bounds5 = volInfo.Bounds[5];
+	const float bounds0 = volInfo.Bounds[0]+1.0f;
+	const float bounds1 = volInfo.Bounds[1]-1.0f;
+	const float bounds2 = volInfo.Bounds[2]+1.0f;
+	const float bounds3 = volInfo.Bounds[3]-1.0f;
+	const float bounds4 = volInfo.Bounds[4]+1.0f;
+	const float bounds5 = volInfo.Bounds[5]-1.0f;
 	__syncthreads();
 		
 	float diffS;
@@ -366,7 +366,13 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
 	CUDAkernel_SetRayEnds(index, rayStart, rayInc, outindex);
 
 	//determine the maximum number of steps the ray should sample and determine the length of each step
-	numSteps = __fsqrt_ru(rayInc.x*rayInc.x+rayInc.y*rayInc.y+rayInc.z*rayInc.z) ;
+	__syncthreads();
+	float3 spacing = volInfo.Spacing;
+	float minSpacing = volInfo.MinSpacing;
+	__syncthreads();
+	numSteps = __fsqrt_ru(rayInc.x*rayInc.x*spacing.x*spacing.x+
+							rayInc.y*rayInc.y*spacing.y*spacing.y+
+							rayInc.z*rayInc.z*spacing.z*spacing.z) / minSpacing;
 	rayInc.x /= numSteps;
 	rayInc.y /= numSteps;
 	rayInc.z /= numSteps;

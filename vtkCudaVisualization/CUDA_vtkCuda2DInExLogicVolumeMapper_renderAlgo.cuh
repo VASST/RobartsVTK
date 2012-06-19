@@ -102,7 +102,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 			rayStart.x = rayStart.x + (backStep ? -rayInc.x : rayInc.x);
 			rayStart.y = rayStart.y + (backStep ? -rayInc.y : rayInc.y);
 			rayStart.z = rayStart.z + (backStep ? -rayInc.z : rayInc.z);
-			maxSteps = maxSteps + (backStep ? -1 : 1);
+			maxSteps = maxSteps + (backStep ? 1 : -1);
 
 			if(!backStep){
 

@@ -68,10 +68,16 @@ void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
 	this->VolumeInfo.VolumeSize.x = dims[0];
 	this->VolumeInfo.VolumeSize.y = dims[1];
 	this->VolumeInfo.VolumeSize.z = dims[2];
-
+	
 	this->VolumeInfo.SpacingReciprocal.x = 0.5f / spacing[0];
 	this->VolumeInfo.SpacingReciprocal.y = 0.5f / spacing[1];
 	this->VolumeInfo.SpacingReciprocal.z = 0.5f / spacing[2];
+	this->VolumeInfo.Spacing.x = spacing[0];
+	this->VolumeInfo.Spacing.y = spacing[1];
+	this->VolumeInfo.Spacing.z = spacing[2];
+	this->VolumeInfo.MinSpacing = spacing[0];
+	this->VolumeInfo.MinSpacing = (this->VolumeInfo.MinSpacing > spacing[1]) ? spacing[1] : this->VolumeInfo.MinSpacing;
+	this->VolumeInfo.MinSpacing = (this->VolumeInfo.MinSpacing > spacing[2]) ? spacing[2] : this->VolumeInfo.MinSpacing;
 
 	//calculate the bounds
 	this->VolumeInfo.Bounds[0] = 0.0f;

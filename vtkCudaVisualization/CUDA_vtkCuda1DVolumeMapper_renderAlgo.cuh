@@ -115,7 +115,7 @@ __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStar
 			rayStart.x = rayStart.x + (step.x ? -rayInc.x : rayInc.x);
 			rayStart.y = rayStart.y + (step.x ? -rayInc.y : rayInc.y);
 			rayStart.z = rayStart.z + (step.x ? -rayInc.z : rayInc.z);
-			maxSteps = maxSteps + (step.x ? -1 : 1);
+			maxSteps = maxSteps + (step.x ? 1 : -1);
 
 			if(!step.x){
 				//accumulate the opacity for this sample point
