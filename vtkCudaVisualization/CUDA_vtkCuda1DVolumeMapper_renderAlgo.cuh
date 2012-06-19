@@ -261,7 +261,39 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	dim3 grid(blockX, blockY, 1);
 	dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 	CUDAkernel_renderAlgo_formRays <<< grid, threads, 0, *stream >>>();
+
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "1D Rendering Error Status 1: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
 	CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite <<< grid, threads, 0, *stream >>>();
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "1D Rendering Error Status 2: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	//shade the image
+	grid.x = outputInfo.resolution.x*outputInfo.resolution.y / 256;
+	grid.y = 1;
+	threads.x = 256;
+	threads.y = 1;
+	CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
+	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
+
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "1D Rendering Error Status 3: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+	
+	return (cudaGetLastError() == 0);
 
 	return (cudaGetLastError() == 0);
 }
