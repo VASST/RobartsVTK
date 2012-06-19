@@ -132,7 +132,9 @@ void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 	//handle the transfer function changes
 	this->transferFunctionInfoHandler->SetColourTransferFunction( vol->GetProperty()->GetRGBTransferFunction() );
 	this->transferFunctionInfoHandler->SetOpacityTransferFunction( vol->GetProperty()->GetScalarOpacity() );
-	this->transferFunctionInfoHandler->Update();
+	this->transferFunctionInfoHandler->SetGradientOpacityTransferFunction( vol->GetProperty()->GetGradientOpacity() );
+	this->transferFunctionInfoHandler->UseGradientOpacity( !vol->GetProperty()->GetDisableGradientOpacity() );
+	this->transferFunctionInfoHandler->Update(vol);
 
 	//perform the render
 	this->tfLock->Lock();

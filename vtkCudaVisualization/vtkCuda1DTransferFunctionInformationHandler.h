@@ -3,9 +3,10 @@
  *  @brief Header file defining an internal class for vtkCudaVolumeMapper which manages information regarding the volume and transfer function
  *
  *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
- *  @note First documented on March 28, 2011
+ *  @note First documented on May 11, 2012
  *
  */
+
 #ifndef vtkCuda1DTransferFunctionInformationHandler_H_
 #define vtkCuda1DTransferFunctionInformationHandler_H_
 
@@ -15,6 +16,7 @@
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkCudaObject.h"
+#include "vtkVolume.h"
 
 /** @brief vtkCuda1DTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
@@ -66,11 +68,21 @@ public:
 	 *  @note This also resets the lastModifiedTime that the volume information handler has for the transfer function, forcing an updating in the lookup tables for the first render
 	 */
 	void SetOpacityTransferFunction(vtkPiecewiseFunction* func);
+
+	/** @brief Set the transfer function used for determining colour in the volume rendering process
+	 *
+	 *  @param func The 1 dimensional transfer function (from vtkVolumeProperty)
+	 *
+	 *  @note This also resets the lastModifiedTime that the volume information handler has for the transfer function, forcing an updating in the lookup tables for the first render
+	 */
+	void SetGradientOpacityTransferFunction(vtkPiecewiseFunction* func);
 	
+	void UseGradientOpacity( int u );
+
 	/** @brief Triggers an update for the volume information, checking all subsidary information for modifications
 	 *
 	 */
-	virtual void Update();
+	virtual void Update(vtkVolume* vol);
 
 protected:
 	
@@ -100,9 +112,11 @@ private:
 	
 	vtkImageData*						InputData;		/**< The 3D image data currently being renderered */
 	cuda1DTransferFunctionInformation	TransInfo;		/**< The CUDA specific structure holding the required volume related information for rendering */
-
+	
 	vtkPiecewiseFunction*				opacityFunction;
+	vtkPiecewiseFunction*				gradientopacityFunction;
 	vtkColorTransferFunction*			colourFunction;
+	bool								useGradientOpacity;
 	
 	unsigned long lastModifiedTime;			/**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
 	int						FunctionSize;	/**< The size of the transfer function which is square */

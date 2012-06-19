@@ -15,6 +15,8 @@
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkImageData.h"
+#include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
 
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
 
@@ -23,11 +25,14 @@ vtkStandardNewMacro(vtkCuda1DTransferFunctionInformationHandler);
 vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformationHandler(){
 	this->colourFunction = NULL;
 	this->opacityFunction = NULL;
+	this->gradientopacityFunction = NULL;
+	this->useGradientOpacity = false;
 
 	this->FunctionSize = 512;
 	this->lastModifiedTime = 0;
 	
 	this->TransInfo.alphaTransferArray1D = 0;
+	this->TransInfo.galphaTransferArray1D = 0;
 	this->TransInfo.colorRTransferArray1D = 0;
 	this->TransInfo.colorGTransferArray1D = 0;
 	this->TransInfo.colorBTransferArray1D = 0;
@@ -76,9 +81,17 @@ void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtk
 	}
 }
 
+void vtkCuda1DTransferFunctionInformationHandler::SetGradientOpacityTransferFunction(vtkPiecewiseFunction* f){
+	if( f != this->gradientopacityFunction ){
+		this->gradientopacityFunction = f;
+		this->lastModifiedTime = 0;
+		this->Modified();
+	}
+}
+
 void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer function, don't
-	if(this->colourFunction || this->opacityFunction ||
+	if(!this->colourFunction || !this->opacityFunction ||
 		(this->colourFunction->GetMTime() <= lastModifiedTime &&
 		this->opacityFunction->GetMTime() <= lastModifiedTime) ) return;
 	lastModifiedTime = (this->colourFunction->GetMTime() > this->opacityFunction->GetMTime()) ?
@@ -90,10 +103,17 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	this->opacityFunction->GetRange( minIntensity, maxIntensity );
 	minIntensity = (this->InputData->GetScalarRange()[0] > minIntensity ) ? this->InputData->GetScalarRange()[0] : minIntensity;
 	maxIntensity = (this->InputData->GetScalarRange()[1] < maxIntensity ) ? this->InputData->GetScalarRange()[1] : maxIntensity;
+	
+	//get the gradient ranges from the transfer function
+	double minGradient; 
+	double maxGradient;
+	this->gradientopacityFunction->GetRange( minGradient, maxGradient );
 
 	//figure out the multipliers for applying the transfer function in GPU
 	this->TransInfo.intensityLow = minIntensity;
 	this->TransInfo.intensityMultiplier = 1.0 / ( maxIntensity - minIntensity );
+	this->TransInfo.gradientLow = minGradient;
+	this->TransInfo.gradientMultiplier = 1.0 / ( maxGradient - minGradient );
 
 	//create local buffers to house the transfer function
 	float* LocalColorRedTransferFunction = new float[this->FunctionSize];
@@ -101,16 +121,20 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize];
 	float* LocalColorWholeTransferFunction = new float[3*this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize];
+	float* LocalGAlphaTransferFunction = new float[this->FunctionSize];
 
-	memset( (void*) LocalColorRedTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
-	memset( (void*) LocalColorGreenTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
-	memset( (void*) LocalColorBlueTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
-	memset( (void*) LocalColorWholeTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
+	memset( (void*) LocalColorRedTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+	memset( (void*) LocalColorGreenTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+	memset( (void*) LocalColorBlueTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+	memset( (void*) LocalColorWholeTransferFunction, 0.0f, 3*sizeof(float) * this->FunctionSize);
 	memset( (void*) LocalAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
+	memset( (void*) LocalGAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
 
 	//populate the table
 	this->opacityFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
 		LocalAlphaTransferFunction );
+	this->gradientopacityFunction->GetTable( minGradient, maxGradient, this->FunctionSize,
+		LocalGAlphaTransferFunction );
 	this->colourFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
 		LocalColorWholeTransferFunction );
 	for( int i = 0; i < this->FunctionSize; i++ ){
@@ -128,6 +152,7 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
 		LocalAlphaTransferFunction,
+		LocalGAlphaTransferFunction,
 		this->GetStream() );
 
 	//clean up the garbage
@@ -136,9 +161,30 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	delete LocalColorBlueTransferFunction;
 	delete LocalColorWholeTransferFunction;
 	delete LocalAlphaTransferFunction;
+	delete LocalGAlphaTransferFunction;
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::Update(){
+void vtkCuda1DTransferFunctionInformationHandler::UseGradientOpacity(int u){
+	this->useGradientOpacity = (u != 0);
+}
+
+void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol){
+
+	//get shading params
+	this->TransInfo.Ambient = 1.0f;
+	this->TransInfo.Diffuse = 0.0f;
+	this->TransInfo.Specular.x = 0.0f;
+	this->TransInfo.Specular.y = 1.0f;
+	if( vol && vol->GetProperty() ){
+		int shadingType = vol->GetProperty()->GetShade();
+		if(shadingType){
+			this->TransInfo.Ambient = vol->GetProperty()->GetAmbient();
+			this->TransInfo.Diffuse = vol->GetProperty()->GetDiffuse();
+			this->TransInfo.Specular.x = vol->GetProperty()->GetSpecular();
+			this->TransInfo.Specular.y = vol->GetProperty()->GetSpecularPower();
+		}
+	}
+
 	if(this->InputData){
 		this->InputData->Update();
 		this->Modified();

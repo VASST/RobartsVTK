@@ -16,7 +16,7 @@
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_container1DTransferFunctionInformation.h"
 
-/** @brief Compute the image of the volume taking into account occluding isosurfaces returning it in a CUDA-OpenGL compatible texture
+/** @brief Compute the image of the volume taking into account occluding isosurfaces returning it in a image buffer
  *
  *  @param outputInfo Structure containing information for the rendering process describing the output image and how it is handled
  *  @param renderInfo Structure containing information for the rendering process taken primarily from the renderer, such as camera/shading properties
@@ -64,7 +64,7 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream)
  *
  */
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(cuda1DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* galphaTF,
 								  cudaStream_t* stream);
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
@@ -76,7 +76,7 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunction
  *  @pre index is between 0 and 99 inclusive
  *
  */
-bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo,
-														 const int index, cudaStream_t* stream);
+bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index,
+														 cudaStream_t* stream);
 
 #endif
