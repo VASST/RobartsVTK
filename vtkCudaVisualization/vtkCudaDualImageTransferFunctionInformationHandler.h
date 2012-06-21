@@ -21,6 +21,8 @@
 class vtkCudaDualImageTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 	
+	vtkTypeMacro( vtkCudaDualImageTransferFunctionInformationHandler, vtkObject );
+	
 	/** @brief VTK compatible constructor method
 	 *
 	 */

@@ -24,7 +24,7 @@ vtkCudaDeviceManager* vtkCudaDeviceManager::Singleton(){
 vtkCudaDeviceManager::vtkCudaDeviceManager(){
 
 	//create the locks
-	this->regularLock = vtkMutexLock::New();
+	this->regularLock = 0;
 	int n = this->GetNumberOfDevices();
 
 }
@@ -77,7 +77,11 @@ bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device){
 		vtkErrorMacro(<<"Invalid device identifier.");
 		return true;
 	}
-	
+
+	//create the lock if uncreated
+	if( !this->regularLock )
+		this->regularLock = vtkMutexLock::New();
+
 	//remove that part of the mapping
 	this->regularLock->Lock();
 	this->ObjectToDeviceMap.insert( std::pair<vtkCudaObject*,int>(caller, device) );
@@ -128,7 +132,11 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device){
 		cudaDeviceReset();
 		if( device != oldDevice ) cudaSetDevice( oldDevice );
 	}
-	this->regularLock->Unlock();
+
+	//delete the lock if no one is left
+	if( this->ObjectToDeviceMap.empty() ) this->regularLock->Delete();
+	else this->regularLock->Unlock();
+
 	return false;
 }
 

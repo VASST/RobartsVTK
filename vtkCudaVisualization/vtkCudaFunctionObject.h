@@ -18,6 +18,8 @@
  */
 class vtkCudaFunctionObject : public vtkObject {
 public:
+
+	vtkTypeMacro( vtkCudaFunctionObject, vtkObject );
 	
 	/** @brief Gets the classifer value associated with this particular function object
 	 *

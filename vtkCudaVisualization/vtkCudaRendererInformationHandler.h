@@ -26,6 +26,8 @@
 class vtkCudaRendererInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 
+	vtkTypeMacro( vtkCudaRendererInformationHandler, vtkObject );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */

@@ -17,15 +17,18 @@
 
 vtkStandardNewMacro(vtkCuda2DInExLogicVolumeMapper);
 
-vtkMutexLock* vtkCuda2DInExLogicVolumeMapper::tfLock = vtkMutexLock::New();
+vtkMutexLock* vtkCuda2DInExLogicVolumeMapper::tfLock = 0;
 vtkCuda2DInExLogicVolumeMapper::vtkCuda2DInExLogicVolumeMapper(){
 	this->transferFunctionInfoHandler = vtkCuda2DInExLogicTransferFunctionInformationHandler::New();
+	if( this->tfLock == 0 ) this->tfLock = vtkMutexLock::New();
+	else this->tfLock->Register(this);
 	this->Reinitialize();
 }
 
 vtkCuda2DInExLogicVolumeMapper::~vtkCuda2DInExLogicVolumeMapper(){
 	this->Deinitialize();
 	this->transferFunctionInfoHandler->Delete();
+	this->tfLock->UnRegister(this);
 }
 
 void vtkCuda2DInExLogicVolumeMapper::Reinitialize(int withData){

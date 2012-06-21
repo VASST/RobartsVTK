@@ -18,6 +18,8 @@
  */
 class vtkCuda2DTransferFunction : public vtkObject {
 public:
+	
+	vtkTypeMacro( vtkCuda2DTransferFunction, vtkObject );
 
 	/** @brief VTK compatible constructor method
 	 *

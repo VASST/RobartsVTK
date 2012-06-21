@@ -19,7 +19,6 @@
 class vtkCudaObject
 {
 public:
-	static vtkCudaObject* New();
 
 	void SetDevice( int d, int withData = 0 );
 	int GetDevice(){ return this->DeviceNumber; };

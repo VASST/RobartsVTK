@@ -28,10 +28,12 @@
 
 vtkStandardNewMacro(vtkCuda1DVolumeMapper);
 
-vtkMutexLock* vtkCuda1DVolumeMapper::tfLock = vtkMutexLock::New();
+vtkMutexLock* vtkCuda1DVolumeMapper::tfLock = 0;
 vtkCuda1DVolumeMapper::vtkCuda1DVolumeMapper()
 {
 	this->transferFunctionInfoHandler = vtkCuda1DTransferFunctionInformationHandler::New();
+	if( this->tfLock == 0 ) this->tfLock = vtkMutexLock::New();
+	else this->tfLock->Register(this);
 	this->Reinitialize();
 }
 
@@ -51,7 +53,8 @@ void vtkCuda1DVolumeMapper::Reinitialize(int withData){
 
 vtkCuda1DVolumeMapper::~vtkCuda1DVolumeMapper(){
 	this->Deinitialize();
-	this->transferFunctionInfoHandler->Delete();
+	transferFunctionInfoHandler->UnRegister( this );
+	this->tfLock->UnRegister(this);
 }
 
 void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){

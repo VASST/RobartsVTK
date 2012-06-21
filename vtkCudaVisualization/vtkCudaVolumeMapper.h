@@ -36,6 +36,8 @@
 class vtkCudaVolumeMapper : public vtkVolumeMapper, public vtkCudaObject {
 public:
 
+	vtkTypeMacro( vtkCudaVolumeMapper, vtkVolumeMapper );
+
 	/** @brief Sets the 3D image data for the first frame in the 4D sequence
 	 *
 	 *  @param image The 3D image data.

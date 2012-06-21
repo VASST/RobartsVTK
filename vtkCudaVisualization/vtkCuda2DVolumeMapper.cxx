@@ -16,16 +16,19 @@
 
 vtkStandardNewMacro(vtkCuda2DVolumeMapper);
 
-vtkMutexLock* vtkCuda2DVolumeMapper::tfLock = vtkMutexLock::New();
+vtkMutexLock* vtkCuda2DVolumeMapper::tfLock = 0;
 vtkCuda2DVolumeMapper::vtkCuda2DVolumeMapper()
 {
 	this->transferFunctionInfoHandler = vtkCuda2DTransferFunctionInformationHandler::New();
+	if( this->tfLock == 0 ) this->tfLock = vtkMutexLock::New();
+	else this->tfLock->Register(this);
 	this->Reinitialize();
 }
 
 vtkCuda2DVolumeMapper::~vtkCuda2DVolumeMapper(){
 	this->Deinitialize();
 	this->transferFunctionInfoHandler->Delete();
+	this->tfLock->UnRegister(this);
 }
 
 void vtkCuda2DVolumeMapper::Deinitialize(int withData){

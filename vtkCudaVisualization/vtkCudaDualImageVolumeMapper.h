@@ -24,6 +24,8 @@
 class vtkCudaDualImageVolumeMapper : public vtkCudaVolumeMapper {
 public:
 
+	vtkTypeMacro( vtkCudaDualImageVolumeMapper, vtkCudaVolumeMapper );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */

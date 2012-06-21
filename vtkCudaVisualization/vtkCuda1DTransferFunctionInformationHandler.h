@@ -24,6 +24,8 @@
 class vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 	
+	vtkTypeMacro( vtkCuda1DTransferFunctionInformationHandler, vtkObject );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */

@@ -20,6 +20,9 @@ class vtkCudaObject;
 class vtkCudaDeviceManager : public vtkObject
 {
 public:
+
+	vtkTypeMacro( vtkCudaDeviceManager, vtkObject );
+
 	static vtkCudaDeviceManager* Singleton();
 
 	int GetNumberOfDevices();

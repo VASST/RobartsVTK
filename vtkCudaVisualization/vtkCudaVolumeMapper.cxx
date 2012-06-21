@@ -208,14 +208,15 @@ void vtkCudaVolumeMapper::SetNumberOfFrames(int n) {
 vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
 {
 	this->Deinitialize();
-	this->VolumeInfoHandler->Delete();
-	this->RendererInfoHandler->Delete();
-	this->OutputInfoHandler->Delete();
-	this->ViewToVoxelsMatrix->Delete();
-	this->WorldToVoxelsMatrix->Delete();
-	this->PerspectiveTransform->Delete();
-	this->VoxelsTransform->Delete();
-	this->VoxelsToViewTransform->Delete();
+	this->VolumeInfoHandler->UnRegister(this);
+	this->RendererInfoHandler->UnRegister(this);
+	this->OutputInfoHandler->UnRegister(this);
+	this->ViewToVoxelsMatrix->UnRegister(this);
+	this->WorldToVoxelsMatrix->UnRegister(this);
+	this->PerspectiveTransform->UnRegister(this);
+	this->VoxelsTransform->UnRegister(this);
+	this->VoxelsToViewTransform->UnRegister(this);
+	this->NextVoxelsToViewTransform->UnRegister(this);
 	if (this->KeyholePlanes)
 		this->KeyholePlanes->UnRegister(this);
 }
@@ -419,7 +420,7 @@ void vtkCudaVolumeMapper::ComputeMatrices()
 		this->NextVoxelsToViewTransform->PostMultiply();
 		this->NextVoxelsToViewTransform->Concatenate( this->PerspectiveTransform->GetMatrix() );
 
-		this->ViewToVoxelsMatrix= this->NextVoxelsToViewTransform->GetMatrix();
+		this->ViewToVoxelsMatrix->DeepCopy(this->NextVoxelsToViewTransform->GetMatrix());
 		this->ViewToVoxelsMatrix->Invert();
 
 		//load into the renderer information via the handler

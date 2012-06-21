@@ -9,6 +9,9 @@
 class vtkCudaMemoryTexture : public vtkObject, public vtkCudaObject
 {
 public:
+
+	vtkTypeMacro( vtkCudaMemoryTexture, vtkObject );
+
 	static vtkCudaMemoryTexture* New();
 
 	void SetWidth(unsigned int width) { this->SetSize(width, this->GetHeight()); }

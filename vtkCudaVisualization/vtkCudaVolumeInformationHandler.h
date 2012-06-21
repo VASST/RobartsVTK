@@ -20,6 +20,8 @@
  */
 class vtkCudaVolumeInformationHandler : public vtkObject, public vtkCudaObject  {
 public:
+
+	vtkTypeMacro( vtkCudaVolumeInformationHandler, vtkObject );
 	
 	/** @brief VTK compatible constructor method
 	 *

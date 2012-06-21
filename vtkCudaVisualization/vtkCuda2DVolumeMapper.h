@@ -24,6 +24,8 @@
 class vtkCuda2DVolumeMapper : public vtkCudaVolumeMapper {
 public:
 
+	vtkTypeMacro( vtkCuda2DVolumeMapper, vtkCudaVolumeMapper );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */

@@ -21,6 +21,8 @@
 class vtkCudaFunctionPolygon : public vtkCudaFunctionObject {
 public:
 
+	vtkTypeMacro( vtkCudaFunctionPolygon, vtkCudaFunctionObject );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */

@@ -25,6 +25,8 @@
 class vtkCudaOutputImageInformationHandler : public vtkObject, public vtkCudaObject {
 public:
 
+	vtkTypeMacro( vtkCudaOutputImageInformationHandler, vtkObject );
+
 	/** @brief VTK compatible constructor method
 	 *
 	 */
