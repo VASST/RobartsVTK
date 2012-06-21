@@ -28,6 +28,7 @@ vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunc
 vtkCudaDualImageTransferFunctionInformationHandler::~vtkCudaDualImageTransferFunctionInformationHandler(){
 	this->Deinitialize();
 	this->SetInputData(NULL, 0);
+	if( this->function ) this->function->UnRegister( this );
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Deinitialize(int withData){
@@ -53,7 +54,10 @@ void vtkCudaDualImageTransferFunctionInformationHandler::SetInputData(vtkImageDa
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::SetTransferFunction(vtkCuda2DTransferFunction* f){
+	if( this->function ==  f ) return;
+	if( this->function ) this->function->UnRegister( this );
 	this->function = f;
+	if( this->function ) this->function->Register( this );
 	this->lastModifiedTime = 0;
 	this->Modified();
 }

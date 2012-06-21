@@ -44,6 +44,9 @@ vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformatio
 vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformationHandler(){
 	this->Deinitialize();
 	this->SetInputData(NULL, 0);
+	if( this->colourFunction ) this->colourFunction->UnRegister(this);
+	if( this->opacityFunction ) this->opacityFunction->UnRegister(this);
+	if( this->gradientopacityFunction ) this->gradientopacityFunction->UnRegister(this);
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData){
@@ -67,7 +70,9 @@ void vtkCuda1DTransferFunctionInformationHandler::SetInputData(vtkImageData* inp
 
 void vtkCuda1DTransferFunctionInformationHandler::SetColourTransferFunction(vtkColorTransferFunction* f){
 	if( f != this->colourFunction ){
+		if(this->colourFunction) this->colourFunction->UnRegister(this);
 		this->colourFunction = f;
+		if(this->colourFunction) this->colourFunction->Register(this);
 		this->lastModifiedTime = 0;
 		this->Modified();
 	}
@@ -75,7 +80,9 @@ void vtkCuda1DTransferFunctionInformationHandler::SetColourTransferFunction(vtkC
 
 void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtkPiecewiseFunction* f){
 	if( f != this->opacityFunction ){
+		if(this->opacityFunction) this->opacityFunction->UnRegister(this);
 		this->opacityFunction = f;
+		if(this->opacityFunction) this->opacityFunction->Register(this);
 		this->lastModifiedTime = 0;
 		this->Modified();
 	}
@@ -83,7 +90,9 @@ void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtk
 
 void vtkCuda1DTransferFunctionInformationHandler::SetGradientOpacityTransferFunction(vtkPiecewiseFunction* f){
 	if( f != this->gradientopacityFunction ){
+		if(this->gradientopacityFunction) this->gradientopacityFunction->UnRegister(this);
 		this->gradientopacityFunction = f;
+		if(this->gradientopacityFunction) this->gradientopacityFunction->Register(this);
 		this->lastModifiedTime = 0;
 		this->Modified();
 	}

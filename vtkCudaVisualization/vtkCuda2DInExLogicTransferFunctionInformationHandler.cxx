@@ -13,6 +13,7 @@ vtkStandardNewMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler);
 
 vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransferFunctionInformationHandler(){
 	this->function = NULL;
+	this->inExFunction = NULL;
 
 	this->FunctionSize = 512;
 	this->LowGradient = 0;
@@ -33,6 +34,8 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransfer
 vtkCuda2DInExLogicTransferFunctionInformationHandler::~vtkCuda2DInExLogicTransferFunctionInformationHandler(){
 	this->Deinitialize();
 	this->SetInputData(NULL, 0);
+	if(this->inExFunction) this->inExFunction->UnRegister(this);
+	if(this->function) this->function->UnRegister(this);
 }
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::Deinitialize(int withData){
@@ -58,7 +61,10 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetInputData(vtkImage
 }
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetVisualizationTransferFunction(vtkCuda2DTransferFunction* f){
+	if( this->function ==  f ) return;
+	if( this->function ) this->function->UnRegister( this );
 	this->function = f;
+	if( this->function ) this->function->Register( this );
 	this->lastModifiedTime = 0;
 	this->Modified();
 }
@@ -68,7 +74,10 @@ vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler:
 }
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetInExLogicTransferFunction(vtkCuda2DTransferFunction* f){
+	if( this->inExFunction ==  f ) return;
+	if( this->inExFunction ) this->inExFunction->UnRegister( this );
 	this->inExFunction = f;
+	if( this->inExFunction ) this->inExFunction->Register( this );
 	this->lastModifiedTime = 0;
 	this->Modified();
 }

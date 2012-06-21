@@ -9,7 +9,7 @@
 */
 
 //For ray-caster
-#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCuda2DInExLogicVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkCuda2DTransferFunction.h"
@@ -48,14 +48,14 @@ class vtkBoxWidgetKeyholeCallback : public vtkCommand
         planes->Delete();
         }
       }
-    void SetMapper(vtkCuda2DVolumeMapper* m) 
+    void SetMapper(vtkCuda2DInExLogicVolumeMapper* m) 
       { this->Mapper = m; }
 
   protected:
     vtkBoxWidgetKeyholeCallback() 
       { this->Mapper = 0; }
 
-    vtkCuda2DVolumeMapper *Mapper;
+    vtkCuda2DInExLogicVolumeMapper *Mapper;
   };
 
 // ---------------------------------------------------------------------------------------------------
@@ -79,10 +79,11 @@ int main(int argc, char** argv){
 	  func->AddFunctionObject( tfReader->GetOutput(i) );
 
   //assemble the ray caster
-  vtkSmartPointer< vtkCuda2DVolumeMapper > mapper = 
-    vtkSmartPointer< vtkCuda2DVolumeMapper >::New();
+  vtkSmartPointer< vtkCuda2DInExLogicVolumeMapper > mapper = 
+    vtkSmartPointer< vtkCuda2DInExLogicVolumeMapper >::New();
   mapper->SetInput( imReader->GetOutput() );
-  mapper->SetFunction( func );
+  mapper->SetVisualizationFunction( func );
+  mapper->SetInExLogicFunction( func );
   mapper->SetGradientShadingConstants( 0.5 );
 
   //assemble the VTK pipeline
