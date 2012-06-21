@@ -2,18 +2,20 @@ PROJECT(ROBARTSULTRASOUND)
 
 SET(KIT RobartsUltrasound)
 SET(UKIT ROBARTSULTRASOUND)
-SET(KIT_LIBS vtkFiltering vtkHybrid vtkAtamaiTracking vtkRobartsECG vtkRobartsVideo)
+SET(KIT_LIBS vtkFiltering vtkHybrid )
 SET(KIT_EXTRA_LIBS)
 
-OPTION (VTK_USE_ULTRASOUNDTESTING "Enable Ultrasound Testing Classes" OFF)
-SET (Kit_SRCS ${Kit_SRCS} )
+SET (Kit_SRCS ${Kit_SRCS} 
+  vtkCT2USSimulation.cxx vtkCT2USSimulation.h
+)
 
+OPTION (VTK_USE_ULTRASOUNDTESTING "Enable Ultrasound Testing Classes" OFF)
 IF (VTK_USE_ULTRASOUNDTESTING)
   SET (Kit_SRCS ${Kit_SRCS} vtkUltrasoundSphereDetectionRayCaster.cxx )
 ENDIF (VTK_USE_ULTRASOUNDTESTING)
 
 IF (VTK_USE_ROBARTSECG)
-
+  SET ( KIT_LIBS ${KIT_LIBS} vtkRobartsECG vtkRobartsVideo vtkAtamaiTracking )
   SET ( Kit_SRCS ${Kit_SRCS}
     vtkFreehandUltrasound2.cxx
   )

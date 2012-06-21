@@ -2,7 +2,7 @@ PROJECT( Cuda2DTFVolumeRendering )
 
 SET(KIT Cuda2DTFVolumeRendering )
 SET(UKIT Cuda2DTFVolumeRendering )
-SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization )
+SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization vtkRobartsUltrasound )
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS
