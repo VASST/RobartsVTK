@@ -28,6 +28,7 @@ public:
 
 	void SetFileName( std::string filename );
 	void Write();
+	void Clear();
 	void AddInput( vtkCudaFunctionPolygon* object );
 	void RemoveInput( vtkCudaFunctionPolygon* object );
 	

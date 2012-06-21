@@ -11,7 +11,7 @@ vtkCudaFunctionPolygonWriter::vtkCudaFunctionPolygonWriter(){
 }
 
 vtkCudaFunctionPolygonWriter::~vtkCudaFunctionPolygonWriter(){
-	this->objects.clear();
+	this->Clear();
 }
 
 void vtkCudaFunctionPolygonWriter::SetFileName( std::string f ){
@@ -38,6 +38,24 @@ void vtkCudaFunctionPolygonWriter::Write(){
 	//close the file
 	file->close();
 	delete file;
+
+	//clear the object pile
+	this->Clear();
+}
+
+void vtkCudaFunctionPolygonWriter::Clear(){
+	
+	//unregister self from the objects
+	int numObjects = this->objects.size();
+	for( int n = 0; n < numObjects; n++ ){
+		vtkCudaFunctionPolygon* oldObject = this->objects.front();
+		this->objects.pop_front();
+		oldObject->UnRegister(this);
+	}
+
+	//make sure the object pile is empty
+	this->objects.clear();
+
 }
 
 void vtkCudaFunctionPolygonWriter::AddInput( vtkCudaFunctionPolygon* object ){
@@ -47,6 +65,7 @@ void vtkCudaFunctionPolygonWriter::AddInput( vtkCudaFunctionPolygon* object ){
 	}
 	if( alreadyThere ) return;
 
+	object->Register(this);
 	this->objects.push_back( object );
 
 }

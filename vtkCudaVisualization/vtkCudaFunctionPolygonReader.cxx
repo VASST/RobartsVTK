@@ -11,7 +11,7 @@ vtkCudaFunctionPolygonReader::vtkCudaFunctionPolygonReader(){
 }
 
 vtkCudaFunctionPolygonReader::~vtkCudaFunctionPolygonReader(){
-	this->objects.clear();
+	this->Clear();
 }
 
 void vtkCudaFunctionPolygonReader::SetFileName( std::string f ){
@@ -40,9 +40,12 @@ int vtkCudaFunctionPolygonReader::GetNumberOfOutputs( ){
 
 void vtkCudaFunctionPolygonReader::Read(){
 	if( !this->fileNameSet ){
-		vtkErrorMacro(<<"Must set file name before writing");
+		vtkErrorMacro(<<"Must set file name before reading");
 		return;
 	}
+
+	//clear the old information
+	this->Clear();
 
 	//open the file stream
 	this->file = new std::ifstream();
@@ -60,6 +63,21 @@ void vtkCudaFunctionPolygonReader::Read(){
 	//close the file
 	file->close();
 	delete file;
+}
+
+void vtkCudaFunctionPolygonReader::Clear(){
+	
+	//unregister self from the objects
+	int numObjects = this->objects.size();
+	for( int n = 0; n < numObjects; n++ ){
+		vtkCudaFunctionPolygon* oldObject = this->objects.front();
+		this->objects.pop_front();
+		oldObject->UnRegister(this);
+	}
+
+	//make sure the object pile is empty
+	this->objects.clear();
+
 }
 
 vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::readTFPolygon(){

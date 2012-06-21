@@ -30,6 +30,7 @@ public:
 
 	void SetFileName( std::string filename );
 	void Read();
+	void Clear();
 	vtkCudaFunctionPolygon* GetOutput( int n );
 	int GetNumberOfOutputs( );
 	
@@ -42,6 +43,7 @@ protected:
 	std::list<vtkCudaFunctionPolygon*> objects;
 	std::string filename;
 	bool fileNameSet;
+	
 
 	std::ifstream* file;
 

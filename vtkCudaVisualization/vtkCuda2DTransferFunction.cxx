@@ -10,6 +10,9 @@ vtkCuda2DTransferFunction::vtkCuda2DTransferFunction(){
 }
 
 vtkCuda2DTransferFunction::~vtkCuda2DTransferFunction(){
+	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin();
+		it != this->components->end(); it++)
+		(*it)->UnRegister(this);
 	this->components->clear();
 	delete this->components;
 }
@@ -117,6 +120,7 @@ short vtkCuda2DTransferFunction::GetNumberOfClassifications(){
 
 void vtkCuda2DTransferFunction::AddFunctionObject(vtkCudaFunctionObject* object){
 	this->components->push_back(object);
+	object->Register(this);
 	this->Modified();
 }
 
@@ -131,6 +135,7 @@ void vtkCuda2DTransferFunction::RemoveFunctionObject(vtkCudaFunctionObject* obje
 		}
 	}
 	if(erase){
+		(*it)->UnRegister(this);
 		this->components->erase(it);
 		this->Modified();
 	}

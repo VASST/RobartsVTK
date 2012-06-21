@@ -9,17 +9,15 @@
 */
 
 //For ray-caster
-#include "vtkCuda1DVolumeMapper.h"
+#include "vtkCuda2DVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkColorTransferFunction.h"
+#include "vtkCuda2DTransferFunction.h"
+#include "vtkCudaFunctionPolygon.h"
+#include "vtkCudaFunctionPolygonReader.h"
 #include "vtkBoxWidget.h"
 #include "vtkCommand.h"
 #include "vtkPlanes.h"
-
-//for VTK ray caster
-#include "vtkGPUVolumeRayCastMapper.h"
 
 //general use
 #include "vtkImageData.h"
@@ -50,14 +48,14 @@ class vtkBoxWidgetKeyholeCallback : public vtkCommand
         planes->Delete();
         }
       }
-    void SetMapper(vtkCuda1DVolumeMapper* m) 
+    void SetMapper(vtkCuda2DVolumeMapper* m) 
       { this->Mapper = m; }
 
   protected:
     vtkBoxWidgetKeyholeCallback() 
       { this->Mapper = 0; }
 
-    vtkCuda1DVolumeMapper *Mapper;
+    vtkCuda2DVolumeMapper *Mapper;
   };
 
 // ---------------------------------------------------------------------------------------------------
@@ -67,50 +65,25 @@ int main(int argc, char** argv){
   //retrieve the image
   vtkSmartPointer< vtkMetaImageReader > imReader = 
     vtkSmartPointer< vtkMetaImageReader >::New();
-  imReader->SetFileName("CT-chest.mhd" );
+  imReader->SetFileName("E:\\jbaxter\\data\\Chamberlain.mhd");
   imReader->Update();
 
   //create the transfer function
-  vtkSmartPointer< vtkPiecewiseFunction > opacityFun = 
-    vtkSmartPointer< vtkPiecewiseFunction >::New();
-  /*
-  opacityFun->AddPoint(0,    0.00);
-  opacityFun->AddPoint(500,  0.15);
-  opacityFun->AddPoint(1000, 0.15);
-  opacityFun->AddPoint(1150, 0.85);
-  */
-  opacityFun->AddPoint(-3024, 0);
-  opacityFun->AddPoint(143.556, 0);
-  opacityFun->AddPoint(166.222, 0.686275);
-  opacityFun->AddPoint(214.389, 0.696078);
-  opacityFun->AddPoint(419.736, 0.833333);
-  opacityFun->AddPoint(3071, 0.803922);
+  vtkSmartPointer< vtkCudaFunctionPolygonReader > tfReader = 
+	  vtkSmartPointer< vtkCudaFunctionPolygonReader >::New();
+  tfReader->SetFileName("E:\\jbaxter\\data\\Chamberlain.2tf");
+  tfReader->Read();
+  vtkSmartPointer< vtkCuda2DTransferFunction > func = 
+	  vtkSmartPointer< vtkCuda2DTransferFunction >::New();
+  for( int i = 0; i < tfReader->GetNumberOfOutputs(); i++ )
+	  func->AddFunctionObject( tfReader->GetOutput(i) );
 
-  vtkSmartPointer< vtkPiecewiseFunction > gradFun =
-    vtkSmartPointer< vtkPiecewiseFunction >::New();
-  gradFun->AddPoint( 0, 1 );
-  gradFun->AddPoint( 255, 1 );
-
-  vtkSmartPointer< vtkColorTransferFunction > colourFun = 
-    vtkSmartPointer< vtkColorTransferFunction >::New();
-  colourFun->AddRGBPoint(-3024, 0, 0, 0);
-  colourFun->AddRGBPoint(143.556, 0.615686, 0.356863, 0.184314);
-  colourFun->AddRGBPoint(166.222, 0.882353, 0.603922, 0.290196);
-  colourFun->AddRGBPoint(214.389, 1, 1, 1);
-  colourFun->AddRGBPoint(419.736, 1, 0.937033, 0.954531);
-  colourFun->AddRGBPoint(3071, 0.827451, 0.658824, 1);
-
-  /*
-  colourFun->AddRGBPoint(0,    0.0, 0.0, 0.0);
-  colourFun->AddRGBPoint(500,  1.0, 0.5, 0.3);
-  colourFun->AddRGBPoint(1000, 1.0, 0.5, 0.3);
-  colourFun->AddRGBPoint(1150, 1.0, 1.0, 0.9);
-  */
   //assemble the ray caster
-  vtkSmartPointer< vtkCuda1DVolumeMapper > mapper = 
-    vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
+  vtkSmartPointer< vtkCuda2DVolumeMapper > mapper = 
+    vtkSmartPointer< vtkCuda2DVolumeMapper >::New();
   mapper->SetInput( imReader->GetOutput() );
-  mapper->SetGradientShadingConstants( 0.0 );
+  mapper->SetFunction( func );
+  mapper->SetGradientShadingConstants( 0.5 );
 
   //assemble the VTK pipeline
   vtkSmartPointer< vtkVolume > volume = 
@@ -119,16 +92,6 @@ int main(int argc, char** argv){
 
   vtkSmartPointer< vtkVolumeProperty > volProperty = 
     vtkSmartPointer< vtkVolumeProperty >::New();
-  volProperty->SetScalarOpacity(opacityFun);
-  volProperty->SetColor(colourFun);
-  volProperty->SetGradientOpacity( gradFun );
-  volProperty->SetDiffuse( 0.9 );
-  volProperty->SetAmbient( 0.1 );
-  volProperty->SetSpecular( 0.2 );
-  volProperty->SetSpecularPower( 10 );
-  volProperty->SetShade( 1 );
-  volProperty->Modified();
-  volume->SetProperty(volProperty);
   volume->Update();
 
   vtkSmartPointer< vtkRenderer > renderer = 
