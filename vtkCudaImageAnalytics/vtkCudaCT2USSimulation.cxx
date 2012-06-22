@@ -66,6 +66,8 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i ){
 			this->information.WorldToVolume[i*4+j] = WorldToVoxelsMatrix->GetElement(i,j);
 		}
 	}
+	VoxelsTransform->Delete();
+	WorldToVoxelsMatrix->Delete();
 
 	//load the input volume into the CUDA kernel
 	this->ReserveGPU();
@@ -141,7 +143,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	//create new output image buffers
 	if( !this->densOutput){
 		this->densOutput = vtkImageData::New();
-		this->densOutput->Register( this );
 	}
 	this->densOutput->SetNumberOfScalarComponents(1);
 	this->densOutput->SetScalarTypeToFloat();
@@ -155,7 +156,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	
 	if( !this->transOutput){
 		this->transOutput = vtkImageData::New();
-		this->transOutput->Register( this );
 	}
 	this->transOutput->SetNumberOfScalarComponents(1);
 	this->transOutput->SetScalarTypeToFloat();
@@ -169,7 +169,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	
 	if( !this->reflOutput){
 		this->reflOutput = vtkImageData::New();
-		this->reflOutput->Register( this );
 	}
 	this->reflOutput->SetNumberOfScalarComponents(1);
 	this->reflOutput->SetScalarTypeToFloat();
@@ -184,7 +183,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	//create a new simulated image
 	if( !this->usOutput){
 		this->usOutput = vtkImageData::New();
-		this->usOutput->Register( this );
 	}
 	this->usOutput->SetNumberOfScalarComponents(3);
 	this->usOutput->SetScalarTypeToUnsignedChar();

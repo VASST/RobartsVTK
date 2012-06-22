@@ -140,26 +140,26 @@ int main(int argc, char** argv){
   probePose->Identity();
   probePose->Translate( imReader->GetOutput()->GetCenter() );
 
-  vtkSmartPointer< vtkCT2USSimulation > ct2us =
-	  vtkSmartPointer< vtkCT2USSimulation >::New();
-  ct2us->SetInput( imReader->GetOutput() );
-  ct2us->SetNumberOfThreads(100);
-  ct2us->SetTransform( probePose );
-  ct2us->SetProbeWidth(0,0);
-  ct2us->SetFarClippingDepth(100);
-  ct2us->SetNearClippingDepth(0);
-  ct2us->SetFanAngle(180,0);
-  ct2us->SetLinearCombinationAlpha(0.72);
-  ct2us->SetLinearCombinationBeta(20);
-  ct2us->SetLinearCombinationBias(0);
-  ct2us->SetLogarithmicScaleFactor(1.0);
-  ct2us->SetTotalReflectionThreshold(4000000);
-  ct2us->SetDensityScaleModel(0.20,-887);
-  ct2us->SetOutputResolution(1000,1000,1);
-  ct2us->Modified();
-  ct2us->Update();
+  //vtkSmartPointer< vtkCT2USSimulation > ct2us =
+	 // vtkSmartPointer< vtkCT2USSimulation >::New();
+  //ct2us->SetInput( imReader->GetOutput() );
+  //ct2us->SetNumberOfThreads(100);
+  //ct2us->SetTransform( probePose );
+  //ct2us->SetProbeWidth(0,0);
+  //ct2us->SetFarClippingDepth(100);
+  //ct2us->SetNearClippingDepth(0);
+  //ct2us->SetFanAngle(180,0);
+  //ct2us->SetLinearCombinationAlpha(0.72);
+  //ct2us->SetLinearCombinationBeta(20);
+  //ct2us->SetLinearCombinationBias(0);
+  //ct2us->SetLogarithmicScaleFactor(1.0);
+  //ct2us->SetTotalReflectionThreshold(4000000);
+  //ct2us->SetDensityScaleModel(0.20,-887);
+  //ct2us->SetOutputResolution(1000,1000,1);
+  //ct2us->Modified();
+  //ct2us->Update();
 
- /* vtkSmartPointer< vtkCudaCT2USSimulation > cuda_ct2us =
+  vtkSmartPointer< vtkCudaCT2USSimulation > cuda_ct2us =
 	  vtkSmartPointer< vtkCudaCT2USSimulation >::New();
   cuda_ct2us->SetInput( imReader->GetOutput() );
   cuda_ct2us->SetTransform( probePose );
@@ -175,17 +175,17 @@ int main(int argc, char** argv){
   cuda_ct2us->SetDensityScaleModel(0.20,-887);
   cuda_ct2us->SetOutputResolution(1000,1000,1);
   cuda_ct2us->Modified();
-  cuda_ct2us->Update();*/
+  cuda_ct2us->Update();
   
-  vtkSmartPointer< vtkBMPWriter > writer1 =
-	  vtkSmartPointer< vtkBMPWriter >::New();
-  writer1->SetInput(ct2us->GetOutput());
-  writer1->SetFileName("E:\\jbaxter\\test.bmp");
-  writer1->Write();
-  //vtkSmartPointer< vtkBMPWriter > writer2 =
+  //vtkSmartPointer< vtkBMPWriter > writer1 =
 	 // vtkSmartPointer< vtkBMPWriter >::New();
-  //writer2->SetInput(cuda_ct2us->GetOutput());
-  //writer2->SetFileName("E:\\jbaxter\\test_cuda.bmp");
-  //writer2->Write();
+  //writer1->SetInput(ct2us->GetOutput());
+  //writer1->SetFileName("E:\\jbaxter\\test.bmp");
+  //writer1->Write();
+  vtkSmartPointer< vtkBMPWriter > writer2 =
+	  vtkSmartPointer< vtkBMPWriter >::New();
+  writer2->SetInput(cuda_ct2us->GetOutput());
+  writer2->SetFileName("E:\\jbaxter\\test_cuda.bmp");
+  writer2->Write();
   
 }
