@@ -10,8 +10,8 @@ SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} cuda cudart cudartemu cufft cufftemu OpenC
 SET ( Kit_SRCS
   
   #CT to US simulation
-  vtkCudaCTToUSSimulation.h
-  vtkCudaCTToUSSimulation.cxx
+  vtkCudaCT2USSimulation.h
+  vtkCudaCT2USSimulation.cxx
   CUDA_cttoussimulation.h
   CUDA_cttoussimulation.cu
 

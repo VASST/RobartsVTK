@@ -119,47 +119,73 @@
 
 #include "vtkSmartPointer.h"
 #include "vtkCT2USSimulation.h"
-#include "vtkMetaImageReader.h"
+#include "vtkCudaCT2USSimulation.h"
+#include "vtkMINCImageReader.h"
 #include "vtkTransform.h"
-#include "vtkTexture.h"
-
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
+#include "vtkBMPWriter.h"
+#include "vtkImageCast.h"
 
 // ---------------------------------------------------------------------------------------------------
 // Main Program
 int main(int argc, char** argv){
 	
   //retrieve the image
-  vtkSmartPointer< vtkMetaImageReader > imReader = 
-    vtkSmartPointer< vtkMetaImageReader >::New();
-  imReader->SetFileName("E:\\jbaxter\\data\\Chamberlain.mhd");
+  vtkSmartPointer< vtkMINCImageReader > imReader = 
+    vtkSmartPointer< vtkMINCImageReader >::New();
+  imReader->SetFileName("E:\\jbaxter\\Code\\spine_NDI_AIGS_RSNA\\data\\NDI-phantom-box-SE2-crop.mnc");
   imReader->Update();
-
   
   vtkSmartPointer< vtkTransform > probePose =
 	  vtkSmartPointer< vtkTransform >::New();
   probePose->Identity();
+  probePose->Translate( imReader->GetOutput()->GetCenter() );
 
   vtkSmartPointer< vtkCT2USSimulation > ct2us =
 	  vtkSmartPointer< vtkCT2USSimulation >::New();
   ct2us->SetInput( imReader->GetOutput() );
+  ct2us->SetNumberOfThreads(100);
   ct2us->SetTransform( probePose );
-  ct2us->SetOutputResolution(100,100,1);
+  ct2us->SetProbeWidth(0,0);
+  ct2us->SetFarClippingDepth(100);
+  ct2us->SetNearClippingDepth(0);
+  ct2us->SetFanAngle(180,0);
+  ct2us->SetLinearCombinationAlpha(0.72);
+  ct2us->SetLinearCombinationBeta(20);
+  ct2us->SetLinearCombinationBias(0);
+  ct2us->SetLogarithmicScaleFactor(1.0);
+  ct2us->SetTotalReflectionThreshold(4000000);
+  ct2us->SetDensityScaleModel(0.20,-887);
+  ct2us->SetOutputResolution(1000,1000,1);
   ct2us->Modified();
   ct2us->Update();
-  
-  vtkSmartPointer< vtkTexture > texture =
-	  vtkSmartPointer< vtkTexture >::New();
-  texture->SetInput(ct2us->GetOutput());
 
-  vtkSmartPointer< vtkRenderer > renderer =
-	  vtkSmartPointer< vtkRenderer >::New();
-  renderer->SetBackgroundTexture(texture);
-  renderer->SetTexturedBackground(true);
-  vtkSmartPointer< vtkRenderWindow > window =
-	  vtkSmartPointer< vtkRenderWindow >::New();
-  window->AddRenderer( renderer );
-  window->Render();
-  ct2us->Update();
+ /* vtkSmartPointer< vtkCudaCT2USSimulation > cuda_ct2us =
+	  vtkSmartPointer< vtkCudaCT2USSimulation >::New();
+  cuda_ct2us->SetInput( imReader->GetOutput() );
+  cuda_ct2us->SetTransform( probePose );
+  cuda_ct2us->SetProbeWidth(0,0);
+  cuda_ct2us->SetFarClippingDepth(100);
+  cuda_ct2us->SetNearClippingDepth(0);
+  cuda_ct2us->SetFanAngle(180,0);
+  cuda_ct2us->SetLinearCombinationAlpha(0.72);
+  cuda_ct2us->SetLinearCombinationBeta(20);
+  cuda_ct2us->SetLinearCombinationBias(0);
+  cuda_ct2us->SetLogarithmicScaleFactor(1.0);
+  cuda_ct2us->SetTotalReflectionThreshold(4000000);
+  cuda_ct2us->SetDensityScaleModel(0.20,-887);
+  cuda_ct2us->SetOutputResolution(1000,1000,1);
+  cuda_ct2us->Modified();
+  cuda_ct2us->Update();*/
+  
+  vtkSmartPointer< vtkBMPWriter > writer1 =
+	  vtkSmartPointer< vtkBMPWriter >::New();
+  writer1->SetInput(ct2us->GetOutput());
+  writer1->SetFileName("E:\\jbaxter\\test.bmp");
+  writer1->Write();
+  //vtkSmartPointer< vtkBMPWriter > writer2 =
+	 // vtkSmartPointer< vtkBMPWriter >::New();
+  //writer2->SetInput(cuda_ct2us->GetOutput());
+  //writer2->SetFileName("E:\\jbaxter\\test_cuda.bmp");
+  //writer2->Write();
+  
 }

@@ -56,13 +56,13 @@ void vtkCT2USSimulation::ThreadedExecute(vtkImageData *inData, vtkImageData *out
 
 		//find the index in the image
 		int index[2];
-		index[0] = threadId % this->CT2USInformation->Resolution[0];
-		index[1] = threadId / this->CT2USInformation->Resolution[0];
+		index[0] = idInUse % this->CT2USInformation->Resolution[0];
+		index[1] = idInUse / this->CT2USInformation->Resolution[0];
 
 		//find the normalized indices
 		double normIndex[2];
-		normIndex[0] = (double) (index[0]+index[1]) / (double) this->CT2USInformation->Resolution[0] - 1.0;
-		normIndex[1] = (double) (index[0]+index[1]) / (double) this->CT2USInformation->Resolution[1] - 1.0;
+		normIndex[0] = (double) (index[0]+index[0]) / (double) this->CT2USInformation->Resolution[0] - 1.0;
+		normIndex[1] = (double) (index[1]+index[1]) / (double) this->CT2USInformation->Resolution[1] - 1.0;
 	
 		//find the vector for the ray through the volume
 		double rayStart[3];
@@ -103,20 +103,20 @@ void vtkCT2USSimulation::SampleAlongRay(const int index[2], double rayStart[2], 
 										   rayInc[2]*rayInc[2]/(spacing[2]*spacing[2]) );
 
 	//set up running accumulators
-	float transmission = 1.0f;
+	double transmission = 1.0f;
 
 	//set up output scaling parameters
-	float multiplier = this->CT2USInformation->a;
-	float divisor = 1.0f / log(1.0f+multiplier);
+	double multiplier = this->CT2USInformation->a;
+	double divisor = 1.0 / log(1.0+multiplier);
 
 	for(unsigned int numStepsTaken = 0; numStepsTaken < numStepsToTake; numStepsTaken++){
 
 		//create default values for the sample point
-		float density = 0.0f;
-		float transmissionLost = 1.0f;
-		float pointReflection = 0.0f;
+		double density = 0.0f;
+		double transmissionLost = 1.0f;
+		double pointReflection = 0.0f;
 
-		float attenuation = 0.0f;
+		double attenuation = 0.0f;
 
 		if(!(rayStart[0] < 0.0f || rayStart[1] < 0.0f || rayStart[2] < 0.0f ||
 			 rayStart[0] > (double)(volumeSize[0] - 1) ||
@@ -137,24 +137,27 @@ void vtkCT2USSimulation::SampleAlongRay(const int index[2], double rayStart[2], 
 			//calculate the reflection, density and transmission at this sample point
 			transmissionLost = 0.0;
 			if( gradMag < threshold ){
-				transmissionLost = 1.0f - gradMagSquared * worldDirectionMag / (4.0f * attenuation * attenuation);
+				transmissionLost = 1.0f - gradMagSquared * worldDirectionMag / (4.0 * attenuation * attenuation);
 				if( transmissionLost < 0.0 ) transmissionLost = 0.0;
 				if( transmissionLost > 1.0 ) transmissionLost = 1.0;
 			}
-			pointReflection  = transmission * (rayInc[0]*gradient[0] + rayInc[1]*gradient[1] + rayInc[2]*gradient[2]) * gradMag / ( 4.0f * attenuation * attenuation * directionMag );
-			density          = (transmission > 0.0f) ? densitySlope * attenuation + densityIntercept : 0.0f;
+			pointReflection  = transmission * -(rayInc[0]*gradient[0] + rayInc[1]*gradient[1] + rayInc[2]*gradient[2]) * gradMag / ( 4.0 * attenuation * attenuation * directionMag );
+			density          = (transmission > 0.0f) ? densitySlope * attenuation + densityIntercept : 0.0;
 
 		}
 
 		//scale the point reflection
 		pointReflection = log( 1 + multiplier * pointReflection ) * divisor;
-		if( pointReflection < 0.0 ) pointReflection = 0.0;
-		if( pointReflection > 1.0 ) pointReflection = 1.0;
+		if( pointReflection < 0.0 )
+			pointReflection = 0.0;
+		else
+			if( pointReflection > 1.0 )
+				pointReflection = 1.0;
 		
 		//create the output image
-		double outputPixel = 255.0*alpha*density+beta*pointReflection+bias;
+		double outputPixel = 255.0*(alpha*density+beta*pointReflection+bias);
 		if( outputPixel < 0.0 ) outputPixel = 0.0;
-		if( outputPixel > 255.0 ) outputPixel = 1.0;
+		if( outputPixel > 255.0 ) outputPixel = 255.0;
 		outputUltrasound[actIndex+0] = outputPixel;
 		outputUltrasound[actIndex+1] = outputPixel;
 		outputUltrasound[actIndex+2] = outputPixel;
@@ -290,15 +293,34 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
 	int extent[6];
 	outData->GetExtent(extent);
 	bool reallocateScalars = !(outData->GetNumberOfScalarComponents() == 3);
-	for (int idx = 0; idx < 3; ++idx){
-		if(extent[2*idx] != 0 || extent[2*idx+1] != this->CT2USInformation->Resolution[idx]-1){
-			extent[2*idx] = 0;
-			extent[2*idx+1] = this->CT2USInformation->Resolution[idx]-1;
+	if( this->CT2USInformation->Resolution[1] != 1 ){
+		for (int idx = 0; idx < 3; ++idx){
+			if(extent[2*idx] != 0 || extent[2*idx+1] != this->CT2USInformation->Resolution[idx]-1){
+				extent[2*idx] = 0;
+				extent[2*idx+1] = this->CT2USInformation->Resolution[idx]-1;
+				reallocateScalars = true;
+			}
+		}
+	}else{
+		if(extent[0] != 0 || extent[1] != this->CT2USInformation->Resolution[0]-1){
+			extent[0] = 0;
+			extent[1] = this->CT2USInformation->Resolution[0]-1;
+			reallocateScalars = true;
+		}
+		if(extent[2] != 0 || extent[3] != this->CT2USInformation->Resolution[2]-1){
+			extent[2] = 0;
+			extent[3] = this->CT2USInformation->Resolution[2]-1;
+			reallocateScalars = true;
+		}
+		if(extent[4] != 0 || extent[5] != this->CT2USInformation->Resolution[1]-1){
+			extent[4] = 0;
+			extent[5] = this->CT2USInformation->Resolution[1]-1;
 			reallocateScalars = true;
 		}
 	}
 	if(reallocateScalars){
 		outData->SetExtent(extent);
+		outData->SetWholeExtent(extent);
 		outData->SetScalarTypeToUnsignedChar();
 		outData->SetNumberOfScalarComponents(3);
 		outData->AllocateScalars();
@@ -346,6 +368,7 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
 	this->VoxelsTransform->Identity();
 	this->VoxelsTransform->Translate( extentOrigin[0], extentOrigin[1], extentOrigin[2] );
 	this->VoxelsTransform->Scale( spacing[0], spacing[1], spacing[2] );
+	this->Interpolator->SetTransform(this->VoxelsTransform);
 	
 	// Now we actually have the world to voxels matrix - copy it out
 	this->WorldToVoxelsMatrix->DeepCopy( VoxelsTransform->GetMatrix() );
@@ -377,10 +400,7 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
 
 void vtkCT2USSimulation::GetCTValue(double i[3], double& f, double g[3]){
 	f = this->Interpolator->FunctionValue(i);
-	double* grad = this->Interpolator->FunctionGradient(i);
-	g[0] = grad[0];
-	g[1] = grad[1];
-	g[2] = grad[2];
+	this->Interpolator->FunctionGradient(i,g);
 }
 
 void vtkCT2USSimulation::SetLogarithmicScaleFactor(double factor){

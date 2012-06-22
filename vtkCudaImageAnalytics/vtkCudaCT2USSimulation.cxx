@@ -1,21 +1,21 @@
-#include "vtkCudaCTToUSSimulation.h"
+#include "vtkCudaCT2USSimulation.h"
 #include "vtkObjectFactory.h"
 
-vtkStandardNewMacro(vtkCudaCTToUSSimulation);
+vtkStandardNewMacro(vtkCudaCT2USSimulation);
 
-void vtkCudaCTToUSSimulation::Reinitialize(int withData){
+void vtkCudaCT2USSimulation::Reinitialize(int withData){
 	if( withData && this->caster->GetInput() )
 		this->SetInput((vtkImageData*) this->caster->GetInput());
 }
 
-void vtkCudaCTToUSSimulation::Deinitialize(int withData){
+void vtkCudaCT2USSimulation::Deinitialize(int withData){
 	if(this->caster->GetInput()){
 		this->ReserveGPU();
 		CUDAsetup_unloadCTImage( this->GetStream() );
 	}
 }
 
-void vtkCudaCTToUSSimulation::SetInput( vtkImageData * i ){
+void vtkCudaCT2USSimulation::SetInput( vtkImageData * i ){
 	//load the input to a texture
 	this->caster->SetInput(i);
 	this->caster->Update();
@@ -74,14 +74,14 @@ void vtkCudaCTToUSSimulation::SetInput( vtkImageData * i ){
 
 }
 
-void vtkCudaCTToUSSimulation::SetTransform( vtkTransform * t ){
+void vtkCudaCT2USSimulation::SetTransform( vtkTransform * t ){
 	this->usTransform = t;
 	this->Modified();
 }
 
 #include "vtkTimerLog.h"
 
-void vtkCudaCTToUSSimulation::Update(){
+void vtkCudaCT2USSimulation::Update(){
 
 	//if we are missing either input or transform, do not update
 	if( !this->caster->GetInput() || !this->usTransform ) return;
@@ -111,11 +111,11 @@ void vtkCudaCTToUSSimulation::Update(){
 
 }
 
-vtkImageData* vtkCudaCTToUSSimulation::GetOutput(){
+vtkImageData* vtkCudaCT2USSimulation::GetOutput(){
 	return this->usOutput;
 }
 
-vtkImageData* vtkCudaCTToUSSimulation::GetOutput(int i){
+vtkImageData* vtkCudaCT2USSimulation::GetOutput(int i){
 	switch(i){
 		case 0: return this->usOutput;
 		case 1: return this->transOutput;
@@ -125,7 +125,7 @@ vtkImageData* vtkCudaCTToUSSimulation::GetOutput(int i){
 	}
 }
 
-void vtkCudaCTToUSSimulation::SetOutputResolution(int x, int y, int z){
+void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 
 	//if we are 2D, treat us as such (make sure z is still depth)
 	if( z == 1){
@@ -198,50 +198,50 @@ void vtkCudaCTToUSSimulation::SetOutputResolution(int x, int y, int z){
 	
 }
 
-void vtkCudaCTToUSSimulation::SetLogarithmicScaleFactor(float factor){
+void vtkCudaCT2USSimulation::SetLogarithmicScaleFactor(float factor){
 	this->information.a = factor;
 }
 
-void vtkCudaCTToUSSimulation::SetTotalReflectionThreshold(float threshold){
+void vtkCudaCT2USSimulation::SetTotalReflectionThreshold(float threshold){
 	this->information.reflectionThreshold = threshold;
 }
 
-void vtkCudaCTToUSSimulation::SetLinearCombinationAlpha(float a){
+void vtkCudaCT2USSimulation::SetLinearCombinationAlpha(float a){
 	this->information.alpha = a;
 }
 
-void vtkCudaCTToUSSimulation::SetLinearCombinationBeta(float b){
+void vtkCudaCT2USSimulation::SetLinearCombinationBeta(float b){
 	this->information.beta = b;
 }
 
-void vtkCudaCTToUSSimulation::SetLinearCombinationBias(float bias){
+void vtkCudaCT2USSimulation::SetLinearCombinationBias(float bias){
 	this->information.bias = bias;
 }
 
-void vtkCudaCTToUSSimulation::SetProbeWidth(float xWidth, float yWidth){
+void vtkCudaCT2USSimulation::SetProbeWidth(float xWidth, float yWidth){
 	this->information.probeWidth.x = xWidth;
 	this->information.probeWidth.y = yWidth;
 }
 
-void vtkCudaCTToUSSimulation::SetFanAngle(float xAngle, float yAngle){
+void vtkCudaCT2USSimulation::SetFanAngle(float xAngle, float yAngle){
 	this->information.fanAngle.x = xAngle * 3.1415926 / 180.0;
 	this->information.fanAngle.y = yAngle * 3.1415926 / 180.0;
 }
 
-void vtkCudaCTToUSSimulation::SetNearClippingDepth(float depth){
+void vtkCudaCT2USSimulation::SetNearClippingDepth(float depth){
 	this->information.StartDepth = depth;
 }
 
-void vtkCudaCTToUSSimulation::SetFarClippingDepth(float depth){
+void vtkCudaCT2USSimulation::SetFarClippingDepth(float depth){
 	this->information.EndDepth = depth;
 }
 
-void vtkCudaCTToUSSimulation::SetDensityScaleModel(float scale, float offset){
+void vtkCudaCT2USSimulation::SetDensityScaleModel(float scale, float offset){
 	this->information.hounsfieldScale = scale;
 	this->information.hounsfieldOffset = offset;
 }
 
-vtkCudaCTToUSSimulation::vtkCudaCTToUSSimulation(){
+vtkCudaCT2USSimulation::vtkCudaCT2USSimulation(){
 	this->usOutput = 0;
 	this->densOutput = 0;
 	this->transOutput = 0;
@@ -268,7 +268,7 @@ vtkCudaCTToUSSimulation::vtkCudaCTToUSSimulation(){
 	this->caster->ClampOverflowOn();
 }
 
-vtkCudaCTToUSSimulation::~vtkCudaCTToUSSimulation(){
+vtkCudaCT2USSimulation::~vtkCudaCT2USSimulation(){
 	if(this->usOutput){
 		this->usOutput->Delete();
 		this->transOutput->Delete();

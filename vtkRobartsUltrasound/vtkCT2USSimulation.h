@@ -69,7 +69,6 @@ private:
 										const int xResolution, const int yResolution, char* const outputUltrasound);
 	void GetCTValue(double i[3], double& f, double g[3]);
 	vtkImplicitVolume* Interpolator;
-
 };
 
 #endif

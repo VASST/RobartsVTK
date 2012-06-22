@@ -1,5 +1,5 @@
-#ifndef __VTKCUDACTTOUSSIMULATION_H__
-#define __VTKCUDACTTOUSSIMULATION_H__
+#ifndef __vtkCudaCT2USSimulation_H__
+#define __vtkCudaCT2USSimulation_H__
 
 #include "CUDA_cttoussimulation.h"
 #include "vtkAlgorithm.h"
@@ -9,10 +9,13 @@
 
 #include "vtkCudaObject.h"
 
-class vtkCudaCTToUSSimulation : public vtkAlgorithm, public vtkCudaObject
+class vtkCudaCT2USSimulation : public vtkAlgorithm, public vtkCudaObject
 {
 public:
-	static vtkCudaCTToUSSimulation *New();
+
+	vtkTypeMacro( vtkCudaCT2USSimulation, vtkAlgorithm )
+
+	static vtkCudaCT2USSimulation *New();
 
 	void SetInput( vtkImageData * );
 	void SetTransform( vtkTransform * );
@@ -36,15 +39,15 @@ public:
 	void SetFarClippingDepth(float depth);
 
 protected:
-	vtkCudaCTToUSSimulation();
-	virtual ~vtkCudaCTToUSSimulation();
+	vtkCudaCT2USSimulation();
+	virtual ~vtkCudaCT2USSimulation();
 	
 	void Reinitialize(int withData);
 	void Deinitialize(int withData);
 
 private:
-	vtkCudaCTToUSSimulation operator=(const vtkCudaCTToUSSimulation&){}
-	vtkCudaCTToUSSimulation(const vtkCudaCTToUSSimulation&){}
+	vtkCudaCT2USSimulation operator=(const vtkCudaCT2USSimulation&){}
+	vtkCudaCT2USSimulation(const vtkCudaCT2USSimulation&){}
 	
 	CT_To_US_Information information;
 	vtkTransform* usTransform;
