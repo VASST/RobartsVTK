@@ -15,6 +15,12 @@ SET ( Kit_SRCS
   CUDA_cttoussimulation.h
   CUDA_cttoussimulation.cu
 
+  #Fuzzy Connectedness filter
+  vtkCudaFuzzyConnectednessFilter.h
+  vtkCudaFuzzyConnectednessFilter.cxx
+  CUDA_fuzzyconnectednessfilter.h
+  CUDA_fuzzyconnectednessfilter.cu
+
   #Kohonen self-organizing map
   vtkCudaKohonenGenerator.h
   vtkCudaKohonenGenerator.cxx
