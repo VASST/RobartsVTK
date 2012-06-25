@@ -6,25 +6,17 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "CUDA_fuzzyconnectednessfilter.h"
+#include "vtkCudaObject.h"
 
 struct vtkCudaFuzzyConnectednessFilterInformation;
 
-class vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm
+class vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
 
-	vtkTypeMacro( vtkCudaFuzzyConnectednessFilter, vtkThreadedImageAlgorithm )
+	vtkTypeMacro( vtkCudaFuzzyConnectednessFilter, vtkImageAlgorithm )
 
 	static vtkCudaFuzzyConnectednessFilter *New();
-
-	//output parameters
-	void SetOutputResolution(int x, int y, int z);
-	void SetLogarithmicScaleFactor(double factor);
-	void SetTotalReflectionThreshold(double threshold);
-	void SetLinearCombinationAlpha(double a); //weighting for the reflection
-	void SetLinearCombinationBeta(double b); //weighting for the density
-	void SetLinearCombinationBias(double bias); //bias amount
-	void SetDensityScaleModel(double scale, double offset);
 	
 	// Description:
 	// Get/Set the t-Norm and s-Norm type
@@ -32,8 +24,19 @@ public:
 	vtkGetMacro( TNorm, int );
 	vtkSetClampMacro( SNorm, int, 0, 2 );
 	vtkGetMacro( SNorm, int );
+
+	// Description:
+	// Get/Set the weights for the affinity function
+	vtkSetClampMacro( DistanceWeight, double, 0, 2 );
+	vtkGetMacro( DistanceWeight, double );
+	vtkSetClampMacro( GradientWeight, double, 0, 2 );
+	vtkGetMacro( GradientWeight, double );
+
 protected:
 	
+	void Reinitialize(int withData);
+	void Deinitialize(int withData);
+
 	int RequestData(vtkInformation* request,
                           vtkInformationVector** inputVector,
                           vtkInformationVector* outputVector);
@@ -47,6 +50,9 @@ private:
 	
 	int TNorm;
 	int SNorm;
+	
+	double DistanceWeight;
+	double GradientWeight;
 
 	Fuzzy_Connectedness_Information* Information;
 };
