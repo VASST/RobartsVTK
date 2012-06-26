@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#define DEBUG_VTKCUDAVISUALIZATION
+//#define DEBUG_VTKCUDAVISUALIZATION
 
 #define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 

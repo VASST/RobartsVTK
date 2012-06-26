@@ -20,7 +20,7 @@ __global__ void updateConnectedness(float* connectedness, float* seed,
 	char t = info.tnorm;
 	char s = info.snorm;
 	
-	float uk = connectedness[idx];
+	float uk = 0.0f;
 
 	float n = connectedness[idx+1];
 	float a = affinityX[idx];
