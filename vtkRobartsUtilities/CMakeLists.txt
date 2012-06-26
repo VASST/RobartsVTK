@@ -8,6 +8,7 @@ SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkCommon vtkParallel vtkFiltering)
 SET ( Kit_SRCS
   vtkImagePipe.h vtkImagePipe.cxx
   vtkReadWriteLock.h vtkReadWriteLock.cxx
+  vtkImageSeedFilter.h vtkImageSeedFilter.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
