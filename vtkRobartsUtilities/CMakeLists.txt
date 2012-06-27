@@ -9,6 +9,7 @@ SET ( Kit_SRCS
   vtkImagePipe.h vtkImagePipe.cxx
   vtkReadWriteLock.h vtkReadWriteLock.cxx
   vtkImageSeedFilter.h vtkImageSeedFilter.cxx
+  vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )

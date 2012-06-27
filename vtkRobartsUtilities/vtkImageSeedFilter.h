@@ -21,7 +21,7 @@ public:
 	void AddPointInVolumeCoordinates(double point[3], int component);
 	
 	//get/set the number of components (separate objects represented)
-	vtkSetClampMacro( NumberOfComponents, int, 1, VTK_MAX_INT );
+	vtkSetClampMacro( NumberOfComponents, int, 1, 1000 );
 	vtkGetMacro( NumberOfComponents, int );
 
 protected:

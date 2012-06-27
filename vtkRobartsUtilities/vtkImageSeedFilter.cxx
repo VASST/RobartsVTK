@@ -69,7 +69,7 @@ int vtkImageSeedFilter::RequestData(vtkInformation* request,
 	std::vector<double>::iterator itY = this->pointsInVoxelY.begin();
 	std::vector<double>::iterator itZ = this->pointsInVoxelZ.begin();
 	std::vector<int>::iterator itW = this->pointsInVoxelW.begin();
-	int N = this->pointsInVolumeX.size();
+	int N = this->pointsInVoxelX.size();
 	for(int i = 0; i < N; i++){
 
 		//check if the component is in the volume
@@ -98,7 +98,7 @@ int vtkImageSeedFilter::RequestData(vtkInformation* request,
 	itY = this->pointsInVolumeY.begin();
 	itZ = this->pointsInVolumeZ.begin();
 	itW = this->pointsInVolumeW.begin();
-	int N = this->pointsInVolumeX.size();
+	N = this->pointsInVolumeX.size();
 	for(int i = 0; i < N; i++){
 
 		//convert first to voxel co-ordinates
