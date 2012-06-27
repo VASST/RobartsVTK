@@ -9,64 +9,57 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
                           vtkInformationVector* outputVector){
 
 	// get the info objects
-	vtkImageData *inData = vtkImageData::SafeDownCast(this->GetInput(0));
-	vtkImageData *seedData = vtkImageData::SafeDownCast(this->GetInput(1));
+	vtkImageData *seedData = vtkImageData::SafeDownCast(this->GetInput(0));
+	vtkImageData *affData = vtkImageData::SafeDownCast(this->GetInput(1));
 	vtkImageData *outData = this->GetOutput();
-	if( !inData || !seedData || !outData ) return -1;
+	if( !affData || !seedData || !outData ) return -1;
 
 	//make sure that there is only 1 component and it is not a double
-	if( inData->GetNumberOfScalarComponents() != 1 ||
-		seedData->GetNumberOfScalarComponents() != 1 ||
-		inData->GetScalarType() == VTK_DOUBLE ||
-		seedData->GetScalarType() != VTK_FLOAT ){
-      vtkErrorMacro(<< "Execute: Invalid number of components or input type");
+	if( seedData->GetScalarType() != VTK_FLOAT ||
+		affData->GetScalarType() != VTK_FLOAT ||
+		affData->GetNumberOfScalarComponents() != 3 ){
+      vtkErrorMacro(<< "Execute: Input data is not in FLOAT form or the affinity does not have 3 components");
       return -1;
 	}
 
 	//make sure the seed image and the actual image are the same size
-	int* dimIn = inData->GetDimensions();
+	int* dimAff = affData->GetDimensions();
 	int* dimSeed = seedData->GetDimensions();
-	if( dimIn[0] != dimSeed[0] || dimIn[1] != dimSeed[1] || dimIn[2] != dimSeed[2] ){
-      vtkErrorMacro(<< "Execute: Seed image not the same size as the input image");
+	if( dimAff[0] != dimSeed[0] || dimAff[1] != dimSeed[1] || dimAff[2] != dimSeed[2] ){
+      vtkErrorMacro(<< "Execute: Seed image not the same size as the affinity image");
       return -1;
 	}
 
 	//scale the output image appropriately
 	outData->SetScalarTypeToFloat();
-	outData->SetNumberOfScalarComponents(1);
-	outData->SetExtent( inData->GetExtent() );
-	outData->SetSpacing( inData->GetSpacing() );
-	outData->SetOrigin( inData->GetOrigin() );
+	outData->SetNumberOfScalarComponents(seedData->GetNumberOfScalarComponents());
+	outData->SetExtent( seedData->GetExtent() );
+	outData->SetSpacing( seedData->GetSpacing() );
+	outData->SetOrigin( seedData->GetOrigin() );
 	outData->AllocateScalars();
 	
 	//load the CUDA information struct
 	this->Information->snorm = this->SNorm;
 	this->Information->tnorm = this->TNorm;
-	this->Information->VolumeSize.x = inData->GetExtent()[1] - inData->GetExtent()[0] + 1;
-	this->Information->VolumeSize.y = inData->GetExtent()[3] - inData->GetExtent()[2] + 1;
-	this->Information->VolumeSize.z = inData->GetExtent()[5] - inData->GetExtent()[4] + 1;
-	this->Information->Spacing.x = inData->GetSpacing()[0];
-	this->Information->Spacing.y = inData->GetSpacing()[1];
-	this->Information->Spacing.z = inData->GetSpacing()[2];
-	this->Information->distanceWeight = this->DistanceWeight;
-	this->Information->gradientWeight = this->GradientWeight;
+	this->Information->VolumeSize.x = seedData->GetExtent()[1] - seedData->GetExtent()[0] + 1;
+	this->Information->VolumeSize.y = seedData->GetExtent()[3] - seedData->GetExtent()[2] + 1;
+	this->Information->VolumeSize.z = seedData->GetExtent()[5] - seedData->GetExtent()[4] + 1;
+	this->Information->NumObjects = seedData->GetNumberOfScalarComponents();
+	this->Information->Spacing.x = seedData->GetSpacing()[0];
+	this->Information->Spacing.y = seedData->GetSpacing()[1];
+	this->Information->Spacing.z = seedData->GetSpacing()[2];
 
+	//figure out a good number of iterations (exact number required for SNORM=0, lower bound for rest)
+	int numIts = this->Information->VolumeSize.x*
+				 this->Information->VolumeSize.y*
+				 this->Information->VolumeSize.z;
+	
 	//run algorithm
 	this->ReserveGPU();
-	switch (inData->GetScalarType())
-    {
-    vtkTemplateMacro(
-		CUDAalgo_calculateConnectedness((float*) outData->GetScalarPointer(),
+	CUDAalgo_calculateConnectedness((float*) outData->GetScalarPointer(),
 										(float*) seedData->GetScalarPointer(),
-										1000,
-										inData->GetScalarPointer(), 1,
-										*(this->Information), this->GetStream() )
-	);
-    default:
-      vtkErrorMacro(<< "Execute: Unknown input ScalarType");
-      return -1;
-    }
-
+										(float*) affData->GetScalarPointer(),
+										numIts, *(this->Information), this->GetStream() );
 	return 1;
 }
 

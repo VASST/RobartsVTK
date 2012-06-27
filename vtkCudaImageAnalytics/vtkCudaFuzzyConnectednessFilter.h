@@ -25,13 +25,6 @@ public:
 	vtkSetClampMacro( SNorm, int, 0, 2 );
 	vtkGetMacro( SNorm, int );
 
-	// Description:
-	// Get/Set the weights for the affinity function
-	vtkSetClampMacro( DistanceWeight, double, 0, 2 );
-	vtkGetMacro( DistanceWeight, double );
-	vtkSetClampMacro( GradientWeight, double, 0, 2 );
-	vtkGetMacro( GradientWeight, double );
-
 protected:
 	
 	void Reinitialize(int withData);
@@ -50,9 +43,6 @@ private:
 	
 	int TNorm;
 	int SNorm;
-	
-	double DistanceWeight;
-	double GradientWeight;
 
 	Fuzzy_Connectedness_Information* Information;
 };

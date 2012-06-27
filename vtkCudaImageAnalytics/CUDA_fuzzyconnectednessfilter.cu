@@ -1,5 +1,7 @@
 #include "CUDA_fuzzyconnectednessfilter.h"
 
+#define BLOCK_SIZE 256
+
 #define MAX(a,b) ( a > b ? a : b )
 #define MIN(a,b) ( a <= b ? a : b )
 #define TNORM(a,b,n) (n == 0) ? MIN(a,b) : (n == 1) ? a*b: a*b / (2.0f - a - b + a*b);
@@ -7,149 +9,92 @@
 
 __constant__ Fuzzy_Connectedness_Information info;
 
-__global__ void updateConnectedness(float* connectedness, float* seed,
-									float* affinityX, float* affinityY, float* affinityZ){
+__global__ void updateConnectedness(float* connectedness, float* seed, float3* affinity){
 
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int3 iN = info.VolumeSize;
-	int3 i;
+	int4 iN;
+	iN.x = info.VolumeSize.x;
+	iN.y = info.VolumeSize.y;
+	iN.z = info.VolumeSize.z;
+	iN.w = info.NumObjects;
+	int4 i;
 	i.x = idx % iN.x;
-	i.z = idx / iN.x;
-	i.y = i.z % iN.y;
-	i.z = i.z / iN.y;
+	i.w = idx / iN.x;
+	i.y = i.w % iN.y;
+	i.w = i.w / iN.y;
+	i.z = i.w % iN.z;
+	i.w = i.w / iN.z;
+	int lidx = i.x + iN.x * (i.y + iN.y*i.z);
+
 	char t = info.tnorm;
 	char s = info.snorm;
-	
-	float uk = 0.0f;
 
-	float n = connectedness[idx+1];
-	float a = affinityX[idx];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.x != (iN.x-1) ? n : 0.0f, s);
+	float n = (i.x != (iN.x-1)) ? connectedness[idx+1] : 0.0f;
+	float3 a = affinity[lidx];
+	float uk = TNORM(a.x,n,t);
    
-	n = connectedness[idx+iN.x];
-	a = affinityY[idx];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.y != (iN.y-1) ? n : 0.0f, s);
+	n = (i.y != (iN.y-1)) ? connectedness[idx+iN.x] : 0.0f;
+	n = TNORM(a.y,n,t);
+	uk = SNORM(uk, n, s);
    
-	n = connectedness[idx+iN.x*iN.y];
-	a = affinityZ[idx];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.z < (iN.z-1) ? n : 0.0f, s);
+	n = (i.z != (iN.z-1)) ? connectedness[idx+iN.x*iN.y] : 0.0f;
+	a = affinity[3*lidx+2];
+	n = TNORM(a.z,n,t);
+	uk = SNORM(uk, n, s);
   
-	n = connectedness[idx-1];
-	a = affinityX[idx-1];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.x != 0 ? n : 0.0f, s);
+	n = (i.x != 0) ? connectedness[idx-1] : 0.0f;
+	a = (i.x != 0) ? affinity[lidx-1] : a;
+	n = TNORM((i.x != 0) ? a.x : 0.0f, n, t);
+	uk = SNORM(uk, n, s);
 	
-	n = connectedness[idx-iN.x];
-	a = affinityY[idx-iN.x];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.y != 0 ? n : 0.0f, s);
+	n = (i.y != 0) ? connectedness[idx-iN.x] : 0.0f;
+	a = (i.y != 0) ? affinity[lidx-iN.x] : a;
+	n = TNORM((i.y != 0) ? a.y : 0.0f, n,t);
+	uk = SNORM(uk, n, s);
 	
-	n = connectedness[idx-iN.x*iN.y];
-	a = affinityZ[idx-iN.x*iN.y];
-	n = TNORM(a,n,t);
-	uk = SNORM(uk, i.z != 0 ? n : 0.0f, s);
+	n = (i.z != 0) ? connectedness[idx-iN.x*iN.y] : 0.0f;
+	a = (i.z != 0) ? affinity[lidx-iN.x*iN.y] : a;
+	n = TNORM((i.z != 0) ? a.z : 0.0f, n,t);
+	uk = SNORM(uk, n, s);
 
 	//write out value for others to read
 	float us = seed[idx];
-	if( i.z < iN.z ) connectedness[idx] = us * (1.0f - us) * uk;
+	if( i.w < iN.w ) connectedness[idx] = us * (1.0f - us) * uk;
 	__syncthreads();
   
 }
 
-template<class T>
-__global__ void calculateAffinty(T* image, float* affinityX, float* affinityY, float* affinityZ){
-
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int3 iN = info.VolumeSize;
-	float3 sp = info.Spacing;
-	int3 i;
-	i.x = idx % iN.x;
-	i.z = idx / iN.x;
-	i.y = i.z % iN.y;
-	i.z = i.z / iN.y;
-
-	//collect current value
-	float imageValue = (float) image[idx];
-
-	//calculate difference in the X direction
-	float neigh = (float) image[idx+1] - imageValue;
-	neigh *= info.gradientWeight * neigh;
-	neigh += info.distanceWeight * sp.x;
-
-	//output the affinity X values
-	if( i.z < iN.z ) affinityX[idx] = exp( - neigh );
-
-	//calculate weighted difference in the Y direction
-	neigh = (float) image[idx+iN.x] - imageValue;
-	neigh *= info.gradientWeight * neigh;
-	neigh += info.distanceWeight * sp.y;
-
-	//output the affinity Y values
-	if( i.z < iN.z ) affinityY[idx] = exp( - neigh );
-
-	//calculate difference in the Z direction
-	neigh = (float) image[idx+iN.x*iN.y] - imageValue;
-	neigh *= info.gradientWeight * neigh;
-	neigh += info.distanceWeight * sp.z;
-	
-	//output the affinity Z values
-	if( i.z < iN.z ) affinityZ[idx] = exp( - neigh );
-
-}
-
-template<class T>
-void CUDAalgo_calculateConnectedness( float* connectedness, float* seed, int numIterations, T* image, int numCompo,
+void CUDAalgo_calculateConnectedness( float* connectedness, float* seed, float* affinity, int numIterations,
 	Fuzzy_Connectedness_Information& information, cudaStream_t* stream ){
 
 	//load parameter information into constant memory
 	cudaMemcpyToSymbolAsync(info, &information, sizeof(Fuzzy_Connectedness_Information), 0, cudaMemcpyHostToDevice, *stream);
 
-	//load image into GPU
-	T* dev_image = 0;
-	cudaMalloc( (void**) &dev_image,  sizeof(T)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-	cudaMemcpyAsync( (void*) dev_image, (void*) image, sizeof(T)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z, cudaMemcpyHostToDevice, *stream );
-
 	//allocate affinity buffers
-	float* dev_affinityX = 0;
-	cudaMalloc( (void**) &dev_affinityX,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-	float* dev_affinityY = 0;
-	cudaMalloc( (void**) &dev_affinityY,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-	float* dev_affinityZ = 0;
-	cudaMalloc( (void**) &dev_affinityZ,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-
-	//calculate the affinities
-	int maxBlockSize = 256;
-	dim3 threads( maxBlockSize, 1, 1);
-	int gridSize = information.VolumeSize.x * information.VolumeSize.y * information.VolumeSize.z / maxBlockSize + ( (information.VolumeSize.x * information.VolumeSize.y * information.VolumeSize.z % maxBlockSize == 0 ) ? 0 : 1 );
-	dim3 grid( gridSize, 1, 1);
-	calculateAffinty<<< grid, threads, 0, *stream >>>( dev_image, dev_affinityX, dev_affinityY, dev_affinityZ );
-
-	//deallocate image and allocate connectedness and seed image
-	cudaFree( dev_image );
+	float3* dev_affinity = 0;
+	cudaMalloc( (void**) &dev_affinity,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*3 );
+	cudaMemcpyAsync( (void*) dev_affinity, (void*) affinity, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects, cudaMemcpyHostToDevice, *stream );
+	
+	//allocate connectedness and seed image
 	float* dev_connectedness = 0;
 	float* dev_seededness = 0;
-	cudaMalloc( (void**) &dev_connectedness,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-	cudaMalloc( (void**) &dev_seededness,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z );
-	cudaMemcpyAsync( (void*) dev_seededness, (void*) seed, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z, cudaMemcpyHostToDevice, *stream );
-	cudaMemcpyAsync( (void*) dev_connectedness, (void*) dev_seededness, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z, cudaMemcpyDeviceToDevice, *stream );
+	cudaMalloc( (void**) &dev_connectedness,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects );
+	cudaMalloc( (void**) &dev_seededness,  sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects );
+	cudaMemcpyAsync( (void*) dev_seededness, (void*) seed, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects, cudaMemcpyHostToDevice, *stream );
+	cudaMemcpyAsync( (void*) dev_connectedness, (void*) dev_seededness, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects, cudaMemcpyDeviceToDevice, *stream );
 
 	//calculate connectedness
+	dim3 threads(BLOCK_SIZE);
+	int smallSize = information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects;
+	dim3 grid( smallSize/threads.x +( (smallSize % threads.x == 0) ? 0:1) );
 	for(int i = 0; i < numIterations; i++){
-		updateConnectedness<<< grid, threads, 0, *stream >>>( dev_connectedness, dev_seededness,
-											dev_affinityX, dev_affinityY, dev_affinityZ );
+		updateConnectedness<<< grid, threads, 0, *stream >>>( dev_connectedness, dev_seededness, dev_affinity );
 	}
 
-	//load connectedness back into CPU storage
-	cudaMemcpyAsync( (void*) connectedness, (void*) dev_connectedness, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z, cudaMemcpyDeviceToHost, *stream );
-	
-	//deallocate connectedness and affinities on GPU
-	cudaFree( dev_connectedness );
+	//load connectedness back into CPU storage and deallocate GPU storage
 	cudaFree( dev_seededness );
-	cudaFree( dev_affinityX );
-	cudaFree( dev_affinityY );
-	cudaFree( dev_affinityZ );
+	cudaFree( dev_affinity );
+	cudaMemcpyAsync( (void*) connectedness, (void*) dev_connectedness, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z, cudaMemcpyDeviceToHost, *stream );
+	cudaFree( dev_connectedness );
 
 }
