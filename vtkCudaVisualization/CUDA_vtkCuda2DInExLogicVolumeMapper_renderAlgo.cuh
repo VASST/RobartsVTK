@@ -153,7 +153,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	retDepth -= maxSteps;
 	
 	//if we have some alpha information, make the background black and opague
-	outputVal.w = (outputVal.w < 1.0f - 0.03125f) ? 1.0f : 0.0f;
+	outputVal.w = special ? 1.0f : 0.0f;
 	
 }
 
