@@ -87,10 +87,16 @@ vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::readTFPolygon(){
 	
 		//load in the colour values
 		float r,g,b,a;
+		float ambient, diffuse, specular, specularPower;
 		short identifier;
 		*(this->file) >> r >> g >> b >> a;
 		e->SetColour(r,g,b);
 		e->SetOpacity(a);
+		*(this->file) >> ambient >> diffuse >> specular >> specularPower;
+		e->SetAmbient(ambient);
+		e->SetDiffuse(diffuse);
+		e->SetSpecular(specular);
+		e->SetSpecularPower(specularPower);
 		*(this->file) >> identifier;
 		e->SetIdentifier( identifier );
 

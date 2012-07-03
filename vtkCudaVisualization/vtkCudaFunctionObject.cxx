@@ -5,6 +5,10 @@ vtkCudaFunctionObject::vtkCudaFunctionObject(){
 	this->colourGreen = 0.0f;
 	this->colourBlue = 0.0f;
 	this->opacity = 0.0f;
+	this->Ambient = 1.0f;
+	this->Diffuse = 0.0f;
+	this->Specular = 0.0f;
+	this->SpecularPower = 1.0f;
 	this->identifier = 0;
 }
 

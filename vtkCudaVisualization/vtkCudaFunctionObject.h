@@ -79,6 +79,16 @@ public:
 	 */
 	void	SetOpacity(float alpha);
 
+	//accessors and mutators for the material-specific shading parameters
+	vtkSetClampMacro( Ambient, float, 0.0f, 1.0f );
+	vtkGetMacro( Ambient, float );
+	vtkSetClampMacro( Diffuse, float, 0.0f, 1.0f );
+	vtkGetMacro( Diffuse, float );
+	vtkSetClampMacro( Specular, float, 0.0f, 1.0f );
+	vtkGetMacro( Specular, float );
+	vtkSetClampMacro( SpecularPower, float, 0.0f, 1.0f );
+	vtkGetMacro( SpecularPower, float );
+
 	/** @brief Method that, given a table to house the transfer function, applies the attributes (RGBA) to the parts of the table that are within the object
 	 *
 	 *  @param IntensitySize The size of each transfer function lookup table in the intensity dimension
@@ -161,7 +171,12 @@ protected:
 	float	colourGreen;	/**< The green component of the colour mapped to voxels with intensity and gradient falling within this object */
 	float	colourBlue;		/**< The blue component of the colour mapped to voxels with intensity and gradient falling within this object */
 	float	opacity;		/**< The opacity mapped to voxels with intensity and gradient falling within this object */
-
+	
+	//ADS shading paradigm parameters
+	float	Ambient;		/**< The amount of ambient light reflected */
+	float	Diffuse;		/**< The amount of diffuse light reflected */
+	float	Specular;		/**< The amount of light scattered in a specular reflection */
+	float	SpecularPower;	/**< The amount of scattering in the specular reflection (higher means less scatter) */
 };
 
 

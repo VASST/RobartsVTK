@@ -83,6 +83,7 @@ void vtkCudaFunctionPolygonWriter::printTFPolygon( vtkCudaFunctionPolygon* e ){
 
 	//save the colour, opacity and identifier
 	*(this->file) << e->GetRedColourValue() << " " << e->GetGreenColourValue() << " " << e->GetBlueColourValue() << " " << e->GetOpacity() << std::endl;
+	*(this->file) << e->GetAmbient() << " " << e->GetDiffuse() << " " << e->GetSpecular() << " " << e->GetSpecularPower() << std::endl;
 	*(this->file) << e->GetIdentifier() << std::endl;
 
 	//save the number of vertices
