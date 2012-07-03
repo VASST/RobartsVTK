@@ -216,6 +216,80 @@ void vtkCudaFunctionPolygon::PopulatePortionOfTransferTable(	int IntensitySize, 
 
 }
 
+
+void vtkCudaFunctionPolygon::PopulatePortionOfShadingTable(	int IntensitySize, int GradientSize,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
+											float GradientLow, float GradientHigh, float GradientOffset,
+											float* aTable, float* dTable, float* sTable, float* pTable,
+											int logUsed){
+	
+	//find bounding rectangle for this polygon
+	float minI = this->getMinIntensity();
+	float maxI = this->getMaxIntensity();
+	float minG = this->getMinGradient();
+	float maxG = this->getMaxGradient();
+
+	//transform into table co-ordinates
+	if( logUsed & 2 ){
+		minG = (log(minG*minG + GradientOffset) - log(GradientOffset) ) / log(2.0);
+		maxG = (log(maxG*maxG + GradientOffset) - log(GradientOffset) ) / log(2.0);
+	}
+	if( logUsed & 1 ){
+		minI = (log(minI*minI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
+		maxI = (log(maxI*maxI + IntensityOffset) - log(IntensityOffset) ) / log(2.0);
+	}
+
+	//find the bounding co-ordinates
+	int lowIntensityIndex = (double)(IntensitySize-1) * (minI - IntensityLow) / (IntensityHigh-IntensityLow);
+	if( lowIntensityIndex < 0 ) lowIntensityIndex = 0;
+	if( lowIntensityIndex >= IntensitySize ) lowIntensityIndex = IntensitySize-1;
+	int highIntensityIndex = (double)(IntensitySize-1) * (maxI - IntensityLow) / (IntensityHigh-IntensityLow);
+	if( highIntensityIndex < 0 ) highIntensityIndex = 0;
+	if( highIntensityIndex >= IntensitySize ) highIntensityIndex = IntensitySize-1;
+	int lowGradientIndex = (double)(GradientSize-1) * (minG - GradientLow) / (GradientHigh-GradientLow);
+	if( lowGradientIndex < 0 ) lowGradientIndex = 0;
+	if( lowGradientIndex >= GradientSize ) lowGradientIndex = GradientSize-1;
+	int highGradientIndex = (double)(GradientSize-1) * (maxG - GradientLow) / (GradientHigh-GradientLow);
+	if( highGradientIndex < 0 ) highGradientIndex = 0;
+	if( highGradientIndex >= GradientSize ) highGradientIndex = GradientSize-1;
+
+	//populate the section of the table if it falls in the polygon
+	for(int g = lowGradientIndex; g < highGradientIndex; g++){
+		
+		//calculate the gradient at this point
+		double gradient = 0.0;
+		if( logUsed & 2 ){
+			gradient = (double)(g) * (double)(GradientHigh-GradientLow) / (double) (GradientSize-1) + GradientLow ;
+			gradient = sqrt(exp( log(2.0) * gradient + log(GradientOffset) ) - GradientOffset);
+		}else{
+			gradient = (double) (g) * (GradientHigh-GradientLow) / (double)(GradientSize-1) + GradientLow;
+		}
+
+		for(int i = lowIntensityIndex; i < highIntensityIndex; i++){
+
+			double intensity = 0.0;
+			if( logUsed & 1 ){
+				intensity = (double)(i) * (double)(IntensityHigh-IntensityLow) / (double) (IntensitySize-1) + IntensityLow ;
+				intensity = sqrt(exp( log(2.0) * intensity + log(IntensityOffset) ) - IntensityOffset);
+			}else{
+				intensity = (double) (i) * (IntensityHigh-IntensityLow) / (double)(IntensitySize-1) + IntensityLow;
+			}
+
+			//tell if this point is within the triangles
+			bool inside = pointInPolygon(intensity, gradient);
+
+			if( inside ){
+				int tableIndex = i + g * IntensitySize;
+				if(aTable) aTable[tableIndex] = this->Ambient;
+				if(dTable) dTable[tableIndex] = this->Diffuse;
+				if(sTable) sTable[tableIndex] = this->Specular;
+				if(pTable) pTable[tableIndex] = this->SpecularPower;
+			}
+		}
+	}
+
+}
+
 void vtkCudaFunctionPolygon::PopulatePortionOfClassifyTable(	int IntensitySize, int GradientSize,
 											float IntensityLow, float IntensityHigh, float IntensityOffset,
 											float GradientLow, float GradientHigh, float GradientOffset,

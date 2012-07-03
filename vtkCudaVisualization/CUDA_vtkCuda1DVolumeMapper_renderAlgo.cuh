@@ -294,8 +294,6 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	#endif
 	
 	return (cudaGetLastError() == 0);
-
-	return (cudaGetLastError() == 0);
 }
 
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStream_t* stream){

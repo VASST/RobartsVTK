@@ -71,6 +71,30 @@ public:
 	void GetTransferTable(	float* outputRTable, float* outputGTable, float* outputBTable, float* outputATable,
 							int sizeI, int sizeG, float lowI, float offsetI, float highI, float lowG, float highG, float offsetG, int logUsed);
 	
+	/** @brief Given a buffer for each of the ADSP, fill these buffers with the colour and opacity values defined by the function objects in the transfer function (the buffer becomes a lookup table for the transfer function)
+	 *
+	 *  @param outputATable The transfer function lookup table housing the ambient shading component
+	 *  @param outputDTable The transfer function lookup table housing the diffuse shading component
+	 *  @param outputSTable The transfer function lookup table housing the specular shading component
+	 *  @param outputPTable The transfer function lookup table housing the specular power component
+	 *  @param sizeI The size of each transfer function lookup table in the intensity dimension
+	 *  @param sizeG The size of each transfer function lookup table in the gradient dimension
+	 *  @param lowI The minimum intensity represented by this table (often the minimum intensity of the image)
+	 *  @param highI The maximum intensity represented by this table (often the minimum maximum of the image)
+	 *  @param lowG The minimum logarithmically scaled gradient (including offset) represented by this table
+	 *  @param highG The maximum logarithmically scaled gradient (including offset) represented by this table
+	 *  @param offsetG The offset for logarithmically scaling the gradient
+	 *
+	 *  @pre outputRTable, outputGTable, outputBTable, outputATable are all of size sizeI*sizeG
+	 *
+	 *  @post outputRTable, outputGTable, outputBTable, outputATable are all populated with values between 0.0f and 1.0f
+	 *  @post If the list of function objects is empty, outputRTable, outputGTable, outputBTable, outputATable will all consist solely of 0.0fs
+	 *
+	 *  @note The responsibility for both allocation and deallocation of the buffers is given to the caller
+	 */
+	void GetShadingTable(	float* outputATable, float* outputDTable, float* outputSTable, float* outputPTable,
+							int sizeI, int sizeG, float lowI, float offsetI, float highI, float lowG, float highG, float offsetG, int logUsed);
+	
 	/** @brief Gets the maximum number of classifications this transfer function currently has
 	 *
 	 *  @note This is currently just the maximum identifier found in the set of function objects, even if there are gaps in how these numbers are distributed over the objects

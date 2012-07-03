@@ -53,6 +53,30 @@ public:
 											float* rTable, float* gTable, float* bTable, float* aTable,
 											int logUsed );
 
+	/** @brief Method that, given a table to house the transfer function, applies the shading attributes (ADS) to the parts of the table that are within the object
+	 *
+	 *  @param IntensitySize The size of each transfer function lookup table in the intensity dimension
+	 *  @param GradientSize The size of each transfer function lookup table in the gradient dimension
+	 *  @param IntensityLow The minimum intensity represented by this table (often the minimum intensity of the image)
+	 *  @param IntensityHigh The maximum intensity represented by this table (often the minimum maximum of the image)
+	 *  @param GradientLow The minimum logarithmically scaled gradient (including offset) represented by this table
+	 *  @param GradientHigh The maximum logarithmically scaled gradient (including offset) represented by this table
+	 *  @param GradientOffset The offset for logarithmically scaling the gradient
+	 *  @param aTable The transfer function lookup table housing the red colour component
+	 *  @param dTable The transfer function lookup table housing the green colour component
+	 *  @param sTable The transfer function lookup table housing the blue colour component
+	 *  @param pTable The transfer function lookup table housing the opacity component
+	 *
+	 *  @pre rTable, gTable, bTable and aTable are all buffers of size IntensitySize*GradientSize
+	 *
+	 *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
+	 */
+	virtual void	PopulatePortionOfShadingTable(	int IntensitySize, int GradientSize,
+											float IntensityLow, float IntensityHigh, float IntensityOffset,
+											float GradientLow, float GradientHigh, float GradientOffset,
+											float* aTable, float* dTable, float* sTable, float* pTable,
+											int logUsed );
+
 	/** @brief Method that, given a table to house the classification function, applies the identifer to the parts of the table that are within the object reimplemented from vtkCudaFunctionObject
 	 *
 	 *  @param IntensitySize The size of each transfer function lookup table in the intensity dimension

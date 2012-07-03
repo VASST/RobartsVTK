@@ -20,6 +20,10 @@ vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformatio
 	this->lastModifiedTime = 0;
 	
 	this->TransInfo.alphaTransferArray2D = 0;
+	this->TransInfo.ambientTransferArray2D = 0;
+	this->TransInfo.diffuseTransferArray2D = 0;
+	this->TransInfo.specularTransferArray2D = 0;
+	this->TransInfo.specularPowerTransferArray2D = 0;
 	this->TransInfo.colorRTransferArray2D = 0;
 	this->TransInfo.colorGTransferArray2D = 0;
 	this->TransInfo.colorBTransferArray2D = 0;
@@ -105,9 +109,15 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	float* LocalColorGreenTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalAmbientTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalDiffuseTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularPowerTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
+		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
+	this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
 
 	//map the trasfer functions to textures for fast access
@@ -118,6 +128,10 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
 		LocalAlphaTransferFunction,
+		LocalAmbientTransferFunction,
+		LocalDiffuseTransferFunction,
+		LocalSpecularTransferFunction,
+		LocalSpecularPowerTransferFunction,
 		this->GetStream());
 
 	//clean up the garbage

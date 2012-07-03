@@ -108,6 +108,25 @@ void vtkCuda2DTransferFunction::GetTransferTable(	float* outputRTable, float* ou
 
 }
 
+void vtkCuda2DTransferFunction::GetShadingTable(	float* outputATable, float* outputDTable, float* outputSTable, float* outputPTable,
+													int sizeI, int sizeG,
+													float lowI, float highI, float offsetI,
+													float lowG, float highG, float offsetG,
+													int logUsed ){
+
+	//clear the table
+	if(outputATable) memset( (void*) outputATable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputDTable) memset( (void*) outputDTable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputSTable) memset( (void*) outputSTable, 0.0f, sizeof(float) * sizeI * sizeG);
+	if(outputPTable) memset( (void*) outputPTable, 0.0f, sizeof(float) * sizeI * sizeG);
+
+	//iterate over each object, letting them contribute to the table
+	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
+		(*it)->PopulatePortionOfShadingTable(sizeI, sizeG, lowI, highI, offsetI, lowG, highG, offsetG, outputATable, outputDTable, outputSTable, outputPTable, logUsed);
+	}
+
+}
+
 short vtkCuda2DTransferFunction::GetNumberOfClassifications(){
 	short max = 0;
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){

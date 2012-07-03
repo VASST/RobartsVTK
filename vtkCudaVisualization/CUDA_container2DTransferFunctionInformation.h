@@ -28,6 +28,10 @@ typedef struct __align__(16) {
 
 	//opague memory back for the transfer function
 	cudaArray* alphaTransferArray2D;
+	cudaArray* ambientTransferArray2D;
+	cudaArray* diffuseTransferArray2D;
+	cudaArray* specularTransferArray2D;
+	cudaArray* specularPowerTransferArray2D;
 	cudaArray* colorRTransferArray2D;
 	cudaArray* colorGTransferArray2D;
 	cudaArray* colorBTransferArray2D;

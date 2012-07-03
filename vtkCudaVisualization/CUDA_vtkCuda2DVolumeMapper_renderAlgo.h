@@ -64,7 +64,9 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream)
  *
  */
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, cudaStream_t* stream);
+								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+								  float* ambTF, float* diffTF, float* specTF, float* powTF,
+								  cudaStream_t* stream);
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cuda2DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering

@@ -25,6 +25,10 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransfer
 	this->InputData = NULL;
 
 	this->TransInfo.alphaTransferArray2D = 0;
+	this->TransInfo.ambientTransferArray2D = 0;
+	this->TransInfo.diffuseTransferArray2D = 0;
+	this->TransInfo.specularTransferArray2D = 0;
+	this->TransInfo.specularPowerTransferArray2D = 0;
 	this->TransInfo.colorRTransferArray2D = 0;
 	this->TransInfo.colorGTransferArray2D = 0;
 	this->TransInfo.colorBTransferArray2D = 0;
@@ -130,9 +134,15 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalInExTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalAmbientTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalDiffuseTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularPowerTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
+		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
+	this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
 	this->inExFunction->GetTransferTable(0, 0, 0, LocalInExTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
@@ -153,6 +163,10 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
 	delete LocalColorGreenTransferFunction;
 	delete LocalColorBlueTransferFunction;
 	delete LocalAlphaTransferFunction;
+	delete LocalAmbientTransferFunction;
+	delete LocalDiffuseTransferFunction;
+	delete LocalSpecularTransferFunction;
+	delete LocalSpecularPowerTransferFunction;
 	delete LocalInExTransferFunction;
 }
 
