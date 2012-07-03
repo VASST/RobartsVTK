@@ -34,11 +34,19 @@ typedef struct __align__(16)
 	//threshold value for total reflection (in Hounsfield Units)
 	float reflectionThreshold;
 
+	//whether or not to compute alpha, beta and bias optimally given an input image
+	bool optimalParam;
+	float crossCorrelation;
+
 } CT_To_US_Information;
 
 void CUDAsetup_unloadCTImage(cudaStream_t* stream);
 
 void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, cudaStream_t* stream);
+
+void CUDAsetup_unloadUSImage(cudaStream_t* stream);
+
+void CUDAsetup_loadUSImage( float* USImage, int resolution[3], cudaStream_t* stream);
 
 void CUDAalgo_simulateUltraSound( float* outputDensity, float* outputTransmission, float* outputReflection, unsigned char* outputUltrasound,
 								  CT_To_US_Information& information, cudaStream_t* stream );

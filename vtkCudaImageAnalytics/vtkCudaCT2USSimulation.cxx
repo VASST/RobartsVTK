@@ -15,6 +15,34 @@ void vtkCudaCT2USSimulation::Deinitialize(int withData){
 	}
 }
 
+void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i){
+	
+	//if 0 is our identifier, we are adding the CT
+	if( i == 0 ){
+		this->SetInput(inData);
+
+	//if 1 is the identifier, we are adding a base ultrasound
+	}else if ( i == 1 && inData != 0 && inData->GetScalarType() == VTK_UNSIGNED_CHAR ){
+		this->information.optimalParam = true;
+		if( this->inputUltrasound == inData ) return;
+		if( this->inputUltrasound ) this->inputUltrasound->UnRegister(this);
+		this->inputUltrasound = inData;
+		this->inputUltrasound->Register(this);
+		
+		//load the input volume into the CUDA kernel
+		this->ReserveGPU();
+		CUDAsetup_loadUSImage((unsigned char*) this->inputUltrasound->GetScalarPointer(),this->inputUltrasound->GetDimensions(),
+			this->GetStream() );
+
+	//if we pass a null image, treat as if we don't want to compute cross-correlation
+	}else if ( i == 1 && inData == 0 ){
+		this->information.optimalParam = false;
+		if( this->inputUltrasound )
+			this->inputUltrasound->UnRegister(this);
+		this->inputUltrasound = 0;
+	}
+}
+
 void vtkCudaCT2USSimulation::SetInput( vtkImageData * i ){
 	//load the input to a texture
 	this->caster->SetInput(i);
@@ -239,6 +267,12 @@ void vtkCudaCT2USSimulation::SetDensityScaleModel(float scale, float offset){
 	this->information.hounsfieldOffset = offset;
 }
 
+float vtkCudaCT2USSimulation::GetCrossCorrelation(){
+	if( this->autoGenerateLinearCombination )
+		return this->information.crossCorrelation;
+	return -1.0f;
+}
+
 vtkCudaCT2USSimulation::vtkCudaCT2USSimulation(){
 	this->usOutput = 0;
 	this->densOutput = 0;
@@ -260,10 +294,13 @@ vtkCudaCT2USSimulation::vtkCudaCT2USSimulation(){
 	this->information.reflectionThreshold = 1000000.0;
 	this->information.hounsfieldScale = 1.0;
 	this->information.hounsfieldOffset = -1024.0;
+	this->information.optimalParam = false;
 
 	this->caster = vtkImageCast::New();
 	this->caster->SetOutputScalarTypeToFloat();
 	this->caster->ClampOverflowOn();
+
+	this->autoGenerateLinearCombination = false;
 }
 
 vtkCudaCT2USSimulation::~vtkCudaCT2USSimulation(){
@@ -274,4 +311,15 @@ vtkCudaCT2USSimulation::~vtkCudaCT2USSimulation(){
 		this->densOutput->Delete();
 	}
 	this->caster->Delete();
+}
+
+float vtkCudaCT2USSimulation::GetLinearCombinationAlpha(){
+	return this->information.alpha;
+}
+float vtkCudaCT2USSimulation::GetLinearCombinationBeta(){
+	return this->information.beta;
+}
+
+float vtkCudaCT2USSimulation::GetLinearCombinationBias(){
+	return this->information.bias;
 }

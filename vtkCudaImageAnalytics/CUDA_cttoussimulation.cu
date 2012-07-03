@@ -3,6 +3,8 @@
 //3D input data (read-only texture with corresponding opague device memory back)
 texture<float, 3, cudaReadModeElementType> ct_input_texture;
 cudaArray* ct_input_array = 0;
+texture<unsigned char, 3, cudaReadModeElementType> us_input_texture;
+cudaArray* us_input_array = 0;
 
 //parameters held in constant memory
 __constant__ CT_To_US_Information info;
@@ -13,8 +15,7 @@ __device__ void CUDAkernel_CollectSamples(	int2 index,
 						float3& rayInc,
 						float* outputDensity,
 						float* outputTransmission,
-						float* outputReflection,
-						uchar3* outputUltrasound){
+						float* outputReflection){
 
 	//collect parameters from constant memory
 	uint3 volumeSize = info.VolumeSize;
@@ -30,9 +31,6 @@ __device__ void CUDAkernel_CollectSamples(	int2 index,
 	float densityIntercept = 512.0f*0.00025f;
 	float HounsFieldScale = info.hounsfieldScale;
 	float HounsFieldOffset = info.hounsfieldOffset;
-	float alpha = info.alpha;
-	float beta = info.beta;
-	float bias = info.bias;
 
 	float directionMag = sqrt( rayInc.x*rayInc.x + rayInc.y*rayInc.y + rayInc.z*rayInc.z );
 	float worldDirectionMag = 2.0f * sqrt( rayInc.x*rayInc.x/(spacing.x*spacing.x) +
@@ -85,17 +83,6 @@ __device__ void CUDAkernel_CollectSamples(	int2 index,
 		__syncthreads();
 		if( isValid ) outputDensity[actIndex] = density;
 		__syncthreads();
-		
-		//create the output image
-		uchar3 outputImage;
-		outputImage.x = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
-		outputImage.y = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
-		outputImage.z = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
-
-		//output the simulated ultrasound
-		__syncthreads();
-		if( isValid ) outputUltrasound[actIndex] = outputImage;
-		__syncthreads();
 
 		//update the running values
 		transmission *= transmissionLost;
@@ -114,6 +101,30 @@ __device__ void CUDAkernel_CollectSamples(	int2 index,
 	}
 
 
+}
+
+__global__ void CUDAkernel_ColourParamOutput(float alpha, float beta, float bias,
+						float* outputDensity,
+						float* outputReflection,
+						uchar3* outputUltrasound ){
+	int actIndex = (threadIdx.x + blockDim.x * blockIdx.x);
+	bool isValid = (actIndex < info.Resolution.x*info.Resolution.y*info.Resolution.z );
+	
+	__syncthreads();
+	float pointReflection = ( isValid ) ? outputReflection[actIndex] : 0.0f;
+	__syncthreads();
+	float density = ( isValid ) ? outputDensity[actIndex] : 0.0f;
+	__syncthreads();
+
+	uchar3 outputImage;
+	outputImage.x = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
+	outputImage.y = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
+	outputImage.z = 255.0f * saturate(alpha*density+beta*pointReflection+bias);
+
+	//output the simulated ultrasound
+	__syncthreads();
+	if( isValid ) outputUltrasound[actIndex] = outputImage;
+	__syncthreads();
 }
 
 //device code to determine from the parameters, the start, end and increment vectors in volume space
@@ -198,8 +209,7 @@ __device__ void CUDAkernel_FindVectors(	float2 nIndex,
 
 __global__ void CUDAkernel_CreateSimulatedUS(	float* outputDensity,
 												float* outputTransmission,
-												float* outputReflection,
-												uchar3* outputUltrasound){
+												float* outputReflection){
 
 	//find x index value in the simulated ultrasound image
 	int2 index;
@@ -217,8 +227,41 @@ __global__ void CUDAkernel_CreateSimulatedUS(	float* outputDensity,
 	CUDAkernel_FindVectors( normIndex, rayStart, rayInc );
 
 	//simulate the ultrasound (writing to the output buffers)
-	CUDAkernel_CollectSamples( index, rayStart, rayInc, outputDensity, outputTransmission, outputReflection, outputUltrasound );
+	CUDAkernel_CollectSamples( index, rayStart, rayInc, outputDensity, outputTransmission, outputReflection );
 
+}
+
+__global__ void CUDAkernel_sampleU( float* destination, int size ){
+	int fullIndex = (threadIdx.x + blockDim.x * blockIdx.x);
+	int3 index;
+	index.x = fullIndex % info.Resolution.x;
+	index.z = fullIndex / info.Resolution.x;
+	index.y = index.z % info.Resolution.y;
+	index.z = index.z / info.Resolution.y;
+
+	if( info.Resolution.y == 1 ){
+		int temp = index.z;
+		index.z = index.y;
+		index.y = temp;
+	}
+
+	unsigned char value = tex3D(us_input_texture, index.x, index.y, index.z);
+
+	if( fullIndex < size ) destination[fullIndex] = (float) value / 255.0f;
+}
+
+__global__ void CUDAkernel_multiply( float* sourceA, float* sourceB, float* destination, int size ){
+	int index = threadIdx.x + blockDim.x * blockIdx.x;
+	float a = sourceA[index];
+	float b = sourceB[index];
+	if( index < size ) destination[index] = a * b;
+}
+
+__global__ void CUDAkernel_accumulate( float* buffer, int addSize, int size ){
+	int index = threadIdx.x + blockDim.x * blockIdx.x;
+	float a = buffer[index];
+	float b = buffer[index+addSize];
+	if( index+addSize < size ) buffer[index] = a+b;
 }
 
 void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, cudaStream_t* stream){
@@ -257,10 +300,64 @@ void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, c
 
 }
 
+void CUDAsetup_loadUSImage( unsigned char* USImage, int resolution[3], cudaStream_t* stream){
+
+	//free the array if there is another image residing
+	cudaStreamSynchronize( *stream );
+	if(us_input_array ) cudaFreeArray(us_input_array );
+
+	//find the volume size
+	cudaExtent volumeSize;
+	volumeSize.width = resolution[0];
+	volumeSize.height = resolution[1];
+	volumeSize.depth = resolution[2];
+
+	// create 3D array
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<unsigned char>();
+	cudaMalloc3DArray(&us_input_array, &channelDesc, volumeSize);
+
+	// copy data to 3D array
+	cudaMemcpy3DParms copyParams = {0};
+	copyParams.srcPtr   = make_cudaPitchedPtr(USImage, volumeSize.width*sizeof(unsigned char), volumeSize.width, volumeSize.height);
+	copyParams.dstArray = ct_input_array;
+	copyParams.extent   = volumeSize;
+	copyParams.kind     = cudaMemcpyHostToDevice;
+	cudaMemcpy3DAsync(&copyParams, *stream);
+
+	// set the texture parameters
+	us_input_texture.normalized = false;						// access with unnormalized texture coordinates
+	us_input_texture.filterMode = cudaFilterModeLinear;			// linear interpolation
+	us_input_texture.addressMode[0] = cudaAddressModeClamp;		// wrap texture coordinates
+	us_input_texture.addressMode[1] = cudaAddressModeClamp;
+	us_input_texture.addressMode[2] = cudaAddressModeClamp;
+
+	//bind the texture in
+	cudaBindTextureToArray(us_input_texture, us_input_array, channelDesc);
+
+}
+
 void CUDAsetup_unloadCTImage(cudaStream_t* stream){
 	cudaStreamSynchronize( *stream );
 	if(ct_input_array ) cudaFreeArray(ct_input_array );
 	ct_input_array = 0;
+}
+
+void CUDAsetup_unloadUSImage(cudaStream_t* stream){
+	cudaStreamSynchronize( *stream );
+	if(us_input_array ) cudaFreeArray(us_input_array );
+	us_input_array = 0;
+}
+
+inline int pow2roundup (int x) {
+    if (x < 0)
+        return 0;
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x+1;
 }
 
 void CUDAalgo_simulateUltraSound(	float* outputDensity, float* outputTransmission, float* outputReflection, unsigned char* outputUltrasound,
@@ -282,20 +379,152 @@ void CUDAalgo_simulateUltraSound(	float* outputDensity, float* outputTransmissio
 	//simulate the ultrasound
 	int maxBlockSize = 256;
 	dim3 threads( maxBlockSize, 1, 1);
-	int gridSize = information.Resolution.x * information.Resolution.y / maxBlockSize + ( (information.Resolution.x % maxBlockSize == 0 ) ? 0 : 1 );
+	int gridSize = information.Resolution.x * information.Resolution.y / maxBlockSize + ( (information.Resolution.x * information.Resolution.y % maxBlockSize == 0 ) ? 0 : 1 );
 	dim3 grid( gridSize, 1, 1);
-	CUDAkernel_CreateSimulatedUS<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_trans, device_output_refl, device_output_us );
-
-	//copy the results
+	CUDAkernel_CreateSimulatedUS<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_trans, device_output_refl );
+	
+	//copy the preliminary results
 	cudaMemcpyAsync( (void*) outputDensity,      (void*) device_output_dens,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
 	cudaMemcpyAsync( (void*) outputTransmission, (void*) device_output_trans, sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
 	cudaMemcpyAsync( (void*) outputReflection,   (void*) device_output_refl,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
+	cudaFree(device_output_trans);
+
+	//optimal parameter fiddling
+	gridSize = information.Resolution.x * information.Resolution.y * information.Resolution.z / maxBlockSize + ( (information.Resolution.x * information.Resolution.y * information.Resolution.z % maxBlockSize == 0 ) ? 0 : 1 );
+	grid.x = gridSize;
+	int largestAddSize = pow2roundup( information.Resolution.x * information.Resolution.y * information.Resolution.z );
+	int actualSize = information.Resolution.x*information.Resolution.y*information.Resolution.z;
+	if( information.optimalParam ){
+		
+		//add together all the information in the simulation and corresponding location in the ultrasound
+		//to produce the M matrix and U vector
+		
+		//find the values of u (interpolated from given texture)
+		float* device_output_u;
+		cudaMalloc( (void**) &device_output_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
+		CUDAkernel_sampleU<<< grid, threads, 0, *stream >>>( device_output_u, actualSize );
+		
+		//find the sum of the du terms
+		float* device_output_dens_u;
+		cudaMalloc( (void**) &device_output_dens_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
+		CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_u, device_output_dens_u, actualSize);
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_u, largestAddSize, actualSize);
+		}
+		float sum_du = 0.0f;
+		cudaMemcpyAsync((void*) &sum_du, (void*) device_output_dens_u, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_dens_u);
+
+		//find the sum of the ru terms
+		float* device_output_refl_u;
+		cudaMalloc( (void**) &device_output_refl_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
+		CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_refl, device_output_u, device_output_refl_u, actualSize);
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl_u, largestAddSize, actualSize);
+		}
+		float sum_ru = 0.0f;
+		cudaMemcpyAsync((void*) &sum_ru, (void*) device_output_refl_u,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_refl_u);
+		
+		//find the sum of the u terms
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_u, largestAddSize, actualSize);
+		}
+		float sum_u = 0.0f;
+		cudaMemcpyAsync((void*) &sum_u, (void*) device_output_u,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_u);
+		
+		//find the sum of the d^2 terms
+		float* device_output_dens_square;
+		cudaMalloc( (void**) &device_output_dens_square,  sizeof(float)*actualSize );
+		CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_dens, device_output_dens_square, actualSize);
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_square, largestAddSize, actualSize);
+		}
+		float sum_d2 = 0.0f;
+		cudaMemcpyAsync((void*) &sum_d2, (void*) device_output_dens_square,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_dens_square);
+		
+		//find the sum of the dr terms
+		float* device_output_dens_refl;
+		cudaMalloc( (void**) &device_output_dens_refl,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
+		CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_refl, device_output_dens_refl, actualSize);
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_refl, largestAddSize, actualSize);
+		}
+		float sum_dr = 0.0f;
+		cudaMemcpyAsync((void*) &sum_dr, (void*) device_output_dens_refl,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_dens_refl);
+		
+		//find the sum of the r^2 terms
+		float* device_output_refl_square;
+		cudaMalloc( (void**) &device_output_refl_square,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
+		CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_refl, device_output_refl, device_output_refl_square, actualSize);
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl_square, largestAddSize, actualSize);
+		}
+		float sum_r2 = 0.0f;
+		cudaMemcpyAsync((void*) &sum_r2, (void*) device_output_refl_square,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaFree(device_output_refl_square);
+			
+		//find the sum of the r terms
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl, largestAddSize, actualSize);
+		}
+		float sum_r = 0.0f;
+		cudaMemcpyAsync((void*) &sum_r, (void*) device_output_refl,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		
+		//find the sum of the d terms
+		for(int i = largestAddSize; i > 0; i /= 2){
+			CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens, largestAddSize, actualSize);
+		}
+		float sum_d = 0.0f;
+		cudaMemcpyAsync((void*) &sum_d, (void*) device_output_dens,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		
+		//find the adjoint matrix
+		float m11 = (sum_r2*actualSize)-(sum_r * sum_r);
+		float m12 = -1.0f * (sum_dr*actualSize)-(sum_d * sum_r);
+		float m13 = (sum_dr*sum_r)-(sum_d * sum_r2);
+
+		float m21 = -1.0f * (sum_dr*actualSize)-(sum_r * sum_d);
+		float m22 = (sum_d2*actualSize)-(sum_d * sum_d);
+		float m23 = -1.0f * (sum_d2*sum_r)-(sum_d * sum_dr);
+
+		float m31 = (sum_dr*sum_r)-(sum_r2 * sum_d);
+		float m32 = -1.0f * (sum_d2*sum_r)-(sum_dr * sum_d);
+		float m33 = (sum_d2*sum_r2)-(sum_dr * sum_dr);
+
+		//find the determinant
+		float det = sum_d2 * m11 - sum_dr * m12 + sum_d * m13;
+
+		//find the inverse matrix (assume non-zero determinant therefore invertible M)
+		//then multiply by U vector
+		float calcAlpha = (m11*sum_du+m12*sum_ru+m13*sum_u) / det;
+		float calcBeta = (m21*sum_du+m22*sum_ru+m23*sum_u) / det;;
+		float calcBias = (m31*sum_du+m32*sum_ru+m33*sum_u) / det;;
+
+		//copy new linear combination to the information holder
+		information.alpha = calcAlpha;
+		information.beta = calcBeta;
+		information.bias = calcBias;
+		
+	}
+
+	//we already have parameters, so just use them
+	CUDAkernel_ColourParamOutput<<< grid, threads, 0, *stream >>>( information.alpha, information.beta, information.bias, device_output_dens, device_output_refl, device_output_us );
+	
+	//calculate cross correlation if warranted
+	//TODO
+	if( information.optimalParam ){
+
+	}
+
+	//copy the results
 	cudaMemcpyAsync( (void*) outputUltrasound,   (void*) device_output_us,    3*sizeof(unsigned char)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
 	cudaStreamSynchronize( *stream );
 
 	//free the device buffers
 	cudaFree(device_output_dens);
-	cudaFree(device_output_trans);
 	cudaFree(device_output_refl);
 	cudaFree(device_output_us);
 
