@@ -14,6 +14,8 @@ vtkStandardNewMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler);
 vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransferFunctionInformationHandler(){
 	this->function = NULL;
 	this->inExFunction = NULL;
+	this->UseBlackKeyhole = false;
+	this->TransInfo.useBlackKeyhole = false;
 
 	this->FunctionSize = 512;
 	this->LowGradient = 0;
@@ -165,3 +167,8 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::Update(){
 	}
 }
 
+void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetUseBlackKeyhole(bool t){
+	this->UseBlackKeyhole = t;
+	this->TransInfo.useBlackKeyhole = t;
+	this->Modified();
+}

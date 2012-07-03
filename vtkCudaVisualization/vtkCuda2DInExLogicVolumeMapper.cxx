@@ -19,6 +19,7 @@ vtkStandardNewMacro(vtkCuda2DInExLogicVolumeMapper);
 
 vtkMutexLock* vtkCuda2DInExLogicVolumeMapper::tfLock = 0;
 vtkCuda2DInExLogicVolumeMapper::vtkCuda2DInExLogicVolumeMapper(){
+	this->UseBlackKeyhole = false;
 	this->transferFunctionInfoHandler = vtkCuda2DInExLogicTransferFunctionInformationHandler::New();
 	if( this->tfLock == 0 ) this->tfLock = vtkMutexLock::New();
 	else this->tfLock->Register(this);
@@ -153,4 +154,10 @@ void vtkCuda2DInExLogicVolumeMapper::SetInExLogicFunction(vtkCuda2DTransferFunct
 //collect the function from the transfer function handler
 vtkCuda2DTransferFunction* vtkCuda2DInExLogicVolumeMapper::GetInExLogicFunction(){
 	return this->transferFunctionInfoHandler->GetInExLogicTransferFunction();
+}
+
+void vtkCuda2DInExLogicVolumeMapper::SetUseBlackKeyhole(bool t){
+	this->UseBlackKeyhole = t;
+	this->transferFunctionInfoHandler->SetUseBlackKeyhole(t);
+	this->Modified();
 }

@@ -82,6 +82,9 @@ public:
 	 *
 	 */
 	virtual void Update();
+	
+	void SetUseBlackKeyhole( bool t );
+	vtkGetMacro( UseBlackKeyhole, bool );
 
 protected:
 	
@@ -118,7 +121,7 @@ private:
 	int						FunctionSize;	/**< The size of the transfer function which is square */
 	double					HighGradient;	/**< The maximum gradient of the current image */
 	double					LowGradient;	/**< The minimum gradient of the current image */
-
+	bool					UseBlackKeyhole;
 };
 
 #endif

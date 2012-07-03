@@ -25,6 +25,7 @@ typedef struct __align__(16) {
 	float			gradientMultiplier;		/**< The maximum logarithmic gradient index including the offset */
 	float			gradientOffset;			/**< The offset for the logarithmic scaling of the gradient indexes */
 	unsigned int	functionSize;			/**< The size of the lookup table */
+	bool			useBlackKeyhole;
 
 	//opague memory back for the transfer function
 	cudaArray* alphaTransferArray2D;

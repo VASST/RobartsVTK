@@ -60,6 +60,9 @@ public:
 	 *
 	 */
 	vtkCuda2DTransferFunction* GetInExLogicFunction();
+	
+	void SetUseBlackKeyhole( bool t );
+	vtkGetMacro( UseBlackKeyhole, bool );
 
 protected:
 	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
@@ -78,6 +81,8 @@ protected:
 	vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
 	static vtkMutexLock* tfLock;
+
+	bool UseBlackKeyhole;
 
 private:
 	vtkCuda2DInExLogicVolumeMapper operator=(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
