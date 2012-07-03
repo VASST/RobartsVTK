@@ -155,6 +155,10 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
 		LocalAlphaTransferFunction,
+		LocalAmbientTransferFunction,
+		LocalDiffuseTransferFunction,
+		LocalSpecularTransferFunction,
+		LocalSpecularPowerTransferFunction,
 		LocalInExTransferFunction,
 		this->GetStream() );
 
