@@ -48,7 +48,7 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 	//apply a randomized offset to the ray
 	retDepth = dRandomRayOffsets[threadIdx.x + BLOCK_DIM2D * threadIdx.y];
 	__syncthreads();
-	int maxSteps = __float2int_rd(numSteps) - retDepth;
+	int maxSteps = __float2int_rd(numSteps - retDepth);
 	rayStart.x += retDepth*rayInc.x;
 	rayStart.y += retDepth*rayInc.y;
 	rayStart.z += retDepth*rayInc.z;

@@ -75,7 +75,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 							 rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
 			
 		//fetching the gradient index into the transfer function
-				float3 gradient;
+		float3 gradient;
 		gradient.x = ( tex3D(CUDA_vtkCuda2DInExVolumeMapper_input_texture, rayStart.x+1.0f, rayStart.y, rayStart.z)
 					 - tex3D(CUDA_vtkCuda2DInExVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * space.x;
 		gradient.y = ( tex3D(CUDA_vtkCuda2DInExVolumeMapper_input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z)
@@ -87,8 +87,8 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 		gradMag = sqrtf( gradMag );
 		
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
-		float inEx = tex2D(inExLogic_texture_2DInEx, tempIndex, gradMag);
-		float alpha = tex2D(alpha_texture_2DInEx, tempIndex, gradMag);
+		float inEx = tex2D(inExLogic_texture_2DInEx, tempIndex, gradMagIndex);
+		float alpha = tex2D(alpha_texture_2DInEx, tempIndex, gradMagIndex);
 
 		//adjust shading
 		float phongLambert = saturate( abs ( gradient.x*rayInc.x*incSpace.x + 
@@ -100,11 +100,8 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 						pow( phongLambert, tex2D(specularPower_texture_2DInEx, tempIndex, gradMagIndex) );
 
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-		if((inEx > 0.0f || alpha > 0.0f) && tempIndex >= 0.0f && tempIndex <= 1.0f && gradMag >= 0.0f && gradMag <= 1.0f){
+		if(inEx > 0.0f || alpha > 0.0f){
 
-			//collect the alpha difference (if we sample now) as well as the colour multiplier (with photorealistic shading)
-			float multiplier = outputVal.w * alpha;
-			alpha = (1.0f - alpha);
 
 			//determine which kind of step to make
 			backStep = skipStep;
@@ -122,14 +119,15 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 				if( !special && !( excludeStart >= maxSteps && excludeEnd <= maxSteps )
 						&& inEx > 0.5f ) break;
 				special = true;
-
+				
 				//accumulate the opacity for this sample point
-				outputVal.w *= alpha;
+				float multiplier = outputVal.w * alpha;
+				outputVal.w *= (1.0f - alpha);
 
 				//accumulate the colour information from this sample point
-				outputVal.x += multiplier * saturate( shadeD*tex2D(colorR_texture_2DInEx, tempIndex, gradMag) + shadeS);
-				outputVal.y += multiplier * saturate( shadeD*tex2D(colorG_texture_2DInEx, tempIndex, gradMag) + shadeS);
-				outputVal.z += multiplier * saturate( shadeD*tex2D(colorB_texture_2DInEx, tempIndex, gradMag) + shadeS);
+				outputVal.x += multiplier * saturate( shadeD*tex2D(colorR_texture_2DInEx, tempIndex, gradMagIndex) + shadeS );
+				outputVal.y += multiplier * saturate( shadeD*tex2D(colorG_texture_2DInEx, tempIndex, gradMagIndex) + shadeS );
+				outputVal.z += multiplier * saturate( shadeD*tex2D(colorB_texture_2DInEx, tempIndex, gradMagIndex) + shadeS );
 
 			}
 			
@@ -166,7 +164,7 @@ __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& raySt
 	
 	//if we have some alpha information, make the background black and opague
 	outputVal.w = ( CUDA_vtkCuda2DInExVolumeMapper_trfInfo.useBlackKeyhole ) ? (special ? 1.0f : 0.0f) :
-					(outputVal.w < 1.0f - 0.03125f ? 1.0f : 0.0f);
+					( 1.0f - outputVal.w) ;
 	
 }
 
@@ -484,7 +482,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadTextures(cuda2DInExTrans
 
 	//define the texture mapping for the blue component after copying information from host to device array
 	if(transInfo.inExLogicTransferArray2D)
-		cudaFreeArray(transInfo.colorBTransferArray2D);
+		cudaFreeArray(transInfo.inExLogicTransferArray2D);
 	cudaMallocArray( &(transInfo.inExLogicTransferArray2D), &channelDesc, transInfo.functionSize, transInfo.functionSize);
 	cudaMemcpyToArrayAsync(transInfo.inExLogicTransferArray2D, 0, 0, inExTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 
@@ -542,7 +540,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_unloadTextures(cuda2DInExTra
 	
 	//define the texture mapping for the blue component after copying information from host to device array
 	if(transInfo.inExLogicTransferArray2D)
-		cudaFreeArray(transInfo.colorBTransferArray2D);
+		cudaFreeArray(transInfo.inExLogicTransferArray2D);
 	transInfo.inExLogicTransferArray2D = 0;
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
