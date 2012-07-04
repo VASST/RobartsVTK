@@ -49,7 +49,6 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
 	// loop through all provided clipping planes
 	if(!numPlanes) return;
 	int flag = 0;
-	#pragma unroll 1
 	for ( int i = 0; i < numPlanes; i++ ){
 		
 		//refine the ray direction to account for any changes in starting or ending position
@@ -101,12 +100,13 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
 	rayEnd.z -= oldRayStart.z;
 	
 	//if the ray is not inside the clipping planes, make the ray zero length
-	excludeStart = flag ? -1.0f : rayStart.x * rayInc.x +
-								  rayStart.y * rayInc.y +
-								  rayStart.z * rayInc.z - 0.1f;
-	excludeEnd = flag ?  -1.0f : rayEnd.x * rayInc.x +
-								 rayEnd.y * rayInc.y +
-								 rayEnd.z * rayInc.z + 0.1f;
+	float invRayLengthSquared = 1.0f / (rayInc.x*rayInc.x + rayInc.y*rayInc.y + rayInc.z*rayInc.z);
+	excludeStart = flag ? -1.0f : (rayStart.x * rayInc.x +
+								   rayStart.y * rayInc.y +
+								   rayStart.z * rayInc.z ) * invRayLengthSquared;
+	excludeEnd = flag ?  -1.0f : (rayEnd.x * rayInc.x +
+								  rayEnd.y * rayInc.y +
+								  rayEnd.z * rayInc.z ) * invRayLengthSquared;
 
 }
 
