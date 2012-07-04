@@ -65,12 +65,6 @@ public:
 	 */
 	void SetDistanceShadingConstants(float darkness, float a, float b);
 
-	/** @brief Set the strength of the photorealistic shading model
-	 *
-	 *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
-	 */
-	void SetGradientShadingConstants(float darkness);
-
 	/** @brief Sets the view to voxels matrix, which is used in rendering to convert rays in view space to rays in voxel space necessary for ray casting
 	 *
 	 *  @param m The 4x4 matrix representing the transformation from view space to voxel space

@@ -264,10 +264,6 @@ void vtkCudaVolumeMapper::SetDistanceShadingConstants(float darkness, float a, f
 	this->RendererInfoHandler->SetDistanceShadingConstants(darkness, a, b);
 }
 
-void vtkCudaVolumeMapper::SetGradientShadingConstants(float darkness){
-	this->RendererInfoHandler->SetGradientShadingConstants(darkness);
-}
-
 void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor){
 	 this->OutputInfoHandler->SetRenderOutputScaleFactor(scaleFactor);
 }

@@ -35,7 +35,6 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 	
 	SetCelShadingConstants( 0.70f, 0.002f, 0.005f );
 	SetDistanceShadingConstants( 0.25f, 0.45f, 0.6f );
-	SetGradientShadingConstants(0.605f);
 	
 	this->ZBuffer = 0;
 
@@ -77,13 +76,6 @@ void vtkCudaRendererInformationHandler::SetDistanceShadingConstants(float darkne
 		this->RendererInfo.disb = b;
 		this->RendererInfo.disr = darkness;
 		this->RendererInfo.disc = 1.0 / (b-a);
-	}
-}
-
-void vtkCudaRendererInformationHandler::SetGradientShadingConstants(float darkness){
-	if(darkness >= 0.0f && darkness <= 1.0f ){
-		this->RendererInfo.gradShadeScale = darkness;
-		this->RendererInfo.gradShadeShift = 1.0 - darkness;
 	}
 }
 

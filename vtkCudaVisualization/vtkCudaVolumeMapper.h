@@ -99,12 +99,6 @@ public:
 	 */
 	void SetDistanceShadingConstants(float darkness, float a, float b);
 
-	/** @brief Set the strength of the photorealistic shading model which is given to the renderer information handler
-	 *
-	 *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
-	 */
-	void SetGradientShadingConstants(float darkness);
-
 	/** @brief Changes the next frame to be rendered to the provided frame
 	 *
 	 *  @param frame The next frame to be rendered

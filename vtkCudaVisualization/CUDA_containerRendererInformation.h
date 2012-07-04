@@ -29,10 +29,6 @@ typedef struct __align__(16)
 	int NumberOfKeyholePlanes;		/**< Number of additional user defined keyhole planes to a maximum of 6 */
 	float KeyholePlanes[24];		/**< Parameters defining each of the additional user defined keyhole planes */
 
-	//Gradient shading constants
-	float gradShadeScale;			/**< Multiplicative constant for flat-like shading of the volume */
-	float gradShadeShift;			/**< Additive constant for the flat-like shading of the volume */
-
 	//Cel shading constants
 	float celr;						/**< Multiplicative constant for Cel shading of the volume */
 	float cela;						/**< Start */
