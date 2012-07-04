@@ -86,7 +86,7 @@ public:
 	vtkGetMacro( Diffuse, float );
 	vtkSetClampMacro( Specular, float, 0.0f, 1.0f );
 	vtkGetMacro( Specular, float );
-	vtkSetClampMacro( SpecularPower, float, 0.0f, 1.0f );
+	vtkSetClampMacro( SpecularPower, float, 0.0f, 1000.0f );
 	vtkGetMacro( SpecularPower, float );
 
 	/** @brief Method that, given a table to house the transfer function, applies the attributes (RGBA) to the parts of the table that are within the object
