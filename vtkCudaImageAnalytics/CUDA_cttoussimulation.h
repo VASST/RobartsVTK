@@ -46,7 +46,7 @@ void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, c
 
 void CUDAsetup_unloadUSImage(cudaStream_t* stream);
 
-void CUDAsetup_loadUSImage( float* USImage, int resolution[3], cudaStream_t* stream);
+void CUDAsetup_loadUSImage( unsigned char* USImage, int resolution[3], cudaStream_t* stream);
 
 void CUDAalgo_simulateUltraSound( float* outputDensity, float* outputTransmission, float* outputReflection, unsigned char* outputUltrasound,
 								  CT_To_US_Information& information, cudaStream_t* stream );
