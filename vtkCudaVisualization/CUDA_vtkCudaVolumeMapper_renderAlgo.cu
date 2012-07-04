@@ -539,8 +539,8 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* st
 }
 
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
+#include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh"
-#include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"
 
 #endif

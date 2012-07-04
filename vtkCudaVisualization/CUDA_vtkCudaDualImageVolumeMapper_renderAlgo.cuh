@@ -8,6 +8,10 @@ __constant__ cudaDualImageTransferFunctionInformation	CUDA_vtkCudaDualImageVolum
 
 //transfer function as read-only textures
 texture<float, 2, cudaReadModeElementType> alpha_texture_DualImage;
+texture<float, 2, cudaReadModeElementType> ambient_texture_DualImage;
+texture<float, 2, cudaReadModeElementType> diffuse_texture_DualImage;
+texture<float, 2, cudaReadModeElementType> specular_texture_DualImage;
+texture<float, 2, cudaReadModeElementType> specularPower_texture_DualImage;
 texture<float, 2, cudaReadModeElementType> colorR_texture_DualImage;
 texture<float, 2, cudaReadModeElementType> colorG_texture_DualImage;
 texture<float, 2, cudaReadModeElementType> colorB_texture_DualImage;
@@ -36,11 +40,8 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRays(float3& ra
 	const float funct1RangeMulti = CUDA_vtkCudaDualImageVolumeMapper_trfInfo.intensity1Multiplier;
 	const float funct2RangeLow = CUDA_vtkCudaDualImageVolumeMapper_trfInfo.intensity2Low;
 	const float funct2RangeMulti = CUDA_vtkCudaDualImageVolumeMapper_trfInfo.intensity2Multiplier;
-	const float spaceX = volInfo.SpacingReciprocal.x;
-	const float spaceY = volInfo.SpacingReciprocal.y;
-	const float spaceZ = volInfo.SpacingReciprocal.z;
-	const float shadeMultiplier = renInfo.gradShadeScale;
-	const float shadeShift = renInfo.gradShadeShift + 1.0f;
+	const float3 space = volInfo.SpacingReciprocal;
+	const float3 incSpace = volInfo.Spacing;
 	__syncthreads();
 
 	//apply a randomized offset to the ray
@@ -51,6 +52,9 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRays(float3& ra
 	rayStart.y += retDepth*rayInc.y;
 	rayStart.z += retDepth*rayInc.z;
 	retDepth = maxSteps;
+	float rayLength = sqrtf(rayInc.x*rayInc.x*incSpace.x*incSpace.x +
+							rayInc.y*rayInc.y*incSpace.y*incSpace.y +
+							rayInc.z*rayInc.z*incSpace.z*incSpace.z);
 
 	//allocate flags
 	char2 step;
@@ -89,36 +93,44 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRays(float3& ra
 		gradient1.x = tempGradient.x;
 		gradient2.x = tempGradient.y;
 		tempGradient = tex3D(CUDA_vtkCudaDualImageVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z);
-		gradient1.x = (gradient1.x - tempGradient.x) * spaceX;
-		gradient2.x = (gradient2.x - tempGradient.y) * spaceX;
+		gradient1.x = (gradient1.x - tempGradient.x) * space.x;
+		gradient2.x = (gradient2.x - tempGradient.y) * space.x;
 		tempGradient = tex3D(CUDA_vtkCudaDualImageVolumeMapper_input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z);
 		gradient1.y = tempGradient.x;
 		gradient2.y = tempGradient.y;
 		tempGradient = tex3D(CUDA_vtkCudaDualImageVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z);
-		gradient1.y = (gradient1.y - tempGradient.x) * spaceY;
-		gradient2.y = (gradient2.y - tempGradient.y) * spaceY;
+		gradient1.y = (gradient1.y - tempGradient.x) * space.y;
+		gradient2.y = (gradient2.y - tempGradient.y) * space.y;
 		tempGradient = tex3D(CUDA_vtkCudaDualImageVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f);
 		gradient1.z = tempGradient.x;
 		gradient2.z = tempGradient.y;
 		tempGradient = tex3D(CUDA_vtkCudaDualImageVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f);
-		gradient1.z = (gradient1.z - tempGradient.x) * spaceZ;
-		gradient2.z = (gradient2.z - tempGradient.y) * spaceZ;
+		gradient1.z = (gradient1.z - tempGradient.x) * space.z;
+		gradient2.z = (gradient2.z - tempGradient.y) * space.z;
+		float gradMag = sqrtf(gradient1.x*gradient1.x+gradient1.y*gradient1.y+gradient1.z*gradient1.z);
 		float inverseGradMag1 = rsqrtf(gradient1.x*gradient1.x+gradient1.y*gradient1.y+gradient1.z*gradient1.z);
 		float inverseGradMag2 = rsqrtf(gradient2.x*gradient2.x+gradient2.y*gradient2.y+gradient2.z*gradient2.z);
 		float dot = gradient1.x*gradient2.x+gradient1.y*gradient2.y+gradient1.z*gradient2.z;
 		dot *= inverseGradMag1*inverseGradMag2;
+		
+		//adjust shading
+		float phongLambert = saturate( abs ( gradient1.x*rayInc.x*incSpace.x + 
+											gradient1.y*rayInc.y*incSpace.y +
+											gradient1.z*rayInc.z*incSpace.z 	) / (gradMag * rayLength) );
+		float shadeD = tex2D(ambient_texture_DualImage, tempIndex.x, tempIndex.y)
+						+ tex2D(diffuse_texture_DualImage, tempIndex.x, tempIndex.y) * phongLambert;
+		float shadeS = tex2D(specular_texture_DualImage, tempIndex.x, tempIndex.y) * 
+						pow( phongLambert, tex2D(specularPower_texture_DualImage, tempIndex.x, tempIndex.y) );
 
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
 		float alpha = tex2D(alpha_texture_DualImage, tempIndex.x, tempIndex.y);
 
-		//determine the colour multiplier (with photorealistic shading)
-		const float multiplier = outputVal.w * alpha * ( 1.0f + abs(dot) *
-					(shadeShift + shadeMultiplier * abs(gradient1.x*rayInc.x + gradient1.y*rayInc.y + gradient1.z*rayInc.z) * inverseGradMag1 ) );
 		
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
 		if(alpha > 0.0f){
 
 			//collect the alpha difference (if we sample now)
+			const float multiplier = outputVal.w * alpha;
 			alpha = (1.0f - alpha);
 
 			//determine which kind of step to make
@@ -136,9 +148,9 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRays(float3& ra
 				outputVal.w *= alpha;
 
 				//accumulate the colour information from this sample point
-				outputVal.x += multiplier * tex2D(colorR_texture_DualImage, tempIndex.x, tempIndex.y);
-				outputVal.y += multiplier * tex2D(colorG_texture_DualImage, tempIndex.x, tempIndex.y);
-				outputVal.z += multiplier * tex2D(colorB_texture_DualImage, tempIndex.x, tempIndex.y);
+				outputVal.x += multiplier * saturate(shadeD*tex2D(colorR_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
+				outputVal.y += multiplier * saturate(shadeD*tex2D(colorG_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
+				outputVal.z += multiplier * saturate(shadeD*tex2D(colorB_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
 			}
 			
 			//determine whether or not we've hit an opacity where further sampling becomes neglible
@@ -272,10 +284,31 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 	colorB_texture_DualImage.addressMode[0] = cudaAddressModeClamp;
 	colorB_texture_DualImage.addressMode[1] = cudaAddressModeClamp;
 	cudaBindTextureToArray(colorB_texture_DualImage, transInfo.colorBTransferArrayDualImage, channelDesc);
+	
+	ambient_texture_DualImage.normalized = true;
+	ambient_texture_DualImage.filterMode = cudaFilterModePoint;
+	ambient_texture_DualImage.addressMode[0] = cudaAddressModeClamp;
+	ambient_texture_DualImage.addressMode[1] = cudaAddressModeClamp;
+	cudaBindTextureToArray(ambient_texture_DualImage, transInfo.ambientTransferArrayDualImage, channelDesc);
+	diffuse_texture_DualImage.normalized = true;
+	diffuse_texture_DualImage.filterMode = cudaFilterModePoint;
+	diffuse_texture_DualImage.addressMode[0] = cudaAddressModeClamp;
+	diffuse_texture_DualImage.addressMode[1] = cudaAddressModeClamp;
+	cudaBindTextureToArray(diffuse_texture_DualImage, transInfo.diffuseTransferArrayDualImage, channelDesc);
+	specular_texture_DualImage.normalized = true;
+	specular_texture_DualImage.filterMode = cudaFilterModePoint;
+	specular_texture_DualImage.addressMode[0] = cudaAddressModeClamp;
+	specular_texture_DualImage.addressMode[1] = cudaAddressModeClamp;
+	cudaBindTextureToArray(specular_texture_DualImage, transInfo.specularTransferArrayDualImage, channelDesc);
+	specularPower_texture_DualImage.normalized = true;
+	specularPower_texture_DualImage.filterMode = cudaFilterModePoint;
+	specularPower_texture_DualImage.addressMode[0] = cudaAddressModeClamp;
+	specularPower_texture_DualImage.addressMode[1] = cudaAddressModeClamp;
+	cudaBindTextureToArray(specularPower_texture_DualImage, transInfo.specularPowerTransferArrayDualImage, channelDesc);
 
 	//create the necessary execution amount parameters from the block sizes and calculate the volume rendering integral
-	int blockX = outputInfo.resolution.x / BLOCK_DIM2D ;
-	int blockY = outputInfo.resolution.y / BLOCK_DIM2D ;
+	int blockX = outputInfo.resolution.x / BLOCK_DIM2D;
+	int blockY = outputInfo.resolution.y / BLOCK_DIM2D;
 
 	dim3 grid(blockX, blockY, 1);
 	dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
@@ -341,7 +374,9 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(const int frame, c
 //pre: the transfer functions are all of type float and are all of size FunctionSize
 //post: the alpha, colorR, G and B DualImage textures will map to each transfer function
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, cudaStream_t* stream){
+								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+								  float* ambTF, float* diffTF, float* specTF, float* powTF,
+								  cudaStream_t* stream){
 
 	//retrieve the size of the transer functions
 	size_t size = sizeof(float) * transInfo.functionSize;
@@ -369,6 +404,30 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTran
 		cudaFreeArray(transInfo.colorBTransferArrayDualImage);
 	cudaMallocArray( &(transInfo.colorBTransferArrayDualImage), &channelDesc, transInfo.functionSize, transInfo.functionSize);
 	cudaMemcpyToArrayAsync(transInfo.colorBTransferArrayDualImage, 0, 0, blueTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
+	
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.ambientTransferArrayDualImage)
+		cudaFreeArray(transInfo.ambientTransferArrayDualImage);
+	cudaMallocArray( &(transInfo.ambientTransferArrayDualImage), &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(transInfo.ambientTransferArrayDualImage, 0, 0, ambTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
+
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.diffuseTransferArrayDualImage)
+		cudaFreeArray(transInfo.diffuseTransferArrayDualImage);
+	cudaMallocArray( &(transInfo.diffuseTransferArrayDualImage), &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(transInfo.diffuseTransferArrayDualImage, 0, 0, diffTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
+	
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.specularTransferArrayDualImage)
+		cudaFreeArray(transInfo.specularTransferArrayDualImage);
+	cudaMallocArray( &(transInfo.specularTransferArrayDualImage), &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(transInfo.specularTransferArrayDualImage, 0, 0, specTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
+
+	//define the texture mapping for the specular power component after copying information from host to device array
+	if(transInfo.specularPowerTransferArrayDualImage)
+		cudaFreeArray(transInfo.specularPowerTransferArrayDualImage);
+	cudaMallocArray( &(transInfo.specularPowerTransferArrayDualImage), &channelDesc, transInfo.functionSize, transInfo.functionSize);
+	cudaMemcpyToArrayAsync(transInfo.specularPowerTransferArrayDualImage, 0, 0, powTF, size*transInfo.functionSize, cudaMemcpyHostToDevice, *stream);
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
@@ -401,6 +460,26 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(cudaDualImageTr
 	if(transInfo.colorBTransferArrayDualImage)
 		cudaFreeArray(transInfo.colorBTransferArrayDualImage);
 	transInfo.colorBTransferArrayDualImage = 0;
+	
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.ambientTransferArrayDualImage)
+		cudaFreeArray(transInfo.ambientTransferArrayDualImage);
+	transInfo.ambientTransferArrayDualImage = 0;
+
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.diffuseTransferArrayDualImage)
+		cudaFreeArray(transInfo.diffuseTransferArrayDualImage);
+	transInfo.diffuseTransferArrayDualImage = 0;
+
+	//define the texture mapping for the ambient component after copying information from host to device array
+	if(transInfo.specularTransferArrayDualImage)
+		cudaFreeArray(transInfo.specularTransferArrayDualImage);
+	transInfo.specularTransferArrayDualImage = 0;
+
+	//define the texture mapping for the specular power component after copying information from host to device array
+	if(transInfo.specularPowerTransferArrayDualImage)
+		cudaFreeArray(transInfo.specularPowerTransferArrayDualImage);
+	transInfo.specularPowerTransferArrayDualImage = 0;
 
 	return (cudaGetLastError() == 0);
 }

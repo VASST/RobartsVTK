@@ -18,6 +18,10 @@ vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunc
 	this->lastModifiedTime = 0;
 	
 	this->TransInfo.alphaTransferArrayDualImage = 0;
+	this->TransInfo.ambientTransferArrayDualImage = 0;
+	this->TransInfo.diffuseTransferArrayDualImage = 0;
+	this->TransInfo.specularTransferArrayDualImage = 0;
+	this->TransInfo.specularPowerTransferArrayDualImage = 0;
 	this->TransInfo.colorRTransferArrayDualImage = 0;
 	this->TransInfo.colorGTransferArrayDualImage = 0;
 	this->TransInfo.colorBTransferArrayDualImage = 0;
@@ -94,9 +98,15 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 	float* LocalColorGreenTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalAmbientTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalDiffuseTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularPowerTransferFunction = new float[this->FunctionSize * this->FunctionSize];
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
+		this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
+	this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
 
 	//map the trasfer functions to textures for fast access
@@ -107,6 +117,10 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 		LocalColorGreenTransferFunction,
 		LocalColorBlueTransferFunction,
 		LocalAlphaTransferFunction,
+		LocalAmbientTransferFunction,
+		LocalDiffuseTransferFunction,
+		LocalSpecularTransferFunction,
+		LocalSpecularPowerTransferFunction,
 		this->GetStream());
 
 	//clean up the garbage
@@ -114,6 +128,10 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 	delete LocalColorGreenTransferFunction;
 	delete LocalColorBlueTransferFunction;
 	delete LocalAlphaTransferFunction;
+	delete LocalAmbientTransferFunction;
+	delete LocalDiffuseTransferFunction;
+	delete LocalSpecularTransferFunction;
+	delete LocalSpecularPowerTransferFunction;
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Update(){
