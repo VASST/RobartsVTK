@@ -10,6 +10,7 @@ SET ( Kit_SRCS
   vtkReadWriteLock.h vtkReadWriteLock.cxx
   vtkImageSeedFilter.h vtkImageSeedFilter.cxx
   vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
+  vtkImage2DHistogram.h vtkImage2DHistogram.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
