@@ -441,7 +441,7 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
   //fullPath = strcat (fullPath, "/");
 
   fullPath = strcpy( fullPath, folder );
-  fullPath = strcat( fullPath, "/" );
+  fullPath = strcat( fullPath, "\\" );
   
   int hFind = dir->Open(fullPath);
 

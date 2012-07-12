@@ -9,7 +9,7 @@
 #ifndef __vtkReplayImageVideoSource_h
 #define __vtkReplayImageVideoSource_h
 
-#include <windows.h>
+//#include <windows.h>
 #include <vector>
 
 #include "vtkVideoSource.h"  
@@ -43,6 +43,7 @@ public:
   
   void LoadFile(char * filename);
   int LoadFolder(char * folder, char * filetype);
+  //  int LoadFolder2(char * folder, char * filetype);
   void Clear();
   void SetClipRegion(int x0, int x1, int y0, int y1, int z0, int z1);
 
