@@ -433,13 +433,6 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
   vtkDirectory *dir = vtkDirectory::New();
   char buf[1024];
 
-  
-  //dir->GetCurrentWorkingDirectory(buf,1024);
-  //fullPath = strcpy (fullPath, buf);
-  //fullPath = strcat (fullPath, "/");
-  //fullPath = strcat (fullPath, folder);
-  //fullPath = strcat (fullPath, "/");
-
   fullPath = strcpy( fullPath, folder );
   fullPath = strcat( fullPath, "/" );
   
