@@ -430,7 +430,7 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
 {
 
   char* fullPath = new char[1024];
-  vtkDirectory *dir = vtkDirectory::New();
+  vtkSmartPointer<vtkDirectory> dir = vtkSmartPointer<vtkDirectory>::New();
   char buf[1024];
 
   fullPath = strcpy( fullPath, folder );
@@ -442,7 +442,7 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
     return -1;
   }
 
-  vtkSortFileNames *sort = vtkSortFileNames::New();
+  vtkSmartPointer<vtkSortFileNames> sort = vtkSmartPointer<vtkSortFileNames>::New();
   sort->SetInputFileNames(dir->GetFiles());
   sort->SkipDirectoriesOn();
   sort->NumericSortOn();
@@ -457,88 +457,8 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
     this->LoadFile(file);
   }
 
-  return 0;
+  return 0;+
 }
-
-// int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
-// {
-
-//   char* fullPath = new char[1024];
-//   vtkDirectory *dir = vtkDirectory::New();
-//   char buf[1024];
-//   fullPath = strcpy (fullPath, dir->GetCurrentWorkingDirectory(buf,1024));
-//   fullPath = strcat (fullPath, "/");
-//   fullPath = strcat (fullPath, folder);
-//   fullPath = strcat (fullPath, "/");
-
-//   int hFind = dir->Open(fullPath);
-
-//   std::cout << "DEBUG!" << hFind << "Folder: " << fullPath << std::endl;
-
-//   if(hFind == 1){
-//     return -1;
-//   }
-
-//   vtkSortFileNames *sort = vtkSortFileNames::New();
-//   sort->SetInputFileNames(dir->GetFiles());
-//   sort->SkipDirectoriesOn();
-//   sort->NumericSortOn();
-  
-  
-
-
-//   std::cout << "DEBUG!" << std::endl;
-
-//   for(int i = 0; i < sort->GetFileNames()->GetNumberOfValues(); i++){
-  
-
-//     char* tmpPath = strcat(fullPath, sort->GetFileNames()->GetValue(i) );
-  
-//   //  this->LoadFile(fullFilePath);
-//   }
-
-// }
-
-
-// int vtkReplayImageVideoSource::LoadFolder2(char * folder, char * filetype)
-// {
-// 	WIN32_FIND_DATA ffd;
-// 	TCHAR szDir[MAX_PATH];
-// 	TCHAR fullFilePath[MAX_PATH];
-// 	HANDLE hFind = INVALID_HANDLE_VALUE;
-//     DWORD dwError=0;
-
-// 	StringCchCopy(szDir, MAX_PATH, folder);
-// 	StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
-
-// 	hFind = FindFirstFile(szDir, &ffd);
-
-// 	if (INVALID_HANDLE_VALUE == hFind) 
-// 	{
-// 		vtkWarningMacro("Error Opening Folder");
-// 		return dwError;
-// 	} 
-
-// 	do
-// 	{
-// 		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-// 		{
-// 			continue; //skip directories
-// 		}
-// 		else
-// 		{
-// 			StringCchCopy(fullFilePath, MAX_PATH, folder);
-// 			StringCchCat(fullFilePath, MAX_PATH, ffd.cFileName);
-// 			this->LoadFile(fullFilePath);
-// 		}
-// 	}
-// 	while (FindNextFile(hFind, &ffd) != 0);
-
-// 	FindClose(hFind);
-// 	return dwError;
-// }
-
-
 
 void vtkReplayImageVideoSource::Clear()
 {
