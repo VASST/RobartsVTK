@@ -71,7 +71,7 @@
 #include <vtkSortFileNames.h>
 #include <vtkStringArray.h>
 
-#pragma comment(lib, "User32.lib")
+//#pragma comment(lib, "User32.lib")
 
 vtkReplayImageVideoSource* vtkReplayImageVideoSource::New()
 {
@@ -97,6 +97,7 @@ vtkReplayImageVideoSource::vtkReplayImageVideoSource()
   this->vtkVideoSource::SetFrameBufferSize( 54 );
   this->vtkVideoSource::SetFrameRate( 15.0f );
   this->SetFrameSize(720,480,1); 
+  this->SetFrameSizeAutomatically = true;
   this->imageIndex=-1;
 }
 
@@ -348,80 +349,83 @@ void vtkReplayImageVideoSource::UnPause() {
 
 void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
-
-  std::cout << filename << std::endl;
   
-  std::string str(filename);
-  std::string ext = ".png";
+	std::string str(filename);
+	std::string ext = "";
   
-  for(unsigned int i=0; i<str.length(); i++)
-    {
-      if(str[i] == '.')
+	for(unsigned int i=0; i<str.length(); i++)
 	{
-	  for(unsigned int j = i; j<str.length(); j++)
-	    {
-	      ext += str[j];
-	    }
-	  //return p = ext.c_str();
-	  break;
+		if(str[i] == '.')
+		{
+			for(unsigned int j = i; j<str.length(); j++)
+			{
+				ext += str[j];
+			}
+			break;
+		}
 	}
-    }
   
-  std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-
-  ext = ".png";
-
-
-  vtkImageData * data = vtkImageData::New();
+	vtkImageData * data = vtkImageData::New();
   
-  vtkSmartPointer<vtkImageReader2> reader;
+	vtkSmartPointer<vtkImageReader2> reader;
   
-  if (ext == ".jpg")
-    {
-      reader = vtkSmartPointer<vtkJPEGReader>::New();
-    }
-  else if (ext == ".png")
-    {
-      reader = vtkSmartPointer<vtkPNGReader>::New();
-    }
-  else if (ext == ".bmp")
-    {
-      reader = vtkSmartPointer<vtkBMPReader>::New();
+	if (ext == ".jpg")
+	{
+		reader = vtkSmartPointer<vtkJPEGReader>::New();
+	}
+	else if (ext == ".png")
+	{
+		reader = vtkSmartPointer<vtkPNGReader>::New();
+	}
+	else if (ext == ".bmp")
+	{
+		reader = vtkSmartPointer<vtkBMPReader>::New();
 		
-    }
-  else if (ext == ".tiff")
-    {
-      reader = vtkSmartPointer<vtkTIFFReader>::New();
-    }
-  else 
-    {
-      return;
-    }
+	}
+	else if (ext == ".tiff")
+	{
+		reader = vtkSmartPointer<vtkTIFFReader>::New();
+	}
+	else 
+	{
+		return;
+	}
 
-  if (reader->CanReadFile(filename)) {
-    reader->SetFileName(filename);
-    reader->Update();
-    reader->Modified();
-    reader->GetOutput()->Update();
-  } else {
-    cout << "can't read" << endl;
-    return;
-  }
+	if (reader->CanReadFile(filename)) 
+	{
+		reader->SetFileName(filename);
+		reader->Update();
+		reader->Modified();
+		reader->GetOutput()->Update();
+	} 
+	else 
+	{
+		cerr << "Unable To Read File:" << filename << endl;
+		return;
+	}
 
-  int extents[6];
-  reader->GetOutput()->GetExtent(extents);
-  // if (extents[1]-extents[0]+1 != this->FrameSize[0] ||
-  // 	extents[3]-extents[2]+1 != this->FrameSize[1] ||
-  // 	extents[5]-extents[4]+1 != this->FrameSize[2] )
-  // {
-  // 	vtkErrorMacro("Unable to open file as size doesn't match video source");
-  // 	return;
-  // }
-  data->DeepCopy(reader->GetOutput());
+	int extents[6];
+	reader->GetOutput()->GetExtent(extents);
+	if (extents[1]-extents[0]+1 != this->FrameSize[0] ||
+	 	extents[3]-extents[2]+1 != this->FrameSize[1] ||
+	 	extents[5]-extents[4]+1 != this->FrameSize[2] )
+	{
+		if (this->SetFrameSizeAutomatically) 
+		{
+			this->SetFrameSize(extents[1]-extents[0]+1, extents[3]-extents[2]+1,extents[5]-extents[4]+1);
+			this->SetFrameSizeAutomatically = false;
+		}
+		else 
+		{
+	 		vtkErrorMacro("Unable to open file as size doesn't match video source");
+			return;
+		}
+	}
+	data->DeepCopy(reader->GetOutput());
 
-  this->loadedData.push_back(data);
-
+	this->loadedData.push_back(data);
 
 }
 
@@ -431,10 +435,9 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
 
   char* fullPath = new char[1024];
   vtkSmartPointer<vtkDirectory> dir = vtkSmartPointer<vtkDirectory>::New();
-  char buf[1024];
 
-  fullPath = strcpy( fullPath, folder );
-  fullPath = strcat( fullPath, "/" );
+  fullPath = strncpy( fullPath, folder,1024);
+  fullPath = strncat( fullPath, "/",1024);
   
   int hFind = dir->Open(fullPath);
 
@@ -450,14 +453,14 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
   for(int i = 0; i < sort->GetFileNames()->GetNumberOfValues(); i++){
   
     char *file = new char[1024];
-    file = strcpy(file, fullPath);
-    file = strcat(file, sort->GetFileNames()->GetValue(i));
+    file = strncpy(file, fullPath,1024);
+    file = strncat(file, sort->GetFileNames()->GetValue(i),1024);
     //std::cout << file << std::endl;
   
     this->LoadFile(file);
   }
 
-  return 0;+
+  return 0;
 }
 
 void vtkReplayImageVideoSource::Clear()

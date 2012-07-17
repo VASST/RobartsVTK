@@ -56,6 +56,8 @@ protected:
   std::vector<vtkImageData *> loadedData;
   int imageIndex;
 
+  bool SetFrameSizeAutomatically;
+
   int pauseFeed;
   int currentLength;
 };
