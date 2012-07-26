@@ -139,6 +139,10 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 	delete LocalColorGreenTransferFunction;
 	delete LocalColorBlueTransferFunction;
 	delete LocalAlphaTransferFunction;
+	delete LocalAmbientTransferFunction;
+	delete LocalDiffuseTransferFunction;
+	delete LocalSpecularTransferFunction;
+	delete LocalSpecularPowerTransferFunction;
 }
 
 void vtkCuda2DTransferFunctionInformationHandler::Update(){

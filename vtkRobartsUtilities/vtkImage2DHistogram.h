@@ -20,8 +20,8 @@ public:
 	
 	// Description:
 	// Get/Set the resolution of the returned histogram
-	vtkSetClampMacro( Resolution, int[2], 0.0, 1000 );
-	vtkGetMacro( Resolution, int[2] );
+	void SetResolution( int res[2] );
+	vtkGetMacro( Resolution, int* );
 
 	// The method that starts the multithreading
 	template< class T >

@@ -1,5 +1,6 @@
 #include "vtkImage2DHistogram.h"
 #include "vtkPointData.h"
+#include "vtkDataArray.h"
 
 void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads){
 	
@@ -19,7 +20,7 @@ void vtkImage2DHistogram::ThreadedExecuteCasted(vtkImageData *inData, vtkImageDa
 
 	//find the total volume size
 	int totalVolumeSize = inData->GetDimensions()[0] * inData->GetDimensions()[1] * inData->GetDimensions()[2];
-	int* outPtr = (float*) outData->GetScalarPointer();
+	int* outPtr = (int*) outData->GetScalarPointer();
 	T* inPtr = (T*) inData->GetScalarPointer();
 	int numIComp = inData->GetNumberOfScalarComponents();
 	
@@ -48,6 +49,12 @@ void vtkImage2DHistogram::ThreadedExecuteCasted(vtkImageData *inData, vtkImageDa
 	}
 }
 
+struct vtkImage2DHistogramThreadStruct {
+  vtkImage2DHistogram *Filter;
+  vtkImageData   *inData;
+  vtkImageData   *outData;
+};
+
 VTK_THREAD_RETURN_TYPE vtkImage2DHistogramThreadedExecute( void *arg ) {
 	vtkImage2DHistogramThreadStruct *str;
 	int threadId, threadCount;
@@ -62,12 +69,6 @@ VTK_THREAD_RETURN_TYPE vtkImage2DHistogramThreadedExecute( void *arg ) {
 
 	return VTK_THREAD_RETURN_VALUE;
 }
-
-struct vtkImage2DHistogramThreadStruct {
-  vtkImage2DHistogram *Filter;
-  vtkImageData   *inData;
-  vtkImageData   *outData;
-};
 
 int vtkImage2DHistogram::RequestData(vtkInformation* request,
                           vtkInformationVector** inputVector,
@@ -125,4 +126,11 @@ vtkImage2DHistogram::vtkImage2DHistogram() {
 
 vtkImage2DHistogram::~vtkImage2DHistogram() {
 	this->Threader->Delete();
+}
+
+void vtkImage2DHistogram::SetResolution( int res[2] ){
+	if( res[0] > 0 && res[1] > 0 ){
+		this->Resolution[0] = res[0];
+		this->Resolution[0] = res[1];
+	}
 }
