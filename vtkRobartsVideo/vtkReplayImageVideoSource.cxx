@@ -6,7 +6,7 @@
   Language: C++
   Description: 
      
-=========================================================================
+  =========================================================================
 
   Copyright (c) Chris Wedlake, cwedlake@robarts.ca
 
@@ -61,11 +61,17 @@
 #include <string>
 #include <algorithm>
 
-#include <windows.h>
-#include <tchar.h> 
+// #include <windows.h>
+// #include <tchar.h> 
 #include <stdio.h>
-#include <strsafe.h>
-#pragma comment(lib, "User32.lib")
+//#include <strsafe.h>
+
+
+#include <vtkDirectory.h>
+#include <vtkSortFileNames.h>
+#include <vtkStringArray.h>
+
+//#pragma comment(lib, "User32.lib")
 
 vtkReplayImageVideoSource* vtkReplayImageVideoSource::New()
 {
@@ -73,7 +79,7 @@ vtkReplayImageVideoSource* vtkReplayImageVideoSource::New()
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkReplayImageVideoSource");
   if(ret)
     {
-    return (vtkReplayImageVideoSource*)ret;
+      return (vtkReplayImageVideoSource*)ret;
     }
   // If the factory was unable to create the object, then create it here.
   return new vtkReplayImageVideoSource;
@@ -90,7 +96,8 @@ vtkReplayImageVideoSource::vtkReplayImageVideoSource()
   this->vtkVideoSource::SetOutputFormat(VTK_RGB);
   this->vtkVideoSource::SetFrameBufferSize( 54 );
   this->vtkVideoSource::SetFrameRate( 15.0f );
-  this->SetFrameSize(800,600,1); 
+  this->SetFrameSize(720,480,1); 
+  this->SetFrameSizeAutomatically = true;
   this->imageIndex=-1;
 }
 
@@ -99,7 +106,7 @@ vtkReplayImageVideoSource::~vtkReplayImageVideoSource()
 {
   this->vtkReplayImageVideoSource::ReleaseSystemResources();
   for (unsigned int i = 0; i < this->loadedData.size(); i++) {
-	  this->loadedData[i]->Delete();
+    this->loadedData[i]->Delete();
   }
   this->loadedData.clear();
 }  
@@ -114,9 +121,9 @@ void vtkReplayImageVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 void vtkReplayImageVideoSource::Initialize()
 {
   if (this->Initialized) 
-  {
-    return;
-  }
+    {
+      return;
+    }
  
 
   // Initialization worked
@@ -134,49 +141,57 @@ void vtkReplayImageVideoSource::ReleaseSystemResources()
 
 void vtkReplayImageVideoSource::InternalGrab()
 {
-	if (this->loadedData.size() == 0)
+
+  if (this->loadedData.size() == 0)
+    {
+      return;
+    }
+
+
+
+  // get a thread lock on the frame buffer
+  this->FrameBufferMutex->Lock();
+
+  if (this->AutoAdvance)
+    {
+      this->AdvanceFrameBuffer(1);
+      if (this->FrameIndex + 1 < this->FrameBufferSize)
 	{
-		return;
+	  this->FrameIndex++;
 	}
+    }
 
-	// get a thread lock on the frame buffer
-	this->FrameBufferMutex->Lock();
 
-	if (this->AutoAdvance)
-	{
-		this->AdvanceFrameBuffer(1);
-		if (this->FrameIndex + 1 < this->FrameBufferSize)
-		{
-			this->FrameIndex++;
-		}
-	}
+  int index = this->FrameBufferIndex % this->FrameBufferSize;
+  while (index < 0)
+    {
+      index += this->FrameBufferSize;
+    }
 
-	int index = this->FrameBufferIndex % this->FrameBufferSize;
-	while (index < 0)
-	{
-		index += this->FrameBufferSize;
-	}
-
-	this->imageIndex = ++this->imageIndex % this->loadedData.size();
+  this->imageIndex = ++this->imageIndex % this->loadedData.size();
   
-	void *buffer = this->loadedData[this->imageIndex]->GetScalarPointer();
 
-	unsigned char *ptr = reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
 
-	//int ImageSize = (this->FrameBufferExtent[1]-this->FrameBufferExtent[0])*(this->FrameBufferExtent[3]-this->FrameBufferExtent[2]);
+  void *buffer = this->loadedData[this->imageIndex]->GetScalarPointer();
 
-	memcpy(ptr, buffer, this->NumberOfScalarComponents*(this->FrameSize[0]-1)*(this->FrameSize[1]-1));
+  unsigned char *ptr = reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
 
-	this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
+  //int ImageSize = (this->FrameBufferExtent[1]-this->FrameBufferExtent[0])*(this->FrameBufferExtent[3]-this->FrameBufferExtent[2]);
 
-	if (this->FrameCount++ == 0)
-	{
-		this->StartTimeStamp = this->FrameBufferTimeStamps[index];
-	}
+  memcpy(ptr, buffer, this->NumberOfScalarComponents*(this->FrameSize[0]-1)*(this->FrameSize[1]-1));
 
-	this->Modified();
 
-	this->FrameBufferMutex->Unlock();
+
+  this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
+
+  if (this->FrameCount++ == 0)
+    {
+      this->StartTimeStamp = this->FrameBufferTimeStamps[index];
+    }
+
+  this->Modified();
+
+  this->FrameBufferMutex->Unlock();
 }
 
 //----------------------------------------------------------------------------
@@ -204,34 +219,34 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
   // loop either until the time has arrived or until the thread is ended
   for (int i = 0;; i++)
     {
-    double remaining = time - vtkTimerLog::GetUniversalTime();
+      double remaining = time - vtkTimerLog::GetUniversalTime();
 
-    // check to see if we have reached the specified time
-    if (remaining <= 0)
-      {
-      if (i == 0)
-        {
-        vtkGenericWarningMacro("Dropped a video frame.");
-        }
-      return 1;
-      }
-    // check the ActiveFlag at least every 0.1 seconds
-    if (remaining > 0.1)
-      {
-      remaining = 0.1;
-      }
+      // check to see if we have reached the specified time
+      if (remaining <= 0)
+	{
+	  if (i == 0)
+	    {
+	      vtkGenericWarningMacro("Dropped a video frame.");
+	    }
+	  return 1;
+	}
+      // check the ActiveFlag at least every 0.1 seconds
+      if (remaining > 0.1)
+	{
+	  remaining = 0.1;
+	}
 
-    // check to see if we are being told to quit 
-    data->ActiveFlagLock->Lock();
-    int activeFlag = *(data->ActiveFlag);
-    data->ActiveFlagLock->Unlock();
+      // check to see if we are being told to quit 
+      data->ActiveFlagLock->Lock();
+      int activeFlag = *(data->ActiveFlag);
+      data->ActiveFlagLock->Unlock();
 
-    if (activeFlag == 0)
-      {
-      break;
-      }
+      if (activeFlag == 0)
+	{
+	  break;
+	}
 
-    vtkSleep(remaining);
+      vtkSleep(remaining);
     }
 
   return 0;
@@ -249,8 +264,8 @@ static void *vtkReplayImageVideoSourceRecordThread(vtkMultiThreader::ThreadInfo 
 
   do
     {
-    self->InternalGrab();
-    frame++;
+      self->InternalGrab();
+      frame++;
     }
   while (vtkThreadSleep(data, startTime + frame/rate));
 
@@ -279,8 +294,8 @@ static void *vtkReplayImageVideoSourcePlayThread(vtkMultiThreader::ThreadInfo *d
 
   do
     {
-    self->Seek(1);
-    frame++;
+      self->Seek(1);
+      frame++;
     }
   while (vtkThreadSleep(data, startTime + frame/rate));
 
@@ -294,18 +309,18 @@ void vtkReplayImageVideoSource::Play()
 {
   if (this->Recording)
     {
-    this->Stop();
+      this->Stop();
     }
 
   if (!this->Playing)
     {
-    this->Initialize();
+      this->Initialize();
 
-    this->Playing = 1;
-    this->Modified();
-    this->PlayerThreadId = 
-      this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
-                                        &vtkReplayImageVideoSourcePlayThread,this);
+      this->Playing = 1;
+      this->Modified();
+      this->PlayerThreadId = 
+	this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
+					  &vtkReplayImageVideoSourcePlayThread,this);
     }
 }
 
@@ -316,27 +331,28 @@ void vtkReplayImageVideoSource::Stop()
 {
   if (this->Playing || this->Recording)
     {
-    this->PlayerThreader->TerminateThread(this->PlayerThreadId);
-    this->PlayerThreadId = -1;
-    this->Playing = 0;
-    this->Recording = 0;
-    this->Modified();
+      this->PlayerThreader->TerminateThread(this->PlayerThreadId);
+      this->PlayerThreadId = -1;
+      this->Playing = 0;
+      this->Recording = 0;
+      this->Modified();
     }
 } 
 
 void vtkReplayImageVideoSource::Pause() {
-	this->pauseFeed = 1;
+  this->pauseFeed = 1;
 }
 
 void vtkReplayImageVideoSource::UnPause() {
-	this->pauseFeed = 0;
+  this->pauseFeed = 0;
 }
 
 void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
-   	std::string str(filename);
+  
+	std::string str(filename);
 	std::string ext = "";
-	
+  
 	for(unsigned int i=0; i<str.length(); i++)
 	{
 		if(str[i] == '.')
@@ -345,18 +361,16 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 			{
 				ext += str[j];
 			}
-			//return p = ext.c_str();
 			break;
 		}
-			
 	}
-
+  
 	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
 	vtkImageData * data = vtkImageData::New();
-
+  
 	vtkSmartPointer<vtkImageReader2> reader;
-
+  
 	if (ext == ".jpg")
 	{
 		reader = vtkSmartPointer<vtkJPEGReader>::New();
@@ -379,66 +393,74 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 		return;
 	}
 
-	if (reader->CanReadFile(filename)) {
+	if (reader->CanReadFile(filename)) 
+	{
 		reader->SetFileName(filename);
 		reader->Update();
 		reader->Modified();
 		reader->GetOutput()->Update();
-	} else {
-		cout << "can't read" << endl;
+	} 
+	else 
+	{
+		cerr << "Unable To Read File:" << filename << endl;
 		return;
 	}
 
 	int extents[6];
 	reader->GetOutput()->GetExtent(extents);
 	if (extents[1]-extents[0]+1 != this->FrameSize[0] ||
-		extents[3]-extents[2]+1 != this->FrameSize[1] ||
-		extents[5]-extents[4]+1 != this->FrameSize[2] )
+	 	extents[3]-extents[2]+1 != this->FrameSize[1] ||
+	 	extents[5]-extents[4]+1 != this->FrameSize[2] )
 	{
-		vtkErrorMacro("Unable to open file as size doesn't match video source");
-		return;
+		if (this->SetFrameSizeAutomatically) 
+		{
+			this->SetFrameSize(extents[1]-extents[0]+1, extents[3]-extents[2]+1,extents[5]-extents[4]+1);
+			this->SetFrameSizeAutomatically = false;
+		}
+		else 
+		{
+	 		vtkErrorMacro("Unable to open file as size doesn't match video source");
+			return;
+		}
 	}
 	data->DeepCopy(reader->GetOutput());
 
 	this->loadedData.push_back(data);
+
 }
+
 
 int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
 {
-	WIN32_FIND_DATA ffd;
-	TCHAR szDir[MAX_PATH];
-	TCHAR fullFilePath[MAX_PATH];
-	HANDLE hFind = INVALID_HANDLE_VALUE;
-    DWORD dwError=0;
 
-	StringCchCopy(szDir, MAX_PATH, folder);
-	StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
+  char* fullPath = new char[1024];
+  vtkSmartPointer<vtkDirectory> dir = vtkSmartPointer<vtkDirectory>::New();
 
-	hFind = FindFirstFile(szDir, &ffd);
+  fullPath = strncpy( fullPath, folder,1024);
+  fullPath = strncat( fullPath, "/",1024);
+  
+  int hFind = dir->Open(fullPath);
 
-	if (INVALID_HANDLE_VALUE == hFind) 
-	{
-		vtkWarningMacro("Error Opening Folder");
-		return dwError;
-	} 
+  if(hFind != 1){
+    return -1;
+  }
 
-	do
-	{
-		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		{
-			continue; //skip directories
-		}
-		else
-		{
-			StringCchCopy(fullFilePath, MAX_PATH, folder);
-			StringCchCat(fullFilePath, MAX_PATH, ffd.cFileName);
-			this->LoadFile(fullFilePath);
-		}
-	}
-	while (FindNextFile(hFind, &ffd) != 0);
+  vtkSmartPointer<vtkSortFileNames> sort = vtkSmartPointer<vtkSortFileNames>::New();
+  sort->SetInputFileNames(dir->GetFiles());
+  sort->SkipDirectoriesOn();
+  sort->NumericSortOn();
+  
+  for(int i = 0; i < sort->GetFileNames()->GetNumberOfValues(); i++){
+  
+    char *file = new char[1024];
+    file = strncpy(file, fullPath,1024);
+    file = strncat(file, sort->GetFileNames()->GetValue(i),1024);
+    //std::cout << file << std::endl;
+  
+    this->LoadFile(file);
+  }
 
-	FindClose(hFind);
-	return dwError;
+  return 0;
 }
 
 void vtkReplayImageVideoSource::Clear()
@@ -447,7 +469,7 @@ void vtkReplayImageVideoSource::Clear()
 }
 
 void vtkReplayImageVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, 
-                                   int z0, int z1)
+					      int z0, int z1)
 {
-	return;
+  return;
 }
