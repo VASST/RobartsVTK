@@ -342,6 +342,10 @@ void vtkReplayImageVideoSource::UnPause() {
   this->pauseFeed = 0;
 }
 
+void vtkReplayImageVideoSource::Restart() {
+  this->imageIndex = -1;
+}
+
 void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
 

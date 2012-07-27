@@ -80,6 +80,8 @@ public:
 
   void Pause();
   void UnPause();
+
+  void Restart();
   
   void LoadFile(char * filename);
   int LoadFolder(char * folder, char * filetype);
