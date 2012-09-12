@@ -45,7 +45,7 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 
 	this->renModified = 0;
 	this->volModified = 0;
-	this->currFrame = -1;
+	this->currFrame = 0;
 	this->numFrames = 1;
 	
 	this->Reinitialize();
@@ -230,7 +230,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
 	
 	//pass down to subclass
 	this->SetInputInternal( input, 0 );
-	if( this->currFrame == -1 ) this->ChangeFrame(0);
+	if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
 
 void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
@@ -244,7 +244,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 
 	//pass down to subclass
 	this->SetInputInternal(input, index);
-	if( this->currFrame == -1 ) this->ChangeFrame(0);
+	if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
 
 void vtkCudaVolumeMapper::ClearInput(){

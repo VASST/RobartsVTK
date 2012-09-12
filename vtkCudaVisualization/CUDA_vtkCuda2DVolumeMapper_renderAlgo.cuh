@@ -18,7 +18,6 @@ texture<float, 2, cudaReadModeElementType> specularPower_texture_2D;
 
 //3D input data (read-only texture with corresponding opague device memory back)
 texture<float, 3, cudaReadModeElementType> CUDA_vtkCuda2DVolumeMapper_input_texture;
-cudaArray* CUDA_vtkCuda2DVolumeMapper_sourceDataArray[100];
 
 __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 									const float& numSteps,
@@ -228,12 +227,35 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite( ) {
 	outInfo.depthBuffer[outindex + outInfo.resolution.x] = outputDepth;
 }
 
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, cudaStream_t* stream){
+
+	// set the texture to the correct image
+	CUDA_vtkCuda2DVolumeMapper_input_texture.normalized = false;					// access with unnormalized texture coordinates
+	CUDA_vtkCuda2DVolumeMapper_input_texture.filterMode = cudaFilterModeLinear;		// linear interpolation
+	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[0] = cudaAddressModeClamp;	// wrap texture coordinates
+	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[1] = cudaAddressModeClamp;
+	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[2] = cudaAddressModeClamp;
+
+	// bind array to 3D texture
+	cudaBindTextureToArray(CUDA_vtkCuda2DVolumeMapper_input_texture, frame, channelDesc);
+	
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "Change Frame Status: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	return (cudaGetLastError() == 0);
+}
+
 //pre: the resolution of the image has been processed such that it's x and y size are both multiples of 16 (enforced automatically) and y > 256 (enforced automatically)
 //post: the OutputImage pointer will hold the ray casted information
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
 							 const cuda2DTransferFunctionInformation& transInfo,
+							 cudaArray* frame,
 							 cudaStream_t* stream)
 {
 
@@ -243,6 +265,9 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 	cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation), 0, cudaMemcpyHostToDevice, *stream);
 	cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DVolumeMapper_trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation), 0, cudaMemcpyHostToDevice, *stream);
 	
+	//bind the input data texture to the provided frame
+	CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(frame,stream);
+
 	//bind the transfer functions to the used textures
 	alpha_texture_2D.normalized = true;
 	alpha_texture_2D.filterMode = cudaFilterModePoint;
@@ -332,29 +357,6 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 		printf( "\n" );
 	#endif
 	
-	return (cudaGetLastError() == 0);
-}
-
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStream_t* stream){
-
-	// set the texture to the correct image
-	CUDA_vtkCuda2DVolumeMapper_input_texture.normalized = false;					// access with unnormalized texture coordinates
-	CUDA_vtkCuda2DVolumeMapper_input_texture.filterMode = cudaFilterModeLinear;		// linear interpolation
-	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[0] = cudaAddressModeClamp;	// wrap texture coordinates
-	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[1] = cudaAddressModeClamp;
-	CUDA_vtkCuda2DVolumeMapper_input_texture.addressMode[2] = cudaAddressModeClamp;
-
-	// bind array to 3D texture
-	cudaBindTextureToArray(CUDA_vtkCuda2DVolumeMapper_input_texture,
-							CUDA_vtkCuda2DVolumeMapper_sourceDataArray[frame], channelDesc);
-	
-	#ifdef DEBUG_VTKCUDAVISUALIZATION
-		cudaThreadSynchronize();
-		printf( "Change Frame Status: " );
-		printf( cudaGetErrorString( cudaGetLastError() ) );
-		printf( "\n" );
-	#endif
-
 	return (cudaGetLastError() == 0);
 }
 
@@ -474,11 +476,10 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures( cuda2DTransferFunctio
 //pre:	the data has been preprocessed by the volumeInformationHandler such that it is float data
 //		the index is between 0 and 100
 //post: the input_texture will map to the source data in voxel coordinate space
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, const int index, cudaStream_t* stream){
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream){
 
 	// if the array is already populated with information, free it to prevent leaking
-	if(CUDA_vtkCuda2DVolumeMapper_sourceDataArray[index])
-		cudaFreeArray(CUDA_vtkCuda2DVolumeMapper_sourceDataArray[index]);
+	if(*frame) cudaFreeArray(*frame);
 	
 	//define the size of the data, retrieved from the volume information
 	cudaExtent volumeSize;
@@ -487,13 +488,13 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 	volumeSize.depth = volumeInfo.VolumeSize.z;
 	
 	// create 3D array to store the image data in
-	cudaMalloc3DArray(&(CUDA_vtkCuda2DVolumeMapper_sourceDataArray[index]), &channelDesc, volumeSize);
+	cudaMalloc3DArray(frame, &channelDesc, volumeSize);
 
 	// copy data to 3D array
 	cudaMemcpy3DParms copyParams = {0};
 	copyParams.srcPtr   = make_cudaPitchedPtr( (void*) data, volumeSize.width*sizeof(float),
 												volumeSize.width, volumeSize.height);
-	copyParams.dstArray = CUDA_vtkCuda2DVolumeMapper_sourceDataArray[index];
+	copyParams.dstArray = *frame;
 	copyParams.extent   = volumeSize;
 	copyParams.kind     = cudaMemcpyHostToDevice;
 	cudaMemcpy3DAsync(&copyParams, *stream);
@@ -509,18 +510,10 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 }
 
 void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream){
-	for(int i = 0; i < 100; i++)
-		CUDA_vtkCuda2DVolumeMapper_sourceDataArray[i] = 0;
 }
 
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream){
-	for(int i = 0; i < 100; i++){
-		
-		// if the array is already populated with information, free it to prevent leaking
-		if(CUDA_vtkCuda2DVolumeMapper_sourceDataArray[i])
-			cudaFreeArray(CUDA_vtkCuda2DVolumeMapper_sourceDataArray[i]);
-		
-		//null the pointer
-		CUDA_vtkCuda2DVolumeMapper_sourceDataArray[i] = 0;
-	}
+void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cudaStream_t* stream){
+	if(*frame)
+		cudaFreeArray(*frame);
+	*frame = 0;
 }
