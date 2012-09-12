@@ -57,6 +57,8 @@
 #include "vtkImageData.h"
 #include "vtkPointData.h"
 
+#include "vtkImageFlip.h"
+
 #include <vtkstd/string> 
 #include <string>
 #include <algorithm>
@@ -96,7 +98,7 @@ vtkReplayImageVideoSource::vtkReplayImageVideoSource()
   this->vtkVideoSource::SetOutputFormat(VTK_RGB);
   this->vtkVideoSource::SetFrameBufferSize( 54 );
   this->vtkVideoSource::SetFrameRate( 15.0f );
-  this->SetFrameSize(720,480,1); 
+  this->SetFrameSize(1680,1048,1); 
   this->SetFrameSizeAutomatically = true;
   this->imageIndex=-1;
 }
@@ -147,8 +149,6 @@ void vtkReplayImageVideoSource::InternalGrab()
       return;
     }
 
-
-
   // get a thread lock on the frame buffer
   this->FrameBufferMutex->Lock();
 
@@ -161,7 +161,6 @@ void vtkReplayImageVideoSource::InternalGrab()
 	}
     }
 
-
   int index = this->FrameBufferIndex % this->FrameBufferSize;
   while (index < 0)
     {
@@ -170,8 +169,6 @@ void vtkReplayImageVideoSource::InternalGrab()
 
   this->imageIndex = ++this->imageIndex % this->loadedData.size();
   
-
-
   void *buffer = this->loadedData[this->imageIndex]->GetScalarPointer();
 
   unsigned char *ptr = reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
@@ -179,8 +176,6 @@ void vtkReplayImageVideoSource::InternalGrab()
   //int ImageSize = (this->FrameBufferExtent[1]-this->FrameBufferExtent[0])*(this->FrameBufferExtent[3]-this->FrameBufferExtent[2]);
 
   memcpy(ptr, buffer, this->NumberOfScalarComponents*(this->FrameSize[0]-1)*(this->FrameSize[1]-1));
-
-
 
   this->FrameBufferTimeStamps[index] = vtkTimerLog::GetUniversalTime();
 
@@ -347,8 +342,14 @@ void vtkReplayImageVideoSource::UnPause() {
   this->pauseFeed = 0;
 }
 
+void vtkReplayImageVideoSource::Restart() {
+  this->imageIndex = -1;
+}
+
 void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
+
+	bool applyFlip = false;
   
 	std::string str(filename);
 	std::string ext = "";
@@ -384,9 +385,10 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 		reader = vtkSmartPointer<vtkBMPReader>::New();
 		
 	}
-	else if (ext == ".tiff")
+	else if (ext == ".tif")
 	{
 		reader = vtkSmartPointer<vtkTIFFReader>::New();
+		applyFlip = true;
 	}
 	else 
 	{
@@ -423,7 +425,22 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 			return;
 		}
 	}
-	data->DeepCopy(reader->GetOutput());
+
+	if (applyFlip == true) 
+	{
+		vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+		flip->SetInput(reader->GetOutput());
+		flip->SetFilteredAxis(1);
+		flip->Modified();
+		flip->Update();
+
+		data->DeepCopy(flip->GetOutput());
+
+	}
+	else
+	{
+		data->DeepCopy(reader->GetOutput());
+	}
 
 	this->loadedData.push_back(data);
 
@@ -471,5 +488,6 @@ void vtkReplayImageVideoSource::Clear()
 void vtkReplayImageVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, 
 					      int z0, int z1)
 {
-  return;
+	vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);
+  //return;
 }
