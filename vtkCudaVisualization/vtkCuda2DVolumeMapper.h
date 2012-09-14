@@ -66,7 +66,7 @@ protected:
 	
 	vtkCuda2DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
-	cudaArray* SourceData[100];
+	cudaArray* SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
 
 	static vtkMutexLock* tfLock;
 private:

@@ -509,9 +509,6 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 	return (cudaGetLastError() == 0);
 }
 
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream){
-}
-
 void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cudaStream_t* stream){
 	if(*frame)
 		cudaFreeArray(*frame);

@@ -40,15 +40,14 @@ vtkCuda1DVolumeMapper::vtkCuda1DVolumeMapper()
 void vtkCuda1DVolumeMapper::Deinitialize(int withData){
 	this->vtkCudaVolumeMapper::Deinitialize(withData);
 	this->ReserveGPU();
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
+	for( int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ )
+		CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(&(this->SourceData[i]), this->GetStream());
 }
 
 void vtkCuda1DVolumeMapper::Reinitialize(int withData){
 	this->vtkCudaVolumeMapper::Reinitialize(withData);
 	this->transferFunctionInfoHandler->ReplicateObject(this, withData);
-	this->ReserveGPU();
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_initImageArray(this->GetStream());
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(this->currFrame, this->GetStream());
+	for( int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ ) this->SourceData[i] = 0;
 }
 
 vtkCuda1DVolumeMapper::~vtkCuda1DVolumeMapper(){
@@ -113,7 +112,7 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	//load data onto the GPU and clean up the CPU
 	if(!this->erroredOut){
 		this->ReserveGPU();
-		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index, this->GetStream());
+		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), &(this->SourceData[index]), this->GetStream());
 	}
 	if(input->GetScalarType() != VTK_FLOAT) delete buffer;
 
@@ -122,10 +121,6 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 }
 
 void vtkCuda1DVolumeMapper::ChangeFrameInternal(unsigned int frame){
-	if(!this->erroredOut){
-		this->ReserveGPU();
-		this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());
-	}
 }
 
 void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
@@ -143,12 +138,13 @@ void vtkCuda1DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 	this->tfLock->Lock();
 	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
-		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream());
+		this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->SourceData[this->currFrame], this->GetStream());
 	this->tfLock->Unlock();
 
 }
 
 void vtkCuda1DVolumeMapper::ClearInputInternal(){
 	this->ReserveGPU();
-	CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
+	for(int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ )
+		CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(&(this->SourceData[i]),this->GetStream());
 }

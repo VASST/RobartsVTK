@@ -43,11 +43,6 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
  */
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, cudaStream_t* stream);
 
-/** @brief Prepares the container for the frame at the initialization of the renderer
- *
- */
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream);
-
 /** @brief Deallocates the frames and clears the container (needed for ray caster deallocation)
  *
  */

@@ -35,7 +35,7 @@ void vtkCuda2DVolumeMapper::Deinitialize(int withData){
 	this->vtkCudaVolumeMapper::Deinitialize(withData);
 	this->ReserveGPU();
 	
-	for( int i = 0; i < 100; i++ ){
+	for( int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ ){
 		if( this->SourceData[i] )
 			CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(&(this->SourceData[i]), this->GetStream());
 	}
@@ -44,11 +44,8 @@ void vtkCuda2DVolumeMapper::Deinitialize(int withData){
 void vtkCuda2DVolumeMapper::Reinitialize(int withData){
 	this->vtkCudaVolumeMapper::Reinitialize(withData);
 	this->transferFunctionInfoHandler->ReplicateObject(this, withData);
+	for( int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ ) this->SourceData[i] = 0;
 	this->ReserveGPU();
-
-	for( int i = 0; i < 100; i++ ) this->SourceData[i] = 0;
-
-	CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(this->GetStream());
 	CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(this->SourceData[this->currFrame], this->GetStream());
 }
 
@@ -118,10 +115,6 @@ void vtkCuda2DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 }
 
 void vtkCuda2DVolumeMapper::ChangeFrameInternal(unsigned int frame){
-	if(!this->erroredOut){
-		this->ReserveGPU();
-		this->erroredOut = !CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(this->SourceData[frame], this->GetStream());
-	}
 }
 
 void vtkCuda2DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
@@ -142,7 +135,7 @@ void vtkCuda2DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 
 void vtkCuda2DVolumeMapper::ClearInputInternal(){
 	this->ReserveGPU();
-	for( int i = 0; i < 100; i++ ){
+	for( int i = 0; i < VTKCUDAVOLUMEMAPPER_UPPER_BOUND; i++ ){
 		if( this->SourceData[i] )
 			CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(&(this->SourceData[i]), this->GetStream());
 	}
