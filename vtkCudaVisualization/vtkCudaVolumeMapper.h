@@ -30,6 +30,9 @@
 #include "vtkVolume.h"
 #include <map>
 
+// This is the maximum number of frames, may need to be set
+#define VTKCUDAVOLUMEMAPPER_UPPER_BOUND 30
+
 /** @brief vtkCudaVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
  */
