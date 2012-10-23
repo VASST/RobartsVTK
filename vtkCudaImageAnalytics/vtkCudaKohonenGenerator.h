@@ -11,12 +11,12 @@
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
-class vtkCudaKohonenGenerator : public vtkThreadedImageAlgorithm, public vtkCudaObject
+class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
+	vtkTypeMacro( vtkCudaKohonenGenerator, vtkImageAlgorithm );
+
 	static vtkCudaKohonenGenerator *New();
-
-
 
 	void SetAlphaInitial(double alphaInitial);
 	double GetAlphaInitial(){ return (double) alphaInit; }
@@ -26,9 +26,8 @@ public:
 	double GetWidthInitial(){ return (double) widthInit; }
 	void SetWidthDecay(double widthDecay);
 	double GetWidthDecay(){ return (double) widthDecay; }
-	
-	void UsePositionDataOn();
-	void UsePositionDataOff();
+
+	void SetKohonenMapSize(int SizeX, int SizeY);
 
 	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
 
@@ -37,17 +36,15 @@ public:
 	// will be broken up, multiple threads will be spawned, and each thread
 	// will call this method. It is public so that the thread functions
 	// can call this method.
-	virtual void ThreadedRequestData(vtkInformation *request, 
-									vtkInformationVector **inputVector, 
-									vtkInformationVector *outputVector,
-									vtkImageData ***inData, 
-									vtkImageData **outData,
-									int extent[6], int threadId);
-  
-	// also support the old signature
-	virtual void ThreadedExecute(vtkImageData *inData, 
-								vtkImageData *outData,
-								int extent[6], int threadId);
+	virtual int RequestData(vtkInformation *request, 
+							 vtkInformationVector **inputVector, 
+							 vtkInformationVector *outputVector);
+	virtual int RequestInformation( vtkInformation* request,
+							 vtkInformationVector** inputVector,
+							 vtkInformationVector* outputVector);
+	virtual int RequestUpdateExtent( vtkInformation* request,
+							 vtkInformationVector** inputVector,
+							 vtkInformationVector* outputVector);
 
 protected:
 	vtkCudaKohonenGenerator();
@@ -60,17 +57,12 @@ private:
 	vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&){}
 	vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
 	
-	int outputWidth;
-	int outputHeight;
-	
 	float alphaInit;
 	float alphaDecay;
 	float widthInit;
 	float widthDecay;
 	int numIterations;
 
-	bool usePosition;
-	float diagonalLength;
 	int outExt[6];
 
 	Kohonen_Generator_Information info;

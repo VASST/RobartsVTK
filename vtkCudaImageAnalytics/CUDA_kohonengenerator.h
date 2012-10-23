@@ -3,25 +3,26 @@
 
 #include "vector_types.h"
 
+#define MAX_DIMENSIONALITY 16
+
 typedef struct __align__(16)
 {
-
-	// The resolution of the rStartering screen.
 	int VolumeSize[3];
-	float spacing[3];
-	short numberOfDimensions;
-	short flags;
+	int KohonenMapSize[3];
+	int NumberOfDimensions;
+	int flags;
 
-	float distanceBuffer;
+	int MaxEpochs;
+	int BatchSize;
 
-	int OutputResolution[3];
+	float Weights[MAX_DIMENSIONALITY];
 
 } Kohonen_Generator_Information;
 
-void CUDAsetup_loadNDImage( cudaStream_t* stream );
-
-void CUDAsetup_loadNDImage( float* image, Kohonen_Generator_Information& information, cudaStream_t* stream);
-
-void CUDAalgo_generateKohonenMap( float* outputKohonen, Kohonen_Generator_Information& information, cudaStream_t* stream );
+void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, 
+									Kohonen_Generator_Information& information,
+									float alpha, float alphaDecay,
+									float neighbourhood, float nDecay,
+									cudaStream_t* stream );
 
 #endif //__KOHONENGENERATOR_H__
