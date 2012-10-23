@@ -1,5 +1,5 @@
-#ifndef __VTKKOHONENGENERATOR_H__
-#define __VTKKOHONENGENERATOR_H__
+#ifndef __VTKCUDAKOHONENGENERATOR_H__
+#define __VTKCUDAKOHONENGENERATOR_H__
 
 #include "CUDA_kohonengenerator.h"
 #include "vtkAlgorithm.h"

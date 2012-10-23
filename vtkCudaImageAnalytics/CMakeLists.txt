@@ -27,6 +27,11 @@ SET ( Kit_SRCS
   CUDA_kohonengenerator.h
   CUDA_kohonengenerator.cu
 
+  #Custom histogram creator
+  vtkCudaKohonenApplication.h
+  vtkCudaKohonenApplication.cxx
+  CUDA_kohonenapplication.h
+  CUDA_kohonenapplication.cu
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )
