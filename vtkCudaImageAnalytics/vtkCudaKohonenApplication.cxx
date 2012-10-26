@@ -1,131 +1,93 @@
-#include "vtkCudaKohonenGenerator.h"
+#include "vtkCudaKohonenApplication.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 
-vtkStandardNewMacro(vtkCudaKohonenGenerator);
+vtkStandardNewMacro(vtkCudaKohonenApplication);
 
-vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
-	this->outExt[0] = 0;
-	this->outExt[1] = 0;
-	this->outExt[2] = 0;
-	this->outExt[3] = 0;
-	this->outExt[4] = 0;
-	this->outExt[5] = 0;
-	this->alphaInit = 1.0f;
-	this->alphaDecay = 0.99f;
-	this->widthInit = 1.0f;
-	this->widthDecay = 0.99f;
-	this->numIterations = 100;
-	
-	this->info.KohonenMapSize[0] = 256;
-	this->info.KohonenMapSize[1] = 256;
-	this->info.KohonenMapSize[2] = 1;
+vtkCudaKohonenApplication::vtkCudaKohonenApplication(){
+	this->SetNumberOfInputPorts(2);
+	this->SetNumberOfInputConnections(0,1);
+	this->SetNumberOfInputConnections(1,1);
 	for(int i = 0; i < 16; i++){
 		this->info.Weights[i] = 1.0f;
 	}
-	this->info.BatchSize = 100;
-	this->info.MaxEpochs = 100;
-	this->info.flags = 0;
 }
 
-vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator(){
+vtkCudaKohonenApplication::~vtkCudaKohonenApplication(){
 }
 
 //------------------------------------------------------------
 //Commands for vtkCudaObject compatibility
 
-void vtkCudaKohonenGenerator::Reinitialize(int withData){
+void vtkCudaKohonenApplication::Reinitialize(int withData){
 	//TODO
 }
 
-void vtkCudaKohonenGenerator::Deinitialize(int withData){
+void vtkCudaKohonenApplication::Deinitialize(int withData){
 }
 
-//------------------------------------------------------------
-//Accessors and mutators
-
-void vtkCudaKohonenGenerator::SetAlphaInitial(double alphaInitial){
-	if(alphaInitial >= 0.0 && alphaInitial <= 1.0)
-		this->alphaInit = alphaInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetAlphaDecay(double alphaDecay){
-	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
-		this->alphaDecay = alphaDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetWidthInitial(double widthInitial){
-	if(widthInitial >= 0.0 && widthInitial <= 1.0)
-		this->widthInit = widthInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetWidthDecay(double widthDecay){
-	if(widthDecay >= 0.0 && widthDecay <= 1.0)
-		this->widthDecay = widthDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
-	if(SizeX < 1 || SizeY < 1) return;
-	
-	this->info.KohonenMapSize[0] = SizeX;
-	this->info.KohonenMapSize[1] = SizeY;
-}
-//------------------------------------------------------------
 
 //----------------------------------------------------------------------------
-int vtkCudaKohonenGenerator::RequestInformation(
+int vtkCudaKohonenApplication::RequestInformation(
   vtkInformation* request,
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
 	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, inData->GetNumberOfScalarComponents());
+    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_SHORT, 2);
 	return 1;
 }
 
-int vtkCudaKohonenGenerator::RequestUpdateExtent(
+int vtkCudaKohonenApplication::RequestUpdateExtent(
   vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** vtkNotUsed(inputVector),
+  vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	outData->SetUpdateExtent(0, this->info.KohonenMapSize[0]-1, 0, this->info.KohonenMapSize[1]-1, 0, this->info.KohonenMapSize[2]-1 );
-	outData->SetWholeExtent(0, this->info.KohonenMapSize[0]-1, 0, this->info.KohonenMapSize[1]-1, 0, this->info.KohonenMapSize[2]-1 );
-	return 1;
-}
-
-int vtkCudaKohonenGenerator::RequestData(vtkInformation *request, 
-							vtkInformationVector **inputVector, 
-							vtkInformationVector *outputVector){
-								
+	vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
 	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	
+	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),kohonenData->GetExtent(),6);
+	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),kohonenData->GetExtent(),6);
+	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),inData->GetExtent(),6);
+	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+
+	return 1;
+}
+
+int vtkCudaKohonenApplication::RequestData(vtkInformation *request, 
+							vtkInformationVector **inputVector, 
+							vtkInformationVector *outputVector){
+
+	vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
+	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	
+	//figure out the extent of the output
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
+	outData->SetScalarTypeToShort();
+	outData->SetNumberOfScalarComponents(2);
 	outData->SetExtent(updateExtent);
+	outData->SetWholeExtent(updateExtent);
 	outData->AllocateScalars();
-
+	
 	//update information container
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	inData->GetDimensions( this->info.VolumeSize );
-	this->info.BatchSize = (this->info.VolumeSize[0]*this->info.VolumeSize[0] + this->info.VolumeSize[1]*this->info.VolumeSize[1] + this->info.VolumeSize[2]*this->info.VolumeSize[2])/15.0;
-
-	//pass information to CUDA
+	kohonenData->GetDimensions( this->info.KohonenMapSize );
+	
+	//pass it over to the GPU
 	this->ReserveGPU();
-	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), this->info,
-		this->alphaInit, this->alphaDecay, this->widthInit*sqrt((double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1])),
-		this->widthDecay, this->GetStream() );
+	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
+							  (short*) outData->GetScalarPointer(), this->info, this->GetStream() );
 
 	return 1;
 }

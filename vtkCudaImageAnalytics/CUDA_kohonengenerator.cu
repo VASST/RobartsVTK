@@ -105,8 +105,8 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen,
 				FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer, device_IndexBuffer, i);
 			}
 			short2 minIndex;
+			cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
-			cudaMemcpy( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost );
 			UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
 		}
 		alpha *= alphaDecay;

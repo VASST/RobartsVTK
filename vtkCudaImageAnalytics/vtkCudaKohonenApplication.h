@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAKOHONENAPPLICATION_H__
 #define __VTKCUDAKOHONENAPPLICATION_H__
 
-#include "CUDA_kohonengenerator.h"
+#include "CUDA_kohonenapplication.h"
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
@@ -44,6 +44,7 @@ private:
 	vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&){}
 	vtkCudaKohonenApplication(const vtkCudaKohonenApplication&){}
 
+	Kohonen_Application_Information info;
 };
 
 #endif
