@@ -47,6 +47,11 @@ void vtkCudaDualImageVolumeMapper::Reinitialize(int withData){
 
 void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	
+	if( input->GetNumberOfScalarComponents() != 2 ){
+		vtkErrorMacro(<<"Input must have 2 components.");
+		return;
+	}
+
 	//convert data to float
 	const cudaVolumeInformation& VolumeInfo = this->VolumeInfoHandler->GetVolumeInfo();
 	float* buffer = new float[2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z];
