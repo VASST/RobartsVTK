@@ -28,6 +28,9 @@ public:
 	double GetWidthDecay(){ return (double) widthDecay; }
 
 	void SetKohonenMapSize(int SizeX, int SizeY);
+	
+	vtkDataObject* GetInput(int idx);
+	void SetInput(int idx, vtkDataObject *input);
 
 	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
 

@@ -5,9 +5,12 @@
 vtkStandardNewMacro(vtkCudaKohonenApplication);
 
 vtkCudaKohonenApplication::vtkCudaKohonenApplication(){
+	//configure the input ports
 	this->SetNumberOfInputPorts(2);
 	this->SetNumberOfInputConnections(0,1);
 	this->SetNumberOfInputConnections(1,1);
+
+	//initialize the weights to 1
 	for(int i = 0; i < 16; i++){
 		this->info.Weights[i] = 1.0f;
 	}

@@ -26,6 +26,9 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->info.BatchSize = 100;
 	this->info.MaxEpochs = 100;
 	this->info.flags = 0;
+
+	//configure the input ports
+	this->SetNumberOfInputPorts(1);
 }
 
 vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator(){
@@ -76,6 +79,22 @@ void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
 }
 //------------------------------------------------------------
 
+void vtkCudaKohonenGenerator::SetInput(int idx, vtkDataObject *input)
+{
+  // Ask the superclass to connect the input.
+  this->SetNthInputConnection(0, idx, (input ? input->GetProducerPort() : 0));
+}
+
+//----------------------------------------------------------------------------
+vtkDataObject *vtkCudaKohonenGenerator::GetInput(int idx)
+{
+  if (this->GetNumberOfInputConnections(0) <= idx)
+    {
+    return 0;
+    }
+  return vtkImageData::SafeDownCast(
+    this->GetExecutive()->GetInputData(0, idx));
+}
 //----------------------------------------------------------------------------
 int vtkCudaKohonenGenerator::RequestInformation(
   vtkInformation* request,
@@ -112,9 +131,11 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 							vtkInformationVector *outputVector){
 								
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkInformation* maskInfo = (inputVector[0])->GetInformationObject(1);
 	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* maskData = (maskInfo) ? vtkImageData::SafeDownCast(maskInfo->Get(vtkDataObject::DATA_OBJECT())) : 0;
 	
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
@@ -131,7 +152,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 	//pass information to CUDA
 	this->ReserveGPU();
-	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), this->info,
+	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), (maskData) ? (char*) maskData->GetScalarPointer() : 0, this->info,
 		this->alphaInit, this->alphaDecay, this->widthInit*sqrt((double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1])),
 		this->widthDecay, this->GetStream() );
 

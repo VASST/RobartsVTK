@@ -19,7 +19,7 @@ typedef struct __align__(16)
 
 } Kohonen_Generator_Information;
 
-void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, 
+void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* maskData,
 									Kohonen_Generator_Information& information,
 									float alpha, float alphaDecay,
 									float neighbourhood, float nDecay,

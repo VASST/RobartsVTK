@@ -67,7 +67,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float alpha, 
 
 }
 
-void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen,
+void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* maskData,
 									Kohonen_Generator_Information& information,
 									float alpha, float alphaDecay,
 									float neighbourhood, float nDecay,
@@ -97,18 +97,32 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen,
 			int x = (rand() % information.VolumeSize[0])+ information.VolumeSize[0] * (
 					(rand() % information.VolumeSize[1])+ information.VolumeSize[1] * (
 					(rand() % information.VolumeSize[2])							  )) * information.NumberOfDimensions;
+
+			//if this is not a valid sample (ie: masked out) then try again
+			if( maskData && maskData[x/information.NumberOfDimensions] == 0 ){
+				batch--;
+				continue;
+			}
+
+			//find the distance between each centroid and the sample
 			cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[x]), sizeof(float)*information.NumberOfDimensions );
 			cudaStreamSynchronize(*stream);
 			ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer, device_IndexBuffer);
+
+			//find the winning centroid
 			for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i > 0; i = i/2){
 				dim3 tempGrid( i>256 ? i/256 : 1, 1, 1);
 				FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer, device_IndexBuffer, i);
 			}
+
+			//update the weights of each centroid
 			short2 minIndex;
 			cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
 			UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
 		}
+
+		//update the weight updaters
 		alpha *= alphaDecay;
 		neighbourhood *= nDecay;
 	}
