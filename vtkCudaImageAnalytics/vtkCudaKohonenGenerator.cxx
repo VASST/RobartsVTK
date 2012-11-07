@@ -78,6 +78,11 @@ void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
 	this->info.KohonenMapSize[1] = SizeY;
 }
 //------------------------------------------------------------
+int vtkCudaKohonenGenerator::FillInputPortInformation(int i, vtkInformation* info)
+{
+  info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
+  return this->Superclass::FillInputPortInformation(i,info);
+}
 
 void vtkCudaKohonenGenerator::SetInput(int idx, vtkDataObject *input)
 {
@@ -85,7 +90,6 @@ void vtkCudaKohonenGenerator::SetInput(int idx, vtkDataObject *input)
   this->SetNthInputConnection(0, idx, (input ? input->GetProducerPort() : 0));
 }
 
-//----------------------------------------------------------------------------
 vtkDataObject *vtkCudaKohonenGenerator::GetInput(int idx)
 {
   if (this->GetNumberOfInputConnections(0) <= idx)

@@ -48,6 +48,7 @@ public:
 	virtual int RequestUpdateExtent( vtkInformation* request,
 							 vtkInformationVector** inputVector,
 							 vtkInformationVector* outputVector);
+	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
 	vtkCudaKohonenGenerator();
