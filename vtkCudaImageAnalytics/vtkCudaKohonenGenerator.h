@@ -26,6 +26,11 @@ public:
 	double GetWidthInitial(){ return (double) widthInit; }
 	void SetWidthDecay(double widthDecay);
 	double GetWidthDecay(){ return (double) widthDecay; }
+	
+	void SetWeight(int index, double weight);
+	double GetWeight(int index);
+	void SetWeightNormalization(bool set);
+	bool GetWeightNormalization();
 
 	void SetKohonenMapSize(int SizeX, int SizeY);
 	
@@ -70,6 +75,9 @@ private:
 	int outExt[6];
 
 	Kohonen_Generator_Information info;
+
+	float	UnnormalizedWeights[MAX_DIMENSIONALITY];
+	bool	WeightNormalization;
 
 };
 

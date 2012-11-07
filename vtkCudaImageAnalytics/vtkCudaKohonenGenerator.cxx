@@ -1,6 +1,8 @@
 #include "vtkCudaKohonenGenerator.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkPointData.h"
+#include "vtkDataArray.h"
 
 vtkStandardNewMacro(vtkCudaKohonenGenerator);
 
@@ -20,7 +22,9 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
 	this->info.KohonenMapSize[2] = 1;
-	for(int i = 0; i < 16; i++){
+	this->WeightNormalization = true;
+	for(int i = 0; i < MAX_DIMENSIONALITY; i++){
+		this->UnnormalizedWeights[i] = 1.0f;
 		this->info.Weights[i] = 1.0f;
 	}
 	this->info.BatchSize = 100;
@@ -77,6 +81,27 @@ void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
 	this->info.KohonenMapSize[0] = SizeX;
 	this->info.KohonenMapSize[1] = SizeY;
 }
+//------------------------------------------------------------
+
+void vtkCudaKohonenGenerator::SetWeight(int index, double weight){
+	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 )
+		this->UnnormalizedWeights[index] = weight;
+}
+
+double vtkCudaKohonenGenerator::GetWeight(int index){
+	if( index >= 0 && index < MAX_DIMENSIONALITY )
+		return this->UnnormalizedWeights[index];
+	return 0.0;
+}
+
+void vtkCudaKohonenGenerator::SetWeightNormalization(bool set){
+	this->WeightNormalization = set;
+}
+
+bool vtkCudaKohonenGenerator::GetWeightNormalization(){
+	return this->WeightNormalization;
+}
+
 //------------------------------------------------------------
 int vtkCudaKohonenGenerator::FillInputPortInformation(int i, vtkInformation* info)
 {
@@ -153,6 +178,19 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	inData->GetDimensions( this->info.VolumeSize );
 	this->info.BatchSize = (this->info.VolumeSize[0]*this->info.VolumeSize[0] + this->info.VolumeSize[1]*this->info.VolumeSize[1] + this->info.VolumeSize[2]*this->info.VolumeSize[2])/15.0;
+
+	//update weights
+	if( this->WeightNormalization ){
+		for(int i = 0; i < this->info.NumberOfDimensions; i++){
+			double Range[2];
+			inData->GetPointData()->GetScalars()->GetRange(Range,i);
+			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[1] - Range[0] > 0.0) ? (Range[1] - Range[0] > 0.0) : 1.0);
+		}
+	}else{
+		for(int i = 0; i < this->info.NumberOfDimensions; i++){
+			this->UnnormalizedWeights[i] = this->info.Weights[i];
+		}
+	}
 
 	//pass information to CUDA
 	this->ReserveGPU();
