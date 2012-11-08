@@ -67,7 +67,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float alpha, 
 
 }
 
-void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* maskData,
+void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* maskData, double* range,
 									Kohonen_Generator_Information& information,
 									float alpha, float alphaDecay,
 									float neighbourhood, float nDecay,
@@ -79,8 +79,10 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* 
 	//create buffer for the Kohonen map
 	float* device_KohonenMap = 0;
 	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions );
-	for(int i = 0; i < information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions; i++)
-		outputKohonen[i] = (float)rand()/(float)RAND_MAX;
+	int c = 0;
+	for(int i = 0; i < information.KohonenMapSize[0]*information.KohonenMapSize[1]; i++)
+		for(int j = 0; j < information.NumberOfDimensions; j++ )
+			outputKohonen[c++] = (float)((range[2*j+1] - range[2*j])*(double)rand()/(float)RAND_MAX + range[2*j]);
 	cudaMemcpyAsync(device_KohonenMap, outputKohonen, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
 
 	//allocate a distance buffer

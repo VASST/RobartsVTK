@@ -17,7 +17,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->alphaDecay = 0.99f;
 	this->widthInit = 1.0f;
 	this->widthDecay = 0.99f;
-	this->numIterations = 100;
+	this->BatchPercent = 1.0/15.0;
 	
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
@@ -27,8 +27,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 		this->UnnormalizedWeights[i] = 1.0f;
 		this->info.Weights[i] = 1.0f;
 	}
-	this->info.BatchSize = 100;
-	this->info.MaxEpochs = 100;
+	this->info.MaxEpochs = 1000;
 	this->info.flags = 0;
 
 	//configure the input ports
@@ -88,10 +87,24 @@ void vtkCudaKohonenGenerator::SetWeight(int index, double weight){
 		this->UnnormalizedWeights[index] = weight;
 }
 
+void vtkCudaKohonenGenerator::SetWeights(const double* weights){
+	for(int i = 0; i < MAX_DIMENSIONALITY; i++)
+		try{
+			this->UnnormalizedWeights[i] = weights[i];
+		}catch(...){
+			this->UnnormalizedWeights[i] = 1.0;
+		}
+
+}
+
 double vtkCudaKohonenGenerator::GetWeight(int index){
 	if( index >= 0 && index < MAX_DIMENSIONALITY )
 		return this->UnnormalizedWeights[index];
 	return 0.0;
+}
+
+double* vtkCudaKohonenGenerator::GetWeights(){
+	return this->UnnormalizedWeights;
 }
 
 void vtkCudaKohonenGenerator::SetWeightNormalization(bool set){
@@ -101,6 +114,25 @@ void vtkCudaKohonenGenerator::SetWeightNormalization(bool set){
 bool vtkCudaKohonenGenerator::GetWeightNormalization(){
 	return this->WeightNormalization;
 }
+
+void vtkCudaKohonenGenerator::SetNumberOfIterations(int number){
+	if( number > 0 )
+		this->info.MaxEpochs = number;
+}
+
+int vtkCudaKohonenGenerator::GetNumberOfIterations(){
+	return this->info.MaxEpochs;
+}
+
+void vtkCudaKohonenGenerator::SetBatchSize(double fraction){
+	if( fraction >= 0.0 )
+		this->BatchPercent = fraction;
+}
+
+double vtkCudaKohonenGenerator::GetBatchSize(){
+	return this->BatchPercent;
+}
+
 
 //------------------------------------------------------------
 int vtkCudaKohonenGenerator::FillInputPortInformation(int i, vtkInformation* info)
@@ -177,14 +209,19 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	//update information container
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	inData->GetDimensions( this->info.VolumeSize );
-	this->info.BatchSize = (this->info.VolumeSize[0]*this->info.VolumeSize[0] + this->info.VolumeSize[1]*this->info.VolumeSize[1] + this->info.VolumeSize[2]*this->info.VolumeSize[2])/15.0;
+	this->info.BatchSize = (this->info.VolumeSize[0]*this->info.VolumeSize[0] + this->info.VolumeSize[1]*this->info.VolumeSize[1] + this->info.VolumeSize[2]*this->info.VolumeSize[2])*this->BatchPercent;
+
+	//get range
+	double* Range = new double[2*(this->info.NumberOfDimensions)];
+	for(int i = 0; i < this->info.NumberOfDimensions; i++){
+		inData->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
+	}
+
 
 	//update weights
 	if( this->WeightNormalization ){
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			double Range[2];
-			inData->GetPointData()->GetScalars()->GetRange(Range,i);
-			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[1] - Range[0] > 0.0) ? (Range[1] - Range[0] > 0.0) : 1.0);
+			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i] > 0.0) : 1.0);
 		}
 	}else{
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
@@ -194,9 +231,12 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 	//pass information to CUDA
 	this->ReserveGPU();
-	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), (maskData) ? (char*) maskData->GetScalarPointer() : 0, this->info,
+	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), (maskData) ? (char*) maskData->GetScalarPointer() : 0, Range, this->info, 
 		this->alphaInit, this->alphaDecay, this->widthInit*sqrt((double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1])),
 		this->widthDecay, this->GetStream() );
+	
+	//clean up temporaries
+	delete Range;
 
 	return 1;
 }

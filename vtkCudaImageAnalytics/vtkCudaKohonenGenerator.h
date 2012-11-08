@@ -27,10 +27,18 @@ public:
 	void SetWidthDecay(double widthDecay);
 	double GetWidthDecay(){ return (double) widthDecay; }
 	
+	void SetNumberOfIterations(int number);
+	int GetNumberOfIterations();
+
 	void SetWeight(int index, double weight);
+	void SetWeights(const double* weights);
 	double GetWeight(int index);
+	double* GetWeights();
 	void SetWeightNormalization(bool set);
 	bool GetWeightNormalization();
+
+	void SetBatchSize(double fraction);
+	double GetBatchSize();
 
 	void SetKohonenMapSize(int SizeX, int SizeY);
 	
@@ -70,14 +78,15 @@ private:
 	float alphaDecay;
 	float widthInit;
 	float widthDecay;
-	int numIterations;
 
 	int outExt[6];
 
 	Kohonen_Generator_Information info;
 
-	float	UnnormalizedWeights[MAX_DIMENSIONALITY];
+	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
 	bool	WeightNormalization;
+
+	double	BatchPercent;
 
 };
 

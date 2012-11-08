@@ -1,6 +1,8 @@
 #include "vtkCudaKohonenApplication.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkPointData.h"
+#include "vtkDataArray.h"
 
 vtkStandardNewMacro(vtkCudaKohonenApplication);
 
@@ -11,7 +13,9 @@ vtkCudaKohonenApplication::vtkCudaKohonenApplication(){
 	this->SetNumberOfInputConnections(1,1);
 
 	//initialize the weights to 1
-	for(int i = 0; i < 16; i++){
+	this->WeightNormalization = true;
+	for(int i = 0; i < MAX_DIMENSIONALITY; i++){
+		this->UnnormalizedWeights[i] = 1.0f;
 		this->info.Weights[i] = 1.0f;
 	}
 }
@@ -31,6 +35,27 @@ void vtkCudaKohonenApplication::Deinitialize(int withData){
 
 
 //----------------------------------------------------------------------------
+
+void vtkCudaKohonenApplication::SetWeight(int index, double weight){
+	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 )
+		this->UnnormalizedWeights[index] = weight;
+}
+
+double vtkCudaKohonenApplication::GetWeight(int index){
+	if( index >= 0 && index < MAX_DIMENSIONALITY )
+		return this->UnnormalizedWeights[index];
+	return 0.0;
+}
+
+void vtkCudaKohonenApplication::SetWeightNormalization(bool set){
+	this->WeightNormalization = set;
+}
+
+bool vtkCudaKohonenApplication::GetWeightNormalization(){
+	return this->WeightNormalization;
+}
+
+//------------------------------------------------------------
 int vtkCudaKohonenApplication::RequestInformation(
   vtkInformation* request,
   vtkInformationVector** inputVector,
@@ -87,6 +112,19 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 	inData->GetDimensions( this->info.VolumeSize );
 	kohonenData->GetDimensions( this->info.KohonenMapSize );
 	
+	//update weights
+	if( this->WeightNormalization ){
+		for(int i = 0; i < this->info.NumberOfDimensions; i++){
+			double Range[2];
+			inData->GetPointData()->GetScalars()->GetRange(Range,i);
+			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[1] - Range[0] > 0.0) ? (Range[1] - Range[0] > 0.0) : 1.0);
+		}
+	}else{
+		for(int i = 0; i < this->info.NumberOfDimensions; i++){
+			this->UnnormalizedWeights[i] = this->info.Weights[i];
+		}
+	}
+
 	//pass it over to the GPU
 	this->ReserveGPU();
 	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),

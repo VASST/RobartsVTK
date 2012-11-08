@@ -17,6 +17,13 @@ public:
 	vtkTypeMacro( vtkCudaKohonenApplication, vtkImageAlgorithm );
 
 	static vtkCudaKohonenApplication *New();
+	
+	void SetWeight(int index, double weight);
+	void SetWeights(const double* weights);
+	double GetWeight(int index);
+	double* GetWeights();
+	void SetWeightNormalization(bool set);
+	bool GetWeightNormalization();
 
 	// Description:
 	// If the subclass does not define an Execute method, then the task
@@ -43,6 +50,9 @@ protected:
 private:
 	vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&){}
 	vtkCudaKohonenApplication(const vtkCudaKohonenApplication&){}
+	
+	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
+	bool	WeightNormalization;
 
 	Kohonen_Application_Information info;
 };
