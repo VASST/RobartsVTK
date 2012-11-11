@@ -20,6 +20,12 @@ __constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 cudaArray* ZBufferArray = 0;
 texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
+#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;					 \
+										  textureToBind.filterMode = cudaFilterModePoint;			 \
+										  textureToBind.addressMode[0] = cudaAddressModeClamp;		 \
+										  textureToBind.addressMode[1] = cudaAddressModeClamp;		 \
+										  cudaBindTextureToArray(textureToBind, value, channelDesc); \
+
 //channel for loading input data and transfer functions
 cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float2>();

@@ -39,16 +39,27 @@ public:
 									const cudaVolumeInformation& volumeInfo,
 									const cudaOutputImageInformation& outputInfo );
 
-	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
+	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler outside the keyhole window
 	 *
 	 *  @param func The 2 dimensional transfer function
 	 */
 	void SetFunction(vtkCuda2DTransferFunction* func);
 	
-	/** @brief Get the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
+	/** @brief Get the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler outside the keyhole window
 	 *
 	 */
 	vtkCuda2DTransferFunction* GetFunction();
+
+	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler within the keyhole window
+	 *
+	 *  @param func The 2 dimensional transfer function
+	 */
+	void SetKeyholeFunction(vtkCuda2DTransferFunction* func);
+	
+	/** @brief Get the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler within the keyhole window
+	 *
+	 */
+	vtkCuda2DTransferFunction* GetKeyholeFunction();
 
 protected:
 	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers

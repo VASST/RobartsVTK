@@ -151,3 +151,13 @@ void vtkCudaDualImageVolumeMapper::SetFunction(vtkCuda2DTransferFunction* funct)
 vtkCuda2DTransferFunction* vtkCudaDualImageVolumeMapper::GetFunction(){
 	return this->transferFunctionInfoHandler->GetTransferFunction();
 }
+
+//give the function to the transfer function handler
+void vtkCudaDualImageVolumeMapper::SetKeyholeFunction(vtkCuda2DTransferFunction* funct){
+	this->transferFunctionInfoHandler->SetKeyholeTransferFunction(funct);
+}
+
+//collect the function from the transfer function handler
+vtkCuda2DTransferFunction* vtkCudaDualImageVolumeMapper::GetKeyholeFunction(){
+	return this->transferFunctionInfoHandler->GetKeyholeTransferFunction();
+}

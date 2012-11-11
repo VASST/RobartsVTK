@@ -35,6 +35,17 @@ typedef struct __align__(16) {
 	cudaArray* colorGTransferArrayDualImage;
 	cudaArray* colorBTransferArrayDualImage;
 
+	//opague memory back for the keyhole transfer function
+	bool			useSecondTransferFunction;
+	cudaArray* K_alphaTransferArrayDualImage;
+	cudaArray* K_ambientTransferArrayDualImage;
+	cudaArray* K_diffuseTransferArrayDualImage;
+	cudaArray* K_specularTransferArrayDualImage;
+	cudaArray* K_specularPowerTransferArrayDualImage;
+	cudaArray* K_colorRTransferArrayDualImage;
+	cudaArray* K_colorGTransferArrayDualImage;
+	cudaArray* K_colorBTransferArrayDualImage;
+
 } cudaDualImageTransferFunctionInformation;
 
 #endif
