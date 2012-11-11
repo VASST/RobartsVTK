@@ -41,10 +41,23 @@ void vtkCudaKohonenApplication::SetWeight(int index, double weight){
 		this->UnnormalizedWeights[index] = weight;
 }
 
+void vtkCudaKohonenApplication::SetWeights(const double* weights){
+	for(int i = 0; i < MAX_DIMENSIONALITY; i++)
+		try{
+			this->UnnormalizedWeights[i] = weights[i];
+		}catch(...){
+			this->UnnormalizedWeights[i] = 1.0;
+		}
+}
+
 double vtkCudaKohonenApplication::GetWeight(int index){
 	if( index >= 0 && index < MAX_DIMENSIONALITY )
 		return this->UnnormalizedWeights[index];
 	return 0.0;
+}
+
+double* vtkCudaKohonenApplication::GetWeights(){
+	return this->UnnormalizedWeights;
 }
 
 void vtkCudaKohonenApplication::SetWeightNormalization(bool set){
@@ -101,7 +114,7 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 	//figure out the extent of the output
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
-	outData->SetScalarTypeToShort();
+	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(2);
 	outData->SetExtent(updateExtent);
 	outData->SetWholeExtent(updateExtent);
@@ -117,11 +130,11 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
 			double Range[2];
 			inData->GetPointData()->GetScalars()->GetRange(Range,i);
-			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[1] - Range[0] > 0.0) ? (Range[1] - Range[0] > 0.0) : 1.0);
+			this->info.Weights[i] = this->UnnormalizedWeights[i] / (this->info.NumberOfDimensions*((Range[1] - Range[0] > 0.0) ? (Range[1] - Range[0]) : 1.0));
 		}
 	}else{
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->UnnormalizedWeights[i] = this->info.Weights[i];
+			this->info.Weights[i] = this->UnnormalizedWeights[i] / this->info.NumberOfDimensions;
 		}
 	}
 

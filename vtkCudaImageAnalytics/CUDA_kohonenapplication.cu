@@ -4,12 +4,14 @@
 __constant__ Kohonen_Application_Information info;
 
 
-__global__ void ProcessImageToMapFirst(float* KohonenMap, float* InputData, short2* OutputData, float* OutputDistance ){
+__global__ void ProcessImageToMapFirst(float* KohonenMap, float* InputData, float2* OutputData, float* OutputWeight, float2* OutputNearest, float* OutputDistance ){
 
 	__shared__ float MapPoint[MAX_DIMENSIONALITY];
 	
+	float currWeight = 0.0f;
+	float2 weightedIndex = {0.0f, 0.0f};
+	float2 minIndex = {0.0f, 0.0f};
 	float minDistance = 0.0f;
-	short2 minIndex = {0, 0};
 
 	int kOffset = threadIdx.x + blockDim.x * blockIdx.x;
 	int bufferSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
@@ -28,6 +30,8 @@ __global__ void ProcessImageToMapFirst(float* KohonenMap, float* InputData, shor
 		}
 
 		//if less than the minimum, save it
+		weightedIndex.x = exp( -1.0f* currDistance ) * (float) i;
+		currWeight = exp( -1.0f* currDistance );
 		minDistance = currDistance;
 
 	}
@@ -46,26 +50,32 @@ __global__ void ProcessImageToMapFirst(float* KohonenMap, float* InputData, shor
 		}
 
 		//if less than the minimum, save it
-		minIndex.x = (currDistance < minDistance) ? i : minIndex.x;
-		minDistance = (currDistance < minDistance) ? currDistance : minDistance;
+		weightedIndex.x += exp( -1.0f* currDistance ) * (float) i;
+		currWeight += exp( -1.0f* currDistance );
+		minIndex.x = (minDistance < currDistance) ? minIndex.x : (float) i;
+		minDistance = (minDistance < currDistance) ? minDistance : currDistance;
 
 	}
 
 	//save off the index of the closest map point
-	if( kOffset < bufferSize ) OutputData[kOffset] = minIndex;
+	if( kOffset < bufferSize ) OutputData[kOffset] = weightedIndex;
+	if( kOffset < bufferSize ) OutputWeight[kOffset] = currWeight;
+	if( kOffset < bufferSize ) OutputNearest[kOffset] = minIndex;
 	if( kOffset < bufferSize ) OutputDistance[kOffset] = minDistance;
 
 }
 
-__global__ void ProcessImageToMapRepeat(float* KohonenMap, float* InputData, short2* OutputData, float* OutputDistance, int KohonenRow){
+__global__ void ProcessImageToMapRepeat(float* KohonenMap, float* InputData, float2* OutputData, float* OutputWeight, float2* OutputNearest, float* OutputDistance, int KohonenRow){
 
 	__shared__ float MapPoint[MAX_DIMENSIONALITY];
 
 	int kOffset = threadIdx.x + blockDim.x * blockIdx.x;
 
+	float currWeight = OutputWeight[kOffset];
+	float2 weightedIndex = OutputData[kOffset];
+	float2 minIndex = OutputNearest[kOffset];
 	float minDistance = OutputDistance[kOffset];
-	short2 minIndex = OutputData[kOffset];
-
+	
 	int bufferSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
 	for(int i = 0; i < info.KohonenMapSize[0]; i++){
 
@@ -83,16 +93,32 @@ __global__ void ProcessImageToMapRepeat(float* KohonenMap, float* InputData, sho
 		}
 
 		//if less than the minimum, save it
-		minIndex.x = (currDistance < minDistance) ? i : minIndex.x;
-		minIndex.y = (currDistance < minDistance) ? KohonenRow : minIndex.y;
-		minDistance = (currDistance < minDistance) ? currDistance : minDistance;
+		weightedIndex.x += exp( -1.0f * currDistance ) * (float) i;
+		weightedIndex.y += exp( -1.0f * currDistance ) * (float) KohonenRow;
+		currWeight += exp( -1.0f * currDistance );
+		minIndex.x = (minDistance < currDistance) ? minIndex.x : (float) i;
+		minIndex.y = (minDistance < currDistance) ? minIndex.y : (float) KohonenRow;
+		minDistance = (minDistance < currDistance) ? minDistance : currDistance;
 
 	}
 
 	//save off the index of the closest map point
-	if( kOffset < bufferSize ) OutputData[kOffset] = minIndex;
+	if( kOffset < bufferSize ) OutputData[kOffset] = weightedIndex;
+	if( kOffset < bufferSize ) OutputWeight[kOffset] = currWeight;
+	if( kOffset < bufferSize ) OutputNearest[kOffset] = minIndex;
 	if( kOffset < bufferSize ) OutputDistance[kOffset] = minDistance;
 
+}
+
+__global__ void NormalizeImage( float2* OutputData, float* OutputWeight, float2* OutputNearest ){
+	int kOffset = threadIdx.x + blockDim.x * blockIdx.x;
+	float currWeight = OutputWeight[kOffset];
+	float2 appIndex = OutputData[kOffset];
+	float2 minIndex = OutputNearest[kOffset];
+	appIndex.x = (currWeight > 0.0f) ? appIndex.x / currWeight : minIndex.x;
+	appIndex.y = (currWeight > 0.0f) ? appIndex.y / currWeight : minIndex.y;
+	int bufferSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
+	if( kOffset < bufferSize ) OutputData[kOffset] = appIndex;
 }
 
 void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, short* outputData,
@@ -121,29 +147,35 @@ void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, short* out
 	cudaMemcpyAsync( device_InputData, inputTransposed, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
 	delete[] inputTransposed;
 	
-	short* device_OutputData = 0;
-	cudaMalloc( (void**) &device_OutputData, sizeof(short)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*2 );
+	float* device_OutputData = 0;
+	cudaMalloc( (void**) &device_OutputData, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*2 );
+	float* device_OutputWeight = 0;
+	cudaMalloc( (void**) &device_OutputWeight, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] );
+	float* device_OutputNearest = 0;
+	cudaMalloc( (void**) &device_OutputNearest, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*2 );
 	float* device_OutputDistance = 0;
 	cudaMalloc( (void**) &device_OutputDistance, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] );
 
 	//apply the map
-
 	dim3 grid((information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] + 255) / 256,1,1);
 	dim3 threads(256,1,1);
-	ProcessImageToMapFirst<<<grid, threads, 0, *stream >>>(device_KohonenMap, device_InputData, (short2*) device_OutputData, device_OutputDistance );
+	ProcessImageToMapFirst<<<grid, threads, 0, *stream >>>(device_KohonenMap, device_InputData, (float2*) device_OutputData, device_OutputWeight, (float2*) device_OutputNearest, device_OutputDistance );
 	cudaStreamSynchronize(*stream);
 	for( int i = 1; i < information.KohonenMapSize[1]; i++ ){
-		ProcessImageToMapRepeat<<<grid, threads, 0, *stream >>>(device_KohonenMap, device_InputData, (short2*) device_OutputData, device_OutputDistance, i );
+		ProcessImageToMapRepeat<<<grid, threads, 0, *stream >>>(device_KohonenMap, device_InputData, (float2*) device_OutputData, device_OutputWeight, (float2*) device_OutputNearest, device_OutputDistance, i );
 		cudaStreamSynchronize(*stream);
 	}
+	NormalizeImage<<<grid, threads, 0, *stream >>>((float2*) device_OutputData, device_OutputWeight, (float2*) device_OutputNearest );
 
 	//copy results back
-	cudaMemcpyAsync( outputData, device_OutputData, sizeof(short)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*2, cudaMemcpyDeviceToHost, *stream );
+	cudaMemcpyAsync( outputData, device_OutputData, sizeof(float)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]*2, cudaMemcpyDeviceToHost, *stream );
 	cudaStreamSynchronize(*stream);
 
 	//remove allocated memory
 	cudaFree(device_KohonenMap);
 	cudaFree(device_InputData);
-	cudaFree(device_OutputDistance);
 	cudaFree(device_OutputData);
+	cudaFree(device_OutputWeight);
+	cudaFree(device_OutputNearest);
+	cudaFree(device_OutputDistance);
 }

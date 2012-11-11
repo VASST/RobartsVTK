@@ -94,7 +94,6 @@ void vtkCudaKohonenGenerator::SetWeights(const double* weights){
 		}catch(...){
 			this->UnnormalizedWeights[i] = 1.0;
 		}
-
 }
 
 double vtkCudaKohonenGenerator::GetWeight(int index){
@@ -217,15 +216,14 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		inData->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
 	}
 
-
 	//update weights
 	if( this->WeightNormalization ){
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->UnnormalizedWeights[i] = this->info.Weights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i] > 0.0) : 1.0);
+			this->info.Weights[i] = this->UnnormalizedWeights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i]) : 1.0);
 		}
 	}else{
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->UnnormalizedWeights[i] = this->info.Weights[i];
+			this->info.Weights[i] = this->UnnormalizedWeights[i];
 		}
 	}
 
