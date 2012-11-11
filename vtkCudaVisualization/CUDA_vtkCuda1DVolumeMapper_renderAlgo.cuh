@@ -26,8 +26,8 @@ texture<float, 3, cudaReadModeElementType> CUDA_vtkCuda1DVolumeMapper_input_text
 
 __device__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_CastRays1D(float3& rayStart,
 									const float& numSteps,
-									float& excludeStart,
-									float& excludeEnd,
+									int& excludeStart,
+									int& excludeEnd,
 									const float3& rayInc,
 									float4& outputVal) {
 
@@ -176,8 +176,8 @@ __global__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite( ) {
 	float3 rayInc; // ray sample increment
 	float numSteps; //maximum number of samples along this ray
 	float4 outputVal; //rgba value of this ray (calculated in castRays, used in WriteData)
-	float excludeStart; //where to start excluding
-	float excludeEnd; //where to end excluding
+	int excludeStart; //where to start excluding
+	int excludeEnd; //where to end excluding
 
 	//load in the rays
 	__syncthreads();
@@ -195,9 +195,9 @@ __global__ void CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite( ) {
 	__syncthreads();
 	numSteps = outInfo.numSteps[outindex];
 	__syncthreads();
-	excludeStart = outInfo.excludeStart[outindex];
+	excludeStart = __float2int_ru(outInfo.excludeStart[outindex]);
 	__syncthreads();
-	excludeEnd = outInfo.excludeEnd[outindex];
+	excludeEnd = __float2int_rd(outInfo.excludeEnd[outindex]);
 	__syncthreads();
 
 	// trace along the ray (composite)
