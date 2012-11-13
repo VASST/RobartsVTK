@@ -456,7 +456,7 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
 	float c = renInfo.celc;
 	__syncthreads();
 	
-	//multiply by the depth factor
+	//multiply by the cel-shading factor
 	gradMag = 1.0f - darkness * saturate( (gradMag - a) * c );
 	
 	//grab distance shading parameters
