@@ -78,7 +78,7 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysNoSecond(fl
 	while( maxSteps > 0 ){
 
 		//if we are in the exclusion area, leave
-		if( excludeStart > maxSteps && excludeEnd < maxSteps ){
+		if( excludeStart >= maxSteps && excludeEnd < maxSteps ){
 			rayStart.x += (maxSteps-excludeEnd) * rayInc.x;
 			rayStart.y += (maxSteps-excludeEnd) * rayInc.y;
 			rayStart.z += (maxSteps-excludeEnd) * rayInc.z;
@@ -282,26 +282,22 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysWithSecond(
 		dot *= inverseGradMag1*inverseGradMag2;
 		
 		//adjust shading
+		bool inKeyhole = (excludeStart >= maxSteps && excludeEnd < maxSteps);
 		float phongLambert = saturate( abs ( gradient1.x*rayInc.x*incSpace.x + 
 											gradient1.y*rayInc.y*incSpace.y +
 											gradient1.z*rayInc.z*incSpace.z 	) / (gradMag * rayLength) );
-		float shadeD = (( excludeStart > maxSteps && excludeEnd < maxSteps ) ?
-					 tex2D(k_ambient_texture_DualImage, tempIndex.x, tempIndex.y) :
-					 tex2D(ambient_texture_DualImage, tempIndex.x, tempIndex.y)) +
-					 phongLambert * ( ( excludeStart > maxSteps && excludeEnd < maxSteps ) ?
-					 tex2D(k_diffuse_texture_DualImage, tempIndex.x, tempIndex.y) :
-					 tex2D(diffuse_texture_DualImage, tempIndex.x, tempIndex.y) );
-		float shadeS = (( excludeStart > maxSteps && excludeEnd < maxSteps ) ?
-					 tex2D(k_specular_texture_DualImage, tempIndex.x, tempIndex.y) :
-					 tex2D(specular_texture_DualImage, tempIndex.x, tempIndex.y) ) * 
-						pow( phongLambert, ( excludeStart > maxSteps && excludeEnd < maxSteps ) ?
-											tex2D(k_specularPower_texture_DualImage, tempIndex.x, tempIndex.y) :
-											tex2D(specularPower_texture_DualImage, tempIndex.x, tempIndex.y) );
+		float shadeD = ( inKeyhole ? tex2D(k_ambient_texture_DualImage, tempIndex.x, tempIndex.y) :
+									 tex2D(ambient_texture_DualImage, tempIndex.x, tempIndex.y) ) +
+					 phongLambert * ( inKeyhole ? tex2D(k_diffuse_texture_DualImage, tempIndex.x, tempIndex.y) :
+												  tex2D(diffuse_texture_DualImage, tempIndex.x, tempIndex.y) );
+		float shadeS = ( inKeyhole ? tex2D(k_specular_texture_DualImage, tempIndex.x, tempIndex.y) :
+									 tex2D(specular_texture_DualImage, tempIndex.x, tempIndex.y) ) * 
+						pow( phongLambert, inKeyhole ? tex2D(k_specularPower_texture_DualImage, tempIndex.x, tempIndex.y) :
+													   tex2D(specularPower_texture_DualImage, tempIndex.x, tempIndex.y) );
 
 		//fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
-		float alpha = ( excludeStart > maxSteps && excludeEnd < maxSteps ) ?
-					 tex2D(k_alpha_texture_DualImage, tempIndex.x, tempIndex.y) :
-					 tex2D(alpha_texture_DualImage, tempIndex.x, tempIndex.y);
+		float alpha = inKeyhole ? tex2D(k_alpha_texture_DualImage, tempIndex.x, tempIndex.y) :
+								  tex2D(alpha_texture_DualImage, tempIndex.x, tempIndex.y);
 
 		
 		//filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
@@ -326,7 +322,7 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysWithSecond(
 				outputVal.w *= alpha;
 
 				//accumulate the colour information from this sample point
-				if( excludeStart > maxSteps && excludeEnd < maxSteps ){
+				if( inKeyhole ){
 					outputVal.x += multiplier * saturate(shadeD*tex2D(k_colorR_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
 					outputVal.y += multiplier * saturate(shadeD*tex2D(k_colorG_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
 					outputVal.z += multiplier * saturate(shadeD*tex2D(k_colorB_texture_DualImage, tempIndex.x, tempIndex.y)+shadeS);
@@ -375,7 +371,7 @@ __device__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysWithSecond(
 }
 
 
-__global__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite( ) {
+__global__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite_WithDual( ) {
 	
 	//index in the output image (DualImage)
 	int2 index;
@@ -415,11 +411,65 @@ __global__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite( ) {
 	__syncthreads();
 
 	// trace along the ray (composite)
-	if( CUDA_vtkCudaDualImageVolumeMapper_trfInfo.useSecondTransferFunction ){
-		CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysWithSecond(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
-	}else{
-		CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysNoSecond(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
-	}
+	CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysWithSecond(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
+
+	//convert output to uchar, adjusting it to be valued from [0,256) rather than [0,1]
+	uchar4 temp;
+	temp.x = 255.0f * outputVal.x;
+	temp.y = 255.0f * outputVal.y;
+	temp.z = 255.0f * outputVal.z;
+	temp.w = 255.0f * outputVal.w;
+	
+	//place output in the image buffer
+	__syncthreads();
+	outInfo.deviceOutputImage[outindex] = temp;
+
+	//write out the depth
+	__syncthreads();
+	outInfo.depthBuffer[outindex + outInfo.resolution.x] = outputDepth;
+}
+
+__global__ void CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite_WithoutDual( ) {
+	
+	//index in the output image (DualImage)
+	int2 index;
+	index.x = blockDim.x * blockIdx.x + threadIdx.x;
+	index.y = blockDim.y * blockIdx.y + threadIdx.y;
+
+	//index in the output image (1D)
+	int outindex = index.x + index.y * outInfo.resolution.x;
+	
+	float3 rayStart; //ray starting point
+	float3 rayInc; // ray sample increment
+	float numSteps; //maximum number of samples along this ray
+	int excludeStart; //where to start excluding
+	int excludeEnd; //where to end excluding
+	float4 outputVal; //rgba value of this ray (calculated in castRays, used in WriteData)
+	float outputDepth; //depth to put in the cel shading array
+
+	//load in the rays
+	__syncthreads();
+	rayStart.x = outInfo.rayStartX[outindex];
+	__syncthreads();
+	rayStart.y = outInfo.rayStartY[outindex];
+	__syncthreads();
+	rayStart.z = outInfo.rayStartZ[outindex];
+	__syncthreads();
+	rayInc.x = outInfo.rayIncX[outindex];
+	__syncthreads();
+	rayInc.y = outInfo.rayIncY[outindex];
+	__syncthreads();
+	rayInc.z = outInfo.rayIncZ[outindex];
+	__syncthreads();
+	numSteps = outInfo.numSteps[outindex];
+	__syncthreads();
+	excludeStart = __float2int_ru(outInfo.excludeStart[outindex]);
+	__syncthreads();
+	excludeEnd = __float2int_rd(outInfo.excludeEnd[outindex]);
+	__syncthreads();
+
+	// trace along the ray (composite)
+	CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_CastRaysNoSecond(rayStart, numSteps, excludeStart, excludeEnd, rayInc, outputVal, outputDepth);
 
 	//convert output to uchar, adjusting it to be valued from [0,256) rather than [0,1]
 	uchar4 temp;
@@ -503,7 +553,11 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 		printf( "\n" );
 	#endif
 
-	CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite <<< grid, threads, 0, *stream >>>();
+	if( transInfo.useSecondTransferFunction )
+		CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite_WithDual <<< grid, threads, 0, *stream >>>();
+	else
+		CUDA_vtkCudaDualImageVolumeMapper_CUDAkernel_Composite_WithoutDual <<< grid, threads, 0, *stream >>>();
+
 	
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
@@ -518,7 +572,6 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 	threads.x = 256;
 	threads.y = 1;
 	CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
-	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
@@ -526,6 +579,16 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
+
+	CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
+
+	#ifdef DEBUG_VTKCUDAVISUALIZATION
+		cudaThreadSynchronize();
+		printf( "DualImage Rendering Error Status 4: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
 	
 	return (cudaGetLastError() == 0);
 }
@@ -553,14 +616,6 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(const int frame, c
 	return (cudaGetLastError() == 0);
 }
 
-void CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(cudaArray** array, float* values, int functionSize, cudaStream_t* stream){
-	size_t size = sizeof(float) * functionSize;
-	if(*array)
-		cudaFreeArray(*array);
-	cudaMallocArray( array, &channelDesc, functionSize, functionSize);
-	cudaMemcpyToArrayAsync(*array, 0, 0, values, size*functionSize, cudaMemcpyHostToDevice, *stream);
-}
-
 //pre: the transfer functions are all of type float and are all of size FunctionSize
 //post: the alpha, colorR, G and B DualImage textures will map to each transfer function
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTransferFunctionInformation& transInfo,
@@ -570,25 +625,27 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTran
 								  float* kambTF, float* kdiffTF, float* kspecTF, float* kpowTF,
 								  cudaStream_t* stream){
 	
-	//define the texture mapping for the second TF's components after copying information from host to device array
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_alphaTransferArrayDualImage), kalphaTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_colorRTransferArrayDualImage), kredTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_colorGTransferArrayDualImage), kgreenTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_colorBTransferArrayDualImage), kblueTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_ambientTransferArrayDualImage), kambTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_diffuseTransferArrayDualImage), kdiffTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_specularTransferArrayDualImage), kspecTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.K_specularPowerTransferArrayDualImage), kpowTF, transInfo.functionSize, stream);
-	
 	//define the texture mapping for the first TF's components after copying information from host to device array
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.alphaTransferArrayDualImage), alphaTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.colorRTransferArrayDualImage), redTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.colorGTransferArrayDualImage), greenTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.colorBTransferArrayDualImage), blueTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.ambientTransferArrayDualImage), ambTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.diffuseTransferArrayDualImage), diffTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.specularTransferArrayDualImage), specTF, transInfo.functionSize, stream);
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadSingleTexture(&(transInfo.specularPowerTransferArrayDualImage), powTF, transInfo.functionSize, stream);
+	load2DArray(transInfo.alphaTransferArrayDualImage, alphaTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.colorRTransferArrayDualImage, redTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.colorGTransferArrayDualImage, greenTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.colorBTransferArrayDualImage, blueTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.ambientTransferArrayDualImage, ambTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.diffuseTransferArrayDualImage, diffTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.specularTransferArrayDualImage, specTF, transInfo.functionSize, *stream);
+	load2DArray(transInfo.specularPowerTransferArrayDualImage, powTF, transInfo.functionSize, *stream);
+
+	//define the texture mapping for the second TF's components after copying information from host to device array
+	if( transInfo.useSecondTransferFunction ){
+		load2DArray(transInfo.K_alphaTransferArrayDualImage, kalphaTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_colorRTransferArrayDualImage, kredTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_colorGTransferArrayDualImage, kgreenTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_colorBTransferArrayDualImage, kblueTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_ambientTransferArrayDualImage, kambTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_diffuseTransferArrayDualImage, kdiffTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_specularTransferArrayDualImage, kspecTF, transInfo.functionSize, *stream);
+		load2DArray(transInfo.K_specularPowerTransferArrayDualImage, kpowTF, transInfo.functionSize, *stream);
+	}
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
 		cudaThreadSynchronize();
@@ -600,32 +657,26 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTran
 	return (cudaGetLastError() == 0);
 }
 
-void CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(cudaArray** array){
-	if(*array)
-		cudaFreeArray(*array);
-	*array = 0;
-}
-
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(cudaDualImageTransferFunctionInformation& transInfo, cudaStream_t* stream ){
 	
-	//define the texture mapping for the alpha component after copying information from host to device array
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.alphaTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.colorRTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.colorGTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.colorBTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.ambientTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.diffuseTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.specularTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.specularPowerTransferArrayDualImage));
+	//unload each array in the transfer function information container
+	unloadArray(transInfo.alphaTransferArrayDualImage);
+	unloadArray(transInfo.colorRTransferArrayDualImage);
+	unloadArray(transInfo.colorGTransferArrayDualImage);
+	unloadArray(transInfo.colorBTransferArrayDualImage);
+	unloadArray(transInfo.ambientTransferArrayDualImage);
+	unloadArray(transInfo.diffuseTransferArrayDualImage);
+	unloadArray(transInfo.specularTransferArrayDualImage);
+	unloadArray(transInfo.specularPowerTransferArrayDualImage);
 
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_alphaTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_colorRTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_colorGTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_colorBTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_ambientTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_diffuseTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_specularTransferArrayDualImage));
-	CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadSingleTexture(&(transInfo.K_specularPowerTransferArrayDualImage));
+	unloadArray(transInfo.K_alphaTransferArrayDualImage);
+	unloadArray(transInfo.K_colorRTransferArrayDualImage);
+	unloadArray(transInfo.K_colorGTransferArrayDualImage);
+	unloadArray(transInfo.K_colorBTransferArrayDualImage);
+	unloadArray(transInfo.K_ambientTransferArrayDualImage);
+	unloadArray(transInfo.K_diffuseTransferArrayDualImage);
+	unloadArray(transInfo.K_specularTransferArrayDualImage);
+	unloadArray(transInfo.K_specularPowerTransferArrayDualImage);
 
 	return (cudaGetLastError() == 0);
 }

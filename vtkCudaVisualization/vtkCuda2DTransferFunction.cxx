@@ -167,3 +167,7 @@ vtkCudaFunctionObject* vtkCuda2DTransferFunction::GetFunctionObject(unsigned int
 	return components->at(index);
 
 }
+
+int vtkCuda2DTransferFunction::GetNumberOfFunctionObjects(){
+	return this->components->size();
+}

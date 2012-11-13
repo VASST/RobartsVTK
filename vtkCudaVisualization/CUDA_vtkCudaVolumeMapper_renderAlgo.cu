@@ -20,11 +20,18 @@ __constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 cudaArray* ZBufferArray = 0;
 texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
-#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;					 \
-										  textureToBind.filterMode = cudaFilterModePoint;			 \
-										  textureToBind.addressMode[0] = cudaAddressModeClamp;		 \
-										  textureToBind.addressMode[1] = cudaAddressModeClamp;		 \
-										  cudaBindTextureToArray(textureToBind, value, channelDesc); \
+#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;							  \
+												   textureToBind.filterMode = cudaFilterModePoint;			  \
+												   textureToBind.addressMode[0] = cudaAddressModeClamp;		  \
+												   textureToBind.addressMode[1] = cudaAddressModeClamp;		  \
+												   cudaBindTextureToArray(textureToBind, value, channelDesc); 
+
+#define load2DArray(array, values, s, tr) if(array) cudaFreeArray(array);									\
+										  cudaMallocArray( &array, &channelDesc, s, s);						\
+										  cudaMemcpyToArrayAsync(array, 0, 0, values, sizeof(float)*s*s,	\
+											cudaMemcpyHostToDevice, tr);
+
+#define unloadArray(a) if(a); cudaFreeArray(a); a = 0;
 
 //channel for loading input data and transfer functions
 cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
@@ -416,7 +423,7 @@ __global__ void CUDAkernel_shadeAlgo_normBuffer( ){
 	float curr = outInfo.depthBuffer[outIndex];
 	float max = outInfo.maxDepthBuffer[outIndex];
 	float min = outInfo.minDepthBuffer[outIndex];
-	curr = (curr + min) / max;
+	curr = (max > 0.0f) ? (curr + min) / max : 1.0f;
 	outInfo.depthBuffer[outIndex] = curr;
 }
 
