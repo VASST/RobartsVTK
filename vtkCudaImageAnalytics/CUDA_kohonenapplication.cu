@@ -121,7 +121,7 @@ __global__ void NormalizeImage( float2* OutputData, float* OutputWeight, float2*
 	if( kOffset < bufferSize ) OutputData[kOffset] = appIndex;
 }
 
-void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, short* outputData,
+void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, float* outputData,
 								Kohonen_Application_Information& information,
 								cudaStream_t* stream ){
 

@@ -76,7 +76,7 @@ int vtkCudaKohonenApplication::RequestInformation(
 {
 	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_SHORT, 2);
+    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, 2);
 	return 1;
 }
 
@@ -141,7 +141,7 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 	//pass it over to the GPU
 	this->ReserveGPU();
 	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-							  (short*) outData->GetScalarPointer(), this->info, this->GetStream() );
+							  (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
 
 	return 1;
 }
