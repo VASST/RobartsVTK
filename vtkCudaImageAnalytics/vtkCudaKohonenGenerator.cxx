@@ -115,7 +115,7 @@ bool vtkCudaKohonenGenerator::GetWeightNormalization(){
 }
 
 void vtkCudaKohonenGenerator::SetNumberOfIterations(int number){
-	if( number > 0 )
+	if( number >= 0 )
 		this->info.MaxEpochs = number;
 }
 

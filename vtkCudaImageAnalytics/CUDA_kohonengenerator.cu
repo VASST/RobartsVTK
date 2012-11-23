@@ -1,5 +1,6 @@
 #include "CUDA_kohonengenerator.h"
 #include <float.h>
+#include <stdio.h>
 
 //parameters held in constant memory
 __constant__ Kohonen_Generator_Information info;
@@ -14,14 +15,14 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 	if(threadIdx.x < MAX_DIMENSIONALITY){
 		SamplePointLocal[threadIdx.x] = SamplePoint[threadIdx.x];
 	}
+	__syncthreads();
 	
 	//calculate the distance
 	float distance = 0.0f;
 	int bufferSize = info.KohonenMapSize[0] * info.KohonenMapSize[1];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float value = KohonenMap[i*bufferSize+kOffset] - SamplePointLocal[i];
-		distance += info.Weights[i]*value*value;
-		__syncthreads();
+		float value = info.Weights[i]*(KohonenMap[i*bufferSize+kOffset] - SamplePointLocal[i]);
+		distance += value*value;
 	}
 
 	DistanceBuffer[kOffset] = distance;
@@ -57,7 +58,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float alpha, 
 	}
 
 	
-	float multiplier = (neigh > 0.125f ) ? alpha * exp( -((currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) ) / neigh ) : 0;
+	float multiplier = alpha * exp( -((currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) ) / neigh );
 	int bufferSize = info.KohonenMapSize[0] * info.KohonenMapSize[1];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float value = (1.0f-multiplier)*KohonenMap[i*bufferSize+kOffset] + multiplier*SamplePointLocal[i];
@@ -82,7 +83,7 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* 
 	int c = 0;
 	for(int i = 0; i < information.KohonenMapSize[0]*information.KohonenMapSize[1]; i++)
 		for(int j = 0; j < information.NumberOfDimensions; j++ )
-			outputKohonen[c++] = (float)((range[2*j+1] - range[2*j])*(double)rand()/(float)RAND_MAX + range[2*j]);
+			outputKohonen[c++] = (float)((double)rand()/(double)RAND_MAX);
 	cudaMemcpyAsync(device_KohonenMap, outputKohonen, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
 
 	//allocate a distance buffer
@@ -91,23 +92,27 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* 
 	short2* device_IndexBuffer = 0;
 	cudaMalloc( (void**) &device_IndexBuffer, sizeof(short2)*information.KohonenMapSize[0]*information.KohonenMapSize[1] );
 
+	//pre-train kohonen map
+
 	//train kohonen map
 	dim3 grid(information.KohonenMapSize[0]*information.KohonenMapSize[1]/256, 1, 1);
 	dim3 threads(256, 1, 1);
 	for( int epoch = 0; epoch < information.MaxEpochs; epoch++ ){
 		for( int batch = 0; batch < information.BatchSize; batch++ ){
-			int x = (rand() % information.VolumeSize[0])+ information.VolumeSize[0] * (
-					(rand() % information.VolumeSize[1])+ information.VolumeSize[1] * (
-					(rand() % information.VolumeSize[2])							  )) * information.NumberOfDimensions;
+			int sampleX = rand() % information.VolumeSize[0];
+			int sampleY = rand() % information.VolumeSize[1];
+			int sampleZ = rand() % information.VolumeSize[2];
+			int sampleOffset = (sampleX + information.VolumeSize[0] *( sampleY + information.VolumeSize[1] * sampleZ ) );
+			int sampleDimensionalOffset = information.NumberOfDimensions * sampleOffset;
 
 			//if this is not a valid sample (ie: masked out) then try again
-			if( maskData && maskData[x/information.NumberOfDimensions] == 0 ){
+			if( maskData && maskData[sampleOffset] == 0 ){
 				batch--;
 				continue;
 			}
 
 			//find the distance between each centroid and the sample
-			cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[x]), sizeof(float)*information.NumberOfDimensions );
+			cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[sampleDimensionalOffset]), sizeof(float)*information.NumberOfDimensions );
 			cudaStreamSynchronize(*stream);
 			ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer, device_IndexBuffer);
 
