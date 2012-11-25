@@ -1,15 +1,17 @@
 #ifndef __vtkImage2DHistogram_H__
 #define __vtkImage2DHistogram_H__
 
-#include "vtkThreadedImageAlgorithm.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkMultiThreader.h"
+#include "vtkInformationVector.h"
+#include "vtkInformation.h"
 
-class vtkImage2DHistogram : public vtkThreadedImageAlgorithm
+class vtkImage2DHistogram : public vtkImageAlgorithm
 {
 public:
 
-	vtkTypeMacro( vtkImage2DHistogram, vtkThreadedImageAlgorithm )
+	vtkTypeMacro( vtkImage2DHistogram, vtkImageAlgorithm )
 
 	static vtkImage2DHistogram *New();
 	
@@ -22,19 +24,26 @@ public:
 	// Get/Set the resolution of the returned histogram
 	void SetResolution( int res[2] );
 	vtkGetMacro( Resolution, int* );
-
-	// The method that starts the multithreading
-	template< class T >
-	void ThreadedExecuteCasted(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads);
+	
+	virtual int RequestData(vtkInformation *request, 
+							 vtkInformationVector **inputVector, 
+							 vtkInformationVector *outputVector);
+	virtual int RequestInformation( vtkInformation* request,
+							 vtkInformationVector** inputVector,
+							 vtkInformationVector* outputVector);
+	virtual int RequestUpdateExtent( vtkInformation* request,
+							 vtkInformationVector** inputVector,
+							 vtkInformationVector* outputVector);
+	
 	void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads);
 
 protected:
 
-	int Resolution[2];
+	// The method that starts the multithreading
+	template< class T >
+	void ThreadedExecuteCasted(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads);
 
-	int RequestData(vtkInformation* request,
-                          vtkInformationVector** inputVector,
-                          vtkInformationVector* outputVector);
+	int Resolution[2];
 
 	vtkImage2DHistogram();
 	virtual ~vtkImage2DHistogram();
