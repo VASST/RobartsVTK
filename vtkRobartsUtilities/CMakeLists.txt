@@ -11,6 +11,7 @@ SET ( Kit_SRCS
   vtkImageSeedFilter.h vtkImageSeedFilter.cxx
   vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
   vtkImage2DHistogram.h vtkImage2DHistogram.cxx
+  vtkImageMultiStatistics.h vtkImageMultiStatistics.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
