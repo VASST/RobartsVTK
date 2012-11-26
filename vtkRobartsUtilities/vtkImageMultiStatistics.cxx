@@ -1,4 +1,3 @@
-
 #include "vtkImageMultiStatistics.h"
 #include "vtkObjectFactory.h"
 #include "vtkCommand.h"
@@ -140,13 +139,183 @@ int vtkImageMultiStatistics::GetEntropyResolution(){
 }
 
 //----------------------------------------------------------------------------
-template <class T>
-static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self, 
+template <class T, class S>
+static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self, 
 					  T *inPtr,
 					  vtkImageData *inData,
-					  double **AverageMagnitude,
-					  double **Covariance,
-					  double **JointEntropy,
+					  S *maskPtr,
+					  vtkImageData *maskData,
+					  long double **AverageMagnitude,
+					  long double **Covariance,
+					  long double **JointEntropy,
+					  long int *Count, int N){
+						  
+	int inIdxX, inIdxY, inIdxZ;
+	vtkIdType inIncX, inIncY, inIncZ;
+	vtkIdType maskIncX, maskIncY, maskIncZ;
+	int inIdxN, inIdxN2;
+	int wholeInExt[6];
+	int wholeMaskExt[6];
+	
+	T *curPtr;
+	S *curMaskPtr;
+
+	//use the output holders for temporary storage for statistical information
+	long double* sum = *AverageMagnitude;
+	long double* sum_squared = *Covariance;
+	for(int i = 0; i < N; i++){
+		sum[i] = 0.0;
+		for( int j = 0; j < N; j++)
+			sum_squared[i*N+j] = 0.0;
+	}
+
+	//Create temporary storage for information theoretic information
+	int Resolution = self->GetEntropyResolution();
+	long double* Maximum = new long double[N];
+	long double* Minimum = new long double[N];
+	for( int i = 0; i < N; i++ ){
+		Minimum[i] = inData->GetPointData()->GetScalars()->GetRange(i)[0];
+		Maximum[i] = inData->GetPointData()->GetScalars()->GetRange(i)[1];
+	}
+	unsigned int* DoubleHistogram = new unsigned int [(N * N - N) * Resolution * Resolution / 2];
+	memset( DoubleHistogram, 0, sizeof(unsigned int) * (N * N - N) * Resolution * Resolution / 2 );
+	unsigned int* SingleHistogram = new unsigned int [N * Resolution];
+	memset( SingleHistogram, 0, sizeof(unsigned int) * N * Resolution );
+
+	// Get increments to march through data 
+	inData->GetWholeExtent(wholeInExt);
+	inData->GetContinuousIncrements(wholeInExt, inIncX, inIncY, inIncZ);
+	maskData->GetWholeExtent(wholeMaskExt);
+	maskData->GetContinuousIncrements(wholeMaskExt, maskIncX, maskIncY, maskIncZ);
+	*Count = 0;
+	
+	// Loop through input dataset once to gather stats
+	curPtr = inPtr;
+	curMaskPtr = maskPtr;
+	for (inIdxZ = wholeInExt[4]; inIdxZ <= wholeInExt[5]; inIdxZ++) {
+		for (inIdxY = wholeInExt[2]; !self->AbortExecute && inIdxY <= wholeInExt[3]; inIdxY++) {
+			for (inIdxX = wholeInExt[0]; inIdxX <= wholeInExt[1]; inIdxX++) {
+				
+				//only process if we are in the non-zero part of the mask
+				if( (double) *curMaskPtr != 0.0 ){
+					int DimCount = 0;
+					for( inIdxN = 0; inIdxN < N; inIdxN++ ){
+
+						//do univariate 
+						sum[inIdxN] += curPtr[inIdxN];
+						sum_squared[inIdxN*N+inIdxN] += curPtr[inIdxN] * curPtr[inIdxN];
+						int histIdx = (int)((double) Resolution * ((double) curPtr[inIdxN]-Minimum[inIdxN]) / (Maximum[inIdxN]-Minimum[inIdxN]));
+						if( histIdx >= Resolution )
+							histIdx = Resolution - 1;
+						SingleHistogram[inIdxN*Resolution+histIdx]++;
+
+						//do bivariate
+						for( inIdxN2 = inIdxN+1; inIdxN2 < N; inIdxN2++ ){
+							sum_squared[inIdxN*N+inIdxN2] += curPtr[inIdxN] * curPtr[inIdxN2];
+							sum_squared[inIdxN+inIdxN2*N] += curPtr[inIdxN] * curPtr[inIdxN2];
+							int hist2Idx = (int)((double) Resolution * ((double) curPtr[inIdxN2]-Minimum[inIdxN2]) / (Maximum[inIdxN2]-Minimum[inIdxN2]));
+							if( hist2Idx >= Resolution ) hist2Idx = Resolution - 1;
+							DoubleHistogram[DimCount*Resolution*Resolution + histIdx*Resolution + hist2Idx]++;
+							DimCount++;
+						}
+					}
+					(*Count)++;
+				}
+
+
+				curPtr += N;
+				curMaskPtr++;
+			}
+			curPtr += inIncY;
+			curMaskPtr += maskIncY;
+		}
+		curPtr += inIncZ;
+		curMaskPtr += maskIncZ;
+	}
+
+	//compute the means
+	for(int i = 0; i < N; i++){
+		long double SafeSum = sum[i];
+		(*AverageMagnitude)[i] = SafeSum / (double)*Count;
+	}
+
+	//compute the covariances
+	for(int i = 0; i < N; i++){
+		for(int j = 0; j < N; j++){
+			long double SafeSquareSum = sum_squared[i*N+j];
+			(*Covariance)[i*N+j] = (SafeSquareSum / (long double)*Count) - (*AverageMagnitude)[i] * (*AverageMagnitude)[j];
+		}
+	}
+
+	//compute the entropies
+	int DimCount = 0;
+	for(int i = 0; i < N; i++){
+
+		//compute single entropy
+		(*JointEntropy)[i*N+i] = 0.0;
+		for(int r = 0; r < Resolution; r++){
+			if( SingleHistogram[i*Resolution+r] )
+				(*JointEntropy)[i*N+i] -=        ((long double) SingleHistogram[i*Resolution+r] / (long double) *Count)
+											* log((long double) SingleHistogram[i*Resolution+r] / (long double) *Count) / log(2.0);
+		}
+
+		for(int j = i+1; j < N; j++){
+			int totCount = 0;
+			(*JointEntropy)[i*N+j] = 0.0;
+			(*JointEntropy)[j*N+i] = 0.0;
+			for(int r = 0; r < Resolution*Resolution; r++){
+				if(	DoubleHistogram[DimCount*Resolution*Resolution+r] ){
+					(*JointEntropy)[i*N+j] -=        ((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count)
+												* log((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count) / log(2.0);
+					(*JointEntropy)[j*N+i] -=        ((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count)
+												* log((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count) / log(2.0);
+					totCount += DoubleHistogram[DimCount*Resolution*Resolution+r];
+				}
+			}
+
+			DimCount++;
+		}
+	}
+
+	//release storage
+	delete [] Maximum;
+	delete [] Minimum;
+	delete [] SingleHistogram;
+	delete [] DoubleHistogram;
+
+}
+
+template <class T>
+static void vtkImageMultiStatisticsExecuteWithMaskStart(vtkImageMultiStatistics *self, 
+					  T *inPtr,
+					  vtkImageData *inData,
+					  vtkImageData *maskData,
+					  long double **AverageMagnitude,
+					  long double **Covariance,
+					  long double **JointEntropy,
+					  long int *Count, int N){
+
+	void* maskPtr = maskData->GetScalarPointerForExtent( maskData->GetWholeExtent() );
+	switch (maskData->GetScalarType()) {
+		vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithMask(
+			self, inPtr, inData,
+			(VTK_TT *) maskPtr, maskData,
+			AverageMagnitude, Covariance, JointEntropy,
+			Count, N));
+		default:
+			vtkErrorWithObjectMacro(self,<< "Update: Unknown ScalarType");
+			return;
+	}
+}
+
+
+template <class T>
+static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *self, 
+					  T *inPtr,
+					  vtkImageData *inData,
+					  long double **AverageMagnitude,
+					  long double **Covariance,
+					  long double **JointEntropy,
 					  long int *Count, int N)
 {
 	int inIdxX, inIdxY, inIdxZ;
@@ -156,8 +325,8 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 	T *curPtr;
 
 	//use the output holders for temporary storage for statistical information
-	double* sum = *AverageMagnitude;
-	double* sum_squared = *Covariance;
+	long double* sum = *AverageMagnitude;
+	long double* sum_squared = *Covariance;
 	for(int i = 0; i < N; i++){
 		sum[i] = 0.0;
 		for( int j = 0; j < N; j++)
@@ -166,8 +335,8 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 
 	//Create temporary storage for information theoretic information
 	int Resolution = self->GetEntropyResolution();
-	double* Maximum = new double[N];
-	double* Minimum = new double[N];
+	long double* Maximum = new long double[N];
+	long double* Minimum = new long double[N];
 	for( int i = 0; i < N; i++ ){
 		Minimum[i] = inData->GetPointData()->GetScalars()->GetRange(i)[0];
 		Maximum[i] = inData->GetPointData()->GetScalars()->GetRange(i)[1];
@@ -218,15 +387,15 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 
 	//compute the means
 	for(int i = 0; i < N; i++){
-		double SafeSum = sum[i];
+		long double SafeSum = sum[i];
 		(*AverageMagnitude)[i] = SafeSum / (double)*Count;
 	}
 
 	//compute the covariances
 	for(int i = 0; i < N; i++){
 		for(int j = 0; j < N; j++){
-			double SafeSquareSum = sum_squared[i*N+j];
-			(*Covariance)[i*N+j] = (SafeSquareSum / (double)*Count) - (*AverageMagnitude)[i] * (*AverageMagnitude)[j];
+			long double SafeSquareSum = sum_squared[i*N+j];
+			(*Covariance)[i*N+j] = (SafeSquareSum / (long double)*Count) - (*AverageMagnitude)[i] * (*AverageMagnitude)[j];
 		}
 	}
 
@@ -238,8 +407,8 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 		(*JointEntropy)[i*N+i] = 0.0;
 		for(int r = 0; r < Resolution; r++){
 			if( SingleHistogram[i*Resolution+r] )
-				(*JointEntropy)[i*N+i] -=        ((double) SingleHistogram[i*Resolution+r] / (double) *Count)
-											* log((double) SingleHistogram[i*Resolution+r] / (double) *Count) / log(2.0);
+				(*JointEntropy)[i*N+i] -=        ((long double) SingleHistogram[i*Resolution+r] / (long double) *Count)
+											* log((long double) SingleHistogram[i*Resolution+r] / (long double) *Count) / log(2.0);
 		}
 
 		for(int j = i+1; j < N; j++){
@@ -248,10 +417,10 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 			(*JointEntropy)[j*N+i] = 0.0;
 			for(int r = 0; r < Resolution*Resolution; r++){
 				if(	DoubleHistogram[DimCount*Resolution*Resolution+r] ){
-					(*JointEntropy)[i*N+j] -=        ((double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (double) *Count)
-												* log((double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (double) *Count) / log(2.0);
-					(*JointEntropy)[j*N+i] -=        ((double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (double) *Count)
-												* log((double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (double) *Count) / log(2.0);
+					(*JointEntropy)[i*N+j] -=        ((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count)
+												* log((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count) / log(2.0);
+					(*JointEntropy)[j*N+i] -=        ((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count)
+												* log((long double) DoubleHistogram[DimCount*Resolution*Resolution+r] / (long double) *Count) / log(2.0);
 					totCount += DoubleHistogram[DimCount*Resolution*Resolution+r];
 				}
 			}
@@ -273,73 +442,98 @@ static void vtkImageMultiStatisticsExecute(vtkImageMultiStatistics *self,
 // Description:
 // Make sure input is available then call the templated execute method to
 // deal with the particular data type.
-void vtkImageMultiStatistics::Update()
-{
-  vtkImageData *input = this->GetInput(0);
-  void *inPtr;
-  int wholeInExt[6];
+void vtkImageMultiStatistics::Update() {
 
-  // make sure input is available
-  if (!input)
-    {
-      vtkErrorMacro(<< "No input...can't execute!");
-      return;
-    }
+	vtkImageData *input = this->GetInput(0);
+	void *inPtr;
+	int wholeInExt[6];
 
-  input->Update();
-  input->GetWholeExtent(wholeInExt);
-  inPtr = input->GetScalarPointerForExtent(wholeInExt);
-
-  // get the number of input components
-  int oldNumberOfComponents = this->NumberOfComponents;
-  this->NumberOfComponents = input->GetNumberOfScalarComponents();
-  if (this->NumberOfComponents < 1)
-    {
-      vtkErrorMacro(<< "Input must have at least 1 scalar component");
-      return;
-    }
-
-  //update the size of the information holders
-  if( this->NumberOfComponents != oldNumberOfComponents ){
-	  if( this->AverageMagnitude ) delete [] this->AverageMagnitude;
-	  this->AverageMagnitude = new double[this->NumberOfComponents];
-	  if( this->Covariance ) delete [] this->Covariance;
-	  this->Covariance = new double[this->NumberOfComponents*this->NumberOfComponents];
-      if( this->JointEntropy ) delete [] this->JointEntropy;
-	  this->JointEntropy = new double[this->NumberOfComponents*this->NumberOfComponents];
-  }
-
-  if (input->GetMTime() > this->ExecuteTime ||
-      this->GetMTime() > this->ExecuteTime )
-    {
-      this->InvokeEvent(vtkCommand::StartEvent, NULL);
-
-      // reset Abort flag
-      this->AbortExecute = 0;
-      this->Progress = 0.0;
-      switch (input->GetScalarType())
-	{
-	vtkTemplateMacro8(vtkImageMultiStatisticsExecute,
-			  this, (VTK_TT *) (inPtr), input,
-			  &(this->AverageMagnitude),
-			  &(this->Covariance),
-			  &(this->JointEntropy),
-			  &(this->Count), this->NumberOfComponents);
-	default:
-	  vtkErrorMacro(<< "Update: Unknown ScalarType");
-	  return;
+	// make sure input is available
+	if (!input) {
+		vtkErrorMacro(<< "No input...can't execute!");
+		return;
 	}
-      this->ExecuteTime.Modified();
-      if (!this->AbortExecute)
-	{
-	this->UpdateProgress(1.0);
+
+	input->Update();
+	input->GetWholeExtent(wholeInExt);
+	inPtr = input->GetScalarPointerForExtent(wholeInExt);
+
+	// get the number of input components
+	int oldNumberOfComponents = this->NumberOfComponents;
+	this->NumberOfComponents = input->GetNumberOfScalarComponents();
+	if (this->NumberOfComponents < 1){
+		vtkErrorMacro(<< "Input must have at least 1 scalar component");
+		return;
 	}
-      this->InvokeEvent(vtkCommand::EndEvent, NULL);
-    }
-  if (input->ShouldIReleaseData())
-    {
-    input->ReleaseData();
-    }
+  
+	//fetch and check the mask data
+	vtkImageData *mask = this->GetInput(1);
+	if( mask ){
+		int MaskExtent[6];
+		mask->GetWholeExtent( MaskExtent );
+		if( MaskExtent[0] != wholeInExt[0] || MaskExtent[1] != wholeInExt[1] || MaskExtent[2] != wholeInExt[2] ||
+			MaskExtent[3] != wholeInExt[3] || MaskExtent[4] != wholeInExt[4] || MaskExtent[5] != wholeInExt[5] ){
+			vtkErrorMacro(<< "Mask is not the same extent as the input.");
+			mask = 0;
+		}
+		if( mask && mask->GetNumberOfScalarComponents() != 1 ){
+			vtkErrorMacro(<< "Mask can only have 1 scalar component.");
+			mask = 0;
+		}
+	}
+
+	//update the size of the information holders
+	if( this->NumberOfComponents != oldNumberOfComponents ){
+		if( this->AverageMagnitude ) delete [] this->AverageMagnitude;
+		this->AverageMagnitude = new long double[this->NumberOfComponents];
+		if( this->Covariance ) delete [] this->Covariance;
+		this->Covariance = new long double[this->NumberOfComponents*this->NumberOfComponents];
+		if( this->JointEntropy ) delete [] this->JointEntropy;
+		this->JointEntropy = new long double[this->NumberOfComponents*this->NumberOfComponents];
+	}
+
+	if (input->GetMTime() > this->ExecuteTime || this->GetMTime() > this->ExecuteTime ){
+		this->InvokeEvent(vtkCommand::StartEvent, NULL);
+
+		// reset Abort flag
+		this->AbortExecute = 0;
+		this->Progress = 0.0;
+
+		//if there is no mask, run the regular version
+		if( !mask )
+			switch (input->GetScalarType()) {
+				vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithoutMask(
+					this, (VTK_TT *) (inPtr), input,
+					&(this->AverageMagnitude),
+					&(this->Covariance),
+					&(this->JointEntropy),
+					&(this->Count), this->NumberOfComponents));
+				default:
+					vtkErrorMacro(<< "Update: Unknown ScalarType");
+					return;
+			}
+		else
+			switch (input->GetScalarType()) {
+				vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithMaskStart(
+					this, (VTK_TT *) (inPtr), input, mask,
+					&(this->AverageMagnitude),
+					&(this->Covariance),
+					&(this->JointEntropy),
+					&(this->Count), this->NumberOfComponents));
+				default:
+					vtkErrorMacro(<< "Update: Unknown ScalarType");
+					return;
+			}
+
+		this->ExecuteTime.Modified();
+		if (!this->AbortExecute) {
+			this->UpdateProgress(1.0);
+		}
+		this->InvokeEvent(vtkCommand::EndEvent, NULL);
+	}
+	if (input->ShouldIReleaseData()) {
+		input->ReleaseData();
+	}
 }
 
 

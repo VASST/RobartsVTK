@@ -57,9 +57,9 @@ protected:
 
   void Execute();
   
-  double* AverageMagnitude;
-  double* Covariance;
-  double* JointEntropy;
+  long double* AverageMagnitude;
+  long double* Covariance;
+  long double* JointEntropy;
   long int Count;
   int NumberOfComponents;
   int NumberOfBins;
