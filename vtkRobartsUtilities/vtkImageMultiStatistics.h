@@ -32,6 +32,18 @@ public:
   // Description:
   // Compute and return the joint entropy of the image in terms of the given components
   double GetJointEntropy(int component1 = 0, int component2 = 0);
+  
+  // Description:
+  // Compute and return the entropy of the image over all components.
+  double GetTotalEntropy();
+
+  // Description:
+  // Compute and return the specified component of the nth significant PCA weighting vector
+  double GetPCAWeight(int significance = 0, int component = 0);
+
+  // Description:
+  // Compute and return the nth significance in PCA
+  double GetPCAVariance(int significance = 0);
 
   // Description:
   // Compute and return the number of pixels.
@@ -57,12 +69,16 @@ protected:
 
   void Execute();
   
-  long double* AverageMagnitude;
-  long double* Covariance;
-  long double* JointEntropy;
+  double* AverageMagnitude;
+  double** Covariance;
+  double** JointEntropy;
+  double TotalEntropy;
   long int Count;
   int NumberOfComponents;
   int NumberOfBins;
+
+  double* PCAVariance;
+  double** PCAAxisVectors;
 
   vtkTimeStamp ExecuteTime;
 
