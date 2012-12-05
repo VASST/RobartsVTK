@@ -25,6 +25,7 @@ vtkImageMultiStatistics::vtkImageMultiStatistics()
   //Initialize internal stucture
   this->NumberOfComponents = 0;
   this->AverageMagnitude = 0;
+  this->MeanSquared = 0;
   this->Covariance = 0;
   this->JointEntropy = 0;
   this->PCAAxisVectors = 0;
@@ -40,6 +41,7 @@ vtkImageMultiStatistics::vtkImageMultiStatistics()
 vtkImageMultiStatistics::~vtkImageMultiStatistics()
 {
 	if( this->AverageMagnitude ) delete [] this->AverageMagnitude;
+	if( this->MeanSquared ) delete [] this->MeanSquared;
 	if( this->PCAVariance ) delete [] this->PCAVariance;
 	
 	if( this->Covariance ){
@@ -89,6 +91,16 @@ double vtkImageMultiStatistics::GetAverageMagnitude(int component){
 	if( component < this->NumberOfComponents ){
 		this->Update(); 
 		return this->AverageMagnitude[component];
+	}else{
+		vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+		return 0.0;
+	}
+}
+
+double vtkImageMultiStatistics::GetMeanSquared(int component){
+	if( component < this->NumberOfComponents ){
+		this->Update(); 
+		return this->MeanSquared[component];
 	}else{
 		vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
 		return 0.0;
@@ -284,6 +296,7 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
 					  S *maskPtr,
 					  vtkImageData *maskData,
 					  double *AverageMagnitude,
+					  double *MeanSquared,
 					  double **Covariance,
 					  double **JointEntropy,
 					  long int *Count,
@@ -303,9 +316,10 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
 
 	//use the output holders for temporary storage for statistical information
 	double* sum = AverageMagnitude;
-	double** sum_squared = Covariance;
+	long double** sum_squared = new long double* [N];
 	for(int i = 0; i < N; i++){
 		sum[i] = 0.0;
+		sum_squared[i] = new long double [N];
 		for( int j = 0; j < N; j++)
 			sum_squared[i][j] = 0.0;
 	}
@@ -384,13 +398,13 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
 	for(int i = 0; i < N; i++){
 		double SafeSum = sum[i];
 		AverageMagnitude[i] = SafeSum / (double)*Count;
+		MeanSquared[i] = sum_squared[i][i] / (double)*Count;
 	}
 
 	//compute the covariances
 	for(int i = 0; i < N; i++){
 		for(int j = 0; j < N; j++){
-			double SafeSquareSum = sum_squared[i][j];
-			Covariance[i][j] = (SafeSquareSum / (double)*Count) - AverageMagnitude[i] * AverageMagnitude[j];
+			Covariance[i][j] = (sum_squared[i][j] / (long double)*Count) - AverageMagnitude[i] * AverageMagnitude[j];
 		}
 	}
 
@@ -428,6 +442,9 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
 	delete [] SingleHistogram;
 	delete [] DoubleHistogram;
 	delete [] HistIndices;
+	for(int i = 0; i < N; i++)
+		delete [] sum_squared[i];
+	delete [] sum_squared;
 
 	//asynchronously delete the huge histogram somehow... //TODO
 	delete MultiHist;
@@ -440,6 +457,7 @@ static void vtkImageMultiStatisticsExecuteWithMaskStart(vtkImageMultiStatistics 
 					  vtkImageData *inData,
 					  vtkImageData *maskData,
 					  double *AverageMagnitude,
+					  double *MeanSquared,
 					  double **Covariance,
 					  double **JointEntropy,
 					  long int *Count,
@@ -450,7 +468,7 @@ static void vtkImageMultiStatisticsExecuteWithMaskStart(vtkImageMultiStatistics 
 		vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithMask(
 			self, inPtr, inData,
 			(VTK_TT *) maskPtr, maskData,
-			AverageMagnitude, Covariance, JointEntropy,
+			AverageMagnitude, MeanSquared, Covariance, JointEntropy,
 			Count, WholeEntropy, N));
 		default:
 			vtkErrorWithObjectMacro(self,<< "Update: Unknown ScalarType");
@@ -464,6 +482,7 @@ static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *s
 					  T *inPtr,
 					  vtkImageData *inData,
 					  double *AverageMagnitude,
+					  double* MeanSquared,
 					  double **Covariance,
 					  double **JointEntropy,
 					  long int *Count,
@@ -479,9 +498,10 @@ static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *s
 
 	//use the output holders for temporary storage for statistical information
 	double* sum = AverageMagnitude;
-	double** sum_squared = Covariance;
+	long double** sum_squared = new long double* [N];
 	for(int i = 0; i < N; i++){
 		sum[i] = 0.0;
+		sum_squared[i] = new long double [N];
 		for( int j = 0; j < N; j++)
 			sum_squared[i][j] = 0.0;
 	}
@@ -548,15 +568,13 @@ static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *s
 	for(int i = 0; i < N; i++){
 		double SafeSum = sum[i];
 		AverageMagnitude[i] = SafeSum / (double)*Count;
+		MeanSquared[i] = sum_squared[i][i] / (double)*Count;
 	}
 
 	//compute the covariances
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
-			double SafeSquareSum = sum_squared[i][j];
-			Covariance[i][j] = (SafeSquareSum / (double)*Count) - AverageMagnitude[i] * AverageMagnitude[j];
-		}
-	}
+	for(int i = 0; i < N; i++)
+		for(int j = 0; j < N; j++)
+			Covariance[i][j] = (sum_squared[i][j] / (long double)*Count) - AverageMagnitude[i] * AverageMagnitude[j];
 
 	//compute the entropies
 	int DimCount = 0;
@@ -592,6 +610,9 @@ static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *s
 	delete [] SingleHistogram;
 	delete [] DoubleHistogram;
 	delete [] HistIndices;
+	for(int i = 0; i < N; i++)
+		delete [] sum_squared[i];
+	delete [] sum_squared;
 
 	//asynchronously delete the huge histogram somehow... //TODO
 	delete MultiHist;
@@ -645,6 +666,9 @@ void vtkImageMultiStatistics::Update() {
 	if( this->NumberOfComponents != oldNumberOfComponents ){
 		if( this->AverageMagnitude ) delete [] this->AverageMagnitude;
 		this->AverageMagnitude = new double[this->NumberOfComponents];
+		
+		if( this->MeanSquared ) delete [] this->MeanSquared;
+		this->MeanSquared = new double[this->NumberOfComponents];
 
 		if( this->Covariance ){
 			for( int i = 0; i < this->NumberOfComponents; i++)
@@ -690,7 +714,7 @@ void vtkImageMultiStatistics::Update() {
 			switch (input->GetScalarType()) {
 				vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithoutMask(
 					this, (VTK_TT *) (inPtr), input,
-					this->AverageMagnitude,
+					this->AverageMagnitude, this->MeanSquared,
 					this->Covariance,
 					this->JointEntropy,
 					&(this->Count), &(this->TotalEntropy), this->NumberOfComponents));
@@ -702,7 +726,7 @@ void vtkImageMultiStatistics::Update() {
 			switch (input->GetScalarType()) {
 				vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithMaskStart(
 					this, (VTK_TT *) (inPtr), input, mask,
-					this->AverageMagnitude,
+					this->AverageMagnitude,  this->MeanSquared,
 					this->Covariance,
 					this->JointEntropy,
 					&(this->Count), &(this->TotalEntropy), this->NumberOfComponents));
@@ -722,7 +746,17 @@ void vtkImageMultiStatistics::Update() {
 	}
 
 	//update PCA results
-	vtkMath::JacobiN(this->Covariance, this->NumberOfComponents, this->PCAVariance, this->PCAAxisVectors );
+	double** temporaryCovariance = new double* [this->NumberOfComponents];
+	for(int i = 0; i < this->NumberOfComponents; i++){
+		temporaryCovariance[i] = new double[this->NumberOfComponents];
+		for(int j = 0; j < this->NumberOfComponents; j++){
+			temporaryCovariance[i][j] = Covariance[i][j];
+		}
+	}
+	vtkMath::JacobiN(temporaryCovariance, this->NumberOfComponents, this->PCAVariance, this->PCAAxisVectors );
+	for(int i = 0; i < this->NumberOfComponents; i++)
+		delete [] temporaryCovariance[i];
+	delete [] temporaryCovariance;
 
 }
 
@@ -750,6 +784,9 @@ void vtkImageMultiStatistics::PrintSelf(ostream& os, vtkIndent indent)
 
   for( int i = 0; i < this->NumberOfComponents; i++)
 	  os << indent << "StandardDeviation: (" << i << "): " << sqrt(this->Covariance[i][i]) << "\n";
+
+  for( int i = 0; i < this->NumberOfComponents; i++)
+	  os << indent << "MeanSquared (" << i << "): " << this->MeanSquared[i] << "\n";
   
   os << indent << "Total Entropy: " << this->TotalEntropy << "\n";
 

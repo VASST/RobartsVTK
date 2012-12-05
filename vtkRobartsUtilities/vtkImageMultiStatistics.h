@@ -16,6 +16,10 @@ public:
   // Description:
   // Compute and return the average magnitude.
   double GetAverageMagnitude(int component = 0);
+
+  // Description:
+  // Compute and return the average magnitude.
+  double GetMeanSquared(int component = 0);
   
   // Description:
   // Compute and return the standard deviation.
@@ -70,6 +74,7 @@ protected:
   void Execute();
   
   double* AverageMagnitude;
+  double* MeanSquared;
   double** Covariance;
   double** JointEntropy;
   double TotalEntropy;
