@@ -136,11 +136,6 @@ void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, float* out
 		cudaStreamSynchronize(*stream);
 	}
 	NormalizeImage<<<grid, threads, 0, *stream >>>(device_OutputData, device_OutputWeight, device_OutputNearest, device_OutputDistance );
-		
-	printf( "Apply Map: " );
-	cudaStreamSynchronize(*stream);
-	printf( cudaGetErrorString( cudaGetLastError() ) );
-	printf( "\n" );
 
 	//copy results back
 	cudaMemcpyAsync( outputData, device_OutputData, sizeof(float2)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2], cudaMemcpyDeviceToHost, *stream );
