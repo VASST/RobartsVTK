@@ -98,35 +98,67 @@ void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* 
 	dim3 grid(information.KohonenMapSize[0]*information.KohonenMapSize[1]/256, 1, 1);
 	dim3 threads(256, 1, 1);
 	for( int epoch = 0; epoch < information.MaxEpochs; epoch++ ){
-		for( int batch = 0; batch < information.BatchSize; batch++ ){
-			int sampleX = rand() % information.VolumeSize[0];
-			int sampleY = rand() % information.VolumeSize[1];
-			int sampleZ = rand() % information.VolumeSize[2];
-			int sampleOffset = (sampleX + information.VolumeSize[0] *( sampleY + information.VolumeSize[1] * sampleZ ) );
-			int sampleDimensionalOffset = information.NumberOfDimensions * sampleOffset;
 
-			//if this is not a valid sample (ie: masked out) then try again
-			if( maskData && maskData[sampleOffset] == 0 ){
-				batch--;
-				continue;
+		if( information.BatchSize == -1 ){
+
+			for( int sampleOffset = 0; sampleOffset < information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]; sampleOffset++){
+
+				int sampleDimensionalOffset = information.NumberOfDimensions * sampleOffset;
+
+				//if this is not a valid sample (ie: masked out) then try again
+				if( maskData && maskData[sampleOffset] == 0 )
+					continue;
+
+				//find the distance between each centroid and the sample
+				cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[sampleDimensionalOffset]), sizeof(float)*information.NumberOfDimensions );
+				cudaStreamSynchronize(*stream);
+				ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer, device_IndexBuffer);
+
+				//find the winning centroid
+				for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i > 0; i = i/2){
+					dim3 tempGrid( i>256 ? i/256 : 1, 1, 1);
+					FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer, device_IndexBuffer, i);
+				}
+
+				//update the weights of each centroid
+				short2 minIndex;
+				cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
+				cudaStreamSynchronize(*stream);
+				UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
 			}
 
-			//find the distance between each centroid and the sample
-			cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[sampleDimensionalOffset]), sizeof(float)*information.NumberOfDimensions );
-			cudaStreamSynchronize(*stream);
-			ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer, device_IndexBuffer);
+		}else{
+			for( int batch = 0; batch < information.BatchSize; batch++ ){
 
-			//find the winning centroid
-			for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i > 0; i = i/2){
-				dim3 tempGrid( i>256 ? i/256 : 1, 1, 1);
-				FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer, device_IndexBuffer, i);
+				int sampleX = rand() % information.VolumeSize[0];
+				int sampleY = rand() % information.VolumeSize[1];
+				int sampleZ = rand() % information.VolumeSize[2];
+				int sampleOffset = (sampleX + information.VolumeSize[0] *( sampleY + information.VolumeSize[1] * sampleZ ) );
+				int sampleDimensionalOffset = information.NumberOfDimensions * sampleOffset;
+
+				//if this is not a valid sample (ie: masked out) then try again
+				if( maskData && maskData[sampleOffset] == 0 ){
+					batch--;
+					continue;
+				}
+
+				//find the distance between each centroid and the sample
+				cudaMemcpyToSymbolAsync(SamplePoint, &(inputData[sampleDimensionalOffset]), sizeof(float)*information.NumberOfDimensions );
+				cudaStreamSynchronize(*stream);
+				ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer, device_IndexBuffer);
+
+				//find the winning centroid
+				for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i > 0; i = i/2){
+					dim3 tempGrid( i>256 ? i/256 : 1, 1, 1);
+					FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer, device_IndexBuffer, i);
+				}
+
+				//update the weights of each centroid
+				short2 minIndex;
+				cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
+				cudaStreamSynchronize(*stream);
+				UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
 			}
-
-			//update the weights of each centroid
-			short2 minIndex;
-			cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
-			cudaStreamSynchronize(*stream);
-			UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
 		}
 
 		//update the weight updaters
