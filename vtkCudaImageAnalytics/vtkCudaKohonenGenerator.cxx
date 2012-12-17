@@ -18,6 +18,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->widthInit = 1.0f;
 	this->widthDecay = 0.99f;
 	this->BatchPercent = 1.0/15.0;
+	this->UseAllVoxels = false;
 	
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
@@ -80,11 +81,25 @@ void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
 	this->info.KohonenMapSize[0] = SizeX;
 	this->info.KohonenMapSize[1] = SizeY;
 }
+
+bool vtkCudaKohonenGenerator::GetUseAllVoxelsFlag(){
+	return this->UseAllVoxels;
+}
+
+void vtkCudaKohonenGenerator::SetUseAllVoxelsFlag(bool t){
+	if( t != this->UseAllVoxels ){
+		this->UseAllVoxels = t;
+		this->Modified();
+	}
+}
+
 //------------------------------------------------------------
 
 void vtkCudaKohonenGenerator::SetWeight(int index, double weight){
-	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 )
+	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 ){
 		this->UnnormalizedWeights[index] = weight;
+		this->Modified();
+	}
 }
 
 void vtkCudaKohonenGenerator::SetWeights(const double* weights){
@@ -94,6 +109,7 @@ void vtkCudaKohonenGenerator::SetWeights(const double* weights){
 		}catch(...){
 			this->UnnormalizedWeights[i] = 1.0;
 		}
+	this->Modified();
 }
 
 double vtkCudaKohonenGenerator::GetWeight(int index){
@@ -107,7 +123,10 @@ double* vtkCudaKohonenGenerator::GetWeights(){
 }
 
 void vtkCudaKohonenGenerator::SetWeightNormalization(bool set){
-	this->WeightNormalization = set;
+	if( set != this->WeightNormalization ){
+		this->WeightNormalization = set;
+		this->Modified();
+	}
 }
 
 bool vtkCudaKohonenGenerator::GetWeightNormalization(){
@@ -115,8 +134,10 @@ bool vtkCudaKohonenGenerator::GetWeightNormalization(){
 }
 
 void vtkCudaKohonenGenerator::SetNumberOfIterations(int number){
-	if( number >= 0 )
+	if( number >= 0 && this->info.MaxEpochs != number ){
 		this->info.MaxEpochs = number;
+		this->Modified();
+	}
 }
 
 int vtkCudaKohonenGenerator::GetNumberOfIterations(){
@@ -124,8 +145,10 @@ int vtkCudaKohonenGenerator::GetNumberOfIterations(){
 }
 
 void vtkCudaKohonenGenerator::SetBatchSize(double fraction){
-	if( fraction >= 0.0 )
+	if( fraction >= 0.0 && this->BatchPercent != fraction ){
 		this->BatchPercent = fraction;
+		this->Modified();
+	}
 }
 
 double vtkCudaKohonenGenerator::GetBatchSize(){
@@ -208,7 +231,10 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	//update information container
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	inData->GetDimensions( this->info.VolumeSize );
-	this->info.BatchSize = (this->info.VolumeSize[0]*this->info.VolumeSize[0] + this->info.VolumeSize[1]*this->info.VolumeSize[1] + this->info.VolumeSize[2]*this->info.VolumeSize[2])*this->BatchPercent;
+	this->info.BatchSize = (this->UseAllVoxels) ? -1 :
+						(this->info.VolumeSize[0]*this->info.VolumeSize[0] + 
+						 this->info.VolumeSize[1]*this->info.VolumeSize[1] + 
+						 this->info.VolumeSize[2]*this->info.VolumeSize[2] ) * this->BatchPercent;
 
 	//get range
 	double* Range = new double[2*(this->info.NumberOfDimensions)];

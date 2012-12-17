@@ -47,6 +47,9 @@ public:
 
 	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
 
+	bool GetUseAllVoxelsFlag();
+	void SetUseAllVoxelsFlag(bool t);
+
 	// Description:
 	// If the subclass does not define an Execute method, then the task
 	// will be broken up, multiple threads will be spawned, and each thread
@@ -87,6 +90,7 @@ private:
 	bool	WeightNormalization;
 
 	double	BatchPercent;
+	bool	UseAllVoxels;
 
 };
 
