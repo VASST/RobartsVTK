@@ -9,6 +9,7 @@ typedef struct __align__(16)
 {
 	int VolumeSize[3];				/**< Size of the volume being classified */
 
+	float	TextureSize;
 	float	Intensity1Low;			/**< Minimum intensity of the first component of the image */
 	float	Intensity1Multiplier;	/**< Scale factor to normalize first intensities to between 0 and 1 */
 	float	Intensity2Low;			/**< Minimum intensity of the second component of the image */

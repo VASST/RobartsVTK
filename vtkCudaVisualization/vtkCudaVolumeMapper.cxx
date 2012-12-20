@@ -244,6 +244,16 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 	if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
 
+vtkImageData * vtkCudaVolumeMapper::GetInput(){
+	return GetInput(0);
+}
+
+vtkImageData * vtkCudaVolumeMapper::GetInput( int frame){
+	if( this->inputImages.find(frame) != this->inputImages.end() )
+		return this->inputImages[frame];
+	return 0;
+}
+
 void vtkCudaVolumeMapper::ClearInput(){
 	//clear information at this class level
 	this->VolumeInfoHandler->ClearInput();

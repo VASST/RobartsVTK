@@ -59,6 +59,16 @@ public:
 	void SetInput( vtkImageData * image, int frame);
 	virtual void SetInputInternal( vtkImageData * image, int frame) = 0;
 
+	/** @brief Sets the 3D image data for the first frame in the 4D sequence
+	 
+	 */
+	virtual vtkImageData * GetInput();
+
+	/** @brief Gets the 3D image data for a particular frame in the 4D sequence
+	 *
+	 */
+	vtkImageData * GetInput( int frame);
+
 	/** @brief Clears all the frames in the 4D sequence
 	 *
 	 */
@@ -101,7 +111,7 @@ public:
 	 *  @param b The shading stop value
 	 */
 	void SetDistanceShadingConstants(float darkness, float a, float b);
-
+	
 	/** @brief Changes the next frame to be rendered to the provided frame
 	 *
 	 *  @param frame The next frame to be rendered
@@ -110,6 +120,12 @@ public:
 	 */
 	void ChangeFrame(unsigned int frame);
 	virtual void ChangeFrameInternal(unsigned int frame) = 0;
+
+	/** @brief Gets the current frame being rendered
+	 *
+	 *  @post frame is a non-negative integer less than the total number of frames
+	 */
+	int GetCurrentFrame(){ return this->currFrame; };
 
 	/** @brief Changes the next frame to be rendered to the next frame in the 4D sequence (modulo the number of frames, so if this is called on the last frame, the next frame is the first frame)
 	 *

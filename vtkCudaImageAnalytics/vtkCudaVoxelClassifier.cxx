@@ -4,6 +4,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 
+#include "vector_types.h"
+
 vtkStandardNewMacro(vtkCudaVoxelClassifier);
 
 vtkCudaVoxelClassifier::vtkCudaVoxelClassifier(){
@@ -133,17 +135,19 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
 	this->ClassifierInfo.Intensity1Multiplier = 1.0 / ( maxIntensity1 - minIntensity1 );
 	this->ClassifierInfo.Intensity2Low = minIntensity2;
 	this->ClassifierInfo.Intensity2Multiplier = 1.0 / ( maxIntensity2 - minIntensity2 );
+	inData->GetDimensions( this->ClassifierInfo.VolumeSize );
+	this->ClassifierInfo.TextureSize = this->TextureSize;
 
 	//update transfer functions
 	short* PrimaryTexture = new short[this->TextureSize*this->TextureSize];
 	std::memset( PrimaryTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
-	this->PrimaryFunction->GetClassifyTable( PrimaryTexture,this->TextureSize,this->TextureSize,minIntensity1, 
-											 maxIntensity1, minIntensity2, maxIntensity2, 0, 0, 0 );
+	this->PrimaryFunction->GetClassifyTable( PrimaryTexture,this->TextureSize,this->TextureSize,minIntensity1,
+											 maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0 );
 	short* KeyholeTexture = new short[this->TextureSize*this->TextureSize];
-	std::memset( PrimaryTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
+	std::memset( KeyholeTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
 	if( this->KeyholeFunction && this->ClassifierInfo.NumberOfKeyholePlanes > 0 ){
 		this->KeyholeFunction->GetClassifyTable( KeyholeTexture,this->TextureSize,this->TextureSize,minIntensity1,
-			maxIntensity1, minIntensity2, maxIntensity2, 0, 0, 0 );
+												 maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0 );
 	}
 
 	//pass it over to the GPU
@@ -161,8 +165,8 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
 
 void vtkCudaVoxelClassifier::SetFunction(vtkCuda2DTransferFunction* func){
 	if( this->PrimaryFunction != func ){
+		if(this->PrimaryFunction) this->PrimaryFunction->UnRegister(this);
 		this->PrimaryFunction = func;
-		this->PrimaryFunction->UnRegister(this);
 		func->Register(this);
 		this->Modified();
 	}
@@ -174,8 +178,8 @@ vtkCuda2DTransferFunction* vtkCudaVoxelClassifier::GetFunction(){
 
 void vtkCudaVoxelClassifier::SetKeyholeFunction(vtkCuda2DTransferFunction* func){
 	if( this->KeyholeFunction != func ){
+		if(this->KeyholeFunction) this->KeyholeFunction->UnRegister(this);
 		this->KeyholeFunction = func;
-		this->KeyholeFunction->UnRegister(this);
 		func->Register(this);
 		this->Modified();
 	}

@@ -8,7 +8,7 @@ texture<short, 2, cudaReadModeElementType> ClassifyKeyholeTexture;
 
 #define NUM_THREADS 256
 
-cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<short>();
+cudaChannelFormatDesc Voxel_Classifier_ChannelDesc = cudaCreateChannelDesc<short>();
 
 __device__ bool WithinPlanes(const float* ConstantPlanes, const int NumPlanes, const int3& index){
 	
@@ -49,8 +49,8 @@ __global__ void ClassifyVolume( const float2* inputVolume, short* outputVolume )
 
 	//get the values from the volume
 	float2 value = inputVolume[inIndex];
-	value.x = (value.x - info.Intensity1Low) * info.Intensity1Multiplier;
-	value.y = (value.y - info.Intensity2Low) * info.Intensity2Multiplier;
+	value.x = (float) info.TextureSize * (value.x - info.Intensity1Low) * info.Intensity1Multiplier;
+	value.y = (float) info.TextureSize * (value.y - info.Intensity2Low) * info.Intensity2Multiplier;
 	__syncthreads();
 
 	//check if we are in the clipping and keyhole planes
@@ -81,31 +81,38 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
 
 	//translate classification textures onto the device
 	cudaArray* PrimaryTextureArray = 0;
-	cudaMallocArray( &PrimaryTextureArray, &channelDesc, textureSize, textureSize);
+	cudaMallocArray( &PrimaryTextureArray, &Voxel_Classifier_ChannelDesc, textureSize, textureSize);
 	cudaMemcpyToArrayAsync(PrimaryTextureArray, 0, 0, inputPrimaryTexture,
 							sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
 	cudaArray* KeyholeTextureArray = 0;
-	cudaMallocArray( &KeyholeTextureArray, &channelDesc, textureSize, textureSize);
+	cudaMallocArray( &KeyholeTextureArray, &Voxel_Classifier_ChannelDesc, textureSize, textureSize);
 	cudaMemcpyToArrayAsync(KeyholeTextureArray, 0, 0, inputKeyholeTexture,
 							sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
-	ClassifyPrimaryTexture.normalized = true;
+	cudaThreadSynchronize();
+	ClassifyPrimaryTexture.normalized = false;
 	ClassifyPrimaryTexture.filterMode = cudaFilterModePoint;
 	ClassifyPrimaryTexture.addressMode[0] = cudaAddressModeClamp;
 	ClassifyPrimaryTexture.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(ClassifyPrimaryTexture, PrimaryTextureArray, channelDesc); 
-	ClassifyKeyholeTexture.normalized = true;
+	cudaBindTextureToArray(ClassifyPrimaryTexture, PrimaryTextureArray, Voxel_Classifier_ChannelDesc); 
+	ClassifyKeyholeTexture.normalized = false;
 	ClassifyKeyholeTexture.filterMode = cudaFilterModePoint;
 	ClassifyKeyholeTexture.addressMode[0] = cudaAddressModeClamp;
 	ClassifyKeyholeTexture.addressMode[1] = cudaAddressModeClamp;
-	cudaBindTextureToArray(ClassifyKeyholeTexture, KeyholeTextureArray, channelDesc); 
+	cudaBindTextureToArray(ClassifyKeyholeTexture, KeyholeTextureArray, Voxel_Classifier_ChannelDesc); 
+	
+	cudaThreadSynchronize();
+	printf( "Load textures: " );
+	printf( cudaGetErrorString( cudaGetLastError() ) );
+	printf( "\n" );
 
 	//allocate working memory for the output
-	float* dev_OutputData = 0;
+	short* dev_OutputData = 0;
 	cudaMalloc( (void**) &dev_OutputData, sizeof(short)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] );
 	
 	//classify the volume - TODO
 	dim3 grid((information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] + NUM_THREADS - 1) / NUM_THREADS,1,1);
 	dim3 threads(NUM_THREADS,1,1);
+	ClassifyVolume<<< grid, threads, 0, *stream >>>((float2*)dev_InputData, dev_OutputData);
 
 	//retrieve classified output
 	cudaMemcpyAsync( outputData, dev_OutputData, sizeof(short)*information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2],
