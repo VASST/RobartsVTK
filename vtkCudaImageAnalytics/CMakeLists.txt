@@ -8,6 +8,12 @@ SET(KIT_LIBS vtkCommon vtkFiltering vtkCudaCommon cudart)
 SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} cuda cudart cudartemu cufft cufftemu OpenCL cublas cublasemu)
 
 SET ( Kit_SRCS
+
+  #Voxel classifier
+  vtkCudaVoxelClassifier.h
+  vtkCudaVoxelClassifier.cxx
+  CUDA_voxelclassifier.h
+  CUDA_voxelclassifier.cu
   
   #CT to US simulation
   vtkCudaCT2USSimulation.h
