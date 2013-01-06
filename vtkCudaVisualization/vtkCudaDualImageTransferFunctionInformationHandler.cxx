@@ -44,6 +44,7 @@ vtkCudaDualImageTransferFunctionInformationHandler::~vtkCudaDualImageTransferFun
 	this->Deinitialize();
 	this->SetInputData(NULL, 0);
 	if( this->function ) this->function->UnRegister( this );
+	if( this->keyholeFunction ) this->keyholeFunction->UnRegister( this );
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Deinitialize(int withData){
