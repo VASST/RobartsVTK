@@ -54,6 +54,7 @@ vtkCudaDeviceManager::~vtkCudaDeviceManager(){
 	this->StreamToDeviceMap.clear();
 	this->StreamToObjectMap.clear();
 	this->ObjectToDeviceMap.clear();
+	this->DeviceToObjectMap.clear();
 	this->regularLock->Unlock();
 	this->regularLock->Delete();
 
@@ -81,6 +82,9 @@ bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device){
 	}
 
 	//lock critical section
+	if( this->regularLock == 0 ){
+		this->regularLock = vtkMutexLock::New();
+	}
 	this->regularLock->Lock();
 
 	//figure out if that pair already exists
@@ -181,6 +185,11 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device){
 	//unlock the critical section
 	this->regularLock->Unlock();
 
+	if( this->DeviceToObjectMap.size() == 0 ){
+		this->regularLock->Delete();
+		this->regularLock = 0;
+	}
+
 	return false;
 }
 
@@ -250,7 +259,6 @@ bool vtkCudaDeviceManager::ReturnStream(vtkCudaObject* caller, cudaStream_t* str
 	//remove that part of the mapping
 	this->StreamToObjectMap.erase(it);
 	if( this->StreamToObjectMap.count(stream) == 0 ){
-		this->StreamToDeviceMap.erase( stream );
 		this->DestroyEmptyStream( stream );
 	}
 
