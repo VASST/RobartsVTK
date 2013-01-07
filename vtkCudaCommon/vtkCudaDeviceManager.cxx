@@ -115,7 +115,7 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device){
 	std::set<cudaStream_t*> streamsToReturn;
 	std::multimap<cudaStream_t*,vtkCudaObject*>::iterator it2 = this->StreamToObjectMap.begin();
 	for( ; it2 != this->StreamToObjectMap.end(); it2++ ){
-		if( this->StreamToDeviceMap.at(it2->first) == device ){
+		if( this->StreamToDeviceMap[it2->first] == device ){
 			cudaStream_t* tempStreamPointer = it2->first;
 		}
 	}
@@ -151,7 +151,7 @@ bool vtkCudaDeviceManager::GetStream(vtkCudaObject* caller, cudaStream_t** strea
 	//if stream is provided, check for stream-device consistancy
 	this->regularLock->Lock();
 	if( *stream && this->StreamToDeviceMap.count(*stream) == 1 && 
-		this->StreamToDeviceMap.at(*stream) != device ){
+		this->StreamToDeviceMap[*stream] != device ){
 		this->regularLock->Unlock();
 		vtkErrorMacro(<<"Stream already assigned to particular device.");
 		return true;
@@ -191,7 +191,7 @@ bool vtkCudaDeviceManager::ReturnStream(vtkCudaObject* caller, cudaStream_t* str
 	std::multimap<cudaStream_t*,vtkCudaObject*>::iterator it = this->StreamToObjectMap.begin();
 	for( ; it != this->StreamToObjectMap.end(); it++ ){
 		if( it->first == stream && it->second == caller &&
-			this->StreamToDeviceMap.at(it->first) == device ){
+			this->StreamToDeviceMap[it->first] == device ){
 			found = true;
 			break;
 		}
@@ -220,7 +220,7 @@ bool vtkCudaDeviceManager::SynchronizeStream( cudaStream_t* stream ){
 		this->regularLock->Unlock();
 		return true;
 	}
-	int device = this->StreamToDeviceMap.at(stream);
+	int device = this->StreamToDeviceMap[stream];
 	this->regularLock->Unlock();
 
 	//synchronize the stream and return the success value
@@ -242,7 +242,7 @@ bool vtkCudaDeviceManager::ReserveGPU( cudaStream_t* stream ){
 		this->regularLock->Unlock();
 		return true;
 	}
-	int device = this->StreamToDeviceMap.at(stream);
+	int device = this->StreamToDeviceMap[stream];
 	this->regularLock->Unlock();
 
 	//synchronize the stream and return the success value
@@ -266,7 +266,7 @@ int vtkCudaDeviceManager::QueryDeviceForStream( cudaStream_t* stream ){
 	this->regularLock->Lock();
 	int device = -1;
 	if( this->StreamToDeviceMap.count(stream) == 1 )
-		device = this->StreamToDeviceMap.at(stream);
+		device = this->StreamToDeviceMap[stream];
 	else
 		vtkErrorMacro(<<"No mapping exists.");
 	this->regularLock->Unlock();

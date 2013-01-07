@@ -164,7 +164,7 @@ void vtkCuda2DTransferFunction::RemoveFunctionObject(vtkCudaFunctionObject* obje
 vtkCudaFunctionObject* vtkCuda2DTransferFunction::GetFunctionObject(unsigned int index){
 
 	if(index >= components->size()) return 0;
-	return components->at(index);
+	return (*components)[index];
 
 }
 
