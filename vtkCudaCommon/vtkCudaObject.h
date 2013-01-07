@@ -30,7 +30,7 @@ public:
 	void ReplicateObject( vtkCudaObject* object, int withData = 0  );
 
 protected:
-	vtkCudaObject();
+	vtkCudaObject(int d = 0);
 	~vtkCudaObject();
 	
 	virtual void Reinitialize(int withData = 0) = 0;

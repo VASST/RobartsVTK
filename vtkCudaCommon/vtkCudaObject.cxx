@@ -25,18 +25,26 @@ void errorOut(vtkCudaObject* self, const char* message){
 		 }                                                          
 }
 
-vtkCudaObject::vtkCudaObject(){
+vtkCudaObject::vtkCudaObject(int d){
+
+	//get the device managing utility
 	this->DeviceManager = vtkCudaDeviceManager::Singleton();
+
+	//get the starting device (default device 0)
 	this->DeviceStream = 0;
-	this->DeviceNumber = 0;
-	bool result = this->DeviceManager->GetDevice(this, this->DeviceNumber);
-	if(result){
+	this->DeviceNumber = d;
+	if( d < 0 || d >= this->DeviceManager->GetNumberOfDevices() )
+		this->DeviceNumber = 0;
+	bool errorThrown = this->DeviceManager->GetDevice(this, this->DeviceNumber);
+	if(errorThrown){
 		errorOut(this,"Device selected cannot be retrieved.");
 		this->DeviceNumber = -1;
 		return;
 	}
-	result = this->DeviceManager->GetStream(this, &(this->DeviceStream), this->DeviceNumber );
-	if(result){
+
+	//get a stream 
+	errorThrown = this->DeviceManager->GetStream(this, &(this->DeviceStream), this->DeviceNumber );
+	if(errorThrown){
 		errorOut(this,"Device selected cannot be retrieved.");
 		this->DeviceManager->ReturnDevice(this, this->DeviceNumber );
 		this->DeviceNumber = -1;
