@@ -118,8 +118,8 @@ public:
 	 *
 	 *  @pre frame is a non-negative integer less than the total number of frames
 	 */
-	void ChangeFrame(unsigned int frame);
-	virtual void ChangeFrameInternal(unsigned int frame) = 0;
+	void ChangeFrame(int frame);
+	virtual void ChangeFrameInternal(int frame) = 0;
 
 	/** @brief Gets the current frame being rendered
 	 *

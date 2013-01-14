@@ -119,7 +119,7 @@ void vtkCuda2DVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	this->transferFunctionInfoHandler->SetInputData(input,index);
 }
 
-void vtkCuda2DVolumeMapper::ChangeFrameInternal(unsigned int frame){
+void vtkCuda2DVolumeMapper::ChangeFrameInternal(int frame){
 }
 
 void vtkCuda2DVolumeMapper::InternalRender (	vtkRenderer* ren, vtkVolume* vol,

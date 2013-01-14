@@ -275,7 +275,7 @@ void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor){
 	 this->OutputInfoHandler->SetRenderOutputScaleFactor(scaleFactor);
 }
 
-void vtkCudaVolumeMapper::ChangeFrame(unsigned int frame){
+void vtkCudaVolumeMapper::ChangeFrame(int frame){
 	if(frame >= 0 && frame < this->numFrames ){
 		this->ChangeFrameInternal(frame);
 		this->currFrame = frame;

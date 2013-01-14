@@ -114,7 +114,7 @@ void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int in
 	this->transferFunctionInfoHandler->SetInputData(input,index);
 }
 
-void vtkCudaDualImageVolumeMapper::ChangeFrameInternal(unsigned int frame){
+void vtkCudaDualImageVolumeMapper::ChangeFrameInternal(int frame){
 	if(!this->erroredOut){
 		this->ReserveGPU();
 		this->erroredOut = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());
