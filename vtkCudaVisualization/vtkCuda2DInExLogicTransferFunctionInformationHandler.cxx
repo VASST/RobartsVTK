@@ -4,7 +4,6 @@
 
 //Volume and Property
 #include "vtkImageData.h"
-#include "vtkImageGradientMagnitude.h"
 #include "vtkCuda2DTransferFunction.h"
 
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
@@ -94,30 +93,24 @@ vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler:
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer functions, don't
+	if(!this->InputData ) return;
 	if(!this->function || this->function->GetMTime() <= lastModifiedTime ||
 		!this->inExFunction || this->inExFunction->GetMTime() <= lastModifiedTime) return;
 	lastModifiedTime = (this->function->GetMTime() < this->inExFunction->GetMTime()) ?
 		this->inExFunction->GetMTime() : this->function->GetMTime();
-	
-	//calculate the gradient (to get max gradient values)
-	double gradRange[2];
-	vtkImageGradientMagnitude* gradientCalculator = vtkImageGradientMagnitude::New();
-	gradientCalculator->SetInput(this->InputData);
-	gradientCalculator->SetDimensionality(3);
-	gradientCalculator->Update();
-	gradientCalculator->GetOutput()->GetScalarRange(gradRange);
-	this->LowGradient = gradRange[0];
-	this->HighGradient = gradRange[1];
-	gradientCalculator->Delete();
 
 	//get the ranges from the transfer function
 	double minIntensity = (this->InputData->GetScalarRange()[0] > this->function->getMinIntensity() ) ? this->InputData->GetScalarRange()[0] : this->function->getMinIntensity();
 	double maxIntensity = (this->InputData->GetScalarRange()[1] < this->function->getMaxIntensity() ) ? this->InputData->GetScalarRange()[1] : this->function->getMaxIntensity();
 	double minGradient = (this->LowGradient > this->function->getMinGradient() ) ? this->LowGradient : this->function->getMinGradient();
 	double maxGradient = (this->HighGradient < this->function->getMaxGradient() ) ? this->HighGradient : this->function->getMaxGradient();
+	
+	//estimate the gradient ranges
+	this->LowGradient = 0;
+	this->HighGradient = abs(this->InputData->GetScalarRange()[0]-this->InputData->GetScalarRange()[1]) / std::min( this->InputData->GetSpacing()[0], std::min(this->InputData->GetSpacing()[1], this->InputData->GetSpacing()[2] ) );
 	minGradient = (minGradient > this->inExFunction->getMinGradient() ) ? minGradient : this->inExFunction->getMinGradient();
 	maxGradient = (maxGradient < this->inExFunction->getMaxGradient() ) ? maxGradient : this->inExFunction->getMaxGradient();
-	double gradientOffset = this->HighGradient * 0.8;
+	double gradientOffset = maxGradient * 0.8;
 	maxGradient = (log(maxGradient*maxGradient+gradientOffset) - log(gradientOffset) )/ log(2.0) + 1.0;
 	minGradient = (log(minGradient*minGradient+gradientOffset) - log(gradientOffset) )/ log(2.0);
 

@@ -98,7 +98,7 @@ vtkCuda2DTransferFunction* vtkCudaDualImageTransferFunctionInformationHandler::G
 
 void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer function, don't
-	if(!this->function) return;
+	if(!this->function || !this->InputData ) return;
 	if( this->keyholeFunction == 0 && this->function->GetMTime() <= lastModifiedTime) return;
 	if( this->keyholeFunction != 0 && this->keyholeFunction->GetMTime() <= lastModifiedTime && this->function->GetMTime() <= lastModifiedTime) return;
 	if( this->keyholeFunction )
