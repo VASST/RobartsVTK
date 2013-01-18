@@ -19,6 +19,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->widthDecay = 0.99f;
 	this->BatchPercent = 1.0/15.0;
 	this->UseAllVoxels = false;
+	this->UseMask = false;
 	
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
@@ -28,7 +29,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 		this->UnnormalizedWeights[i] = 1.0f;
 		this->info.Weights[i] = 1.0f;
 	}
-	this->info.MaxEpochs = 1000;
+	this->MaxEpochs = 1000;
 	this->info.flags = 0;
 
 	//configure the input ports
@@ -93,6 +94,17 @@ void vtkCudaKohonenGenerator::SetUseAllVoxelsFlag(bool t){
 	}
 }
 
+bool vtkCudaKohonenGenerator::GetUseMaskFlag(){
+	return this->UseMask;
+}
+
+void vtkCudaKohonenGenerator::SetUseMaskFlag(bool t){
+	if( t != this->UseMask ){
+		this->UseMask = t;
+		this->Modified();
+	}
+}
+
 //------------------------------------------------------------
 
 void vtkCudaKohonenGenerator::SetWeight(int index, double weight){
@@ -134,14 +146,14 @@ bool vtkCudaKohonenGenerator::GetWeightNormalization(){
 }
 
 void vtkCudaKohonenGenerator::SetNumberOfIterations(int number){
-	if( number >= 0 && this->info.MaxEpochs != number ){
-		this->info.MaxEpochs = number;
+	if( number >= 0 && this->MaxEpochs != number ){
+		this->MaxEpochs = number;
 		this->Modified();
 	}
 }
 
 int vtkCudaKohonenGenerator::GetNumberOfIterations(){
-	return this->info.MaxEpochs;
+	return this->MaxEpochs;
 }
 
 void vtkCudaKohonenGenerator::SetBatchSize(double fraction){
@@ -212,14 +224,56 @@ int vtkCudaKohonenGenerator::RequestUpdateExtent(
 int vtkCudaKohonenGenerator::RequestData(vtkInformation *request, 
 							vtkInformationVector **inputVector, 
 							vtkInformationVector *outputVector){
-								
-	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
-	vtkInformation* maskInfo = (inputVector[0])->GetInformationObject(1);
-	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* maskData = (maskInfo) ? vtkImageData::SafeDownCast(maskInfo->Get(vtkDataObject::DATA_OBJECT())) : 0;
 	
+	//get general information
+	int NumPictures = (inputVector[0])->GetNumberOfInformationObjects() / (this->UseMask ? 2 : 1);
+	if( NumPictures < 1 ){
+		vtkErrorMacro(<<"No pictures to train on.");
+		return -1;
+	}
+	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	
+	//make sure that the number of components is constant and the input type is FLOAT, and collect volume sizes
+	vtkImageData* inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* maskData = 0;
+	int* VolumeSize = new int[ 3*NumPictures ];
+	int SumDiagonal = 0;
+	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
+	for(int p = 0; p < NumPictures; p++){
+		
+		if( this->UseMask ){
+			inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
+			maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p+1)->Get(vtkDataObject::DATA_OBJECT()));
+		}else{
+			inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
+		}
+
+		inData->GetDimensions( &(VolumeSize[3*p]) );
+		SumDiagonal += VolumeSize[3*p]*VolumeSize[3*p];
+		SumDiagonal += VolumeSize[3*p+1]*VolumeSize[3*p+1];
+		SumDiagonal += VolumeSize[3*p+2]*VolumeSize[3*p+2];
+
+		if( inData->GetNumberOfScalarComponents() != this->info.NumberOfDimensions ){
+			vtkErrorMacro(<<"Data objects need to have a consistant number of components");
+			delete VolumeSize;
+			return -1;
+		}
+		if( inData->GetScalarType() != VTK_FLOAT ){
+			vtkErrorMacro(<<"Data objects need to be of type float");
+			delete VolumeSize;
+			return -1;
+		}
+		if( this->UseMask && maskData->GetScalarType() != VTK_CHAR &&
+							 maskData->GetScalarType() != VTK_SIGNED_CHAR &&
+							 maskData->GetScalarType() != VTK_UNSIGNED_CHAR ){
+			std::cout << maskData->GetScalarType() << std::endl;
+			vtkErrorMacro(<<"Mask objects need to be of type char");
+			delete VolumeSize;
+			return -1;
+		}
+	}
+
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
@@ -229,18 +283,40 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	outData->AllocateScalars();
 
 	//update information container
-	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
-	inData->GetDimensions( this->info.VolumeSize );
-	this->info.BatchSize = (this->UseAllVoxels) ? -1 :
-						(this->info.VolumeSize[0]*this->info.VolumeSize[0] + 
-						 this->info.VolumeSize[1]*this->info.VolumeSize[1] + 
-						 this->info.VolumeSize[2]*this->info.VolumeSize[2] ) * this->BatchPercent;
+	int BatchSize = (this->UseAllVoxels) ? -1 : SumDiagonal * this->BatchPercent;
 
 	//get range
 	double* Range = new double[2*(this->info.NumberOfDimensions)];
 	for(int i = 0; i < this->info.NumberOfDimensions; i++){
-		inData->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
+		Range[i] = DBL_MAX; Range[i+1] = DBL_MIN;
+		for(int p = 0; p < NumPictures; p++){
+			double tempRange[2];
+			if( this->UseMask ){
+				inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
+			}else{
+				inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
+			}
+			inData->GetPointData()->GetScalars()->GetRange(tempRange,i);
+			Range[2*i] = std::min( tempRange[0], Range[2*i] );
+			Range[2*i+1] = std::max( tempRange[1], Range[2*i+1] );
+		}
 	}
+
+	//get scalar pointers
+	float** inputDataPtr = new float* [NumPictures];
+	char** maskDataPtr = (this->UseMask) ? new char*[NumPictures]: 0;
+	for(int p = 0; p < NumPictures; p++){
+		if( this->UseMask ){
+			inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
+			inputDataPtr[p] = (float*) inData->GetScalarPointer();
+			maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p+1)->Get(vtkDataObject::DATA_OBJECT()));
+			maskDataPtr[p] = (char*) maskData->GetScalarPointer();
+		}else{
+			inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
+			inputDataPtr[p] = (float*) inData->GetScalarPointer();
+		}
+	}
+
 
 	//update weights
 	if( this->WeightNormalization ){
@@ -255,12 +331,16 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 	//pass information to CUDA
 	this->ReserveGPU();
-	CUDAalgo_generateKohonenMap( (float*) inData->GetScalarPointer(), (float*) outData->GetScalarPointer(), (maskData) ? (char*) maskData->GetScalarPointer() : 0, Range, this->info, 
+	CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
+		Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 
 		this->alphaInit, this->alphaDecay, this->widthInit*sqrt((double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1])),
 		this->widthDecay, this->GetStream() );
 	
 	//clean up temporaries
 	delete Range;
+	delete VolumeSize;
+	delete inputDataPtr;
+	if( this->UseMask ) delete maskDataPtr;
 
 	return 1;
 }

@@ -47,6 +47,9 @@ public:
 
 	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
 
+	bool GetUseMaskFlag();
+	void SetUseMaskFlag(bool t);
+
 	bool GetUseAllVoxelsFlag();
 	void SetUseAllVoxelsFlag(bool t);
 
@@ -89,8 +92,11 @@ private:
 	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
 	bool	WeightNormalization;
 
+	int		MaxEpochs;
 	double	BatchPercent;
 	bool	UseAllVoxels;
+
+	bool	UseMask;
 
 };
 

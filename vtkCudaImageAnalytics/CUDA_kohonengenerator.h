@@ -7,20 +7,18 @@
 
 typedef struct __align__(16)
 {
-	int VolumeSize[3];
 	int KohonenMapSize[3];
 	int NumberOfDimensions;
 	int flags;
-
-	int MaxEpochs;
-	int BatchSize;
 
 	float Weights[MAX_DIMENSIONALITY];
 
 } Kohonen_Generator_Information;
 
-void CUDAalgo_generateKohonenMap( float* inputData, float* outputKohonen, char* maskData, double* range,
+void CUDAalgo_generateKohonenMap( float** inputData, float* outputKohonen, char** maskData, double* range,
+									int* VolumeSize, int NumVolumes,
 									Kohonen_Generator_Information& information,
+									int MaxEpochs, int BatchSize,
 									float alpha, float alphaDecay,
 									float neighbourhood, float nDecay,
 									cudaStream_t* stream );
