@@ -2,6 +2,8 @@
 #include <float.h>
 #include <stdio.h>
 
+#define DEBUGGING
+
 //parameters held in constant memory
 __constant__ Kohonen_Generator_Information info;
 __constant__ float SamplePoint[MAX_DIMENSIONALITY];
@@ -130,6 +132,10 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 				}
 			}
 
+			#ifdef DEBUGGING
+				printf("Finished epoch %d", epoch);
+			#endif
+
 			//update the weight updaters
 			alpha *= alphaDecay;
 			neighbourhood *= nDecay;
@@ -169,7 +175,16 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 				cudaMemcpyAsync( &minIndex, device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
 				cudaStreamSynchronize(*stream);
 				UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood);
+			
 			}
+
+			#ifdef DEBUGGING
+				printf("Finished epoch %d", epoch);
+			#endif
+
+			//update the weight updaters
+			alpha *= alphaDecay;
+			neighbourhood *= nDecay;
 		}
 
 	}
