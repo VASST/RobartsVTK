@@ -20,12 +20,21 @@ public:
 
 	void SetAlphaInitial(double alphaInitial);
 	double GetAlphaInitial(){ return (double) alphaInit; }
+	void SetAlphaProlong(double alphaProlong);
+	double GetAlphaProlong(){ return (double) alphaProlong; }
 	void SetAlphaDecay(double alphaDecay);
 	double GetAlphaDecay(){ return (double) alphaDecay; }
+	void SetAlphaBaseline(double alphaBaseline);
+	double GetAlphaBaseline(){ return (double) alphaBaseline; }
+
 	void SetWidthInitial(double widthInitial);
 	double GetWidthInitial(){ return (double) widthInit; }
+	void SetWidthProlong(double widthProlong);
+	double GetWidthProlong(){ return (double) widthProlong; }
 	void SetWidthDecay(double widthDecay);
 	double GetWidthDecay(){ return (double) widthDecay; }
+	void SetWidthBaseline(double widthBaseline);
+	double GetWidthBaseline(){ return (double) widthBaseline; }
 	
 	void SetNumberOfIterations(int number);
 	int GetNumberOfIterations();
@@ -81,9 +90,14 @@ private:
 	vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
 	
 	float alphaInit;
+	float alphaProlong;
 	float alphaDecay;
+	float alphaBaseline;
+
 	float widthInit;
+	float widthProlong;
 	float widthDecay;
+	float widthBaseline;
 
 	int outExt[6];
 

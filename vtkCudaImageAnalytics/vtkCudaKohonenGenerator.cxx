@@ -58,6 +58,18 @@ void vtkCudaKohonenGenerator::SetAlphaInitial(double alphaInitial){
 	this->Modified();
 }
 
+void vtkCudaKohonenGenerator::SetAlphaBaseline(double alphaBaseline){
+	if(alphaBaseline >= 0.0 && alphaBaseline <= 1.0)
+		this->alphaBaseline = alphaBaseline;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetAlphaProlong(double alphaProlong){
+	if(alphaProlong >= 0.0 )
+		this->alphaProlong = alphaProlong;
+	this->Modified();
+}
+
 void vtkCudaKohonenGenerator::SetAlphaDecay(double alphaDecay){
 	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
 		this->alphaDecay = alphaDecay;
@@ -70,9 +82,21 @@ void vtkCudaKohonenGenerator::SetWidthInitial(double widthInitial){
 	this->Modified();
 }
 
+void vtkCudaKohonenGenerator::SetWidthProlong(double widthProlong){
+	if(widthProlong >= 0.0 )
+		this->widthProlong = widthProlong;
+	this->Modified();
+}
+
 void vtkCudaKohonenGenerator::SetWidthDecay(double widthDecay){
 	if(widthDecay >= 0.0 && widthDecay <= 1.0)
 		this->widthDecay = widthDecay;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetWidthBaseline(double widthBaseline){
+	if(widthBaseline >= 0.0 && widthBaseline <= 1.0)
+		this->widthBaseline = widthBaseline;
 	this->Modified();
 }
 
@@ -288,7 +312,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	//get range
 	double* Range = new double[2*(this->info.NumberOfDimensions)];
 	for(int i = 0; i < this->info.NumberOfDimensions; i++){
-		Range[i] = DBL_MAX; Range[i+1] = DBL_MIN;
+		Range[2*i] = DBL_MAX; Range[2*i+1] = DBL_MIN;
 		for(int p = 0; p < NumPictures; p++){
 			double tempRange[2];
 			if( this->UseMask ){
@@ -329,12 +353,16 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		}
 	}
 
+	
+
 	//pass information to CUDA
 	this->ReserveGPU();
 	CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
 		Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 
-		this->alphaInit, this->alphaDecay, this->widthInit*sqrt((double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1])),
-		this->widthDecay, this->GetStream() );
+		(1+exp((this->alphaDecay - 1.0)*this->alphaProlong))*(this->alphaInit-this->alphaBaseline), this->alphaBaseline,
+		1.0 - this->alphaDecay, (this->alphaDecay - 1.0)*this->alphaProlong,
+		(1+exp((this->widthDecay - 1.0)*this->widthProlong))*(this->widthInit-this->widthBaseline), this->widthBaseline,
+		1.0 - this->widthDecay, (this->widthDecay - 1.0)*this->widthProlong, this->GetStream() );
 	
 	//clean up temporaries
 	delete Range;

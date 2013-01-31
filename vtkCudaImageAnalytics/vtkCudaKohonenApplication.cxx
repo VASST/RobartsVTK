@@ -8,9 +8,10 @@ vtkStandardNewMacro(vtkCudaKohonenApplication);
 
 vtkCudaKohonenApplication::vtkCudaKohonenApplication(){
 	//configure the input ports
-	this->SetNumberOfInputPorts(2);
+	this->SetNumberOfInputPorts(3);
 	this->SetNumberOfInputConnections(0,1);
 	this->SetNumberOfInputConnections(1,1);
+	this->SetNumberOfInputConnections(2,1);
 
 	//initialize the weights to 1
 	this->WeightNormalization = true;
@@ -106,9 +107,11 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 
 	vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkInformation* maskInfo = (inputVector[2])->GetInformationObject(0);
 	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
 	vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* maskData = vtkImageData::SafeDownCast(maskInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	
 	//figure out the extent of the output
@@ -140,7 +143,7 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 
 	//pass it over to the GPU
 	this->ReserveGPU();
-	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
+	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), (char*) maskData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
 							  (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
 
 	return 1;

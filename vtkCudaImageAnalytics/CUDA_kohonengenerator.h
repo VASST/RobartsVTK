@@ -19,8 +19,8 @@ void CUDAalgo_generateKohonenMap( float** inputData, float* outputKohonen, char*
 									int* VolumeSize, int NumVolumes,
 									Kohonen_Generator_Information& information,
 									int MaxEpochs, int BatchSize,
-									float alpha, float alphaDecay,
-									float neighbourhood, float nDecay,
+									float alphaVMult, float alphaVShift, float alphaHMult, float alphaHShift,
+									float nVMult, float nVShift, float nHMult, float nHShift,
 									cudaStream_t* stream );
 
 #endif //__KOHONENGENERATOR_H__
