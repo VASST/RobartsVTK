@@ -209,8 +209,8 @@ protected:
 	//modified time variables used to minimize setup
 	unsigned long	renModified;								/**< The last time the renderer object was modified */
 	unsigned long	volModified;								/**< The last time the volume object was modified */
-	unsigned int	currFrame;									/**< The current frame being rendered */
-	unsigned int	numFrames;									/**< The total number of frames housed by the mapper */
+	int	currFrame;									/**< The current frame being rendered */
+	int	numFrames;									/**< The total number of frames housed by the mapper */
 
 	/** @brief Using the mapper's volume and renderer objects, check for updates and reconstruct the appropriate matrices based on them, sending them off to the renderer information handler afterwards
 	 *

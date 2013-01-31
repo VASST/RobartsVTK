@@ -656,7 +656,7 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 												volumeSize.width, volumeSize.height);
 	copyParams.dstArray = *frame;
 	copyParams.extent   = volumeSize;
-	copyParams.kind     = cudaMemcpyHostToDevice;
+	copyParams.kind     = cudaMemcpyDeviceToDevice;
 	cudaMemcpy3DAsync(&copyParams, *stream);
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION
