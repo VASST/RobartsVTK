@@ -43,6 +43,12 @@ SET ( Kit_SRCS
   CUDA_kohonenreprojector.h
   CUDA_kohonenreprojector.cu
 
+  #Custom PAGMM estimators
+  vtkCudaPAGMMEstimator.h
+  vtkCudaPAGMMEstimator.cxx
+  CUDA_PAGMMestimator.h
+  CUDA_PAGMMestimator.cu
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )

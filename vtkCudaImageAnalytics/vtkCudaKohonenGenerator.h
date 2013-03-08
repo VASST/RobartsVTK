@@ -54,8 +54,6 @@ public:
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
 
-	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
-
 	bool GetUseMaskFlag();
 	void SetUseMaskFlag(bool t);
 
@@ -86,6 +84,9 @@ protected:
 	void Deinitialize(int withData);
 
 private:
+
+	Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
+
 	vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&){}
 	vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
 	
