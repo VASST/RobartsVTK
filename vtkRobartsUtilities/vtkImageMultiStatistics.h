@@ -67,6 +67,9 @@ public:
 
   int FillInputPortInformation(int i, vtkInformation* info);
 
+  void SetUseMask(bool t);
+  bool GetUseMask();
+
 protected:
   vtkImageMultiStatistics();
   ~vtkImageMultiStatistics();
@@ -84,6 +87,8 @@ protected:
 
   double* PCAVariance;
   double** PCAAxisVectors;
+
+  bool UseMask;
 
   vtkTimeStamp ExecuteTime;
 
