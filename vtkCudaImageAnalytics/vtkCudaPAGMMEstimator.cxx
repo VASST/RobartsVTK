@@ -22,7 +22,7 @@ vtkCudaPAGMMEstimator::vtkCudaPAGMMEstimator(){
 	}
 
 	//initialize conservativeness and scale
-	this->Q = 0.5;
+	this->Q = 0.01;
 	this->Scale = 1.0;
 }
 
@@ -145,33 +145,37 @@ int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
 							vtkInformationVector *outputVector){
 	//collect input data information							
 	vtkInformation* inputDataInfo = (inputVector[0])->GetInformationObject(0);
-	vtkImageData* inputDataImage = vtkImageData::SafeDownCast(inputDataInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkInformation* inputGMMInfo = (inputVector[1])->GetInformationObject(0);
-	vtkImageData* inputGMMImage = vtkImageData::SafeDownCast(inputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkInformation* seededDataInfo = (inputVector[2])->GetInformationObject(0);
+	vtkImageData* inputDataImage = vtkImageData::SafeDownCast(inputDataInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* inputGMMImage = vtkImageData::SafeDownCast(inputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* seededDataImage = vtkImageData::SafeDownCast(seededDataInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 	//get output data information containers
 	vtkInformation* outputDataInfo = outputVector->GetInformationObject(0);
-	vtkImageData* outputDataImage = vtkImageData::SafeDownCast(outputDataInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkInformation* outputGMMInfo = outputVector->GetInformationObject(1);
+	vtkImageData* outputDataImage = vtkImageData::SafeDownCast(outputDataInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outputGMMImage = vtkImageData::SafeDownCast(outputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 	
 	//figure out the extent of the output
+	this->info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
+	this->info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
     int updateExtent[6];
     outputDataInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outputDataImage->SetScalarTypeToFloat();
-	outputDataImage->SetNumberOfScalarComponents(seededDataImage->GetScalarRange()[1]);
+	outputDataImage->SetNumberOfScalarComponents( this->info.NumberOfLabels );
 	outputDataImage->SetExtent(updateExtent);
-	outputDataImage->SetWholeExtent(updateExtent);
 	outputDataImage->AllocateScalars();
     outputGMMInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outputGMMImage->SetScalarTypeToFloat();
-	outputGMMImage->SetNumberOfScalarComponents(seededDataImage->GetScalarRange()[1]);
+	outputGMMImage->SetNumberOfScalarComponents( this->info.NumberOfLabels );
 	outputGMMImage->SetExtent(updateExtent);
-	outputGMMImage->SetWholeExtent(updateExtent);
 	outputGMMImage->AllocateScalars();
 	
+	//get volume information for containers
+	outputDataImage->GetDimensions( this->info.VolumeSize );
+	outputGMMImage->GetDimensions( this->info.GMMSize );
+
 	//get range for weight normalization
 	double* Range = new double[2*(this->info.NumberOfDimensions)];
 	for(int i = 0; i < this->info.NumberOfDimensions; i++)
@@ -185,15 +189,10 @@ int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
 		for(int i = 0; i < this->info.NumberOfDimensions; i++)
 			this->info.Weights[i] = this->UnnormalizedWeights[i];
 
-	//get volume information for containers
-	inputDataImage->GetDimensions( this->info.VolumeSize );
-	inputGMMImage->GetDimensions( this->info.GMMSize );
-	this->info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
 
 	//calculate P according tot he Naive model
-	float P = (Q > 0.0) ? 
-		this->Q / (1.0 - pow(1.0-this->Q,this->info.GMMSize[0]*this->info.GMMSize[1])) :
-		1.0 / ((double)this->info.GMMSize[0]*this->info.GMMSize[1]);
+	int N = this->info.GMMSize[0]*this->info.GMMSize[1];
+	float P = (Q > 0.0) ? this->Q / (1.0 - pow(1.0-this->Q,N)) : 1.0 / ((double)N);
 
 	//run algorithm on CUDA
 	this->ReserveGPU();

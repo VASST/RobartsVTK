@@ -11,6 +11,21 @@
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
+//INPUT PORT DESCRIPTION
+//[0] Input Image - full X by Y by Z image with D float components interlaced (VTK default)
+//[1] Input GMM - M by N image with D float components interlaced (VTK default) representing
+//                the means of the Gaussian mixture model
+//[2] Seed Image - full X by Y by Z image with 1 char component only representing the label
+//                 associated with a given location (note that 0 means no label, not background
+//                 label. give background a different label altogether. No negative values allowed.)
+
+//OUTPUT PORT DESCRIPTION
+//[0] Probability Image - full X by Y by Z image with L float components interlaced (VTK default) which
+//                        represents the probability of a point being associated with a label. (can be
+//                        transformed into a valid Gibbs energy using -ln() of the image.)
+//[1] PAGMM Set - M by N image with L float components interlaced (VTK default) representing the
+//                activation of each Gaussian component in the histogram estimate of each label
+
 class vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
