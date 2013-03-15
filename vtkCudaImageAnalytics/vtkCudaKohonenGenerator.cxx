@@ -13,10 +13,27 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->outExt[3] = 0;
 	this->outExt[4] = 0;
 	this->outExt[5] = 0;
-	this->alphaInit = 1.0f;
-	this->alphaDecay = 0.99f;
-	this->widthInit = 1.0f;
-	this->widthDecay = 0.99f;
+
+	this->MeansAlphaInit = 1.0f;
+	this->MeansAlphaDecay = 0.99f;
+	this->MeansAlphaBaseline = 0.0f;
+	this->MeansAlphaProlong = 0.0f;
+	
+	this->MeansWidthInit = 1.0f;
+	this->MeansWidthDecay = 0.99f;
+	this->MeansWidthBaseline = 0.0f;
+	this->MeansWidthProlong = 0.0f;
+	
+	this->VarsAlphaInit = 1.0f;
+	this->VarsAlphaDecay = 0.99f;
+	this->VarsAlphaBaseline = 0.0f;
+	this->VarsAlphaProlong = 0.0f;
+	
+	this->VarsWidthInit = 1.0f;
+	this->VarsWidthDecay = 0.99f;
+	this->VarsWidthBaseline = 0.0f;
+	this->VarsWidthProlong = 0.0f;
+
 	this->BatchPercent = 1.0/15.0;
 	this->UseAllVoxels = false;
 	this->UseMask = false;
@@ -52,51 +69,99 @@ void vtkCudaKohonenGenerator::Deinitialize(int withData){
 //------------------------------------------------------------
 //Accessors and mutators
 
-void vtkCudaKohonenGenerator::SetAlphaInitial(double alphaInitial){
+void vtkCudaKohonenGenerator::SetMeansAlphaInitial(double alphaInitial){
 	if(alphaInitial >= 0.0 && alphaInitial <= 1.0)
-		this->alphaInit = alphaInitial;
+		this->MeansAlphaInit = alphaInitial;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetAlphaBaseline(double alphaBaseline){
+void vtkCudaKohonenGenerator::SetMeansAlphaBaseline(double alphaBaseline){
 	if(alphaBaseline >= 0.0 && alphaBaseline <= 1.0)
-		this->alphaBaseline = alphaBaseline;
+		this->MeansAlphaBaseline = alphaBaseline;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetAlphaProlong(double alphaProlong){
+void vtkCudaKohonenGenerator::SetMeansAlphaProlong(double alphaProlong){
 	if(alphaProlong >= 0.0 )
-		this->alphaProlong = alphaProlong;
+		this->MeansAlphaProlong = alphaProlong;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetAlphaDecay(double alphaDecay){
+void vtkCudaKohonenGenerator::SetMeansAlphaDecay(double alphaDecay){
 	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
-		this->alphaDecay = alphaDecay;
+		this->MeansAlphaDecay = alphaDecay;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetWidthInitial(double widthInitial){
+void vtkCudaKohonenGenerator::SetVarsAlphaInitial(double alphaInitial){
+	if(alphaInitial >= 0.0 && alphaInitial <= 1.0)
+		this->VarsAlphaInit = alphaInitial;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsAlphaBaseline(double alphaBaseline){
+	if(alphaBaseline >= 0.0 && alphaBaseline <= 1.0)
+		this->VarsAlphaBaseline = alphaBaseline;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsAlphaProlong(double alphaProlong){
+	if(alphaProlong >= 0.0 )
+		this->VarsAlphaProlong = alphaProlong;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsAlphaDecay(double alphaDecay){
+	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
+		this->VarsAlphaDecay = alphaDecay;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetMeansWidthInitial(double widthInitial){
 	if(widthInitial >= 0.0 && widthInitial <= 1.0)
-		this->widthInit = widthInitial;
+		this->MeansWidthInit = widthInitial;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetWidthProlong(double widthProlong){
+void vtkCudaKohonenGenerator::SetMeansWidthProlong(double widthProlong){
 	if(widthProlong >= 0.0 )
-		this->widthProlong = widthProlong;
+		this->MeansWidthProlong = widthProlong;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetWidthDecay(double widthDecay){
+void vtkCudaKohonenGenerator::SetMeansWidthDecay(double widthDecay){
 	if(widthDecay >= 0.0 && widthDecay <= 1.0)
-		this->widthDecay = widthDecay;
+		this->MeansWidthDecay = widthDecay;
 	this->Modified();
 }
 
-void vtkCudaKohonenGenerator::SetWidthBaseline(double widthBaseline){
+void vtkCudaKohonenGenerator::SetMeansWidthBaseline(double widthBaseline){
 	if(widthBaseline >= 0.0 && widthBaseline <= 1.0)
-		this->widthBaseline = widthBaseline;
+		this->MeansWidthBaseline = widthBaseline;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsWidthInitial(double widthInitial){
+	if(widthInitial >= 0.0 && widthInitial <= 1.0)
+		this->VarsWidthInit = widthInitial;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsWidthProlong(double widthProlong){
+	if(widthProlong >= 0.0 )
+		this->VarsWidthProlong = widthProlong;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsWidthDecay(double widthDecay){
+	if(widthDecay >= 0.0 && widthDecay <= 1.0)
+		this->VarsWidthDecay = widthDecay;
+	this->Modified();
+}
+
+void vtkCudaKohonenGenerator::SetVarsWidthBaseline(double widthBaseline){
+	if(widthBaseline >= 0.0 && widthBaseline <= 1.0)
+		this->VarsWidthBaseline = widthBaseline;
 	this->Modified();
 }
 
@@ -301,7 +366,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
-	outData->SetNumberOfScalarComponents(inData->GetNumberOfScalarComponents());
+	outData->SetNumberOfScalarComponents(2*inData->GetNumberOfScalarComponents());
 	outData->SetExtent(updateExtent);
 	outData->SetWholeExtent(updateExtent);
 	outData->AllocateScalars();
@@ -346,23 +411,27 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	if( this->WeightNormalization ){
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
 			this->info.Weights[i] = this->UnnormalizedWeights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i]) : 1.0);
+			this->info.Weights[i] *= this->info.Weights[i];
 		}
 	}else{
 		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->info.Weights[i] = this->UnnormalizedWeights[i];
+			this->info.Weights[i] = this->UnnormalizedWeights[i]*this->UnnormalizedWeights[i];
 		}
 	}
-
-	
 
 	//pass information to CUDA
 	this->ReserveGPU();
 	CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
 		Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 
-		(1+exp((this->alphaDecay - 1.0)*this->alphaProlong))*(this->alphaInit-this->alphaBaseline), this->alphaBaseline,
-		1.0 - this->alphaDecay, (this->alphaDecay - 1.0)*this->alphaProlong,
-		(1+exp((this->widthDecay - 1.0)*this->widthProlong))*(this->widthInit-this->widthBaseline), this->widthBaseline,
-		1.0 - this->widthDecay, (this->widthDecay - 1.0)*this->widthProlong, this->GetStream() );
+		(1+exp((this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong))*(this->MeansAlphaInit-this->MeansAlphaBaseline), this->MeansAlphaBaseline,
+		1.0 - this->MeansAlphaDecay, (this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong,
+		(1+exp((this->MeansWidthDecay - 1.0)*this->MeansWidthProlong))*(this->MeansWidthInit-this->MeansWidthBaseline), this->MeansWidthBaseline,
+		1.0 - this->MeansWidthDecay, (this->MeansWidthDecay - 1.0)*this->MeansWidthProlong,
+		(1+exp((this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong))*(this->VarsAlphaInit-this->VarsAlphaBaseline), this->VarsAlphaBaseline,
+		1.0 - this->VarsAlphaDecay, (this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong,
+		(1+exp((this->VarsWidthDecay - 1.0)*this->VarsWidthProlong))*(this->VarsWidthInit-this->VarsWidthBaseline), this->VarsWidthBaseline,
+		1.0 - this->VarsWidthDecay, (this->VarsWidthDecay - 1.0)*this->VarsWidthProlong,
+		this->GetStream() );
 	
 	//clean up temporaries
 	delete Range;

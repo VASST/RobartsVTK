@@ -18,23 +18,41 @@ public:
 
 	static vtkCudaKohonenGenerator *New();
 
-	void SetAlphaInitial(double alphaInitial);
-	double GetAlphaInitial(){ return (double) alphaInit; }
-	void SetAlphaProlong(double alphaProlong);
-	double GetAlphaProlong(){ return (double) alphaProlong; }
-	void SetAlphaDecay(double alphaDecay);
-	double GetAlphaDecay(){ return (double) alphaDecay; }
-	void SetAlphaBaseline(double alphaBaseline);
-	double GetAlphaBaseline(){ return (double) alphaBaseline; }
+	void SetMeansAlphaInitial(double alphaInitial);
+	double GetMeansAlphaInitial(){ return (double) MeansAlphaInit; }
+	void SetMeansAlphaProlong(double alphaProlong);
+	double GetMeansAlphaProlong(){ return (double) MeansAlphaProlong; }
+	void SetMeansAlphaDecay(double alphaDecay);
+	double GetMeansAlphaDecay(){ return (double) MeansAlphaDecay; }
+	void SetMeansAlphaBaseline(double alphaBaseline);
+	double GetMeansAlphaBaseline(){ return (double) MeansAlphaBaseline; }
 
-	void SetWidthInitial(double widthInitial);
-	double GetWidthInitial(){ return (double) widthInit; }
-	void SetWidthProlong(double widthProlong);
-	double GetWidthProlong(){ return (double) widthProlong; }
-	void SetWidthDecay(double widthDecay);
-	double GetWidthDecay(){ return (double) widthDecay; }
-	void SetWidthBaseline(double widthBaseline);
-	double GetWidthBaseline(){ return (double) widthBaseline; }
+	void SetMeansWidthInitial(double widthInitial);
+	double GetMeansWidthInitial(){ return (double) MeansWidthInit; }
+	void SetMeansWidthProlong(double widthProlong);
+	double GetMeansWidthProlong(){ return (double) MeansWidthProlong; }
+	void SetMeansWidthDecay(double widthDecay);
+	double GetMeansWidthDecay(){ return (double) MeansWidthDecay; }
+	void SetMeansWidthBaseline(double widthBaseline);
+	double GetMeansWidthBaseline(){ return (double) MeansWidthBaseline; }
+	
+	void SetVarsAlphaInitial(double alphaInitial);
+	double GetVarsAlphaInitial(){ return (double) VarsAlphaInit; }
+	void SetVarsAlphaProlong(double alphaProlong);
+	double GetVarsAlphaProlong(){ return (double) VarsAlphaProlong; }
+	void SetVarsAlphaDecay(double alphaDecay);
+	double GetVarsAlphaDecay(){ return (double) VarsAlphaDecay; }
+	void SetVarsAlphaBaseline(double alphaBaseline);
+	double GetVarsAlphaBaseline(){ return (double) VarsAlphaBaseline; }
+
+	void SetVarsWidthInitial(double widthInitial);
+	double GetVarsWidthInitial(){ return (double) VarsWidthInit; }
+	void SetVarsWidthProlong(double widthProlong);
+	double GetVarsWidthProlong(){ return (double) VarsWidthProlong; }
+	void SetVarsWidthDecay(double widthDecay);
+	double GetVarsWidthDecay(){ return (double) VarsWidthDecay; }
+	void SetVarsWidthBaseline(double widthBaseline);
+	double GetVarsWidthBaseline(){ return (double) VarsWidthBaseline; }
 	
 	void SetNumberOfIterations(int number);
 	int GetNumberOfIterations();
@@ -90,15 +108,25 @@ private:
 	vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&){}
 	vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
 	
-	float alphaInit;
-	float alphaProlong;
-	float alphaDecay;
-	float alphaBaseline;
+	float MeansAlphaInit;
+	float MeansAlphaProlong;
+	float MeansAlphaDecay;
+	float MeansAlphaBaseline;
 
-	float widthInit;
-	float widthProlong;
-	float widthDecay;
-	float widthBaseline;
+	float MeansWidthInit;
+	float MeansWidthProlong;
+	float MeansWidthDecay;
+	float MeansWidthBaseline;
+
+	float VarsAlphaInit;
+	float VarsAlphaProlong;
+	float VarsAlphaDecay;
+	float VarsAlphaBaseline;
+
+	float VarsWidthInit;
+	float VarsWidthProlong;
+	float VarsWidthDecay;
+	float VarsWidthBaseline;
 
 	int outExt[6];
 

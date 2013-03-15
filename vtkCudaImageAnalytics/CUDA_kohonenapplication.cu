@@ -20,11 +20,16 @@ __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Kohon
 	
 	//calculate the distance
 	float distance = 0.0f;
+	float penalty = 1.0f;
 	int bufferSize = info.KohonenMapSize[0] * info.KohonenMapSize[1];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float value = info.Weights[i]*(KohonenMap[i*bufferSize+kOffset] - SamplePointLocal[i]);
+		float var = KohonenMap[(2*i+1)*bufferSize+kOffset];
+		float value = (KohonenMap[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
+		value *= info.Scale / var;
 		distance += value*value;
+		penalty *= var;
 	}
+	distance += 0.5 * log(penalty);
 
 	//output distance and weight
 	if(kOffset < bufferSize) DistanceBuffer[kOffset] = distance;
@@ -252,14 +257,15 @@ void CUDAalgo_applyKohonenMap( float* inputData, char* inputMask, float* inputKo
 	cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Application_Information) );
 
 	//translate data onto device (need to transpose KSOM)
-	float* tempKohonen = new float[information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions];
-	int bufferJump = information.KohonenMapSize[0]*information.KohonenMapSize[1];
-	for(int i = 0; i < information.KohonenMapSize[0]*information.KohonenMapSize[1]; i++)
-		for( int j = 0; j < information.NumberOfDimensions; j++ )
-			tempKohonen[j*bufferJump+i] = inputKohonen[i*information.NumberOfDimensions+j];
+	int MapSize = information.KohonenMapSize[0]*information.KohonenMapSize[1];
+	float* tempKohonen = new float[2*MapSize*information.NumberOfDimensions];
+	int bufferJump = MapSize;
+	for(int i = 0; i < MapSize; i++)
+		for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
+			tempKohonen[j*bufferJump+i] = inputKohonen[i*2*information.NumberOfDimensions+j];
 	float* device_KohonenMap = 0;
-	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions );
-	cudaMemcpy( device_KohonenMap, tempKohonen, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions, cudaMemcpyHostToDevice );
+	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*MapSize*2*information.NumberOfDimensions );
+	cudaMemcpy( device_KohonenMap, tempKohonen, sizeof(float)*MapSize*2*information.NumberOfDimensions, cudaMemcpyHostToDevice );
 	delete[] tempKohonen;
 
 	//allocate a distance buffer

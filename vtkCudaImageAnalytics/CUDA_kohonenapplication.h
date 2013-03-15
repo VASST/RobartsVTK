@@ -11,7 +11,7 @@ typedef struct __align__(16)
 	int KohonenMapSize[3];
 	int NumberOfDimensions;
 
-	float Weights[MAX_DIMENSIONALITY];
+	float Scale;
 
 } Kohonen_Application_Information;
 

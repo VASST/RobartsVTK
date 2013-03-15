@@ -9,6 +9,11 @@
 __constant__ Kohonen_Generator_Information info;
 __constant__ float SamplePoint[MAX_DIMENSIONALITY];
 
+__global__ void SetBufferToConstant(float* buffer, float constant, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	if(offset < size ) buffer[offset] = constant;
+}
+
 __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* IndexBuffer, int mapSizeX, int mapSizeY ){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
@@ -22,16 +27,19 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 	
 	//calculate the distance
 	float distance = 0.0f;
+	float penalty = 1.0f;
 	int bufferSize = mapSizeX * mapSizeY;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float value = info.Weights[i]*(KohonenMap[i*bufferSize+kOffset] - SamplePointLocal[i]);
+		float weight = KohonenMap[(2*i+1)*bufferSize+kOffset];
+		float value = (KohonenMap[2*i*bufferSize+kOffset] - SamplePointLocal[i]) / weight;
 		distance += value*value;
+		penalty *= weight;
 	}
 	__syncthreads();
 
-	DistanceBuffer[kOffset] = distance;
+	if( kOffset < bufferSize ) DistanceBuffer[kOffset] = distance + 0.5f * log(penalty);
 	short2 index = {kOffset % mapSizeX, kOffset / mapSizeX };
-	IndexBuffer[kOffset] = index;
+	if( kOffset < bufferSize ) IndexBuffer[kOffset] = index;
 
 }
 
@@ -42,7 +50,7 @@ __global__ void DoubleMapSizeInX( float* KohonenMap, float* tempStore, int currM
 	//double size in X direction
 	int bufferSize = currMapSizeX * currMapSizeY;
 	int xIndex = kOffset % currMapSizeX;
-	for(int i = 0; i < info.NumberOfDimensions; i++){
+	for(int i = 0; i < 2*info.NumberOfDimensions; i++){
 		float valueOld = KohonenMap[i*bufferSize+kOffset];
 		float valueNeighbour = KohonenMap[i*bufferSize+kOffset+1];
 		float difference = (xIndex != currMapSizeX-1) ? valueNeighbour - valueOld : 0.0f;
@@ -59,7 +67,7 @@ __global__ void DoubleMapSizeInY( float* KohonenMap, float* tempStore, int currM
 	//double size in Y direction
 	int xIndex = kOffset % currMapSizeX;
 	int yIndex = kOffset / currMapSizeX;
-	for(int i = 0; i < info.NumberOfDimensions; i++){
+	for(int i = 0; i < 2*info.NumberOfDimensions; i++){
 		float valueOld = tempStore[i*bufferSize+kOffset];
 		float valueNeighbour = tempStore[i*bufferSize+kOffset+currMapSizeX];
 		float difference = (yIndex != currMapSizeY-1) ? valueNeighbour - valueOld : 0.0f;
@@ -180,24 +188,32 @@ __global__ void FindMinSample( float* DistanceBuffer, short2* IndexBuffer, int s
 
 }
 
-__global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float alpha, float neigh, int mapSizeX, int mapSizeY ){
+__global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float mAlpha, float mNeigh, float vAlpha, float vNeigh, int mapSizeX, int mapSizeY ){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
 	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
 	short2 currIndex = {kOffset % mapSizeX, kOffset / mapSizeX };
-	if(threadIdx.x < MAX_DIMENSIONALITY){
+	if(threadIdx.x < MAX_DIMENSIONALITY)
 		SamplePointLocal[threadIdx.x] = SamplePoint[threadIdx.x];
-	}
-
 	
-	float multiplier = alpha * exp( -((currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) ) / neigh );
+	//figure out the multipliers
+	float mMultiplier = mAlpha * exp( -((currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) ) / mNeigh );
+	float vMultiplier = vAlpha * exp( -((currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) ) / vNeigh );
+
+	//adjust the weights
 	int bufferSize = mapSizeX * mapSizeY;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float value = (1.0f-multiplier)*KohonenMap[i*bufferSize+kOffset] + multiplier*SamplePointLocal[i];
+		float mean = KohonenMap[2*i*bufferSize+kOffset];
+		float weight = KohonenMap[(2*i+1)*bufferSize+kOffset];
+		
+		float newMean = (1.0f-mMultiplier)*mean + mMultiplier*SamplePointLocal[i];
+		float newWeight = (1.0f-vMultiplier)*weight + vMultiplier*(SamplePointLocal[i]-mean)*(SamplePointLocal[i]-mean);
+
 		//float value = SamplePointLocal[i];
-		KohonenMap[i*bufferSize+kOffset] = value;
+		if( kOffset < bufferSize ) KohonenMap[2*i*bufferSize+kOffset] = newMean;
+		if( kOffset < bufferSize ) KohonenMap[(2*i+1)*bufferSize+kOffset] = newWeight;
 		__syncthreads();
 	}
 
@@ -235,26 +251,41 @@ void getMinimum(int size, int threads, int blocks, float *d_idata, float *d_odat
 
 }
 
-#define NUMTHREADS 512
+unsigned int gcd(unsigned int r, unsigned int n){
+	if( r < n ) return gcd( n, r );
+	if( n == 0 ) return r;
+	return gcd( n, r % n );
+}
+
+unsigned int random_prime(unsigned int n){
+     unsigned int r = rand();
+	 unsigned int t;
+     while ((t = gcd(r, n)) > 1)
+         r /= t;
+     return r;
+}
+
+#define NUMTHREADS 256
 
 void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char** maskData, double* range,
 									int* VolumeSize, int NumVolumes,
 									Kohonen_Generator_Information& information,
 									int MaxEpochs, int BatchSize,
-									float alphaVMult, float alphaVShift, float alphaHMult, float alphaHShift,
-									float nVMult, float nVShift, float nHMult, float nHShift,
+									float mAlphaVMult, float mAlphaVShift, float mAlphaHMult, float mAlphaHShift,
+									float mnVMult, float mnVShift, float mnHMult, float mnHShift,
+									float vAlphaVMult, float vAlphaVShift, float vAlphaHMult, float vAlphaHShift,
+									float vnVMult, float vnVShift, float vnHMult, float vnHShift,
 									cudaStream_t* stream ){
 
 	//copy information to GPU
 	cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Generator_Information) );
 
-
 	//find minimum starting size
-	float neighbourhood = nVShift + nVMult / (1 + exp( nHShift ) );
+	float neighbourhood = min( mnVShift + mnVMult / (1 + exp( mnHShift ) ), vnVShift + vnVMult / (1 + exp( vnHShift ) ) );
 	int currentMapSize[3] = {2, 2, 1};
-	while( neighbourhood * (double) currentMapSize[0] < 2.0 && currentMapSize[0] < information.KohonenMapSize[0] ) currentMapSize[0] += currentMapSize[0];
+	while( neighbourhood * (double) currentMapSize[0] < 8.0 && currentMapSize[0] < information.KohonenMapSize[0] ) currentMapSize[0] += currentMapSize[0];
 	if( currentMapSize[0] > information.KohonenMapSize[0] ) currentMapSize[0] = information.KohonenMapSize[0];
-	while( neighbourhood * (double) currentMapSize[1] < 2.0 && currentMapSize[1] < information.KohonenMapSize[1] ) currentMapSize[1] += currentMapSize[1];
+	while( neighbourhood * (double) currentMapSize[1] < 8.0 && currentMapSize[1] < information.KohonenMapSize[1] ) currentMapSize[1] += currentMapSize[1];
 	if( currentMapSize[1] > information.KohonenMapSize[1] ) currentMapSize[1] = information.KohonenMapSize[1];
 
 	//allocate a distance buffer
@@ -264,43 +295,68 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 	cudaMalloc( (void**) &device_IndexBuffer1, sizeof(short2)*information.KohonenMapSize[0]*information.KohonenMapSize[1] );
 	
 	//create buffer for the Kohonen map
+	int MapSize = information.KohonenMapSize[0]*information.KohonenMapSize[1];
+	int currMapSize = currentMapSize[0]*currentMapSize[1];
 	float* device_KohonenMap = 0;
-	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions );
+	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*MapSize*2*information.NumberOfDimensions );
 	float* device_tempSpace = 0;
-	cudaMalloc( (void**) &device_tempSpace, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions );
-	int c = 0;
-	for(int j = 0; j < information.NumberOfDimensions; j++ )
-		for(int i = 0; i < currentMapSize[0]*currentMapSize[1]; i++)
-			outputKohonen[c++] = (float)( (range[2*j+1]-range[2*j]) * ((double) rand() / (double)RAND_MAX) + range[2*j] );
-	cudaMemcpyAsync(device_KohonenMap, outputKohonen, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
+	cudaMalloc( (void**) &device_tempSpace, sizeof(float)*MapSize*2*information.NumberOfDimensions );
 
-	//train kohonen map
+	//initialize weights
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
+	for(int j = 0; j < information.NumberOfDimensions; j++ ){
+		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j)*currMapSize, 0.5*(range[2*j+1]+range[2*j]), currMapSize);
+		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j+1)*currMapSize, information.Weights[j], currMapSize);
+	}
+
+	//train kohonen map
 	if( BatchSize == -1 ){
 	
 		BatchSize = 0;
 		for( int p = 0; p < NumVolumes; p++ )
 			for( int sampleOffset = 0; sampleOffset < VolumeSize[3*p]*VolumeSize[3*p+1]*VolumeSize[3*p+2]; sampleOffset++)
 				if( maskData && (maskData[p])[sampleOffset] != 0 ) BatchSize++;
-
-		float alpha = (alphaVShift + alphaVMult / (1 + exp( alphaHShift ) ));
+				
+		float mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( mAlphaHShift ) ));
+		float vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( vAlphaHShift ) ));
+		float mNeigh = (mnVShift + mnVMult / (1 + exp( mnHShift ) )) * 
+						sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+		float vNeigh = (vnVShift + vnVMult / (1 + exp( vnHShift ) )) *
+						sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
 
 		for( int epoch = 0; epoch < MaxEpochs; epoch++ ){
 
-			for( int picture = 0; picture < NumVolumes; picture++ ){
-				for( int sampleOffset = 0; sampleOffset < VolumeSize[3*picture]*VolumeSize[3*picture+1]*VolumeSize[3*picture+2]; sampleOffset++){
+			//generate a random iterator through [0,NumVolumes-1]
+			int pictureIncrement = random_prime( NumVolumes ) % NumVolumes;
+			int pictureInUse = rand() % NumVolumes;
 
-					int sampleDimensionalOffset = information.NumberOfDimensions * sampleOffset;
+			for( int picture = 0; picture < NumVolumes; picture++ ){
+
+				//figure out what pseudo-random picture to grab
+				pictureInUse = (pictureInUse + pictureIncrement) % NumVolumes;
+				int NumVoxels = VolumeSize[3*pictureInUse]*VolumeSize[3*pictureInUse+1]*VolumeSize[3*pictureInUse+2];
+				
+				//generate a random iterator through [0,NumVolumes-1]
+				int offsetIncrement = random_prime( NumVoxels ) % NumVoxels;
+				int offsetInUse = rand() % NumVoxels;
+
+				for( int sampleOffset = 0; sampleOffset < NumVoxels; sampleOffset++){
+					
+					//figure out what pseudo-random offset to grab
+					offsetInUse = (offsetInUse + offsetIncrement) % NumVoxels;
+					int sampleDimensionalOffset = information.NumberOfDimensions * offsetInUse;
 
 					//if this is not a valid sample (ie: masked out) then try again
-					if( maskData && (maskData[picture])[sampleOffset] == 0 )
+					if( maskData && (maskData[pictureInUse])[offsetInUse] == 0 )
 						continue;
 
 					//find the distance between each centroid and the sample
-					cudaMemcpyToSymbolAsync(SamplePoint, &((inputData[picture])[sampleDimensionalOffset]), sizeof(float)*information.NumberOfDimensions );
+					cudaMemcpyToSymbolAsync(SamplePoint, &((inputData[pictureInUse])[sampleDimensionalOffset]),
+											sizeof(float)*information.NumberOfDimensions );
 					cudaStreamSynchronize(*stream);
-					ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer1, device_IndexBuffer1, currentMapSize[0], currentMapSize[1]);
+					ProcessSample<<<grid, threads, 0, *stream>>>(device_KohonenMap, device_DistanceBuffer1, device_IndexBuffer1,
+																 currentMapSize[0], currentMapSize[1]);
 
 					
 					//update the weights of each centroid
@@ -313,7 +369,8 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 					//find the winning centroid
 					for(int i = currentMapSize[0]*currentMapSize[1] / 2; i > NUMTHREADS; i = i/2){
 						dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
-						FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer1, device_IndexBuffer1, i, currentMapSize[0], currentMapSize[1]);
+						FindMinSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBuffer1, device_IndexBuffer1, i,
+																		 currentMapSize[0], currentMapSize[1]);
 					}
 					getMinimum( min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), 1,
 								device_DistanceBuffer1, device_DistanceBuffer1, device_IndexBuffer1, device_IndexBuffer1, stream );
@@ -323,19 +380,22 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 					cudaMemcpy( &minIndex, device_IndexBuffer1, sizeof(short2), cudaMemcpyDeviceToHost );
 					cudaMemcpy( &distance, device_DistanceBuffer1, sizeof(float), cudaMemcpyDeviceToHost );
 					//printf("%d, %d, %f\n", minIndex.x,  minIndex.y, distance);
-					UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, alpha, neighbourhood*sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1])), currentMapSize[0], currentMapSize[1]);
+					UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, mAlpha, mNeigh, vAlpha, vNeigh, currentMapSize[0], currentMapSize[1]);
 				}
 			}
 
 			#ifdef DEBUGGING
-				printf("Finished epoch %d with parameters (a,n) = (%f,%f) at %d\n", epoch, alpha, neighbourhood, (int) time(NULL));
+				printf("Finished epoch %d with parameters M:(a,n) = (%f,%f) and \n", epoch, mAlpha, mNeigh); 
+				printf("                                  V:(a,n) = (%f,%f) at %d\n",vAlpha, vNeigh, (int) time(NULL));
 			#endif
 
 			//update the weight updaters
-			alpha = (alphaVShift + alphaVMult / (1 + exp( (epoch+1) * alphaHMult + alphaHShift ) ) );
-			neighbourhood = nVShift + nVMult / (1 + exp( (epoch+1) * nHMult + nHShift ) );
-			
-			if( ((neighbourhood * (double) currentMapSize[0] < 2.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
+			mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( (epoch+1) * mAlphaHMult + mAlphaHShift ) ));
+			vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( (epoch+1) * vAlphaHMult + vAlphaHShift ) ));
+			neighbourhood = min( mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) ),
+								 vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) ) );
+						
+			if( ((neighbourhood * (double) currentMapSize[0] <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInX<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[0] *= 2;
@@ -344,7 +404,7 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 				#endif
 			}
 
-			if( ((neighbourhood * (double) currentMapSize[1] < 2.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
+			if( ((neighbourhood * (double) currentMapSize[1] <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInY<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[1] *= 2;
@@ -352,12 +412,24 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
 			}
+
+			//update the neighbourhood
+			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+
 		}
 
 	//if we are randomly sampling from the images
 	}else{
 	
-		float alpha = (alphaVShift + alphaVMult / (1 + exp( alphaHShift ) ) );
+		float mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( mAlphaHShift ) ));
+		float vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( vAlphaHShift ) ));
+		float mNeigh = (mnVShift + mnVMult / (1 + exp( mnHShift ) )) * 
+						sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+		float vNeigh = (vnVShift + vnVMult / (1 + exp( vnHShift ) )) *
+						sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
 
 		for( int epoch = 0; epoch < MaxEpochs; epoch++ ){
 			for( int batch = 0; batch < BatchSize; batch++ ){
@@ -389,22 +461,25 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 							device_DistanceBuffer1, device_DistanceBuffer1, device_IndexBuffer1, device_IndexBuffer1, stream );
 
 				//update the weights of each centroid
-				short2* minIndex = new short2[currentMapSize[0]*currentMapSize[1]];
-				cudaMemcpyAsync( &minIndex, device_IndexBuffer1, sizeof(short2)*currentMapSize[0]*currentMapSize[1], cudaMemcpyDeviceToHost, *stream );
+				short2 minIndex;
+				cudaMemcpyAsync( &minIndex, device_IndexBuffer1, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
 				cudaStreamSynchronize(*stream);
-				UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex[0], alpha, neighbourhood*sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1])), currentMapSize[0], currentMapSize[1]);
+				UpdateWeights<<<grid, threads, 0, *stream>>>(device_KohonenMap, minIndex, mAlpha, mNeigh, vAlpha, vNeigh, currentMapSize[0], currentMapSize[1]);
 			
 			}
 
 			#ifdef DEBUGGING
-				printf("Finished epoch %d with parameters (a,n) = (%f,%f) at %d\n", epoch, alpha, neighbourhood, (int) time(NULL));
+				printf("Finished epoch %d with parameters M:(a,n) = (%f,%f) and \n", epoch, mAlpha, mNeigh ); 
+				printf("                                  V:(a,n) = (%f,%f) at %d\n",vAlpha, vNeigh, (int) time(NULL));
 			#endif
 
 			//update the weight updaters
-			alpha = (alphaVShift + alphaVMult / (1 + exp( epoch * alphaHShift + alphaHShift ) ) );
-			neighbourhood = nVShift + nVMult / (1 + exp( epoch * nHShift + nHShift ) );
+			mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( (epoch+1) * mAlphaHMult + mAlphaHShift ) ));
+			vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( (epoch+1) * vAlphaHMult + vAlphaHShift ) ));
+			neighbourhood = min( mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) ),
+								 vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) ) );
 			
-			if( ((neighbourhood * (double) currentMapSize[0] < 2.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
+			if( ((neighbourhood * (double) currentMapSize[0] <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInX<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[0] *= 2;
@@ -413,7 +488,7 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 				#endif
 			}
 
-			if( ((neighbourhood * (double) currentMapSize[1] < 2.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
+			if( ((neighbourhood * (double) currentMapSize[1] <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInY<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[1] *= 2;
@@ -421,6 +496,12 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
 			}
+
+			//update the neighbourhood
+			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
 
 		}
 
@@ -431,16 +512,16 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 	cudaFree(device_IndexBuffer1);
 
 	//translate back data
-	float* tempKohonen = new float[information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions];
-	cudaMemcpyAsync( tempKohonen, device_KohonenMap, sizeof(float)*information.KohonenMapSize[0]*information.KohonenMapSize[1]*information.NumberOfDimensions, cudaMemcpyDeviceToHost, *stream );
+	float* tempKohonen = new float[2*MapSize*information.NumberOfDimensions];
+	cudaMemcpyAsync( tempKohonen, device_KohonenMap, 2*sizeof(float)*MapSize*information.NumberOfDimensions, cudaMemcpyDeviceToHost, *stream );
 	cudaFree(device_KohonenMap);
 	cudaFree(device_tempSpace);
 	cudaStreamSynchronize(*stream);
 
 	int bufferJump = information.KohonenMapSize[0]*information.KohonenMapSize[1];
 	for(int i = 0; i < information.KohonenMapSize[0]*information.KohonenMapSize[1]; i++)
-		for( int j = 0; j < information.NumberOfDimensions; j++ )
-			outputKohonen[i*information.NumberOfDimensions+j] = tempKohonen[j*bufferJump+i];
+		for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
+			outputKohonen[2*i*information.NumberOfDimensions+j] = tempKohonen[j*bufferJump+i];
 	delete[] tempKohonen;
 
 }

@@ -30,7 +30,7 @@ __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
 		//fetch input index from shared memory
 		int currInputIndex = (i*NUM_THREADS + threadIdx.x) / info.NumberOfDimensions;
 		float2 currLoc = InputIndices[currInputIndex];
-		int currComponent = (i*NUM_THREADS + threadIdx.x) % info.NumberOfDimensions;
+		int currComponent = 2*((i*NUM_THREADS + threadIdx.x) % info.NumberOfDimensions);
 
 		//fetch information from texture
 		float reprojValue = tex3D(Kohonen_Map, (float) currComponent, currLoc.x, currLoc.y);
@@ -64,7 +64,7 @@ void CUDAalgo_reprojectKohonenMap( float* inputData, float* inputKohonen, float*
 	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 	cudaArray* dev_KSOM = 0;
 	cudaExtent KSOMSize;
-	KSOMSize.width = information.NumberOfDimensions;
+	KSOMSize.width = 2*information.NumberOfDimensions;
 	KSOMSize.height = information.KohonenMapSize[0];
 	KSOMSize.depth = information.KohonenMapSize[1];
 	cudaMalloc3DArray(&dev_KSOM, &channelDesc, KSOMSize);
