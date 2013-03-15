@@ -267,8 +267,31 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 	//generate probability values
 	long double* Prob = (long double*) malloc( sizeof(long double) * N );
 	Prob[0] = (long double) N * (long double) p * pow(1.0 - (long double) q,N-1);
-	for( int k = 2; k <= N; k++ )
-		Prob[k-1] = Prob[k-2] * (long double)(q/(1.0-q)) * ((long double)(k-1) / (long double)k) * ((long double)(N-k+1) / (long double)(k-1));
+	Prob[N-1] = (long double) N * (long double) p * pow((long double) q,N-1);
+	for( int k = 1; k < N-1; k++ )
+		Prob[k] = 0.0f;
+	for( int reps = 0 ; reps < (int)(sqrt((double)N)+0.5); reps++ ){
+		for( int b = 1; b < N-1; b++ ){
+			int k = b+1;
+			long double upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
+			long double downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
+			Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+		
+			k = N-b-1;
+			upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
+			downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
+			Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+		}
+		long double probSum = 0.0;
+		for( int k = 1; k < N-1; k++ )
+			probSum += Prob[k];
+		for( int b = 1; b < N-1; b++ )
+			Prob[b] *= ((long double)1.0 - Prob[0] - Prob[N-1]) / probSum;
+		probSum = 0.0;
+		for( int k = 1; k < N-1; k++ )
+			probSum += Prob[k];
+		probSum = probSum;
+	}
 
 	//estimate coefficients
 	for( int k = 1; k <= N; k++ ){
