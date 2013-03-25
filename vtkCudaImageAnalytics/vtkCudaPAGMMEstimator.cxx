@@ -14,13 +14,6 @@ vtkCudaPAGMMEstimator::vtkCudaPAGMMEstimator(){
 	this->SetNumberOfInputConnections(2,1);
 	this->SetNumberOfOutputPorts(2);
 
-	//initialize the weights to 1
-	this->WeightNormalization = true;
-	for(int i = 0; i < MAX_DIMENSIONALITY; i++){
-		this->UnnormalizedWeights[i] = 1.0f;
-		this->info.Weights[i] = 1.0f;
-	}
-
 	//initialize conservativeness and scale
 	this->Q = 0.01;
 	this->Scale = 1.0;
@@ -41,39 +34,6 @@ void vtkCudaPAGMMEstimator::Deinitialize(int withData){
 
 
 //----------------------------------------------------------------------------
-
-void vtkCudaPAGMMEstimator::SetWeight(int index, double weight){
-	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 )
-		this->UnnormalizedWeights[index] = weight;
-}
-
-void vtkCudaPAGMMEstimator::SetWeights(const double* weights){
-	for(int i = 0; i < MAX_DIMENSIONALITY; i++)
-		try{
-			this->UnnormalizedWeights[i] = weights[i];
-		}catch(...){
-			this->UnnormalizedWeights[i] = 1.0;
-		}
-}
-
-double vtkCudaPAGMMEstimator::GetWeight(int index){
-	if( index >= 0 && index < MAX_DIMENSIONALITY )
-		return this->UnnormalizedWeights[index];
-	return 0.0;
-}
-
-double* vtkCudaPAGMMEstimator::GetWeights(){
-	return this->UnnormalizedWeights;
-}
-
-void vtkCudaPAGMMEstimator::SetWeightNormalization(bool set){
-	this->WeightNormalization = set;
-}
-
-bool vtkCudaPAGMMEstimator::GetWeightNormalization(){
-	return this->WeightNormalization;
-}
-//------------------------------------------------------------
 
 void vtkCudaPAGMMEstimator::SetConservativeness(double q){
 	if( q != this->Q && q >= 0.0 && q <= 1.0 ){
@@ -180,15 +140,6 @@ int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
 	double* Range = new double[2*(this->info.NumberOfDimensions)];
 	for(int i = 0; i < this->info.NumberOfDimensions; i++)
 		inputDataImage->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
-
-	//update weights
-	if( this->WeightNormalization )
-		for(int i = 0; i < this->info.NumberOfDimensions; i++)
-			this->info.Weights[i] = this->UnnormalizedWeights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i]) : 1.0);
-	else
-		for(int i = 0; i < this->info.NumberOfDimensions; i++)
-			this->info.Weights[i] = this->UnnormalizedWeights[i];
-
 
 	//calculate P according tot he Naive model
 	int N = this->info.GMMSize[0]*this->info.GMMSize[1];

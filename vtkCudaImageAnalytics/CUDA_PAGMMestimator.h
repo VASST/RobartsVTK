@@ -12,8 +12,6 @@ typedef struct __align__(16)
 	int NumberOfDimensions;
 	int NumberOfLabels;
 
-	float Weights[MAX_DIMENSIONALITY];
-
 } PAGMM_Information;
 
 void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputData, float* outputGMM,

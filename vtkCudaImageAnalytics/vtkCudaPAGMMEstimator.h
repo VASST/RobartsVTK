@@ -32,13 +32,6 @@ public:
 	vtkTypeMacro( vtkCudaPAGMMEstimator, vtkImageAlgorithm );
 
 	static vtkCudaPAGMMEstimator *New();
-	
-	void SetWeight(int index, double weight);
-	void SetWeights(const double* weights);
-	double GetWeight(int index);
-	double* GetWeights();
-	void SetWeightNormalization(bool set);
-	bool GetWeightNormalization();
 
 	void SetConservativeness(double q);
 	double GetConservativeness();
@@ -73,9 +66,6 @@ private:
 	
 	double	Q;
 	double	Scale;
-
-	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
-	bool	WeightNormalization;
 
 	PAGMM_Information info;
 };

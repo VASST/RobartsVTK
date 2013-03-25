@@ -13,6 +13,12 @@ __global__ void ZeroOutBuffer(float* buffer, int size){
 	if(offset < size ) buffer[offset] = 0.0f;
 }
 
+__global__ void ReplaceNANs(float* buffer, float value, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	float current = buffer[offset];
+	current = isnan(current) ? value : current;
+}
+
 __global__ void OneOutBuffer(float* buffer, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
 	if(offset < size ) buffer[offset] = 1.0f;
@@ -60,18 +66,21 @@ __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Map, 
 
 	//get sample co-ordinates in buffer
 	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
-	if(threadIdx.x < MAX_DIMENSIONALITY){
+	if(threadIdx.x < MAX_DIMENSIONALITY)
 		SamplePointLocal[threadIdx.x] = InputData[info.NumberOfDimensions*samplePointLoc+threadIdx.x];
-	}
 	__syncthreads();
 	
 	//calculate the distance
 	float distance = 0.0f;
+	float penalty = 1.0f;
 	int bufferSize = info.GMMSize[0]*info.GMMSize[1];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float value = info.Weights[i]*(Map[i*bufferSize+kOffset] - SamplePointLocal[i]);
-		distance += value*value;
+		float weight = Map[(2*i+1)*bufferSize+kOffset];
+		float value = (Map[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
+		distance += value * value / weight ;
+		penalty *= weight;
 	}
+	distance += 0.5f * log( penalty );
 
 	//output results
 	if(kOffset < bufferSize) OutputBuffer[kOffset] = exp( -distance * scale );
@@ -195,13 +204,13 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 	cudaMemcpyToSymbolAsync(info, &information, sizeof(PAGMM_Information) );
 	
 	//copy input GMM transposed definition to GPU
-	float* tempGMM = new float[N*information.NumberOfDimensions];
+	float* tempGMM = new float[2*N*information.NumberOfDimensions];
 	for(int i = 0; i < N; i++)
-		for( int j = 0; j < information.NumberOfDimensions; j++ )
-			tempGMM[j*N+i] = inputGMM[i*information.NumberOfDimensions+j];
-	float* dev_GMMMeans = 0;
-	cudaMalloc( (void**) &dev_GMMMeans, sizeof(float)*N*information.NumberOfDimensions );
-	cudaMemcpyAsync( dev_GMMMeans, tempGMM, sizeof(float)*N*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
+		for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
+			tempGMM[j*N+i] = inputGMM[i*2*information.NumberOfDimensions+j];
+	float* dev_GMMOrig = 0;
+	cudaMalloc( (void**) &dev_GMMOrig, sizeof(float)*2*N*information.NumberOfDimensions );
+	cudaMemcpyAsync( dev_GMMOrig, tempGMM, sizeof(float)*2*N*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
 	delete[] tempGMM;
 
 	//copy input image into GPU
@@ -241,7 +250,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 		
 		//find GMM activation and place in working buffer
 		ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-			(x, dev_inputImage, dev_GMMMeans, dev_workingBuffer, scale);
+			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
 
 		//reduce working buffer by summation
 		for(int j = N / 2; j > NUMTHREADS; j = j/2){
@@ -266,29 +275,43 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 
 	//generate probability values
 	long double* Prob = (long double*) malloc( sizeof(long double) * N );
-	Prob[0] = (long double) N * (long double) p * pow(1.0 - (long double) q,N-1);
-	Prob[N-1] = (long double) N * (long double) p * pow((long double) q,N-1);
-	for( int k = 1; k < N-1; k++ )
-		Prob[k] = 0.0f;
+	Prob[0] = (long double) N * (long double) p * (long double) N * pow(1.0 - (long double) q,N-1);
+	Prob[N-1] = (long double) N * (long double) p *  (long double) N * pow((long double) q,N-1);
+	for( int b = 1; b < N-1; b++ ){
+		int k = b+1;
+		long double upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
+		long double downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
+		Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+		
+		k = N-b;
+		upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
+		downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
+		Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+	}
+
+	//refine the values
 	for( int reps = 0 ; reps < (int)(sqrt((double)N)+0.5); reps++ ){
+		Prob[0] = (long double) N * (long double) p * (long double) N * pow(1.0 - (long double) q,N-1);
+		Prob[N-1] = (long double) N * (long double) p *  (long double) N * pow((long double) q,N-1);
 		for( int b = 1; b < N-1; b++ ){
 			int k = b+1;
 			long double upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
 			long double downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
-			Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+			Prob[k-1] = (upVal + downVal) / (long double) 2.0;
 		
-			k = N-b-1;
+			k = N-b;
 			upVal = Prob[k-2] * ((long double)(q)/(long double)(1.0-q)) * (long double)(N-k+1) / (long double)(k);
 			downVal = Prob[k] * ((long double)(1.0-q)/(long double)q) * (long double)(k+1) / (long double)(N-k);
-			Prob[k-1] = (upVal > downVal) ? upVal : downVal;
+			Prob[k-1] = (upVal + downVal) / (long double) 2.0;
 		}
 		long double probSum = 0.0;
-		for( int k = 1; k < N-1; k++ )
+		for( int k = 0; k < N; k++ )
 			probSum += Prob[k];
-		for( int b = 1; b < N-1; b++ )
-			Prob[b] *= ((long double)1.0 - Prob[0] - Prob[N-1]) / probSum;
+		probSum = probSum;
+		for( int b = 0; b < N; b++ )
+			Prob[b] *= ((long double)N / probSum);
 		probSum = 0.0;
-		for( int k = 1; k < N-1; k++ )
+		for( int k = 0; k < N; k++ )
 			probSum += Prob[k];
 		probSum = probSum;
 	}
@@ -309,7 +332,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 
 			//find GMM activation and place in working buffer
 			ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-				(x, dev_inputImage, dev_GMMMeans, dev_workingBuffer, scale);
+				(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
 
 			//combine working buffer with summation buffer and multiply into product buffer
 			MultiplyBuffers<<<gridN, threadsFull, 0, *stream>>>
@@ -319,7 +342,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 		}
 
 		//multiply product buffer by probability value
-		TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_productBuffer, Prob[k], 0.0f, N*L);
+		TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_productBuffer, (float) Prob[k], 0.0f, N*L);
 
 		//sum product buffer into estimate coefficients buffer
 		SumBuffers<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, dev_productBuffer, N*L);
@@ -340,6 +363,9 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 		TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, 1.0f/sum, 0.0f, N);
 	}
 
+	//replace all NaN values with zeros
+	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 0.0f, N*L);
+
 	//deallocate product buffer (size N*L) and probabilities
 	cudaFree( dev_productBuffer );
 	free( Prob );
@@ -356,7 +382,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 
 		//find GMM activation and place in working buffer
 		ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-			(x, dev_inputImage, dev_GMMMeans, dev_workingBuffer2, scale);
+			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer2, scale);
 		
 		//for each label
 		for( int curl = 0; curl < L; curl++ ){
@@ -377,11 +403,12 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 			//copy into host probability buffer
 			cudaMemcpyAsync( &(outputData[x*L+curl]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
+			if( isnan(outputData[x*L+curl]) ) outputData[x*L+curl] = 0.0f;
 		}
 
 
 	}
-
+	
 	//copy estimate coefficients to host
 	float* tempPAGMM = new float[N*L];
 	cudaMemcpyAsync( tempPAGMM, dev_outputGMM, sizeof(float)*L*N, cudaMemcpyDeviceToHost, *stream );
@@ -399,7 +426,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 	cudaFree(dev_outputGMM);
 	
 	//deallocate Gaussian mixture (size N*D)
-	cudaFree(dev_GMMMeans);
+	cudaFree(dev_GMMOrig);
 
 	//deallocate buffer of input data (size V*D)
 	cudaFree(dev_inputImage);
