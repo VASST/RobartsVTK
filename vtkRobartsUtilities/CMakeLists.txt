@@ -12,6 +12,8 @@ SET ( Kit_SRCS
   vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
   vtkImage2DHistogram.h vtkImage2DHistogram.cxx
   vtkImageMultiStatistics.h vtkImageMultiStatistics.cxx
+
+  vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
