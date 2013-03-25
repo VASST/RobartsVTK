@@ -31,13 +31,14 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 	int bufferSize = mapSizeX * mapSizeY;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float weight = KohonenMap[(2*i+1)*bufferSize+kOffset];
-		float value = (KohonenMap[2*i*bufferSize+kOffset] - SamplePointLocal[i]) / weight;
-		distance += value*value;
+		float value = (KohonenMap[2*i*bufferSize+kOffset] - SamplePointLocal[i]);
+		distance += value*value / weight;
 		penalty *= weight;
 	}
+	distance += 0.5f * log(penalty);
 	__syncthreads();
 
-	if( kOffset < bufferSize ) DistanceBuffer[kOffset] = distance + 0.5f * log(penalty);
+	if( kOffset < bufferSize ) DistanceBuffer[kOffset] = distance;
 	short2 index = {kOffset % mapSizeX, kOffset / mapSizeX };
 	if( kOffset < bufferSize ) IndexBuffer[kOffset] = index;
 
@@ -306,7 +307,7 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
 	for(int j = 0; j < information.NumberOfDimensions; j++ ){
-		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j)*currMapSize, 0.5*(range[2*j+1]+range[2*j]), currMapSize);
+		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j)*currMapSize, (float)(0.5*(range[2*j+1]+range[2*j])), currMapSize);
 		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j+1)*currMapSize, information.Weights[j], currMapSize);
 	}
 
@@ -392,32 +393,44 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 			//update the weight updaters
 			mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( (epoch+1) * mAlphaHMult + mAlphaHShift ) ));
 			vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( (epoch+1) * vAlphaHMult + vAlphaHShift ) ));
-			neighbourhood = min( mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) ),
-								 vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) ) );
+			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			neighbourhood = min( mNeigh, vNeigh );
 						
-			if( ((neighbourhood * (double) currentMapSize[0] <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
+			if( ((neighbourhood <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInX<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[0] *= 2;
 				#ifdef DEBUGGING
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
+				
+				//update the neighbourhood
+				mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+				vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+
 			}
 
-			if( ((neighbourhood * (double) currentMapSize[1] <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
+			if( ((neighbourhood <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInY<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[1] *= 2;
 				#ifdef DEBUGGING
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
+				
+				//update the neighbourhood
+				mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+				vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+
 			}
 
-			//update the neighbourhood
-			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
-							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
-			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
-							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
 
 		}
 
@@ -476,32 +489,43 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 			//update the weight updaters
 			mAlpha = (mAlphaVShift + mAlphaVMult / (1 + exp( (epoch+1) * mAlphaHMult + mAlphaHShift ) ));
 			vAlpha = (vAlphaVShift + vAlphaVMult / (1 + exp( (epoch+1) * vAlphaHMult + vAlphaHShift ) ));
-			neighbourhood = min( mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) ),
-								 vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) ) );
-			
-			if( ((neighbourhood * (double) currentMapSize[0] <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
+			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			neighbourhood = min( mNeigh, vNeigh );
+						
+			if( ((neighbourhood <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInX<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[0] *= 2;
 				#ifdef DEBUGGING
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
+				
+				//update the neighbourhood
+				mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+				vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+
 			}
 
-			if( ((neighbourhood * (double) currentMapSize[1] <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
+			if( ((neighbourhood <= 8.0) && (currentMapSize[1] < information.KohonenMapSize[1])) ){
 				grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 				DoubleMapSizeInY<<<grid, threads, 0, *stream>>>( device_KohonenMap, device_tempSpace, currentMapSize[0], currentMapSize[1] );
 				currentMapSize[1] *= 2;
 				#ifdef DEBUGGING
 					printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
 				#endif
-			}
+				
+				//update the neighbourhood
+				mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+				vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
+								sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
 
-			//update the neighbourhood
-			mNeigh = (mnVShift + mnVMult / (1 + exp( (epoch+1) * mnHMult + mnHShift ) )) * 
-							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
-			vNeigh = (vnVShift + vnVMult / (1 + exp( (epoch+1) * vnHMult + vnHShift ) )) *
-							sqrt((float)(currentMapSize[0]*currentMapSize[0]+currentMapSize[1]*currentMapSize[1]));
+			}
 
 		}
 
