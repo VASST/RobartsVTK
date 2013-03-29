@@ -33,8 +33,24 @@ public:
 	//no smoothness term is provided, it is assumed to be the unit function.
 	void AddSmoothnessScalar( vtkIdType node, double alpha );
 	
+	//Get and Set the number of iterations used by the algorithm (computing convergence term
+	//is too slow.)
+	vtkSetClampMacro(NumberOfIterations,int,0,INT_MAX);
+	vtkGetMacro(NumberOfIterations,int);
+	
+	//Get and Set the labeling constant, CC, of the algorithm
+	vtkSetClampMacro(CC,float,0.0f,1.0f);
+	vtkGetMacro(CC,float);
+
+	//Get and Set the step size of the algorithm for updating spatial flows
+	vtkSetClampMacro(StepSize,float,0.0f,1.0f);
+	vtkGetMacro(StepSize,float);
+
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetOutput(int idx);
+
+	
 
 	// Description:
 	// If the subclass does not define an Execute method, then the task
@@ -50,6 +66,9 @@ public:
 	virtual int RequestUpdateExtent( vtkInformation* request,
 							 vtkInformationVector** inputVector,
 							 vtkInformationVector* outputVector);
+	virtual int RequestDataObject( vtkInformation* request,
+							 vtkInformationVector** inputVector,
+							 vtkInformationVector* outputVector);
 	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
@@ -59,9 +78,22 @@ protected:
 private:
 	vtkHierarchicalMaxFlowSegmentation operator=(const vtkHierarchicalMaxFlowSegmentation&){}
 	vtkHierarchicalMaxFlowSegmentation(const vtkHierarchicalMaxFlowSegmentation&){}
+
+	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
+	void PropogateLabels( vtkIdType currNode, float** branchLabels, float** leafLabels, int size );
+	void PropogateFlows( vtkIdType currNode, float* sourceSinkFlow, float** branchSinkFlows, float** leafSinkFlows,
+											 float** branchIncFlows,
+											 float** branchDivFlows, float** leafDivFlows,
+											 float** branchLabels, float** leafLabels, int size );
 	
 	vtkTree* Hierarchy;
 	std::map<vtkIdType,double> SmoothnessScalars;
+	std::map<vtkIdType,int> OutputPortMapping;
+	std::map<vtkIdType,int> IntermediateBufferMapping;
+
+	int NumberOfIterations;
+	float CC;
+	float StepSize;
 };
 
 #endif
