@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+#include <unistd.h>
+
 vtkStandardNewMacro(vtkImagePipe);
 
 extern "C"
@@ -243,7 +245,7 @@ void* vtkImagePipe::FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
 			self->clientSocket = newClient;
 			self->threader->SpawnThread( (vtkThreadFunctionType) &ServerSideUpdate, (void*) self );
 		}else{
-			Sleep( 100 );
+			sleep( 100 );
 		}
 	}
 	return 0;

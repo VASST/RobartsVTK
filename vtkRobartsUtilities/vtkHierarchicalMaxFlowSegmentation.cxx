@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <float.h>
 
 #define SQR(X) X*X
 
@@ -565,7 +566,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 				float upX = (x == X-1) ? 0.0f : (leafFlowXBuffers[i])[idx+1];
 				float upY = (y == Y-1) ? 0.0f : (leafFlowYBuffers[i])[idx+X];
 				float upZ = (z == Z-1) ? 0.0f : (leafFlowZBuffers[i])[idx+X*Y];
-				(leafWorkingBuffers[i])[x] = std::sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[x]) +
+				(leafWorkingBuffers[i])[x] = sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[x]) +
 																 SQR(upY) + SQR((leafFlowYBuffers[i])[x]) +
 																 SQR(upZ) + SQR((leafFlowZBuffers[i])[x]) ));
 			}
@@ -574,7 +575,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 				float upX = (x == X-1) ? 0.0f : (branchFlowXBuffers[i])[idx+1];
 				float upY = (y == Y-1) ? 0.0f : (branchFlowYBuffers[i])[idx+X];
 				float upZ = (z == Z-1) ? 0.0f : (branchFlowZBuffers[i])[idx+X*Y];
-				(branchWorkingBuffers[i])[x] = std::sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[x]) +
+				(branchWorkingBuffers[i])[x] = sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[x]) +
 																 SQR(upY) + SQR((branchFlowYBuffers[i])[x]) +
 																 SQR(upZ) + SQR((branchFlowZBuffers[i])[x]) ));
 			}

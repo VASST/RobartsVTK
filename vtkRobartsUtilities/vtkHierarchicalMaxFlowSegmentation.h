@@ -13,6 +13,8 @@
 #include "vtkTree.h"
 #include <map>
 
+#include <limits.h>
+
 //INPUT PORT DESCRIPTION
 
 //OUTPUT PORT DESCRIPTION
