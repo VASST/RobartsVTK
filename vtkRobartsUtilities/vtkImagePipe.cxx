@@ -23,8 +23,6 @@
 
 #include <iostream>
 
-#include <unistd.h>
-
 vtkStandardNewMacro(vtkImagePipe);
 
 extern "C"
@@ -232,6 +230,23 @@ void vtkImagePipe::Initialize()
 
 }  
 
+//----------------------------------------------------------------------------
+// platform-independent sleep function
+static inline void vtkSleep(double duration)
+{
+  duration = duration; // avoid warnings
+  // sleep according to OS preference
+#ifdef _WIN32
+  Sleep((int)(1000*duration));
+#elif defined(__FreeBSD__) || defined(__linux__) || defined(sgi)
+  struct timespec sleep_time, dummy;
+  sleep_time.tv_sec = (int)duration;
+  sleep_time.tv_nsec = (int)(1000000000*(duration-sleep_time.tv_sec));
+  nanosleep(&sleep_time,&dummy);
+#endif
+}
+//----------------------------------------------------------------------------
+
 void* vtkImagePipe::FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
 	
 	vtkImagePipe *self = (vtkImagePipe *)(data->UserData);
@@ -245,7 +260,7 @@ void* vtkImagePipe::FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
 			self->clientSocket = newClient;
 			self->threader->SpawnThread( (vtkThreadFunctionType) &ServerSideUpdate, (void*) self );
 		}else{
-			sleep( 100 );
+			vtkSleep(100);
 		}
 	}
 	return 0;
