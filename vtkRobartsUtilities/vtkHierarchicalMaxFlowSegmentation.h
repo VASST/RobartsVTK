@@ -96,6 +96,11 @@ private:
 	int NumberOfIterations;
 	float CC;
 	float StepSize;
+	
+	std::map<vtkIdType,int> InputPortMapping;
+	std::map<int,vtkIdType> BackwardsInputPortMapping;
+	int FirstUnusedPort;
+
 };
 
 #endif
