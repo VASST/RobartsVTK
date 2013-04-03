@@ -471,11 +471,10 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//				1 divergence buffer
 	//				1 outgoing flow buffer
 	//				1 working temp buffer (ie: guk)
-	float* branchNodeBuffer = new float[7*VolumeSize*NumBranches];
+	float* branchNodeBuffer = new float[6*VolumeSize*NumBranches];
 	float** branchFlowXBuffers = new float* [NumBranches];
 	float** branchFlowYBuffers = new float* [NumBranches];
 	float** branchFlowZBuffers = new float* [NumBranches];
-	float** branchDivBuffers = new float* [NumBranches];
 	float** branchSinkBuffers = new float* [NumBranches];
 	float** branchLabelBuffers = new float* [NumBranches];
 	float** branchWorkingBuffers = new float* [NumBranches];
@@ -484,7 +483,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		branchFlowXBuffers[i] = ptr; ptr += VolumeSize;
 		branchFlowYBuffers[i] = ptr; ptr += VolumeSize;
 		branchFlowZBuffers[i] = ptr; ptr += VolumeSize;
-		branchDivBuffers[i] = ptr; ptr += VolumeSize;
 		branchLabelBuffers[i] = ptr; ptr += VolumeSize;
 		branchSinkBuffers[i] = ptr; ptr += VolumeSize;
 		branchWorkingBuffers[i] = ptr; ptr += VolumeSize;
@@ -496,11 +494,10 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//				1 divergence buffer
 	//				1 sink flow buffer
 	//				1 working temp buffer (ie: guk)
-	float*	leafNodeBuffer = new float[6*VolumeSize*NumLeaves];
+	float*	leafNodeBuffer = new float[5*VolumeSize*NumLeaves];
 	float** leafFlowXBuffers = new float* [NumLeaves];
 	float** leafFlowYBuffers = new float* [NumLeaves];
 	float** leafFlowZBuffers = new float* [NumLeaves];
-	float** leafDivBuffers = new float* [NumLeaves];
 	float** leafSinkBuffers = new float* [NumLeaves];
 	float** leafWorkingBuffers = new float* [NumLeaves];
 	ptr = leafNodeBuffer;
@@ -508,7 +505,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		leafFlowXBuffers[i] = ptr; ptr += VolumeSize;
 		leafFlowYBuffers[i] = ptr; ptr += VolumeSize;
 		leafFlowZBuffers[i] = ptr; ptr += VolumeSize;
-		leafDivBuffers[i] = ptr; ptr += VolumeSize;
 		leafSinkBuffers[i] = ptr; ptr += VolumeSize;
 		leafWorkingBuffers[i] = ptr; ptr += VolumeSize;
 	}
@@ -519,7 +515,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 			(branchFlowXBuffers[i])[x] = 0.0f;
 			(branchFlowYBuffers[i])[x] = 0.0f;
 			(branchFlowZBuffers[i])[x] = 0.0f;
-			(branchDivBuffers[i])[x] = 0.0f;
 			(branchLabelBuffers[i])[x] = 0.0f;
 			(branchWorkingBuffers[i])[x] = 0.0f;
 		}
@@ -527,7 +522,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 			(leafFlowXBuffers[i])[x] = 0.0f;
 			(leafFlowYBuffers[i])[x] = 0.0f;
 			(leafFlowZBuffers[i])[x] = 0.0f;
-			(leafDivBuffers[i])[x] = 0.0f;
 			(leafWorkingBuffers[i])[x] = 0.0f;
 		}
 	}
@@ -571,6 +565,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		for(int i = 0; i < NumBranches; i++)
 			(branchSinkBuffers[i])[x] = (leafDataTermBuffers[maxProbLabel])[x];
 	}
+	PropogateLabels( this->Hierarchy->GetRoot(), branchLabelBuffers, leafLabelBuffers, VolumeSize );
 
 	//convert smoothness constants mapping to two mappings
 	iterator = vtkTreeDFSIterator::New();
@@ -596,12 +591,13 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
 
 		//compute the flow conservation error at each point and store in working buffer
+		//before, working buffer held the divergence
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int x = 0; x < VolumeSize; x++ )
-				(leafWorkingBuffers[i])[x] = (leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x] - (leafLabelBuffers[i])[x] / this->CC;
+				(leafWorkingBuffers[i])[x] = (leafWorkingBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x] - (leafLabelBuffers[i])[x] / this->CC;
 		for(int i = 0; i < NumBranches; i++ )
 			for( int x = 0; x < VolumeSize; x++ )
-				(branchWorkingBuffers[i])[x] = (branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x] - (branchLabelBuffers[i])[x] / this->CC;
+				(branchWorkingBuffers[i])[x] = (branchWorkingBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x] - (branchLabelBuffers[i])[x] / this->CC;
 
 		//Do the gradient-descent based update of the spatial flows
 		for(int i = 0; i < NumLeaves; i++ )
@@ -674,23 +670,23 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//calculate the divergence since the source flows won't change for the rest of this iteration
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int x = 0; x < VolumeSize; x++ )
-				(leafDivBuffers[i])[x] = (leafFlowXBuffers[i])[x+1] - (leafFlowXBuffers[i])[x] +
+				(leafWorkingBuffers[i])[x] = (leafFlowXBuffers[i])[x+1] - (leafFlowXBuffers[i])[x] +
 										(leafFlowYBuffers[i])[x+X] - (leafFlowYBuffers[i])[x] +
 										(leafFlowZBuffers[i])[x+X*Y] - (leafFlowZBuffers[i])[x];
 		for(int i = 0; i < NumBranches; i++ )
 			for( int x = 0; x < VolumeSize; x++ )
-				(branchDivBuffers[i])[x] = (branchFlowXBuffers[i])[x+1] - (branchFlowXBuffers[i])[x] +
+				(branchWorkingBuffers[i])[x] = (branchFlowXBuffers[i])[x+1] - (branchFlowXBuffers[i])[x] +
 										 (branchFlowYBuffers[i])[x+X] - (branchFlowYBuffers[i])[x] +
 										 (branchFlowZBuffers[i])[x+X*Y] - (branchFlowZBuffers[i])[x];
 
 		//compute sink flow (store in working buffer) and update source flows bottom up
 		PropogateFlows( this->Hierarchy->GetRoot(), sourceFlow, branchSinkBuffers, leafSinkBuffers, branchIncBuffers,
-						branchDivBuffers, leafDivBuffers, branchLabelBuffers, leafLabelBuffers, VolumeSize );
+						branchWorkingBuffers, leafWorkingBuffers, branchLabelBuffers, leafLabelBuffers, VolumeSize );
 		
 		//update the leaf sink flows
 		for(int i = 0; i < NumLeaves; i++ ){
 			for( int x = 0; x < VolumeSize; x++ ){
-				float potential = (leafIncBuffers[i])[x] - (leafDivBuffers[i])[x] + (leafLabelBuffers[i])[x] / this->CC;
+				float potential = (leafIncBuffers[i])[x] - (leafWorkingBuffers[i])[x] + (leafLabelBuffers[i])[x] / this->CC;
 				(leafSinkBuffers[i])[x] = std::max( 0.0f, std::min( potential, (leafDataTermBuffers[i])[x] ) );  
 			}
 		}
@@ -698,14 +694,14 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//update labels (multipliers) at the leaves
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int x = 0; x < VolumeSize; x++ ){
-				(leafLabelBuffers[i])[x] -= this->CC * ((leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x]);
+				(leafLabelBuffers[i])[x] -= this->CC * ((leafWorkingBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x]);
 				(leafLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (leafLabelBuffers[i])[x] ) );
 			}
 		
 		//update labels (multipliers) at the branches (incrementally, not push-up)
 		for(int i = 0; i < NumBranches; i++ )
 			for( int x = 0; x < VolumeSize; x++ ){
-				(branchLabelBuffers[i])[x] -= this->CC * ((branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x]);
+				(branchLabelBuffers[i])[x] -= this->CC * ((branchWorkingBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x]);
 				(branchLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (branchLabelBuffers[i])[x] ) );
 			}
 	}
@@ -715,7 +711,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] branchFlowXBuffers;
 	delete[] branchFlowYBuffers;
 	delete[] branchFlowZBuffers;
-	delete[] branchDivBuffers;
 	delete[] branchIncBuffers;
 	delete[] branchLabelBuffers;
 	delete[] branchWorkingBuffers;
@@ -727,7 +722,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] leafFlowXBuffers;
 	delete[] leafFlowYBuffers;
 	delete[] leafFlowZBuffers;
-	delete[] leafDivBuffers;
 	delete[] leafIncBuffers;
 	delete[] leafSinkBuffers;
 	delete[] leafWorkingBuffers;
