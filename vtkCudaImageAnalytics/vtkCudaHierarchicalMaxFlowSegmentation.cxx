@@ -1,19 +1,22 @@
-#include "vtkHierarchicalMaxFlowSegmentation.h"
+#include "vtkCudaHierarchicalMaxFlowSegmentation.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkPointData.h"
-#include "vtkDataArray.h"
 #include "vtkTreeDFSIterator.h"
 
 #include <assert.h>
 #include <math.h>
 #include <float.h>
 
+#include <set>
+#include <list>
+
+#include "CUDA_hierarchicalmaxflow.h"
+
 #define SQR(X) X*X
 
-vtkStandardNewMacro(vtkHierarchicalMaxFlowSegmentation);
+vtkStandardNewMacro(vtkCudaHierarchicalMaxFlowSegmentation);
 
-vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
+vtkCudaHierarchicalMaxFlowSegmentation::vtkCudaHierarchicalMaxFlowSegmentation(){
 	
 	//configure the IO ports
 	this->SetNumberOfInputPorts(1);
@@ -32,24 +35,31 @@ vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
 	//set the other values to defaults
 	this->Hierarchy = 0;
 	this->SmoothnessScalars.clear();
-	this->OutputPortMapping.clear();
+	this->LeafMap.clear();
 	this->InputPortMapping.clear();
-	this->IntermediateBufferMapping.clear();
+	this->BranchMap.clear();
 
 }
 
-vtkHierarchicalMaxFlowSegmentation::~vtkHierarchicalMaxFlowSegmentation(){
+vtkCudaHierarchicalMaxFlowSegmentation::~vtkCudaHierarchicalMaxFlowSegmentation(){
 	if( this->Hierarchy ) this->Hierarchy->UnRegister(this);
 	this->SmoothnessScalars.clear();
-	this->OutputPortMapping.clear();
+	this->LeafMap.clear();
 	this->InputPortMapping.clear();
 	this->BackwardsInputPortMapping.clear();
-	this->IntermediateBufferMapping.clear();
+	this->BranchMap.clear();
 }
 
+void vtkCudaHierarchicalMaxFlowSegmentation::Reinitialize(int withData = 0){
+	//TODO
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::Deinitialize(int withData = 0){
+	//TODO
+}
 //------------------------------------------------------------
 
-void vtkHierarchicalMaxFlowSegmentation::SetHierarchy(vtkTree* graph){
+void vtkCudaHierarchicalMaxFlowSegmentation::SetHierarchy(vtkTree* graph){
 	if( graph != this->Hierarchy ){
 		if( this->Hierarchy ) this->Hierarchy->UnRegister(this);
 		this->Hierarchy = graph;
@@ -57,30 +67,30 @@ void vtkHierarchicalMaxFlowSegmentation::SetHierarchy(vtkTree* graph){
 		this->Modified();
 
 		//update output mapping
-		this->OutputPortMapping.clear();
+		this->LeafMap.clear();
 		vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
 		iterator->SetTree(this->Hierarchy);
 		iterator->SetStartVertex(this->Hierarchy->GetRoot());
 		while( iterator->HasNext() ){
 			vtkIdType node = iterator->Next();
 			if( this->Hierarchy->IsLeaf(node) )
-				this->OutputPortMapping.insert(std::pair<vtkIdType,int>(node,(int) this->OutputPortMapping.size()));
+				this->LeafMap.insert(std::pair<vtkIdType,int>(node,(int) this->LeafMap.size()));
 		}
 		iterator->Delete();
 
 		//update number of output ports
-		this->SetNumberOfOutputPorts((int) this->OutputPortMapping.size());
+		this->SetNumberOfOutputPorts((int) this->LeafMap.size());
 
 	}
 }
 
-vtkTree* vtkHierarchicalMaxFlowSegmentation::GetHierarchy(){
+vtkTree* vtkCudaHierarchicalMaxFlowSegmentation::GetHierarchy(){
 	return this->Hierarchy;
 }
 
 //------------------------------------------------------------
 
-void vtkHierarchicalMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, double value){
+void vtkCudaHierarchicalMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, double value){
 	if( value >= 0.0 ){
 		this->SmoothnessScalars.insert(std::pair<vtkIdType,double>(node,value));
 		this->Modified();
@@ -91,14 +101,14 @@ void vtkHierarchicalMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, dou
 
 //------------------------------------------------------------
 
-int vtkHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkInformation* info){
+int vtkCudaHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkInformation* info){
 	info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
 	info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
 	info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
 	return this->Superclass::FillInputPortInformation(i,info);
 }
 
-void vtkHierarchicalMaxFlowSegmentation::SetInput(int idx, vtkDataObject *input)
+void vtkCudaHierarchicalMaxFlowSegmentation::SetInput(int idx, vtkDataObject *input)
 {
 	//we are adding/switching an input, so no need to resort list
 	if( input != NULL ){
@@ -145,18 +155,18 @@ void vtkHierarchicalMaxFlowSegmentation::SetInput(int idx, vtkDataObject *input)
 	}
 }
 
-vtkDataObject *vtkHierarchicalMaxFlowSegmentation::GetInput(int idx)
+vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetInput(int idx)
 {
 	if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() )
 		return 0;
 	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->InputPortMapping.find(idx)->second));
 }
 
-vtkDataObject *vtkHierarchicalMaxFlowSegmentation::GetOutput(int idx)
+vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetOutput(int idx)
 {
 	//look up port in mapping
-	std::map<vtkIdType,int>::iterator port = this->OutputPortMapping.find(idx);
-	if( port == this->OutputPortMapping.end() )
+	std::map<vtkIdType,int>::iterator port = this->LeafMap.find(idx);
+	if( port == this->LeafMap.end() )
 		return 0;
 
 	return vtkImageData::SafeDownCast(this->GetExecutive()->GetOutputData(port->second));
@@ -164,7 +174,7 @@ vtkDataObject *vtkHierarchicalMaxFlowSegmentation::GetOutput(int idx)
 
 //----------------------------------------------------------------------------
 
-int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
+int vtkCudaHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
 	
 	//check to make sure that the hierarchy is specified
 	if( !this->Hierarchy ){
@@ -245,7 +255,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 	return 0;
 }
 
-int vtkHierarchicalMaxFlowSegmentation::RequestInformation(
+int vtkCudaHierarchicalMaxFlowSegmentation::RequestInformation(
   vtkInformation* request,
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
@@ -262,7 +272,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestInformation(
 	return 1;
 }
 
-int vtkHierarchicalMaxFlowSegmentation::RequestUpdateExtent(
+int vtkCudaHierarchicalMaxFlowSegmentation::RequestUpdateExtent(
   vtkInformation* vtkNotUsed(request),
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
@@ -283,104 +293,129 @@ int vtkHierarchicalMaxFlowSegmentation::RequestUpdateExtent(
 	return 1;
 }
 
-void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode, float** branchLabels, float** leafLabels, int size ){
+void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
 	
 	//update graph for all kids
 	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
 	for(int kid = 0; kid < NumKids; kid++)
-		PropogateLabels( this->Hierarchy->GetChild(currNode,kid), branchLabels, leafLabels, size );
+		PropogateLabels( this->Hierarchy->GetChild(currNode,kid) );
 
 	//sum value into parent (if parent exists and is not the root)
 	if( currNode == this->Hierarchy->GetRoot() ) return;
 	vtkIdType parent = 	this->Hierarchy->GetParent(currNode);
 	if( parent == this->Hierarchy->GetRoot() ) return;
-	int parentIndex = this->IntermediateBufferMapping.find(parent)->second;
+	int parentIndex = this->BranchMap.find(parent)->second;
 	float* currVal =   this->Hierarchy->IsLeaf(currNode) ?
-		currVal = leafLabels[this->OutputPortMapping.find(currNode)->second] :
-		currVal = branchLabels[this->IntermediateBufferMapping.find(currNode)->second];
-	for( int x = 0; x < size; x++ )
-		(branchLabels[parentIndex])[x] += currVal[x];
+		currVal = this->leafLabelBuffers[this->LeafMap.find(currNode)->second] :
+		currVal = this->branchLabelBuffers[this->BranchMap.find(currNode)->second];
+	for( int x = 0; x < VolumeSize; x++ )
+		(this->branchLabelBuffers[parentIndex])[x] += currVal[x];
 	
 }
 
-
-void vtkHierarchicalMaxFlowSegmentation::PropogateFlows( vtkIdType currNode, float* sourceSinkFlow, float** branchSinkFlows, float** leafSinkFlows,
-																			 float** branchIncFlows, float** branchDivFlows, float** leafDivFlows,
-																			 float** branchLabels, float** leafLabels, int size ){
-
-	//update graph for all kids
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
-	for(int kid = 0; kid < NumKids; kid++)
-		PropogateFlows( this->Hierarchy->GetChild(currNode,kid), sourceSinkFlow, branchSinkFlows, leafSinkFlows, branchIncFlows, branchDivFlows, leafDivFlows, branchLabels, leafLabels, size );
+void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 	
-	//if we are a leaf, we have nothing to do, since sink flow is already up-to-date
-	if( NumKids == 0 ) return;
 
-	//if we are the root, we need to be treated differently
-	if( currNode == this->Hierarchy->GetRoot() ){
+	//get number of kids
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
 
-		//initialize the flow
-		for( int x = 0; x < size; x++ )
-			sourceSinkFlow[x] = 1.0f / this->CC;
+	//figure out what type of node we are
+	bool isRoot = (currNode == this->Hierarchy->GetRoot());
+	bool isLeaf = (NumKids == 0);
+	bool isBranch = (!isRoot && !isLeaf);
 
-		//get required flow from children
-		for(int kid = 0; kid < NumKids; kid++){
-			vtkIdType kidNode = this->Hierarchy->GetChild(currNode,kid);
-			float* kidSinkFlow = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafSinkFlows[this->OutputPortMapping.find(kidNode)->second] :
-				branchSinkFlows[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			float* kidDivFlow = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafDivFlows[this->OutputPortMapping.find(kidNode)->second] :
-				branchDivFlows[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			float* kidLabels = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafLabels[this->OutputPortMapping.find(kidNode)->second] :
-				branchLabels[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			for( int x = 0; x < size; x++ )
-				sourceSinkFlow[x] += kidSinkFlow[x] + kidDivFlow[x] - kidLabels[x] / this->CC;
-		}
-		
-		//implement the normalizing factor
-		for( int x = 0; x < size; x++ )
-			sourceSinkFlow[x] /= (float) NumKids;
+	//RB : clear working buffer
+	if( !isLeaf ){
 
-		return;
+		//organize the GPU to obtain the buffers
+		float* workingBufferUsed = isRoot ? sourceWorkingBuffer :
+				branchWorkingBuffers[BranchMap[currNode]] ;
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(workingBufferUsed);
+		this->GetGPUBuffers();
 
-	//if we are a branch node, the process is more complicated
-	}else{
-		int currNodeIndex = this->IntermediateBufferMapping.find(currNode)->second;
+		//activate the kernel
+		NumKernelRuns++;
+		CUDA_zeroOutBuffer(CPU2GPUMap[workingBufferUsed],VolumeSize,this->GetStream());
 
-		//start at 0
-		for( int x = 0; x < size; x++ )
-			(branchSinkFlows[currNodeIndex])[x] = 0.0f;
-
-		//get required flow from children
-		for(int kid = 0; kid < NumKids; kid++){
-			vtkIdType kidNode = this->Hierarchy->GetChild(currNode,kid);
-			float* kidSinkFlow = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafSinkFlows[this->OutputPortMapping.find(kidNode)->second] :
-				branchSinkFlows[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			float* kidDivFlow = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafDivFlows[this->OutputPortMapping.find(kidNode)->second] :
-				branchDivFlows[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			float* kidLabels = (this->Hierarchy->IsLeaf(kidNode)) ?
-				leafLabels[this->OutputPortMapping.find(kidNode)->second] :
-				branchLabels[this->IntermediateBufferMapping.find(kidNode)->second] ;
-			for( int x = 0; x < size; x++ )
-				(branchSinkFlows[currNodeIndex])[x] += kidSinkFlow[x] + kidDivFlow[x] - kidLabels[x] / this->CC;
-		}
-
-		//get required flow from self
-		for( int x = 0; x < size; x++ )
-			(branchSinkFlows[currNodeIndex])[x] += (branchIncFlows[currNodeIndex])[x] - (branchDivFlows[currNodeIndex])[x] + (branchLabels[currNodeIndex])[x] / this->CC;
-
-		//implement the normalizing factor
-		for( int x = 0; x < size; x++ )
-			(branchSinkFlows[currNodeIndex])[x] /= (float) (NumKids + 1);
+		//remove current working buffer from the no-copy list
+		this->NoCopyBack.erase( this->NoCopyBack.find(workingBufferUsed) );
 	}
 
+	// BL: Update spatial flow (gradient descent portion)
+	//TODO
+
+	// BL: Update spatial flow (projection portion)
+	//TODO
+
+	//RB : Update everything for the children
+	for(int kid = 0; kid < NumKids; kid++)
+		SolveMaxFlow( this->Hierarchy->GetChild(currNode,kid) );
+
+	// B : Add sink potential to working buffer
+	//TODO
+	if( isBranch ){
+
+	}
+
+	// B : Divide working buffer by N+1 and store in sink buffer
+	//TODO
+	if( isBranch ){
+		//since we are overwriting it, the current sink buffer can be considered garbage
+		this->NoCopyBack.insert(branchSinkBuffers[BranchMap[currNode]]);
+
+		//organize the GPU to obtain the buffers
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchWorkingBuffers[BranchMap[currNode]]);
+		this->CPUInUse.insert(branchSinkBuffers[BranchMap[currNode]]);
+		this->GetGPUBuffers();
+
+		//activate the kernel
+		NumKernelRuns++;
+		CUDA_divideAndStoreBuffer(CPU2GPUMap[branchWorkingBuffers[BranchMap[currNode]]],CPU2GPUMap[branchSinkBuffers[BranchMap[currNode]]],
+			(float)NumKids,VolumeSize,this->GetStream());
+		
+		//since we are done with the working buffer, we can mark it as garbage, and we need to keep the sink value, so no longer garbage
+		this->NoCopyBack.insert(branchWorkingBuffers[BranchMap[currNode]]);
+		this->NoCopyBack.erase(NoCopyBack.find(branchSinkBuffers[BranchMap[currNode]]));
+	}
+
+	//R  : Divide working buffer by N and store in sink buffer
+	//TODO
+	if( isRoot ){
+		//since we are overwriting it, the current sink buffer can be considered garbage
+		this->NoCopyBack.insert(sourceFlowBuffer);
+		
+		//organize the GPU to obtain the buffers
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(sourceWorkingBuffer);
+		this->CPUInUse.insert(sourceFlowBuffer);
+		this->GetGPUBuffers();
+
+		//activate the kernel
+		NumKernelRuns++;
+		CUDA_divideAndStoreBuffer(CPU2GPUMap[sourceWorkingBuffer],CPU2GPUMap[sourceFlowBuffer],(float)NumKids,VolumeSize,this->GetStream());
+
+		//since we are done with the working buffer, we can mark it as garbage, and we need to keep the sink value, so no longer garbage
+		this->NoCopyBack.insert(sourceWorkingBuffer);
+		this->NoCopyBack.erase(NoCopyBack.find(sourceFlowBuffer));
+	}
+
+	//  L: Find sink potential and store, constrained, in sink
+	//TODO
+
+	// BL: Find source potential and store in parent's working buffer
+	//TODO
+
+	//RB : Update child label buffers
+	//TODO
+	for(int kid = 0; kid < NumKids; kid++){
+
+	}
 }
 
-int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request, 
+
+int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request, 
 							vtkInformationVector **inputVector, 
 							vtkInformationVector *outputVector){
 								
@@ -398,10 +433,13 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	int X = (Extent[1] - Extent[0] + 1);
 	int Y = (Extent[3] - Extent[2] + 1);
 	int Z = (Extent[5] - Extent[4] + 1);
-	int VolumeSize =  X * Y * Z;
+	VolumeSize =  X * Y * Z;
+
+	//make a container for the total number of memory buffers
+	int TotalNumberOfBuffers = 0;
 
 	//create relevant node identifier to buffer mappings
-	this->IntermediateBufferMapping.clear();
+	this->BranchMap.clear();
 	vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
 	iterator->SetTree(this->Hierarchy);
 	iterator->SetStartVertex(this->Hierarchy->GetRoot());
@@ -409,27 +447,32 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkIdType node = iterator->Next();
 		if( node == this->Hierarchy->GetRoot() ) continue;
 		if( !this->Hierarchy->IsLeaf(node) )
-			IntermediateBufferMapping.insert(std::pair<vtkIdType,int>(node,(int) this->IntermediateBufferMapping.size()));
+			BranchMap.insert(std::pair<vtkIdType,int>(node,(int) this->BranchMap.size()));
 	}
 	iterator->Delete();
 
 	//get the data term buffers
-	float** leafDataTermBuffers = new float* [NumLeaves];
+	this->leafDataTermBuffers = new float* [NumLeaves];
 	iterator = vtkTreeDFSIterator::New();
 	iterator->SetTree(this->Hierarchy);
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		if( this->Hierarchy->IsLeaf(node) ){
-			int inputNumber = this->InputPortMapping.find(node)->second;
+			int inputNumber = this->InputPortMapping[node];
 			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
-			leafDataTermBuffers[this->OutputPortMapping.find(node)->second] = (float*) CurrImage->GetScalarPointer();
+			leafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
+
+			//add the data term buffer in and set it to read only
+			TotalNumberOfBuffers++;
+			ReadOnly.insert( (float*) CurrImage->GetScalarPointer());
+
 		}
 	}
 	iterator->Delete();
 	
 	//get the smoothness term buffers
-	float** leafSmoothnessTermBuffers = new float* [NumLeaves];
-	float** branchSmoothnessTermBuffers = new float* [NumBranches];
+	this->leafSmoothnessTermBuffers = new float* [NumLeaves];
+	this->branchSmoothnessTermBuffers = new float* [NumBranches];
 	iterator = vtkTreeDFSIterator::New();
 	iterator->SetTree(this->Hierarchy);
 	while( iterator->HasNext() ){
@@ -437,18 +480,24 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		if( node == this->Hierarchy->GetRoot() ) continue;
 		vtkImageData* CurrImage = 0;
 		if( this->InputPortMapping.find(this->Hierarchy->GetParent(node)) != this->InputPortMapping.end() ){
-			int parentInputNumber = this->InputPortMapping.find(this->Hierarchy->GetParent(node))->second;
+			int parentInputNumber = this->InputPortMapping[this->Hierarchy->GetParent(node)];
 			vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(parentInputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 		}
 		if( this->Hierarchy->IsLeaf(node) )
-			leafSmoothnessTermBuffers[this->OutputPortMapping.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
-			branchSmoothnessTermBuffers[this->IntermediateBufferMapping.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+			branchSmoothnessTermBuffers[this->BranchMap.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+		
+		// add the smoothness buffer in as read only
+		if( CurrImage ){
+			TotalNumberOfBuffers++;
+			ReadOnly.insert( (float*) CurrImage->GetScalarPointer());
+		}
 	}
 	iterator->Delete();
 
 	//get the output buffers
-	float** leafLabelBuffers = new float* [NumLeaves];
+	this->leafLabelBuffers = new float* [NumLeaves];
 	for(int i = 0; i < NumLeaves; i++ ){
 		vtkInformation *outputInfo = outputVector->GetInformationObject(i);
 		vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
@@ -456,12 +505,20 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		outputBuffer->Modified();
 		outputBuffer->AllocateScalars();
 		leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
+		TotalNumberOfBuffers++;
 	}
 
 	//allocate source flow buffer
-	float* sourceFlow = new float[VolumeSize];
+	sourceFlowBuffer = new float[VolumeSize];
+	TotalNumberOfBuffers++;
 	for(int x = 0; x < VolumeSize; x++)
-		sourceFlow[x] = 0.0f;
+		sourceFlowBuffer[x] = 0.0f;
+
+	//allocate source working buffer
+	sourceWorkingBuffer = new float[VolumeSize];
+	TotalNumberOfBuffers++;
+	for(int x = 0; x < VolumeSize; x++)
+		sourceWorkingBuffer[x] = 0.0f;
 
 	//allocate required memory buffers for the brach nodes
 	//		buffers needed:
@@ -471,14 +528,15 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//				1 divergence buffer
 	//				1 outgoing flow buffer
 	//				1 working temp buffer (ie: guk)
+	TotalNumberOfBuffers += 7*NumBranches;
 	float* branchNodeBuffer = new float[7*VolumeSize*NumBranches];
-	float** branchFlowXBuffers = new float* [NumBranches];
-	float** branchFlowYBuffers = new float* [NumBranches];
-	float** branchFlowZBuffers = new float* [NumBranches];
-	float** branchDivBuffers = new float* [NumBranches];
-	float** branchSinkBuffers = new float* [NumBranches];
-	float** branchLabelBuffers = new float* [NumBranches];
-	float** branchWorkingBuffers = new float* [NumBranches];
+	this->branchFlowXBuffers = new float* [NumBranches];
+	this->branchFlowYBuffers = new float* [NumBranches];
+	this->branchFlowZBuffers = new float* [NumBranches];
+	this->branchDivBuffers = new float* [NumBranches];
+	this->branchSinkBuffers = new float* [NumBranches];
+	this->branchLabelBuffers = new float* [NumBranches];
+	this->branchWorkingBuffers = new float* [NumBranches];
 	float* ptr = branchNodeBuffer;
 	for(int i = 0; i < NumBranches; i++ ){
 		branchFlowXBuffers[i] = ptr; ptr += VolumeSize;
@@ -496,13 +554,13 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//				1 divergence buffer
 	//				1 sink flow buffer
 	//				1 working temp buffer (ie: guk)
-	float*	leafNodeBuffer = new float[6*VolumeSize*NumLeaves];
-	float** leafFlowXBuffers = new float* [NumLeaves];
-	float** leafFlowYBuffers = new float* [NumLeaves];
-	float** leafFlowZBuffers = new float* [NumLeaves];
-	float** leafDivBuffers = new float* [NumLeaves];
-	float** leafSinkBuffers = new float* [NumLeaves];
-	float** leafWorkingBuffers = new float* [NumLeaves];
+	TotalNumberOfBuffers += 5*NumLeaves;
+	float*	leafNodeBuffer = new float[5*VolumeSize*NumLeaves];
+	this->leafFlowXBuffers = new float* [NumLeaves];
+	this->leafFlowYBuffers = new float* [NumLeaves];
+	this->leafFlowZBuffers = new float* [NumLeaves];
+	this->leafDivBuffers = new float* [NumLeaves];
+	this->leafSinkBuffers = new float* [NumLeaves];
 	ptr = leafNodeBuffer;
 	for(int i = 0; i < NumLeaves; i++ ){
 		leafFlowXBuffers[i] = ptr; ptr += VolumeSize;
@@ -510,7 +568,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		leafFlowZBuffers[i] = ptr; ptr += VolumeSize;
 		leafDivBuffers[i] = ptr; ptr += VolumeSize;
 		leafSinkBuffers[i] = ptr; ptr += VolumeSize;
-		leafWorkingBuffers[i] = ptr; ptr += VolumeSize;
 	}
 
 	//initalize all spatial flows and divergences to zero
@@ -528,13 +585,12 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 			(leafFlowYBuffers[i])[x] = 0.0f;
 			(leafFlowZBuffers[i])[x] = 0.0f;
 			(leafDivBuffers[i])[x] = 0.0f;
-			(leafWorkingBuffers[i])[x] = 0.0f;
 		}
 	}
 
 	//create pointers to parent outflow
-	float** leafIncBuffers = new float* [NumLeaves];
-	float** branchIncBuffers = new float* [NumBranches];
+	leafIncBuffers = new float* [NumLeaves];
+	branchIncBuffers = new float* [NumBranches];
 	iterator = vtkTreeDFSIterator::New();
 	iterator->SetTree(this->Hierarchy);
 	iterator->Next();
@@ -543,19 +599,18 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkIdType parent = this->Hierarchy->GetParent(node);
 		if( this->Hierarchy->IsLeaf(node) ){
 			if( parent == this->Hierarchy->GetRoot() )
-				leafIncBuffers[this->OutputPortMapping.find(node)->second] = sourceFlow;
+				leafIncBuffers[this->LeafMap.find(node)->second] = sourceFlowBuffer;
 			else
-				leafIncBuffers[this->OutputPortMapping.find(node)->second] = branchSinkBuffers[this->IntermediateBufferMapping.find(parent)->second];
+				leafIncBuffers[this->LeafMap.find(node)->second] = branchSinkBuffers[this->BranchMap.find(parent)->second];
 		}else{
 			if( parent == this->Hierarchy->GetRoot() )
-				branchIncBuffers[this->IntermediateBufferMapping.find(node)->second] = sourceFlow;
+				branchIncBuffers[this->BranchMap.find(node)->second] = sourceFlowBuffer;
 			else
-				branchIncBuffers[this->IntermediateBufferMapping.find(node)->second] = branchSinkBuffers[this->IntermediateBufferMapping.find(parent)->second];
+				branchIncBuffers[this->BranchMap.find(node)->second] = branchSinkBuffers[this->BranchMap.find(parent)->second];
 		}
 	}
 	iterator->Delete();
 	
-
 	//initalize all labels to most likely result from data prior at the leaf nodes
 	for(int x = 0; x < VolumeSize; x++){
 		float maxProbValue = FLT_MAX;
@@ -571,144 +626,196 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		for(int i = 0; i < NumBranches; i++)
 			(branchSinkBuffers[i])[x] = (leafDataTermBuffers[maxProbLabel])[x];
 	}
+	PropogateLabels( this->Hierarchy->GetRoot() );
 
 	//convert smoothness constants mapping to two mappings
 	iterator = vtkTreeDFSIterator::New();
 	iterator->SetTree(this->Hierarchy);
-	float* leafSmoothnessConstants = new float[NumLeaves];
-	float* branchSmoothnessConstants = new float[NumBranches];
+	leafSmoothnessConstants = new float[NumLeaves];
+	branchSmoothnessConstants = new float[NumBranches];
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		if( node == this->Hierarchy->GetRoot() ) continue;
 		if( this->Hierarchy->IsLeaf(node) )
 			if( this->SmoothnessScalars.find(this->Hierarchy->GetParent(node)) != this->SmoothnessScalars.end() )
-				leafSmoothnessConstants[this->OutputPortMapping.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
+				leafSmoothnessConstants[this->LeafMap.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
 			else
-				leafSmoothnessConstants[this->OutputPortMapping.find(node)->second] = 1.0f;
+				leafSmoothnessConstants[this->LeafMap.find(node)->second] = 1.0f;
 		else
 			if( this->SmoothnessScalars.find(this->Hierarchy->GetParent(node)) != this->SmoothnessScalars.end() )
-				branchSmoothnessConstants[this->IntermediateBufferMapping.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
+				branchSmoothnessConstants[this->BranchMap.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
 			else
-				branchSmoothnessConstants[this->IntermediateBufferMapping.find(node)->second] = 1.0f;
+				branchSmoothnessConstants[this->BranchMap.find(node)->second] = 1.0f;
 	}
 	iterator->Delete();
 
-	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
+	//create LIFO priority queue (priority stack) data structure
+	FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
+	for( std::map<float*,int>::iterator priorityIt = CPU2PriorityMap.begin(); priorityIt != CPU2PriorityMap.end(); priorityIt++ )
+		BuildStackUpToPriority(priorityIt->second);
 
-		//compute the flow conservation error at each point and store in working buffer
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int x = 0; x < VolumeSize; x++ )
-				(leafWorkingBuffers[i])[x] = (leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x] - (leafLabelBuffers[i])[x] / this->CC;
-		for(int i = 0; i < NumBranches; i++ )
-			for( int x = 0; x < VolumeSize; x++ )
-				(branchWorkingBuffers[i])[x] = (branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x] - (branchLabelBuffers[i])[x] / this->CC;
+	//add all the working buffers from the branches to the garbage (no copy necessary) list
+	NoCopyBack.insert( sourceWorkingBuffer );
+	for(int i = 0; i < NumBranches; i++ )
+		NoCopyBack.insert( branchWorkingBuffers[i] );
 
-		//Do the gradient-descent based update of the spatial flows
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(leafFlowXBuffers[i])[idx+1] -= this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx+1]);
-				(leafFlowYBuffers[i])[idx+X] -= this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx+X]);
-				(leafFlowZBuffers[i])[idx+X*Y] -= this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx+X*Y]);
-			}
-		for(int i = 0; i < NumBranches; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(branchFlowXBuffers[i])[idx+1]		+= this->StepSize * ((branchWorkingBuffers[i])[idx+1]	-(branchWorkingBuffers[i])[idx] );
-				(branchFlowYBuffers[i])[idx+X]		+= this->StepSize * ((branchWorkingBuffers[i])[idx+X]	-(branchWorkingBuffers[i])[idx] );
-				(branchFlowZBuffers[i])[idx+X*Y]	+= this->StepSize * ((branchWorkingBuffers[i])[idx+X*Y]	-(branchWorkingBuffers[i])[idx] );
-			}
+	//Get GPU buffers
+	int BuffersAcquired = 0;
+	UnusedGPUBuffers.clear();
+	std::list<float*> AllGPUBufferBlocks;
+	CPU2GPUMap.clear();
+	GPU2CPUMap.clear();
+	while(true) {
+		//try acquiring some new buffers
+		float* NewAcquiredBuffers = 0;
+		int NewNumberAcquired = CUDA_GetGPUBuffers( TotalNumberOfBuffers-BuffersAcquired, &NewAcquiredBuffers, VolumeSize );
+		BuffersAcquired += NewNumberAcquired;
 
-		//calculate the magnitude of spatial flows through each voxel and place this magnitude in the working buffer
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				float upX = (x == X-1) ? 0.0f : (leafFlowXBuffers[i])[idx+1];
-				float upY = (y == Y-1) ? 0.0f : (leafFlowYBuffers[i])[idx+X];
-				float upZ = (z == Z-1) ? 0.0f : (leafFlowZBuffers[i])[idx+X*Y];
-				(leafWorkingBuffers[i])[x] = sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[x]) +
-																 SQR(upY) + SQR((leafFlowYBuffers[i])[x]) +
-																 SQR(upZ) + SQR((leafFlowZBuffers[i])[x]) ));
-			}
-		for(int i = 0; i < NumBranches; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				float upX = (x == X-1) ? 0.0f : (branchFlowXBuffers[i])[idx+1];
-				float upY = (y == Y-1) ? 0.0f : (branchFlowYBuffers[i])[idx+X];
-				float upZ = (z == Z-1) ? 0.0f : (branchFlowZBuffers[i])[idx+X*Y];
-				(branchWorkingBuffers[i])[x] = sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[x]) +
-																 SQR(upY) + SQR((branchFlowYBuffers[i])[x]) +
-																 SQR(upZ) + SQR((branchFlowZBuffers[i])[x]) ));
-			}
+		//if no new buffers were acquired, exit the loop
+		if( NewNumberAcquired == 0 ) break;
 
-		//calculate the multiplying for bringing it to within the specified bound (smoothness term)
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int x = 0; x < VolumeSize; x++ ){
-				if( (leafWorkingBuffers[i])[x] > leafSmoothnessConstants[i] * (leafSmoothnessTermBuffers[i] ? (leafSmoothnessTermBuffers[i])[x] : 1.0f) )
-					(leafWorkingBuffers[i])[x] = leafSmoothnessConstants[i] * (leafSmoothnessTermBuffers[i] ? (leafSmoothnessTermBuffers[i])[x] : 1.0f) / (leafWorkingBuffers[i])[x];
-				else
-					(leafWorkingBuffers[i])[x] = 1.0f;
-			}
-		for(int i = 0; i < NumBranches; i++ )
-			for( int x = 0; x < VolumeSize; x++ ){
-				if( (branchWorkingBuffers[i])[x] > branchSmoothnessConstants[i] * (branchSmoothnessTermBuffers[i] ? (branchSmoothnessTermBuffers[i])[x] : 1.0f) )
-					(branchWorkingBuffers[i])[x] = branchSmoothnessConstants[i] * (branchSmoothnessTermBuffers[i] ? (branchSmoothnessTermBuffers[i])[x] : 1.0f) / (branchWorkingBuffers[i])[x];
-				else
-					(branchWorkingBuffers[i])[x] = 1.0f;
-			}
-
-		//adjust the spatial flows by the multipliers
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(leafFlowXBuffers[i])[idx+1] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+1]);
-				(leafFlowYBuffers[i])[idx+X] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+X]);
-				(leafFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+X*Y]);
-			}
-		for(int i = 0; i < NumBranches; i++ )
-			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(branchFlowXBuffers[i])[idx+1] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+1]);
-				(branchFlowYBuffers[i])[idx+X] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+X]);
-				(branchFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+X*Y]);
-			}
-
-		//calculate the divergence since the source flows won't change for the rest of this iteration
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int x = 0; x < VolumeSize; x++ )
-				(leafDivBuffers[i])[x] = (leafFlowXBuffers[i])[x+1] - (leafFlowXBuffers[i])[x] +
-										(leafFlowYBuffers[i])[x+X] - (leafFlowYBuffers[i])[x] +
-										(leafFlowZBuffers[i])[x+X*Y] - (leafFlowZBuffers[i])[x];
-		for(int i = 0; i < NumBranches; i++ )
-			for( int x = 0; x < VolumeSize; x++ )
-				(branchDivBuffers[i])[x] = (branchFlowXBuffers[i])[x+1] - (branchFlowXBuffers[i])[x] +
-										 (branchFlowYBuffers[i])[x+X] - (branchFlowYBuffers[i])[x] +
-										 (branchFlowZBuffers[i])[x+X*Y] - (branchFlowZBuffers[i])[x];
-
-		//compute sink flow (store in working buffer) and update source flows bottom up
-		PropogateFlows( this->Hierarchy->GetRoot(), sourceFlow, branchSinkBuffers, leafSinkBuffers, branchIncBuffers,
-						branchDivBuffers, leafDivBuffers, branchLabelBuffers, leafLabelBuffers, VolumeSize );
-		
-		//update the leaf sink flows
-		for(int i = 0; i < NumLeaves; i++ ){
-			for( int x = 0; x < VolumeSize; x++ ){
-				float potential = (leafIncBuffers[i])[x] - (leafDivBuffers[i])[x] + (leafLabelBuffers[i])[x] / this->CC;
-				(leafSinkBuffers[i])[x] = std::max( 0.0f, std::min( potential, (leafDataTermBuffers[i])[x] ) );  
-			}
+		//else, load the new buffers into the list of unused buffers
+		AllGPUBufferBlocks.push_back(NewAcquiredBuffers);
+		for(int i = 0; i < NewNumberAcquired; i++){
+			UnusedGPUBuffers.push_back(NewAcquiredBuffers);
+			NewAcquiredBuffers += VolumeSize;
 		}
-
-		//update labels (multipliers) at the leaves
-		for(int i = 0; i < NumLeaves; i++ )
-			for( int x = 0; x < VolumeSize; x++ ){
-				(leafLabelBuffers[i])[x] -= this->CC * ((leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x]);
-				(leafLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (leafLabelBuffers[i])[x] ) );
-			}
-		
-		//update labels (multipliers) at the branches (incrementally, not push-up)
-		for(int i = 0; i < NumBranches; i++ )
-			for( int x = 0; x < VolumeSize; x++ ){
-				(branchLabelBuffers[i])[x] -= this->CC * ((branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x]);
-				(branchLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (branchLabelBuffers[i])[x] ) );
-			}
 	}
+
+	//Solve maximum flow problem in an iterative bottom-up manner
+	NumMemCpies = 0;
+	NumKernelRuns = 0;
+	this->ReserveGPU();
+	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ )
+		SolveMaxFlow( this->Hierarchy->GetRoot() );
+
+	//Copy back any uncopied leaf label buffers (others don't matter anymore)
+	for( int i = 0; i < NumLeaves; i++ ){
+		if( CPU2GPUMap.find(leafLabelBuffers[i]) != CPU2GPUMap.end() )
+			ReturnBufferGPU2CPU(leafLabelBuffers[i], CPU2GPUMap.find(leafLabelBuffers[i])->second);
+	}
+
+	//Return all GPU buffers
+	while( AllGPUBufferBlocks.size() > 0 ){
+		CUDA_ReturnGPUBuffers( AllGPUBufferBlocks.front() );
+		AllGPUBufferBlocks.pop_front();
+	}
+	CUDA_GetGPUBuffers( 0, 0, VolumeSize );
+
+	//	//compute the flow conservation error at each point and store in working buffer
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ )
+	//			(leafDivBuffers[i])[x] = (leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x] - (leafLabelBuffers[i])[x] / this->CC;
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ )
+	//			(branchDivBuffers[i])[x] = (branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x] - (branchLabelBuffers[i])[x] / this->CC;
+
+	//	//Do the gradient-descent based update of the spatial flows
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
+	//			(leafFlowXBuffers[i])[idx+1] -= this->StepSize * ((leafDivBuffers[i])[idx] - (leafDivBuffers[i])[idx+1]);
+	//			(leafFlowYBuffers[i])[idx+X] -= this->StepSize * ((leafDivBuffers[i])[idx] - (leafDivBuffers[i])[idx+X]);
+	//			(leafFlowZBuffers[i])[idx+X*Y] -= this->StepSize * ((leafDivBuffers[i])[idx] - (leafDivBuffers[i])[idx+X*Y]);
+	//		}
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
+	//			(branchFlowXBuffers[i])[idx+1]		+= this->StepSize * ((branchDivBuffers[i])[idx+1]	-(branchDivBuffers[i])[idx] );
+	//			(branchFlowYBuffers[i])[idx+X]		+= this->StepSize * ((branchDivBuffers[i])[idx+X]	-(branchDivBuffers[i])[idx] );
+	//			(branchFlowZBuffers[i])[idx+X*Y]	+= this->StepSize * ((branchDivBuffers[i])[idx+X*Y]	-(branchDivBuffers[i])[idx] );
+	//		}
+
+	//	//calculate the magnitude of spatial flows through each voxel and place this magnitude in the working buffer
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			float upX = (x == X-1) ? 0.0f : (leafFlowXBuffers[i])[idx+1];
+	//			float upY = (y == Y-1) ? 0.0f : (leafFlowYBuffers[i])[idx+X];
+	//			float upZ = (z == Z-1) ? 0.0f : (leafFlowZBuffers[i])[idx+X*Y];
+	//			(leafDivBuffers[i])[x] = sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[x]) +
+	//															 SQR(upY) + SQR((leafFlowYBuffers[i])[x]) +
+	//															 SQR(upZ) + SQR((leafFlowZBuffers[i])[x]) ));
+	//		}
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			float upX = (x == X-1) ? 0.0f : (branchFlowXBuffers[i])[idx+1];
+	//			float upY = (y == Y-1) ? 0.0f : (branchFlowYBuffers[i])[idx+X];
+	//			float upZ = (z == Z-1) ? 0.0f : (branchFlowZBuffers[i])[idx+X*Y];
+	//			(branchDivBuffers[i])[x] = sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[x]) +
+	//															 SQR(upY) + SQR((branchFlowYBuffers[i])[x]) +
+	//															 SQR(upZ) + SQR((branchFlowZBuffers[i])[x]) ));
+	//		}
+
+	//	//calculate the multiplying for bringing it to within the specified bound (smoothness term)
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ ){
+	//			if( (leafDivBuffers[i])[x] > leafSmoothnessConstants[i] * (leafSmoothnessTermBuffers[i] ? (leafSmoothnessTermBuffers[i])[x] : 1.0f) )
+	//				(leafDivBuffers[i])[x] = leafSmoothnessConstants[i] * (leafSmoothnessTermBuffers[i] ? (leafSmoothnessTermBuffers[i])[x] : 1.0f) / (leafWorkingBuffers[i])[x];
+	//			else
+	//				(leafDivBuffers[i])[x] = 1.0f;
+	//		}
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ ){
+	//			if( (branchDivBuffers[i])[x] > branchSmoothnessConstants[i] * (branchSmoothnessTermBuffers[i] ? (branchSmoothnessTermBuffers[i])[x] : 1.0f) )
+	//				(branchDivBuffers[i])[x] = branchSmoothnessConstants[i] * (branchSmoothnessTermBuffers[i] ? (branchSmoothnessTermBuffers[i])[x] : 1.0f) / (branchWorkingBuffers[i])[x];
+	//			else
+	//				(branchDivBuffers[i])[x] = 1.0f;
+	//		}
+
+	//	//adjust the spatial flows by the multipliers
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
+	//			(leafFlowXBuffers[i])[idx+1] *= 0.5f * ((leafDivBuffers[i])[idx] + (leafDivBuffers[i])[idx+1]);
+	//			(leafFlowYBuffers[i])[idx+X] *= 0.5f * ((leafDivBuffers[i])[idx] + (leafDivBuffers[i])[idx+X]);
+	//			(leafFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((leafDivBuffers[i])[idx] + (leafDivBuffers[i])[idx+X*Y]);
+	//		}
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
+	//			if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
+	//			(branchFlowXBuffers[i])[idx+1] *= 0.5f * ((branchDivBuffers[i])[idx] + (branchDivBuffers[i])[idx+1]);
+	//			(branchFlowYBuffers[i])[idx+X] *= 0.5f * ((branchDivBuffers[i])[idx] + (branchDivBuffers[i])[idx+X]);
+	//			(branchFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((branchDivBuffers[i])[idx] + (branchDivBuffers[i])[idx+X*Y]);
+	//		}
+
+	//	//calculate the divergence since the source flows won't change for the rest of this iteration
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ )
+	//			(leafDivBuffers[i])[x] = (leafFlowXBuffers[i])[x+1] - (leafFlowXBuffers[i])[x] +
+	//									(leafFlowYBuffers[i])[x+X] - (leafFlowYBuffers[i])[x] +
+	//									(leafFlowZBuffers[i])[x+X*Y] - (leafFlowZBuffers[i])[x];
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ )
+	//			(branchDivBuffers[i])[x] = (branchFlowXBuffers[i])[x+1] - (branchFlowXBuffers[i])[x] +
+	//									 (branchFlowYBuffers[i])[x+X] - (branchFlowYBuffers[i])[x] +
+	//									 (branchFlowZBuffers[i])[x+X*Y] - (branchFlowZBuffers[i])[x];
+
+	//	//compute sink flow (store in working buffer) and update source flows bottom up
+	//	PropogateFlows( this->Hierarchy->GetRoot(), sourceFlow, branchSinkBuffers, leafSinkBuffers, branchIncBuffers,
+	//					branchDivBuffers, leafDivBuffers, branchLabelBuffers, leafLabelBuffers, VolumeSize );
+	//	
+	//	//update the leaf sink flows
+	//	for(int i = 0; i < NumLeaves; i++ ){
+	//		for( int x = 0; x < VolumeSize; x++ ){
+	//			float potential = (leafIncBuffers[i])[x] - (leafDivBuffers[i])[x] + (leafLabelBuffers[i])[x] / this->CC;
+	//			(leafSinkBuffers[i])[x] = std::max( 0.0f, std::min( potential, (leafDataTermBuffers[i])[x] ) );  
+	//		}
+	//	}
+
+	//	//update labels (multipliers) at the leaves
+	//	for(int i = 0; i < NumLeaves; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ ){
+	//			(leafLabelBuffers[i])[x] -= this->CC * ((leafDivBuffers[i])[x] - (leafIncBuffers[i])[x] + (leafSinkBuffers[i])[x]);
+	//			(leafLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (leafLabelBuffers[i])[x] ) );
+	//		}
+	//	
+	//	//update labels (multipliers) at the branches (incrementally, not push-up)
+	//	for(int i = 0; i < NumBranches; i++ )
+	//		for( int x = 0; x < VolumeSize; x++ ){
+	//			(branchLabelBuffers[i])[x] -= this->CC * ((branchDivBuffers[i])[x] - (branchIncBuffers[i])[x] + (branchSinkBuffers[i])[x]);
+	//			(branchLabelBuffers[i])[x] = std::min(1.0f, std::max( 0.0f, (branchLabelBuffers[i])[x] ) );
+	//		}
+	//}
 	
 	//deallocate branch temporary buffers
 	delete[] branchNodeBuffer;
@@ -716,6 +823,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] branchFlowYBuffers;
 	delete[] branchFlowZBuffers;
 	delete[] branchDivBuffers;
+	delete[] branchSinkBuffers;
 	delete[] branchIncBuffers;
 	delete[] branchLabelBuffers;
 	delete[] branchWorkingBuffers;
@@ -730,17 +838,174 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] leafDivBuffers;
 	delete[] leafIncBuffers;
 	delete[] leafSinkBuffers;
-	delete[] leafWorkingBuffers;
 	delete[] leafLabelBuffers;
 	delete[] leafDataTermBuffers;
 	delete[] leafSmoothnessTermBuffers;
 	delete[] leafSmoothnessConstants;
 
+	//delete source node buffers
+	delete[] sourceFlowBuffer;
+	delete[] sourceWorkingBuffer;
+
 	return 1;
 }
 
+void vtkCudaHierarchicalMaxFlowSegmentation::FigureOutBufferPriorities( vtkIdType currNode ){
+	
+	//Propogate down the tree
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int kid = 0; kid < NumKids; kid++)
+		FigureOutBufferPriorities( this->Hierarchy->GetChild(currNode,kid) );
 
-int vtkHierarchicalMaxFlowSegmentation::RequestDataObject(
+	//if we are the root, figure out the buffers
+	if( this->Hierarchy->GetRoot() == currNode ){
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(sourceFlowBuffer,NumKids+1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(sourceWorkingBuffer,NumKids+2));
+
+	//if we are a leaf, handle separately
+	}else if( NumKids == 0 ){
+		int Number = LeafMap.find(currNode)->second;
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafDivBuffers[Number],2));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowXBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowYBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowZBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafSinkBuffers[Number],2));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafDataTermBuffers[Number],0));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafLabelBuffers[Number],2));
+		if( leafSmoothnessTermBuffers[Number] )
+			this->CPU2PriorityMap[leafSmoothnessTermBuffers[Number]]++;
+
+	//else, we are a branch
+	}else{
+		int Number = BranchMap.find(currNode)->second;
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchDivBuffers[Number],2));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowXBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowYBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowZBuffers[Number],1));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchSinkBuffers[Number],NumKids+3));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchLabelBuffers[Number],2));
+		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchWorkingBuffers[Number],NumKids+2));
+		if( branchSmoothnessTermBuffers[Number] )
+			this->CPU2PriorityMap[branchSmoothnessTermBuffers[Number]]++;
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::GetGPUBuffers(){
+	
+	for( std::set<float*>::iterator iterator = CPUInUse.begin();
+		 iterator != CPUInUse.end(); iterator++ ){
+
+		//check if this buffer needs to be assigned
+		if( CPU2GPUMap.find( *iterator ) != CPU2GPUMap.end() ) continue;
+
+		//start assigning from the list of unused buffers
+		if( UnusedGPUBuffers.size() > 0 ){
+			float* NewGPUBuffer = UnusedGPUBuffers.front();
+			UnusedGPUBuffers.pop_front();
+			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+			
+			//update the priority stacks
+			AddToStack(*iterator);
+			continue;
+		}
+
+		//see if there is some garbage we can deallocate first
+		bool flag = false;
+		for( std::set<float*>::iterator iterator2 = NoCopyBack.begin();
+			 iterator2 != NoCopyBack.end(); iterator++ ){
+			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
+			float* NewGPUBuffer = CPU2GPUMap.find(*iterator2)->second;
+			CPU2GPUMap.erase( CPU2GPUMap.find(*iterator2) );
+			GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
+			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+			
+			//update the priority stacks
+			RemoveFromStack(*iterator2);
+			AddToStack(*iterator);
+			flag = true;
+			break;
+		}
+		if( flag ) continue;
+
+		//else, we have to move something in use back to the CPU
+		flag = false;
+		std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+		for( ; stackIterator != PriorityStacks.end(); stackIterator++ ){
+			for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
+				
+				//can't remove this one because it is in use
+				if( CPUInUse.find( *subIterator ) != CPUInUse.end() ) continue;
+
+				//else, find it and move it back to the CPU
+				float* NewGPUBuffer = CPU2GPUMap.find(*subIterator)->second;
+				CPU2GPUMap.erase( CPU2GPUMap.find(*subIterator) );
+				GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
+				CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+				GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+				ReturnBufferGPU2CPU(*subIterator,NewGPUBuffer);
+				MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+				
+				//update the priority stack and leave immediately since our iterators
+				//no longer have a valid contract (changed container)
+				RemoveFromStack(*subIterator);
+				AddToStack(*iterator);
+				flag = true;
+				break;
+
+			}
+			if( flag ) break;
+		}
+
+
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer){
+	if( ReadOnly.find(CPUBuffer) != ReadOnly.end() ) return;
+	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
+	CUDA_CopyBufferToCPU( GPUBuffer, CPUBuffer, VolumeSize, GetStream());
+	NumMemCpies++;
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer){
+	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
+	CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, GetStream());
+	NumMemCpies++;
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::BuildStackUpToPriority( int priority ){
+	while( PriorityStacks.size() < priority ){
+		PriorityStacks.push_back( std::list<float*>() );
+		Priority.push_back( (int) PriorityStacks.size() );
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::AddToStack( float* CPUBuffer ){
+	int neededPriority = CPU2PriorityMap.find(CPUBuffer)->second;
+	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::list< int >::iterator priorityIterator = Priority.begin();
+	for( ; *priorityIterator != neededPriority; stackIterator++, priorityIterator++);
+	stackIterator->push_front(CPUBuffer);
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::RemoveFromStack( float* CPUBuffer ){
+	int neededPriority = CPU2PriorityMap.find(CPUBuffer)->second;
+	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::list< int >::iterator priorityIterator = Priority.begin();
+	for( ; *priorityIterator != neededPriority; stackIterator++, priorityIterator++);
+	for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
+		if( *subIterator == CPUBuffer ){
+			stackIterator->erase(subIterator);
+			return;
+		}
+	}
+}
+
+int vtkCudaHierarchicalMaxFlowSegmentation::RequestDataObject(
   vtkInformation* vtkNotUsed(request),
   vtkInformationVector** inputVector ,
   vtkInformationVector* outputVector){

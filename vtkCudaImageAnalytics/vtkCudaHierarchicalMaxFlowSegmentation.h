@@ -1,7 +1,8 @@
-#ifndef __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
-#define __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
+#ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
+#define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 
-#include "vtkHierarchicalMaxFlowSegmentation.h"
+#include "vtkCudaObject.h"
+
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
@@ -12,6 +13,8 @@
 #include "vtkDirectedGraph.h"
 #include "vtkTree.h"
 #include <map>
+#include <list>
+#include <set>
 
 #include <limits.h>
 
@@ -19,12 +22,12 @@
 
 //OUTPUT PORT DESCRIPTION
 
-class vtkHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm 
+class vtkCudaHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
-	vtkTypeMacro( vtkHierarchicalMaxFlowSegmentation, vtkImageAlgorithm );
+	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkImageAlgorithm );
 
-	static vtkHierarchicalMaxFlowSegmentation *New();
+	static vtkCudaHierarchicalMaxFlowSegmentation *New();
 
 	//Set the hierarchical model used in the segmentation, note that this has to be a 
 	// tree.
@@ -51,9 +54,7 @@ public:
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
 	vtkDataObject* GetOutput(int idx);
-
 	
-
 	// Description:
 	// If the subclass does not define an Execute method, then the task
 	// will be broken up, multiple threads will be spawned, and each thread
@@ -74,33 +75,84 @@ public:
 	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
-	vtkHierarchicalMaxFlowSegmentation();
-	virtual ~vtkHierarchicalMaxFlowSegmentation();
+	vtkCudaHierarchicalMaxFlowSegmentation();
+	virtual ~vtkCudaHierarchicalMaxFlowSegmentation();
 
 private:
-	vtkHierarchicalMaxFlowSegmentation operator=(const vtkHierarchicalMaxFlowSegmentation&){}
-	vtkHierarchicalMaxFlowSegmentation(const vtkHierarchicalMaxFlowSegmentation&){}
+	vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){}
+	vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){}
+
+	void Reinitialize(int withData);
+	void Deinitialize(int withData);
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
-	void PropogateLabels( vtkIdType currNode, float** branchLabels, float** leafLabels, int size );
-	void PropogateFlows( vtkIdType currNode, float* sourceSinkFlow, float** branchSinkFlows, float** leafSinkFlows,
-											 float** branchIncFlows,
-											 float** branchDivFlows, float** leafDivFlows,
-											 float** branchLabels, float** leafLabels, int size );
+	void PropogateLabels( vtkIdType currNode );
+	void SolveMaxFlow( vtkIdType currNode );
 	
 	vtkTree* Hierarchy;
 	std::map<vtkIdType,double> SmoothnessScalars;
-	std::map<vtkIdType,int> OutputPortMapping;
-	std::map<vtkIdType,int> IntermediateBufferMapping;
+	std::map<vtkIdType,int> LeafMap;
+	std::map<vtkIdType,int> BranchMap;
 
 	int NumberOfIterations;
 	float CC;
 	float StepSize;
+	int VolumeSize;
 	
 	std::map<vtkIdType,int> InputPortMapping;
 	std::map<int,vtkIdType> BackwardsInputPortMapping;
 	int FirstUnusedPort;
 
+	//pointers to variable structures, easier to keep as part of the class definition
+	float**	branchFlowXBuffers;
+	float**	branchFlowYBuffers;
+	float**	branchFlowZBuffers;
+	float**	branchDivBuffers;
+	float**	branchSinkBuffers;
+	float**	branchIncBuffers;
+	float**	branchLabelBuffers;
+	float**	branchSmoothnessTermBuffers;
+	float**	branchWorkingBuffers;
+	float*	branchSmoothnessConstants;
+
+	float**	leafFlowXBuffers;
+	float**	leafFlowYBuffers;
+	float**	leafFlowZBuffers;
+	float**	leafDivBuffers;
+	float**	leafSinkBuffers;
+	float**	leafIncBuffers;
+	float**	leafLabelBuffers;
+	float**	leafDataTermBuffers;
+	float**	leafSmoothnessTermBuffers;
+	float*	leafSmoothnessConstants;
+
+	float*	sourceFlowBuffer;
+	float*	sourceWorkingBuffer;
+
+	//Mappings for CPU-GPU buffer sharing
+	void GetGPUBuffers();
+	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer);
+	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer);
+	void AddToStack( float* CPUBuffer );
+	void RemoveFromStack( float* CPUBuffer );
+	void BuildStackUpToPriority( int priority );
+	void FigureOutBufferPriorities( vtkIdType currNode );
+
+	std::map<float*,float*> CPU2GPUMap;
+	std::map<float*,float*> GPU2CPUMap;
+	std::map<float*,int> CPU2PriorityMap;
+
+	std::set<float*> CPUInUse;
+	
+	std::list< std::list<float*> > PriorityStacks;
+	std::list< int > Priority;
+
+	std::list< float* > UnusedGPUBuffers;
+	std::set< float* > ReadOnly;
+	std::set< float* > NoCopyBack;
+	
+	int		NumMemCpies;
+	int		NumKernelRuns;
 };
 
 #endif
