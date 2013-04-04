@@ -602,14 +602,14 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//Do the gradient-descent based update of the spatial flows
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == 0 || y == 0 || z == 0 ) continue;  
+				if( z == 0 || y == 0 || x == 0 ) continue;
 				(leafFlowXBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-1] );
 				(leafFlowYBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X] );
 				(leafFlowZBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X*Y] );
 			}
 		for(int i = 0; i < NumBranches; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == 0 || y == 0 || z == 0 ) continue;  
+				if( z == 0 || y == 0 || x == 0 ) continue;
 				(branchFlowXBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-1] );
 				(branchFlowYBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-X] );
 				(branchFlowZBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-X*Y] );
@@ -711,6 +711,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] branchFlowXBuffers;
 	delete[] branchFlowYBuffers;
 	delete[] branchFlowZBuffers;
+	delete[] branchSinkBuffers;
 	delete[] branchIncBuffers;
 	delete[] branchLabelBuffers;
 	delete[] branchWorkingBuffers;
@@ -729,6 +730,8 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	delete[] leafDataTermBuffers;
 	delete[] leafSmoothnessTermBuffers;
 	delete[] leafSmoothnessConstants;
+
+	delete[] sourceFlow;
 
 	return 1;
 }
