@@ -49,6 +49,11 @@ SET ( Kit_SRCS
   CUDA_PAGMMestimator.h
   CUDA_PAGMMestimator.cu
 
+  #Accelerated hierarchical max flow algorithm
+  vtkCudaHierarchicalMaxFlowSegmentation.h
+  vtkCudaHierarchicalMaxFlowSegmentation.cxx
+  CUDA_hierarchicalmaxflow.h
+  CUDA_hierarchicalmaxflow.cu
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )

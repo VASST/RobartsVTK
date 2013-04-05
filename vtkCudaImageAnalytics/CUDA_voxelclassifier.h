@@ -1,5 +1,5 @@
-#ifndef __KOHONENAPPLICATION_H__
-#define __KOHONENAPPLICATION_H__
+#ifndef __CUDA_VOXELCLASSIFIER_H__
+#define __CUDA_VOXELCLASSIFIER_H__
 
 #include "vector_types.h"
 
@@ -27,4 +27,4 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
 								short* outputData, Voxel_Classifier_Information& information,
 								cudaStream_t* stream );
 
-#endif //__KOHONENAPPLICATION_H__
+#endif //__CUDA_VOXELCLASSIFIER_H__
