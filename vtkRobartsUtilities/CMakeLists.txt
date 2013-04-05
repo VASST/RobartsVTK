@@ -12,6 +12,7 @@ SET ( Kit_SRCS
   vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
   vtkImage2DHistogram.h vtkImage2DHistogram.cxx
   vtkImageMultiStatistics.h vtkImageMultiStatistics.cxx
+  vtkImageLogLikelihood.h vtkImageLogLikelihood.cxx
 
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
 )
