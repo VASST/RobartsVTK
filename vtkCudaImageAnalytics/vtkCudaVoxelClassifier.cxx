@@ -140,11 +140,11 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
 
 	//update transfer functions
 	short* PrimaryTexture = new short[this->TextureSize*this->TextureSize];
-	std::memset( PrimaryTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
+	memset( PrimaryTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
 	this->PrimaryFunction->GetClassifyTable( PrimaryTexture,this->TextureSize,this->TextureSize,minIntensity1,
 											 maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0 );
 	short* KeyholeTexture = new short[this->TextureSize*this->TextureSize];
-	std::memset( KeyholeTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
+	memset( KeyholeTexture, 0, sizeof(short)*this->TextureSize*this->TextureSize );
 	if( this->KeyholeFunction && this->ClassifierInfo.NumberOfKeyholePlanes > 0 ){
 		this->KeyholeFunction->GetClassifyTable( KeyholeTexture,this->TextureSize,this->TextureSize,minIntensity1,
 												 maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0 );

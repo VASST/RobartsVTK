@@ -3,6 +3,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
+#include "float.h"
 
 vtkStandardNewMacro(vtkCudaKohonenGenerator);
 
