@@ -744,7 +744,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestDataObject(
 	vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkImageData::DATA_OBJECT()));
  
 	if (input) {
-		std::cout << "There are " << outputVector->GetNumberOfInformationObjects() << " output info objects" << std::endl;
 		for(int i=0; i < outputVector->GetNumberOfInformationObjects(); ++i) {
 			vtkInformation* info = outputVector->GetInformationObject(0);
 			vtkDataSet *output = vtkDataSet::SafeDownCast(
