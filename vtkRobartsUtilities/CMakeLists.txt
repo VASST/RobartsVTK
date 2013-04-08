@@ -13,7 +13,7 @@ SET ( Kit_SRCS
   vtkImage2DHistogram.h vtkImage2DHistogram.cxx
   vtkImageMultiStatistics.h vtkImageMultiStatistics.cxx
   vtkImageLogLikelihood.h vtkImageLogLikelihood.cxx
-
+  vtkImageVote.h vtkImageVote.cxx
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
 )
 
