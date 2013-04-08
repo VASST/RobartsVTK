@@ -349,7 +349,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 			CUDA_zeroOutBuffer(CPU2GPUMap[workingBufferUsed],VolumeSize,this->GetStream());
 		else
 			CUDA_SetBufferToValue(CPU2GPUMap[workingBufferUsed],1.0f/CC,VolumeSize,this->GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[workingBufferUsed],workingBufferUsed,VolumeSize,GetStream());
 
 		//remove current working buffer from the no-copy list
 		this->NoCopyBack.erase( this->NoCopyBack.find(workingBufferUsed) );
@@ -371,7 +370,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_flowGradientStep(CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]], CPU2GPUMap[leafIncBuffers[LeafMap[currNode]]],
 							  CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafLabelBuffers[LeafMap[currNode]]],
 							  StepSize, CC, VolumeSize, GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]],leafDivBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 		
 		//re-organize the GPU for the next step
 		this->CPUInUse.clear();
@@ -387,9 +385,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_applyStep(CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafFlowXBuffers[LeafMap[currNode]]],
 					   CPU2GPUMap[leafFlowYBuffers[LeafMap[currNode]]], CPU2GPUMap[leafFlowZBuffers[LeafMap[currNode]]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowXBuffers[LeafMap[currNode]]],leafFlowXBuffers[LeafMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowYBuffers[LeafMap[currNode]]],leafFlowYBuffers[LeafMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowZBuffers[LeafMap[currNode]]],leafFlowZBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 		
 		//add the smoothness term
 		if(leafSmoothnessTermBuffers[LeafMap[currNode]]){
@@ -404,7 +399,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 					   CPU2GPUMap[leafFlowYBuffers[LeafMap[currNode]]], CPU2GPUMap[leafFlowZBuffers[LeafMap[currNode]]],
 					   CPU2GPUMap[leafSmoothnessTermBuffers[LeafMap[currNode]]], leafSmoothnessConstants[LeafMap[currNode]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]],leafDivBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 		
 		//project onto set and recompute the divergence
 		//std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
@@ -412,10 +406,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_projectOntoSet(CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafFlowXBuffers[LeafMap[currNode]]],
 					   CPU2GPUMap[leafFlowYBuffers[LeafMap[currNode]]], CPU2GPUMap[leafFlowZBuffers[LeafMap[currNode]]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowXBuffers[LeafMap[currNode]]],leafFlowXBuffers[LeafMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowYBuffers[LeafMap[currNode]]],leafFlowYBuffers[LeafMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafFlowZBuffers[LeafMap[currNode]]],leafFlowZBuffers[LeafMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]],leafDivBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 
 	}else if( isBranch ){
 		//organize the GPU to obtain the buffers
@@ -432,7 +422,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_flowGradientStep(CPU2GPUMap[branchSinkBuffers[BranchMap[currNode]]], CPU2GPUMap[branchIncBuffers[BranchMap[currNode]]],
 							  CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]], CPU2GPUMap[branchLabelBuffers[BranchMap[currNode]]],
 							  StepSize, CC,VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]],branchDivBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 
 		//re-organize the GPU for the next step
 		this->CPUInUse.clear();
@@ -448,9 +437,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_applyStep(CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]], CPU2GPUMap[branchFlowXBuffers[BranchMap[currNode]]],
 					   CPU2GPUMap[branchFlowYBuffers[BranchMap[currNode]]], CPU2GPUMap[branchFlowZBuffers[BranchMap[currNode]]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowXBuffers[BranchMap[currNode]]],branchFlowXBuffers[BranchMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowYBuffers[BranchMap[currNode]]],branchFlowYBuffers[BranchMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowZBuffers[BranchMap[currNode]]],branchFlowZBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 		
 		//add the smoothness term
 		if(branchSmoothnessTermBuffers[BranchMap[currNode]]){
@@ -465,18 +451,12 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 					   CPU2GPUMap[branchFlowYBuffers[BranchMap[currNode]]], CPU2GPUMap[branchFlowZBuffers[BranchMap[currNode]]],
 					   CPU2GPUMap[branchSmoothnessTermBuffers[BranchMap[currNode]]], branchSmoothnessConstants[BranchMap[currNode]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]],branchDivBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 		
 		//project onto set and recompute the divergence
-		//std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
 		NumKernelRuns += 2;
 		CUDA_projectOntoSet(CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]], CPU2GPUMap[branchFlowXBuffers[BranchMap[currNode]]],
 					   CPU2GPUMap[branchFlowYBuffers[BranchMap[currNode]]], CPU2GPUMap[branchFlowZBuffers[BranchMap[currNode]]],
 					   VX, VY, VZ, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]],branchDivBuffers[BranchMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowXBuffers[BranchMap[currNode]]],branchFlowXBuffers[BranchMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowYBuffers[BranchMap[currNode]]],branchFlowYBuffers[BranchMap[currNode]],VolumeSize,GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchFlowZBuffers[BranchMap[currNode]]],branchFlowZBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 	}
 
 	//RB : Update everything for the children
@@ -499,7 +479,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_storeSinkFlowInBuffer(CPU2GPUMap[branchWorkingBuffers[BranchMap[currNode]]], CPU2GPUMap[branchIncBuffers[BranchMap[currNode]]],
 								  CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]], CPU2GPUMap[branchLabelBuffers[BranchMap[currNode]]],
 								  CC, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchWorkingBuffers[BranchMap[currNode]]],branchWorkingBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 
 	}
 
@@ -519,7 +498,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		NumKernelRuns++;
 		CUDA_divideAndStoreBuffer(CPU2GPUMap[branchWorkingBuffers[BranchMap[currNode]]],CPU2GPUMap[branchSinkBuffers[BranchMap[currNode]]],
 			(float)(NumKids+1),VolumeSize,this->GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchSinkBuffers[BranchMap[currNode]]],branchSinkBuffers[BranchMap[currNode]],VolumeSize,GetStream());
 		
 		//since we are done with the working buffer, we can mark it as garbage, and we need to keep the sink value, so no longer garbage
 		this->NoCopyBack.insert(branchWorkingBuffers[BranchMap[currNode]]);
@@ -541,7 +519,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		//std::cout << currNode << "\t Update sink flow" << std::endl;
 		NumKernelRuns++;
 		CUDA_divideAndStoreBuffer(CPU2GPUMap[sourceWorkingBuffer],CPU2GPUMap[sourceFlowBuffer],(float)NumKids,VolumeSize,this->GetStream());
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[sourceFlowBuffer],sourceFlowBuffer,VolumeSize,GetStream());
 
 		//since we are done with the working buffer, we can mark it as garbage, and we need to keep the sink value, so no longer garbage
 		this->NoCopyBack.insert(sourceWorkingBuffer);
@@ -564,7 +541,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		CUDA_updateLeafSinkFlow(CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]], CPU2GPUMap[leafIncBuffers[LeafMap[currNode]]],
 								CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafLabelBuffers[LeafMap[currNode]]],
 								CC, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]],leafSinkBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 
 		this->CPUInUse.clear();
 		this->CPUInUse.insert(leafSinkBuffers[LeafMap[currNode]]);
@@ -575,7 +551,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		NumKernelRuns++;
 		CUDA_constrainLeafSinkFlow(CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]], CPU2GPUMap[leafDataTermBuffers[LeafMap[currNode]]],
 									VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]],leafSinkBuffers[LeafMap[currNode]],VolumeSize,GetStream());
 	}
 
 	// BL: Find source potential and store in parent's working buffer
@@ -606,12 +581,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 			CUDA_storeSourceFlowInBuffer(CPU2GPUMap[workingBuffer], CPU2GPUMap[branchSinkBuffers[BranchMap[currNode]]],
 									  CPU2GPUMap[branchDivBuffers[BranchMap[currNode]]], CPU2GPUMap[branchLabelBuffers[BranchMap[currNode]]],
 									  CC, VolumeSize, GetStream() );
-			//CUDA_CopyBufferToCPU(CPU2GPUMap[workingBuffer],workingBuffer,VolumeSize,GetStream());
 		}else{
 			CUDA_storeSourceFlowInBuffer(CPU2GPUMap[workingBuffer], CPU2GPUMap[leafSinkBuffers[LeafMap[currNode]]],
 									  CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafLabelBuffers[LeafMap[currNode]]],
 									  CC, VolumeSize, GetStream() );
-			//CUDA_CopyBufferToCPU(CPU2GPUMap[workingBuffer],workingBuffer,VolumeSize,GetStream());
 		}
 
 	}
@@ -639,7 +612,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
 		CUDA_updateLabel(CPU2GPUMap[leafSinkBuffers[LeafMap[node]]], CPU2GPUMap[leafIncBuffers[LeafMap[node]]],
 						 CPU2GPUMap[leafDivBuffers[LeafMap[node]]], CPU2GPUMap[leafLabelBuffers[LeafMap[node]]],
 						 CC, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[leafLabelBuffers[LeafMap[node]]],leafLabelBuffers[LeafMap[node]],VolumeSize,GetStream());
 
 	}else{
 		//organize the GPU to obtain the buffers
@@ -655,7 +627,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
 		CUDA_updateLabel(CPU2GPUMap[branchSinkBuffers[BranchMap[node]]], CPU2GPUMap[branchIncBuffers[BranchMap[node]]],
 						 CPU2GPUMap[branchDivBuffers[BranchMap[node]]], CPU2GPUMap[branchLabelBuffers[BranchMap[node]]],
 						 CC, VolumeSize, GetStream() );
-		//CUDA_CopyBufferToCPU(CPU2GPUMap[branchLabelBuffers[BranchMap[node]]],branchLabelBuffers[BranchMap[node]],VolumeSize,GetStream());
 	}
 }
 
