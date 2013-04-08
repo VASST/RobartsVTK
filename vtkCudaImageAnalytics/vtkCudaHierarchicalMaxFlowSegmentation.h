@@ -88,6 +88,7 @@ private:
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode );
+	void UpdateLabel( vtkIdType node );
 	
 	vtkTree* Hierarchy;
 	std::map<vtkIdType,double> SmoothnessScalars;
@@ -98,6 +99,7 @@ private:
 	float CC;
 	float StepSize;
 	int VolumeSize;
+	int VX, VY, VZ;
 	
 	std::map<vtkIdType,int> InputPortMapping;
 	std::map<int,vtkIdType> BackwardsInputPortMapping;
