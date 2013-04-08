@@ -438,7 +438,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkImageData* CurrImage = 0;
 		if( this->InputPortMapping.find(this->Hierarchy->GetParent(node)) != this->InputPortMapping.end() ){
 			int parentInputNumber = this->InputPortMapping.find(this->Hierarchy->GetParent(node))->second;
-			vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(parentInputNumber)->Get(vtkDataObject::DATA_OBJECT()));
+			CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(parentInputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 		}
 		if( this->Hierarchy->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->OutputPortMapping.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
@@ -602,17 +602,15 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//Do the gradient-descent based update of the spatial flows
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( z == 0 || y == 0 || x == 0 ) continue;
-				(leafFlowXBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-1] );
-				(leafFlowYBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X] );
-				(leafFlowZBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X*Y] );
+				if( x != 0 ) (leafFlowXBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-1] );
+				if( y != 0 ) (leafFlowYBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X] );
+				if( z != 0 ) (leafFlowZBuffers[i])[idx] += this->StepSize * ((leafWorkingBuffers[i])[idx] - (leafWorkingBuffers[i])[idx-X*Y] );
 			}
 		for(int i = 0; i < NumBranches; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( z == 0 || y == 0 || x == 0 ) continue;
-				(branchFlowXBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-1] );
-				(branchFlowYBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-X] );
-				(branchFlowZBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	-(branchWorkingBuffers[i])[idx-X*Y] );
+				if( x != 0 ) (branchFlowXBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	- (branchWorkingBuffers[i])[idx-1] );
+				if( y != 0 ) (branchFlowYBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	- (branchWorkingBuffers[i])[idx-X] );
+				if( z != 0 ) (branchFlowZBuffers[i])[idx]	+= this->StepSize * ((branchWorkingBuffers[i])[idx]	- (branchWorkingBuffers[i])[idx-X*Y] );
 			}
 
 		//calculate the magnitude of spatial flows through each voxel and place this magnitude in the working buffer
@@ -621,18 +619,18 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 				float upX = (x == X-1) ? 0.0f : (leafFlowXBuffers[i])[idx+1];
 				float upY = (y == Y-1) ? 0.0f : (leafFlowYBuffers[i])[idx+X];
 				float upZ = (z == Z-1) ? 0.0f : (leafFlowZBuffers[i])[idx+X*Y];
-				(leafWorkingBuffers[i])[x] = sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[x]) +
-																 SQR(upY) + SQR((leafFlowYBuffers[i])[x]) +
-																 SQR(upZ) + SQR((leafFlowZBuffers[i])[x]) ));
+				(leafWorkingBuffers[i])[idx] = sqrt(0.5f *	(SQR(upX) + SQR((leafFlowXBuffers[i])[idx]) +
+																 SQR(upY) + SQR((leafFlowYBuffers[i])[idx]) +
+																 SQR(upZ) + SQR((leafFlowZBuffers[i])[idx]) ));
 			}
 		for(int i = 0; i < NumBranches; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
 				float upX = (x == X-1) ? 0.0f : (branchFlowXBuffers[i])[idx+1];
 				float upY = (y == Y-1) ? 0.0f : (branchFlowYBuffers[i])[idx+X];
 				float upZ = (z == Z-1) ? 0.0f : (branchFlowZBuffers[i])[idx+X*Y];
-				(branchWorkingBuffers[i])[x] = sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[x]) +
-																 SQR(upY) + SQR((branchFlowYBuffers[i])[x]) +
-																 SQR(upZ) + SQR((branchFlowZBuffers[i])[x]) ));
+				(branchWorkingBuffers[i])[idx] = sqrt(0.5f * (SQR(upX) + SQR((branchFlowXBuffers[i])[idx]) +
+																 SQR(upY) + SQR((branchFlowYBuffers[i])[idx]) +
+																 SQR(upZ) + SQR((branchFlowZBuffers[i])[idx]) ));
 			}
 
 		//calculate the multiplying for bringing it to within the specified bound (smoothness term)
@@ -654,17 +652,15 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//adjust the spatial flows by the multipliers
 		for(int i = 0; i < NumLeaves; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(leafFlowXBuffers[i])[idx+1] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+1]);
-				(leafFlowYBuffers[i])[idx+X] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+X]);
-				(leafFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((leafWorkingBuffers[i])[idx] + (leafWorkingBuffers[i])[idx+X*Y]);
+				if( x != 0 ) (leafFlowXBuffers[i])[idx] *= 0.5f * ((leafWorkingBuffers[i])[idx-1] + (leafWorkingBuffers[i])[idx]);
+				if( y != 0 ) (leafFlowYBuffers[i])[idx] *= 0.5f * ((leafWorkingBuffers[i])[idx-X] + (leafWorkingBuffers[i])[idx]);
+				if( z != 0 ) (leafFlowZBuffers[i])[idx] *= 0.5f * ((leafWorkingBuffers[i])[idx-X*Y] + (leafWorkingBuffers[i])[idx]);
 			}
 		for(int i = 0; i < NumBranches; i++ )
 			for( int idx = 0, z = 0; z < Z; z++ ) for( int y = 0; y < Y; y++ ) for( int x = 0; x < X; x++, idx++ ){
-				if( x == X-1 || y == Y-1 || z == Z-1 ) continue;  
-				(branchFlowXBuffers[i])[idx+1] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+1]);
-				(branchFlowYBuffers[i])[idx+X] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+X]);
-				(branchFlowZBuffers[i])[idx+X*Y] *= 0.5f * ((branchWorkingBuffers[i])[idx] + (branchWorkingBuffers[i])[idx+X*Y]);
+				if( x != 0 ) (branchFlowXBuffers[i])[idx] *= 0.5f * ((branchWorkingBuffers[i])[idx-1] + (branchWorkingBuffers[i])[idx]);
+				if( y != 0 ) (branchFlowYBuffers[i])[idx] *= 0.5f * ((branchWorkingBuffers[i])[idx-X] + (branchWorkingBuffers[i])[idx]);
+				if( z != 0 ) (branchFlowZBuffers[i])[idx] *= 0.5f * ((branchWorkingBuffers[i])[idx-X*Y] + (branchWorkingBuffers[i])[idx]);
 			}
 
 		//calculate the divergence since the source flows won't change for the rest of this iteration
