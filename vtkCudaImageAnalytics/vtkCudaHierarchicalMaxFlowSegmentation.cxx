@@ -553,6 +553,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 									VolumeSize, GetStream() );
 	}
 
+	//RB : Update children's labels
+	for(int kid = 0; kid < NumKids; kid++)
+		UpdateLabel( this->Hierarchy->GetChild(currNode,kid) );
+
 	// BL: Find source potential and store in parent's working buffer
 	if( !isRoot ){
 		//get parent's working buffer
@@ -586,14 +590,11 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 									  CPU2GPUMap[leafDivBuffers[LeafMap[currNode]]], CPU2GPUMap[leafLabelBuffers[LeafMap[currNode]]],
 									  CC, VolumeSize, GetStream() );
 		}
-
 	}
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
 	int NumKids = this->Hierarchy->GetNumberOfChildren(node);
-	for(int kid = 0; kid < NumKids; kid++)
-		UpdateLabel( this->Hierarchy->GetChild(node, kid) );
 
 	if( this->Hierarchy->GetRoot() == node ) return;
 	
