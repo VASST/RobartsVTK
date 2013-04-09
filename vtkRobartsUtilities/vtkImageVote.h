@@ -1,10 +1,8 @@
 #ifndef __VTKIMAGEVOTE_H__
 #define __VTKIMAGEVOTE_H__
 
-#include "vtkImageAlgorithm.h"
+#include "vtkThreadedImageAlgorithm.h"
 #include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkSetGet.h"
@@ -16,10 +14,10 @@
 
 //OUTPUT PORT DESCRIPTION
 
-class vtkImageVote : public vtkImageAlgorithm 
+class vtkImageVote : public vtkThreadedImageAlgorithm 
 {
 public:
-	vtkTypeMacro( vtkImageVote, vtkImageAlgorithm );
+	vtkTypeMacro( vtkImageVote, vtkThreadedImageAlgorithm );
 
 	static vtkImageVote *New();
 
@@ -34,9 +32,12 @@ public:
 	// will be broken up, multiple threads will be spawned, and each thread
 	// will call this method. It is public so that the thread functions
 	// can call this method.
-	virtual int RequestData(vtkInformation *request, 
-							 vtkInformationVector **inputVector, 
-							 vtkInformationVector *outputVector);
+	virtual void ThreadedRequestData(vtkInformation *request,
+                                     vtkInformationVector **inputVector,
+                                     vtkInformationVector *outputVector,
+                                     vtkImageData ***inData,
+                                     vtkImageData **outData,
+                                     int extent[6], int threadId);
 	virtual int RequestInformation( vtkInformation* request,
 							 vtkInformationVector** inputVector,
 							 vtkInformationVector* outputVector);

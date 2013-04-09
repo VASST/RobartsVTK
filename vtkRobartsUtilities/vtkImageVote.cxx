@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 
 #define SQR(X) X*X
 
@@ -25,6 +26,7 @@ vtkImageVote::vtkImageVote(){
 	this->FirstUnusedPort = 0;
 
 	this->OutputDataType = VTK_SHORT;
+    this->SetNumberOfThreads(1);
 
 }
 
@@ -175,7 +177,7 @@ template<class T>
 void vtkImageVoteExecute(vtkImageVote *self,
 				vtkImageData **inData,
 				vtkImageData *outData,
-				int* outExt, T* unUsed ){
+				int* outExt, T* unUsed, int threadId ){
 
 	T** inPtr = new T* [self->GetNumberOfInputConnections(0)];
 	for(int i = 0; i < self->GetNumberOfInputConnections(0); i++ )
@@ -184,7 +186,7 @@ void vtkImageVoteExecute(vtkImageVote *self,
 	void* outPtr = outData->GetScalarPointer();
 
 	switch (outData->GetScalarType()) {
-		vtkTemplateMacro(vtkImageVoteExecute(self, inData, inPtr, outData, static_cast<VTK_TT *>(outPtr), outExt ));
+		vtkTemplateMacro(vtkImageVoteExecute(self, inData, inPtr, outData, static_cast<VTK_TT *>(outPtr), outExt, threadId ));
 		default:
 		  vtkGenericWarningMacro("Execute: Unknown output ScalarType");
 		  return;
@@ -197,10 +199,11 @@ template <class IT, class OT>
 void vtkImageVoteExecute(vtkImageVote *self,
 				vtkImageData **inData, IT **inPtr,
 				vtkImageData *outData, OT *outPtr,
-				int* outExt ){
+				int* outExt, int threadId ){
 	
+	int NumThreads = self->GetNumberOfThreads();
 	int VolumeSize = (outExt[1]-outExt[0]+1)*(outExt[3]-outExt[2]+1)*(outExt[5]-outExt[4]+1);
-	for(int idx = 0; idx < VolumeSize; idx++){
+	for(int idx = threadId; idx < VolumeSize; idx+=NumThreads){
 		OT maxIdentifier = -1;
 		IT maxValue = 0;
 		for( int iv = 0; iv < self->GetNumberOfInputConnections(0); iv++ )
@@ -213,38 +216,29 @@ void vtkImageVoteExecute(vtkImageVote *self,
 
 }
 
-int vtkImageVote::RequestData(vtkInformation *request, 
-							vtkInformationVector **inputVector, 
-							vtkInformationVector *outputVector){
-				
+void vtkImageVote::ThreadedRequestData(vtkInformation *request,
+                                     vtkInformationVector **inputVector,
+                                     vtkInformationVector *outputVector,
+                                     vtkImageData ***inData,
+                                     vtkImageData **outData,
+                                     int extent[6], int threadId){
+
 	//check input for consistancy
 	int Extent[6]; int NumLabels; int DataType;
 	int result = CheckInputConsistancy( inputVector, Extent, &NumLabels, &DataType );
-	if( result || NumLabels == 0 ) return -1;				
+	if( result || NumLabels == 0 ) return;				
 	
 	//allocate output image (using short)
-	vtkInformation *outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData *outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	outData->SetScalarType(this->OutputDataType);
-	outData->SetExtent(Extent);
-	outData->AllocateScalars();
-
-	//create array of in data pointers
-	vtkImageData** inData = new vtkImageData* [this->InputPortMapping.size()];
-	for(int inputPortNumber = 0; inputPortNumber < this->InputPortMapping.size(); inputPortNumber++){
-		inData[inputPortNumber] = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-	}
+	(*outData)->SetScalarType(this->OutputDataType);
+	(*outData)->SetExtent(Extent);
+	(*outData)->AllocateScalars();
 
 	//call typed method
 	switch (DataType) {
-		vtkTemplateMacro(vtkImageVoteExecute(this, inData, outData, Extent, static_cast<VTK_TT *>(0) ));
+		vtkTemplateMacro(vtkImageVoteExecute(this, *inData, *outData, Extent, static_cast<VTK_TT *>(0), threadId ));
 		default:
 		  vtkGenericWarningMacro("Execute: Unknown output ScalarType");
-		  return -1;
+		  return;
     }
 
-	//return any extra memory
-	delete[] inData;
-
-	return 1;
 }
