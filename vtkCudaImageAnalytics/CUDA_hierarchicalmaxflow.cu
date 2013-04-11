@@ -6,14 +6,16 @@
 
 //#define DEBUG_VTKCUDAHMF
 
-int CUDA_GetGPUBuffers( int maxNumber, float** buffer, int volSize ){
+void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int volSize, int* numberAcquired, double* percentAcquired ){
 
 	size_t freeMemory, totalMemory;
 	cudaError_t nErr = cudaSuccess;
 	cudaMemGetInfo(&freeMemory, &totalMemory);
 
-    printf("===========================================================\n");
-    printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
+	int maxAllowed = ((double) totalMemory * maxPercent) / (double) (4 * volSize);
+	maxNumber = (maxNumber > maxAllowed) ? maxAllowed : maxNumber;
+    //printf("===========================================================\n");
+    //printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
 
 	while( maxNumber > 0 ){
 		nErr = cudaMalloc((void**) buffer, sizeof(float)*maxNumber*volSize);
@@ -22,10 +24,11 @@ int CUDA_GetGPUBuffers( int maxNumber, float** buffer, int volSize ){
 	}
 	
 	cudaMemGetInfo(&freeMemory, &totalMemory);
-    printf("===========================================================\n");
-    printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
+    //printf("===========================================================\n");
+    //printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
 
-	return maxNumber;
+	*numberAcquired = maxNumber;
+	*percentAcquired = (double) (4*maxNumber*volSize) / (double) totalMemory;
 
 }
 

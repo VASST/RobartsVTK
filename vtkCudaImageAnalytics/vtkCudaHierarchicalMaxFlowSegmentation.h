@@ -17,6 +17,7 @@
 #include <set>
 
 #include <limits.h>
+#include <float.h>
 
 //INPUT PORT DESCRIPTION
 
@@ -42,6 +43,10 @@ public:
 	//is too slow.)
 	vtkSetClampMacro(NumberOfIterations,int,0,INT_MAX);
 	vtkGetMacro(NumberOfIterations,int);
+	
+	//Get and Set the maximum 
+	vtkSetClampMacro(MaxGPUUsage,double,0.0,1.0);
+	vtkGetMacro(MaxGPUUsage,double);
 	
 	//Get and Set the labeling constant, CC, of the algorithm
 	vtkSetClampMacro(CC,float,0.0f,1.0f);
@@ -84,6 +89,8 @@ private:
 
 	void Reinitialize(int withData);
 	void Deinitialize(int withData);
+
+	double	MaxGPUUsage;
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );

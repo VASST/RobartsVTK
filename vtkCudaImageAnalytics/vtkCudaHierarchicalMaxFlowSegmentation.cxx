@@ -26,6 +26,7 @@ vtkCudaHierarchicalMaxFlowSegmentation::vtkCudaHierarchicalMaxFlowSegmentation()
 	this->NumberOfIterations = 100;
 	this->StepSize = 0.1;
 	this->CC = 0.25;
+	this->MaxGPUUsage = 0.75;
 
 	//set up the input mapping structure
 	this->InputPortMapping.clear();
@@ -878,6 +879,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 
 	//Get GPU buffers
 	int BuffersAcquired = 0;
+	double PercentAcquired = 0.0;
 	UnusedGPUBuffers.clear();
 	std::list<float*> AllGPUBufferBlocks;
 	CPU2GPUMap.clear();
@@ -887,8 +889,11 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	while(true) {
 		//try acquiring some new buffers
 		float* NewAcquiredBuffers = 0;
-		int NewNumberAcquired = CUDA_GetGPUBuffers( TotalNumberOfBuffers-BuffersAcquired, &NewAcquiredBuffers, VolumeSize );
+		int NewNumberAcquired = 0;
+		double NewPercentAcquired = 0;
+		CUDA_GetGPUBuffers( TotalNumberOfBuffers-BuffersAcquired, this->MaxGPUUsage-PercentAcquired, &NewAcquiredBuffers, VolumeSize, &NewNumberAcquired, &NewPercentAcquired );
 		BuffersAcquired += NewNumberAcquired;
+		PercentAcquired += NewPercentAcquired;
 
 		//if no new buffers were acquired, exit the loop
 		if( NewNumberAcquired == 0 ) break;
@@ -1019,9 +1024,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::GetGPUBuffers(){
 		//see if there is some garbage we can deallocate first
 		bool flag = false;
 		for( std::set<float*>::iterator iterator2 = NoCopyBack.begin();
-			 iterator2 != NoCopyBack.end(); iterator++ ){
+			 iterator2 != NoCopyBack.end(); iterator2++ ){
 			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
-			float* NewGPUBuffer = CPU2GPUMap.find(*iterator2)->second;
+			if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
+			float* NewGPUBuffer = CPU2GPUMap[*iterator2];
 			CPU2GPUMap.erase( CPU2GPUMap.find(*iterator2) );
 			GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
 			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
