@@ -642,6 +642,9 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	if( result || NumNodes == 0 ) return -1;
 	int NumBranches = NumNodes - NumLeaves - 1;
 
+	if( this->Debug )
+		vtkDebugMacro(<< "Starting input data preparation and CPU buffer allocation." );
+
 	//set the number of output ports
 	outputVector->SetNumberOfInformationObjects(NumLeaves);
 	this->SetNumberOfOutputPorts(NumLeaves);
@@ -877,6 +880,11 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	for(int i = 0; i < NumBranches; i++ )
 		NoCopyBack.insert( branchWorkingBuffers[i] );
 
+	//if verbose, print progress
+	if( this->Debug ){
+		vtkDebugMacro(<<"Starting GPU buffer acquisition");
+	}
+
 	//Get GPU buffers
 	int BuffersAcquired = 0;
 	double PercentAcquired = 0.0;
@@ -907,12 +915,18 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	}
 
 	//Solve maximum flow problem in an iterative bottom-up manner
+	if( this->Debug )
+		vtkDebugMacro(<<"Starting max-flow iterations.");
 	NumMemCpies = 0;
 	NumKernelRuns = 0;
 	this->ReserveGPU();
 	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
+		int oldNumMemCpies = NumMemCpies;
 		SolveMaxFlow( this->Hierarchy->GetRoot() );
-		UpdateLabel( this->Hierarchy->GetRoot() );
+		
+		if( this->Debug )
+			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
+
 	}
 
 	//Copy back any uncopied leaf label buffers (others don't matter anymore)
@@ -920,6 +934,8 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		if( CPU2GPUMap.find(leafLabelBuffers[i]) != CPU2GPUMap.end() )
 			ReturnBufferGPU2CPU(leafLabelBuffers[i], CPU2GPUMap.find(leafLabelBuffers[i])->second);
 	}
+	if( this->Debug )
+		vtkDebugMacro(<< "Results copied back to CPU " );
 
 	//Return all GPU buffers
 	while( AllGPUBufferBlocks.size() > 0 ){

@@ -56,6 +56,10 @@ public:
 	vtkSetClampMacro(StepSize,float,0.0f,1.0f);
 	vtkGetMacro(StepSize,float);
 
+	//Get and Set the verbose flag
+	vtkSetMacro(Verbose,bool);
+	vtkGetMacro(Verbose,bool);
+
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
 	vtkDataObject* GetOutput(int idx);
@@ -91,6 +95,7 @@ private:
 	void Deinitialize(int withData);
 
 	double	MaxGPUUsage;
+	bool	Verbose;
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
