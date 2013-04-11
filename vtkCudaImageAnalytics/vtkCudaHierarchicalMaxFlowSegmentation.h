@@ -99,8 +99,8 @@ private:
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
-	void SolveMaxFlow( vtkIdType currNode );
-	void UpdateLabel( vtkIdType node );
+	void SolveMaxFlow( vtkIdType currNode, int* timeStep );
+	void UpdateLabel( vtkIdType node, int* timeStep );
 	
 	vtkTree* Hierarchy;
 	std::map<vtkIdType,double> SmoothnessScalars;
@@ -151,6 +151,17 @@ private:
 	void RemoveFromStack( float* CPUBuffer );
 	void BuildStackUpToPriority( int priority );
 	void FigureOutBufferPriorities( vtkIdType currNode );
+	
+	class CircListNode;
+	std::map< float*, CircListNode* > PrioritySet;
+	std::map< float*, int > PrioritySetNumUses;
+	void ClearBufferOrdering( vtkIdType currNode );
+	void SimulateIterationForBufferOrdering( vtkIdType currNode, int* reference );
+	void SimulateIterationForBufferOrderingUpdateLabelStep( vtkIdType currNode, int* reference );
+	void UpdateBufferOrderingAt( float* buffer, int reference );
+	void DeallocatePrioritySet();
+	void GetGPUBuffersV2(int reference);
+
 
 	std::map<float*,float*> CPU2GPUMap;
 	std::map<float*,float*> GPU2CPUMap;

@@ -322,9 +322,8 @@ void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode
 	
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
+void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode, int* TimeStep ){
 	
-
 	//get number of kids
 	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
 
@@ -341,7 +340,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 				branchWorkingBuffers[BranchMap[currNode]] ;
 		this->CPUInUse.clear();
 		this->CPUInUse.insert(workingBufferUsed);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the kernel
 		//std::cout << currNode << "\t Clear working buffer" << std::endl;
@@ -363,7 +364,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(leafIncBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafSinkBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafLabelBuffers[LeafMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//compute the gradient step amount (store in div buffer for now)
 		//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
@@ -378,7 +381,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(leafFlowXBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafFlowYBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafFlowZBuffers[LeafMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//apply gradient descent to the flows
 		//std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
@@ -390,8 +395,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		//add the smoothness term
 		if(leafSmoothnessTermBuffers[LeafMap[currNode]]){
 			this->CPUInUse.insert(leafSmoothnessTermBuffers[LeafMap[currNode]]);
-			this->GetGPUBuffers();
+			//this->GetGPUBuffers();
 		}
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 		
 		//run kernel on CPU
 		//std::cout << currNode << "\t Find Projection multiplier" << std::endl;
@@ -415,7 +422,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(branchIncBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchSinkBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchLabelBuffers[BranchMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 		
 		//run kernel on CPU
 		//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
@@ -430,7 +439,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(branchFlowXBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchFlowYBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchFlowZBuffers[BranchMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 		
 		//run kernel on CPU
 		//std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
@@ -442,8 +453,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		//add the smoothness term
 		if(branchSmoothnessTermBuffers[BranchMap[currNode]]){
 			this->CPUInUse.insert(branchSmoothnessTermBuffers[BranchMap[currNode]]);
-			this->GetGPUBuffers();
+			//this->GetGPUBuffers();
 		}
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//compute the multiplier for projecting back onto the feasible flow set (and store in div buffer)
 		//std::cout << currNode << "\t Find Projection multiplier" << std::endl;
@@ -462,7 +475,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 
 	//RB : Update everything for the children
 	for(int kid = 0; kid < NumKids; kid++)
-		SolveMaxFlow( this->Hierarchy->GetChild(currNode,kid) );
+		SolveMaxFlow( this->Hierarchy->GetChild(currNode,kid), TimeStep );
 
 	// B : Add sink potential to working buffer
 	if( isBranch ){
@@ -472,7 +485,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(branchIncBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchLabelBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchDivBuffers[BranchMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the kernel
 		//std::cout << currNode << "\t Add sink potential to working buffer" << std::endl;
@@ -492,7 +507,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.clear();
 		this->CPUInUse.insert(branchWorkingBuffers[BranchMap[currNode]]);
 		this->CPUInUse.insert(branchSinkBuffers[BranchMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//run the kernel
 		//std::cout << currNode << "\t Update sink flow" << std::endl;
@@ -514,7 +531,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.clear();
 		this->CPUInUse.insert(sourceWorkingBuffer);
 		this->CPUInUse.insert(sourceFlowBuffer);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//run the kernel
 		//std::cout << currNode << "\t Update sink flow" << std::endl;
@@ -534,7 +553,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.insert(leafSinkBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafLabelBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafDivBuffers[LeafMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 		
 		//activate the first unconstrained kernel
 		//std::cout << currNode << "\t Update sink flow" << std::endl;
@@ -546,7 +567,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 		this->CPUInUse.clear();
 		this->CPUInUse.insert(leafSinkBuffers[LeafMap[currNode]]);
 		this->CPUInUse.insert(leafDataTermBuffers[LeafMap[currNode]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the second constrained kernel
 		NumKernelRuns++;
@@ -555,8 +578,8 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 	}
 
 	//RB : Update children's labels
-	for(int kid = 0; kid < NumKids; kid++)
-		UpdateLabel( this->Hierarchy->GetChild(currNode,kid) );
+	for(int kid = NumKids-1; kid >= 0; kid--)
+		UpdateLabel( this->Hierarchy->GetChild(currNode,kid), TimeStep );
 
 	// BL: Find source potential and store in parent's working buffer
 	if( !isRoot ){
@@ -577,7 +600,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 			this->CPUInUse.insert(leafLabelBuffers[LeafMap[currNode]]);
 			this->CPUInUse.insert(leafDivBuffers[LeafMap[currNode]]);
 		}
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the kernel
 		//std::cout << currNode << "\t Add source potential to parent working buffer" << std::endl;
@@ -594,7 +619,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 	}
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
+void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node, int* TimeStep ){
 	int NumKids = this->Hierarchy->GetNumberOfChildren(node);
 
 	if( this->Hierarchy->GetRoot() == node ) return;
@@ -607,7 +632,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
 		this->CPUInUse.insert(leafSinkBuffers[LeafMap[node]]);
 		this->CPUInUse.insert(leafLabelBuffers[LeafMap[node]]);
 		this->CPUInUse.insert(leafDivBuffers[LeafMap[node]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the first unconstrained kernel
 		NumKernelRuns++;
@@ -622,7 +649,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
 		this->CPUInUse.insert(branchSinkBuffers[BranchMap[node]]);
 		this->CPUInUse.insert(branchLabelBuffers[BranchMap[node]]);
 		this->CPUInUse.insert(branchDivBuffers[BranchMap[node]]);
-		this->GetGPUBuffers();
+		//this->GetGPUBuffers();
+		this->GetGPUBuffersV2(*TimeStep);
+		(*TimeStep)++;
 
 		//activate the first unconstrained kernel
 		NumKernelRuns++;
@@ -880,6 +909,11 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	for(int i = 0; i < NumBranches; i++ )
 		NoCopyBack.insert( branchWorkingBuffers[i] );
 
+	//find buffer ordering by simulating a single iteration
+	int reference = 0;
+	SimulateIterationForBufferOrdering( this->Hierarchy->GetRoot(), &reference );
+	SimulateIterationForBufferOrderingUpdateLabelStep( this->Hierarchy->GetRoot(), &reference );
+
 	//if verbose, print progress
 	if( this->Debug ){
 		vtkDebugMacro(<<"Starting GPU buffer acquisition");
@@ -922,7 +956,8 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	this->ReserveGPU();
 	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
 		int oldNumMemCpies = NumMemCpies;
-		SolveMaxFlow( this->Hierarchy->GetRoot() );
+		int TimeStep = 0;
+		SolveMaxFlow( this->Hierarchy->GetRoot(), &TimeStep );
 		
 		if( this->Debug )
 			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
@@ -943,6 +978,9 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		AllGPUBufferBlocks.pop_front();
 	}
 	
+	//deallocate priority structure
+	//DeallocatePrioritySet();
+
 	//deallocate branch temporary buffers
 	delete[] branchNodeBuffer;
 	delete[] branchFlowXBuffers;
@@ -1157,4 +1195,445 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestDataObject(
 		}
 	}
 	return 0;
+}
+
+//-----------------------------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------------------------//
+
+class vtkCudaHierarchicalMaxFlowSegmentation::CircListNode {
+public:
+	CircListNode* Prev;
+	CircListNode* Next;
+	
+	int			Value;
+
+	CircListNode(int val){
+		Value = val;
+		Next = Prev = this;
+	}
+
+	CircListNode* InsertBehind(int val){
+		CircListNode* newNode = new CircListNode(val);
+		newNode->Next = this;
+		newNode->Prev = this->Prev;
+		this->Prev = newNode;
+		newNode->Prev->Next = newNode;
+		return newNode;
+	}
+
+	CircListNode* InsertFront(int val){
+		CircListNode* newNode = new CircListNode(val);
+		newNode->Prev = this;
+		newNode->Next = this->Next;
+		this->Next = newNode;
+		newNode->Next->Prev = newNode;
+		return newNode;
+	}
+
+	bool Equals(CircListNode* other){
+		return this->Value == other->Value;
+	}
+
+	bool ComesBefore(CircListNode* other, int reference){
+		if( this->Value <= reference ){
+			if( other->Value >= reference ) return false;
+			if( other->Value <= this->Value) return false;
+			return true;
+		}else{
+			if( other->Value <= reference ) return true;
+			if( other->Value > this->Value ) return true;
+			return false;
+		}
+	}
+};
+
+void vtkCudaHierarchicalMaxFlowSegmentation::ClearBufferOrdering( vtkIdType currNode ){
+	//push down to leaves
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++) ClearBufferOrdering( this->Hierarchy->GetChild(currNode,i) );
+
+	//clear all values in the Priority Set Num Uses, assuming Priority set itself is entirely empty
+	if( NumKids == 0 ){
+		this->PrioritySetNumUses[leafLabelBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafDivBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafSinkBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafDataTermBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafSmoothnessTermBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafFlowXBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafFlowYBuffers[LeafMap[currNode]]] = 0;
+		this->PrioritySetNumUses[leafFlowZBuffers[LeafMap[currNode]]] = 0;
+
+	}else if( currNode == this->Hierarchy->GetRoot() ){
+		this->PrioritySetNumUses[sourceWorkingBuffer] = 0;
+		this->PrioritySetNumUses[sourceFlowBuffer] = 0;
+
+	}else{
+		this->PrioritySetNumUses[branchLabelBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchDivBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchSinkBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchWorkingBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchSmoothnessTermBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchFlowXBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchFlowYBuffers[BranchMap[currNode]]] = 0;
+		this->PrioritySetNumUses[branchFlowZBuffers[BranchMap[currNode]]] = 0;
+	}
+
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::UpdateBufferOrderingAt( float* buffer, int reference ){
+	//if we are null, don't bother with use
+	if( buffer == 0 ) return;
+
+	//if we are new, we need an initial circular node
+	if( this->PrioritySetNumUses[buffer] == 0 ){
+		this->PrioritySetNumUses[buffer] = 1;
+		this->PrioritySet[buffer] = new CircListNode(reference);
+
+	//if we've already been called, ignore us
+	}else if(this->PrioritySet[buffer]->Prev->Value == reference){
+		return;
+
+	//else this is a new use, so increment and insert into the circle
+	}else{
+		this->PrioritySetNumUses[buffer]++;
+		this->PrioritySet[buffer]->InsertBehind(reference);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrdering( vtkIdType currNode, int* reference ){
+	//get number of kids
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+
+	//figure out what type of node we are
+	bool isRoot = (currNode == this->Hierarchy->GetRoot());
+	bool isLeaf = (NumKids == 0);
+	bool isBranch = (!isRoot && !isLeaf);
+
+	//RB : clear working buffer
+	if( !isLeaf ){
+		float* workingBufferUsed = isRoot ? sourceWorkingBuffer :
+				branchWorkingBuffers[BranchMap[currNode]] ;
+		UpdateBufferOrderingAt(workingBufferUsed,*reference);
+		(*reference)++;
+	}
+
+	// BL: Update spatial flow
+	if( isLeaf ){
+		//find capacity
+		UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafIncBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafLabelBuffers[LeafMap[currNode]],*reference);
+		(*reference)++;
+
+		//gradient descent on spatial flow
+		UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowXBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowYBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowZBuffers[LeafMap[currNode]],*reference);
+		(*reference)++;
+
+		//find projection and divergence term
+		UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowXBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowYBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafFlowZBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafSmoothnessTermBuffers[LeafMap[currNode]],*reference);
+		(*reference)++;
+
+	}else if( isBranch ){
+		//find capacity
+		UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchIncBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchSinkBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchLabelBuffers[BranchMap[currNode]],*reference);
+		(*reference)++;
+
+		//gradient descent on spatial flow
+		UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowXBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowYBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowZBuffers[BranchMap[currNode]],*reference);
+		(*reference)++;
+
+		//find projection and divergence term
+		UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowXBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowYBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchFlowZBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchSmoothnessTermBuffers[BranchMap[currNode]],*reference);
+		(*reference)++;
+
+	}
+
+	//RB : Update everything for the children
+	for(int kid = 0; kid < NumKids; kid++)
+		SimulateIterationForBufferOrdering( this->Hierarchy->GetChild(currNode,kid), reference );
+
+	// B : Add sink potential to working buffer
+	if( isBranch ){
+		UpdateBufferOrderingAt(branchWorkingBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchIncBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchLabelBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+		(*reference)++;
+	}
+
+	// B : Divide working buffer by N+1 and store in sink buffer
+	if( isBranch ){
+		UpdateBufferOrderingAt(branchWorkingBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchSinkBuffers[BranchMap[currNode]],*reference);
+		(*reference)++;
+	}
+
+	//R  : Divide working buffer by N and store in sink buffer
+	if( isRoot ){
+		UpdateBufferOrderingAt(sourceWorkingBuffer,*reference);
+		UpdateBufferOrderingAt(sourceFlowBuffer,*reference);
+		(*reference)++;
+	}
+
+	//  L: Find sink potential and store, constrained, in sink
+	if( isLeaf ){
+
+		UpdateBufferOrderingAt(leafIncBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafLabelBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+		
+		//increment the step counter
+		(*reference)++;
+
+		UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafDataTermBuffers[LeafMap[currNode]],*reference);
+		
+		//increment the step counter
+		(*reference)++;
+	}
+
+	//RB : Update children's labels
+	for(int kid = NumKids-1; kid >= 0; kid--)
+		SimulateIterationForBufferOrderingUpdateLabelStep( this->Hierarchy->GetChild(currNode,kid), reference );
+
+	// BL: Find source potential and store in parent's working buffer
+	if( !isRoot ){
+		//get parent's working buffer
+		float* workingBuffer = (this->Hierarchy->GetParent(currNode) == this->Hierarchy->GetRoot()) ?
+								sourceWorkingBuffer :
+								branchWorkingBuffers[BranchMap[this->Hierarchy->GetParent(currNode)]];
+		UpdateBufferOrderingAt(workingBuffer,*reference);
+
+		//organize the GPU to obtain the buffers
+		if( isBranch ){
+			UpdateBufferOrderingAt(branchSinkBuffers[BranchMap[currNode]],*reference);
+			UpdateBufferOrderingAt(branchLabelBuffers[BranchMap[currNode]],*reference);
+			UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+		}else{
+			UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);
+			UpdateBufferOrderingAt(leafLabelBuffers[LeafMap[currNode]],*reference);
+			UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+		}
+
+		//increment the step counter
+		(*reference)++;
+	}
+}
+
+//apply the reference counting for the label step
+void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrderingUpdateLabelStep( vtkIdType currNode, int* reference ){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	if( this->Hierarchy->GetRoot() == currNode ) return;
+	if( NumKids == 0 ){
+		UpdateBufferOrderingAt(leafIncBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafLabelBuffers[LeafMap[currNode]],*reference);
+		UpdateBufferOrderingAt(leafDivBuffers[LeafMap[currNode]],*reference);
+	}else{
+		UpdateBufferOrderingAt(branchIncBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchSinkBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchLabelBuffers[BranchMap[currNode]],*reference);
+		UpdateBufferOrderingAt(branchDivBuffers[BranchMap[currNode]],*reference);
+	}
+
+	//move to the next timestep
+	(*reference)++;
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::DeallocatePrioritySet(){
+	for( std::map<float*,int>::iterator useIterator = this->PrioritySetNumUses.begin();
+		 useIterator != this->PrioritySetNumUses.end(); useIterator++ ){
+		
+		//we know how many items need to be removed, so only remove that many
+		CircListNode* currNode = this->PrioritySet[useIterator->first];
+		for(int i = 0; i < useIterator->second; i++ ){
+			CircListNode* nextNode = currNode->Next;
+			delete currNode;
+			currNode = nextNode;
+		}
+	}
+
+	//clear the larger structures
+	this->PrioritySet.clear();
+	this->PrioritySetNumUses.clear();
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation::GetGPUBuffersV2(int reference){
+		
+	for( std::set<float*>::iterator iterator = CPUInUse.begin();
+		 iterator != CPUInUse.end(); iterator++ ){
+
+		//check if this buffer needs to be assigned
+		if( CPU2GPUMap.find( *iterator ) != CPU2GPUMap.end() ) continue;
+
+		//start assigning from the list of unused buffers
+		if( UnusedGPUBuffers.size() > 0 ){
+			float* NewGPUBuffer = UnusedGPUBuffers.front();
+			UnusedGPUBuffers.pop_front();
+			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+			continue;
+		}
+		
+		//else, we have to assign a space already in use, try no-copy-backs and read onlies first
+		int lastBufferTime = -1;
+		float* lastBuffer = 0;
+		CircListNode* lastBufferNode = 0;
+		for( std::set<float*>::iterator iterator2 = NoCopyBack.begin();
+			iterator2 != NoCopyBack.end(); iterator2++ ){
+			
+			//can't deallocate something in use, null, or not on GPU
+			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
+			if( *iterator2 == 0 ) continue;
+			if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
+
+			//if this is the first valid one, assume we use it
+			if( lastBufferTime == -1 ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//else, compare against the current minimum
+			if( lastBufferNode->ComesBefore( this->PrioritySet[*iterator2], reference ) ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//if they are equal, prefer removing a no-copy one
+			if( lastBufferNode->Equals( this->PrioritySet[*iterator2] ) &&
+				this->NoCopyBack.find(*iterator2) != this->NoCopyBack.end() ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+			}
+		}
+
+		//now for read-onlies
+		for( std::set<float*>::iterator iterator2 = ReadOnly.begin();
+			iterator2 != ReadOnly.end(); iterator2++ ){
+			
+			//can't deallocate something in use, null, or not on GPU
+			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
+			if( *iterator2 == 0 ) continue;
+			if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
+
+			//if this is the first valid one, assume we use it
+			if( lastBufferTime == -1 ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//else, compare against the current minimum
+			if( lastBufferNode->ComesBefore( this->PrioritySet[*iterator2], reference ) ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//if they are equal, prefer removing a no-copy one
+			if( lastBufferNode->Equals( this->PrioritySet[*iterator2] ) &&
+				this->NoCopyBack.find(*iterator2) != this->NoCopyBack.end() ){
+				lastBuffer = *iterator2;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+			}
+		}
+
+		//if we have a catch, use it and swap buffers
+		if( lastBuffer ){
+			float* NewGPUBuffer = CPU2GPUMap[lastBuffer];
+			CPU2GPUMap.erase( CPU2GPUMap.find(lastBuffer) );
+			GPU2CPUMap.erase( NewGPUBuffer );
+			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+			ReturnBufferGPU2CPU(lastBuffer,NewGPUBuffer);
+			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+			continue;
+		}
+
+		//else, we have to assign a space already in use regardless of no-copy-back status
+		lastBufferTime = -1;
+		lastBuffer = 0;
+		lastBufferNode = 0;
+		for( std::map<float*,float*>::iterator iterator2 = CPU2GPUMap.begin();
+			iterator2 != CPU2GPUMap.end(); iterator2++ ){
+			
+			//can't deallocate something in use	
+			if( CPUInUse.find(iterator2->first) != CPUInUse.end() ) continue;
+
+			//can't deallocate the null pointer
+			if( iterator2->first == 0 ) continue;
+
+			//if this is the first valid one, assume we use it
+			if( lastBufferTime == -1 ){
+				lastBuffer = iterator2->first;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//else, compare against the current minimum
+			if( lastBufferNode->ComesBefore( this->PrioritySet[iterator2->first], reference ) ){
+				lastBuffer = iterator2->first;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+				continue;
+			}
+
+			//if they are equal, prefer removing a no-copy one
+			if( lastBufferNode->Equals( this->PrioritySet[iterator2->first] ) &&
+				this->NoCopyBack.find(iterator2->first) != this->NoCopyBack.end() ){
+				lastBuffer = iterator2->first;
+				lastBufferNode = this->PrioritySet[lastBuffer];
+				lastBufferTime = lastBufferNode->Value;
+			}
+
+		}
+
+		//swap buffers
+		float* NewGPUBuffer = CPU2GPUMap[lastBuffer];
+		CPU2GPUMap.erase( CPU2GPUMap.find(lastBuffer) );
+		GPU2CPUMap.erase( NewGPUBuffer );
+		CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
+		GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
+		ReturnBufferGPU2CPU(lastBuffer,NewGPUBuffer);
+		MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
+
+	}
+	
+	//increment the next time everything on CPU is called
+	for( std::set<float*>::iterator iterator = CPUInUse.begin();
+		 iterator != CPUInUse.end(); iterator++ ){
+		CircListNode* bufferNode = this->PrioritySet[*iterator];
+		assert( bufferNode->Value == reference );
+		this->PrioritySet[*iterator] = bufferNode->Next;
+	}
+
 }
