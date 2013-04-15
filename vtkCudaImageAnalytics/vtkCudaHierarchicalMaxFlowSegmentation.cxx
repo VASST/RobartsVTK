@@ -915,8 +915,6 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	}
 
 	//initalize all spatial flows and divergences to zero
-	for(int x = 0; x < VolumeSize; x++)
-		sourceWorkingBuffer[x] = 0.0f;
 	for(int x = 0; x < VolumeSize; x++){
 		for(int i = 0; i < NumBranches; i++ ){
 			(branchFlowXBuffers[i])[x] = 0.0f;
@@ -924,7 +922,6 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 			(branchFlowZBuffers[i])[x] = 0.0f;
 			(branchDivBuffers[i])[x] = 0.0f;
 			(branchLabelBuffers[i])[x] = 0.0f;
-			(branchWorkingBuffers[i])[x] = 0.0f;
 		}
 		for(int i = 0; i < NumLeaves; i++ ){
 			(leafFlowXBuffers[i])[x] = 0.0f;
