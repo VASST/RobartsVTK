@@ -6,19 +6,19 @@
 
 //#define DEBUG_VTKCUDAHMF
 
-void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int volSize, int* numberAcquired, double* percentAcquired ){
+void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired ){
 
 	size_t freeMemory, totalMemory;
 	cudaError_t nErr = cudaSuccess;
 	cudaMemGetInfo(&freeMemory, &totalMemory);
 
-	int maxAllowed = ((double) totalMemory * maxPercent) / (double) (4 * volSize);
+	int maxAllowed = (((double) totalMemory * maxPercent) - (double)(2*pad)) / (double) (4 * volSize);
 	maxNumber = (maxNumber > maxAllowed) ? maxAllowed : maxNumber;
     //printf("===========================================================\n");
     //printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
 
 	while( maxNumber > 0 ){
-		nErr = cudaMalloc((void**) buffer, sizeof(float)*maxNumber*volSize);
+		nErr = cudaMalloc((void**) buffer, sizeof(float)*(maxNumber*volSize+2*pad));
 		if( nErr == cudaSuccess ) break;
 		maxNumber--; 
 	}
@@ -28,7 +28,7 @@ void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int v
     //printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
 
 	*numberAcquired = maxNumber;
-	*percentAcquired = (double) (4*maxNumber*volSize) / (double) totalMemory;
+	*percentAcquired = (double) sizeof(float)*(maxNumber*volSize+2*pad) / (double) totalMemory;
 
 }
 
@@ -264,10 +264,9 @@ void CUDA_applyStep(float* divBuffer, float* flowX, float* flowY, float* flowZ, 
 __global__ void kern_ComputeFlowMagVariSmooth(float* amount, float* flowX, float* flowY, float* flowZ, float* smooth, const float alpha, const int2 dims, const int size){
 	
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int3 idxN;
+	int2 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
-	idxN.z = idxN.y / dims.y;
 	idxN.y = idxN.y % dims.y;
 
 	//compute flow in X
@@ -300,10 +299,9 @@ __global__ void kern_ComputeFlowMagVariSmooth(float* amount, float* flowX, float
 __global__ void kern_ComputeFlowMagConstSmooth(float* amount, float* flowX, float* flowY, float* flowZ, const float alpha, const int2 dims, const int size){
 	
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int3 idxN;
+	int2 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
-	idxN.z = idxN.y / dims.y;
 	idxN.y = idxN.y % dims.y;
 	
 	//compute flow in X

@@ -3,7 +3,7 @@
 
 #include "vector_types.h"
 
-void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int volSize, int* numberAcquired, double* percentAcquired );
+void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired );
 void CUDA_ReturnGPUBuffers(float* buffer);
 
 void CUDA_CopyBufferToCPU(float* GPUBuffer, float* CPUBuffer, int size, cudaStream_t* stream);

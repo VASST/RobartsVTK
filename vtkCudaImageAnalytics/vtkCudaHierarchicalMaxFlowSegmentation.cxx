@@ -982,8 +982,9 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		//try acquiring some new buffers
 		float* NewAcquiredBuffers = 0;
 		int NewNumberAcquired = 0;
+		int Pad = VX*VY;
 		double NewPercentAcquired = 0;
-		CUDA_GetGPUBuffers( TotalNumberOfBuffers-BuffersAcquired, this->MaxGPUUsage-PercentAcquired, &NewAcquiredBuffers, VolumeSize, &NewNumberAcquired, &NewPercentAcquired );
+		CUDA_GetGPUBuffers( TotalNumberOfBuffers-BuffersAcquired, this->MaxGPUUsage-PercentAcquired, &NewAcquiredBuffers, Pad, VolumeSize, &NewNumberAcquired, &NewPercentAcquired );
 		BuffersAcquired += NewNumberAcquired;
 		PercentAcquired += NewPercentAcquired;
 
@@ -992,6 +993,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 
 		//else, load the new buffers into the list of unused buffers
 		AllGPUBufferBlocks.push_back(NewAcquiredBuffers);
+		NewAcquiredBuffers += Pad;
 		for(int i = 0; i < NewNumberAcquired; i++){
 			UnusedGPUBuffers.push_back(NewAcquiredBuffers);
 			NewAcquiredBuffers += VolumeSize;
