@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 
 #include <set>
 #include <list>
@@ -819,33 +820,42 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	this->branchSinkBuffers =		tempPtr; tempPtr += NumBranches;
 	this->branchLabelBuffers =		tempPtr; tempPtr += NumBranches;
 	this->branchWorkingBuffers =	tempPtr; tempPtr += NumBranches;
-	for(int i = 0; i < NumBranches; i++ ){
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchFlowXBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchFlowYBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchFlowZBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchDivBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchSinkBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchLabelBuffers[i]));
+	for(int i = 0; i < NumBranches; i++ )
 		BufferPointerLocs.push_front(&(branchWorkingBuffers[i]));
-	}
 	this->leafFlowXBuffers =		tempPtr; tempPtr += NumLeaves;
 	this->leafFlowYBuffers =		tempPtr; tempPtr += NumLeaves;
 	this->leafFlowZBuffers =		tempPtr; tempPtr += NumLeaves;
 	this->leafDivBuffers =			tempPtr; tempPtr += NumLeaves;
 	this->leafSinkBuffers =			tempPtr; tempPtr += NumLeaves;
-	for(int i = 0; i < NumLeaves; i++ ){
+	for(int i = 0; i < NumLeaves; i++ )
 		BufferPointerLocs.push_front(&(leafFlowXBuffers[i]));
+	for(int i = 0; i < NumLeaves; i++ )
 		BufferPointerLocs.push_front(&(leafFlowYBuffers[i]));
+	for(int i = 0; i < NumLeaves; i++ )
 		BufferPointerLocs.push_front(&(leafFlowZBuffers[i]));
+	for(int i = 0; i < NumLeaves; i++ )
 		BufferPointerLocs.push_front(&(leafDivBuffers[i]));
+	for(int i = 0; i < NumLeaves; i++ )
 		BufferPointerLocs.push_front(&(leafSinkBuffers[i]));
-	}
 
 	//try to obtain required CPU buffers
 	std::list<float*> CPUBuffersAcquired;
 	std::list<int> CPUBuffersSize;
 	while( NumberOfAdditionalCPUBuffersNeeded > 0 ){
-		int NumBuffersAcquired = NumberOfAdditionalCPUBuffersNeeded;
+		int NumBuffersAcquired = (NumberOfAdditionalCPUBuffersNeeded < INT_MAX / VolumeSize) ?
+			NumberOfAdditionalCPUBuffersNeeded : INT_MAX / VolumeSize;
 		for( ; NumBuffersAcquired > 0; NumBuffersAcquired--){
 			try{
 				float* NewCPUBuffer = new float[VolumeSize*NumBuffersAcquired];
@@ -1010,6 +1020,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		int oldNumMemCpies = NumMemCpies;
 		int TimeStep = 0;
 		SolveMaxFlow( this->Hierarchy->GetRoot(), &TimeStep );
+		this->CallSyncThreads();
 		
 		if( this->Debug )
 			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
