@@ -54,7 +54,7 @@ public:
   
   // Description:
   // Set each pixel to gaussian(x-C,K^2) where K and C are the constants
-  // and x is the pixel value. Image 2 is not used.
+  // and x is the pixel value. Image 2 can be used.
   void SetOperationToGaussian() {this->SetOperation(VTK_GAUSSIAN);};
 
   // Description:

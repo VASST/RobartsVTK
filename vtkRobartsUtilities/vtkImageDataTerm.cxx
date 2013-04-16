@@ -318,11 +318,11 @@ void vtkImageDataTerm::ThreadedRequestData(
   outPtr = outData[0]->GetScalarPointerForExtent(outExt);
 
   
+
+  if (inData[1] && inData[1][0])
+    {
 	void *inPtr2;
 	inPtr2 = inData[1][0]->GetScalarPointerForExtent(outExt);
-
-  if (inPtr2)
-    {
 
     // this filter expects that input is the same type as output.
     if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())
