@@ -135,8 +135,8 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
 				}
 				for (idxR = 0; idxR < rowLength; idxR++){
 					*outPtr = (T)( entropy ? 
-						log(1.0 + exp(-(constantk1*(double)*in1Ptr + constantc1)) ) :
-						1.0 / (1.0 + exp(-(constantk1*(double)*in1Ptr + constantc1)) ) );
+						log(1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) :
+						1.0 / (1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) );
 					outPtr++;
 					in1Ptr++;
 				}
@@ -157,8 +157,8 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
 				}
 				for (idxR = 0; idxR < rowLength; idxR++){
 					*outPtr = (T)( entropy ? 
-						0.5*(((double)*in1Ptr + constantc1)/constantk1) * (((double)*in1Ptr + constantc1)/constantk1) :
-						exp(-0.5 * (((double)*in1Ptr + constantc1)/constantk1) * (((double)*in1Ptr + constantc1)/constantk1)));
+						0.5*(((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) :
+						exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1)));
 					outPtr++;
 					in1Ptr++;
 				}
@@ -249,10 +249,10 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
 				}
 				for (idxR = 0; idxR < rowLength; idxR++){
 					*outPtr = (T)( entropy ? 
-						log((1.0 + exp(-(constantk1*(double)*in1Ptr + constantc1))) *
-						    (1.0 + exp(-(constantk2*(double)*in2Ptr + constantc2))) ) :
-						1.0 / ((1.0 + exp(-(constantk1*(double)*in1Ptr + constantc1))) *
-							   (1.0 + exp(-(constantk2*(double)*in2Ptr + constantc2))) ));
+						log((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
+						    (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ) :
+						1.0 / ((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
+							   (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ));
 					outPtr++;
 					in1Ptr++;
 					in2Ptr++;
@@ -276,10 +276,10 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
 				}
 				for (idxR = 0; idxR < rowLength; idxR++){
 					*outPtr = (T)( entropy ? 
-						0.5 * (((double)*in1Ptr + constantc1)/constantk1) * (((double)*in1Ptr + constantc1)/constantk1) +
-						0.5 * (((double)*in2Ptr + constantc2)/constantk2) * (((double)*in2Ptr + constantc2)/constantk2) :
-						exp(-0.5 * (((double)*in1Ptr + constantc1)/constantk1) * (((double)*in1Ptr + constantc1)/constantk1) -
-							 0.5 * (((double)*in2Ptr + constantc2)/constantk2 * (((double)*in2Ptr + constantc2)/constantk2) )) );
+						0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) +
+						0.5 * (((double)*in2Ptr - constantc2)/constantk2) * (((double)*in2Ptr - constantc2)/constantk2) :
+						exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) -
+							 0.5 * (((double)*in2Ptr  - constantc2)/constantk2 * (((double)*in2Ptr - constantc2)/constantk2) )) );
 					outPtr++;
 					in1Ptr++;
 					in2Ptr++;

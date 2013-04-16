@@ -48,7 +48,7 @@ public:
   void SetOperationToConstant() {this->SetOperation(VTK_CONSTANT);};
 
   // Description:
-  // Set each pixel to sigmoid(K1*x1+C1)*sigmoid(K2*x2+C2) where K and C are the constants
+  // Set each pixel to sigmoid(K1*(x1-C1))*sigmoid(K2*(x2-C2)) where K and C are the constants
   // and x is the pixel value. If image 2 is not provided, sigm0id(K2*x2+C2) <= 1.
   void SetOperationToLogistic() {this->SetOperation(VTK_LOGISTIC);};
   
