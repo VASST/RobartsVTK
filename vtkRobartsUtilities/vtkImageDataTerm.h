@@ -71,6 +71,12 @@ public:
   vtkSetMacro(ConstantC2,double);
   vtkGetMacro(ConstantC2,double);
 
+  // Set whether the output should be forced to normalize (good for entropy calculations)
+  vtkSetMacro(Normalize,bool);
+  vtkGetMacro(Normalize,bool);
+  void SetNormalizeOn(){ this->SetNormalize(true); }
+  void SetNormalizeOff(){ this->SetNormalize(false); }
+
   // Description:
   // Set the two inputs to this filter. For some operations, the second input
   // is not used.
@@ -81,8 +87,8 @@ public:
   // Take the negative log of the output to convert from a probability to an
   // entropy. These methods are toggles between those two modes. Default:
   // probability.
-  void SetOutputEntropy(){ this->Entropy = true; };
-  void SetOutputProbability(){ this->Entropy = false; };
+  void SetOutputToEntropy(){ this->Entropy = true; };
+  void SetOutputToProbability(){ this->Entropy = false; };
   bool GetEntropyUsed() { return this->Entropy; };
   bool GetProbabilityUsed() { return !this->Entropy; };
 
@@ -96,6 +102,7 @@ protected:
   double ConstantK2;
   double ConstantC2;
   bool Entropy;
+  bool Normalize;
 
   virtual int RequestInformation (vtkInformation *,
                                   vtkInformationVector **,

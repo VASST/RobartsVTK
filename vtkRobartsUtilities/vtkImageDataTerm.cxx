@@ -34,6 +34,7 @@ vtkImageDataTerm::vtkImageDataTerm()
   this->ConstantC1 = 0.0;
   this->ConstantC2 = 0.0;
   this->Entropy = false;
+  this->Normalize = true;
   this->SetNumberOfInputPorts(2);
 }
 
@@ -87,6 +88,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
   unsigned long count = 0;
   unsigned long target;
   int op = self->GetOperation();
+  T* origOutPtr = outPtr;
 
   // find the region to loop over
   rowLength = (outExt[1] - outExt[0]+1)*in1Data->GetNumberOfScalarComponents();
@@ -170,6 +172,63 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
 		}
 		break;
 	}
+	
+	//if we are not normalizing, we can leave now
+	if( !self->GetNormalize() ) return;
+
+  // Get normalization constants
+  double normOffset = 0.0;
+  double normMultiply = 1.0 / constantc1;
+  double Range[2]; in1Data->GetScalarRange(Range); 
+  if( op == VTK_GAUSSIAN && entropy){
+	  double valAtMax = 0.5*((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1);
+	  double valAtMin = 0.5*((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1);
+	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+	  if( constantc1 > Range[0] && constantc1 < Range[1] ) minValue = 0.0f;
+	  normOffset = -minValue;
+	  normMultiply = 1.0 / (maxValue-minValue);
+  }else if( op == VTK_GAUSSIAN && !entropy){
+	  double Range[2]; in1Data->GetScalarRange(Range); 
+	  double valAtMax = exp(-0.5 * ((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1));
+	  double valAtMin = exp(-0.5 * ((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1));
+	  double minValue = exp( -((valAtMax >= valAtMin) ? valAtMax : valAtMin) );
+	  double maxValue = exp( -((valAtMax <  valAtMin) ? valAtMax : valAtMin) );
+	  if( constantc1 > Range[0] && constantc1 < Range[1] ) maxValue = 1.0f;
+	  normOffset = -minValue;
+	  normMultiply = 1.0 / (maxValue-minValue);
+  }else if( op == VTK_LOGISTIC && entropy){	  double Range[2]; in1Data->GetScalarRange(Range); 
+	  double valAtMax = log(1.0 + exp(-(constantk1*(Range[1] - constantc1))) );
+	  double valAtMin = log(1.0 + exp(-(constantk1*(Range[0] - constantc1))) );
+	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+	  normOffset = -minValue;
+	  normMultiply = 1.0 / (maxValue-minValue);
+  }else if( op == VTK_LOGISTIC && !entropy){
+	  double valAtMax = 1.0 / (1.0 + exp(-(constantk1*(Range[1] - constantc1))));
+	  double valAtMin = 1.0 / (1.0 + exp(-(constantk1*(Range[0] - constantc1))));
+	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+	  normOffset = -minValue;
+	  normMultiply = 1.0 / (maxValue-minValue);
+  }
+
+  //apply the normalization
+  outPtr = origOutPtr;
+  for(idxZ = 0; idxZ <= maxZ; idxZ++){
+	  for (idxY = 0; idxY <= maxY; idxY++){
+			if( !id ){
+				if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+				count++;
+			}
+			for (idxR = 0; idxR < rowLength; idxR++){
+				*outPtr = (T)( ((double)(*outPtr) + normOffset) * normMultiply );
+				outPtr++;
+			}
+			outPtr += outIncY;
+		}
+		outPtr += outIncZ;
+  }
 
 }
 
