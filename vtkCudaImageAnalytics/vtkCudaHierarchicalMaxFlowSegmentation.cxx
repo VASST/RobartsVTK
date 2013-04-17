@@ -50,14 +50,6 @@ vtkCudaHierarchicalMaxFlowSegmentation::~vtkCudaHierarchicalMaxFlowSegmentation(
 	this->InputPortMapping.clear();
 	this->BackwardsInputPortMapping.clear();
 	this->BranchMap.clear();
-
-	//deconstruct priority stack datastructure
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
-	for( ; stackIterator != PriorityStacks.end(); stackIterator++ )
-		stackIterator->clear();
-	PriorityStacks.clear();
-	Priority.clear();
-
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation::Reinitialize(int withData = 0){
@@ -937,11 +929,6 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkDebugMacro(<<"Find priority structures.");
 	}
 
-	//create LIFO priority queue (priority stack) data structure
-	FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
-	for( std::map<float*,int>::iterator priorityIt = CPU2PriorityMap.begin(); priorityIt != CPU2PriorityMap.end(); priorityIt++ )
-		BuildStackUpToPriority(priorityIt->second);
-
 	//add all the working buffers from the branches to the garbage (no copy necessary) list
 	NoCopyBack.insert( sourceWorkingBuffer );
 	for(int i = 0; i < NumBranches; i++ )
@@ -1151,121 +1138,6 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	return 1;
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation::FigureOutBufferPriorities( vtkIdType currNode ){
-	
-	//Propogate down the tree
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
-	for(int kid = 0; kid < NumKids; kid++)
-		FigureOutBufferPriorities( this->Hierarchy->GetChild(currNode,kid) );
-
-	//if we are the root, figure out the buffers
-	if( this->Hierarchy->GetRoot() == currNode ){
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(sourceFlowBuffer,NumKids+2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(sourceWorkingBuffer,NumKids+3));
-
-	//if we are a leaf, handle separately
-	}else if( NumKids == 0 ){
-		int Number = LeafMap.find(currNode)->second;
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafDivBuffers[Number],3));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowXBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowYBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowZBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafSinkBuffers[Number],3));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafDataTermBuffers[Number],1));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(leafLabelBuffers[Number],3));
-		if( leafSmoothnessTermBuffers[Number] )
-			this->CPU2PriorityMap[leafSmoothnessTermBuffers[Number]]++;
-
-	//else, we are a branch
-	}else{
-		int Number = BranchMap.find(currNode)->second;
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchDivBuffers[Number],3));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowXBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowYBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowZBuffers[Number],2));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchSinkBuffers[Number],NumKids+4));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchLabelBuffers[Number],3));
-		this->CPU2PriorityMap.insert(std::pair<float*,int>(branchWorkingBuffers[Number],NumKids+3));
-		if( branchSmoothnessTermBuffers[Number] )
-			this->CPU2PriorityMap[branchSmoothnessTermBuffers[Number]]++;
-	}
-}
-
-void vtkCudaHierarchicalMaxFlowSegmentation::GetGPUBuffers(){
-	
-	for( std::set<float*>::iterator iterator = CPUInUse.begin();
-		 iterator != CPUInUse.end(); iterator++ ){
-
-		//check if this buffer needs to be assigned
-		if( CPU2GPUMap.find( *iterator ) != CPU2GPUMap.end() ) continue;
-
-		//start assigning from the list of unused buffers
-		if( UnusedGPUBuffers.size() > 0 ){
-			float* NewGPUBuffer = UnusedGPUBuffers.front();
-			UnusedGPUBuffers.pop_front();
-			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
-			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
-			
-			//update the priority stacks
-			AddToStack(*iterator);
-			continue;
-		}
-
-		//see if there is some garbage we can deallocate first
-		bool flag = false;
-		for( std::set<float*>::iterator iterator2 = NoCopyBack.begin();
-			 iterator2 != NoCopyBack.end(); iterator2++ ){
-			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
-			if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
-			float* NewGPUBuffer = CPU2GPUMap[*iterator2];
-			CPU2GPUMap.erase( CPU2GPUMap.find(*iterator2) );
-			GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
-			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
-			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-			MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
-			
-			//update the priority stacks
-			RemoveFromStack(*iterator2);
-			AddToStack(*iterator);
-			flag = true;
-			break;
-		}
-		if( flag ) continue;
-
-		//else, we have to move something in use back to the CPU
-		flag = false;
-		std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
-		for( ; stackIterator != PriorityStacks.end(); stackIterator++ ){
-			for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
-				
-				//can't remove this one because it is in use
-				if( CPUInUse.find( *subIterator ) != CPUInUse.end() ) continue;
-
-				//else, find it and move it back to the CPU
-				float* NewGPUBuffer = CPU2GPUMap.find(*subIterator)->second;
-				CPU2GPUMap.erase( CPU2GPUMap.find(*subIterator) );
-				GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
-				CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
-				GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-				ReturnBufferGPU2CPU(*subIterator,NewGPUBuffer);
-				MoveBufferCPU2GPU(*iterator,NewGPUBuffer);
-				
-				//update the priority stack and leave immediately since our iterators
-				//no longer have a valid contract (changed container)
-				RemoveFromStack(*subIterator);
-				AddToStack(*iterator);
-				flag = true;
-				break;
-
-			}
-			if( flag ) break;
-		}
-
-
-	}
-}
-
 void vtkCudaHierarchicalMaxFlowSegmentation::ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer){
 	if( ReadOnly.find(CPUBuffer) != ReadOnly.end() ) return;
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
@@ -1277,34 +1149,6 @@ void vtkCudaHierarchicalMaxFlowSegmentation::MoveBufferCPU2GPU(float* CPUBuffer,
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
 	CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, GetStream());
 	NumMemCpies++;
-}
-
-void vtkCudaHierarchicalMaxFlowSegmentation::BuildStackUpToPriority( int priority ){
-	while( PriorityStacks.size() < priority ){
-		PriorityStacks.push_back( std::list<float*>() );
-		Priority.push_back( (int) PriorityStacks.size() );
-	}
-}
-
-void vtkCudaHierarchicalMaxFlowSegmentation::AddToStack( float* CPUBuffer ){
-	int neededPriority = CPU2PriorityMap.find(CPUBuffer)->second;
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
-	std::list< int >::iterator priorityIterator = Priority.begin();
-	for( ; *priorityIterator != neededPriority; stackIterator++, priorityIterator++);
-	stackIterator->push_front(CPUBuffer);
-}
-
-void vtkCudaHierarchicalMaxFlowSegmentation::RemoveFromStack( float* CPUBuffer ){
-	int neededPriority = CPU2PriorityMap.find(CPUBuffer)->second;
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
-	std::list< int >::iterator priorityIterator = Priority.begin();
-	for( ; *priorityIterator != neededPriority; stackIterator++, priorityIterator++);
-	for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
-		if( *subIterator == CPUBuffer ){
-			stackIterator->erase(subIterator);
-			return;
-		}
-	}
 }
 
 int vtkCudaHierarchicalMaxFlowSegmentation::RequestDataObject(

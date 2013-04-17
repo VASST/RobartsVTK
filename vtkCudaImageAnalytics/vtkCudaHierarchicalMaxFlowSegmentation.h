@@ -144,14 +144,17 @@ private:
 	float*	sourceWorkingBuffer;
 
 	//Mappings for CPU-GPU buffer sharing
-	void GetGPUBuffers();
 	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer);
 	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer);
-	void AddToStack( float* CPUBuffer );
-	void RemoveFromStack( float* CPUBuffer );
-	void BuildStackUpToPriority( int priority );
-	void FigureOutBufferPriorities( vtkIdType currNode );
-	
+	void GetGPUBuffersV2(int reference);
+	std::map<float*,float*> CPU2GPUMap;
+	std::map<float*,float*> GPU2CPUMap;
+	std::set<float*> CPUInUse;
+	std::list<float*> UnusedGPUBuffers;
+	std::set<float*> ReadOnly;
+	std::set<float*> NoCopyBack;
+
+	//Prioirty structure
 	class CircListNode;
 	std::map< float*, CircListNode* > PrioritySet;
 	std::map< float*, int > PrioritySetNumUses;
@@ -160,22 +163,7 @@ private:
 	void SimulateIterationForBufferOrderingUpdateLabelStep( vtkIdType currNode, int* reference );
 	void UpdateBufferOrderingAt( float* buffer, int reference );
 	void DeallocatePrioritySet();
-	void GetGPUBuffersV2(int reference);
 
-
-	std::map<float*,float*> CPU2GPUMap;
-	std::map<float*,float*> GPU2CPUMap;
-	std::map<float*,int> CPU2PriorityMap;
-
-	std::set<float*> CPUInUse;
-	
-	std::list< std::list<float*> > PriorityStacks;
-	std::list< int > Priority;
-
-	std::list< float* > UnusedGPUBuffers;
-	std::set< float* > ReadOnly;
-	std::set< float* > NoCopyBack;
-	
 	int		NumMemCpies;
 	int		NumKernelRuns;
 };
