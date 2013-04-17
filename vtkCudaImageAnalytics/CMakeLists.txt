@@ -52,6 +52,8 @@ SET ( Kit_SRCS
   #Accelerated hierarchical max flow algorithm
   vtkCudaHierarchicalMaxFlowSegmentation.h
   vtkCudaHierarchicalMaxFlowSegmentation.cxx
+  vtkCudaHierarchicalMaxFlowSegmentation2.h
+  vtkCudaHierarchicalMaxFlowSegmentation2.cxx
   CUDA_hierarchicalmaxflow.h
   CUDA_hierarchicalmaxflow.cu
 )
