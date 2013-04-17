@@ -12,7 +12,7 @@ void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int p
 	cudaError_t nErr = cudaSuccess;
 	cudaMemGetInfo(&freeMemory, &totalMemory);
 
-	int maxAllowed = (((double) totalMemory * maxPercent) - (double)(2*pad)) / (double) (4 * volSize);
+	int maxAllowed = (int) ( (((double) totalMemory * maxPercent) - (double)(2*pad)) / (double) (4 * volSize) );
 	maxNumber = (maxNumber > maxAllowed) ? maxAllowed : maxNumber;
     //printf("===========================================================\n");
     //printf("Free/Total(kB): %f/%f\n", (float)freeMemory/1024.0f, (float)totalMemory/1024.0f);
@@ -399,6 +399,104 @@ void CUDA_projectOntoSet(float* divBuffer, float* flowX, float* flowY, float* fl
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_projectOntoSet: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Copy(float* dst, float* src, const int size){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	float value = src[idx];
+	if( idx < size ) dst[idx] = value;
+}
+
+void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Copy<<<grid,threads,0,*stream>>>(dst, src, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "CUDA_CopyBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Min(float* dst, float* src, const int size){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	float value1 = src[idx];
+	float value2 = dst[idx];
+	float minVal = (value1 < value2) ? value1 : value2;
+	if( idx < size ) dst[idx] = minVal;
+}
+
+void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Min<<<grid,threads,0,*stream>>>(dst, src, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "CUDA_MinBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Lbl(float* lbl, float* flo, float* cap, const int size){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	float value1 = cap[idx];
+	float value2 = flo[idx];
+	float minVal =  (value2 == value1) ? 1.0f : 0.0f;
+	if( idx < size ) lbl[idx] = minVal;
+}
+
+void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Lbl<<<grid,threads,0,*stream>>>(lbl, flo, cap, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "CUDA_LblBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Sum(float* dst, float* src, const int size){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	float value1 = src[idx];
+	float value2 = dst[idx];
+	float minVal =  value1 + value2;
+	if( idx < size ) dst[idx] = minVal;
+}
+
+void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Sum<<<grid,threads,0,*stream>>>(dst, src, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "CUDA_SumBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Div(float* dst, float* src, const int size){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	float value1 = src[idx];
+	float value2 = dst[idx];
+	float minVal =  value2 / value1;
+	if( idx < size ) dst[idx] = minVal;
+}
+
+void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Div<<<grid,threads,0,*stream>>>(dst, src, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "CUDA_DivBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif

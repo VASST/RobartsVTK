@@ -26,4 +26,10 @@ void CUDA_applyStep(float* divBuffer, float* flowX, float* flowY, float* flowZ, 
 void CUDA_computeFlowMag(float* divBuffer, float* flowX, float* flowY, float* flowZ, float* smoothnessTerm, float smoothnessConstant, int X, int Y, int Z, int size, cudaStream_t* stream );
 void CUDA_projectOntoSet(float* divBuffer, float* flowX, float* flowY, float* flowZ, int X, int Y, int Z, int size, cudaStream_t* stream );
 
+void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* stream);
+void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+
 #endif //__CUDA_HIERARCHICALMAXFLOW_H__

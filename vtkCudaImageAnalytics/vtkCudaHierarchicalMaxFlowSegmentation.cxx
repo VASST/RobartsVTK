@@ -304,13 +304,21 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestUpdateExtent(
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
-	
-	//update graph for all kids
 	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	
+	//clear own label buffer if not a leaf
+	if( NumKids > 0 ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchLabelBuffers[BranchMap[currNode]]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[branchLabelBuffers[BranchMap[currNode]]],VolumeSize,GetStream());
+	}
+
+	//update graph for all kids
 	for(int kid = 0; kid < NumKids; kid++)
 		PropogateLabels( this->Hierarchy->GetChild(currNode,kid) );
 
-	//sum value into parent (if parent exists and is not the root)
+	//find parent index
 	if( currNode == this->Hierarchy->GetRoot() ) return;
 	vtkIdType parent = 	this->Hierarchy->GetParent(currNode);
 	if( parent == this->Hierarchy->GetRoot() ) return;
@@ -318,8 +326,13 @@ void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode
 	float* currVal =   this->Hierarchy->IsLeaf(currNode) ?
 		currVal = this->leafLabelBuffers[this->LeafMap[currNode]] :
 		currVal = this->branchLabelBuffers[this->BranchMap[currNode]];
-	for( int x = 0; x < VolumeSize; x++ )
-		(this->branchLabelBuffers[parentIndex])[x] += currVal[x];
+	
+	//sum value into parent (if parent exists and is not the root)
+	this->CPUInUse.clear();
+	this->CPUInUse.insert(currVal);
+	this->CPUInUse.insert(branchLabelBuffers[parentIndex]);
+	this->GetGPUBuffersV2(-1);
+	CUDA_SumBuffer(CPU2GPUMap[branchLabelBuffers[parentIndex]],CPU2GPUMap[currVal],VolumeSize,GetStream());
 	
 }
 
@@ -921,43 +934,8 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	
 	//if verbose, print progress
 	if( this->Debug ){
-		vtkDebugMacro(<<"Create initial solution.");
+		vtkDebugMacro(<<"Find priority structures.");
 	}
-
-	//initalize all spatial flows and divergences to zero
-	for(int x = 0; x < VolumeSize; x++){
-		for(int i = 0; i < NumBranches; i++ ){
-			(branchFlowXBuffers[i])[x] = 0.0f;
-			(branchFlowYBuffers[i])[x] = 0.0f;
-			(branchFlowZBuffers[i])[x] = 0.0f;
-			(branchDivBuffers[i])[x] = 0.0f;
-			(branchLabelBuffers[i])[x] = 0.0f;
-		}
-		for(int i = 0; i < NumLeaves; i++ ){
-			(leafFlowXBuffers[i])[x] = 0.0f;
-			(leafFlowYBuffers[i])[x] = 0.0f;
-			(leafFlowZBuffers[i])[x] = 0.0f;
-			(leafDivBuffers[i])[x] = 0.0f;
-		}
-	}
-
-	//initalize all labels to most likely result from data prior at the leaf nodes
-	for(int x = 0; x < VolumeSize; x++){
-		float maxProbValue = FLT_MAX;
-		int maxProbLabel = 0;
-		for(int i = 0; i < NumLeaves; i++){
-			maxProbLabel = (maxProbValue > (leafDataTermBuffers[i])[x]) ? i : maxProbLabel;
-			maxProbValue = (maxProbValue > (leafDataTermBuffers[i])[x]) ? (leafDataTermBuffers[i])[x] : maxProbLabel; ;
-		}
-		for(int i = 0; i < NumLeaves; i++){
-			(leafLabelBuffers[i])[x] = (i == maxProbLabel) ? 1.0f : 0.0f;
-			(leafSinkBuffers[i])[x] = (leafDataTermBuffers[maxProbLabel])[x];
-		}
-		for(int i = 0; i < NumBranches; i++)
-			(branchSinkBuffers[i])[x] = (leafDataTermBuffers[maxProbLabel])[x];
-		sourceFlowBuffer[x] = (leafDataTermBuffers[maxProbLabel])[x];
-	}
-	PropogateLabels( this->Hierarchy->GetRoot() );
 
 	//create LIFO priority queue (priority stack) data structure
 	FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
@@ -1009,6 +987,122 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 			NewAcquiredBuffers += VolumeSize;
 		}
 	}
+	
+	//if verbose, print progress
+	if( this->Debug ){
+		vtkDebugMacro(<<"Starting initialization");
+	}
+	NumMemCpies = 0;
+
+	//initialize solution
+	//initalize all spatial flows and divergences to zero
+	for(int i = 0; i < NumBranches; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchFlowXBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[branchFlowXBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchFlowYBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[branchFlowYBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchFlowZBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[branchFlowZBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(branchDivBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[branchDivBuffers[i]], VolumeSize, GetStream() );
+	}
+	for(int i = 0; i < NumLeaves; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafFlowXBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[leafFlowXBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafFlowYBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[leafFlowYBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafFlowZBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[leafFlowZBuffers[i]], VolumeSize, GetStream() );
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafDivBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_zeroOutBuffer(CPU2GPUMap[leafDivBuffers[i]], VolumeSize, GetStream() );
+	}
+
+	//initialize all leak sink flows to their constraints
+	for(int i = 0; i < NumLeaves; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafSinkBuffers[i]);
+		this->CPUInUse.insert(leafDataTermBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_CopyBuffer(CPU2GPUMap[leafSinkBuffers[i]], CPU2GPUMap[leafDataTermBuffers[i]], VolumeSize, GetStream() );
+	}
+
+	//find the minimum sink flow
+	for(int i = 1; i < NumLeaves; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafSinkBuffers[0]);
+		this->CPUInUse.insert(leafSinkBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_MinBuffer(CPU2GPUMap[leafSinkBuffers[0]], CPU2GPUMap[leafSinkBuffers[i]], VolumeSize, GetStream() );
+	}
+
+	//copy minimum sink flow over all leaves and sum the resulting labels into the source working buffer
+	this->CPUInUse.clear();
+	this->CPUInUse.insert(sourceWorkingBuffer);
+	this->CPUInUse.insert(leafSinkBuffers[0]);
+	this->CPUInUse.insert(leafLabelBuffers[0]);
+	this->CPUInUse.insert(leafDataTermBuffers[0]);
+	this->GetGPUBuffersV2(-1);
+	CUDA_zeroOutBuffer(CPU2GPUMap[sourceWorkingBuffer], VolumeSize, GetStream() );
+	CUDA_LblBuffer(CPU2GPUMap[leafLabelBuffers[0]], CPU2GPUMap[leafSinkBuffers[0]], CPU2GPUMap[leafDataTermBuffers[0]], VolumeSize, GetStream() );
+	CUDA_SumBuffer(CPU2GPUMap[sourceWorkingBuffer], CPU2GPUMap[leafLabelBuffers[0]], VolumeSize, GetStream() );
+	for(int i = 1; i < NumLeaves; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(sourceWorkingBuffer);
+		this->CPUInUse.insert(leafSinkBuffers[0]);
+		this->CPUInUse.insert(leafSinkBuffers[i]);
+		this->CPUInUse.insert(leafLabelBuffers[i]);
+		this->CPUInUse.insert(leafDataTermBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_CopyBuffer(CPU2GPUMap[leafSinkBuffers[i]], CPU2GPUMap[leafSinkBuffers[0]], VolumeSize, GetStream() );
+		CUDA_LblBuffer(CPU2GPUMap[leafLabelBuffers[i]], CPU2GPUMap[leafSinkBuffers[i]], CPU2GPUMap[leafDataTermBuffers[i]], VolumeSize, GetStream() );
+		CUDA_SumBuffer(CPU2GPUMap[sourceWorkingBuffer], CPU2GPUMap[leafLabelBuffers[i]], VolumeSize, GetStream() );
+	}
+
+	//divide the labels out to constrain them to validity
+	for(int i = 0; i < NumLeaves; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(sourceWorkingBuffer);
+		this->CPUInUse.insert(leafLabelBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_DivBuffer(CPU2GPUMap[leafLabelBuffers[i]], CPU2GPUMap[sourceWorkingBuffer], VolumeSize, GetStream() );
+	}
+
+	//apply minimal sink flow over the remaining hierarchy
+	for(int i = 0; i < NumBranches; i++ ){
+		this->CPUInUse.clear();
+		this->CPUInUse.insert(leafSinkBuffers[0]);
+		this->CPUInUse.insert(branchSinkBuffers[i]);
+		this->GetGPUBuffersV2(-1);
+		CUDA_CopyBuffer(CPU2GPUMap[branchSinkBuffers[i]], CPU2GPUMap[leafSinkBuffers[0]], VolumeSize, GetStream() );
+	}
+	this->CPUInUse.clear();
+	this->CPUInUse.insert(leafSinkBuffers[0]);
+	this->CPUInUse.insert(sourceFlowBuffer);
+	this->GetGPUBuffersV2(-1);
+	CUDA_CopyBuffer(CPU2GPUMap[sourceFlowBuffer], CPU2GPUMap[leafSinkBuffers[0]], VolumeSize, GetStream() );
+
+	//propogate labels up the hierarchy
+	PropogateLabels( this->Hierarchy->GetRoot() );
+	this->CallSyncThreads();
+
+	if( this->Debug )
+		vtkDebugMacro(<< "Finished initialization with a total of " << NumMemCpies << " memory transfers.");
 
 	//Solve maximum flow problem in an iterative bottom-up manner
 	if( this->Debug )
@@ -1021,11 +1115,11 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		int TimeStep = 0;
 		SolveMaxFlow( this->Hierarchy->GetRoot(), &TimeStep );
 		this->CallSyncThreads();
-		
 		if( this->Debug )
 			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
-
 	}
+	if( this->Debug )
+		vtkDebugMacro(<< "Finished all iterations with a total of " << NumMemCpies << " memory transfers.");
 
 	//Copy back any uncopied leaf label buffers (others don't matter anymore)
 	for( int i = 0; i < NumLeaves; i++ ){
@@ -1672,6 +1766,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::GetGPUBuffersV2(int reference){
 	}
 	
 	//increment the next time everything on CPU is called
+	if( reference == -1 ) return;
 	for( std::set<float*>::iterator iterator = CPUInUse.begin();
 		 iterator != CPUInUse.end(); iterator++ ){
 		CircListNode* bufferNode = this->PrioritySet[*iterator];
