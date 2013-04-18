@@ -150,8 +150,8 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 	outData[0]->SetScalarTypeToFloat();
 	
 	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
-		if(inData[1][i]) numLabelMaps++;
+	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
+		if(inData[0][i]) numLabelMaps++;
 
     if (numLabelMaps == 0) {
         vtkErrorMacro(<< "At least one label map is required." );
@@ -167,14 +167,14 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 
 	// this filter expects the label map to be of type char
 	int LabelType = -1;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
-		if( !inData[1][i] ) continue;
-		if( LabelType == -1 ) LabelType = inData[1][i]->GetScalarType();
-		if (inData[1][i]->GetScalarType() != LabelType) {
+	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
+		if( !inData[0][i] ) continue;
+		if( LabelType == -1 ) LabelType = inData[0][i]->GetScalarType();
+		if (inData[0][i]->GetScalarType() != LabelType) {
 			vtkErrorMacro(<< "Label maps must be of same type." );
 			return;
 		}
-		if ( inData[1][i]->GetNumberOfScalarComponents() != 1 ) {
+		if ( inData[0][i]->GetNumberOfScalarComponents() != 1 ) {
 			vtkErrorMacro(<< "Label map can only have 1 component." );
 			return;
 
