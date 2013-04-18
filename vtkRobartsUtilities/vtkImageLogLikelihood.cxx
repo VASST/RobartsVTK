@@ -6,8 +6,6 @@
 #include "vtkInformationVector.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 
-#include "vtkImageCast.h"
-
 #include <math.h>
 #include <float.h>
 
@@ -20,6 +18,7 @@ vtkImageLogLikelihood::vtkImageLogLikelihood()
     this->NormalizeDataTerm = 0;
     this->LabelID = 1.0;
     this->HistogramResolution = 1.0f;
+	this->RequiredAgreement = 0.8;
     this->SetNumberOfInputPorts(2);
     this->SetNumberOfThreads(1);
 }
@@ -38,7 +37,11 @@ int vtkImageLogLikelihood::RequestInformation (
     // get the info objects
     vtkInformation* outInfo = outputVector->GetInformationObject(0);
     vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-    vtkInformation *inInfo2 = inputVector[1]->GetInformationObject(0);
+    vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
+
+	int numLabelMaps = 0;
+	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
+		numLabelMaps++;
 
     int ext[6], ext2[6], idx;
 
@@ -46,25 +49,27 @@ int vtkImageLogLikelihood::RequestInformation (
 
     // two input take intersection
 
-    if (!inInfo2)
+    if (!numLabelMaps)
     {
-        vtkErrorMacro(<< "Second input must be specified for this operation.");
+        vtkErrorMacro(<< "At least one label map must be specified.");
         return 1;
     }
-
-    inInfo2->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
-    for (idx = 0; idx < 3; ++idx)
-    {
-        if (ext2[idx*2] > ext[idx*2])
-        {
-            ext[idx*2] = ext2[idx*2];
-        }
-        if (ext2[idx*2+1] < ext[idx*2+1])
-        {
-            ext[idx*2+1] = ext2[idx*2+1];
-        }
-    }
-
+	
+	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
+		vtkInformation *inInfo2 = inputVector[1]->GetInformationObject(i);
+		inInfo2->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
+		for (idx = 0; idx < 3; ++idx)
+		{
+			if (ext2[idx*2] > ext[idx*2])
+			{
+				ext[idx*2] = ext2[idx*2];
+			}
+			if (ext2[idx*2+1] < ext[idx*2+1])
+			{
+				ext[idx*2+1] = ext2[idx*2+1];
+			}
+		}
+	}
 
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext,6);
 
@@ -72,77 +77,91 @@ int vtkImageLogLikelihood::RequestInformation (
 }
 
 //----------------------------------------------------------------------------
-template <class TValue, class TIvar>
-void vtkImageMathematicsClamp(TValue &value, TIvar ivar, vtkImageData *data)
+
+template <class T>
+void vtkImageLogLikelihoodExecute2(vtkImageLogLikelihood *self,
+                                  vtkImageData *in1Data, T *in1Ptr,
+                                  vtkImageData **in2Data,
+                                  vtkImageData *outData, float *outPtr,
+                                  int outExt[6], int numLabels, int lblType, int id)
 {
-  if (ivar < static_cast<TIvar>(data->GetScalarTypeMin()))
+	//get some scalar pointer to appease the compiler
+	void* scalarPtr = 0;
+	for(int i = 0; i < numLabels; i++)
+		if( in2Data[i] ){
+			scalarPtr = in2Data[i]->GetScalarPointer();
+			break;
+		}
+
+	//move down another type
+	switch (lblType)
     {
-    value = static_cast<TValue>(data->GetScalarTypeMin());
+    vtkTemplateMacro(
+                vtkImageLogLikelihoodExecute(self,in1Data,
+                                             (T*) in1Ptr,
+                                             in2Data,
+											 static_cast<VTK_TT *>(scalarPtr),
+                                             outData,
+                                             outPtr, outExt,
+                                             numLabels, id));
+    default:
+        vtkErrorWithObjectMacro(self, << "Execute: Unknown ScalarType");
+        return;
     }
-  else if (ivar > static_cast<TIvar>(data->GetScalarTypeMax()))
-    {
-    value = static_cast<TValue>(data->GetScalarTypeMax());
-    }
-  else
-    {
-    value = static_cast<TValue>(ivar);
-    }
+
 }
-
-
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 // Handles the two input operations
-template <class T>
+template <class T, class TT>
 void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
                                   vtkImageData *in1Data, T *in1Ptr,
-                                  vtkImageData *in2Data, T *in2Ptr,
-                                  vtkImageData *outData, T *outPtr,
-                                  int outExt[6], int id)
+                                  vtkImageData **in2Data, TT *in2Ptr,
+                                  vtkImageData *outData, float *outPtr,
+                                  int outExt[6], int numLabels, int id)
 {
 
-
-    vtkImageCast *in1Cast = vtkImageCast::New();
-    vtkImageCast *in2Cast = vtkImageCast::New();
-
-    in1Cast->SetInput(in1Data);
-    in1Cast->SetOutputScalarTypeToFloat();
-    in1Cast->Update();
-    in2Cast->SetInput(in2Data);
-    in2Cast->SetOutputScalarTypeToFloat();
-    in2Cast->Update();
-
-    float* inputBuffer = (float*) in1Cast->GetOutput()->GetScalarPointer();
-    float* labelBuffer = (float*) in2Cast->GetOutput()->GetScalarPointer();
-
-    // allocate output buffer
-    outData->DeepCopy(in1Cast->GetOutput());
-
-    int volumeSize = in2Cast->GetOutput()->GetDimensions()[0]*
-                     in2Cast->GetOutput()->GetDimensions()[1]*
-                     in2Cast->GetOutput()->GetDimensions()[2];
+    T* inputBuffer = (T*) in1Data->GetScalarPointer();
+    int volumeSize = in1Data->GetDimensions()[0]*
+                     in1Data->GetDimensions()[1]*
+                     in1Data->GetDimensions()[2];
 
     float* outBuffer =  (float*)outData->GetScalarPointer();
-    std::fill_n(outBuffer, volumeSize , 0.0f);
+    //std::fill_n(outBuffer, volumeSize , 0.0f);
+
+	//find the actual number of non-null labels
+	int actualNumLabels = 0;
+	for(int label = 0; label < numLabels; label++ )
+		if( in2Data[label] ) actualNumLabels++;
 
     // calculate sample size
-    unsigned int szSample = 0;
+    int szSample = 0;
     for(int idx = 0; idx < volumeSize; idx++ ){
-
-        if( labelBuffer[idx] == self->GetLabelID())
-            szSample++;
+		int agree = 0;
+		for(int label = 0; label < numLabels; label++ ){
+			if( in2Data[label] )
+				if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
+					agree++;
+		}
+		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) )
+			szSample++;
     }
 
     // acquire sample
     float *sample = new float[szSample];
-
-    unsigned int count = 0;
+    int count = 0;
     for(int idx = 0; idx < volumeSize; idx++ ){
-        if( labelBuffer[idx] == self->GetLabelID() ){
-            sample[count] = inputBuffer[idx];
+		int agree = 0;
+		for(int label = 0; label < numLabels; label++ ){
+			if( in2Data[label] )
+				if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
+					agree++;
+		}
+		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
+            sample[count] = (float) inputBuffer[idx];
             count++;
         }
-    }
+	}
 
     // calculate histogram and ML data term
     int szHist = 0;
@@ -153,7 +172,6 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 
     // Find min and max intensity values from sample
     for(int i = 0; i < szSample; i++){
-
         if ( sample[i] < minVal)
             minVal = sample[i];
         if ( sample[i] > maxVal)
@@ -179,7 +197,7 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
     }
 
     // Calculate log likelihood dataterm
-    for (unsigned int idx = 0; idx < volumeSize; idx++){
+    for (int idx = 0; idx < volumeSize; idx++){
 
         outBuffer[idx] =( inputBuffer[idx] < minVal ||  (int)((inputBuffer[idx]-minVal) / resolution) >= szHist) ?
             -log(1.0e-10) :
@@ -195,9 +213,6 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
     delete[] sample;
     delete[] hist;
 
-    in1Cast->Delete();
-    in2Cast->Delete();
-
     return;
 }
 
@@ -209,72 +224,70 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 // the datas data types.
 void vtkImageLogLikelihood::ThreadedRequestData(
         vtkInformation * vtkNotUsed( request ),
-        vtkInformationVector ** vtkNotUsed( inputVector ),
-        vtkInformationVector * vtkNotUsed( outputVector ),
+        vtkInformationVector ** inputVector,
+        vtkInformationVector * outputVector,
         vtkImageData ***inData,
         vtkImageData **outData,
         int outExt[6], int id)
 {
     void *inPtr1;
-    void *inPtr2;
     void *outPtr;
 
     inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
-    inPtr2 = inData[1][0]->GetScalarPointerForExtent(outExt);
     outPtr = outData[0]->GetScalarPointerForExtent(outExt);
+	outData[0]->SetScalarTypeToFloat();
+	
+	int numLabelMaps = 0;
+	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
+		if(inData[1][i]) numLabelMaps++;
 
-    if (!inData[1] || ! inData[1][0])
-    {
-        vtkErrorMacro(
-                    "ImageMathematics requested to perform a two input operation "
-                    "with only one input\n");
+    if (numLabelMaps == 0) {
+        vtkErrorMacro(<< "At least one label map is required." );
         return;
     }
 
-    // this filter expects that input is the same type as output.
-    if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())
+    // this filter expects the output datatype to be float.
+    if (outData[0]->GetScalarType() != VTK_FLOAT)
     {
-        vtkErrorMacro(<< "Execute: input1 ScalarType, "
-                      <<  inData[0][0]->GetScalarType()
-                      << ", must match output ScalarType "
-                      << outData[0]->GetScalarType());
+        vtkErrorMacro(<< "Output data type must be float." );
         return;
     }
 
-    if (inData[1][0]->GetScalarType() != outData[0]->GetScalarType())
-    {
-        vtkErrorMacro(<< "Execute: input2 ScalarType, "
-                      << inData[1][0]->GetScalarType()
-                      << ", must match output ScalarType "
-                      << outData[0]->GetScalarType());
-        return;
-    }
+	// this filter expects the label map to be of type char
+	int LabelType = -1;
+	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
+		if( !inData[1][i] ) continue;
+		if( LabelType == -1 ) LabelType = inData[1][i]->GetScalarType();
+		if (inData[1][i]->GetScalarType() != LabelType) {
+			vtkErrorMacro(<< "Label maps must be of same type." );
+			return;
+		}
+		if ( inData[1][i]->GetNumberOfScalarComponents() != 1 ) {
+			vtkErrorMacro(<< "Label map can only have 1 component." );
+			return;
+
+		}
+	}
 
     // this filter expects that inputs that have the same number of components
-    if (inData[0][0]->GetNumberOfScalarComponents() !=
-            inData[1][0]->GetNumberOfScalarComponents())
+    if (inData[0][0]->GetNumberOfScalarComponents() != 1 )
     {
-        vtkErrorMacro(<< "Execute: input1 NumberOfScalarComponents, "
-                      << inData[0][0]->GetNumberOfScalarComponents()
-                      << ", must match out input2 NumberOfScalarComponents "
-                      << inData[1][0]->GetNumberOfScalarComponents());
+        vtkErrorMacro(<< "Execute: Image can only have one component.");
         return;
     }
 
     switch (inData[0][0]->GetScalarType())
     {
     vtkTemplateMacro(
-                vtkImageLogLikelihoodExecute(this,inData[0][0],
+                vtkImageLogLikelihoodExecute2(this,inData[0][0],
                                              static_cast<VTK_TT *>(inPtr1),
-                                             inData[1][0],
-                                             static_cast<VTK_TT *>(inPtr2),
+                                             inData[1],
                                              outData[0],
-                                             static_cast<VTK_TT *>(outPtr), outExt,
-                                             id));
+                                             static_cast<float *>(outPtr), outExt,
+                                             inputVector[1]->GetNumberOfInformationObjects(),
+											 LabelType,id));
     default:
         vtkErrorMacro(<< "Execute: Unknown ScalarType");
-
-
         return;
     }
 
@@ -285,7 +298,7 @@ void vtkImageLogLikelihood::ThreadedRequestData(
 int vtkImageLogLikelihood::FillInputPortInformation(
         int port, vtkInformation* info)
 {
-
+	if( port == 1 ) info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
 }

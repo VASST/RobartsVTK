@@ -16,6 +16,8 @@
 
 
 #include "vtkThreadedImageAlgorithm.h"
+#include "vtkAlgorithmOutput.h"
+#include "vtkDataObject.h"
 
 #include <float.h>
 #include <limits.h>
@@ -27,8 +29,8 @@ public:
   vtkTypeMacro(vtkImageLogLikelihood,vtkThreadedImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  virtual void SetInput1(vtkDataObject *in) { this->SetInput(0,in); }
-  virtual void SetInput2(vtkDataObject *in) { this->SetInput(1,in); }
+  virtual void SetInputImage(vtkDataObject *in) { this->SetInput(0,in); }
+  virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(1,number,in->GetProducerPort()); }
 
   void SetNormalizeDataTerm() {this->NormalizeDataTerm = 1; }
   int GetNormalizeDataTerm() {return (this->NormalizeDataTerm); }
@@ -39,6 +41,9 @@ public:
   vtkSetClampMacro(HistogramResolution,float, 1, 1024);
   vtkGetMacro(HistogramResolution,float);
 
+  vtkSetClampMacro(RequiredAgreement,double,0.0,1.0);
+  vtkGetMacro(RequiredAgreement,double);
+
 protected:
   vtkImageLogLikelihood();
   ~vtkImageLogLikelihood();
@@ -46,6 +51,8 @@ protected:
   int LabelID;
   int NormalizeDataTerm;
   float HistogramResolution;
+  double RequiredAgreement;
+  int NumberOfLabelMaps;
 
   virtual int RequestInformation (vtkInformation *,
                                     vtkInformationVector **,
@@ -57,9 +64,8 @@ protected:
                                      vtkImageData ***inData,
                                      vtkImageData **outData,
                                      int extent[6], int threadId);
-
+  
   virtual int FillInputPortInformation(int port, vtkInformation* info);
-
 
 private:
   vtkImageLogLikelihood(const vtkImageLogLikelihood&);  // Not implemented.
