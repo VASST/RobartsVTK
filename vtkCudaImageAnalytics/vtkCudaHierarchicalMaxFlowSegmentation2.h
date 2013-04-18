@@ -17,6 +17,8 @@
 #include <limits.h>
 #include <float.h>
 
+#include "vtkCudaObject.h"
+
 //INPUT PORT DESCRIPTION
 
 //OUTPUT PORT DESCRIPTION
@@ -144,40 +146,51 @@ private:
 	float*	sourceWorkingBuffer;
 
 	//Mappings for CPU-GPU buffer sharing
-	void GetGPUBuffers();
-	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer);
-	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer);
-	void AddToStack( float* CPUBuffer );
-	void RemoveFromStack( float* CPUBuffer );
-	void BuildStackUpToPriority( int priority );
+	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
+	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
 	void FigureOutBufferPriorities( vtkIdType currNode );
 	
-	class CircListNode;
-	std::map< float*, CircListNode* > PrioritySet;
-	std::map< float*, int > PrioritySetNumUses;
-	void ClearBufferOrdering( vtkIdType currNode );
-	void SimulateIterationForBufferOrdering( vtkIdType currNode, int* reference );
-	void SimulateIterationForBufferOrderingUpdateLabelStep( vtkIdType currNode, int* reference );
-	void UpdateBufferOrderingAt( float* buffer, int reference );
-	void DeallocatePrioritySet();
-	void GetGPUBuffersV2(int reference);
+	class Worker : public vtkCudaObject {
+	public:
+		vtkCudaHierarchicalMaxFlowSegmentation2* const Parent;
+		const int GPU;
+		std::map<float*,float*> CPU2GPUMap;
+		std::map<float*,float*> GPU2CPUMap;
+		std::set<float*> CPUInUse;
+		std::list<float*> UnusedGPUBuffers;
+		std::list<float*> AllGPUBufferBlocks;
+		std::list<std::list< float* >> PriorityStacks;
+		Worker(int g, vtkCudaHierarchicalMaxFlowSegmentation2* p );
+		~Worker();
+		void ForceSync();
+		void UpdateBuffersInUse();
+		void AddToStack( float* CPUBuffer );
+		void RemoveFromStack( float* CPUBuffer );
+		void BuildStackUpToPriority( int priority );
+		void TakeDownPriorityStacks();
+		void Reinitialize(int withData){} // not used
+		void Deinitialize(int withData){} // not used
+	};
+	friend Worker;
+	std::set<Worker*> Workers;
 
-
-	std::map<float*,float*> CPU2GPUMap;
-	std::map<float*,float*> GPU2CPUMap;
-	std::map<float*,int> CPU2PriorityMap;
+	class Task;
+	friend Task;
+	std::set<Task*> CurrentTasks;
 
 	std::set<float*> CPUInUse;
-	
-	std::list< std::list<float*> > PriorityStacks;
-	std::list< int > Priority;
+	std::map<float*,int> CPU2PriorityMap;
 
-	std::list< float* > UnusedGPUBuffers;
 	std::set< float* > ReadOnly;
 	std::set< float* > NoCopyBack;
 	
+	int		TotalNumberOfBuffers;
 	int		NumMemCpies;
 	int		NumKernelRuns;
+	int		NumLeaves;
+	int		NumBranches;
+	int		NumNodes;
+	int		NumEdges;
 };
 
 #endif
