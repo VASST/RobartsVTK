@@ -1,22 +1,15 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkImageDataTerm.h,v $
+  Module:    vtkImageDataTerm.h
 
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
+  Copyright (c) John SH Baxter, Robarts Research Institute
 
      This software is distributed WITHOUT ANY WARRANTY; without even
      the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkImageDataTerm - Add, subtract, multiply, divide, invert, sin,
-// cos, exp, log.
-// .SECTION Description
-// vtkImageDataTerm implements more complex mathematic operations commonly
-// used in definining data terms. This filter takes 
 
 
 #ifndef __vtkImageDataTerm_h

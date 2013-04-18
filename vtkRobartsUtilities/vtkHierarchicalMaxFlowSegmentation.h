@@ -1,7 +1,19 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkHierarchicalMaxFlowSegmentation.h
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 
-#include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
