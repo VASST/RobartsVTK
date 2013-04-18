@@ -18,7 +18,7 @@ vtkImageAtlasLabelProbability::vtkImageAtlasLabelProbability()
     this->NormalizeDataTerm = 0;
     this->LabelID = 1.0;
 	this->Entropy = false;
-    this->SetNumberOfInputPorts(0);
+    this->SetNumberOfInputPorts(1);
     this->SetNumberOfThreads(10);
 	this->MaxValueToGive = 100.0;
 }
