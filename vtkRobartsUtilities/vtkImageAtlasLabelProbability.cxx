@@ -40,7 +40,7 @@ int vtkImageAtlasLabelProbability::RequestInformation (
     vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
 
 	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
+	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
 		numLabelMaps++;
 
     int ext[6], ext2[6], idx;
@@ -89,11 +89,12 @@ void vtkImageAtlasLabelProbabilityExecute(vtkImageAtlasLabelProbability *self,
 
 	//find the actual number of non-null labels
 	int actualNumLabels = 0;
-	for(int label = 0; label < numLabels; label++ )
+	for(int label = 0; label < numLabels; label++ ){
 		if( inData[label] ) actualNumLabels++;
+	}
 
     
-	for(int idx = (id*volumeSize) / self->GetNumberOfThreads(); idx < ((id+1)*volumeSize) / self->GetNumberOfThreads(); idx++ ){
+	for(int idx = id; idx < volumeSize; idx+=self->GetNumberOfThreads() ){
 	
 		//find the number of agreed on pixels
 		int agree = 0;
@@ -105,14 +106,14 @@ void vtkImageAtlasLabelProbabilityExecute(vtkImageAtlasLabelProbability *self,
 
 		//there is no agreement, assign the maximum value
 		if( agree == 0 ){
-			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 0 )
+			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
 				outBuffer[idx] = 1.0f;
 			else if( self->GetEntropy() )
 				self->GetMaxValueToGive();
 			else
 				outBuffer[idx] = 0.0f;
 		}else{
-			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 0 )
+			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
 				outBuffer[idx] = (log((float)actualNumLabels) - log((float)agree) < self->GetMaxValueToGive()) ?
 				  (log((float)actualNumLabels) - log((float)agree)) / self->GetMaxValueToGive() :
 				  1.0f ;
@@ -209,7 +210,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 int vtkImageAtlasLabelProbability::FillInputPortInformation(
         int port, vtkInformation* info)
 {
-	if( port == 0 ) info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
+	info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
 }

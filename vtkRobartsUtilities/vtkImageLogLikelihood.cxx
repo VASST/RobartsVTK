@@ -131,8 +131,9 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 
 	//find the actual number of non-null labels
 	int actualNumLabels = 0;
-	for(int label = 0; label < numLabels; label++ )
+	for(int label = 0; label < numLabels; label++ ){
 		if( in2Data[label] ) actualNumLabels++;
+	}
 
     // calculate sample size
     int szSample = 0;
