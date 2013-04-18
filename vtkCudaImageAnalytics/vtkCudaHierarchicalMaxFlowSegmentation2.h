@@ -171,11 +171,11 @@ private:
 		void Reinitialize(int withData){} // not used
 		void Deinitialize(int withData){} // not used
 	};
-	friend Worker;
+	friend class Worker;
 	std::set<Worker*> Workers;
 
 	class Task;
-	friend Task;
+	friend class Task;
 	std::set<Task*> CurrentTasks;
 
 	std::set<float*> CPUInUse;
