@@ -147,21 +147,24 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) )
 			szSample++;
     }
-
+	
     // acquire sample
-    float *sample = new float[szSample];
-    int count = 0;
-    for(int idx = 0; idx < volumeSize; idx++ ){
-		int agree = 0;
-		for(int label = 0; label < numLabels; label++ ){
-			if( in2Data[label] )
-				if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
-					agree++;
+	float *sample = 0;
+	if(szSample > 0){
+		sample = new float[szSample];
+		int count = 0;
+		for(int idx = 0; idx < volumeSize; idx++ ){
+			int agree = 0;
+			for(int label = 0; label < numLabels; label++ ){
+				if( in2Data[label] )
+					if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
+						agree++;
+			}
+			if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
+				sample[count] = (float) inputBuffer[idx];
+				count++;
+			}
 		}
-		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
-            sample[count] = (float) inputBuffer[idx];
-            count++;
-        }
 	}
 
     // calculate histogram and ML data term
@@ -172,30 +175,39 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
     float maxVal = FLT_MIN;
 
     // Find min and max intensity values from sample
-    for(int i = 0; i < szSample; i++){
-        if ( sample[i] < minVal)
-            minVal = sample[i];
-        if ( sample[i] > maxVal)
-            maxVal = sample[i];
-    }
+	if( szSample > 0 ){
+		for(int i = 0; i < szSample; i++){
+			if ( sample[i] < minVal)
+				minVal = sample[i];
+			if ( sample[i] > maxVal)
+				maxVal = sample[i];
+		}
+		szHist = ((maxVal - minVal) / resolution) + 1;
+	}else{
+		minVal = 0.0f;
+		maxVal = resolution;
+		szHist = 0;
+	}
 
     //float resolution = 1;
-    szHist = ((maxVal - minVal) / resolution) + 1;
     float *hist = new float[szHist];
 
     std::fill_n(hist, szHist , 0.0f);
 
     // Fill histogram bins
-    for (int j = 0; j < szSample; j++){
-        int histIdx = ((sample[j]-minVal)/resolution );
-        hist[histIdx]++;
-    }
+	for (int j = 0; j < szSample; j++){
+		int histIdx = ((sample[j]-minVal)/resolution );
+		hist[histIdx]++;
+	}
 
     // Normalize histogram
-    for (int i = 0; i < szHist; i++){
-        hist[i] = hist[i]/ (float)szSample + 1.0e-10;
-
-    }
+	if(szSample > 0){
+		for (int i = 0; i < szHist; i++)
+			hist[i] = hist[i]/ (float)szSample + 1.0e-10;
+	}else{
+		for (int i = 0; i < szHist; i++)
+			hist[i] = 1.0e-10;
+	}
 
     // Calculate log likelihood dataterm
     for (int idx = 0; idx < volumeSize; idx++){
