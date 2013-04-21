@@ -411,6 +411,7 @@ __global__ void kern_Copy(float* dst, float* src, const int size){
 }
 
 void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	if( dst == src ) return;
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
 	kern_Copy<<<grid,threads,0,*stream>>>(dst, src, size);
@@ -418,6 +419,7 @@ void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 		cudaThreadSynchronize();
 		printf( "CUDA_CopyBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }
@@ -431,6 +433,7 @@ __global__ void kern_Min(float* dst, float* src, const int size){
 }
 
 void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
+	if( dst == src ) return;
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
 	kern_Min<<<grid,threads,0,*stream>>>(dst, src, size);
@@ -438,6 +441,7 @@ void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 		cudaThreadSynchronize();
 		printf( "CUDA_MinBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }
@@ -478,6 +482,7 @@ void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 		cudaThreadSynchronize();
 		printf( "CUDA_SumBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }
@@ -498,6 +503,7 @@ void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 		cudaThreadSynchronize();
 		printf( "CUDA_DivBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }

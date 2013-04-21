@@ -35,8 +35,11 @@ public:
 	void SetHierarchy(vtkTree* graph);
 	vtkTree* GetHierarchy();
 
-	void AddGPU(int GPU);
-	void RemoveGPU(int GPU);
+	void AddDevice(int GPU);
+	void RemoveDevice(int GPU);
+	bool HasDevice(int GPU);
+	void ClearDevices();
+	void SetDevice(int GPU){ this->ClearDevices(); this->AddDevice(GPU); }
 
 	//Weight the smoothness term. If no scalar is provided, it is assumed to be 1. If
 	//no smoothness term is provided, it is assumed to be the unit function.
@@ -60,8 +63,8 @@ public:
 	vtkGetMacro(StepSize,float);
 
 	//Get and Set the verbose flag
-	vtkSetMacro(Verbose,bool);
-	vtkGetMacro(Verbose,bool);
+	vtkSetClampMacro(ReportRate,int,0,INT_MAX);
+	vtkGetMacro(ReportRate,int);
 
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
@@ -97,7 +100,7 @@ private:
 	std::set<int> GPUsUsed;
 
 	double	MaxGPUUsage;
-	bool	Verbose;
+	int		ReportRate;
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
@@ -162,12 +165,14 @@ private:
 		std::list< std::list<float*> > PriorityStacks;
 		Worker(int g, vtkCudaHierarchicalMaxFlowSegmentation2* p );
 		~Worker();
-		void ForceSync();
 		void UpdateBuffersInUse();
 		void AddToStack( float* CPUBuffer );
 		void RemoveFromStack( float* CPUBuffer );
 		void BuildStackUpToPriority( int priority );
 		void TakeDownPriorityStacks();
+		int LowestBufferShift(int n);
+		void ReturnLeafLabels();
+		void ReturnBuffer(float* CPUBuffer);
 		void Reinitialize(int withData){} // not used
 		void Deinitialize(int withData){} // not used
 	};
@@ -177,6 +182,8 @@ private:
 	class Task;
 	friend class Task;
 	std::set<Task*> CurrentTasks;
+	std::set<Task*> BlockedTasks;
+	std::set<Task*> FinishedTasks;
 
 	std::set<float*> CPUInUse;
 	std::map<float*,int> CPU2PriorityMap;
@@ -191,6 +198,39 @@ private:
 	int		NumBranches;
 	int		NumNodes;
 	int		NumEdges;
+	int		NumTasksGoingToHappen;
+
+	std::map<vtkIdType,Task*> ClearWorkingBufferTasks;
+	std::map<vtkIdType,Task*> UpdateSpatialFlowsTasks;
+	std::map<vtkIdType,Task*> ApplySinkPotentialBranchTasks;
+	std::map<vtkIdType,Task*> ApplySinkPotentialLeafTasks;
+	std::map<vtkIdType,Task*> ApplySourcePotentialTasks;
+	std::map<vtkIdType,Task*> DivideOutWorkingBufferTasks;
+	std::map<vtkIdType,Task*> UpdateLabelsTasks;
+
+	void CreateClearWorkingBufferTasks(vtkIdType currNode);
+	void CreateUpdateSpatialFlowsTasks(vtkIdType currNode);
+	void CreateApplySinkPotentialBranchTasks(vtkIdType currNode);
+	void CreateApplySinkPotentialLeafTasks(vtkIdType currNode);
+	void CreateApplySourcePotentialTask(vtkIdType currNode);
+	void CreateDivideOutWorkingBufferTask(vtkIdType currNode);
+	void CreateUpdateLabelsTask(vtkIdType currNode);
+	void AddIterationTaskDependencies(vtkIdType currNode);
+	
+	std::map<int,Task*> InitializeLeafSinkFlowsTasks;
+	std::map<int,Task*> MinimizeLeafSinkFlowsTasks;
+	std::map<vtkIdType,Task*> PropogateLeafSinkFlowsTasks;
+	std::map<vtkIdType,Task*> InitialLabellingSumTasks;
+	std::map<vtkIdType,Task*> CorrectLabellingTasks;
+	std::map<vtkIdType,Task*> PropogateLabellingTasks;
+
+	void CreateInitializeAllSpatialFlowsToZeroTasks(vtkIdType currNode);
+	void CreateInitializeLeafSinkFlowsToCapTasks(vtkIdType currNode);
+	void CreateCopyMinimalLeafSinkFlowsTasks(vtkIdType currNode);
+	void CreateFindInitialLabellingAndSumTasks(vtkIdType currNode);
+	void CreateClearSourceWorkingBufferTask();
+	void CreateDivideOutLabelsTasks(vtkIdType currNode);
+	void CreatePropogateLabelsTasks(vtkIdType currNode);
 };
 
 #endif

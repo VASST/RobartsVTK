@@ -31,6 +31,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2
 	this->StepSize = 0.1;
 	this->CC = 0.25;
 	this->MaxGPUUsage = 0.75;
+	this->ReportRate = 100;
 
 	//set up the input mapping structure
 	this->InputPortMapping.clear();
@@ -44,6 +45,9 @@ vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2
 	this->InputPortMapping.clear();
 	this->BranchMap.clear();
 
+	//give default GPU selection
+	this->GPUsUsed.insert(0);
+
 }
 
 vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation2(){
@@ -53,21 +57,29 @@ vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation
 	this->InputPortMapping.clear();
 	this->BackwardsInputPortMapping.clear();
 	this->BranchMap.clear();
-
+	this->GPUsUsed.clear();
 }
 
-//------------------------------------------------------------
+//------------------------------------------------------------//
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::AddGPU(int GPU){
-	if( GPU > 0 && GPU < vtkCudaDeviceManager::Singleton()->GetNumberOfDevices() )
+void vtkCudaHierarchicalMaxFlowSegmentation2::AddDevice(int GPU){
+	if( GPU >= 0 && GPU < vtkCudaDeviceManager::Singleton()->GetNumberOfDevices() )
 		this->GPUsUsed.insert(GPU);
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::RemoveGPU(int GPU){
+void vtkCudaHierarchicalMaxFlowSegmentation2::RemoveDevice(int GPU){
 	if( this->GPUsUsed.find(GPU) != this->GPUsUsed.end() )
 		this->GPUsUsed.erase(this->GPUsUsed.find(GPU));
 }
-//------------------------------------------------------------
+
+bool vtkCudaHierarchicalMaxFlowSegmentation2::HasDevice(int GPU){
+	return (this->GPUsUsed.find(GPU) != this->GPUsUsed.end());
+}
+void vtkCudaHierarchicalMaxFlowSegmentation2::ClearDevices(){
+	this->GPUsUsed.clear();
+}
+
+//------------------------------------------------------------//
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::SetHierarchy(vtkTree* graph){
 	if( graph != this->Hierarchy ){
@@ -316,8 +328,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	if( result || NumLeaves < 2 ) return -1;
 	NumBranches = NumNodes - NumLeaves - 1;
 
-	if( this->Debug )
-		vtkDebugMacro(<< "Starting input data preparation." );
+	if( this->Debug ) vtkDebugMacro(<< "Starting input data preparation." );
 
 	//set the number of output ports
 	outputVector->SetNumberOfInformationObjects(NumLeaves);
@@ -424,9 +435,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	iterator->Delete();
 	
 	//if verbose, print progress
-	if( this->Debug ){
-		vtkDebugMacro(<<"Starting CPU buffer acquisition");
-	}
+	if( this->Debug ) vtkDebugMacro(<<"Starting CPU buffer acquisition");
 
 	//source flow and working buffers
 	std::list<float**> BufferPointerLocs;
@@ -536,9 +545,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	}
 	
 	//if verbose, print progress
-	if( this->Debug ){
-		vtkDebugMacro(<<"Relate parent sink with child source buffer pointers.");
-	}
+	if( this->Debug ) vtkDebugMacro(<<"Relate parent sink with child source buffer pointers.");
 
 	//create pointers to parent outflow
 	leafIncBuffers = new float* [NumLeaves];
@@ -564,73 +571,129 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	iterator->Delete();
 	
 	//if verbose, print progress
-	if( this->Debug ){
-		vtkDebugMacro(<<"Building workers.");
-	}
+	if( this->Debug ) vtkDebugMacro(<<"Building workers.");
 	for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++)
 		this->Workers.insert( new Worker(*gpuIterator,this) );
 
 	//if verbose, print progress
-	if( this->Debug ){
-		vtkDebugMacro(<<"Find priority structures.");
-	}
+	if( this->Debug ) vtkDebugMacro(<<"Find priority structures.");
 
 	//create LIFO priority queue (priority stack) data structure
 	FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
 	
 	//add all the working buffers from the branches to the garbage (no copy necessary) list
-	NoCopyBack.insert( sourceWorkingBuffer );
-	for(int i = 0; i < NumBranches; i++ )
-		NoCopyBack.insert( branchWorkingBuffers[i] );
+	//NoCopyBack.insert( sourceWorkingBuffer );
+	//for(int i = 0; i < NumBranches; i++ )
+	//	NoCopyBack.insert( branchWorkingBuffers[i] );
 	
+	//add tasks in for the normal iterations (done first for dependancy reasons)
+	if( this->Debug ) vtkDebugMacro(<<"Creating tasks for normal iterations.");
+	NumTasksGoingToHappen = 0;
+	if( this->NumberOfIterations > 0 ){
+		CreateClearWorkingBufferTasks(this->Hierarchy->GetRoot());
+		CreateUpdateSpatialFlowsTasks(this->Hierarchy->GetRoot());
+		CreateApplySinkPotentialBranchTasks(this->Hierarchy->GetRoot());
+		CreateApplySinkPotentialLeafTasks(this->Hierarchy->GetRoot());
+		CreateApplySourcePotentialTask(this->Hierarchy->GetRoot());
+		CreateDivideOutWorkingBufferTask(this->Hierarchy->GetRoot());
+		CreateUpdateLabelsTask(this->Hierarchy->GetRoot());
+		AddIterationTaskDependencies(this->Hierarchy->GetRoot());
+	}
+	
+	//add tasks in for the initialization (done second for dependancy reasons)
+	if( this->Debug ) vtkDebugMacro(<<"Creating tasks for initialization.");
+	if( this->NumberOfIterations > 0 ) CreateInitializeAllSpatialFlowsToZeroTasks(this->Hierarchy->GetRoot());
+	CreateInitializeLeafSinkFlowsToCapTasks(this->Hierarchy->GetRoot());
+	CreateCopyMinimalLeafSinkFlowsTasks(this->Hierarchy->GetRoot());
+	CreateFindInitialLabellingAndSumTasks(this->Hierarchy->GetRoot());
+	CreateClearSourceWorkingBufferTask();
+	CreateDivideOutLabelsTasks(this->Hierarchy->GetRoot());
+	if( this->NumberOfIterations > 0 ) CreatePropogateLabelsTasks(this->Hierarchy->GetRoot());
+
+	if( this->Debug ) vtkDebugMacro(<<"Number of tasks to be run: " << NumTasksGoingToHappen);
 	
 	//if verbose, print progress
-	if( this->Debug ){
-		vtkDebugMacro(<<"Starting initialization");
-	}
-	NumMemCpies = 0;
-
-	//initialize solution
-	//initalize all spatial flows and divergences to zero
-
-	//initialize all leak sink flows to their constraints
-
-	//find the minimum sink flow
-
-	//copy minimum sink flow over all leaves and sum the resulting labels into the source working buffer
-
-	//divide the labels out to constrain them to validity
-
-	//apply minimal sink flow over the remaining hierarchy
-
-	//propogate labels up the hierarchy
-
-	//synchronize works
-
-	if( this->Debug )
-		vtkDebugMacro(<< "Finished initialization with a total of " << NumMemCpies << " memory transfers.");
-
-	//Solve maximum flow problem in an iterative bottom-up manner
-	if( this->Debug )
-		vtkDebugMacro(<<"Starting max-flow iterations.");
+	if( this->Debug ) vtkDebugMacro(<<"Running tasks");
 	NumMemCpies = 0;
 	NumKernelRuns = 0;
+	int NumTasksDone = 0;
+	while( this->CurrentTasks.size() > 0 ){
 
-	//TODO organize iterations
+		int MinWeight = INT_MAX;
+		int MinUnConflictWeight = INT_MAX;
+		Task* MinTask = 0;
+		Task* MinUnConflictTask = 0;
+		Worker* MinWorker = 0;
+		Worker* MinUnConflictWorker = 0;
+		for(std::set<Task*>::iterator taskIt = CurrentTasks.begin(); MinWeight > 0 && taskIt != CurrentTasks.end(); taskIt++){
+			if( !(*taskIt)->CanDo() ) continue;
+			
+			//find if the task is conflicted and put in appropriate contest
+			Worker* possibleWorker = 0;
+			int conflictWeight = (*taskIt)->Conflicted(&possibleWorker);
+			if( conflictWeight ){
+				if( conflictWeight + (rand()>>8)%2 <= MinUnConflictWeight ){
+					MinUnConflictWeight = conflictWeight;
+					MinUnConflictTask = *taskIt;
+					MinUnConflictWorker = possibleWorker;
+				}
+				continue;
+			}
+			
+			if( possibleWorker ){ //only one worker can do this task
+				int weight = (*taskIt)->CalcWeight(possibleWorker);
+				if( weight + (rand()>>8)%2 <= MinWeight ){
+					MinWeight = weight;
+					MinTask = *taskIt;
+					MinWorker = possibleWorker;
+				}
+			}else{ //all workers have a chance, find the emptiest one
+				for(std::set<Worker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++){
+					int weight = (*taskIt)->CalcWeight(*workerIt);
+					if( weight < MinWeight ){
+						MinWeight = weight;
+						MinTask = *taskIt;
+						MinWorker = *workerIt;
+					}
+				}
+			}
+		}
+		
+		//figure out if it is cheaper to run a conflicted or non-conflicted task
+		if( MinUnConflictWeight >= MinWeight ){
+			MinTask->Perform(MinWorker);
+		}else{
+			MinUnConflictTask->UnConflict(MinUnConflictWorker);
+			MinUnConflictTask->Perform(MinUnConflictWorker);
+		}
 
-	if( this->Debug )
-		vtkDebugMacro(<< "Finished all iterations with a total of " << NumMemCpies << " memory transfers.");
+		//if there are conflicts
+		//update progress
+		NumTasksDone++;
+		if( this->Debug && NumTasksDone % ReportRate == 0 ){
+			for(std::set<Worker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
+				(*workerIt)->CallSyncThreads();
+			vtkDebugMacro(<< "Finished " << NumTasksDone << " with " << NumMemCpies << " memory transfers.");
+		}
+		
+	}
+	assert( BlockedTasks.size() == 0 );
+	if( this->Debug ) vtkDebugMacro(<< "Finished all " << NumTasksDone << " tasks with a total of " << NumMemCpies << " memory transfers.");
 	
+	//remove tasks
+	if( this->Debug ) vtkDebugMacro(<< "Deallocating tasks" );
+	for(std::set<Task*>::iterator taskIterator = FinishedTasks.begin(); taskIterator != FinishedTasks.end(); taskIterator++)
+		delete *taskIterator;
+	FinishedTasks.clear();
+
 	//remove workers
-	if( this->Debug )
-		vtkDebugMacro(<< "Deallocating workers" );
+	if( this->Debug ) vtkDebugMacro(<< "Deallocating workers" );
 	for(std::set<Worker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
 		delete *workerIterator;
 	Workers.clear();
 
 	//deallocate CPU buffers
-	if( this->Debug )
-		vtkDebugMacro(<< "Deallocating CPU buffers" );
+	if( this->Debug ) vtkDebugMacro(<< "Deallocating CPU buffers" );
 	while( CPUBuffersAcquired.size() > 0 ){
 		float* tempBuffer = CPUBuffersAcquired.front();
 		delete[] tempBuffer;
@@ -721,4 +784,358 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestDataObject(
 		}
 	}
 	return 0;
+}
+
+//------------------------------------------------------------//
+//------------------------------------------------------------//
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearWorkingBufferTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateClearWorkingBufferTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids == 0 ) return;
+	
+	//create the new task (requires signal 3+ from children)
+	Task* newTask = new Task(this,0,NumKids+1,this->NumberOfIterations,currNode,Task::ClearWorkingBufferTask);
+	this->ClearWorkingBufferTasks[currNode] = newTask;
+	
+	//modify the task accordingly
+	if(currNode == this->Hierarchy->GetRoot()){
+		newTask->Active = -NumLeaves; //wait for source buffer to finish being used
+		newTask->AddBuffer(sourceWorkingBuffer);
+	}else{
+		NoCopyBack.insert(branchWorkingBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateSpatialFlowsTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateUpdateSpatialFlowsTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( currNode == this->Hierarchy->GetRoot() ) return;
+	
+	//create the new task
+	//initial Active is -(4+NumKids) if branch since 4 clear buffers happen in the initialization and NumKids number of label clears
+	//initial Active is -5 if leaf since 4 clear buffers happen in the initialization and NumKids number of label clears
+	Task* newTask = new Task(this,-(4+(NumKids?NumKids:1)),1,this->NumberOfIterations,currNode,Task::UpdateSpatialFlowsTask);
+	this->UpdateSpatialFlowsTasks[currNode] = newTask;
+	if(NumKids != 0){
+		newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchIncBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchFlowXBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchFlowYBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchFlowZBuffers[BranchMap[currNode]]);
+	}else{
+		newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafFlowXBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafFlowYBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafFlowZBuffers[LeafMap[currNode]]);
+	}
+
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialBranchTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateApplySinkPotentialBranchTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids == 0 ) return;
+	
+	//create the new task
+	if(currNode != this->Hierarchy->GetRoot()){
+		Task* newTask = new Task(this,-2,2,this->NumberOfIterations,currNode,Task::ApplySinkPotentialBranchTask);
+		this->ApplySinkPotentialBranchTasks[currNode] = newTask;
+		newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchIncBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialLeafTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateApplySinkPotentialLeafTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids != 0 ) return;
+	
+	//create the new task
+	Task* newTask = new Task(this,-1,1,this->NumberOfIterations,currNode,Task::ApplySinkPotentialLeafTask);
+	this->ApplySinkPotentialLeafTasks[currNode] = newTask;
+	newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
+	newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
+	newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
+	newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
+	newTask->AddBuffer(leafDataTermBuffers[LeafMap[currNode]]);
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutWorkingBufferTask(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateDivideOutWorkingBufferTask( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids == 0 ) return;
+	
+	//create the new task
+	int NumReps = (currNode != this->Hierarchy->GetRoot()) ? this->NumberOfIterations: this->NumberOfIterations-1;
+	Task* newTask = new Task(this,-(NumKids+1),NumKids+1,NumReps,currNode,Task::DivideOutWorkingBufferTask);
+	this->DivideOutWorkingBufferTasks[currNode] = newTask;
+	if( currNode != this->Hierarchy->GetRoot() ){
+		newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
+	}else{
+		newTask->AddBuffer(sourceWorkingBuffer);
+		newTask->AddBuffer(sourceFlowBuffer);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySourcePotentialTask(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateApplySourcePotentialTask( this->Hierarchy->GetChild(currNode,i) );
+	if( currNode == this->Hierarchy->GetRoot() ) return;
+	vtkIdType parentNode = this->Hierarchy->GetParent(currNode);
+
+	//find appropriate working buffer
+	float* workingBuffer = 0;
+	if( parentNode == this->Hierarchy->GetRoot() ) workingBuffer = sourceWorkingBuffer;
+	else workingBuffer = branchWorkingBuffers[BranchMap[parentNode]];
+
+	//create the new task
+	int NumReps = (NumKids != 0) ? this->NumberOfIterations-1: this->NumberOfIterations;
+	Task* newTask = new Task(this,-2,2,NumReps,currNode,Task::ApplySourcePotentialTask);
+	this->ApplySourcePotentialTasks[currNode] = newTask;
+	newTask->AddBuffer(workingBuffer);
+	if(NumKids != 0){
+		newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
+	}else{
+		newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateLabelsTask(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateUpdateLabelsTask( this->Hierarchy->GetChild(currNode,i) );
+	if( currNode == this->Hierarchy->GetRoot() ) return;
+	
+	//find appropriate number of repetitions
+	int NumReps = NumKids ? this->NumberOfIterations-1: this->NumberOfIterations;
+
+	//create the new task
+	Task* newTask = new Task(this,-2,2,NumReps,currNode,Task::UpdateLabelsTask);
+	this->UpdateLabelsTasks[currNode] = newTask;
+	if(NumKids != 0){
+		newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchIncBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
+		newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
+	}else{
+		newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
+		newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::AddIterationTaskDependencies(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		AddIterationTaskDependencies( this->Hierarchy->GetChild(currNode,i) );
+
+	if( NumKids == 0 ){
+		vtkIdType parNode = this->Hierarchy->GetParent(currNode);
+		this->UpdateSpatialFlowsTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialLeafTasks[currNode]);
+		this->ApplySinkPotentialLeafTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[parNode]);
+		this->ApplySinkPotentialLeafTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[currNode]);
+		this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[parNode]);
+		this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[currNode]);
+		this->UpdateLabelsTasks[currNode]->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+	}else if( currNode == this->Hierarchy->GetRoot() ){
+		this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[currNode]);
+		for(int i = 0; i < NumKids; i++)
+			this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[this->Hierarchy->GetChild(currNode,i)]);
+		this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[currNode]);
+		for(int i = 0; i < NumKids; i++)
+			this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[this->Hierarchy->GetChild(currNode,i)]);
+	}else{
+		vtkIdType parNode = this->Hierarchy->GetParent(currNode);
+		this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialBranchTasks[currNode]);
+		for(int i = 0; i < NumKids; i++)
+			this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[this->Hierarchy->GetChild(currNode,i)]);
+		this->UpdateSpatialFlowsTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialBranchTasks[currNode]);
+		this->ApplySinkPotentialBranchTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[parNode]);
+		this->ApplySinkPotentialBranchTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[currNode]);
+		this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[currNode]);
+		for(int i = 0; i < NumKids; i++)
+			this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[this->Hierarchy->GetChild(currNode,i)]);
+		this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[parNode]);
+		this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[currNode]);
+		this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[currNode]);
+		this->UpdateLabelsTasks[currNode]->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeAllSpatialFlowsToZeroTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateInitializeAllSpatialFlowsToZeroTasks( this->Hierarchy->GetChild(currNode,i) );
+	
+	//modify the task accordingly
+	if( NumKids == 0 ){
+		Task* newTask1 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask2 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask3 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask4 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask2->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask3->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask4->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask1->AddBuffer(this->leafDivBuffers[LeafMap[currNode]]);
+		newTask2->AddBuffer(this->leafFlowXBuffers[LeafMap[currNode]]);
+		newTask3->AddBuffer(this->leafFlowYBuffers[LeafMap[currNode]]);
+		newTask4->AddBuffer(this->leafFlowZBuffers[LeafMap[currNode]]);
+	}else if(currNode != this->Hierarchy->GetRoot()){
+		Task* newTask1 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask2 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask3 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		Task* newTask4 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+		newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask2->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask3->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask4->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+		newTask1->AddBuffer(this->branchDivBuffers[BranchMap[currNode]]);
+		newTask2->AddBuffer(this->branchFlowXBuffers[BranchMap[currNode]]);
+		newTask3->AddBuffer(this->branchFlowYBuffers[BranchMap[currNode]]);
+		newTask4->AddBuffer(this->branchFlowZBuffers[BranchMap[currNode]]);
+	}
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeLeafSinkFlowsToCapTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateInitializeLeafSinkFlowsToCapTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids > 0 ) return;
+	
+	if( LeafMap[currNode] != 0 ){
+		Task* newTask1 = new Task(this,0,1,1,currNode,Task::InitializeLeafFlows);
+		Task* newTask2 = new Task(this,-2,1,1,currNode,Task::MinimizeLeafFlows);
+		InitializeLeafSinkFlowsTasks.insert(std::pair<int,Task*>(LeafMap[currNode],newTask1));
+		MinimizeLeafSinkFlowsTasks.insert(std::pair<int,Task*>(LeafMap[currNode],newTask2));
+		newTask1->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
+		newTask1->AddBuffer(this->leafDataTermBuffers[LeafMap[currNode]]);
+		newTask2->AddBuffer(this->leafSinkBuffers[0]);
+		newTask2->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
+		newTask1->AddTaskToSignal(newTask2);
+		if( InitializeLeafSinkFlowsTasks.find(0) != InitializeLeafSinkFlowsTasks.end() )
+			InitializeLeafSinkFlowsTasks[0]->AddTaskToSignal(newTask2);
+	}else{
+		Task* newTask1 = new Task(this,0,1,1,currNode,Task::InitializeLeafFlows);
+		InitializeLeafSinkFlowsTasks.insert(std::pair<int,Task*>(0,newTask1));
+		newTask1->AddBuffer(this->leafSinkBuffers[0]);
+		newTask1->AddBuffer(this->leafDataTermBuffers[0]);
+		for( std::map<int,Task*>::iterator it = MinimizeLeafSinkFlowsTasks.begin();
+			 it != this->MinimizeLeafSinkFlowsTasks.end(); it++)
+			newTask1->AddTaskToSignal(it->second);
+	}
+
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateCopyMinimalLeafSinkFlowsTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateCopyMinimalLeafSinkFlowsTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( this->Hierarchy->GetRoot() == currNode ) return;
+
+	Task* newTask1 = new Task(this,-((int)this->MinimizeLeafSinkFlowsTasks.size()),1,1,currNode,Task::PropogateLeafFlows);
+	PropogateLeafSinkFlowsTasks.insert(std::pair<vtkIdType,Task*>(currNode,newTask1));
+	newTask1->AddBuffer(this->leafSinkBuffers[0]);
+	for( std::map<int,Task*>::iterator it = this->MinimizeLeafSinkFlowsTasks.begin(); it != this->MinimizeLeafSinkFlowsTasks.end(); it++)
+		it->second->AddTaskToSignal(newTask1);
+
+	if( NumKids > 0 )
+		newTask1->AddBuffer(this->branchSinkBuffers[BranchMap[currNode]]);
+	else
+		newTask1->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
+
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateFindInitialLabellingAndSumTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateFindInitialLabellingAndSumTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids > 0 ) return;
+
+	Task* newTask1 = new Task(this,-1,1,1,currNode,Task::InitializeLeafLabels);
+	Task* newTask2 = new Task(this,-2,1,1,currNode,Task::AccumulateLabels);
+	this->PropogateLeafSinkFlowsTasks[currNode]->AddTaskToSignal(newTask1);
+	newTask1->AddTaskToSignal(newTask2);
+	this->InitialLabellingSumTasks.insert(std::pair<vtkIdType,Task*>(currNode,newTask2));
+	newTask1->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
+	newTask1->AddBuffer(this->leafDataTermBuffers[LeafMap[currNode]]);
+	newTask1->AddBuffer(this->leafLabelBuffers[LeafMap[currNode]]);
+	newTask2->AddBuffer(this->sourceWorkingBuffer);
+	newTask2->AddBuffer(this->leafLabelBuffers[LeafMap[currNode]]);
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearSourceWorkingBufferTask(){
+	Task* newTask = new Task(this,0,1,1,this->Hierarchy->GetRoot(),Task::ClearBufferInitially);
+	newTask->AddBuffer(this->sourceWorkingBuffer);
+	for( std::map<vtkIdType,Task*>::iterator it = InitialLabellingSumTasks.begin(); it != InitialLabellingSumTasks.end(); it++)
+		newTask->AddTaskToSignal(it->second);
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutLabelsTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreateDivideOutLabelsTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( NumKids > 0 ) return;
+	
+	Task* newTask1 = new Task(this,-(int)InitialLabellingSumTasks.size(),1,1,currNode,Task::CorrectLabels);
+	this->CorrectLabellingTasks[currNode] = newTask1;
+	for(std::map<vtkIdType,Task*>::iterator taskIt = InitialLabellingSumTasks.begin(); taskIt != InitialLabellingSumTasks.end(); taskIt++)
+		taskIt->second->AddTaskToSignal(newTask1);
+	newTask1->AddBuffer(this->sourceWorkingBuffer);
+	newTask1->AddBuffer(this->leafLabelBuffers[LeafMap[currNode]]);
+	newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+	newTask1->AddTaskToSignal(this->ClearWorkingBufferTasks[this->Hierarchy->GetRoot()]);
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreatePropogateLabelsTasks(vtkIdType currNode){
+	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++)
+		CreatePropogateLabelsTasks( this->Hierarchy->GetChild(currNode,i) );
+	if( currNode == this->Hierarchy->GetRoot() || NumKids == 0 ) return;
+	
+	//clear the current buffer
+	Task* newTask1 = new Task(this,0,1,1,currNode,Task::ClearBufferInitially);
+	newTask1->AddBuffer(this->branchLabelBuffers[BranchMap[currNode]]);
+
+	//accumulate from children
+	for(int i = 0; i < NumKids; i++){
+		vtkIdType child = this->Hierarchy->GetChild(currNode,i);
+		Task* newTask2 = new Task(this,-1,1,1,child,Task::AccumulateLabels);
+		this->PropogateLabellingTasks[child] = newTask2;
+		newTask1->AddTaskToSignal(newTask2);
+		newTask2->AddBuffer(this->branchLabelBuffers[BranchMap[currNode]]);
+		if( this->Hierarchy->IsLeaf(child) ){
+			newTask2->Active--;
+			newTask2->AddBuffer(this->leafLabelBuffers[LeafMap[child]]);
+			this->CorrectLabellingTasks[child]->AddTaskToSignal(newTask2);
+		}else{
+			newTask2->AddBuffer(this->branchLabelBuffers[BranchMap[child]]);
+			int NumKids2 = this->Hierarchy->GetNumberOfChildren(child);
+			for(int i2 = 0; i2 < NumKids2; i2++)
+				this->PropogateLabellingTasks[this->Hierarchy->GetChild(child,i)]->AddTaskToSignal(newTask2);
+		}
+		newTask2->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+	}
+
 }
