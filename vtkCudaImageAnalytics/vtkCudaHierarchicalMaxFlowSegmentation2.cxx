@@ -936,8 +936,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySourcePotentialTask(vtk
 	else workingBuffer = branchWorkingBuffers[BranchMap[parentNode]];
 
 	//create the new task
-	int NumReps = (NumKids != 0) ? this->NumberOfIterations-1: this->NumberOfIterations;
-	Task* newTask = new Task(this,-2,2,NumReps,currNode,Task::ApplySourcePotentialTask);
+	Task* newTask = new Task(this,-2,2,this->NumberOfIterations,currNode,Task::ApplySourcePotentialTask);
 	this->ApplySourcePotentialTasks[currNode] = newTask;
 	newTask->AddBuffer(workingBuffer);
 	if(NumKids != 0){
