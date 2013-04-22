@@ -900,8 +900,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutWorkingBufferTask(v
 	if( NumKids == 0 ) return;
 	
 	//create the new task
-	int NumReps = (currNode != this->Hierarchy->GetRoot()) ? this->NumberOfIterations: this->NumberOfIterations-1;
-	Task* newTask = new Task(this,-(NumKids+1),NumKids+1,NumReps,currNode,Task::DivideOutWorkingBufferTask);
+	Task* newTask = new Task(this,-(NumKids+1),NumKids+1,this->NumberOfIterations,currNode,Task::DivideOutWorkingBufferTask);
 	this->DivideOutWorkingBufferTasks[currNode] = newTask;
 	if( currNode != this->Hierarchy->GetRoot() ){
 		newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
