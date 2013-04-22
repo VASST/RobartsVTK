@@ -153,8 +153,10 @@ public:
 		for(std::set<Worker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
 			if( *wit == maxGPU ) continue;
 			for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() )
+				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() ){
 					(*wit)->ReturnBuffer(it->second);
+					(*wit)->CallSyncThreads();
+				}
 			}
 		}
 
@@ -164,11 +166,12 @@ public:
 	int CalcWeight(vtkCudaHierarchicalMaxFlowSegmentation2::Worker* w){
 		int retWeight = 0;
 		int numUnused = (int) w->UnusedGPUBuffers.size();
-		for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+		for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
 			if( w->CPU2GPUMap.find(it->second) == w->CPU2GPUMap.end() ){
 				if( numUnused ){numUnused--; retWeight++;
 				}else retWeight += 2;
 			}
+		}
 		return retWeight;
 	}
 
