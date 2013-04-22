@@ -666,10 +666,10 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 						MinTasks.clear();
 						MinTasks.push_back(*taskIt);
 						MinWorkers.clear();
-						MinWorkers.push_back(possibleWorker);
+						MinWorkers.push_back(*workerIt);
 					}else if( weight == MinWeight ){
 						MinTasks.push_back(*taskIt);
-						MinWorkers.push_back(possibleWorker);
+						MinWorkers.push_back(*workerIt);
 					}
 				}
 			}
