@@ -16,7 +16,7 @@
 //-----------------------------------------------------------------------------------------------//
 
 vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, vtkCudaHierarchicalMaxFlowSegmentation2* p )
-	: Parent(p), GPU(g) {
+	: Parent(p), GPU(g), vtkCudaObject(g) {
 	
 	//if verbose, print progress
 	if( Parent->Debug )
