@@ -11,6 +11,7 @@
 
 #include <set>
 #include <list>
+#include <vector>
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include "vtkCudaDeviceManager.h"
@@ -621,10 +622,10 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 
 		int MinWeight = INT_MAX;
 		int MinUnConflictWeight = INT_MAX;
-		Task* MinTask = 0;
-		Task* MinUnConflictTask = 0;
-		Worker* MinWorker = 0;
-		Worker* MinUnConflictWorker = 0;
+		std::vector<Task*> MinTasks;
+		std::vector<Task*> MinUnConflictTasks;
+		std::vector<Worker*> MinWorkers;
+		std::vector<Worker*> MinUnConflictWorkers;
 		for(std::set<Task*>::iterator taskIt = CurrentTasks.begin(); MinWeight > 0 && taskIt != CurrentTasks.end(); taskIt++){
 			if( !(*taskIt)->CanDo() ) continue;
 			
@@ -632,28 +633,43 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 			Worker* possibleWorker = 0;
 			int conflictWeight = (*taskIt)->Conflicted(&possibleWorker);
 			if( conflictWeight ){
-				if( conflictWeight + (rand()>>8)%2 <= MinUnConflictWeight ){
+				if( conflictWeight < MinUnConflictWeight ){
 					MinUnConflictWeight = conflictWeight;
-					MinUnConflictTask = *taskIt;
-					MinUnConflictWorker = possibleWorker;
+					MinUnConflictTasks.clear();
+					MinUnConflictTasks.push_back(*taskIt);
+					MinUnConflictWorkers.clear();
+					MinUnConflictWorkers.push_back(possibleWorker);
+				}else if(conflictWeight == MinUnConflictWeight){
+					MinUnConflictTasks.push_back(*taskIt);
+					MinUnConflictWorkers.push_back(possibleWorker);
 				}
 				continue;
 			}
 			
 			if( possibleWorker ){ //only one worker can do this task
 				int weight = (*taskIt)->CalcWeight(possibleWorker);
-				if( weight + (rand()>>8)%2 <= MinWeight ){
+				if( weight < MinWeight ){
 					MinWeight = weight;
-					MinTask = *taskIt;
-					MinWorker = possibleWorker;
+					MinTasks.clear();
+					MinTasks.push_back(*taskIt);
+					MinWorkers.clear();
+					MinWorkers.push_back(possibleWorker);
+				}else if( weight == MinWeight ){
+					MinTasks.push_back(*taskIt);
+					MinWorkers.push_back(possibleWorker);
 				}
 			}else{ //all workers have a chance, find the emptiest one
 				for(std::set<Worker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++){
 					int weight = (*taskIt)->CalcWeight(*workerIt);
 					if( weight < MinWeight ){
 						MinWeight = weight;
-						MinTask = *taskIt;
-						MinWorker = *workerIt;
+						MinTasks.clear();
+						MinTasks.push_back(*taskIt);
+						MinWorkers.clear();
+						MinWorkers.push_back(possibleWorker);
+					}else if( weight == MinWeight ){
+						MinTasks.push_back(*taskIt);
+						MinWorkers.push_back(possibleWorker);
 					}
 				}
 			}
@@ -661,10 +677,12 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 		
 		//figure out if it is cheaper to run a conflicted or non-conflicted task
 		if( MinUnConflictWeight >= MinWeight ){
-			MinTask->Perform(MinWorker);
+			int taskIdx = rand() % MinTasks.size();
+			MinTasks[taskIdx]->Perform(MinWorkers[taskIdx]);
 		}else{
-			MinUnConflictTask->UnConflict(MinUnConflictWorker);
-			MinUnConflictTask->Perform(MinUnConflictWorker);
+			int taskIdx = rand() % MinUnConflictTasks.size();
+			MinUnConflictTasks[taskIdx]->UnConflict(MinUnConflictWorkers[taskIdx]);
+			MinUnConflictTasks[taskIdx]->Perform(MinUnConflictWorkers[taskIdx]);
 		}
 
 		//if there are conflicts
@@ -677,8 +695,8 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 		}
 		
 	}
-	assert( BlockedTasks.size() == 0 );
 	if( this->Debug ) vtkDebugMacro(<< "Finished all " << NumTasksDone << " tasks with a total of " << NumMemCpies << " memory transfers.");
+	assert( BlockedTasks.size() == 0 );
 	
 	//remove tasks
 	if( this->Debug ) vtkDebugMacro(<< "Deallocating tasks" );
