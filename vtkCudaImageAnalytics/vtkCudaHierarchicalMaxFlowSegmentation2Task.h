@@ -201,6 +201,14 @@ public:
 			if(it->second) w->CPUInUse.insert(it->second);
 		w->UpdateBuffersInUse();
 		
+        for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+            if(w->CPU2GPUMap.find(it->second) == w->CPU2GPUMap.end()){
+                std::cout << "Problem: " << it->second << std::endl;
+            }
+
+
+        assert(w->CPU2GPUMap.size() == w->GPU2CPUMap.size());
+
 		//run the kernels
 		float smoothnessConstant = 1.0f;
 		switch(Type){
@@ -296,6 +304,26 @@ public:
 		default:
 			vtkErrorWithObjectMacro(Parent,<<"Invalid task type" << Type <<".");
 		}
+
+        if(w->CPU2GPUMap.size() != w->GPU2CPUMap.size()){
+            std::cout << RequiredCPUBuffers.size() << std::endl;
+            for(std::map<int,float*>::iterator i = RequiredCPUBuffers.begin(); i != RequiredCPUBuffers.end();i++){
+                std::cout << i->first << " " << i->second << std::endl;
+            }
+            std::cout << w->CPUInUse.size() << std::endl;
+            for(std::set<float*>::iterator i = w->CPUInUse.begin(); i != w->CPUInUse.end();i++){
+                std::cout << *i << std::endl;
+            }
+            std::cout << w->CPU2GPUMap.size() << std::endl;
+            for(std::map<float*,float*>::iterator i = w->CPU2GPUMap.begin(); i != w->CPU2GPUMap.end();i++){
+                std::cout << i->first << " " << i->second << std::endl;
+            }
+            std::cout << w->GPU2CPUMap.size() << std::endl;
+            for(std::map<float*,float*>::iterator i = w->GPU2CPUMap.begin(); i != w->GPU2CPUMap.end();i++){
+                std::cout << i->first << " " << i->second << std::endl;
+            }
+            assert(false);
+        }
 
 		//take them off the no-copy-back list now
 		switch(Type){

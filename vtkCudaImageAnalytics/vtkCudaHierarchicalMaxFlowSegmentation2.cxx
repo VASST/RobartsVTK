@@ -573,19 +573,31 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	
 	//if verbose, print progress
 	if( this->Debug ) vtkDebugMacro(<<"Building workers.");
-	for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++)
-		this->Workers.insert( new Worker(*gpuIterator,this) );
+    for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++){
+        Worker* newWorker = new Worker(*gpuIterator,this);
+        this->Workers.insert( newWorker );
+        if(newWorker->NumBuffers < 8){
+            vtkErrorMacro(<<"Could not allocate sufficient GPU buffers.");
+            for(std::set<Task*>::iterator taskIterator = FinishedTasks.begin(); taskIterator != FinishedTasks.end(); taskIterator++)
+                delete *taskIterator;
+            FinishedTasks.clear();
+            for(std::set<Worker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
+                delete *workerIterator;
+            Workers.clear();
+            while( CPUBuffersAcquired.size() > 0 ){
+                float* tempBuffer = CPUBuffersAcquired.front();
+                delete[] tempBuffer;
+                CPUBuffersAcquired.pop_front();
+            }
+            return -1;
+        }
+    }
 
 	//if verbose, print progress
 	if( this->Debug ) vtkDebugMacro(<<"Find priority structures.");
 
 	//create LIFO priority queue (priority stack) data structure
-	FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
-	
-	//add all the working buffers from the branches to the garbage (no copy necessary) list
-	//NoCopyBack.insert( sourceWorkingBuffer );
-	//for(int i = 0; i < NumBranches; i++ )
-	//	NoCopyBack.insert( branchWorkingBuffers[i] );
+    FigureOutBufferPriorities( this->Hierarchy->GetRoot() );
 	
 	//add tasks in for the normal iterations (done first for dependancy reasons)
 	if( this->Debug ) vtkDebugMacro(<<"Creating tasks for normal iterations.");

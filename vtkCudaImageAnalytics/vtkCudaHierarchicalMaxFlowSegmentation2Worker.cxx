@@ -52,6 +52,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, vtkCudaHierarchic
 			NewAcquiredBuffers += Parent->VolumeSize;
 		}
 	}
+    NumBuffers = BuffersAcquired;
 }
 		
 vtkCudaHierarchicalMaxFlowSegmentation2::Worker::~Worker(){
@@ -61,7 +62,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::~Worker(){
 	ReturnLeafLabels();
 	while( AllGPUBufferBlocks.size() > 0 ){
 		CUDA_ReturnGPUBuffers( AllGPUBufferBlocks.front() );
-		AllGPUBufferBlocks.pop_front();
+        AllGPUBufferBlocks.pop_front();
 	}
 	
 
@@ -89,8 +90,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnBuffer(float* CPUBuf
 	if( !CPUBuffer ) return;
 	if( CPU2GPUMap.find(CPUBuffer) != CPU2GPUMap.end() ){
 		Parent->ReturnBufferGPU2CPU(CPUBuffer, CPU2GPUMap[CPUBuffer],GetStream());
+        UnusedGPUBuffers.push_front(CPU2GPUMap[CPUBuffer]);
 		GPU2CPUMap.erase(GPU2CPUMap.find(CPU2GPUMap[CPUBuffer]));
 		CPU2GPUMap.erase(CPU2GPUMap.find(CPUBuffer));
+        RemoveFromStack(CPUBuffer);
 	}
 }
 
@@ -99,17 +102,13 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 			iterator != CPUInUse.end(); iterator++ ){
 
 		//check if this buffer needs to be assigned
-		if( !(*iterator) ) return;
+        if( !(*iterator) ) continue;
 		if( CPU2GPUMap.find( *iterator ) != CPU2GPUMap.end() ) continue;
-
-		//inform parent of claimed buffer
-		if( Parent->ReadOnly.find( *iterator ) != Parent->ReadOnly.end() )
-			Parent->CPUInUse.insert( *iterator );
 
 		//start assigning from the list of unused buffers
 		if( UnusedGPUBuffers.size() > 0 ){
 			float* NewGPUBuffer = UnusedGPUBuffers.front();
-			UnusedGPUBuffers.pop_front();
+            UnusedGPUBuffers.pop_front();
 			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
 			Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
@@ -124,10 +123,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 		for( std::set<float*>::iterator iterator2 = Parent->NoCopyBack.begin();
 				iterator2 != Parent->NoCopyBack.end(); iterator2++ ){
 			if( CPUInUse.find(*iterator2) != CPUInUse.end() ) continue;
-			if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
+            if( CPU2GPUMap.find(*iterator2) == CPU2GPUMap.end() ) continue;
 			float* NewGPUBuffer = CPU2GPUMap[*iterator2];
 			CPU2GPUMap.erase( CPU2GPUMap.find(*iterator2) );
-			GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
+            GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
 			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
 			Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
@@ -143,10 +142,11 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 		//else, we have to move something in use back to the CPU
 		flag = false;
 		std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
-		for( ; stackIterator != PriorityStacks.end(); stackIterator++ ){
+        for( ; !flag && stackIterator != PriorityStacks.end(); stackIterator++ ){
 			for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
-				
-				//can't remove this one because it is in use
+
+                //can't remove this one because it is in use or null
+                if( !(*subIterator) ) continue;
 				if( CPUInUse.find( *subIterator ) != CPUInUse.end() ) continue;
 
 				//else, find it and move it back to the CPU
@@ -166,9 +166,8 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 				flag = true;
 				break;
 
-			}
-			if( flag ) break;
-		}
+            }
+        }
 	}
 }
 		

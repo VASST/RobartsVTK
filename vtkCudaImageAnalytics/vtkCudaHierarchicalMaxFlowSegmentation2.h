@@ -157,6 +157,7 @@ private:
 	public:
 		vtkCudaHierarchicalMaxFlowSegmentation2* const Parent;
 		const int GPU;
+        int NumBuffers;
 		std::map<float*,float*> CPU2GPUMap;
 		std::map<float*,float*> GPU2CPUMap;
 		std::set<float*> CPUInUse;
