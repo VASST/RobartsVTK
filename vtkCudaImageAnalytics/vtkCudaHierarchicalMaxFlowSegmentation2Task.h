@@ -152,13 +152,16 @@ public:
 		//return everything that is not on that GPU
 		for(std::set<Worker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
 			if( *wit == maxGPU ) continue;
+			bool flag = false;
 			for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
 				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() ){
 					(*wit)->ReturnBuffer(it->second);
-					(*wit)->CallSyncThreads();
+					flag = true;
 				}
 			}
+			if( flag ) (*wit)->CallSyncThreads();
 		}
+		maxGPU->CallSyncThreads();
 
 	}
 
