@@ -765,6 +765,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdTy
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream){
+	if( !CPUBuffer ) return; 
 	if( ReadOnly.find(CPUBuffer) != ReadOnly.end() ) return;
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
 	CUDA_CopyBufferToCPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
@@ -772,6 +773,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::ReturnBufferGPU2CPU(float* CPUBuff
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream){
+	if( !CPUBuffer ) return; 
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
 	CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
 	NumMemCpies++;

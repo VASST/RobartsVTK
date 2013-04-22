@@ -86,6 +86,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnBuffer(float* CPUBuffer){
+	if( !CPUBuffer ) return;
 	if( CPU2GPUMap.find(CPUBuffer) != CPU2GPUMap.end() ){
 		Parent->ReturnBufferGPU2CPU(CPUBuffer, CPU2GPUMap[CPUBuffer],GetStream());
 		GPU2CPUMap.erase(GPU2CPUMap.find(CPU2GPUMap[CPUBuffer]));
@@ -98,6 +99,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 			iterator != CPUInUse.end(); iterator++ ){
 
 		//check if this buffer needs to be assigned
+		if( !(*iterator) ) return;
 		if( CPU2GPUMap.find( *iterator ) != CPU2GPUMap.end() ) continue;
 
 		//inform parent of claimed buffer
