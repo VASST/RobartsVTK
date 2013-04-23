@@ -80,7 +80,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
 	//Copy back any uncopied leaf label buffers (others don't matter anymore)
 	for( int i = 0; i < Parent->NumLeaves; i++ )
 		if( CPU2GPUMap.find(Parent->leafLabelBuffers[i]) != CPU2GPUMap.end() ){
-			Parent->ReturnBufferGPU2CPU(Parent->leafLabelBuffers[i], CPU2GPUMap[Parent->leafLabelBuffers[i]],GetStream());
+			Parent->ReturnBufferGPU2CPU(this,Parent->leafLabelBuffers[i], CPU2GPUMap[Parent->leafLabelBuffers[i]],GetStream());
 			GPU2CPUMap.erase(GPU2CPUMap.find(CPU2GPUMap[Parent->leafLabelBuffers[i]]));
 			CPU2GPUMap.erase(CPU2GPUMap.find(Parent->leafLabelBuffers[i]));
 		}
@@ -89,7 +89,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnBuffer(float* CPUBuffer){
 	if( !CPUBuffer ) return;
 	if( CPU2GPUMap.find(CPUBuffer) != CPU2GPUMap.end() ){
-		Parent->ReturnBufferGPU2CPU(CPUBuffer, CPU2GPUMap[CPUBuffer],GetStream());
+		Parent->ReturnBufferGPU2CPU(this,CPUBuffer, CPU2GPUMap[CPUBuffer],GetStream());
         UnusedGPUBuffers.push_front(CPU2GPUMap[CPUBuffer]);
 		GPU2CPUMap.erase(GPU2CPUMap.find(CPU2GPUMap[CPUBuffer]));
 		CPU2GPUMap.erase(CPU2GPUMap.find(CPUBuffer));
@@ -156,7 +156,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 				GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
 				CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 				GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-				Parent->ReturnBufferGPU2CPU(*subIterator,NewGPUBuffer,GetStream());
+				Parent->ReturnBufferGPU2CPU(this,*subIterator,NewGPUBuffer,GetStream());
 				Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
 				
 				//update the priority stack and leave immediately since our iterators

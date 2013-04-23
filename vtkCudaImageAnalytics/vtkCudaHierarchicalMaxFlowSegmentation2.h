@@ -148,10 +148,6 @@ private:
 	float*	sourceFlowBuffer;
 	float*	sourceWorkingBuffer;
 
-	//Mappings for CPU-GPU buffer sharing
-	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
-	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
-	void FigureOutBufferPriorities( vtkIdType currNode );
 	
 	class Worker : public vtkCudaObject {
 	public:
@@ -179,6 +175,12 @@ private:
 	};
 	friend class Worker;
 	std::set<Worker*> Workers;
+	
+	//Mappings for CPU-GPU buffer sharing
+	void ReturnBufferGPU2CPU(Worker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
+	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
+	void FigureOutBufferPriorities( vtkIdType currNode );
+	std::map<float*,Worker*> LastBufferUse;
 
 	class Task;
 	friend class Task;
