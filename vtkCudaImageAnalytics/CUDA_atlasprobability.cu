@@ -128,6 +128,8 @@ void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int 
 	else
 		kern_ProbBuffer<<<grid,threads,0,*stream>>>(agreement, output, size, max);
 
+	cudaFree(agreement);
+
 	#ifdef DEBUG_VTKCUDA_IALP
 		cudaThreadSynchronize();
 		printf( "CUDA_ConvertInformation: " );

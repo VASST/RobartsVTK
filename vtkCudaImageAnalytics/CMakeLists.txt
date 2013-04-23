@@ -65,6 +65,12 @@ SET ( Kit_SRCS
   CUDA_atlasprobability.h
   CUDA_atlasprobability.cu
 
+  #Accelerated log likelihood data term
+  vtkCudaImageLogLikelihood.h
+  vtkCudaImageLogLikelihood.cxx
+  CUDA_loglikelihoodterm.h
+  CUDA_loglikelihoodterm.cu
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )

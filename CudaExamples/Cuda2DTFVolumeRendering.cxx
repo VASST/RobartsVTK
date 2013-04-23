@@ -519,9 +519,11 @@
 //
 //}
 
+#include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
 #include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "vtkMutableDirectedGraph.h"
 #include "vtkTree.h"
+#include "vtkImageDataTerm.h"
 
 int main( int argc, char** argv ){
 
@@ -550,20 +552,22 @@ int main( int argc, char** argv ){
 	gradReader->SetFileName("E:\\jbaxter\\data\\AbstractData\\2013-03-28-TestingHMF\\gradMag.mhd");
 	gradReader->Update();
 
-	vtkHierarchicalMaxFlowSegmentation* segmentation = vtkHierarchicalMaxFlowSegmentation::New();
-	segmentation->SetInput(source,		gradReader->GetOutput());
-	segmentation->SetInput(higherSide,	gradReader->GetOutput());
-	//segmentation->SetInput(lowerSide,	gradReader->GetOutput());
+	vtkCudaHierarchicalMaxFlowSegmentation2* segmentation = vtkCudaHierarchicalMaxFlowSegmentation2::New();
+	segmentation->SetDevice(0);
+	segmentation->AddDevice(0);
+	segmentation->SetMaxGPUUsage(0.01);
+	//vtkHierarchicalMaxFlowSegmentation* segmentation = vtkHierarchicalMaxFlowSegmentation::New();
+	//segmentation->SetInput(source,		gradReader->GetOutput());
 	segmentation->SetInput(high,		highReader->GetOutput());
 	segmentation->SetInput(mid_high,	midReader->GetOutput());
 	segmentation->SetInput(mid_low,		midReader->GetOutput());
 	segmentation->SetInput(low,			lowReader->GetOutput());
-	segmentation->SetInput(higherSide,	0);
 	segmentation->SetHierarchy(roHierarchy);
-	segmentation->AddSmoothnessScalar(source,1);
-	segmentation->AddSmoothnessScalar(higherSide,0.5);
-	segmentation->AddSmoothnessScalar(lowerSide,0.5);
-	segmentation->SetNumberOfIterations(1000);
+	segmentation->AddSmoothnessScalar(source,10);
+	segmentation->AddSmoothnessScalar(higherSide,5);
+	segmentation->AddSmoothnessScalar(lowerSide,5);
+	segmentation->SetNumberOfIterations(200);
+	segmentation->SetDebug(true);
 	segmentation->Update();
 
 	vtkImageData* highOut = (vtkImageData*) segmentation->GetOutput(high);
