@@ -299,6 +299,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 	cudaFree(GPUInputBuffer);
 	cudaFree(GPUWorkingBuffer);
 	cudaFree(histogramGPU);
+	cudaFree(agreement);
 	
 
 }
