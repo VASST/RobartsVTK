@@ -13,10 +13,26 @@ __global__ void kern_IncrementBuffer(T* labelBuffer, T desiredLabel, short* agre
 	if( idx < size ) agreement[idx] = newAgreement;
 }
 
+template void CUDA_IncrementInformation<float>(float* labelData, float desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<double>(double* labelData, double desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<long>(long* labelData, long desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<unsigned long>(unsigned long* labelData, unsigned long desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<long long>(long long* labelData, long long desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<unsigned long long>(unsigned long long* labelData, unsigned long long desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<int>(int* labelData, int desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<unsigned int>(unsigned int* labelData, unsigned int desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<short>(short* labelData, short desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<unsigned short>(unsigned short* labelData, unsigned short desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<char>(char* labelData, char desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<signed char>(signed char* labelData, signed char desiredValue, short* agreement, int size, cudaStream_t* stream);
+template void CUDA_IncrementInformation<unsigned char>(unsigned char* labelData, unsigned char desiredValue, short* agreement, int size, cudaStream_t* stream);
+
+
 
 template< class T >
 void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, int size, cudaStream_t* stream){
-	cudaMalloc((void**) GPUBuffer, sizeof(T)*size);
+    float* GPUBuffer = 0;
+	cudaMalloc((void**) &GPUBuffer, sizeof(T)*size);
 	cudaMemcpyAsync( labelData, GPUBuffer, sizeof(T)*size, cudaMemcpyDeviceToHost, *stream );
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
