@@ -778,7 +778,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdTy
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::ReturnBufferGPU2CPU(Worker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream){
 	if( !CPUBuffer ) return; 
-	if( ReadOnly.find(CPUBuffer) != ReadOnly.end() ) return; 
+	if( ReadOnly.find(CPUBuffer) != ReadOnly.end() ) return;
+	if( Overwritten[CPUBuffer] == 0 ) return;
+	Overwritten[CPUBuffer] = 0;
 	caller->ReserveGPU();
 	LastBufferUse[CPUBuffer] = caller;
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;

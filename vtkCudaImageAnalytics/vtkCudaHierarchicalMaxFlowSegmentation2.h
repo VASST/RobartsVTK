@@ -181,6 +181,7 @@ private:
 	void MoveBufferCPU2GPU(Worker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
 	void FigureOutBufferPriorities( vtkIdType currNode );
 	std::map<float*,Worker*> LastBufferUse;
+	std::map<float*,int> Overwritten;
 
 	class Task;
 	friend class Task;

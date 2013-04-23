@@ -186,16 +186,17 @@ public:
 		//load anything that will be overwritten onto the no copy back list
 		switch(Type){
 		case(ClearWorkingBufferTask):			//0 - Working
-			Parent->NoCopyBack.insert(RequiredCPUBuffers[0]);
-			break;
 		case(ApplySinkPotentialLeafTask):		//0 - Sink,		1 - Inc,	2 - Div,	3 - Label,	4 - Data
+		case(ClearBufferInitially):				//0 - Any
+		case(InitializeLeafFlows):				//0 - Sink,		1 - Data
 			Parent->NoCopyBack.insert(RequiredCPUBuffers[0]);
 			break;
 		case(DivideOutWorkingBufferTask):		//0 - Working,	1 - Sink
+		case(PropogateLeafFlows):				//0 - SinkMin,	1 - SinkElse
 			Parent->NoCopyBack.insert(RequiredCPUBuffers[1]);
 			break;
-		case(ClearBufferInitially):				//0 - Any
-			Parent->NoCopyBack.insert(RequiredCPUBuffers[0]);
+		case(InitializeLeafLabels):				//0 - Sink,		1 - Data,	2 - Label
+			Parent->NoCopyBack.insert(RequiredCPUBuffers[2]);
 			break;
 		}
 
@@ -219,7 +220,7 @@ public:
 		case(ClearWorkingBufferTask):			//0 - Working
 			if( !isRoot ) CUDA_zeroOutBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
 			else CUDA_SetBufferToValue(w->CPU2GPUMap[RequiredCPUBuffers[0]], 1.0f/Parent->CC, Parent->VolumeSize, w->GetStream());
-			Parent->NoCopyBack.erase( RequiredCPUBuffers[0] );
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 			
@@ -235,6 +236,10 @@ public:
 				w->CPU2GPUMap[RequiredCPUBuffers[7]], smoothnessConstant, Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
 			CUDA_projectOntoSet(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[4]],
 				w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]], Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
+			Parent->Overwritten[RequiredCPUBuffers[2]] = 1;
+			Parent->Overwritten[RequiredCPUBuffers[4]] = 1;
+			Parent->Overwritten[RequiredCPUBuffers[5]] = 1;
+			Parent->Overwritten[RequiredCPUBuffers[6]] = 1;
 			Parent->NumKernelRuns += 4;
 			break;
 
@@ -242,66 +247,78 @@ public:
 			CUDA_updateLeafSinkFlow(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
 				w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]],Parent->CC, Parent->VolumeSize, w->GetStream());
 			CUDA_constrainLeafSinkFlow(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[4]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 2;
 			break;
 
 		case(ApplySinkPotentialBranchTask):		//0 - Working,	1 - Inc,	2 - Div,	3 - Label
 			CUDA_storeSinkFlowInBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
 				w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 			
 		case(ApplySourcePotentialTask):			//0 - Working,	1 - Sink,	2 - Div,	3 - Label
 			CUDA_storeSourceFlowInBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
 				w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
 		case(DivideOutWorkingBufferTask):		//0 - Working,	1 - Sink
 			CUDA_divideAndStoreBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
 				NumKids + (isRoot ? 0 : 1), Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 			
 		case(UpdateLabelsTask):					//0 - Sink,		1 - Inc,	2 - Div,	3 - Label
 			CUDA_updateLabel(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]], w->CPU2GPUMap[RequiredCPUBuffers[2]],
 				w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[3]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
 		case(ClearBufferInitially):				//0 - Any
 			CUDA_zeroOutBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
 		case(InitializeLeafFlows):				//0 - Sink,		1 - Data
 			CUDA_CopyBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
 		case(MinimizeLeafFlows):				//0 - Sink1,	1 - Sink2
 			CUDA_MinBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
 		case(PropogateLeafFlows):				//0 - SinkMin,	1 - SinkElse
 			CUDA_CopyBuffer(w->CPU2GPUMap[RequiredCPUBuffers[1]], w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 			
 		case(InitializeLeafLabels):				//0 - Sink,		1 - Data,	2 - Label
 			CUDA_LblBuffer(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]],
 				Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[2]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 			
 		case(AccumulateLabels):					//0 - Accum,	1 - Label
 			CUDA_SumBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 		
 		case(CorrectLabels):					//0 - Factor,	1 - Label
 			CUDA_DivBuffer(w->CPU2GPUMap[RequiredCPUBuffers[1]], w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
+			Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
 			Parent->NumKernelRuns += 1;
 			break;
 
@@ -332,16 +349,17 @@ public:
 		//take them off the no-copy-back list now
 		switch(Type){
 		case(ClearWorkingBufferTask):			//0 - Working
-			Parent->NoCopyBack.erase(RequiredCPUBuffers[0]);
-			break;
 		case(ApplySinkPotentialLeafTask):		//0 - Sink,		1 - Inc,	2 - Div,	3 - Label,	4 - Data
+		case(ClearBufferInitially):				//0 - Any
+		case(InitializeLeafFlows):				//0 - Sink,		1 - Data
 			Parent->NoCopyBack.erase(RequiredCPUBuffers[0]);
 			break;
 		case(DivideOutWorkingBufferTask):		//0 - Working,	1 - Sink
+		case(PropogateLeafFlows):				//0 - SinkMin,	1 - SinkElse
 			Parent->NoCopyBack.erase(RequiredCPUBuffers[1]);
 			break;
-		case(ClearBufferInitially):				//0 - Any
-			Parent->NoCopyBack.erase(RequiredCPUBuffers[0]);
+		case(InitializeLeafLabels):				//0 - Sink,		1 - Data,	2 - Label
+			Parent->NoCopyBack.erase(RequiredCPUBuffers[2]);
 			break;
 		}
 
