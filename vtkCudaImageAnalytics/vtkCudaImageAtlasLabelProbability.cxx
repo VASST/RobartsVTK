@@ -79,12 +79,19 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
         vtkInformationVector * outputVector )
 {
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+    int updateExtent[6];
+    outputVector->GetInformationObject(0)->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
+	outData->SetNumberOfScalarComponents(1);
+	outData->SetExtent(updateExtent);
+	outData->SetWholeExtent(updateExtent);
+	outData->AllocateScalars();
+
 	vtkImageData** inData = new vtkImageData*[inputVector[0]->GetNumberOfInformationObjects()];
 
 	int numLabelMaps = 0;
 	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
-		inData[i] = vtkImageData::SafeDownCast(outputVector->GetInformationObject(i)->Get(vtkDataObject::DATA_OBJECT()));
+		inData[i] = vtkImageData::SafeDownCast(inputVector[0]->GetInformationObject(i)->Get(vtkDataObject::DATA_OBJECT()));
 		if(inData[i]) numLabelMaps++;
 	}
 
@@ -129,6 +136,7 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
 	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
 		if( !inData[i] ) continue;
 		Number++;
+		this->ReserveGPU();
 		switch (inData[i]->GetScalarType()){
 		vtkTemplateMacro(
 			CUDA_IncrementInformation((VTK_TT *) inData[i]->GetScalarPointer(), (VTK_TT) LabelID, agreementGPU, VolumeSize,this->GetStream()));
@@ -140,8 +148,13 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
 
 	//finish the results
 	short flags = this->Entropy ? 1 : 0;
+	flags += this->NormalizeDataTerm ? 2 : 0;
+	this->ReserveGPU();
 	CUDA_ConvertInformation(agreementGPU, outputGPU, this->MaxValueToGive, VolumeSize, Number, flags, this->GetStream() );
 	CUDA_CopyBackResult(outputGPU, (float*) outData->GetScalarPointer(), VolumeSize, this->GetStream() );
+
+	//deallocate memory
+	delete[] inData;
 
 	return 1;
 }
