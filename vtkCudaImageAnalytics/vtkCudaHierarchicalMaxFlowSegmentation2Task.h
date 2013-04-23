@@ -181,6 +181,7 @@ public:
 	//Perform the task at hand
 	void Perform(vtkCudaHierarchicalMaxFlowSegmentation2::Worker* w){
 		if( !CanDo() ) return;
+		w->ReserveGPU();
 
 		//load anything that will be overwritten onto the no copy back list
 		switch(Type){

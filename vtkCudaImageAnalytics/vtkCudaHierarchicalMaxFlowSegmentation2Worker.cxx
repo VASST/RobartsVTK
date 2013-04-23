@@ -111,7 +111,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
             UnusedGPUBuffers.pop_front();
 			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-			Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
+			Parent->MoveBufferCPU2GPU(this,*iterator,NewGPUBuffer,GetStream());
 			
 			//update the priority stacks
 			AddToStack(*iterator);
@@ -129,7 +129,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
             GPU2CPUMap.erase( GPU2CPUMap.find(NewGPUBuffer) );
 			CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 			GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
-			Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
+			Parent->MoveBufferCPU2GPU(this,*iterator,NewGPUBuffer,GetStream());
 			
 			//update the priority stacks
 			RemoveFromStack(*iterator2);
@@ -157,7 +157,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 				CPU2GPUMap.insert( std::pair<float*,float*>(*iterator, NewGPUBuffer) );
 				GPU2CPUMap.insert( std::pair<float*,float*>(NewGPUBuffer, *iterator) );
 				Parent->ReturnBufferGPU2CPU(this,*subIterator,NewGPUBuffer,GetStream());
-				Parent->MoveBufferCPU2GPU(*iterator,NewGPUBuffer,GetStream());
+				Parent->MoveBufferCPU2GPU(this,*iterator,NewGPUBuffer,GetStream());
 				
 				//update the priority stack and leave immediately since our iterators
 				//no longer have a valid contract (changed container)
