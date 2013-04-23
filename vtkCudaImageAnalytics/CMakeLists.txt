@@ -58,6 +58,13 @@ SET ( Kit_SRCS
   vtkCudaHierarchicalMaxFlowSegmentation2Task.h
   CUDA_hierarchicalmaxflow.h
   CUDA_hierarchicalmaxflow.cu
+
+  #Accelerated atlas-location data term
+  vtkCudaImageAtlasLabelProbability.h
+  vtkCudaImageAtlasLabelProbability.cxx
+  CUDA_atlasprobability.h
+  CUDA_atlasprobability.cu
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )
