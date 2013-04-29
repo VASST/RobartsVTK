@@ -15,7 +15,7 @@
 //-----------------------------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------------------------//
 
-vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, vtkCudaHierarchicalMaxFlowSegmentation2* p )
+vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, double usage, vtkCudaHierarchicalMaxFlowSegmentation2* p )
 	: Parent(p), GPU(g), vtkCudaObject(g) {
 	
 	//if verbose, print progress
@@ -36,7 +36,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, vtkCudaHierarchic
 		int NewNumberAcquired = 0;
 		int Pad = Parent->VX*Parent->VY;
 		double NewPercentAcquired = 0;
-		CUDA_GetGPUBuffers( Parent->TotalNumberOfBuffers-BuffersAcquired, Parent->MaxGPUUsage-PercentAcquired, &NewAcquiredBuffers,
+		CUDA_GetGPUBuffers( Parent->TotalNumberOfBuffers-BuffersAcquired, usage, &NewAcquiredBuffers,
 			Pad, Parent->VolumeSize, &NewNumberAcquired, &NewPercentAcquired );
 		BuffersAcquired += NewNumberAcquired;
 		PercentAcquired += NewPercentAcquired;

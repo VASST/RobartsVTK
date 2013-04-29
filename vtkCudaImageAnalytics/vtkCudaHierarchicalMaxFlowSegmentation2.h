@@ -53,6 +53,9 @@ public:
 	//Get and Set the maximum 
 	vtkSetClampMacro(MaxGPUUsage,double,0.0,1.0);
 	vtkGetMacro(MaxGPUUsage,double);
+	void SetMaxGPUUsage(double usage, int device);
+	double GetMaxGPUUsage(int device);
+	void ClearMaxGPUUsage();
 	
 	//Get and Set the labeling constant, CC, of the algorithm
 	vtkSetClampMacro(CC,float,0.0f,1.0f);
@@ -99,8 +102,9 @@ private:
 
 	std::set<int> GPUsUsed;
 
-	double	MaxGPUUsage;
-	int		ReportRate;
+	double					MaxGPUUsage;
+	std::map<int,double>	MaxGPUUsageNonDefault;
+	int						ReportRate;
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
@@ -160,7 +164,7 @@ private:
 		std::list<float*> UnusedGPUBuffers;
 		std::list<float*> AllGPUBufferBlocks;
 		std::list< std::list<float*> > PriorityStacks;
-		Worker(int g, vtkCudaHierarchicalMaxFlowSegmentation2* p );
+		Worker(int g, double usage, vtkCudaHierarchicalMaxFlowSegmentation2* p );
 		~Worker();
 		void UpdateBuffersInUse();
 		void AddToStack( float* CPUBuffer );

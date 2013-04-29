@@ -59,6 +59,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation
 	this->BackwardsInputPortMapping.clear();
 	this->BranchMap.clear();
 	this->GPUsUsed.clear();
+	this->MaxGPUUsageNonDefault.clear();
 }
 
 //------------------------------------------------------------//
@@ -80,6 +81,22 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::ClearDevices(){
 	this->GPUsUsed.clear();
 }
 
+void vtkCudaHierarchicalMaxFlowSegmentation2::SetMaxGPUUsage(double usage, int device){
+	if( usage < 0.0 ) usage = 0.0;
+	else if( usage > 1.0 ) usage = 1.0;
+	if( device >= 0 && device < vtkCudaDeviceManager::Singleton()->GetNumberOfDevices() )
+		this->MaxGPUUsageNonDefault[device] = usage;
+}
+
+double vtkCudaHierarchicalMaxFlowSegmentation2::GetMaxGPUUsage(int device){
+	if( this->MaxGPUUsageNonDefault.find(device) != this->MaxGPUUsageNonDefault.end() )
+		return this->MaxGPUUsageNonDefault[device];
+	return this->MaxGPUUsage;
+}
+
+void vtkCudaHierarchicalMaxFlowSegmentation2::ClearMaxGPUUsage(){
+	this->MaxGPUUsageNonDefault.clear();
+}
 //------------------------------------------------------------//
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::SetHierarchy(vtkTree* graph){
@@ -574,7 +591,10 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	//if verbose, print progress
 	if( this->Debug ) vtkDebugMacro(<<"Building workers.");
     for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++){
-        Worker* newWorker = new Worker(*gpuIterator,this);
+		double usage = this->MaxGPUUsage;
+		if( this->MaxGPUUsageNonDefault.find(*gpuIterator) != this->MaxGPUUsageNonDefault.end() )
+			usage = this->MaxGPUUsageNonDefault[*gpuIterator];
+        Worker* newWorker = new Worker( *gpuIterator, usage, this );
         this->Workers.insert( newWorker );
         if(newWorker->NumBuffers < 8){
             vtkErrorMacro(<<"Could not allocate sufficient GPU buffers.");
