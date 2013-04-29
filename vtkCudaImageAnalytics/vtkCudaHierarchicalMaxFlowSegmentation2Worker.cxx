@@ -36,7 +36,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, double usage, vtk
 		int NewNumberAcquired = 0;
 		int Pad = Parent->VX*Parent->VY;
 		double NewPercentAcquired = 0;
-		CUDA_GetGPUBuffers( Parent->TotalNumberOfBuffers-BuffersAcquired, usage, &NewAcquiredBuffers,
+		CUDA_GetGPUBuffers( Parent->TotalNumberOfBuffers-BuffersAcquired, usage-PercentAcquired, &NewAcquiredBuffers,
 			Pad, Parent->VolumeSize, &NewNumberAcquired, &NewPercentAcquired );
 		BuffersAcquired += NewNumberAcquired;
 		PercentAcquired += NewPercentAcquired;
