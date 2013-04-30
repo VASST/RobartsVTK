@@ -18,6 +18,7 @@ SET ( Kit_SRCS
   vtkImageAtlasLabelProbability.h vtkImageAtlasLabelProbability.cxx
   vtkImageDataTerm.h vtkImageDataTerm.cxx
   vtkImageVote.h vtkImageVote.cxx
+  vtkDiceCoefficient.h vtkDiceCoefficient.cxx
 
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
 )
