@@ -18,6 +18,7 @@
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkAlgorithmOutput.h"
 #include "vtkDataObject.h"
+#include "vtkImageData.h"
 
 #include <float.h>
 #include <limits.h>
