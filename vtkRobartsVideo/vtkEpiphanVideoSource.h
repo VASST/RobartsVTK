@@ -97,6 +97,10 @@ public:
   void SetSerialNumber(char * serial);
   //ETX
 
+  char * GetSerialNumber();
+
+  bool CheckDevice();
+
   // Description:
   // Standard VCR functionality: Record incoming video.
   void Record();

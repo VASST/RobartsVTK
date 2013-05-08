@@ -93,6 +93,19 @@ vtkEpiphanVideoSource::~vtkEpiphanVideoSource()
 }  
 
 //----------------------------------------------------------------------------
+bool vtkEpiphanVideoSource::CheckDevice()
+{
+  if (this->fg != NULL)
+  { 
+	  return true;
+  }
+  else 
+  {
+	  return false;
+  }
+}
+
+//----------------------------------------------------------------------------
 void vtkEpiphanVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent); 
@@ -236,6 +249,12 @@ void vtkEpiphanVideoSource::InternalGrab()
 void vtkEpiphanVideoSource::SetSerialNumber(char * serial) {
 	strncpy_s(this->serialNumber, serial, 15);
 }
+
+char * vtkEpiphanVideoSource::GetSerialNumber()
+{
+	return this->serialNumber;
+}
+
 
 //----------------------------------------------------------------------------
 // platform-independent sleep function
