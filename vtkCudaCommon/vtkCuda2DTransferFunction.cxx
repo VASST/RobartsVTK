@@ -81,7 +81,7 @@ void vtkCuda2DTransferFunction::GetClassifyTable(	short* outputTable, int sizeI,
 	if(!outputTable) return;
 
 	//clear the table
-	memset( (void*) outputTable, 0.0f, sizeof(short) * sizeI * sizeG);
+	memset( (void*) outputTable, 0, sizeof(short) * sizeI * sizeG);
 
 	//iterate over each object, letting them contribute to the table
 	for( std::vector<vtkCudaFunctionObject*>::iterator it = this->components->begin(); it != this->components->end(); it++){
@@ -164,6 +164,10 @@ void vtkCuda2DTransferFunction::RemoveFunctionObject(vtkCudaFunctionObject* obje
 vtkCudaFunctionObject* vtkCuda2DTransferFunction::GetFunctionObject(unsigned int index){
 
 	if(index >= components->size()) return 0;
-	return components->at(index);
+	return (*components)[index];
 
+}
+
+int vtkCuda2DTransferFunction::GetNumberOfFunctionObjects(){
+	return this->components->size();
 }

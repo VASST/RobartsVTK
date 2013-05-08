@@ -1,6 +1,7 @@
 #include "vtkImage2DHistogram.h"
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
 
 void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads){
 	
@@ -12,7 +13,10 @@ void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *ou
 			if(threadId == 0) vtkErrorMacro(<< "Execute: Unknown input ScalarType");
 			return;
 	}
-
+	
+	//configure the input ports
+	this->SetNumberOfInputPorts(1);
+	this->SetNumberOfInputConnections(0,1);
 }
 
 template< class T >
@@ -70,29 +74,59 @@ VTK_THREAD_RETURN_TYPE vtkImage2DHistogramThreadedExecute( void *arg ) {
 	return VTK_THREAD_RETURN_VALUE;
 }
 
+int vtkImage2DHistogram::RequestInformation(
+  vtkInformation* request,
+  vtkInformationVector** inputVector,
+  vtkInformationVector* outputVector)
+{
+	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_INT, 1);
+	return 1;
+}
+
+int vtkImage2DHistogram::RequestUpdateExtent(
+  vtkInformation* vtkNotUsed(request),
+  vtkInformationVector** inputVector,
+  vtkInformationVector* outputVector)
+{
+	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+	int OutputExtent[6];
+	OutputExtent[0] = OutputExtent[2] = OutputExtent[4] = OutputExtent[5] = 0;
+	OutputExtent[1] = this->Resolution[0];
+	OutputExtent[2] = this->Resolution[1];
+
+	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),OutputExtent,6);
+	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),OutputExtent,6);
+
+	return 1;
+}
+
 int vtkImage2DHistogram::RequestData(vtkInformation* request,
                           vtkInformationVector** inputVector,
                           vtkInformationVector* outputVector){
-
-	// get the info objects
-	vtkImageData *inData = vtkImageData::SafeDownCast(this->GetInput());
-	vtkImageData *outData = this->GetOutput();
-	if( !inData || !outData || inData->GetNumberOfScalarComponents() != 2 ) return -1;
-
-	// get the output extent and reallocate the output buffer if necessary
-	bool reallocateScalars = (outData->GetExtent()[0] != 0) ||
-							 (outData->GetExtent()[1] != Resolution[0]-1) ||
-							 (outData->GetExtent()[2] != 0) ||
-							 (outData->GetExtent()[3] != Resolution[1]-1) ||
-							 (outData->GetExtent()[4] != 0) ||
-							 (outData->GetExtent()[5] != 0) ;
-	if(reallocateScalars){
-		outData->SetExtent(0,Resolution[0]-1,0,Resolution[1]-1,0,0);
-		outData->SetWholeExtent(0,Resolution[0]-1,0,Resolution[1]-1,0,0);
-		outData->SetScalarTypeToInt();
-		outData->SetNumberOfScalarComponents(1);
-		outData->AllocateScalars();
+							  
+	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
+	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	if( inData->GetNumberOfScalarComponents() != 2 ){
+		vtkErrorMacro(<<"Input must have 2 scalar components.");
+		return -1;
 	}
+
+	//figure out the extent of the output
+    int updateExtent[6];
+    outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
+	outData->SetScalarTypeToInt();
+	outData->SetNumberOfScalarComponents(1);
+	outData->SetExtent(updateExtent);
+	outData->SetWholeExtent(updateExtent);
+	outData->AllocateScalars();
 
 	//set all the spacing and origin parameters
 	double* Range1 = inData->GetPointData()->GetScalars()->GetRange(0);
@@ -131,6 +165,6 @@ vtkImage2DHistogram::~vtkImage2DHistogram() {
 void vtkImage2DHistogram::SetResolution( int res[2] ){
 	if( res[0] > 0 && res[1] > 0 ){
 		this->Resolution[0] = res[0];
-		this->Resolution[0] = res[1];
+		this->Resolution[1] = res[1];
 	}
 }

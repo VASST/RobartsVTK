@@ -17,6 +17,7 @@
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_container1DTransferFunctionInformation.h"
+struct cudaArray;
 
 /** @brief vtkCuda1DVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
@@ -33,7 +34,7 @@ public:
 
 	virtual void SetInputInternal( vtkImageData * image, int frame);
 	virtual void ClearInputInternal();
-	virtual void ChangeFrameInternal(unsigned int frame);
+	virtual void ChangeFrameInternal(int frame);
 	virtual void InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 									const cudaRendererInformation& rendererInfo,
 									const cudaVolumeInformation& volumeInfo,
@@ -55,6 +56,8 @@ protected:
 	vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
 	static vtkMutexLock* tfLock;
+
+	cudaArray* SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
 
 private:
 	vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&); /**< not implemented */

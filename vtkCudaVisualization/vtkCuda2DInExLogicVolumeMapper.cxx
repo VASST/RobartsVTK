@@ -13,6 +13,7 @@
 
 // VTKCUDA
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
+#include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 
 
 vtkStandardNewMacro(vtkCuda2DInExLogicVolumeMapper);
@@ -48,52 +49,44 @@ void vtkCuda2DInExLogicVolumeMapper::Deinitialize(int withData){
 
 void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int index){
 	
+	if( input->GetNumberOfScalarComponents() != 1 ){
+		vtkErrorMacro(<<"Input must have 1 components.");
+		return;
+	}
+	
 	//convert data to float
+	float* buffer = 0;
 	const cudaVolumeInformation& VolumeInfo = this->VolumeInfoHandler->GetVolumeInfo();
-	float* buffer = new float[VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z];
 	if(input->GetScalarType() == VTK_CHAR){
-		char* tempPtr = (char*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<char,float>( (char*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_UNSIGNED_CHAR){
-		unsigned char* tempPtr = (unsigned char*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<unsigned char,float>( (unsigned char*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_SIGNED_CHAR){
-		signed char* tempPtr = (signed char*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<char,float>( (char*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_INT){
-		int* tempPtr = (int*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<int,float>( (int*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_UNSIGNED_INT){
-		unsigned int* tempPtr = (unsigned int*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<unsigned int,float>( (unsigned int*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_SHORT){
-		short* tempPtr = (short*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<short,float>( (short*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_UNSIGNED_SHORT){
-		unsigned short* tempPtr = (unsigned short*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<unsigned short,float>( (unsigned short*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_LONG){
-		long* tempPtr = (long*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<long,float>( (long*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_UNSIGNED_LONG){
-		unsigned long* tempPtr = (unsigned long*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_castBuffer<unsigned long,float>( (unsigned long*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else if(input->GetScalarType() == VTK_FLOAT){
-		delete buffer;
-		buffer = (float*) input->GetScalarPointer();
-	}else if(input->GetScalarType() == VTK_DOUBLE){
-		double* tempPtr = (double*) input->GetScalarPointer();
-		for(int i = 0; i < VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z; i++)
-			buffer[i] = (float)(tempPtr[i]);
+		this->ReserveGPU();
+		CUDA_allocBuffer<float>( (float*) input->GetScalarPointer(), &buffer, VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
 	}else{
 		vtkErrorMacro(<<"Input cannot be of that type.");
 		return;
@@ -102,13 +95,16 @@ void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int 
 	//load data onto the GPU and clean up the CPU
 	this->ReserveGPU();
 	this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(), index, this->GetStream());
-	if(input->GetScalarType() != VTK_FLOAT) delete buffer;
+
+	//deallocate memory
+	this->ReserveGPU();
+	CUDA_deallocateMemory( (void*) buffer );
 
 	//inform transfer function handler of the data
 	this->transferFunctionInfoHandler->SetInputData(input,index);
 }
 
-void vtkCuda2DInExLogicVolumeMapper::ChangeFrameInternal(unsigned int frame){
+void vtkCuda2DInExLogicVolumeMapper::ChangeFrameInternal(int frame){
 	if(!this->erroredOut){
 		this->ReserveGPU();
 		this->erroredOut = !CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());

@@ -33,7 +33,7 @@ public:
 
 	virtual void SetInputInternal( vtkImageData * image, int frame);
 	virtual void ClearInputInternal();
-	virtual void ChangeFrameInternal(unsigned int frame);
+	virtual void ChangeFrameInternal(int frame);
 	virtual void InternalRender (	vtkRenderer* ren, vtkVolume* vol,
 									const cudaRendererInformation& rendererInfo,
 									const cudaVolumeInformation& volumeInfo,

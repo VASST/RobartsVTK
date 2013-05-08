@@ -24,18 +24,6 @@ SET ( Kit_SRCS
   CUDA_vtkCudaVolumeMapper_renderAlgo.cu
   CUDA_vtkCudaVolumeMapper_renderAlgo.h
 
-  #2D Transfer function definition
-  vtkCuda2DTransferFunction.cxx
-  vtkCuda2DTransferFunction.h
-  vtkCudaFunctionObject.cxx
-  vtkCudaFunctionObject.h
-  vtkCudaFunctionPolygon.cxx
-  vtkCudaFunctionPolygon.h
-  vtkCudaFunctionPolygonReader.cxx
-  vtkCudaFunctionPolygonReader.h
-  vtkCudaFunctionPolygonWriter.cxx
-  vtkCudaFunctionPolygonWriter.h
-
   #1D Transfer function rendering subclass
   vtkCuda1DVolumeMapper.cxx
   vtkCuda1DVolumeMapper.h

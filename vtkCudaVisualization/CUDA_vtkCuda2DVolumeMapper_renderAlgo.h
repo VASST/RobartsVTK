@@ -15,6 +15,7 @@
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_container2DTransferFunctionInformation.h"
+struct cudaArray;
 
 /** @brief Compute the image of the volume taking into account occluding isosurfaces returning it in a CUDA-OpenGL compatible texture
  *
@@ -30,6 +31,7 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 							 const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo,
 							 const cuda2DTransferFunctionInformation& transInfo,
+							 cudaArray* frame,
 							 cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
@@ -39,17 +41,12 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
  *  @pre frame is less than the total number of frames and is non-negative
  *
  */
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const int frame, cudaStream_t* stream);
-
-/** @brief Prepares the container for the frame at the initialization of the renderer
- *
- */
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_initImageArray(cudaStream_t* stream);
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, cudaStream_t* stream);
 
 /** @brief Deallocates the frames and clears the container (needed for ray caster deallocation)
  *
  */
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream);
+void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cudaStream_t* stream);
 
 /** @brief Loads the RGBA 2D transfer functions into texture memory
  *
@@ -66,6 +63,8 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* stream)
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
 								  float* ambTF, float* diffTF, float* specTF, float* powTF,
+								  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
+								  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
 								  cudaStream_t* stream);
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cuda2DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
@@ -77,6 +76,7 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cuda2DTransferFunction
  *  @pre index is between 0 and 99 inclusive
  *
  */
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, const int index, cudaStream_t* stream);
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData,
+	const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream);
 
 #endif

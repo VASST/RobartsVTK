@@ -87,7 +87,7 @@ public:
   // destructor).
   void ReleaseSystemResources();
 
-  int GetNumberOfDevices(){ return devices.size(); };
+  int GetNumberOfDevices(){ return (int) devices.size(); };
   const char* GetDeviceName(int device);
 
 protected:

@@ -21,9 +21,6 @@
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 
-// This is the maximum number of frames, may need to be set
-#define VTKCUDAVOLUMEMAPPER_UPPER_BOUND 30
-
 vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {
 	this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
@@ -45,7 +42,7 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 
 	this->renModified = 0;
 	this->volModified = 0;
-	this->currFrame = -1;
+	this->currFrame = 0;
 	this->numFrames = 1;
 	
 	this->Reinitialize();
@@ -230,7 +227,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
 	
 	//pass down to subclass
 	this->SetInputInternal( input, 0 );
-	if( this->currFrame == -1 ) this->ChangeFrame(0);
+	if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
 
 void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
@@ -244,7 +241,17 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 
 	//pass down to subclass
 	this->SetInputInternal(input, index);
-	if( this->currFrame == -1 ) this->ChangeFrame(0);
+	if( this->currFrame == 0 ) this->ChangeFrame(0);
+}
+
+vtkImageData * vtkCudaVolumeMapper::GetInput(){
+	return GetInput(0);
+}
+
+vtkImageData * vtkCudaVolumeMapper::GetInput( int frame){
+	if( this->inputImages.find(frame) != this->inputImages.end() )
+		return this->inputImages[frame];
+	return 0;
 }
 
 void vtkCudaVolumeMapper::ClearInput(){
@@ -268,7 +275,7 @@ void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor){
 	 this->OutputInfoHandler->SetRenderOutputScaleFactor(scaleFactor);
 }
 
-void vtkCudaVolumeMapper::ChangeFrame(unsigned int frame){
+void vtkCudaVolumeMapper::ChangeFrame(int frame){
 	if(frame >= 0 && frame < this->numFrames ){
 		this->ChangeFrameInternal(frame);
 		this->currFrame = frame;

@@ -66,6 +66,8 @@ void CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* 
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTransferFunctionInformation& transInfo,
 								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
 								  float* ampTF, float* diffTF, float* specTF, float* powTF,
+								  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
+								  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
 								  cudaStream_t* stream);
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(cudaDualImageTransferFunctionInformation& transInfo, cudaStream_t* stream);
 

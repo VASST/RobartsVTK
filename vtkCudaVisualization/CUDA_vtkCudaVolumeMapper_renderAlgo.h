@@ -18,6 +18,23 @@
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"
 
+/** @brief Converts a host memory buffer to a device memory buffer of a different type
+ *
+ *  @param hostBuffer A floating point buffer 
+ *  @param deviceBuffer The area to store the resulting device buffer
+ *  @param bufferSize The size of the buffer
+ *
+ *  @pre The host buffer pointer points to a buffer of size bufferSize
+ *
+ */
+template<typename T, typename S>
+void CUDA_castBuffer(T* hostBuffer, S** deviceBuffer, int bufferSize);
+
+template<typename T>
+void CUDA_allocBuffer(T* hostBuffer, T** deviceBuffer, int bufferSize);
+void CUDA_deallocateMemory( void* memory );
+
+
 /** @brief Loads the ZBuffer into a 2D texture for checking during the rendering process
  *
  *  @param zBuffer A floating point buffer 

@@ -155,6 +155,13 @@ public:
 	 */
 	vtkCudaFunctionObject* GetFunctionObject(unsigned int index);
 
+	/** @brief Retrives the current number of function objects associated with the function
+	 *
+	 */
+	int GetNumberOfFunctionObjects();
+
+
+
 protected:
 	
 	/** @brief Constructor which creates an empty transfer function, one with no function objects in its list

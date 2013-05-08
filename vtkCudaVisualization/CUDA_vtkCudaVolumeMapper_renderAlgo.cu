@@ -20,6 +20,19 @@ __constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 cudaArray* ZBufferArray = 0;
 texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
+#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;							  \
+												   textureToBind.filterMode = cudaFilterModePoint;			  \
+												   textureToBind.addressMode[0] = cudaAddressModeClamp;		  \
+												   textureToBind.addressMode[1] = cudaAddressModeClamp;		  \
+												   cudaBindTextureToArray(textureToBind, value, channelDesc); 
+
+#define load2DArray(array, values, s, tr) if(array) cudaFreeArray(array);									\
+										  cudaMallocArray( &array, &channelDesc, s, s);						\
+										  cudaMemcpyToArrayAsync(array, 0, 0, values, sizeof(float)*s*s,	\
+											cudaMemcpyHostToDevice, tr);
+
+#define unloadArray(a) if(a); cudaFreeArray(a); a = 0;
+
 //channel for loading input data and transfer functions
 cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float2>();
@@ -410,7 +423,7 @@ __global__ void CUDAkernel_shadeAlgo_normBuffer( ){
 	float curr = outInfo.depthBuffer[outIndex];
 	float max = outInfo.maxDepthBuffer[outIndex];
 	float min = outInfo.minDepthBuffer[outIndex];
-	curr = (curr + min) / max;
+	curr = (max > 0.0f) ? (curr + min) / max : 1.0f;
 	outInfo.depthBuffer[outIndex] = curr;
 }
 
@@ -443,7 +456,7 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
 	float c = renInfo.celc;
 	__syncthreads();
 	
-	//multiply by the depth factor
+	//multiply by the cel-shading factor
 	gradMag = 1.0f - darkness * saturate( (gradMag - a) * c );
 	
 	//grab distance shading parameters
@@ -538,6 +551,68 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* st
 	return (cudaGetLastError() == 0);
 }
 
+
+template<typename T, typename S>
+__global__ void CUDAkernel_convertUnit( T* hostBuffer, S* deviceBuffer, int bufferSize ){
+
+	int index = threadIdx.x + blockDim.x * blockIdx.x;
+	T value = hostBuffer[index];
+	if( index < bufferSize ) deviceBuffer[index] = (S) value;
+
+}
+
+#define CUDA_castBuffer_OptimalThreadSize 512
+
+template<typename T, typename S>
+void CUDA_castBuffer(T* hostBuffer, S** deviceBuffer, int bufferSize){
+
+	//allocate required device memory buffers
+	T* deviceBufferOrgType;
+	S* deviceBufferNewType;
+	cudaMalloc( (void**) &deviceBufferOrgType, sizeof(T)*bufferSize );
+	cudaMalloc( (void**) &deviceBufferNewType, sizeof(S)*bufferSize );
+
+	//copy Org buffer
+	cudaMemcpy(deviceBufferOrgType, hostBuffer, sizeof(T)*bufferSize, cudaMemcpyHostToDevice );
+
+	//create size thread structure
+	dim3 threads (CUDA_castBuffer_OptimalThreadSize, 1, 1);
+	dim3 grid ( (bufferSize-1)/CUDA_castBuffer_OptimalThreadSize+1, 1, 1 );
+
+	//cast on GPU
+	CUDAkernel_convertUnit<T,S><<<grid,threads>>>(deviceBufferOrgType,deviceBufferNewType,bufferSize);
+
+	//deallocate buffer of type T and return new buffer
+	cudaFree( deviceBufferOrgType );
+	*deviceBuffer = deviceBufferNewType;
+
+}
+
+template<typename T>
+void CUDA_allocBuffer(T* hostBuffer, T** deviceBuffer, int bufferSize){
+
+	//allocate required device memory buffers
+	cudaMalloc( (void**) deviceBuffer, sizeof(T)*bufferSize );
+
+	//copy Org buffer
+	cudaMemcpy(*deviceBuffer, hostBuffer, sizeof(T)*bufferSize, cudaMemcpyHostToDevice );
+
+}
+
+template void CUDA_allocBuffer<float>(float* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<char,float>(char* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<unsigned char,float>(unsigned char* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<short,float>(short* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<unsigned short,float>(unsigned short* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<int,float>(int* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<unsigned int,float>(unsigned int* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<long,float>(long* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<unsigned long,float>(unsigned long* hostBuffer, float** deviceBuffer, int bufferSize);
+template void CUDA_castBuffer<float,float>(float* hostBuffer, float** deviceBuffer, int bufferSize);
+
+void CUDA_deallocateMemory(void* ptr){
+	cudaFree(ptr);
+}
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh"

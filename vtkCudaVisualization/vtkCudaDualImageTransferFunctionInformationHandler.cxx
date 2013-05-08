@@ -13,6 +13,7 @@ vtkStandardNewMacro(vtkCudaDualImageTransferFunctionInformationHandler);
 
 vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunctionInformationHandler(){
 	this->function = NULL;
+	this->keyholeFunction = NULL;
 
 	this->FunctionSize = 512;
 	this->lastModifiedTime = 0;
@@ -26,6 +27,16 @@ vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunc
 	this->TransInfo.colorGTransferArrayDualImage = 0;
 	this->TransInfo.colorBTransferArrayDualImage = 0;
 
+	this->TransInfo.useSecondTransferFunction = false;
+	this->TransInfo.K_alphaTransferArrayDualImage = 0;
+	this->TransInfo.K_ambientTransferArrayDualImage = 0;
+	this->TransInfo.K_diffuseTransferArrayDualImage = 0;
+	this->TransInfo.K_specularTransferArrayDualImage = 0;
+	this->TransInfo.K_specularPowerTransferArrayDualImage = 0;
+	this->TransInfo.K_colorRTransferArrayDualImage = 0;
+	this->TransInfo.K_colorGTransferArrayDualImage = 0;
+	this->TransInfo.K_colorBTransferArrayDualImage = 0;
+
 	this->InputData = NULL;
 }
 
@@ -33,6 +44,7 @@ vtkCudaDualImageTransferFunctionInformationHandler::~vtkCudaDualImageTransferFun
 	this->Deinitialize();
 	this->SetInputData(NULL, 0);
 	if( this->function ) this->function->UnRegister( this );
+	if( this->keyholeFunction ) this->keyholeFunction->UnRegister( this );
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Deinitialize(int withData){
@@ -70,18 +82,53 @@ vtkCuda2DTransferFunction* vtkCudaDualImageTransferFunctionInformationHandler::G
 	return this->function;
 }
 
+void vtkCudaDualImageTransferFunctionInformationHandler::SetKeyholeTransferFunction(vtkCuda2DTransferFunction* f){
+	this->TransInfo.useSecondTransferFunction = ( f != 0 );
+	if( this->keyholeFunction ==  f ) return;
+	if( this->keyholeFunction ) this->keyholeFunction->UnRegister( this );
+	this->keyholeFunction = f;
+	if( this->keyholeFunction ) this->keyholeFunction->Register( this );
+	this->lastModifiedTime = 0;
+	this->Modified();
+}
+
+vtkCuda2DTransferFunction* vtkCudaDualImageTransferFunctionInformationHandler::GetKeyholeTransferFunction(){
+	return this->keyholeFunction;
+}
+
 void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(){
 	//if we don't need to update the transfer function, don't
-	if(!this->function || this->function->GetMTime() <= lastModifiedTime) return;
-	lastModifiedTime = this->function->GetMTime();
+	if(!this->function || !this->InputData ) return;
+	if( this->keyholeFunction == 0 && this->function->GetMTime() <= lastModifiedTime) return;
+	if( this->keyholeFunction != 0 && this->keyholeFunction->GetMTime() <= lastModifiedTime && this->function->GetMTime() <= lastModifiedTime) return;
+	if( this->keyholeFunction )
+		lastModifiedTime = (this->keyholeFunction->GetMTime() > this->function->GetMTime() ) ? this->keyholeFunction->GetMTime() : this->function->GetMTime();
+	else
+		lastModifiedTime = this->function->GetMTime();
+
+	//tell if we can safely ignore the second function
+	if( this->keyholeFunction ){
+		if( this->keyholeFunction->GetNumberOfFunctionObjects() == 0 )
+			this->TransInfo.useSecondTransferFunction = false;
+		else
+			this->TransInfo.useSecondTransferFunction = true;
+	}
 
 	//get the ranges from the transfer function
-	int num = this->InputData->GetNumberOfScalarComponents();
 	double scalarRange[4];
 	this->InputData->GetPointData()->GetScalars()->GetRange(scalarRange,0);
 	this->InputData->GetPointData()->GetScalars()->GetRange(scalarRange+2,1);
 	double functionRange[] = {	this->function->getMinIntensity(), this->function->getMaxIntensity(), 
 								this->function->getMinGradient(), this->function->getMaxGradient() };
+	if( this->TransInfo.useSecondTransferFunction ){
+		double kfunctionRange[] = {	this->keyholeFunction->getMinIntensity(), this->keyholeFunction->getMaxIntensity(), 
+									this->keyholeFunction->getMinGradient(), this->keyholeFunction->getMaxGradient() };
+		functionRange[0] = (kfunctionRange[0] < functionRange[0] ) ? kfunctionRange[0] : functionRange[0];
+		functionRange[1] = (kfunctionRange[1] > functionRange[1] ) ? kfunctionRange[1] : functionRange[1];
+		functionRange[2] = (kfunctionRange[2] < functionRange[2] ) ? kfunctionRange[2] : functionRange[2];
+		functionRange[3] = (kfunctionRange[3] > functionRange[3] ) ? kfunctionRange[3] : functionRange[3];
+	}
+
 	double minIntensity1 = (scalarRange[0] > functionRange[0] ) ? scalarRange[0] : functionRange[0];
 	double maxIntensity1 = (scalarRange[1] < functionRange[1] ) ? scalarRange[1] : functionRange[1];
 	double minIntensity2 = (scalarRange[2] > functionRange[2] ) ? scalarRange[2] : functionRange[2];
@@ -92,22 +139,46 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 	this->TransInfo.intensity1Multiplier = 1.0 / ( maxIntensity1 - minIntensity1 );
 	this->TransInfo.intensity2Low = minIntensity2;
 	this->TransInfo.intensity2Multiplier = 1.0 / ( maxIntensity2 - minIntensity2 );
-
+	
 	//create local buffers to house the transfer function
-	float* LocalColorRedTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalColorGreenTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalColorBlueTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalAlphaTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalAmbientTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalDiffuseTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalSpecularTransferFunction = new float[this->FunctionSize * this->FunctionSize];
-	float* LocalSpecularPowerTransferFunction = new float[this->FunctionSize * this->FunctionSize];
+	float* LocalColorRedTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+	float* LocalColorGreenTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+	float* LocalColorBlueTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+	float* LocalAlphaTransferFunction =				new float[this->FunctionSize * this->FunctionSize];
+	float* LocalAmbientTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+	float* LocalDiffuseTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+	float* LocalSpecularPowerTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+	float* KLocalColorRedTransferFunction =			0;
+	float* KLocalColorGreenTransferFunction =		0;
+	float* KLocalColorBlueTransferFunction =		0;
+	float* KLocalAlphaTransferFunction =			0;
+	float* KLocalAmbientTransferFunction =			0;
+	float* KLocalDiffuseTransferFunction =			0;
+	float* KLocalSpecularTransferFunction =			0;
+	float* KLocalSpecularPowerTransferFunction =	0;
+	if( this->TransInfo.useSecondTransferFunction ){
+		KLocalColorRedTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+		KLocalColorGreenTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+		KLocalColorBlueTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+		KLocalAlphaTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+		KLocalAmbientTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+		KLocalDiffuseTransferFunction =			new float[this->FunctionSize * this->FunctionSize];
+		KLocalSpecularTransferFunction =		new float[this->FunctionSize * this->FunctionSize];
+		KLocalSpecularPowerTransferFunction =	new float[this->FunctionSize * this->FunctionSize];
+	}
 
 	//populate the table
 	this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
 	this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
 		this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
+	if( this->TransInfo.useSecondTransferFunction ){
+		this->keyholeFunction->GetTransferTable(KLocalColorRedTransferFunction, KLocalColorGreenTransferFunction, KLocalColorBlueTransferFunction, KLocalAlphaTransferFunction,
+			this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
+		this->keyholeFunction->GetShadingTable(KLocalAmbientTransferFunction, KLocalDiffuseTransferFunction, KLocalSpecularTransferFunction, KLocalSpecularPowerTransferFunction,
+			this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
+	}
 
 	//map the trasfer functions to textures for fast access
 	this->TransInfo.functionSize = this->FunctionSize;
@@ -121,6 +192,14 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 		LocalDiffuseTransferFunction,
 		LocalSpecularTransferFunction,
 		LocalSpecularPowerTransferFunction,
+		KLocalColorRedTransferFunction,
+		KLocalColorGreenTransferFunction,
+		KLocalColorBlueTransferFunction,
+		KLocalAlphaTransferFunction,
+		KLocalAmbientTransferFunction,
+		KLocalDiffuseTransferFunction,
+		KLocalSpecularTransferFunction,
+		KLocalSpecularPowerTransferFunction,
 		this->GetStream());
 
 	//clean up the garbage
@@ -132,6 +211,16 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 	delete LocalDiffuseTransferFunction;
 	delete LocalSpecularTransferFunction;
 	delete LocalSpecularPowerTransferFunction;
+	if(this->TransInfo.useSecondTransferFunction){
+		delete KLocalColorRedTransferFunction;
+		delete KLocalColorGreenTransferFunction;
+		delete KLocalColorBlueTransferFunction;
+		delete KLocalAlphaTransferFunction;
+		delete KLocalAmbientTransferFunction;
+		delete KLocalDiffuseTransferFunction;
+		delete KLocalSpecularTransferFunction;
+		delete KLocalSpecularPowerTransferFunction;
+	}
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Update(){

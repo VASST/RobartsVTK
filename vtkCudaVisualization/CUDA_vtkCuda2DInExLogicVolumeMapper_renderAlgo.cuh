@@ -23,8 +23,8 @@ texture<float, 2, cudaReadModeElementType> inExLogic_texture_2DInEx;
 
 __device__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_CastRays(float3& rayStart,
 									const float& numSteps,
-									float& excludeStart,
-									float& excludeEnd,
+									int& excludeStart,
+									int& excludeEnd,
 									const float3& rayInc,
 									float4& outputVal,
 									float& retDepth) {
@@ -240,8 +240,8 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	float3 rayStart; //ray starting point
 	float3 rayInc; // ray sample increment
 	float numSteps; //maximum number of samples along this ray
-	float excludeStart; //where to start excluding
-	float excludeEnd; //where to end excluding
+	int excludeStart; //where to start excluding
+	int excludeEnd; //where to end excluding
 	float4 outputVal; //rgba value of this ray (calculated in castRays, used in WriteData)
 	float outputDepth; //depth to put in the cel shading array
 
@@ -261,9 +261,9 @@ __global__ void CUDA_vtkCuda2DInExVolumeMapper_CUDAkernel_Composite( ) {
 	__syncthreads();
 	numSteps = outInfo.numSteps[outindex];
 	__syncthreads();
-	excludeStart = outInfo.excludeStart[outindex];
+	excludeStart = __float2int_ru(outInfo.excludeStart[outindex]);
 	__syncthreads();
-	excludeEnd = outInfo.excludeEnd[outindex];
+	excludeEnd = __float2int_rd(outInfo.excludeEnd[outindex]);
 	__syncthreads();
 
 	// trace along the ray (composite)
@@ -577,7 +577,7 @@ bool CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo_loadImageInfo(const float* d
 												volumeSize.width, volumeSize.height);
 	copyParams.dstArray = CUDA_vtkCuda2DInExVolumeMapper_sourceDataArray[index];
 	copyParams.extent   = volumeSize;
-	copyParams.kind     = cudaMemcpyHostToDevice;
+	copyParams.kind     = cudaMemcpyDeviceToDevice;
 	cudaMemcpy3DAsync(&copyParams, *stream);
 
 	#ifdef DEBUG_VTKCUDAVISUALIZATION

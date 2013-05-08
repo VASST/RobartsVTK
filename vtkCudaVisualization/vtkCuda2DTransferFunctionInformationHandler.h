@@ -64,6 +64,19 @@ public:
 	 *
 	 */
 	vtkCuda2DTransferFunction* GetTransferFunction();
+
+	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process within the keyhole window
+	 *
+	 *  @param func The 2 dimensional transfer function
+	 *
+	 *  @note This also resets the lastModifiedTime that the volume information handler has for the transfer function, forcing an updating in the lookup tables for the first render
+	 */
+	void SetKeyholeTransferFunction(vtkCuda2DTransferFunction* func);
+
+	/** @brief Get the transfer function used for determining colour and opacity in the volume rendering process within the keyhole window
+	 *
+	 */
+	vtkCuda2DTransferFunction* GetKeyholeTransferFunction();
 	
 	/** @brief Triggers an update for the volume information, checking all subsidary information for modifications
 	 *
@@ -99,7 +112,8 @@ private:
 	vtkImageData*						InputData;		/**< The 3D image data currently being renderered */
 	cuda2DTransferFunctionInformation	TransInfo;		/**< The CUDA specific structure holding the required volume related information for rendering */
 
-	vtkCuda2DTransferFunction* function;	/**< The 2 dimensional transfer function used to colour the volume during rendering */
+	vtkCuda2DTransferFunction* function;		/**< The 2 dimensional transfer function used to colour the volume during rendering */
+	vtkCuda2DTransferFunction* keyholeFunction;	/**< The 2 dimensional transfer function used to colour the volume during rendering within the keyhole */
 	unsigned long lastModifiedTime;			/**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
 	int						FunctionSize;	/**< The size of the transfer function which is square */
 	double					HighGradient;	/**< The maximum gradient of the current image */
