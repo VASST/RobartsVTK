@@ -64,12 +64,11 @@ __global__ void kern_ZeroOutBuffer(T* buffer, int size){
 	if( idx < size ) buffer[idx] = (T) 0;
 }
 
-void CUDA_ILLT_GetRelevantBuffers(short** agreement, float** output, int size, cudaStream_t* stream){
+void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* stream){
 	cudaMalloc((void**) agreement, sizeof(short)*size);
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
 	kern_ZeroOutBuffer<short><<<grid,threads,0,*stream>>>(*agreement,size);
-	cudaMalloc((void**) output, sizeof(float)*size);
 
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();

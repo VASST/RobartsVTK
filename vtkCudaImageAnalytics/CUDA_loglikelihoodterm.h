@@ -3,7 +3,7 @@
 
 #include "vector_types.h"
 
-void CUDA_ILLT_GetRelevantBuffers(short** agreement, float** output, int size, cudaStream_t* stream);
+void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* stream);
 void CUDA_ILLT_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cudaStream_t* stream);
 
 template<class T>

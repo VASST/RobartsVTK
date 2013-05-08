@@ -96,8 +96,7 @@ void vtkCudaImageLogLikelihoodExecute(vtkCudaImageLogLikelihood *self,
 	//initialize output and temporary memory
     float* outBuffer =  (float*)outData->GetScalarPointer();
 	short* agreementGPU;
-	float* outputGPU;
-	CUDA_ILLT_GetRelevantBuffers(&agreementGPU,&outputGPU,VolumeSize,self->GetStream());
+	CUDA_ILLT_GetRelevantBuffers(&agreementGPU,VolumeSize,self->GetStream());
 
 	//figure out the agreement at each pixel
 	short actualNumLabels = 0;
