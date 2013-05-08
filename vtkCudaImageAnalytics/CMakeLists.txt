@@ -71,6 +71,12 @@ SET ( Kit_SRCS
   CUDA_loglikelihoodterm.h
   CUDA_loglikelihoodterm.cu
 
+  #Accelerated image vote
+  vtkCudaImageVote.h
+  vtkCudaImageVote.cxx
+  CUDA_imagevote.h
+  CUDA_imagevote.cu
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )
