@@ -38,7 +38,7 @@ public:
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
 
-	vtkSetClampMacro(OutputDataType,int,1,11);
+	vtkSetClampMacro(OutputDataType,int,1,20);
 	vtkGetMacro(OutputDataType,int);
 
 	// Description:
