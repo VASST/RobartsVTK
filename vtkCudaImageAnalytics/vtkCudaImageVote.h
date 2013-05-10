@@ -11,8 +11,8 @@
 
 =========================================================================*/
 
-#ifndef __VTKIMAGEVOTE_H__
-#define __VTKIMAGEVOTE_H__
+#ifndef __VTKCUDAIMAGEVOTE_H__
+#define __VTKCUDAIMAGEVOTE_H__
 
 #include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
