@@ -812,6 +812,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::MoveBufferCPU2GPU(Worker* caller, 
 	if( !CPUBuffer ) return; 
 	caller->ReserveGPU();
 	if( LastBufferUse[CPUBuffer] ) LastBufferUse[CPUBuffer]->CallSyncThreads();
+	LastBufferUse[CPUBuffer] = 0;
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
 	CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
 	NumMemCpies++;
