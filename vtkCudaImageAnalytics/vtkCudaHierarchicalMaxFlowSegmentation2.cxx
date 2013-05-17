@@ -812,6 +812,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::MoveBufferCPU2GPU(Worker* caller, 
 	if( !CPUBuffer ) return; 
 	caller->ReserveGPU();
 	if( LastBufferUse[CPUBuffer] ) LastBufferUse[CPUBuffer]->CallSyncThreads();
+	LastBufferUse[CPUBuffer] = 0;
 	if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() ) return;
 	CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
 	NumMemCpies++;
@@ -1191,7 +1192,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreatePropogateLabelsTasks(vtkIdTy
 			newTask2->AddBuffer(this->branchLabelBuffers[BranchMap[child]]);
 			int NumKids2 = this->Hierarchy->GetNumberOfChildren(child);
 			for(int i2 = 0; i2 < NumKids2; i2++)
-				this->PropogateLabellingTasks[this->Hierarchy->GetChild(child,i)]->AddTaskToSignal(newTask2);
+				this->PropogateLabellingTasks[this->Hierarchy->GetChild(child,i2)]->AddTaskToSignal(newTask2);
 		}
 		newTask2->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
 	}
