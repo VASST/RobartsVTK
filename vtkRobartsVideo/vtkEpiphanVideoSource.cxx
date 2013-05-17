@@ -163,6 +163,7 @@ void vtkEpiphanVideoSource::ReleaseSystemResources()
   this->Initialized = 0;
   if (this->fg != NULL) {
 	FrmGrab_Close(this->fg);
+	this->fg = NULL;
   }
 }
 
