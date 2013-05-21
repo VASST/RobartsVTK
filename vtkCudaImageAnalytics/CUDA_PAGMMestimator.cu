@@ -16,7 +16,8 @@ __global__ void ZeroOutBuffer(float* buffer, int size){
 __global__ void ReplaceNANs(float* buffer, float value, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
 	float current = buffer[offset];
-	current = isnan(current) ? value : current;
+	current = isfinite(current) ? current : value;
+	if(offset < size ) buffer[offset] = current;
 }
 
 __global__ void OneOutBuffer(float* buffer, int size){
@@ -188,7 +189,7 @@ void sumData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t*
 
 }
 
-void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputData, float* outputGMM,
+void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputGMM,
 								char* seededImage, PAGMM_Information& information, float p, float q, float scale,
 									cudaStream_t* stream ){
 
@@ -319,7 +320,8 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 	//estimate coefficients
 	for( int k = 1; k <= N; k++ ){
 		
-		if( (float) Prob[k-1] == 0.0f ) continue;
+		bool applicable = ((float) Prob[k-1] > 0.0f);
+		if( !applicable ) continue;
 
 		//initialize the product buffer to all 1's
 		OneOutBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_productBuffer, N*L);
@@ -364,7 +366,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 	}
 
 	//replace all NaN values with zeros
-	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 0.0f, N*L);
+	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
 
 	//deallocate product buffer (size N*L) and probabilities
 	cudaFree( dev_productBuffer );
@@ -372,46 +374,11 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputD
 
 	//deallocate host summation buffer (size V)
 	free(hostSummationBuffer);
-
-	//-----------------------------------------------------------------------------------//
-	//      Start creating the probabilistic result                                      //
-	//-----------------------------------------------------------------------------------//
-
-	//for each voxel in the image
-	for( int x = 0; x < V; x++){
-
-		//find GMM activation and place in working buffer
-		ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer2, scale);
-		
-		//for each label
-		for( int curl = 0; curl < L; curl++ ){
-			//copy into new working buffer
-			CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, dev_workingBuffer2, N);
-
-			//multiply working buffer with estimate coefficient buffer
-			MultiplyBuffers<<<gridN, threadsFull, 0, *stream>>>
-				(dev_workingBuffer, dev_outputGMM+curl*N, 1.0f, 0.0f, N);
-
-			//reduce by summation
-			for(int j = N / 2; j > NUMTHREADS; j = j/2){
-				dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
-				sumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
-			}
-			sumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
-
-			//copy into host probability buffer
-			cudaMemcpyAsync( &(outputData[x*L+curl]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
-			cudaStreamSynchronize(*stream);
-			if( isnan(outputData[x*L+curl]) ) outputData[x*L+curl] = 0.0f;
-		}
-
-
-	}
 	
 	//copy estimate coefficients to host
 	float* tempPAGMM = new float[N*L];
 	cudaMemcpyAsync( tempPAGMM, dev_outputGMM, sizeof(float)*L*N, cudaMemcpyDeviceToHost, *stream );
+	cudaStreamSynchronize(*stream);
 
 	//transpose output PAGMM to right buffer orientation
 	for(int i = 0; i < N; i++)

@@ -14,7 +14,7 @@ typedef struct __align__(16)
 
 } PAGMM_Information;
 
-void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputData, float* outputGMM,
+void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputGMM,
 								char* seededImage, PAGMM_Information& information, float P, float Q, float scale,
 								cudaStream_t* stream );
 
