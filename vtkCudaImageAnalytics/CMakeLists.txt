@@ -58,6 +58,12 @@ SET ( Kit_SRCS
   vtkCudaHierarchicalMaxFlowSegmentation2Task.h
   CUDA_hierarchicalmaxflow.h
   CUDA_hierarchicalmaxflow.cu
+  
+  #Accelerated hierarchical max-flow objective function decomposition
+  vtkCudaHierarchicalMaxFlowDecomposition.h
+  vtkCudaHierarchicalMaxFlowDecomposition.cxx
+  CUDA_hierarchicalmaxflowdecomp.h
+  CUDA_hierarchicalmaxflowdecomp.cu
 
   #Accelerated atlas-location data term
   vtkCudaImageAtlasLabelProbability.h
