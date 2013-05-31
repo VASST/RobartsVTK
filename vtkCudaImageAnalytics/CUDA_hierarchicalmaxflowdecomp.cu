@@ -3,6 +3,7 @@
 #include "cuda.h"
 
 #define NUMTHREADS 512
+//#define DEBUG_VTKCUDAHMFD
 
 __global__ void kern_GHMFD_MultiplyBuffers(float* storage, float* multiplicand, int size){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -157,6 +158,7 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
 	cudaMalloc( &devLabelBuffer, sizeof(float)*size );
 	cudaMemcpyAsync( devDataTermBuffer, data,  sizeof(float)*size, cudaMemcpyHostToDevice, *stream );
 	cudaMemcpyAsync( devLabelBuffer,    label, sizeof(float)*size, cudaMemcpyHostToDevice, *stream );
+	float retVal = 0.0f;
 
 	//multiply buffers
 	dim3 threads(NUMTHREADS,1,1);
@@ -169,11 +171,18 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
 	for(; i > NUMTHREADS; i = i/2){
 		dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
 		ReduceBySummation<<<tempGrid, threads, 0, *stream>>>(devDataTermBuffer, i, size );
+
+		#ifdef DEBUG_VTKCUDAHMFD
+			cudaThreadSynchronize();
+			printf( "Reduce: " );
+			printf( cudaGetErrorString( cudaGetLastError() ) );
+			printf( "\n" );
+		#endif
+
 	}
 	reduceData( min(NUMTHREADS,size), min(NUMTHREADS,size), 1, devDataTermBuffer, stream );
 
 	//return result to CPU
-	float retVal = 0.0f;
 	cudaMemcpyAsync( &retVal, devDataTermBuffer,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
 	cudaStreamSynchronize(*stream);
 
