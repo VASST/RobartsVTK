@@ -753,6 +753,29 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 	//deallocate structure that holds the pointers to the buffers
 	delete[] bufferPointers;
 
+	//clear old lists
+	this->CurrentTasks.clear();
+	this->BlockedTasks.clear();
+	this->CPUInUse.clear();
+	this->CPU2PriorityMap.clear();
+	this->ReadOnly.clear();
+	this->NoCopyBack.clear();
+	this->ClearWorkingBufferTasks.clear();
+	this->UpdateSpatialFlowsTasks.clear();
+	this->ApplySinkPotentialBranchTasks.clear();
+	this->ApplySinkPotentialLeafTasks.clear();
+	this->ApplySourcePotentialTasks.clear();
+	this->DivideOutWorkingBufferTasks.clear();
+	this->UpdateLabelsTasks.clear();
+	this->InitializeLeafSinkFlowsTasks.clear();
+	this->MinimizeLeafSinkFlowsTasks.clear();
+	this->PropogateLeafSinkFlowsTasks.clear();
+	this->InitialLabellingSumTasks.clear();
+	this->CorrectLabellingTasks.clear();
+	this->PropogateLabellingTasks.clear();
+	this->LastBufferUse.clear();
+	this->Overwritten.clear();
+
 	return 1;
 }
 
