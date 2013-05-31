@@ -104,7 +104,8 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
   // Get constants from the main class
   bool entropy = self->GetEntropyUsed();
   double constantk1 = self->GetConstantK1();
-  double constantc1 = (op == VTK_CONSTANT && entropy) ? -log(self->GetConstantC1()) : self->GetConstantC1();
+  double constantc1 = ((op == VTK_CONSTANT || op == VTK_SPIKE) && entropy) ? -log(self->GetConstantC1()) : self->GetConstantC1();
+  double constantc2 = ((op == VTK_CONSTANT || op == VTK_SPIKE) && entropy) ? -log(self->GetConstantC2()) : self->GetConstantC1();
 
   // Loop through output pixels
 	switch (op){
@@ -161,6 +162,26 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
 					*outPtr = (T)( entropy ? 
 						0.5*(((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) :
 						exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1)));
+					outPtr++;
+					in1Ptr++;
+				}
+				outPtr += outIncY;
+				in1Ptr += inIncY;
+			}
+			outPtr += outIncZ;
+			in1Ptr += inIncZ;
+		}
+		break;
+
+	case VTK_SPIKE:
+		for(idxZ = 0; idxZ <= maxZ; idxZ++){
+			for (idxY = 0; idxY <= maxY; idxY++){
+				if( !id ){
+					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+					count++;
+				}
+				for (idxR = 0; idxR < rowLength; idxR++){
+					*outPtr = (*in1Ptr == constantk1) ? constantc1: constantc2 ;
 					outPtr++;
 					in1Ptr++;
 				}

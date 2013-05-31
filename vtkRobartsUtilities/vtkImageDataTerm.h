@@ -20,6 +20,7 @@
 #define VTK_CONSTANT           0
 #define VTK_LOGISTIC            1
 #define VTK_GAUSSIAN           2
+#define VTK_SPIKE           3
 
 #include "vtkThreadedImageAlgorithm.h"
 
@@ -48,7 +49,12 @@ public:
   // Description:
   // Set each pixel to gaussian(x-C,K^2) where K and C are the constants
   // and x is the pixel value. Image 2 can be used.
-  void SetOperationToGaussian() {this->SetOperation(VTK_GAUSSIAN);};
+  void SetOperationToGaussian() {this->SetOperation(VTK_SPIKE);};
+
+  // Description:
+  // Set each pixel to C when it takes on value K
+  // and x is the pixel value. Image 2 is not used
+  void SetOperationToSpike() {this->SetOperation(VTK_GAUSSIAN);};
 
   // Description:
   // A constant used by some operations (typically multiplicative). Default is 1.
