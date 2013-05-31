@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <curand_kernel.h>
+
 #define DEBUGGING
 
 //parameters held in constant memory
@@ -12,6 +14,16 @@ __constant__ float SamplePoint[MAX_DIMENSIONALITY];
 __global__ void SetBufferToConstant(float* buffer, float constant, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
 	if(offset < size ) buffer[offset] = constant;
+}
+
+__global__ void SetBufferToRandom(float* buffer, float min, float max, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	curandState localState;
+	curand_init(7+offset, offset, 0, &localState);
+	__syncthreads();
+
+	float value = min + (max-min)*curand_uniform(&localState);
+	if(offset < size ) buffer[offset] = value;
 }
 
 __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* IndexBuffer, int mapSizeX, int mapSizeY ){
@@ -288,6 +300,9 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 	if( currentMapSize[0] > information.KohonenMapSize[0] ) currentMapSize[0] = information.KohonenMapSize[0];
 	while( neighbourhood * (double) currentMapSize[1] < 8.0 && currentMapSize[1] < information.KohonenMapSize[1] ) currentMapSize[1] += currentMapSize[1];
 	if( currentMapSize[1] > information.KohonenMapSize[1] ) currentMapSize[1] = information.KohonenMapSize[1];
+	#ifdef DEBUGGING
+		printf("Updating size to (%d,%d)\n", currentMapSize[0],currentMapSize[1]);
+	#endif
 
 	//allocate a distance buffer
 	float* device_DistanceBuffer1 = 0;
@@ -307,7 +322,7 @@ void CUDAalgo_generateKohonenMap(	float** inputData, float* outputKohonen, char*
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
 	for(int j = 0; j < information.NumberOfDimensions; j++ ){
-		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j)*currMapSize, (float)(0.5*(range[2*j+1]+range[2*j])), currMapSize);
+		SetBufferToRandom<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j)*currMapSize, (float) range[2*j+1], (float) range[2*j], currMapSize);
 		SetBufferToConstant<<<grid, threads, 0, *stream>>>(device_KohonenMap+(2*j+1)*currMapSize, information.Weights[j], currMapSize);
 	}
 
