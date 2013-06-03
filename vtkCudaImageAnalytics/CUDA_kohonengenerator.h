@@ -15,14 +15,26 @@ typedef struct __align__(16)
 
 } Kohonen_Generator_Information;
 
-void CUDAalgo_generateKohonenMap( float** inputData, float* outputKohonen, char** maskData, double* range,
-									int* VolumeSize, int NumVolumes,
-									Kohonen_Generator_Information& information,
-									int MaxEpochs, int BatchSize,
-									float mAlphaVMult, float mAlphaVShift, float mAlphaHMult, float mAlphaHShift,
-									float mnVMult, float mnVShift, float mnHMult, float mnHShift,
-									float vAlphaVMult, float vAlphaVShift, float vAlphaHMult, float vAlphaHShift,
-									float vnVMult, float vnVShift, float vnHMult, float vnHShift,
-									cudaStream_t* stream );
+void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& information, int* KMapSize,
+								float** device_KohonenMap, float** device_tempSpace,
+								float** device_DistanceBuffer, short2** device_IndexBuffer,
+								float meansWidth, float varsWidth, cudaStream_t* stream );
+
+void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
+								int* KMapSize,
+								float** device_KohonenMap, float** device_tempSpace,
+								float** device_DistanceBuffer, short2** device_IndexBuffer,
+								int* VolumeSize, int NumVolumes,
+								Kohonen_Generator_Information& information,
+								int BatchSize,
+								float meansAlpha, float meansWidth,
+								float varsAlpha, float varsWidth,
+								cudaStream_t* stream );
+
+void CUDAalgo_KSOMOffLoad( float* outputKohonen, float** device_KohonenMap,
+							float** device_tempSpace,
+							float** device_DistanceBuffer, short2** device_IndexBuffer,
+							Kohonen_Generator_Information& information,
+							cudaStream_t* stream );
 
 #endif //__KOHONENGENERATOR_H__

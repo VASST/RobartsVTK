@@ -11,48 +11,23 @@
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
+#include "vtkPiecewiseFunction.h"
+
 class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
 	vtkTypeMacro( vtkCudaKohonenGenerator, vtkImageAlgorithm );
 
 	static vtkCudaKohonenGenerator *New();
-
-	void SetMeansAlphaInitial(double alphaInitial);
-	double GetMeansAlphaInitial(){ return (double) MeansAlphaInit; }
-	void SetMeansAlphaProlong(double alphaProlong);
-	double GetMeansAlphaProlong(){ return (double) MeansAlphaProlong; }
-	void SetMeansAlphaDecay(double alphaDecay);
-	double GetMeansAlphaDecay(){ return (double) MeansAlphaDecay; }
-	void SetMeansAlphaBaseline(double alphaBaseline);
-	double GetMeansAlphaBaseline(){ return (double) MeansAlphaBaseline; }
-
-	void SetMeansWidthInitial(double widthInitial);
-	double GetMeansWidthInitial(){ return (double) MeansWidthInit; }
-	void SetMeansWidthProlong(double widthProlong);
-	double GetMeansWidthProlong(){ return (double) MeansWidthProlong; }
-	void SetMeansWidthDecay(double widthDecay);
-	double GetMeansWidthDecay(){ return (double) MeansWidthDecay; }
-	void SetMeansWidthBaseline(double widthBaseline);
-	double GetMeansWidthBaseline(){ return (double) MeansWidthBaseline; }
 	
-	void SetVarsAlphaInitial(double alphaInitial);
-	double GetVarsAlphaInitial(){ return (double) VarsAlphaInit; }
-	void SetVarsAlphaProlong(double alphaProlong);
-	double GetVarsAlphaProlong(){ return (double) VarsAlphaProlong; }
-	void SetVarsAlphaDecay(double alphaDecay);
-	double GetVarsAlphaDecay(){ return (double) VarsAlphaDecay; }
-	void SetVarsAlphaBaseline(double alphaBaseline);
-	double GetVarsAlphaBaseline(){ return (double) VarsAlphaBaseline; }
-
-	void SetVarsWidthInitial(double widthInitial);
-	double GetVarsWidthInitial(){ return (double) VarsWidthInit; }
-	void SetVarsWidthProlong(double widthProlong);
-	double GetVarsWidthProlong(){ return (double) VarsWidthProlong; }
-	void SetVarsWidthDecay(double widthDecay);
-	double GetVarsWidthDecay(){ return (double) VarsWidthDecay; }
-	void SetVarsWidthBaseline(double widthBaseline);
-	double GetVarsWidthBaseline(){ return (double) VarsWidthBaseline; }
+	vtkSetObjectMacro(MeansAlphaSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(MeansAlphaSchedule,vtkPiecewiseFunction);
+	vtkSetObjectMacro(MeansWidthSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(MeansWidthSchedule,vtkPiecewiseFunction);
+	vtkSetObjectMacro(VarsAlphaSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(VarsAlphaSchedule,vtkPiecewiseFunction);
+	vtkSetObjectMacro(VarsWidthSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(VarsWidthSchedule,vtkPiecewiseFunction);
 	
 	void SetNumberOfIterations(int number);
 	int GetNumberOfIterations();
@@ -61,8 +36,6 @@ public:
 	void SetWeights(const double* weights);
 	double GetWeight(int index);
 	double* GetWeights();
-	void SetWeightNormalization(bool set);
-	bool GetWeightNormalization();
 
 	void SetBatchSize(double fraction);
 	double GetBatchSize();
@@ -108,32 +81,16 @@ private:
 	vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&){}
 	vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
 	
-	float MeansAlphaInit;
-	float MeansAlphaProlong;
-	float MeansAlphaDecay;
-	float MeansAlphaBaseline;
-
-	float MeansWidthInit;
-	float MeansWidthProlong;
-	float MeansWidthDecay;
-	float MeansWidthBaseline;
-
-	float VarsAlphaInit;
-	float VarsAlphaProlong;
-	float VarsAlphaDecay;
-	float VarsAlphaBaseline;
-
-	float VarsWidthInit;
-	float VarsWidthProlong;
-	float VarsWidthDecay;
-	float VarsWidthBaseline;
+	vtkPiecewiseFunction* MeansAlphaSchedule;
+	vtkPiecewiseFunction* MeansWidthSchedule;
+	vtkPiecewiseFunction* VarsAlphaSchedule;
+	vtkPiecewiseFunction* VarsWidthSchedule;
 
 	int outExt[6];
 
 	Kohonen_Generator_Information info;
 
 	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
-	bool	WeightNormalization;
 
 	int		MaxEpochs;
 	double	BatchPercent;

@@ -14,26 +14,11 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->outExt[3] = 0;
 	this->outExt[4] = 0;
 	this->outExt[5] = 0;
-
-	this->MeansAlphaInit = 1.0f;
-	this->MeansAlphaDecay = 0.99f;
-	this->MeansAlphaBaseline = 0.0f;
-	this->MeansAlphaProlong = 0.0f;
 	
-	this->MeansWidthInit = 1.0f;
-	this->MeansWidthDecay = 0.99f;
-	this->MeansWidthBaseline = 0.0f;
-	this->MeansWidthProlong = 0.0f;
-	
-	this->VarsAlphaInit = 1.0f;
-	this->VarsAlphaDecay = 0.99f;
-	this->VarsAlphaBaseline = 0.0f;
-	this->VarsAlphaProlong = 0.0f;
-	
-	this->VarsWidthInit = 1.0f;
-	this->VarsWidthDecay = 0.99f;
-	this->VarsWidthBaseline = 0.0f;
-	this->VarsWidthProlong = 0.0f;
+	this->MeansAlphaSchedule = vtkPiecewiseFunction::New();
+	this->MeansWidthSchedule = vtkPiecewiseFunction::New();
+	this->VarsAlphaSchedule = vtkPiecewiseFunction::New();
+	this->VarsWidthSchedule = vtkPiecewiseFunction::New();
 
 	this->BatchPercent = 1.0/15.0;
 	this->UseAllVoxels = false;
@@ -42,7 +27,6 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
 	this->info.KohonenMapSize[2] = 1;
-	this->WeightNormalization = true;
 	for(int i = 0; i < MAX_DIMENSIONALITY; i++){
 		this->UnnormalizedWeights[i] = 1.0f;
 		this->info.Weights[i] = 1.0f;
@@ -55,6 +39,10 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 }
 
 vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator(){
+	if(this->MeansAlphaSchedule) this->MeansAlphaSchedule->Delete();
+	if(this->MeansWidthSchedule) this->MeansWidthSchedule->Delete();
+	if(this->VarsAlphaSchedule) this->VarsAlphaSchedule->Delete();
+	if(this->VarsWidthSchedule) this->VarsWidthSchedule->Delete();
 }
 
 //------------------------------------------------------------
@@ -69,102 +57,6 @@ void vtkCudaKohonenGenerator::Deinitialize(int withData){
 
 //------------------------------------------------------------
 //Accessors and mutators
-
-void vtkCudaKohonenGenerator::SetMeansAlphaInitial(double alphaInitial){
-	if(alphaInitial >= 0.0 && alphaInitial <= 1.0)
-		this->MeansAlphaInit = alphaInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansAlphaBaseline(double alphaBaseline){
-	if(alphaBaseline >= 0.0 && alphaBaseline <= 1.0)
-		this->MeansAlphaBaseline = alphaBaseline;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansAlphaProlong(double alphaProlong){
-	if(alphaProlong >= 0.0 )
-		this->MeansAlphaProlong = alphaProlong;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansAlphaDecay(double alphaDecay){
-	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
-		this->MeansAlphaDecay = alphaDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsAlphaInitial(double alphaInitial){
-	if(alphaInitial >= 0.0 && alphaInitial <= 1.0)
-		this->VarsAlphaInit = alphaInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsAlphaBaseline(double alphaBaseline){
-	if(alphaBaseline >= 0.0 && alphaBaseline <= 1.0)
-		this->VarsAlphaBaseline = alphaBaseline;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsAlphaProlong(double alphaProlong){
-	if(alphaProlong >= 0.0 )
-		this->VarsAlphaProlong = alphaProlong;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsAlphaDecay(double alphaDecay){
-	if(alphaDecay >= 0.0 && alphaDecay <= 1.0)
-		this->VarsAlphaDecay = alphaDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansWidthInitial(double widthInitial){
-	if(widthInitial >= 0.0 && widthInitial <= 1.0)
-		this->MeansWidthInit = widthInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansWidthProlong(double widthProlong){
-	if(widthProlong >= 0.0 )
-		this->MeansWidthProlong = widthProlong;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansWidthDecay(double widthDecay){
-	if(widthDecay >= 0.0 && widthDecay <= 1.0)
-		this->MeansWidthDecay = widthDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetMeansWidthBaseline(double widthBaseline){
-	if(widthBaseline >= 0.0 && widthBaseline <= 1.0)
-		this->MeansWidthBaseline = widthBaseline;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsWidthInitial(double widthInitial){
-	if(widthInitial >= 0.0 && widthInitial <= 1.0)
-		this->VarsWidthInit = widthInitial;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsWidthProlong(double widthProlong){
-	if(widthProlong >= 0.0 )
-		this->VarsWidthProlong = widthProlong;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsWidthDecay(double widthDecay){
-	if(widthDecay >= 0.0 && widthDecay <= 1.0)
-		this->VarsWidthDecay = widthDecay;
-	this->Modified();
-}
-
-void vtkCudaKohonenGenerator::SetVarsWidthBaseline(double widthBaseline){
-	if(widthBaseline >= 0.0 && widthBaseline <= 1.0)
-		this->VarsWidthBaseline = widthBaseline;
-	this->Modified();
-}
 
 void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY){
 	if(SizeX < 1 || SizeY < 1) return;
@@ -222,17 +114,6 @@ double vtkCudaKohonenGenerator::GetWeight(int index){
 
 double* vtkCudaKohonenGenerator::GetWeights(){
 	return this->UnnormalizedWeights;
-}
-
-void vtkCudaKohonenGenerator::SetWeightNormalization(bool set){
-	if( set != this->WeightNormalization ){
-		this->WeightNormalization = set;
-		this->Modified();
-	}
-}
-
-bool vtkCudaKohonenGenerator::GetWeightNormalization(){
-	return this->WeightNormalization;
 }
 
 void vtkCudaKohonenGenerator::SetNumberOfIterations(int number){
@@ -408,31 +289,47 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	}
 
 
-	//update weights
-	if( this->WeightNormalization ){
-		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->info.Weights[i] = this->UnnormalizedWeights[i] / ((Range[2*i+1] - Range[2*i] > 0.0) ? (Range[2*i+1] - Range[2*i]) : 1.0);
-			this->info.Weights[i] *= this->info.Weights[i];
-		}
-	}else{
-		for(int i = 0; i < this->info.NumberOfDimensions; i++){
-			this->info.Weights[i] = this->UnnormalizedWeights[i]*this->UnnormalizedWeights[i];
-		}
+	//update initial weights
+	for(int i = 0; i < this->info.NumberOfDimensions; i++){
+		this->info.Weights[i] = this->UnnormalizedWeights[i]*this->UnnormalizedWeights[i];
 	}
+
+	//create information holders
+	int KMapSize[3];
+	float* device_KohonenMap = 0;
+	float* device_tempSpace = 0;
+	float* device_DistanceBuffer = 0;
+	short2* device_IndexBuffer = 0;
 
 	//pass information to CUDA
 	this->ReserveGPU();
-	CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
-		Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 
-		(1+exp((this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong))*(this->MeansAlphaInit-this->MeansAlphaBaseline), this->MeansAlphaBaseline,
-		1.0 - this->MeansAlphaDecay, (this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong,
-		(1+exp((this->MeansWidthDecay - 1.0)*this->MeansWidthProlong))*(this->MeansWidthInit-this->MeansWidthBaseline), this->MeansWidthBaseline,
-		1.0 - this->MeansWidthDecay, (this->MeansWidthDecay - 1.0)*this->MeansWidthProlong,
-		(1+exp((this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong))*(this->VarsAlphaInit-this->VarsAlphaBaseline), this->VarsAlphaBaseline,
-		1.0 - this->VarsAlphaDecay, (this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong,
-		(1+exp((this->VarsWidthDecay - 1.0)*this->VarsWidthProlong))*(this->VarsWidthInit-this->VarsWidthBaseline), this->VarsWidthBaseline,
-		1.0 - this->VarsWidthDecay, (this->VarsWidthDecay - 1.0)*this->VarsWidthProlong,
-		this->GetStream() );
+	CUDAalgo_KSOMInitialize( Range, this->info, KMapSize,
+								&device_KohonenMap, &device_tempSpace,
+								&device_DistanceBuffer, &device_IndexBuffer,
+								this->MeansWidthSchedule->GetValue(0.0),
+								this->VarsWidthSchedule->GetValue(0.0), this->GetStream() );
+	for(int epoch = 0; epoch < this->MaxEpochs; epoch++)
+		CUDAalgo_KSOMIteration( inputDataPtr,  maskDataPtr, epoch, KMapSize,
+								&device_KohonenMap, &device_tempSpace,
+								&device_DistanceBuffer, &device_IndexBuffer,
+								VolumeSize, NumPictures, this->info, BatchSize,
+								this->MeansAlphaSchedule->GetValue(epoch), this->MeansWidthSchedule->GetValue(epoch),
+								this->VarsAlphaSchedule->GetValue(epoch), this->VarsWidthSchedule->GetValue(epoch),
+								this->GetStream() );
+	CUDAalgo_KSOMOffLoad( (float*) outData->GetScalarPointer(), &device_KohonenMap, &device_tempSpace,
+							&device_DistanceBuffer, &device_IndexBuffer, this->info, this->GetStream() );
+
+	//CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
+	//	Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 
+	//	(1+exp((this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong))*(this->MeansAlphaInit-this->MeansAlphaBaseline), this->MeansAlphaBaseline,
+	//	1.0 - this->MeansAlphaDecay, (this->MeansAlphaDecay - 1.0)*this->MeansAlphaProlong,
+	//	(1+exp((this->MeansWidthDecay - 1.0)*this->MeansWidthProlong))*(this->MeansWidthInit-this->MeansWidthBaseline), this->MeansWidthBaseline,
+	//	1.0 - this->MeansWidthDecay, (this->MeansWidthDecay - 1.0)*this->MeansWidthProlong,
+	//	(1+exp((this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong))*(this->VarsAlphaInit-this->VarsAlphaBaseline), this->VarsAlphaBaseline,
+	//	1.0 - this->VarsAlphaDecay, (this->VarsAlphaDecay - 1.0)*this->VarsAlphaProlong,
+	//	(1+exp((this->VarsWidthDecay - 1.0)*this->VarsWidthProlong))*(this->VarsWidthInit-this->VarsWidthBaseline), this->VarsWidthBaseline,
+	//	1.0 - this->VarsWidthDecay, (this->VarsWidthDecay - 1.0)*this->VarsWidthProlong,
+	//	this->GetStream() );
 	
 	//clean up temporaries
 	delete Range;
