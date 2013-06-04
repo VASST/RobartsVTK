@@ -291,7 +291,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 	//update initial weights
 	for(int i = 0; i < this->info.NumberOfDimensions; i++){
-		this->info.Weights[i] = this->UnnormalizedWeights[i]*this->UnnormalizedWeights[i];
+		this->info.Weights[i] = this->UnnormalizedWeights[i];
 	}
 
 	//create information holders

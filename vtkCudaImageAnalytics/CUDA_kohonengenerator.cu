@@ -1,30 +1,14 @@
 #include "CUDA_kohonengenerator.h"
+#include "CUDA_commonKernels.h"
 #include <float.h>
 #include <stdio.h>
 #include <time.h>
-
-#include <curand_kernel.h>
 
 #define DEBUGGING
 
 //parameters held in constant memory
 __constant__ Kohonen_Generator_Information info;
 __constant__ float SamplePoint[MAX_DIMENSIONALITY];
-
-__global__ void SetBufferToConstant(float* buffer, float constant, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	if(offset < size ) buffer[offset] = constant;
-}
-
-__global__ void SetBufferToRandom(float* buffer, float min, float max, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	curandState localState;
-	curand_init(7+offset, offset, 0, &localState);
-	__syncthreads();
-
-	float value = min + (max-min)*curand_uniform(&localState);
-	if(offset < size ) buffer[offset] = value;
-}
 
 __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* IndexBuffer, int mapSizeX, int mapSizeY ){
 
@@ -319,7 +303,7 @@ void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& info
 	dim3 threads(NUMTHREADS, 1, 1);
 	for(int j = 0; j < information.NumberOfDimensions; j++ ){
 		SetBufferToRandom<<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*j)*currMapSize, (float) range[2*j+1], (float) range[2*j], currMapSize);
-		SetBufferToConstant<<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*j+1)*currMapSize, information.Weights[j], currMapSize);
+		SetBufferToConst<<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*j+1)*currMapSize, information.Weights[j], currMapSize);
 	}
 
 

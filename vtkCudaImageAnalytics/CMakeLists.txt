@@ -48,6 +48,10 @@ SET ( Kit_SRCS
   vtkCudaPAGMMEstimator.cxx
   CUDA_PAGMMestimator.h
   CUDA_PAGMMestimator.cu
+  vtkCudaKSOMLikelihood.h
+  vtkCudaKSOMLikelihood.cxx
+  CUDA_KSOMlikelihood.h
+  CUDA_KSOMlikelihood.cu
 
   #Accelerated hierarchical max flow algorithm
   vtkCudaHierarchicalMaxFlowSegmentation.h

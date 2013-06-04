@@ -1,4 +1,5 @@
 #include "CUDA_loglikelihoodterm.h"
+#include "CUDA_commonKernels.h"
 #include "stdio.h"
 #include "cuda.h"
 #include "float.h"
@@ -7,15 +8,6 @@
 #define NUMTHREADS 512
 
 //#define DEBUG_VTKCUDA_ILLT
-
-template<class T>
-__global__ void kern_IncrementBuffer(T* labelBuffer, T desiredLabel, short* agreement, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	short newAgreement = agreement[idx];
-	T labelValue = labelBuffer[idx];
-	newAgreement += (labelValue == desiredLabel) ? 1 : 0;
-	if( idx < size ) agreement[idx] = newAgreement;
-}
 
 template void CUDA_ILLT_IncrementInformation<float>(float* labelData, float desiredValue, short* agreement, int size, cudaStream_t* stream);
 template void CUDA_ILLT_IncrementInformation<double>(double* labelData, double desiredValue, short* agreement, int size, cudaStream_t* stream);
@@ -47,7 +39,7 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
+	IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
 	cudaFree(GPUBuffer);
 
 	#ifdef DEBUG_VTKCUDA_ILLT
@@ -58,17 +50,11 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 	#endif
 }
 
-template<class T>
-__global__ void kern_ZeroOutBuffer(T* buffer, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	if( idx < size ) buffer[idx] = (T) 0;
-}
-
 void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* stream){
 	cudaMalloc((void**) agreement, sizeof(short)*size);
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_ZeroOutBuffer<short><<<grid,threads,0,*stream>>>(*agreement,size);
+	ZeroOutBuffer<short><<<grid,threads,0,*stream>>>(*agreement,size);
 
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();

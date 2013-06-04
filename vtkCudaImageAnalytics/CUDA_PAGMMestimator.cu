@@ -1,65 +1,12 @@
 #include "CUDA_PAGMMestimator.h"
+#include "CUDA_commonKernels.h"
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 __constant__ PAGMM_Information info;
-texture<float, 3, cudaReadModeElementType> Mixture_Map;
 
 #define NUMTHREADS 512
-
-__global__ void ZeroOutBuffer(float* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	if(offset < size ) buffer[offset] = 0.0f;
-}
-
-__global__ void ReplaceNANs(float* buffer, float value, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float current = buffer[offset];
-	current = isfinite(current) ? current : value;
-	if(offset < size ) buffer[offset] = current;
-}
-
-__global__ void OneOutBuffer(float* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	if(offset < size ) buffer[offset] = 1.0f;
-}
-
-__global__ void MultiplyBuffers(float* outBuffer, float* multBuffer, float scale, float shift, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value = (scale * outBuffer[offset] + shift) * multBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
-}
-
-__global__ void SumBuffers(float* outBuffer, float* sumBuffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value = outBuffer[offset] + sumBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
-}
-
-__global__ void CopyBuffers(float* outBuffer, float* inBuffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value = inBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
-}
-
-__global__ void NormalizeBuffers(float* bigBuffer, int repeats, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float denom = 0.0f;
-	for( int i = 0; i < repeats; i++ )
-		denom = denom + bigBuffer[i*size+offset];
-		
-	for( int i = 0; i < repeats; i++ ){
-		float value = bigBuffer[i*size+offset];
-		if(offset < size) bigBuffer[i*size+offset] = value / denom;
-	}
-}
-
-__global__ void TranslateBuffer(float* buffer, float scale, float shift, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value = scale * buffer[offset] + shift;
-	if(offset < size ) buffer[offset] = value;
-}
 
 __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Map, float* OutputBuffer, float scale){
 
@@ -85,107 +32,6 @@ __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Map, 
 
 	//output results
 	if(kOffset < bufferSize) OutputBuffer[kOffset] = exp( -distance * scale );
-
-}
-
-template <unsigned int blockSize>
-__global__ void sumOverSmallBuffer(float *buffer, unsigned int n)
-{
-	__shared__ float sdata[blockSize];
-	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockSize*2) + tid;
-	unsigned int gridSize = blockSize*2*gridDim.x;
-	sdata[tid] = 0.0f;
-	
-	while (i < n) {
-		sdata[tid] += buffer[i];
-		sdata[tid] += buffer[i+blockSize];
-		i += gridSize;
-		__syncthreads();
-	}
-	
-	if (blockSize >= 512) { if (tid < 256) {
-			sdata[tid] += sdata[tid + 256];
-	} __syncthreads(); }
-
-	if (blockSize >= 256) { if (tid < 128) {
-			sdata[tid] += sdata[tid + 128];
-	} __syncthreads(); }
-	if (blockSize >= 128) { if (tid <  64) {
-			sdata[tid] += sdata[tid + 64];
-	} __syncthreads(); }
-	
-	if (tid < 32) {
-		if (blockSize >= 64){
-			sdata[tid] += sdata[tid + 32];
-			__syncthreads();
-		}
-		if (blockSize >= 32){
-			sdata[tid] += sdata[tid + 16];
-			__syncthreads();
-		}
-		if (blockSize >= 16){
-			sdata[tid] += sdata[tid + 8];
-			__syncthreads();
-		}
-		if (blockSize >=  8){
-			sdata[tid] += sdata[tid + 4];
-			__syncthreads();
-		}
-		if (blockSize >=  4){
-			sdata[tid] += sdata[tid + 2];
-			__syncthreads();
-		}
-		if (blockSize >=  2){
-			sdata[tid] += sdata[tid + 1];
-			__syncthreads();
-		}
-	}
-	if (tid == 0){
-		buffer[0] = sdata[0];
-	}
-}
-
-__global__ void sumOverLargeBuffer( float* buffer, int spread, int size ){
-	
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value1 = buffer[kOffset];
-	float value2 = buffer[kOffset+spread];
-
-	if( kOffset+spread < size )
-		buffer[kOffset] = value1+value2;
-
-}
-
-void sumData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t* stream ){
-
-    dim3 dimBlock(threads, 1, 1);
-    dim3 dimGrid(blocks, 1, 1);
-
-    int smemSize = (threads <= 32) ? 2 * threads * (sizeof(float)+sizeof(short2)) : threads * (sizeof(float)+sizeof(short2));
-	switch (threads)
-	{
-	case 512:
-		sumOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 256:
-		sumOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 128:
-		sumOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 64:
-		sumOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 32:
-		sumOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 16:
-		sumOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 8:
-		sumOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 4:
-		sumOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 2:
-		sumOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 1:
-		sumOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	}
 
 }
 
@@ -256,9 +102,9 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 		//reduce working buffer by summation
 		for(int j = N / 2; j > NUMTHREADS; j = j/2){
 			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
-			sumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
+			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
 		}
-		sumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
+		SumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
 
 		//place summation on host summation buffer
 		hostSummationBuffer[x] = 0.0f;
@@ -351,18 +197,21 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 
 	}
 
+	//replace all NaN values with zeros
+	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
+
 	//normalize estimate coefficients
 	for( int curl = 0; curl < L; curl++ ){
 		CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, dev_outputGMM+curl*N, N);
 		for(int j = N / 2; j > NUMTHREADS; j = j/2){
 			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
-			sumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
+			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
 		}
-		sumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
+		SumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
 		float sum = 0.0f;
 		cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 		cudaStreamSynchronize(*stream);
-		TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, 1.0f/sum, 0.0f, N);
+		//TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, 1.0f/sum, 0.0f, N);
 	}
 
 	//replace all NaN values with zeros

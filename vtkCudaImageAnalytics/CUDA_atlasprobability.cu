@@ -1,19 +1,11 @@
 #include "CUDA_atlasprobability.h"
+#include "CUDA_commonKernels.h"
 #include "stdio.h"
 #include "cuda.h"
 
 #define NUMTHREADS 512
 
 //#define DEBUG_VTKCUDA_IALP
-
-template<class T>
-__global__ void kern_IncrementBuffer(T* labelBuffer, T desiredLabel, short* agreement, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	short newAgreement = agreement[idx];
-	T labelValue = labelBuffer[idx];
-	newAgreement += (labelValue == desiredLabel) ? 1 : 0;
-	if( idx < size ) agreement[idx] = newAgreement;
-}
 
 template void CUDA_IncrementInformation<float>(float* labelData, float desiredValue, short* agreement, int size, cudaStream_t* stream);
 template void CUDA_IncrementInformation<double>(double* labelData, double desiredValue, short* agreement, int size, cudaStream_t* stream);
@@ -28,8 +20,6 @@ template void CUDA_IncrementInformation<unsigned short>(unsigned short* labelDat
 template void CUDA_IncrementInformation<char>(char* labelData, char desiredValue, short* agreement, int size, cudaStream_t* stream);
 template void CUDA_IncrementInformation<signed char>(signed char* labelData, signed char desiredValue, short* agreement, int size, cudaStream_t* stream);
 template void CUDA_IncrementInformation<unsigned char>(unsigned char* labelData, unsigned char desiredValue, short* agreement, int size, cudaStream_t* stream);
-
-
 
 template< class T >
 void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, int size, cudaStream_t* stream){
@@ -47,7 +37,7 @@ void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, i
 
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
+	IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
 	cudaFree(GPUBuffer);
 
 	#ifdef DEBUG_VTKCUDA_IALP
@@ -58,16 +48,11 @@ void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, i
 	#endif
 }
 
-__global__ void kern_ZeroOutBuffer(short* buffer, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	if( idx < size ) buffer[idx] = 0;
-}
-
 void CUDA_GetRelevantBuffers(short** agreement, float** output, int size, cudaStream_t* stream){
 	cudaMalloc((void**) agreement, sizeof(short)*size);
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_ZeroOutBuffer<<<grid,threads,0,*stream>>>(*agreement,size);
+	ZeroOutBuffer<<<grid,threads,0,*stream>>>(*agreement,size);
 	cudaMalloc((void**) output, sizeof(float)*size);
 
 	#ifdef DEBUG_VTKCUDA_IALP

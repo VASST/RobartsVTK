@@ -1,4 +1,5 @@
 #include "CUDA_hierarchicalmaxflow.h"
+#include "CUDA_commonKernels.h"
 #include "stdio.h"
 #include "cuda.h"
 
@@ -59,15 +60,10 @@ void CUDA_CopyBufferToGPU(float* GPUBuffer, float* CPUBuffer, int size, cudaStre
 	#endif
 }
 
-__global__ void kern_ZeroOutBuffer(float* buffer, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	if( idx < size ) buffer[idx] = 0.0f;
-}
-
 void CUDA_zeroOutBuffer(float* GPUBuffer, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_ZeroOutBuffer<<<grid,threads,0,*stream>>>(GPUBuffer,size);
+	ZeroOutBuffer<<<grid,threads,0,*stream>>>(GPUBuffer,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_zeroOutBuffer: " );
@@ -76,15 +72,10 @@ void CUDA_zeroOutBuffer(float* GPUBuffer, int size, cudaStream_t* stream){
 	#endif
 }
 
-__global__ void kern_SetBufferValue(float* buffer, float value, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	if( idx < size ) buffer[idx] = value;
-}
-
 void CUDA_SetBufferToValue(float* GPUBuffer, float value, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_SetBufferValue<<<grid,threads,0,*stream>>>(GPUBuffer,value,size);
+	SetBufferToConst<<<grid,threads,0,*stream>>>(GPUBuffer,value,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_SetBufferToValue: " );
@@ -93,16 +84,10 @@ void CUDA_SetBufferToValue(float* GPUBuffer, float value, int size, cudaStream_t
 	#endif
 }
 
-__global__ void kern_DivideAndStoreBuffer(float* inBuffer, float* outBuffer, float number, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	float value = inBuffer[idx] * number;
-	if( idx < size ) outBuffer[idx] = value;
-}
-
 void CUDA_divideAndStoreBuffer(float* inBuffer, float* outBuffer, float number, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_DivideAndStoreBuffer<<<grid,threads,0,*stream>>>(inBuffer,outBuffer,1.0f/number,size);
+	MultiplyAndStoreBuffer<<<grid,threads,0,*stream>>>(inBuffer,outBuffer,1.0f/number,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_divideAndStoreBuffer: " );
