@@ -358,6 +358,7 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
 					//calculate the histogram indices and add point to histogram
 					for( inIdxN = 0; inIdxN < N; inIdxN++ ){
 						int histIdx = (int)((double) Resolution * ((double) curPtr[inIdxN]-Minimum[inIdxN]) / (Maximum[inIdxN]-Minimum[inIdxN]));
+						if( Maximum[inIdxN] <= Minimum[inIdxN] ) histIdx = 0;
 						if( histIdx >= Resolution )
 							histIdx = Resolution - 1;
 						HistIndices[inIdxN] = histIdx;
