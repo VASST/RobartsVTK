@@ -14,6 +14,10 @@ SET ( Kit_SRCS
   
   vtkCudaMemoryTexture.h vtkCudaMemoryTexture.cxx
   
+  #very common kernels
+  CUDA_commonKernels.h
+  CUDA_commonKernels.cu
+
   #2D Transfer function definition
   vtkCuda2DTransferFunction.cxx
   vtkCuda2DTransferFunction.h
