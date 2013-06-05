@@ -12,21 +12,78 @@ __global__ void ZeroOutBuffer(T* buffer, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
 	if(offset < size ) buffer[offset] = 0;
 }
+template __global__ void ZeroOutBuffer<char> (char* buffer, int size);
+template __global__ void ZeroOutBuffer<signed char> (signed char* buffer, int size);
+template __global__ void ZeroOutBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void ZeroOutBuffer<short> (short* buffer, int size);
+template __global__ void ZeroOutBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void ZeroOutBuffer<int> (int* buffer, int size);
+template __global__ void ZeroOutBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void ZeroOutBuffer<long> (long* buffer, int size);
+template __global__ void ZeroOutBuffer<unsigned long> (unsigned long* buffer, int size);
 template __global__ void ZeroOutBuffer<float> (float* buffer, int size);
+template __global__ void ZeroOutBuffer<double> (double* buffer, int size);
+template __global__ void ZeroOutBuffer<long long> (long long* buffer, int size);
+template __global__ void ZeroOutBuffer<unsigned long long> (unsigned long long* buffer, int size);
 
 template<class T> 
 __global__ void OneOutBuffer(T* buffer, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
 	if(offset < size ) buffer[offset] = 1;
 }
+template __global__ void OneOutBuffer<char> (char* buffer, int size);
+template __global__ void OneOutBuffer<signed char> (signed char* buffer, int size);
+template __global__ void OneOutBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void OneOutBuffer<short> (short* buffer, int size);
+template __global__ void OneOutBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void OneOutBuffer<int> (int* buffer, int size);
+template __global__ void OneOutBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void OneOutBuffer<long> (long* buffer, int size);
+template __global__ void OneOutBuffer<unsigned long> (unsigned long* buffer, int size);
 template __global__ void OneOutBuffer<float> (float* buffer, int size);
+template __global__ void OneOutBuffer<double> (double* buffer, int size);
+template __global__ void OneOutBuffer<long long> (long long* buffer, int size);
+template __global__ void OneOutBuffer<unsigned long long> (unsigned long long* buffer, int size);
 
 template<class T> 
 __global__ void SetBufferToConst(T* buffer, T value, int size){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	if( idx < size ) buffer[idx] = value;
 }
+template __global__ void SetBufferToConst<char> (char* buffer, char value, int size);
+template __global__ void SetBufferToConst<signed char> (signed char* buffer, signed char value, int size);
+template __global__ void SetBufferToConst<unsigned char> (unsigned char* buffer, unsigned char value, int size);
+template __global__ void SetBufferToConst<short> (short* buffer, short value, int size);
+template __global__ void SetBufferToConst<unsigned short> (unsigned short* buffer, unsigned short value, int size);
+template __global__ void SetBufferToConst<int> (int* buffer, int value, int size);
+template __global__ void SetBufferToConst<unsigned int> (unsigned int* buffer, unsigned int value, int size);
+template __global__ void SetBufferToConst<long> (long* buffer, long value, int size);
+template __global__ void SetBufferToConst<unsigned long> (unsigned long* buffer, unsigned long value, int size);
 template __global__ void SetBufferToConst<float> (float* buffer, float value, int size);
+template __global__ void SetBufferToConst<double> (double* buffer, double value, int size);
+template __global__ void SetBufferToConst<long long> (long long* buffer, long long value, int size);
+template __global__ void SetBufferToConst<unsigned long long> (unsigned long long* buffer, unsigned long long value, int size);
+
+
+template<class T>
+__global__ void TranslateBuffer(T* buffer, T scale, T shift, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	T value = scale * buffer[offset] + shift;
+	if(offset < size ) buffer[offset] = value;
+}
+template __global__ void TranslateBuffer<char>(char* buffer, char scale, char shift, int size);
+template __global__ void TranslateBuffer<signed char>(signed char* buffer, signed char scale, signed char shift, int size);
+template __global__ void TranslateBuffer<unsigned char>(unsigned char* buffer, unsigned char scale, unsigned char shift, int size);
+template __global__ void TranslateBuffer<short>(short* buffer, short scale, short shift, int size);
+template __global__ void TranslateBuffer<unsigned short>(unsigned short* buffer, unsigned short scale, unsigned short shift, int size);
+template __global__ void TranslateBuffer<int>(int* buffer, int scale, int shift, int size);
+template __global__ void TranslateBuffer<unsigned int>(unsigned int* buffer, unsigned int scale, unsigned int shift, int size);
+template __global__ void TranslateBuffer<long>(long* buffer, long scale, long shift, int size);
+template __global__ void TranslateBuffer<unsigned long>(unsigned long* buffer, unsigned long scale, unsigned long shift, int size);
+template __global__ void TranslateBuffer<float>(float* buffer, float scale, float shift, int size);
+template __global__ void TranslateBuffer<double>(double* buffer, double scale, double shift, int size);
+template __global__ void TranslateBuffer<long long>(long long* buffer, long long scale, long long shift, int size);
+template __global__ void TranslateBuffer<unsigned long long>(unsigned long long* buffer, unsigned long long scale, unsigned long long shift, int size);
 
 __global__ void ReplaceNANs(float* buffer, float value, int size){
 	int offset = blockDim.x * blockIdx.x + threadIdx.x;
@@ -233,7 +290,19 @@ __global__ void SumBuffers(T* outBuffer, T* sumBuffer, int size){
 	T value = outBuffer[offset] + sumBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
-template __global__ void SumBuffers<float>(float* outBuffer, float* sumBuffer, int size);
+template __global__ void SumBuffers<char>(char* buffer1, char* buffer2, int size);
+template __global__ void SumBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
+template __global__ void SumBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, int size);
+template __global__ void SumBuffers<short>(short* buffer1, short* buffer2, int size);
+template __global__ void SumBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, int size);
+template __global__ void SumBuffers<int>(int* buffer1, int* buffer2, int size);
+template __global__ void SumBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, int size);
+template __global__ void SumBuffers<long>(long* buffer1, long* buffer2, int size);
+template __global__ void SumBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
+template __global__ void SumBuffers<float>(float* buffer1, float* buffer2, int size);
+template __global__ void SumBuffers<double>(double* buffer1, double* buffer2, int size);
+template __global__ void SumBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void SumBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
 
 template<class T> 
 __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size){
@@ -241,15 +310,19 @@ __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size){
 	T value = inBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
-template __global__ void CopyBuffers<float>(float* outBuffer, float* inBuffer, int size);
-
-template<class T>
-__global__ void TranslateBuffer(T* buffer, T scale, T shift, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
-	T value = scale * buffer[offset] + shift;
-	if(offset < size ) buffer[offset] = value;
-}
-template __global__ void TranslateBuffer<float>(float* buffer, float scale, float shift, int size);
+template __global__ void CopyBuffers<char>(char* buffer1, char* buffer2, int size);
+template __global__ void CopyBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
+template __global__ void CopyBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, int size);
+template __global__ void CopyBuffers<short>(short* buffer1, short* buffer2, int size);
+template __global__ void CopyBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, int size);
+template __global__ void CopyBuffers<int>(int* buffer1, int* buffer2, int size);
+template __global__ void CopyBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, int size);
+template __global__ void CopyBuffers<long>(long* buffer1, long* buffer2, int size);
+template __global__ void CopyBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
+template __global__ void CopyBuffers<float>(float* buffer1, float* buffer2, int size);
+template __global__ void CopyBuffers<double>(double* buffer1, double* buffer2, int size);
+template __global__ void CopyBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void CopyBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, int size){
@@ -257,7 +330,19 @@ __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, i
 	float value = (scale * outBuffer[offset] + shift) * multBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
-template __global__ void MultiplyBuffers<float>(float* buffer, float* multBuffer, float scale, float shift, int size);
+template __global__ void MultiplyBuffers<char>(char* buffer1, char* buffer2, char value1, char value2, int size);
+template __global__ void MultiplyBuffers<signed char>(signed char* buffer1, signed char* buffer2, signed char value1, signed char value2, int size);
+template __global__ void MultiplyBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, unsigned char value1, unsigned char value2, int size);
+template __global__ void MultiplyBuffers<short>(short* buffer1, short* buffer2, short value1, short value2, int size);
+template __global__ void MultiplyBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, unsigned short value1, unsigned short value2, int size);
+template __global__ void MultiplyBuffers<int>(int* buffer1, int* buffer2, int value1, int value2, int size);
+template __global__ void MultiplyBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, unsigned int value1, unsigned int value2, int size);
+template __global__ void MultiplyBuffers<long>(long* buffer1, long* buffer2, long value1, long value2, int size);
+template __global__ void MultiplyBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, unsigned long value1, unsigned long value2, int size);
+template __global__ void MultiplyBuffers<float>(float* buffer1, float* buffer2, float value1, float value2, int size);
+template __global__ void MultiplyBuffers<double>(double* buffer1, double* buffer2, double value1, double value2, int size);
+template __global__ void MultiplyBuffers<long long>(long long* buffer1, long long* buffer2, long long value1, long long value2, int size);
+template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long value1, unsigned long long value2, int size);
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size){
@@ -265,7 +350,19 @@ __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size){
 	float value = outBuffer[offset] * multBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
-template __global__ void MultiplyBuffers<float>(float* buffer, float* multBuffer, int size);
+template __global__ void MultiplyBuffers<char>(char* buffer1, char* buffer2, int size);
+template __global__ void MultiplyBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
+template __global__ void MultiplyBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, int size);
+template __global__ void MultiplyBuffers<short>(short* buffer1, short* buffer2, int size);
+template __global__ void MultiplyBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, int size);
+template __global__ void MultiplyBuffers<int>(int* buffer1, int* buffer2, int size);
+template __global__ void MultiplyBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, int size);
+template __global__ void MultiplyBuffers<long>(long* buffer1, long* buffer2, int size);
+template __global__ void MultiplyBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
+template __global__ void MultiplyBuffers<float>(float* buffer1, float* buffer2, int size);
+template __global__ void MultiplyBuffers<double>(double* buffer1, double* buffer2, int size);
+template __global__ void MultiplyBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
 
 template<class T>
 __global__ void MultiplyAndStoreBuffer(T* inBuffer, T* outBuffer, T number, int size){
@@ -273,7 +370,19 @@ __global__ void MultiplyAndStoreBuffer(T* inBuffer, T* outBuffer, T number, int 
 	T value = inBuffer[idx] * number;
 	if( idx < size ) outBuffer[idx] = value;
 }
-template __global__ void MultiplyAndStoreBuffer<float>(float* inBuffer, float* outBuffer, float number, int size);
+template __global__ void MultiplyAndStoreBuffer<char>(char* buffer1, char* buffer2, char value, int size);
+template __global__ void MultiplyAndStoreBuffer<signed char>(signed char* buffer1, signed char* buffer2, signed char value, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, unsigned char value, int size);
+template __global__ void MultiplyAndStoreBuffer<short>(short* buffer1, short* buffer2, short value, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, unsigned short value, int size);
+template __global__ void MultiplyAndStoreBuffer<int>(int* buffer1, int* buffer2, int value, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, unsigned int value, int size);
+template __global__ void MultiplyAndStoreBuffer<long>(long* buffer1, long* buffer2, long value, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, unsigned long value, int size);
+template __global__ void MultiplyAndStoreBuffer<float>(float* buffer1, float* buffer2, float value, int size);
+template __global__ void MultiplyAndStoreBuffer<double>(double* buffer1, double* buffer2, double value, int size);
+template __global__ void MultiplyAndStoreBuffer<long long>(long long* buffer1, long long* buffer2, long long value, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long value, int size);
 
 
 //---------------------------------------------------------------------------//
