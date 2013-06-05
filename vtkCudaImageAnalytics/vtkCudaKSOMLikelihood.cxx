@@ -1,5 +1,5 @@
 #include "vtkCudaKSOMLikelihood.h"
-#include "CUDA_KSOMLikelihood.h"
+#include "CUDA_KSOMlikelihood.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkPointData.h"
