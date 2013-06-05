@@ -132,7 +132,7 @@ vtkTree* vtkCudaHierarchicalMaxFlowSegmentation2::GetHierarchy(){
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::AddSmoothnessScalar(vtkIdType node, double value){
 	if( value >= 0.0 ){
-		this->SmoothnessScalars.insert(std::pair<vtkIdType,double>(node,value));
+		this->SmoothnessScalars[node] = value;
 		this->Modified();
 	}else{
 		vtkErrorMacro(<<"Cannot use a negative smoothness value.");

@@ -1,5 +1,5 @@
-#ifndef __PAGMMESTIMATOR_H__
-#define __PAGMMESTIMATOR_H__
+#ifndef __CUDA_KSOMLIKELIHOOD_H__
+#define __CUDA_KSOMLIKELIHOOD_H__
 
 #include "vector_types.h"
 

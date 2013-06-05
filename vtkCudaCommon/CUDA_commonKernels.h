@@ -31,4 +31,8 @@ void SumData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t*
 template <unsigned int blockSize> __global__ void SumOverSmallBuffer(float *buffer, unsigned int n);
 __global__ void SumOverLargeBuffer( float* buffer, int spread, int size );
 
+void LogaritureData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t* stream );
+template <unsigned int blockSize> __global__ void LogaritureOverSmallBuffer(float *buffer, unsigned int n);
+__global__ void LogaritureOverLargeBuffer( float* buffer, int spread, int size );
+
 #endif

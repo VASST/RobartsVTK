@@ -1,5 +1,7 @@
 #include "CUDA_commonKernels.h"
 #include <curand_kernel.h>
+#include <limits.h>
+#include <float.h>
 
 //---------------------------------------------------------------------------//
 //-------------------------COMMON UNARY OPERATORS----------------------------//
@@ -209,5 +211,111 @@ __global__ void SumOverLargeBuffer( float* buffer, int spread, int size ){
 
 	if( kOffset+spread < size )
 		buffer[kOffset] = value1+value2;
+
+}
+
+#define Logariture(value1, value2)	0.5f * ((isfinite(value1 + log(1.0f + exp(value2-value1)))?value1 + log(1.0f + exp(value2-value1)):value2 + log(1.0f + exp(value1-value2))) + \
+											(isfinite(value2 + log(1.0f + exp(value1-value2)))?value2 + log(1.0f + exp(value1-value2)):value1 + log(1.0f + exp(value2-value1))) )
+
+void LogaritureData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t* stream ){
+
+    dim3 dimBlock(threads, 1, 1);
+    dim3 dimGrid(blocks, 1, 1);
+
+    int smemSize = (threads <= 32) ? 2 * threads * (sizeof(float)+sizeof(short2)) : threads * (sizeof(float)+sizeof(short2));
+	switch (threads)
+	{
+	case 512:
+		LogaritureOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 256:
+		LogaritureOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 128:
+		LogaritureOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 64:
+		LogaritureOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 32:
+		LogaritureOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 16:
+		LogaritureOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 8:
+		LogaritureOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 4:
+		LogaritureOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 2:
+		LogaritureOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	case 1:
+		LogaritureOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+	}
+
+}
+
+template <unsigned int blockSize>
+__global__ void LogaritureOverSmallBuffer(float *buffer, unsigned int n)
+{
+	__shared__ float sdata[blockSize];
+	unsigned int tid = threadIdx.x;
+	unsigned int i = blockIdx.x*(blockSize*2) + tid;
+	unsigned int gridSize = blockSize*2*gridDim.x;
+	sdata[tid] = -2.0f * FLT_MAX;
+	
+	while (i < n) {
+		sdata[tid] = Logariture(sdata[tid], buffer[i]);
+		sdata[tid] = Logariture(sdata[tid], buffer[i+blockSize]);
+		i += gridSize;
+		__syncthreads();
+	}
+	
+	if (blockSize >= 512) { if (tid < 256) {
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 256]);
+	} __syncthreads(); }
+
+	if (blockSize >= 256) { if (tid < 128) {
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 128]);
+	} __syncthreads(); }
+	if (blockSize >= 128) { if (tid <  64) {
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 64]);
+	} __syncthreads(); }
+	
+	if (tid < 32) {
+		if (blockSize >= 64){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 32]);
+			__syncthreads();
+		}
+		if (blockSize >= 32){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 16]);
+			__syncthreads();
+		}
+		if (blockSize >= 16){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 8]);
+			__syncthreads();
+		}
+		if (blockSize >=  8){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 4]);
+			__syncthreads();
+		}
+		if (blockSize >=  4){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 2]);
+			__syncthreads();
+		}
+		if (blockSize >=  2){
+			sdata[tid] = Logariture(sdata[tid], sdata[tid + 1]);
+			__syncthreads();
+		}
+	}
+	if (tid == 0){
+		buffer[0] = sdata[0];
+	}
+}
+
+__global__ void LogaritureOverLargeBuffer( float* buffer, int spread, int size ){
+	
+	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	float value1 = buffer[kOffset];
+	float value2 = buffer[kOffset+spread];
+	
+	float result = Logariture(value1, value2);
+
+	if( kOffset+spread < size )
+		buffer[kOffset] = result;
 
 }

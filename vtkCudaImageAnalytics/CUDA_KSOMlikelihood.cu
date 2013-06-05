@@ -31,7 +31,7 @@ __global__ void KSOMLL_ProcessSample(int samplePointLoc, float* InputData, float
 	distance += 0.5f * log( penalty );
 
 	//output results
-	if(kOffset < bufferSize) OutputBuffer[kOffset] = exp( -distance * scale );
+	if(kOffset < bufferSize) OutputBuffer[kOffset] =  - distance * scale;
 
 }
 
@@ -86,25 +86,29 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 	ZeroOutBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, N*L);
 
 	//estimate coefficients
-	for( int k = 1; k <= N; k++ ){
+	int* NumberOfSeeds = new int[L];
+	int TotalNumberOfSeeds = 0;
+	for( int i = 0; i < L; i++ ) NumberOfSeeds[i] = 0;
+	for( int x = 0; x < V; x++){
 
-		for( int x = 0; x < V; x++){
+		//find seed number
+		char seedNumber = seededImage[x] - 1;
+		if( seedNumber < 0 ) continue;
+		NumberOfSeeds[seedNumber]++;
+		TotalNumberOfSeeds++;
 
-			//find seed number
-			char seedNumber = seededImage[x] - 1;
-			if( seedNumber < 0 ) continue;
-
-			//find GMM activation and place in working buffer
-			KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-				(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
-			SumBuffers<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM+seedNumber*L, dev_workingBuffer, N);
-
-		}
+		//find GMM activation and place in working buffer
+		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>
+			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
+		SumBuffers<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM+seedNumber*N, dev_workingBuffer, N);
 
 	}
 
-	//replace all NaN values with zeros
-	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, -log((float)N), N*L);
+	//adjust coefficients by region size
+	for( int i = 0; i < L; i++ )
+		if( NumberOfSeeds[i] )
+			TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM+i*N, 1.0f / (float)NumberOfSeeds[i], log((float)TotalNumberOfSeeds) - log((float)NumberOfSeeds[i]), N);
+		
 	
 	//copy estimate coefficients to host
 	float* tempPAGMM = new float[N*L];
@@ -116,6 +120,7 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 		for( int j = 0; j < L; j++ )
 			outputGMM[i*L+j] = tempPAGMM[j*N+i];
 	delete[] tempPAGMM;
+	delete[] NumberOfSeeds;
 
 	//deallocate working buffer (size N*M)
 	cudaFree(dev_workingBuffer);
