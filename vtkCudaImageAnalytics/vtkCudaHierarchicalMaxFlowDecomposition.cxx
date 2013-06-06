@@ -79,7 +79,7 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetHierarchy(vtkTree* graph){
 		while( iterator->HasNext() ){
 			vtkIdType node = iterator->Next();
 			if( this->Hierarchy->IsLeaf(node) )
-				this->LeafMap.insert(std::pair<vtkIdType,int>(node,(int) this->LeafMap.size()));
+				this->LeafMap[node] = (int) this->LeafMap.size();
 		}
 		iterator->Delete();
 
@@ -111,16 +111,16 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetDataInput(int idx, vtkDataObjec
 		if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ){
 			int portNumber = this->FirstUnusedPort;
 			this->FirstUnusedPort++;
-			this->InputPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
-			this->BackwardsInputPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+			this->InputPortMapping[idx] = portNumber;
+			this->BackwardsInputPortMapping[portNumber] = idx;
 		}
-		this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, input->GetProducerPort() );
+		this->SetNthInputConnection(0, this->InputPortMapping[idx], input->GetProducerPort() );
 
 	}else{
-		//if their is no pair in the mapping, just exit, nothing to do
+		//if there is no pair in the mapping, just exit, nothing to do
 		if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ) return;
 
-		int portNumber = this->InputPortMapping.find(idx)->second;
+		int portNumber = this->InputPortMapping[idx];
 		this->InputPortMapping.erase(this->InputPortMapping.find(idx));
 		this->BackwardsInputPortMapping.erase(this->BackwardsInputPortMapping.find(portNumber));
 
@@ -135,11 +135,11 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetDataInput(int idx, vtkDataObjec
 			this->SetNthInputConnection(0, this->FirstUnusedPort - 1, 0 );
 
 			//correct the mappings
-			vtkIdType swappedId = this->BackwardsInputPortMapping.find(this->FirstUnusedPort - 1)->second;
-			this->InputPortMapping.erase(this->InputPortMapping.find(swappedId));
+			vtkIdType swappedId = this->BackwardsInputPortMapping[this->FirstUnusedPort - 1];
+			//this->InputPortMapping.erase(this->InputPortMapping.find(swappedId));
 			this->BackwardsInputPortMapping.erase(this->BackwardsInputPortMapping.find(this->FirstUnusedPort - 1));
-			this->InputPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
-			this->BackwardsInputPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+			this->InputPortMapping[swappedId] = portNumber;
+			this->BackwardsInputPortMapping[portNumber] = swappedId;
 
 		}
 
@@ -165,10 +165,10 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
 		if( this->InputLabelPortMapping.find(idx) == this->InputLabelPortMapping.end() ){
 			int portNumber = this->FirstUnusedLabelPort;
 			this->FirstUnusedLabelPort++;
-			this->InputLabelPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
-			this->BackwardsInputLabelPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+			this->InputLabelPortMapping[idx] = portNumber;
+			this->BackwardsInputLabelPortMapping[portNumber] = idx;
 		}
-		this->SetNthInputConnection(1, this->InputLabelPortMapping.find(idx)->second, input->GetProducerPort() );
+		this->SetNthInputConnection(1, this->InputLabelPortMapping[idx], input->GetProducerPort() );
 
 	}else{
 		//if their is no pair in the mapping, just exit, nothing to do
@@ -190,10 +190,10 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
 
 			//correct the mappings
 			vtkIdType swappedId = this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1)->second;
-			this->InputLabelPortMapping.erase(this->InputLabelPortMapping.find(swappedId));
-			this->BackwardsInputLabelPortMapping.erase(this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1));
-			this->InputLabelPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
-			this->BackwardsInputLabelPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+			//this->InputLabelPortMapping.erase(this->InputLabelPortMapping.find(swappedId));
+			//this->BackwardsInputLabelPortMapping.erase(this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1));
+			this->InputLabelPortMapping[swappedId] = portNumber;
+			this->BackwardsInputLabelPortMapping[portNumber] = swappedId;
 
 		}
 
@@ -207,7 +207,7 @@ vtkDataObject *vtkCudaHierarchicalMaxFlowDecomposition::GetLabelInput(int idx)
 {
 	if( this->InputLabelPortMapping.find(idx) == this->InputLabelPortMapping.end() )
 		return 0;
-	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(1, this->InputLabelPortMapping.find(idx)->second));
+	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(1, this->InputLabelPortMapping[idx]));
 }
 
 double vtkCudaHierarchicalMaxFlowDecomposition::GetF(vtkIdType n){
@@ -267,14 +267,14 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 				return -1;
 			}
 
-			int inputPortNumber = this->InputPortMapping.find(node)->second;
+			int inputPortNumber = this->InputPortMapping[node];
 
 			if( !(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ){
 				vtkErrorMacro(<<"Missing data prior for leaf node.");
 				return -1;
 			}
 
-			int inputLabelPortNumber = this->InputLabelPortMapping.find(node)->second;
+			int inputLabelPortNumber = this->InputLabelPortMapping[node];
 
 			if( !(inputVector[1])->GetInformationObject(inputPortNumber) && (inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ){
 				vtkErrorMacro(<<"Missing label map for leaf node.");
@@ -292,8 +292,8 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 		
 		//if we get here, any missing mapping implies just no smoothness term (default intended)
 		if( this->InputPortMapping.find(node) == this->InputPortMapping.end() ) continue;
-		int inputPortNumber = this->InputPortMapping.find(node)->second;
-		int inputLabelPortNumber = this->InputLabelPortMapping.find(node)->second;
+		int inputPortNumber = this->InputPortMapping[node];
+		int inputLabelPortNumber = this->InputLabelPortMapping[node];
 		if( ! (inputVector[0])->GetInformationObject(inputPortNumber) ||
 			! (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ) continue;
 		if( ! (inputVector[1])->GetInformationObject(inputLabelPortNumber) ||
@@ -400,7 +400,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::RequestData(vtkInformation *request
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		if( !this->Hierarchy->IsLeaf(node) )
-			BranchMap.insert(std::pair<vtkIdType,int>(node,(int) this->BranchMap.size()));
+			BranchMap[node] = (int) this->BranchMap.size();
 	}
 	iterator->Delete();
 
@@ -436,7 +436,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::RequestData(vtkInformation *request
 		if( this->Hierarchy->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
-			branchSmoothnessTermBuffers[this->BranchMap.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+			branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 	}
 	iterator->Delete();
 
