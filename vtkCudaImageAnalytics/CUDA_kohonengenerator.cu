@@ -475,7 +475,8 @@ void CUDAalgo_KSOMOffLoad( float* outputKohonen, float** device_KohonenMap,
 	//translate back data
 	int MapSize = information.KohonenMapSize[0]*information.KohonenMapSize[1];
 	float* tempKohonen = new float[2*MapSize*information.NumberOfDimensions];
-	cudaMemcpyAsync( tempKohonen, device_KohonenMap, 2*sizeof(float)*MapSize*information.NumberOfDimensions, cudaMemcpyDeviceToHost, *stream );
+	cudaMemcpyAsync( tempKohonen, *device_KohonenMap, 2*sizeof(float)*MapSize*information.NumberOfDimensions, cudaMemcpyDeviceToHost, *stream );
+	cudaStreamSynchronize(*stream);
 	cudaFree(*device_KohonenMap);
 	cudaFree(*device_tempSpace);
 	cudaStreamSynchronize(*stream);
