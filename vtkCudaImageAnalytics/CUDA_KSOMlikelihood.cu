@@ -26,12 +26,12 @@ __global__ void KSOMLL_ProcessSample(int samplePointLoc, float* InputData, float
 		float weight = Map[(2*i+1)*bufferSize+kOffset];
 		float value = (Map[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
 		distance += value * value / weight ;
-		penalty *= weight;
+		penalty += log(weight);
 	}
-	distance += 0.5f * log( penalty );
+	distance += 0.5f * penalty;
 
 	//output results
-	if(kOffset < bufferSize) OutputBuffer[kOffset] =  - distance * scale;
+	if(kOffset < bufferSize) OutputBuffer[kOffset] =  exp( - distance * scale );
 
 }
 
@@ -74,41 +74,105 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 	dim3 gridNL((N*L-1)/NUMTHREADS+1, 1, 1);
 	dim3 threadsFull(NUMTHREADS, 1, 1);
 
+	
+	//-----------------------------------------------------------------------------------//
+	//      Grab denominator information                                                 //
+	//-----------------------------------------------------------------------------------//
+
+	//allocate host space for summation buffer (size V)
+	float* hostSummationBuffer = (float*) malloc(V*sizeof(float));
+	
+	//allocate space for a working buffer (size N)
+	float* dev_workingBuffer = 0;
+	float* dev_workingBuffer2 = 0;
+	cudaMalloc((void**)&dev_workingBuffer, sizeof(float)*N);
+	cudaMalloc((void**)&dev_workingBuffer2, sizeof(float)*N);
+
+	//create container for seed samples
+	int* NumberOfSeeds = new int[L];
+	for( int i = 0; i < L; i++ ) NumberOfSeeds[i] = 0;
+	int TotalNumberOfSeeds = 0;
+	double Denominator = 0.0;
+
+	//for each seed sample
+	for( int x = 0; x < V; x++){
+
+		//figure out the seed number
+		char seedNumber = seededImage[x]-1;
+		if( seedNumber < 0 ) continue;
+		NumberOfSeeds[seedNumber]++;
+		TotalNumberOfSeeds++;
+		
+		//find GMM activation and place in working buffer
+		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>
+			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
+
+		//reduce working buffer by summation
+		hostSummationBuffer[x] = 0.0f;
+		cudaMemcpyAsync( &(hostSummationBuffer[x]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaStreamSynchronize(*stream);
+		for(int j = N / 2; j >= NUMTHREADS; j = j/2){
+			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
+			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
+			cudaMemcpyAsync( &(hostSummationBuffer[x]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+			cudaStreamSynchronize(*stream);
+		}
+		SumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
+
+		//place summation on host summation buffer
+		cudaMemcpyAsync( &(hostSummationBuffer[x]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+		cudaStreamSynchronize(*stream);
+
+		//update denominator information
+		Denominator += log( hostSummationBuffer[x] );
+
+	}
+
+
+
 	//-----------------------------------------------------------------------------------//
 	//      Start PAGMM model from the seed points                                       //
 	//-----------------------------------------------------------------------------------//
-
-	//allocate space for two working buffers (size N)
-	float* dev_workingBuffer = 0;
-	cudaMalloc((void**)&dev_workingBuffer, sizeof(float)*N);
-	
+		
 	//zero out the estimate coefficient buffer
-	ZeroOutBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, N*L);
+	SetBufferToConst<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 0.1f, N*L);
+	//ZeroOutBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, N*L);
+	//TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 0.0f, 1.0f, N*L);
 
 	//estimate coefficients
-	int* NumberOfSeeds = new int[L];
-	int TotalNumberOfSeeds = 0;
-	for( int i = 0; i < L; i++ ) NumberOfSeeds[i] = 0;
 	for( int x = 0; x < V; x++){
 
 		//find seed number
 		char seedNumber = seededImage[x] - 1;
 		if( seedNumber < 0 ) continue;
-		NumberOfSeeds[seedNumber]++;
-		TotalNumberOfSeeds++;
 
-		//find GMM activation and place in working buffer
-		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>
-			(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
-		SumBuffers<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM+seedNumber*N, dev_workingBuffer, N);
+		float K = (double) N * (double) NumberOfSeeds[seedNumber] / (double) TotalNumberOfSeeds;
+
+		//find GMM activation and place in working buffers
+		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
+		//CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer2, dev_workingBuffer, N);
+
+		//create the pro-part
+		//TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, (float) (N-K) / (float) (K*(N-1)),
+		//													(float)(K-1)*hostSummationBuffer[x] / (float) (K*(N-1)), N );
+		//LogBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, N);
+		SumBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+seedNumber*N, dev_workingBuffer, N);
+
+		//create the con-part
+		//TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer2, -1.0f / (float)(N-1), (float) hostSummationBuffer[x] / (float)(N-1), N );
+		//LogBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer2, N);
+		//for(int curl = 0; curl < L; curl++){
+		//	if( curl == seedNumber ) continue;
+		//	SumBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, dev_workingBuffer2, N);
+		//}
 
 	}
 
-	//adjust coefficients by region size
-	for( int i = 0; i < L; i++ )
-		if( NumberOfSeeds[i] )
-			TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM+i*N, 1.0f / (float)NumberOfSeeds[i], log((float)TotalNumberOfSeeds) - log((float)NumberOfSeeds[i]), N);
-		
+	//adjust coefficients by region size and denominator
+	//for(int curl = 0; curl < L; curl++)
+	//	TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, -1.0f / (float) (NumberOfSeeds[curl] * TotalNumberOfSeeds), 0.0f, N);
+	LogBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, N*L);
+	TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, -1.0f, log((float)N), N*L);
 	
 	//copy estimate coefficients to host
 	float* tempPAGMM = new float[N*L];
@@ -121,9 +185,11 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 			outputGMM[i*L+j] = tempPAGMM[j*N+i];
 	delete[] tempPAGMM;
 	delete[] NumberOfSeeds;
+	delete[] hostSummationBuffer;
 
 	//deallocate working buffer (size N*M)
 	cudaFree(dev_workingBuffer);
+	cudaFree(dev_workingBuffer2);
 
 	//deallocate estimate coefficient buffer (size N*M*L)
 	cudaFree(dev_outputGMM);

@@ -190,7 +190,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 		}
 
 		//multiply product buffer by probability value
-		TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_productBuffer, (float) Prob[k], 0.0f, N*L);
+		TranslateBuffer<<<gridNL, threadsFull, 0, *stream>>>(dev_productBuffer, (float) Prob[k-1], 0.0f, N*L);
 
 		//sum product buffer into estimate coefficients buffer
 		SumBuffers<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, dev_productBuffer, N*L);
@@ -198,24 +198,26 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 	}
 
 	//replace all NaN values with zeros
-	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
+	//ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
 
 	//normalize estimate coefficients
 	for( int curl = 0; curl < L; curl++ ){
+		float sum = 0.0f;
 		CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, dev_outputGMM+curl*N, N);
-		for(int j = N / 2; j > NUMTHREADS; j = j/2){
+		for(int j = N / 2; 2*j > NUMTHREADS; j = j/2){
 			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
 			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
+			cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+			cudaStreamSynchronize(*stream);
 		}
 		SumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
-		float sum = 0.0f;
 		cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 		cudaStreamSynchronize(*stream);
-		//TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, 1.0f/sum, 0.0f, N);
+		TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_outputGMM+curl*N, 1.0f/sum, 0.0f, N);
 	}
 
 	//replace all NaN values with zeros
-	ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
+	//ReplaceNANs<<<gridNL, threadsFull, 0, *stream>>>(dev_outputGMM, 1.0f/(float)N, N*L);
 
 	//deallocate product buffer (size N*L) and probabilities
 	cudaFree( dev_productBuffer );
