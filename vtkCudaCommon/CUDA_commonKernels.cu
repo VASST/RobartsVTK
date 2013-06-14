@@ -92,6 +92,48 @@ __global__ void ReplaceNANs(float* buffer, float value, int size){
 	if(offset < size ) buffer[offset] = current;
 }
 
+template<class T> 
+__global__ void LogBuffer(T* buffer, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	float input = (float) buffer[offset];
+	T value = (T) log( input );
+	if(offset < size ) buffer[offset] = value;
+}
+template __global__ void LogBuffer<char> (char* buffer, int size);
+template __global__ void LogBuffer<signed char> (signed char* buffer, int size);
+template __global__ void LogBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void LogBuffer<short> (short* buffer, int size);
+template __global__ void LogBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void LogBuffer<int> (int* buffer, int size);
+template __global__ void LogBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void LogBuffer<long> (long* buffer, int size);
+template __global__ void LogBuffer<unsigned long> (unsigned long* buffer, int size);
+template __global__ void LogBuffer<float> (float* buffer, int size);
+template __global__ void LogBuffer<double> (double* buffer, int size);
+template __global__ void LogBuffer<long long> (long long* buffer, int size);
+template __global__ void LogBuffer<unsigned long long> (unsigned long long* buffer, int size);
+
+template<class T> 
+__global__ void NegLogBuffer(T* buffer, int size){
+	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	float input = (float) buffer[offset];
+	T value = (T) -log( input );
+	if(offset < size ) buffer[offset] = value;
+}
+template __global__ void NegLogBuffer<char> (char* buffer, int size);
+template __global__ void NegLogBuffer<signed char> (signed char* buffer, int size);
+template __global__ void NegLogBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void NegLogBuffer<short> (short* buffer, int size);
+template __global__ void NegLogBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void NegLogBuffer<int> (int* buffer, int size);
+template __global__ void NegLogBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void NegLogBuffer<long> (long* buffer, int size);
+template __global__ void NegLogBuffer<unsigned long> (unsigned long* buffer, int size);
+template __global__ void NegLogBuffer<float> (float* buffer, int size);
+template __global__ void NegLogBuffer<double> (double* buffer, int size);
+template __global__ void NegLogBuffer<long long> (long long* buffer, int size);
+template __global__ void NegLogBuffer<unsigned long long> (unsigned long long* buffer, int size);
+
 template<class T, class S>
 __global__ void IncrementBuffer(T* labelBuffer, T desiredLabel, S* agreement, int size){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;

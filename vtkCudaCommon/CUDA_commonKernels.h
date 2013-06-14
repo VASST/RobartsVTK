@@ -12,6 +12,8 @@ template<class T> __global__ void TranslateBuffer(T* buffer, T scale, T shift, i
 __global__ void ReplaceNANs(float* buffer, float value, int size);
 template<class T, class S> __global__ void IncrementBuffer(T* labelBuffer, T desiredLabel, S* agreement, int size);
 __global__ void SetBufferToRandom(float* buffer, float min, float max, int size);
+template<class T> __global__ void LogBuffer(T* buffer, int size);
+template<class T> __global__ void NegLogBuffer(T* buffer, int size);
 
 //---------------------------------------------------------------------------//
 //-------------------------COMMON BINARY OPERATORS---------------------------//
