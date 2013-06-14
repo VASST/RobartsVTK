@@ -181,6 +181,35 @@ __global__ void kern_PopulateHisto(float* histogramGPU, short* agreement, T* ima
 }
 
 template<class T>
+__global__ void kern_PopulateHisto2D(float* histogramGPU, short* agreement, T* image, short requiredAgreement, float imMin, float imMax, float sMin, float sMax, int imageSize){
+	__shared__ float histogram[NUMTHREADS];
+	int idx = threadIdx.x;
+	imMin -= (imMax-imMin)*0.00625;
+	imMax += (imMax-imMin)*0.00625;
+
+	histogram[idx] = 1e-10f;
+	__syncthreads();
+	int repetitions = (imageSize-1) / blockDim.x + 1;
+	int idxCurr = idx;
+	for(int i = 0; i < repetitions; i++, idxCurr += blockDim.x){
+		short localAgreement = agreement[idxCurr];
+		float localValue1 = (float) image[2*idxCurr];
+		float localValue2 = (float) image[2*idxCurr+1];
+		int histInPos = (int) ( (float) (NUMTHREADS-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
+		int histPos = idx;
+		bool useIt = (idxCurr < imageSize && localAgreement >= requiredAgreement && localValue2 >= sMin && localValue2 < sMax);
+		for(int h = 0; h < NUMTHREADS; h++){
+			__syncthreads();
+			histogram[histPos] += (useIt && histPos == histInPos) ? 1 : 0;
+			histPos += (histPos < NUMTHREADS-1) ? 1: -histPos;	
+		}
+	}
+	__syncthreads();
+	histogramGPU[idx] = histogram[idx];
+
+}
+
+template<class T>
 __global__ void kern_PopulateOutput(float* histogramGPU, float* output, T* image, float imMin, float imMax, int imageSize){
 	__shared__ float histogram[NUMTHREADS];
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -197,6 +226,29 @@ __global__ void kern_PopulateOutput(float* histogramGPU, float* output, T* image
 	if(idx < imageSize) output[idx] = histVal;
 
 }
+
+template<class T>
+__global__ void kern_PopulateOutput2D(float* histogramGPU, float* output, T* image, float imMin, float imMax, float sMin, float sMax, int imageSize){
+	__shared__ float histogram[NUMTHREADS];
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	imMin -= (imMax-imMin)*0.00625;
+	imMax += (imMax-imMin)*0.00625;
+	if( threadIdx.x < NUMTHREADS ) histogram[threadIdx.x] = histogramGPU[threadIdx.x];
+	__syncthreads();
+	
+	float localValue1 = (float) image[2*idxCurr];
+	float localValue2 = (float) image[2*idxCurr+1];
+	int histPos = (int) ( (float) (NUMTHREADS-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
+	bool useIt = (localValue2 >= sMin && localValue2 < sMax);
+	float histVal = (histPos < NUMTHREADS && histPos >= 0) ? histogram[histPos] : 1e-10f;
+	histVal = (histVal < 1e-10f) ? 1e-10f : histVal;
+	histVal = log(histVal) / log(1e-10f);
+	float oldHistVal = output[idx];
+	histVal = useIt ? histVal: oldHistVal;
+	if(idx < imageSize) output[idx] = histVal;
+
+}
+
 
 template< class T >
 void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramGPU, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream){
@@ -270,6 +322,128 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
 	kern_PopulateOutput<T><<<grid,threads,0,*stream>>>(histogramGPU, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, imageSize);
+
+	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );
+	
+	#ifdef DEBUG_VTKCUDA_ILLT
+		cudaThreadSynchronize();
+		printf( "CUDA_ILLT_CalculateTerms: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	cudaFree(GPUOutputBuffer);
+	cudaFree(GPUInputBuffer);
+	cudaFree(GPUWorkingBuffer);
+	cudaFree(histogramGPU);
+	cudaFree(agreement);
+	
+
+}
+
+template< class T >
+void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogramGPU, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream){
+	
+	T* GPUInputBuffer = 0;
+	float* GPUOutputBuffer = 0;
+	float* GPUWorkingBuffer = 0;
+	cudaMalloc((void**) &GPUInputBuffer, 2*sizeof(T)*imageSize);
+	cudaMalloc((void**) &GPUOutputBuffer, sizeof(float)*imageSize);
+	cudaMalloc((void**) &GPUWorkingBuffer, sizeof(float)*imageSize);
+	cudaMemcpyAsync( GPUInputBuffer, image, 2*sizeof(T)*imageSize, cudaMemcpyHostToDevice, *stream );
+
+	float2 imMax = {0.0f, 0.0f};
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	kern_PopulateWorkingUp<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
+	#ifdef DEBUG_VTKCUDA_ILLT
+		cudaThreadSynchronize();
+		printf( "CUDA_ILLT_CalculateMinMax: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
+		threads = dim3(NUMTHREADS,1,1);
+		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		kern_PropogateUp<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
+
+		
+		#ifdef DEBUG_VTKCUDA_ILLT
+			cudaThreadSynchronize();
+			printf( "CUDA_ILLT_CalculateMinMax: " );
+			printf( cudaGetErrorString( cudaGetLastError() ) );
+			printf( "\n" );
+		#endif
+	}
+	cudaMemcpyAsync( &imMax, GPUWorkingBuffer, sizeof(float2), cudaMemcpyDeviceToHost, *stream );
+	cudaThreadSynchronize();
+
+	float2 imMin = {0.0f, 0.0f};
+	threads = dim3(NUMTHREADS,1,1);
+	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
+	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
+		threads = dim3(NUMTHREADS,1,1);
+		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		kern_PropogateDown<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
+
+		
+		#ifdef DEBUG_VTKCUDA_ILLT
+			cudaThreadSynchronize();
+			printf( "CUDA_ILLT_CalculateMinMax: " );
+			printf( cudaGetErrorString( cudaGetLastError() ) );
+			printf( "\n" );
+		#endif
+	}
+	cudaMemcpyAsync( &imMin, GPUWorkingBuffer, sizeof(float2), cudaMemcpyDeviceToHost, *stream );
+	cudaThreadSynchronize();
+	
+	//populate unnormalized histogram
+	threads = dim3(NUMTHREADS,1,1);
+	grid = dim3( 1, 1, 1);
+	for(int comp = 0; comp < NUMTHREADS; comp++){
+		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
+		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;
+		kern_PopulateHisto2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, agreement, GPUInputBuffer, requiredAgreement, imMax.x, imMin.x, secondMin, secondMax, imageSize);
+	}
+	
+	#ifdef DEBUG_VTKCUDA_ILLT
+		cudaThreadSynchronize();
+		printf( "CUDA_ILLT_PopulateHistogram: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+
+	//normalize histogram
+	threads = dim3(NUMTHREADS,1,1);
+	grid = dim3( NUMTHREADS, 1, 1);
+	float* dev_workingBuffer = 0;
+	cudaMalloc( &dev_workingBuffer, NUMTHREADS*NUMTHREADS*sizeof(float) );
+	CopyBuffers<<<grid, threads, 0, *stream>>>(dev_workingBuffer, histogramGPU, NUMTHREADS*NUMTHREADS);
+	float sum = 1.0f;
+	for(int j = NUMTHREADS*NUMTHREADS / 2; j >= NUMTHREADS; j = j/2){
+		dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
+		SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(dev_workingBuffer,j,NUMTHREADS*NUMTHREADS);
+	}
+	SumData( NUMTHREADS, NUMTHREADS, 1, dev_workingBuffer, stream );
+	cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
+	cudaStreamSynchronize(*stream);
+	cudaFree(dev_workingBuffer);
+	TranslateBuffer<<<grid,threads,0,*stream>>>(histogramGPU, 1.0f/sum, 0.0f, NUMTHREADS*NUMTHREADS);
+	
+	#ifdef DEBUG_VTKCUDA_ILLT
+		cudaThreadSynchronize();
+		printf( "CUDA_ILLT_NormalizeHistogram: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+	
+	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	for(int comp = 0; comp < NUMTHREADS; comp++){
+		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
+		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;
+		kern_PopulateOutput2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, secondMin, secondMax, imageSize);
+	}
 
 	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );
 	

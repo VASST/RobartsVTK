@@ -15,5 +15,8 @@ void CUDA_ILLT_ReturnBuffer(float* buffer);
 template< class T >
 void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramGPU, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream);
 
+template< class T >
+void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogramGPU, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream);
+
 
 #endif //__CUDA_ATLASPROBABILITY_H__
