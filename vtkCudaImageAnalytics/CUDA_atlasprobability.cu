@@ -74,7 +74,13 @@ void CUDA_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cudaStrea
 	#endif
 }
 
-__global__ void kern_LogBuffer(short* agreement, float* output, float maxOut, int size, short max){
+__global__ void kern_ConvertBuffer(short* agreement, float* output, int size ){
+	int idx = CUDASTDOFFSET;
+	float locAgreement = (float) agreement[idx];
+	if( idx < size ) output[idx] = locAgreement;
+}
+
+__global__ void kern_LogBuffer(float* agreement, float* output, float maxOut, int size, short max){
 	int idx = CUDASTDOFFSET;
 	float locAgreement = (float) agreement[idx];
 	float logValue = (locAgreement > 0.0f) ? log((float)max)-log(locAgreement): maxOut;
@@ -83,7 +89,7 @@ __global__ void kern_LogBuffer(short* agreement, float* output, float maxOut, in
 	if( idx < size ) output[idx] = logValue;
 }
 
-__global__ void kern_NormLogBuffer(short* agreement, float* output, float maxOut, int size, short max){
+__global__ void kern_NormLogBuffer(float* agreement, float* output, float maxOut, int size, short max){
 	int idx = CUDASTDOFFSET;
 	float locAgreement = (float) agreement[idx];
 	float logValue = (locAgreement > 0.0f) ? log((float)max)-log(locAgreement): maxOut;
@@ -92,26 +98,59 @@ __global__ void kern_NormLogBuffer(short* agreement, float* output, float maxOut
 	if( idx < size ) output[idx] = logValue;
 }
 
-__global__ void kern_ProbBuffer(short* agreement, float* output, int size, short max){
+__global__ void kern_ProbBuffer(float* agreement, float* output, int size, short max){
 	int idx = CUDASTDOFFSET;
-	short locAgreement = agreement[idx];
+	float locAgreement = agreement[idx];
 	float probValue = (float) locAgreement / (float) max;
 	probValue = (probValue < 1.0f) ? probValue: 1.0f;
 	if( idx < size ) output[idx] = probValue;
 }
 
-void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int size, short max, short flags, cudaStream_t* stream){
+__global__ void kern_BlurBuffer(float* agreement, float* output, int size, int spread, int dim){
+	int idx = CUDASTDOFFSET;
+	int x = (idx / spread) % dim;
+	float curr = 0.7865707f * agreement[idx];
+	float down = 0.1064508f * agreement[idx-spread];
+	float up   = 0.1064508f * agreement[idx+spread];
+	float newVal = curr + (x > 0 ? down : 0.0f) + (x < dim-1 ? up : 0.0f);
+	if( idx < size ) output[idx] = newVal;
+}
+
+void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int size, short max, short flags, int gaussWidth[], int imageDims[], cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
+	
+	//Gaussian smooth results
+	float* floatAgreement = 0;
+	cudaMalloc( &floatAgreement, sizeof(float)*NUMTHREADS );
+	kern_ConvertBuffer<<<grid,threads,0,*stream>>>(agreement, floatAgreement, size);
+	if( flags & 3 ){
+		while( gaussWidth[0] > 0 && gaussWidth[1] > 0 && gaussWidth[2] > 0 ){
+			if( gaussWidth[0] > 0 ){
+				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, 1, imageDims[0] );
+				gaussWidth[0]--;
+			}
+			if( gaussWidth[1] > 0 ){
+				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, imageDims[0], imageDims[1] );
+				gaussWidth[1]--;
+			}
+			if( gaussWidth[2] > 0 ){
+				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, imageDims[0]*imageDims[1], imageDims[2] );
+				gaussWidth[2]--;
+			}
+		}
+	}
+
 	if( flags & 1 )
 		if( flags & 2)
-			kern_NormLogBuffer<<<grid,threads,0,*stream>>>(agreement, output, maxOut, size, max);
+			kern_NormLogBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, maxOut, size, max);
 		else
-			kern_LogBuffer<<<grid,threads,0,*stream>>>(agreement, output, maxOut, size, max);
+			kern_LogBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, maxOut, size, max);
 	else
-		kern_ProbBuffer<<<grid,threads,0,*stream>>>(agreement, output, size, max);
+		kern_ProbBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, size, max);
 
 	cudaFree(agreement);
+	cudaFree(floatAgreement);
 
 	#ifdef DEBUG_VTKCUDA_IALP
 		cudaThreadSynchronize();

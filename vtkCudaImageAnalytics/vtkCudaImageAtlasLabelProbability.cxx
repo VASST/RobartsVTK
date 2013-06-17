@@ -19,12 +19,39 @@ vtkCudaImageAtlasLabelProbability::vtkCudaImageAtlasLabelProbability()
     this->NormalizeDataTerm = 0;
     this->LabelID = 1.0;
 	this->Entropy = false;
+	this->GaussianBlurOn = false;
     this->SetNumberOfInputPorts(1);
 	this->MaxValueToGive = 100.0;
+	this->GaussianDevs[0] = this->GaussianDevs[1] = this->GaussianDevs[2] = 1.0f;
 }
 
 vtkCudaImageAtlasLabelProbability::~vtkCudaImageAtlasLabelProbability(){
 
+}
+
+//----------------------------------------------------------------------------
+void vtkCudaImageAtlasLabelProbability::SetStDevX(double val){
+	this->GaussianDevs[0] = (val > 0.0f ? val: 0.0f);
+}
+
+void vtkCudaImageAtlasLabelProbability::SetStDevY(double val){
+	this->GaussianDevs[1] = (val > 0.0f ? val: 0.0f);
+}
+
+void vtkCudaImageAtlasLabelProbability::SetStDevZ(double val){
+	this->GaussianDevs[2] = (val > 0.0f ? val: 0.0f);
+}
+
+double vtkCudaImageAtlasLabelProbability::GetStDevX(){
+	return this->GaussianDevs[0];
+}
+
+double vtkCudaImageAtlasLabelProbability::GetStDevY(){
+	return this->GaussianDevs[1];
+}
+
+double vtkCudaImageAtlasLabelProbability::GetStDevZ(){
+	return this->GaussianDevs[2];
 }
 
 //----------------------------------------------------------------------------
@@ -149,8 +176,10 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
 	//finish the results
 	short flags = this->Entropy ? 1 : 0;
 	flags += this->NormalizeDataTerm ? 2 : 0;
+	flags += this->GaussianBlurOn ? 4 : 0;
+	int GaussWidth[3] = {this->GaussianDevs[0]*this->GaussianDevs[0] * 4.0, this->GaussianDevs[1]*this->GaussianDevs[1] * 4.0, this->GaussianDevs[2]*this->GaussianDevs[2] * 4.0 };
 	this->ReserveGPU();
-	CUDA_ConvertInformation(agreementGPU, outputGPU, this->MaxValueToGive, VolumeSize, Number, flags, this->GetStream() );
+	CUDA_ConvertInformation(agreementGPU, outputGPU, this->MaxValueToGive, VolumeSize, Number, flags, GaussWidth, outData->GetDimensions(), this->GetStream() );
 	CUDA_CopyBackResult(outputGPU, (float*) outData->GetScalarPointer(), VolumeSize, this->GetStream() );
 
 	//deallocate memory

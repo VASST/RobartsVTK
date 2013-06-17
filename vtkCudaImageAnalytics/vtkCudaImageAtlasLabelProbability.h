@@ -42,9 +42,19 @@ public:
   vtkGetMacro(Entropy,bool);
   void SetOutputToEntropy(){ this->SetEntropy(true); }
   void SetOutputToProbability(){ this->SetEntropy(false); }
+  
+  vtkSetMacro(GaussianBlurOn,bool);
+  vtkGetMacro(GaussianBlurOn,bool);
 
   vtkSetClampMacro(MaxValueToGive,double,0.0,DBL_MAX);
   vtkGetMacro(MaxValueToGive,double);
+  
+  void SetStDevX(double val);
+  void SetStDevY(double val);
+  void SetStDevZ(double val);
+  double GetStDevX();
+  double GetStDevY();
+  double GetStDevZ();
 
 protected:
   vtkCudaImageAtlasLabelProbability();
@@ -58,6 +68,9 @@ protected:
   bool Entropy;
   int NumberOfLabelMaps;
   double MaxValueToGive;
+
+  bool GaussianBlurOn;
+  double GaussianDevs[3];
 
   virtual int RequestInformation (vtkInformation *,
                                     vtkInformationVector **,
