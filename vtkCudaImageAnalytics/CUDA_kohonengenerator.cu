@@ -15,7 +15,7 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	if(threadIdx.x < MAX_DIMENSIONALITY){
 		SamplePointLocal[threadIdx.x] = SamplePoint[threadIdx.x];
 	}
@@ -42,7 +42,7 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 
 __global__ void DoubleMapSizeInX( float* KohonenMap, float* tempStore, int currMapSizeX, int currMapSizeY ){
 
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 
 	//double size in X direction
 	int bufferSize = currMapSizeX * currMapSizeY;
@@ -58,7 +58,7 @@ __global__ void DoubleMapSizeInX( float* KohonenMap, float* tempStore, int currM
 }
 
 __global__ void DoubleMapSizeInY( float* KohonenMap, float* tempStore, int currMapSizeX, int currMapSizeY ){
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	int bufferSize = currMapSizeX * currMapSizeY;
 	
 	//double size in Y direction
@@ -172,7 +172,7 @@ __global__ void reduce6(float *g_idata, float *g_odata, short2 * i_idata, short2
 
 __global__ void FindMinSample( float* DistanceBuffer, short2* IndexBuffer, int spread, int mapSizeX, int mapSizeY ){
 	
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	float distance1 = DistanceBuffer[kOffset];
 	float distance2 = DistanceBuffer[kOffset+spread];
 	short2 index1 = IndexBuffer[kOffset];
@@ -190,7 +190,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float mAlpha,
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	short2 currIndex = {kOffset % mapSizeX, kOffset / mapSizeX };
 	if(threadIdx.x < MAX_DIMENSIONALITY)
 		SamplePointLocal[threadIdx.x] = SamplePoint[threadIdx.x];

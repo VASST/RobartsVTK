@@ -1,10 +1,9 @@
 #include "CUDA_imagevote.h"
-
-#define NUMTHREADS 512
+#include "CUDA_commonKernels.h"
 
 template<typename IT, typename OT>
 __global__ void CUDA_CIV_kernMinWithMap(IT* inputBuffer, IT* currentMax, OT* outputBuffer, OT newMapVal, int size){
-	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	int idx = CUDASTDOFFSET;
 
 	IT inputValue = inputBuffer[idx];
 	IT previValue = currentMax[idx];
@@ -206,7 +205,7 @@ template<typename IT, typename OT>
 void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* map, int size, cudaStream_t* stream){
 	
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS+1, 1, 1);
+	dim3 grid = GetGrid(size);
 
 	//allocate GPU output buffer and maximum value buffer
 	IT* gpuMaxBuffer = 0;

@@ -1,36 +1,35 @@
 #include "CUDA_kohonenreprojector.h"
+#include "CUDA_commonKernels.h"
 #include <float.h>
 
 __constant__ Kohonen_Reprojection_Information info;
 texture<float, 3, cudaReadModeElementType> Kohonen_Map;
 
-#define NUM_THREADS 256
-
 __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
 
 	//shared memory
-	__shared__ float2 InputIndices[NUM_THREADS];
+	__shared__ float2 InputIndices[NUMTHREADS];
 
 	//get volume and output dimensions
 	int outBufferSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2]*info.NumberOfDimensions;
 
 	//find index in current block
-	int individualInputIndex = blockIdx.x*NUM_THREADS + threadIdx.x;
+	int individualInputIndex = CUDASTDOFFSET;
 
 	//fetch indexing information from input buffer into shared memory
 	InputIndices[threadIdx.x] = InputBuffer[individualInputIndex];
 	__syncthreads();
 
 	//find the starting ouput index coallesced for output
-	int individualOutputIndex = blockIdx.x*NUM_THREADS*info.NumberOfDimensions + threadIdx.x;
+	int individualOutputIndex = threadIdx.x + NUMTHREADS * blockDim.x * (blockIdx.x + gridDim.x * (blockIdx.y + gridDim.y * blockIdx.z));
 
 	//for each component
 	for( int i = 0; i < info.NumberOfDimensions; i++ ){
 
 		//fetch input index from shared memory
-		int currInputIndex = (i*NUM_THREADS + threadIdx.x) / info.NumberOfDimensions;
+		int currInputIndex = (i*NUMTHREADS + threadIdx.x) / info.NumberOfDimensions;
 		float2 currLoc = InputIndices[currInputIndex];
-		int currComponent = 2*((i*NUM_THREADS + threadIdx.x) % info.NumberOfDimensions);
+		int currComponent = 2*((i*NUMTHREADS + threadIdx.x) % info.NumberOfDimensions);
 
 		//fetch information from texture
 		float reprojValue = tex3D(Kohonen_Map, (float) currComponent, currLoc.x, currLoc.y);
@@ -40,7 +39,7 @@ __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
 			OutputBuffer[individualOutputIndex] = reprojValue;
 
 		//find new output index for next iteration, coallesced for output
-		individualOutputIndex += NUM_THREADS;
+		individualOutputIndex += NUMTHREADS;
 
 	}
 }
@@ -86,8 +85,8 @@ void CUDAalgo_reprojectKohonenMap( float* inputData, float* inputKohonen, float*
 	cudaBindTextureToArray(Kohonen_Map, dev_KSOM, channelDesc);
 
 	//translate input indices
-	dim3 grid((information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2] + NUM_THREADS-1) / NUM_THREADS,1,1);
-	dim3 threads(NUM_THREADS,1,1);
+	dim3 grid = GetGrid(information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]);
+	dim3 threads(NUMTHREADS,1,1);
 	cudaThreadSynchronize();
 	ApplyReprojection<<<grid, threads, 0, *stream >>>(dev_InputImage, dev_OutputImage);
 	cudaThreadSynchronize();

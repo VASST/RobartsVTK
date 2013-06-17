@@ -3,8 +3,6 @@
 #include "stdio.h"
 #include "cuda.h"
 
-#define NUMTHREADS 512
-
 //#define DEBUG_VTKCUDAHMF
 
 void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired ){
@@ -62,7 +60,7 @@ void CUDA_CopyBufferToGPU(float* GPUBuffer, float* CPUBuffer, int size, cudaStre
 
 void CUDA_zeroOutBuffer(float* GPUBuffer, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	ZeroOutBuffer<<<grid,threads,0,*stream>>>(GPUBuffer,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
@@ -74,7 +72,7 @@ void CUDA_zeroOutBuffer(float* GPUBuffer, int size, cudaStream_t* stream){
 
 void CUDA_SetBufferToValue(float* GPUBuffer, float value, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	SetBufferToConst<<<grid,threads,0,*stream>>>(GPUBuffer,value,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
@@ -86,7 +84,7 @@ void CUDA_SetBufferToValue(float* GPUBuffer, float value, int size, cudaStream_t
 
 void CUDA_divideAndStoreBuffer(float* inBuffer, float* outBuffer, float number, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	MultiplyAndStoreBuffer<<<grid,threads,0,*stream>>>(inBuffer,outBuffer,1.0f/number,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
@@ -97,14 +95,14 @@ void CUDA_divideAndStoreBuffer(float* inBuffer, float* outBuffer, float number, 
 }
 
 __global__ void kern_FindSinkPotentialAndStore(float* workingBuffer, float* incBuffer, float* divBuffer, float* labelBuffer, float iCC, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = workingBuffer[idx] + incBuffer[idx] - divBuffer[idx] + labelBuffer[idx] * iCC;
 	if( idx < size ) workingBuffer[idx] = value;
 }
 
 void CUDA_storeSinkFlowInBuffer(float* workingBuffer, float* incBuffer, float* divBuffer, float* labelBuffer, float CC, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	kern_FindSinkPotentialAndStore<<<grid,threads,0,*stream>>>(workingBuffer,incBuffer,divBuffer,labelBuffer,1.0f/CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
@@ -115,7 +113,7 @@ void CUDA_storeSinkFlowInBuffer(float* workingBuffer, float* incBuffer, float* d
 }
 
 __global__ void kern_FindSourcePotentialAndStore(float* workingBuffer, float* sinkBuffer, float* divBuffer, float* labelBuffer, float iCC, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = workingBuffer[idx] + sinkBuffer[idx] + divBuffer[idx] - labelBuffer[idx] * iCC;
 	if( idx < size ) workingBuffer[idx] = value;
 }
@@ -133,7 +131,7 @@ void CUDA_storeSourceFlowInBuffer(float* workingBuffer, float* sinkBuffer, float
 }
 
 __global__ void kern_FindLeafSinkPotential(float* sinkBuffer, float* incBuffer, float* divBuffer, float* labelBuffer, float iCC, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = incBuffer[idx] - divBuffer[idx] + labelBuffer[idx] * iCC;
 	if( idx < size ) sinkBuffer[idx] = value;
 }
@@ -151,7 +149,7 @@ void CUDA_updateLeafSinkFlow(float* sinkBuffer, float* incBuffer, float* divBuff
 }
 
 __global__ void kern_ApplyCapacity(float* sinkBuffer, float* capBuffer, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = sinkBuffer[idx];
 	float cap = capBuffer[idx];
 	value = (value < 0.0f) ? 0.0f: value;
@@ -172,7 +170,7 @@ void CUDA_constrainLeafSinkFlow(float* sinkBuffer, float* capBuffer, int size, c
 }
 
 __global__ void kern_UpdateLabel(float* sinkBuffer, float* incBuffer, float* divBuffer, float* labelBuffer, float CC, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = labelBuffer[idx] + CC*(incBuffer[idx] - divBuffer[idx] - sinkBuffer[idx]);
 	value = saturate(value);
 	if( idx < size ) labelBuffer[idx] = value;
@@ -191,7 +189,7 @@ void CUDA_updateLabel(float* sinkBuffer, float* incBuffer, float* divBuffer, flo
 }
 
 __global__ void kern_CalcGradStep(float* sinkBuffer, float* incBuffer, float* divBuffer, float* labelBuffer, float stepSize, float iCC, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = stepSize*(sinkBuffer[idx] + divBuffer[idx] - incBuffer[idx] - labelBuffer[idx] * iCC);
 	if( idx < size ) divBuffer[idx] = value;
 }
@@ -210,7 +208,7 @@ void CUDA_flowGradientStep(float* sinkBuffer, float* incBuffer, float* divBuffer
 
 __global__ void kern_DescentSpatialFlow(float* allowed, float* flowX, float* flowY, float* flowZ, const int2 dims, const int size){
 	
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int3 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
@@ -248,7 +246,7 @@ void CUDA_applyStep(float* divBuffer, float* flowX, float* flowY, float* flowZ, 
 
 __global__ void kern_ComputeFlowMagVariSmooth(float* amount, float* flowX, float* flowY, float* flowZ, float* smooth, const float alpha, const int2 dims, const int size){
 	
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int2 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
@@ -283,7 +281,7 @@ __global__ void kern_ComputeFlowMagVariSmooth(float* amount, float* flowX, float
 
 __global__ void kern_ComputeFlowMagConstSmooth(float* amount, float* flowX, float* flowY, float* flowZ, const float alpha, const int2 dims, const int size){
 	
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int2 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
@@ -331,7 +329,7 @@ void CUDA_computeFlowMag(float* divBuffer, float* flowX, float* flowY, float* fl
 
 __global__ void kern_Project(float* div, float* flowX, float* flowY, float* flowZ, const int2 dims, const int size){
 		
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int3 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
@@ -356,7 +354,7 @@ __global__ void kern_Project(float* div, float* flowX, float* flowY, float* flow
 
 __global__ void kern_Divergence(float* div, float* flowX, float* flowY, float* flowZ, const int2 dims, const int size){
 		
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int3 idxN;
 	idxN.y = idx / dims.x;
 	idxN.x = idx % dims.x;
@@ -390,7 +388,7 @@ void CUDA_projectOntoSet(float* divBuffer, float* flowX, float* flowY, float* fl
 }
 
 __global__ void kern_Copy(float* dst, float* src, const int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value = src[idx];
 	if( idx < size ) dst[idx] = value;
 }
@@ -410,7 +408,7 @@ void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 }
 
 __global__ void kern_Min(float* dst, float* src, const int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value1 = src[idx];
 	float value2 = dst[idx];
 	float minVal = (value1 < value2) ? value1 : value2;
@@ -432,7 +430,7 @@ void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 }
 
 __global__ void kern_Lbl(float* lbl, float* flo, float* cap, const int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value1 = cap[idx];
 	float value2 = flo[idx];
 	float minVal =  (value2 == value1) ? 1.0f : 0.0f;
@@ -452,7 +450,7 @@ void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* 
 }
 
 __global__ void kern_Sum(float* dst, float* src, const int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value1 = src[idx];
 	float value2 = dst[idx];
 	float minVal =  value1 + value2;
@@ -473,7 +471,7 @@ void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 }
 
 __global__ void kern_Div(float* dst, float* src, const int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float value1 = src[idx];
 	float value2 = dst[idx];
 	float minVal =  value2 / value1;

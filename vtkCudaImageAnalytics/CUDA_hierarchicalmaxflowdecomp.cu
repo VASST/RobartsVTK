@@ -3,11 +3,10 @@
 #include "stdio.h"
 #include "cuda.h"
 
-#define NUMTHREADS 512
 //#define DEBUG_VTKCUDAHMFD
 
 __global__ void kern_GHMFD_GradientBuffer(float* buffer, float* gradBuffer, int3 dims, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	int3 idxN = { idx % dims.x, (idx / dims.x) % dims.y, idx / (dims.x*dims.y) };
 	
 	float gradMagSquared = 0.0f;
@@ -37,7 +36,7 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
 
 	//multiply buffers
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	MultiplyBuffers<<<grid,threads,0,*stream>>>(devDataTermBuffer, devLabelBuffer, size);
 
 	//reduce buffer by summation
@@ -83,7 +82,7 @@ double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x,
 
 	//find gradient
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	int3 dims = {x,y,z};
 	kern_GHMFD_GradientBuffer<<<grid,threads,0,*stream>>>(devLabelBuffer, devGradBuffer, dims, size);
 
@@ -128,7 +127,7 @@ double CUDA_GHMFD_LeafNoSmoothnessForLabel(float* label, int x, int y, int z, in
 	
 	//find gradient
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	int3 dims = {x,y,z};
 	kern_GHMFD_GradientBuffer<<<grid,threads,0,*stream>>>(devLabelBuffer, devGradBuffer, dims, size);
 
@@ -170,7 +169,7 @@ double CUDA_GHMFD_BranchSmoothnessForLabel(float* smoothness, float* devLabelBuf
 
 	//find gradient
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	int3 dims = {x,y,z};
 	kern_GHMFD_GradientBuffer<<<grid,threads,0,*stream>>>(devLabelBuffer, devGradBuffer, dims, size);
 
@@ -211,7 +210,7 @@ double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y
 	
 	//find gradient
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	int3 dims = {x,y,z};
 	kern_GHMFD_GradientBuffer<<<grid,threads,0,*stream>>>(devLabelBuffer, devGradBuffer, dims, size);
 
@@ -243,7 +242,7 @@ double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y
 
 float* CUDA_GHMFD_GetBuffer(int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	float* buffer = 0;
 	cudaMalloc(&buffer,size*sizeof(float));
 	ZeroOutBuffer<<<grid,threads,0,*stream>>>(buffer, size);

@@ -1,18 +1,17 @@
 #include "CUDA_kohonenapplication.h"
+#include "CUDA_commonKernels.h"
 #include <float.h>
 #include <stdio.h>
 
 __constant__ Kohonen_Application_Information info;
 texture<float, 3, cudaReadModeElementType> Kohonen_Map;
 
-#define NUM_THREADS 512
-
 __global__ void ProcessSample(int samplePointLoc, float* InputData, float* KohonenMap, float* DistanceBuffer, float* WeightBuffer, float2* IndexBuffer, float2* WeightedIndexBuffer){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	if(threadIdx.x < MAX_DIMENSIONALITY){
 		SamplePointLocal[threadIdx.x] = InputData[info.NumberOfDimensions*samplePointLoc+threadIdx.x];
 	}
@@ -48,7 +47,7 @@ __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Kohon
 __global__ void ReduceSample( float* DistanceBuffer, float* WeightBuffer, float2* IndexBuffer, float2* WeightedIndexBuffer, int spread ){
 	
 	//collect samples
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	float distance1 = DistanceBuffer[kOffset];
 	float distance2 = DistanceBuffer[kOffset+spread];
 	float weight1 = WeightBuffer[kOffset];
@@ -296,8 +295,8 @@ void CUDAalgo_applyKohonenMap( float* inputData, char* inputMask, float* inputKo
 	//delete[] inputTransposed;
 	
 	//apply the map
-	dim3 grid((information.KohonenMapSize[0]*information.KohonenMapSize[1] - 1) / NUM_THREADS + 1,1,1);
-	dim3 threads(NUM_THREADS,1,1);
+	dim3 grid = GetGrid(information.KohonenMapSize[0]*information.KohonenMapSize[1]);
+	dim3 threads(NUMTHREADS,1,1);
 	for( int voxel = 0; voxel < information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2]; voxel++ ){
 		
 		//if we are not in the mask, ignore this voxel
@@ -311,11 +310,11 @@ void CUDAalgo_applyKohonenMap( float* inputData, char* inputMask, float* inputKo
 		ProcessSample<<<grid, threads, 0, *stream>>>(voxel, device_InputData, device_KohonenMap, device_DistanceBufferMin, device_DistanceBufferTot, device_IndexBufferMin, device_IndexBufferTot );
 
 		//summarize into a few key elements
-		for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i > NUM_THREADS; i = i/2){
-			dim3 tempGrid( i>NUM_THREADS ? i/NUM_THREADS : 1, 1, 1);
+		for(int i = information.KohonenMapSize[0]*information.KohonenMapSize[1] / 2; i >= NUMTHREADS; i = i/2){
+			dim3 tempGrid = GetGrid(i);
 			ReduceSample<<<tempGrid, threads, 0, *stream>>>(device_DistanceBufferMin, device_DistanceBufferTot, device_IndexBufferMin, device_IndexBufferTot, i );
 		}
-		reduceData( min(NUM_THREADS,information.KohonenMapSize[0]*information.KohonenMapSize[1]), min(NUM_THREADS,information.KohonenMapSize[0]*information.KohonenMapSize[1]), 1,
+		reduceData( min(NUMTHREADS,information.KohonenMapSize[0]*information.KohonenMapSize[1]), min(NUMTHREADS,information.KohonenMapSize[0]*information.KohonenMapSize[1]), 1,
 					device_DistanceBufferMin, device_DistanceBufferTot, device_IndexBufferMin, device_IndexBufferTot, device_reducedOutput, stream );
 					
 		//copy results back

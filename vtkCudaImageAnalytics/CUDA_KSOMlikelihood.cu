@@ -6,14 +6,12 @@
 
 __constant__ KSOMLL_Information info;
 
-#define NUMTHREADS 512
-
 __global__ void KSOMLL_ProcessSample(int samplePointLoc, float* InputData, float* Map, float* OutputBuffer, float scale){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	if(threadIdx.x < MAX_DIMENSIONALITY)
 		SamplePointLocal[threadIdx.x] = InputData[info.NumberOfDimensions*samplePointLoc+threadIdx.x];
 	__syncthreads();
@@ -70,8 +68,8 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 	cudaMalloc((void**)&dev_outputGMM, sizeof(float)*N*L);
 
 	//preallocate grid and thread sizes for N, and N*L
-	dim3 gridN((N-1)/NUMTHREADS+1, 1, 1);
-	dim3 gridNL((N*L-1)/NUMTHREADS+1, 1, 1);
+	dim3 gridN = GetGrid(N);
+	dim3 gridNL = GetGrid(N*L);
 	dim3 threadsFull(NUMTHREADS, 1, 1);
 
 	
@@ -112,7 +110,7 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 		cudaMemcpyAsync( &(hostSummationBuffer[x]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 		cudaStreamSynchronize(*stream);
 		for(int j = N / 2; j >= NUMTHREADS; j = j/2){
-			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
+			dim3 tempGrid = GetGrid(j);
 			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
 			cudaMemcpyAsync( &(hostSummationBuffer[x]), dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
@@ -145,8 +143,6 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 		//find seed number
 		char seedNumber = seededImage[x] - 1;
 		if( seedNumber < 0 ) continue;
-
-		float K = (double) N * (double) NumberOfSeeds[seedNumber] / (double) TotalNumberOfSeeds;
 
 		//find GMM activation and place in working buffers
 		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);

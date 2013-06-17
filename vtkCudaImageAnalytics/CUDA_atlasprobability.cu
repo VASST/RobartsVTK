@@ -3,8 +3,6 @@
 #include "stdio.h"
 #include "cuda.h"
 
-#define NUMTHREADS 512
-
 //#define DEBUG_VTKCUDA_IALP
 
 template void CUDA_IncrementInformation<float>(float* labelData, float desiredValue, short* agreement, int size, cudaStream_t* stream);
@@ -36,7 +34,7 @@ void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, i
 	#endif
 
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
 	cudaFree(GPUBuffer);
 
@@ -77,7 +75,7 @@ void CUDA_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cudaStrea
 }
 
 __global__ void kern_LogBuffer(short* agreement, float* output, float maxOut, int size, short max){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float locAgreement = (float) agreement[idx];
 	float logValue = (locAgreement > 0.0f) ? log((float)max)-log(locAgreement): maxOut;
 	logValue = (logValue > 0.0f) ? logValue : 0.0f;
@@ -86,7 +84,7 @@ __global__ void kern_LogBuffer(short* agreement, float* output, float maxOut, in
 }
 
 __global__ void kern_NormLogBuffer(short* agreement, float* output, float maxOut, int size, short max){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float locAgreement = (float) agreement[idx];
 	float logValue = (locAgreement > 0.0f) ? log((float)max)-log(locAgreement): maxOut;
 	logValue = (logValue > 0.0f) ? logValue : 0.0f;
@@ -95,7 +93,7 @@ __global__ void kern_NormLogBuffer(short* agreement, float* output, float maxOut
 }
 
 __global__ void kern_ProbBuffer(short* agreement, float* output, int size, short max){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	short locAgreement = agreement[idx];
 	float probValue = (float) locAgreement / (float) max;
 	probValue = (probValue < 1.0f) ? probValue: 1.0f;

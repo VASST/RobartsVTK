@@ -1,13 +1,11 @@
 #include "CUDA_voxelclassifier.h"
+#include "CUDA_commonKernels.h"
 #include <float.h>
 #include <stdio.h>
 
 __constant__ Voxel_Classifier_Information info;
 texture<short, 2, cudaReadModeElementType> ClassifyPrimaryTexture;
 texture<short, 2, cudaReadModeElementType> ClassifyKeyholeTexture;
-
-#define NUM_THREADS 512
-#define MAX_GRID_SIZE 65535
 
 cudaChannelFormatDesc Voxel_Classifier_ChannelDesc = cudaCreateChannelDesc<short>();
 
@@ -41,7 +39,7 @@ __device__ bool WithinPlanes(const float* ConstantPlanes, const int NumPlanes, c
 
 __global__ void ClassifyVolume( const float2* inputVolume, short* outputVolume ){
 	//get the index of the thread in the volume
-	int inIndex = threadIdx.x + NUM_THREADS * (blockIdx.x + gridDim.x*(blockIdx.y + gridDim.y*blockIdx.z));
+	int inIndex = CUDASTDOFFSET;
 	int3 index;
 	index.x = inIndex % info.VolumeSize[0];
 	index.z = inIndex / info.VolumeSize[0];
@@ -112,10 +110,8 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
 	cudaMalloc( (void**) &dev_OutputData, sizeof(short)*VolumeSize );
 	
 	//classify the volume
-	dim3 grid( (VolumeSize-1) / NUM_THREADS+1,1,1);
-	if( grid.x > MAX_GRID_SIZE ) grid.y = grid.x = (int) sqrt((double)VolumeSize/(double)NUM_THREADS) + 1;
-	if( grid.y > MAX_GRID_SIZE ){ grid.y = grid.x = MAX_GRID_SIZE; grid.z = (VolumeSize/NUM_THREADS-1)/(grid.x*grid.y)+1; }
-	dim3 threads(NUM_THREADS,1,1);
+	dim3 grid = GetGrid( VolumeSize );
+	dim3 threads(NUMTHREADS,1,1);
 	ClassifyVolume<<< grid, threads, 0, *stream >>>((float2*)dev_InputData, dev_OutputData);
 	
 	cudaThreadSynchronize();

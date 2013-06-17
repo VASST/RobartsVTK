@@ -1,6 +1,5 @@
 #include "CUDA_fuzzyconnectednessfilter.h"
-
-#define BLOCK_SIZE 256
+#include "CUDA_commonKernels.h"
 
 #define MAX(a,b) ( a > b ? a : b )
 #define MIN(a,b) ( a <= b ? a : b )
@@ -11,7 +10,7 @@ __constant__ Fuzzy_Connectedness_Information info;
 
 __global__ void updateConnectedness(float* connectedness, float* seed, float3* affinity){
 
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int idx = CUDASTDOFFSET;
 	int4 iN;
 	iN.x = info.VolumeSize.x;
 	iN.y = info.VolumeSize.y;
@@ -84,9 +83,8 @@ void CUDAalgo_calculateConnectedness( float* connectedness, float* seed, float* 
 	cudaMemcpyAsync( (void*) dev_connectedness, (void*) dev_seededness, sizeof(float)*information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects, cudaMemcpyDeviceToDevice, *stream );
 
 	//calculate connectedness
-	dim3 threads(BLOCK_SIZE);
-	int smallSize = information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects;
-	dim3 grid( smallSize/threads.x +( (smallSize % threads.x == 0) ? 0:1) );
+	dim3 threads(NUMTHREADS);
+	dim3 grid = GetGrid(information.VolumeSize.x*information.VolumeSize.y*information.VolumeSize.z*information.NumObjects);
 	for(int i = 0; i < numIterations; i++){
 		updateConnectedness<<< grid, threads, 0, *stream >>>( dev_connectedness, dev_seededness, dev_affinity );
 	}

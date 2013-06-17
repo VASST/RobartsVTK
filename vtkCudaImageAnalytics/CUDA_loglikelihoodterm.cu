@@ -5,8 +5,6 @@
 #include "float.h"
 #include "limits.h"
 
-#define NUMTHREADS 512
-
 //#define DEBUG_VTKCUDA_ILLT
 
 template void CUDA_ILLT_IncrementInformation<float>(float* labelData, float desiredValue, short* agreement, int size, cudaStream_t* stream);
@@ -110,7 +108,7 @@ template void CUDA_ILLT_CalculateHistogramAndTerms<float>(float* outputBuffer, f
 
 template<class T>
 __global__ void kern_PopulateWorkingUp(float* working, short* agreement, T* image, short requiredAgreement, int imageSize){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float inputValue = (float) image[idx];
 	short lAgreement = agreement[idx];
 	float outputValue = (lAgreement < requiredAgreement) ? FLT_MIN: inputValue;
@@ -119,7 +117,7 @@ __global__ void kern_PopulateWorkingUp(float* working, short* agreement, T* imag
 
 template<class T>
 __global__ void kern_PopulateWorkingDown(float* working, short* agreement, T* image, short requiredAgreement, int imageSize){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float inputValue = (float) image[idx];
 	short lAgreement = agreement[idx];
 	float outputValue = (lAgreement < requiredAgreement) ? FLT_MAX: inputValue;
@@ -127,7 +125,7 @@ __global__ void kern_PopulateWorkingDown(float* working, short* agreement, T* im
 }
 
 __global__ void kern_PropogateUp(float* working, int span, int imageSize){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float inputValue1 = working[idx];
 	float inputValue2 = working[idx+span];
 	float outputVal = (inputValue1 > inputValue2) ? inputValue1: inputValue2;
@@ -135,7 +133,7 @@ __global__ void kern_PropogateUp(float* working, int span, int imageSize){
 }
 
 __global__ void kern_PropogateDown(float* working, int span, int imageSize){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	float inputValue1 = working[idx];
 	float inputValue2 = working[idx+span];
 	float outputVal = (inputValue1 < inputValue2) ? inputValue1: inputValue2;
@@ -263,7 +261,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 	float imMax = 0;
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	dim3 grid = GetGrid(imageSize);
 	kern_PopulateWorkingUp<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();
@@ -273,10 +271,9 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 	#endif
 	for(int t = (imageSize-1)/2+1; t > 0; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
-		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		grid = GetGrid(t);
 		kern_PropogateUp<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
 
-		
 		#ifdef DEBUG_VTKCUDA_ILLT
 			cudaThreadSynchronize();
 			printf( "CUDA_ILLT_CalculateMinMax: " );
@@ -293,7 +290,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	for(int t = (imageSize-1)/2+1; t > 0; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
-		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		grid = GetGrid(t);
 		kern_PropogateDown<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
 
 		
@@ -319,8 +316,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 		printf( "\n" );
 	#endif
 
-
-	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	grid = GetGrid(imageSize);
 	kern_PopulateOutput<T><<<grid,threads,0,*stream>>>(histogramGPU, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, imageSize);
 
 	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );
@@ -338,7 +334,6 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 	cudaFree(histogramGPU);
 	cudaFree(agreement);
 	
-
 }
 
 template< class T >
@@ -354,7 +349,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 	float2 imMax = {0.0f, 0.0f};
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	dim3 grid = GetGrid(imageSize);
 	kern_PopulateWorkingUp<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();
@@ -364,10 +359,9 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	#endif
 	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
-		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		grid = GetGrid(t);
 		kern_PropogateUp<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
 
-		
 		#ifdef DEBUG_VTKCUDA_ILLT
 			cudaThreadSynchronize();
 			printf( "CUDA_ILLT_CalculateMinMax: " );
@@ -384,10 +378,9 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
-		grid = dim3( (t-1)/NUMTHREADS+1, 1, 1);
+		grid = GetGrid(t);
 		kern_PropogateDown<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
 
-		
 		#ifdef DEBUG_VTKCUDA_ILLT
 			cudaThreadSynchronize();
 			printf( "CUDA_ILLT_CalculateMinMax: " );
@@ -438,7 +431,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 		printf( "\n" );
 	#endif
 	
-	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	grid = GetGrid(imageSize);;
 	for(int comp = 0; comp < NUMTHREADS; comp++){
 		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
 		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;

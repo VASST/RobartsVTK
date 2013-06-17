@@ -6,14 +6,12 @@
 
 __constant__ PAGMM_Information info;
 
-#define NUMTHREADS 512
-
 __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Map, float* OutputBuffer, float scale){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
 	//get sample co-ordinates in buffer
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
+	int kOffset = CUDASTDOFFSET;
 	if(threadIdx.x < MAX_DIMENSIONALITY)
 		SamplePointLocal[threadIdx.x] = InputData[info.NumberOfDimensions*samplePointLoc+threadIdx.x];
 	__syncthreads();
@@ -70,8 +68,8 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 	cudaMalloc((void**)&dev_outputGMM, sizeof(float)*N*L);
 
 	//preallocate grid and thread sizes for N, and N*L
-	dim3 gridN((N-1)/NUMTHREADS+1, 1, 1);
-	dim3 gridNL((N*L-1)/NUMTHREADS+1, 1, 1);
+	dim3 gridN = GetGrid(N);
+	dim3 gridNL = GetGrid(N*L);
 	dim3 threadsFull(NUMTHREADS, 1, 1);
 
 	//-----------------------------------------------------------------------------------//
@@ -101,7 +99,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 
 		//reduce working buffer by summation
 		for(int j = N / 2; j > NUMTHREADS; j = j/2){
-			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
+			dim3 tempGrid = GetGrid(j);
 			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
 		}
 		SumData( min(NUMTHREADS,N), min(NUMTHREADS,N), 1, dev_workingBuffer, stream );
@@ -205,7 +203,7 @@ void CUDAalgo_applyPAGMMModel( float* inputData, float* inputGMM, float* outputG
 		float sum = 0.0f;
 		CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, dev_outputGMM+curl*N, N);
 		for(int j = N / 2; 2*j > NUMTHREADS; j = j/2){
-			dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
+			dim3 tempGrid = GetGrid(j);
 			SumOverLargeBuffer<<<tempGrid, threadsFull, 0, *stream>>>(dev_workingBuffer,j,N);
 			cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);

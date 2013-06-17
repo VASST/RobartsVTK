@@ -4,12 +4,25 @@
 #include <float.h>
 
 //---------------------------------------------------------------------------//
+//------------------------COMMON CONFIG STATEMENTS---------------------------//
+//---------------------------------------------------------------------------//
+
+#define MAX_GRID_SIZE 65535
+
+dim3 GetGrid(int size){
+	dim3 grid( size, 1, 1 );
+	if( grid.x > MAX_GRID_SIZE ) grid.x = grid.y = (int) sqrt( (double)(size-1) ) + 1;
+	else if( grid.y > MAX_GRID_SIZE ) grid.x = grid.y = grid.z = (int) pow( (double)(size-1), (double)1.0/3.0 ) + 1;
+	return grid;
+}
+
+//---------------------------------------------------------------------------//
 //-------------------------COMMON UNARY OPERATORS----------------------------//
 //---------------------------------------------------------------------------//
 
 template<class T> 
 __global__ void ZeroOutBuffer(T* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	if(offset < size ) buffer[offset] = 0;
 }
 template __global__ void ZeroOutBuffer<char> (char* buffer, int size);
@@ -28,7 +41,7 @@ template __global__ void ZeroOutBuffer<unsigned long long> (unsigned long long* 
 
 template<class T> 
 __global__ void OneOutBuffer(T* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	if(offset < size ) buffer[offset] = 1;
 }
 template __global__ void OneOutBuffer<char> (char* buffer, int size);
@@ -47,8 +60,8 @@ template __global__ void OneOutBuffer<unsigned long long> (unsigned long long* b
 
 template<class T> 
 __global__ void SetBufferToConst(T* buffer, T value, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	if( idx < size ) buffer[idx] = value;
+	int offset = CUDASTDOFFSET;
+	if( offset < size ) buffer[offset] = value;
 }
 template __global__ void SetBufferToConst<char> (char* buffer, char value, int size);
 template __global__ void SetBufferToConst<signed char> (signed char* buffer, signed char value, int size);
@@ -67,7 +80,7 @@ template __global__ void SetBufferToConst<unsigned long long> (unsigned long lon
 
 template<class T>
 __global__ void TranslateBuffer(T* buffer, T scale, T shift, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	T value = scale * buffer[offset] + shift;
 	if(offset < size ) buffer[offset] = value;
 }
@@ -86,7 +99,7 @@ template __global__ void TranslateBuffer<long long>(long long* buffer, long long
 template __global__ void TranslateBuffer<unsigned long long>(unsigned long long* buffer, unsigned long long scale, unsigned long long shift, int size);
 
 __global__ void ReplaceNANs(float* buffer, float value, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	float current = buffer[offset];
 	current = isfinite(current) ? current : value;
 	if(offset < size ) buffer[offset] = current;
@@ -94,7 +107,7 @@ __global__ void ReplaceNANs(float* buffer, float value, int size){
 
 template<class T> 
 __global__ void LogBuffer(T* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	float input = (float) buffer[offset];
 	T value = (T) log( input );
 	if(offset < size ) buffer[offset] = value;
@@ -115,7 +128,7 @@ template __global__ void LogBuffer<unsigned long long> (unsigned long long* buff
 
 template<class T> 
 __global__ void NegLogBuffer(T* buffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	float input = (float) buffer[offset];
 	T value = (T) -log( input );
 	if(offset < size ) buffer[offset] = value;
@@ -136,7 +149,7 @@ template __global__ void NegLogBuffer<unsigned long long> (unsigned long long* b
 
 template<class T, class S>
 __global__ void IncrementBuffer(T* labelBuffer, T desiredLabel, S* agreement, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	S newAgreement = agreement[idx];
 	T labelValue = labelBuffer[idx];
 	newAgreement += (labelValue == desiredLabel) ? 1 : 0;
@@ -313,7 +326,7 @@ template __global__ void IncrementBuffer<long long, unsigned long long> (long lo
 template __global__ void IncrementBuffer<unsigned long long, unsigned long long> (unsigned long long* labelBuffer, unsigned long long desiredLabel, unsigned long long* agreement, int size);
 
 __global__ void SetBufferToRandom(float* buffer, float min, float max, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	curandState localState;
 	curand_init(7+offset, offset, 0, &localState);
 	__syncthreads();
@@ -328,7 +341,7 @@ __global__ void SetBufferToRandom(float* buffer, float min, float max, int size)
 
 template<class T> 
 __global__ void SumBuffers(T* outBuffer, T* sumBuffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	T value = outBuffer[offset] + sumBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
@@ -348,7 +361,7 @@ template __global__ void SumBuffers<unsigned long long>(unsigned long long* buff
 
 template<class T> 
 __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	T value = inBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
@@ -368,7 +381,7 @@ template __global__ void CopyBuffers<unsigned long long>(unsigned long long* buf
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	float value = (scale * outBuffer[offset] + shift) * multBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
@@ -388,7 +401,7 @@ template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long*
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size){
-	int offset = blockDim.x * blockIdx.x + threadIdx.x;
+	int offset = CUDASTDOFFSET;
 	float value = outBuffer[offset] * multBuffer[offset];
 	if(offset < size ) outBuffer[offset] = value;
 }
@@ -408,7 +421,7 @@ template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long*
 
 template<class T>
 __global__ void MultiplyAndStoreBuffer(T* inBuffer, T* outBuffer, T number, int size){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int idx = CUDASTDOFFSET;
 	T value = inBuffer[idx] * number;
 	if( idx < size ) outBuffer[idx] = value;
 }
@@ -524,12 +537,12 @@ __global__ void SumOverSmallBuffer(float *buffer, unsigned int n)
 
 __global__ void SumOverLargeBuffer( float* buffer, int spread, int size ){
 	
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value1 = buffer[kOffset];
-	float value2 = buffer[kOffset+spread];
+	int offset = CUDASTDOFFSET;
+	float value1 = buffer[offset];
+	float value2 = buffer[offset+spread];
 
-	if( kOffset+spread < size )
-		buffer[kOffset] = value1+value2;
+	if( offset+spread < size )
+		buffer[offset] = value1+value2;
 
 }
 
@@ -628,13 +641,13 @@ __global__ void LogaritureOverSmallBuffer(float *buffer, unsigned int n)
 
 __global__ void LogaritureOverLargeBuffer( float* buffer, int spread, int size ){
 	
-	int kOffset = blockDim.x * blockIdx.x + threadIdx.x;
-	float value1 = buffer[kOffset];
-	float value2 = buffer[kOffset+spread];
+	int offset = CUDASTDOFFSET;
+	float value1 = buffer[offset];
+	float value2 = buffer[offset+spread];
 	
 	float result = Logariture(value1, value2);
 
-	if( kOffset+spread < size )
-		buffer[kOffset] = result;
+	if( offset+spread < size )
+		buffer[offset] = result;
 
 }

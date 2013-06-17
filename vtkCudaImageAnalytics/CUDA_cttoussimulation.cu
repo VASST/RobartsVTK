@@ -1,4 +1,5 @@
 #include "CUDA_cttoussimulation.h"
+#include "CUDA_commonKernels.h"
 
 //3D input data (read-only texture with corresponding opague device memory back)
 texture<float, 3, cudaReadModeElementType> ct_input_texture;
@@ -107,7 +108,7 @@ __global__ void CUDAkernel_ColourParamOutput(float alpha, float beta, float bias
 						float* outputDensity,
 						float* outputReflection,
 						uchar3* outputUltrasound ){
-	int actIndex = (threadIdx.x + blockDim.x * blockIdx.x);
+	int actIndex = CUDASTDOFFSET;
 	bool isValid = (actIndex < info.Resolution.x*info.Resolution.y*info.Resolution.z );
 	
 	__syncthreads();
@@ -213,8 +214,8 @@ __global__ void CUDAkernel_CreateSimulatedUS(	float* outputDensity,
 
 	//find x index value in the simulated ultrasound image
 	int2 index;
-	index.x = (threadIdx.x + blockDim.x * blockIdx.x) % info.Resolution.x;
-	index.y = (threadIdx.x + blockDim.x * blockIdx.x) / info.Resolution.x;
+	index.x = CUDASTDOFFSET % info.Resolution.x;
+	index.y = CUDASTDOFFSET / info.Resolution.x;
 
 	//find the normalized indices
 	float2 normIndex;
@@ -232,7 +233,7 @@ __global__ void CUDAkernel_CreateSimulatedUS(	float* outputDensity,
 }
 
 __global__ void CUDAkernel_sampleU( float* destination, int size ){
-	int fullIndex = (threadIdx.x + blockDim.x * blockIdx.x);
+	int fullIndex = CUDASTDOFFSET;
 	int3 index;
 	index.x = fullIndex % info.Resolution.x;
 	index.z = fullIndex / info.Resolution.x;
@@ -251,14 +252,14 @@ __global__ void CUDAkernel_sampleU( float* destination, int size ){
 }
 
 __global__ void CUDAkernel_multiply( float* sourceA, float* sourceB, float* destination, int size ){
-	int index = threadIdx.x + blockDim.x * blockIdx.x;
+	int index = CUDASTDOFFSET;
 	float a = sourceA[index];
 	float b = sourceB[index];
 	if( index < size ) destination[index] = a * b;
 }
 
 __global__ void CUDAkernel_accumulate( float* buffer, int addSize, int size ){
-	int index = threadIdx.x + blockDim.x * blockIdx.x;
+	int index = CUDASTDOFFSET;
 	float a = buffer[index];
 	float b = buffer[index+addSize];
 	if( index+addSize < size ) buffer[index] = a+b;
@@ -377,10 +378,8 @@ void CUDAalgo_simulateUltraSound(	float* outputDensity, float* outputTransmissio
 	cudaMalloc( (void**) &device_output_us,    3*sizeof(unsigned char)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
 
 	//simulate the ultrasound
-	int maxBlockSize = 256;
-	dim3 threads( maxBlockSize, 1, 1);
-	int gridSize = information.Resolution.x * information.Resolution.y / maxBlockSize + ( (information.Resolution.x * information.Resolution.y % maxBlockSize == 0 ) ? 0 : 1 );
-	dim3 grid( gridSize, 1, 1);
+	dim3 threads( NUMTHREADS, 1, 1);
+	dim3 grid = GetGrid(information.Resolution.x * information.Resolution.y);
 	CUDAkernel_CreateSimulatedUS<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_trans, device_output_refl );
 	
 	//copy the preliminary results
@@ -390,8 +389,7 @@ void CUDAalgo_simulateUltraSound(	float* outputDensity, float* outputTransmissio
 	cudaFree(device_output_trans);
 
 	//optimal parameter fiddling
-	gridSize = information.Resolution.x * information.Resolution.y * information.Resolution.z / maxBlockSize + ( (information.Resolution.x * information.Resolution.y * information.Resolution.z % maxBlockSize == 0 ) ? 0 : 1 );
-	grid.x = gridSize;
+	grid = GetGrid(information.Resolution.x*information.Resolution.y*information.Resolution.z);
 	int largestAddSize = pow2roundup( information.Resolution.x * information.Resolution.y * information.Resolution.z );
 	int actualSize = information.Resolution.x*information.Resolution.y*information.Resolution.z;
 	if( information.optimalParam ){
