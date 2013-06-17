@@ -234,8 +234,8 @@ __global__ void kern_PopulateOutput2D(float* histogramGPU, float* output, T* ima
 	if( threadIdx.x < NUMTHREADS ) histogram[threadIdx.x] = histogramGPU[threadIdx.x];
 	__syncthreads();
 	
-	float localValue1 = (float) image[2*idxCurr];
-	float localValue2 = (float) image[2*idxCurr+1];
+	float localValue1 = (float) image[2*idx];
+	float localValue2 = (float) image[2*idx+1];
 	int histPos = (int) ( (float) (NUMTHREADS-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
 	bool useIt = (localValue2 >= sMin && localValue2 < sMax);
 	float histVal = (histPos < NUMTHREADS && histPos >= 0) ? histogram[histPos] : 1e-10f;
