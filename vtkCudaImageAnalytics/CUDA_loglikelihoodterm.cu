@@ -106,6 +106,21 @@ template void CUDA_ILLT_CalculateHistogramAndTerms<signed char>(float* outputBuf
 template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned char>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
 template void CUDA_ILLT_CalculateHistogramAndTerms<float>(float* outputBuffer, float* histogramGPU, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
 
+
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<double>(float* outputBuffer, float* histogramGPU, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<long>(float* outputBuffer, float* histogramGPU, short* agreement, long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<long long>(float* outputBuffer, float* histogramGPU, short* agreement, long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<int>(float* outputBuffer, float* histogramGPU, short* agreement, int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned int>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<short>(float* outputBuffer, float* histogramGPU, short* agreement, short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned short>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<char>(float* outputBuffer, float* histogramGPU, short* agreement, char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<signed char>(float* outputBuffer, float* histogramGPU, short* agreement, signed char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned char>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<float>(float* outputBuffer, float* histogramGPU, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
+
 template<class T>
 __global__ void kern_PopulateWorkingUp(float* working, short* agreement, T* image, short requiredAgreement, int imageSize){
 	int idx = CUDASTDOFFSET;
@@ -435,7 +450,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	for(int comp = 0; comp < NUMTHREADS; comp++){
 		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
 		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;
-		kern_PopulateOutput2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, secondMin, secondMax, imageSize);
+		kern_PopulateOutput2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, GPUOutputBuffer, GPUInputBuffer, imMax.x, imMin.x, secondMin, secondMax, imageSize);
 	}
 
 	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );
