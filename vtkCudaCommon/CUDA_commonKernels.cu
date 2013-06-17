@@ -10,6 +10,7 @@
 #define MAX_GRID_SIZE 65535
 
 dim3 GetGrid(int size){
+	size = (size-1) / NUMTHREADS + 1;
 	dim3 grid( size, 1, 1 );
 	if( grid.x > MAX_GRID_SIZE ) grid.x = grid.y = (int) sqrt( (double)(size-1) ) + 1;
 	else if( grid.y > MAX_GRID_SIZE ) grid.x = grid.y = grid.z = (int) pow( (double)(size-1), (double)1.0/3.0 ) + 1;
