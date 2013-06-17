@@ -122,35 +122,64 @@ void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int 
 	
 	//Gaussian smooth results
 	float* floatAgreement = 0;
-	cudaMalloc( &floatAgreement, sizeof(float)*NUMTHREADS );
-	kern_ConvertBuffer<<<grid,threads,0,*stream>>>(agreement, floatAgreement, size);
-	if( flags & 3 ){
-		while( gaussWidth[0] > 0 && gaussWidth[1] > 0 && gaussWidth[2] > 0 ){
-			if( gaussWidth[0] > 0 ){
-				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, 1, imageDims[0] );
-				gaussWidth[0]--;
-			}
-			if( gaussWidth[1] > 0 ){
-				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, imageDims[0], imageDims[1] );
-				gaussWidth[1]--;
-			}
-			if( gaussWidth[2] > 0 ){
-				kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreement, floatAgreement, size, imageDims[0]*imageDims[1], imageDims[2] );
-				gaussWidth[2]--;
-			}
-		}
-	}
+    cudaMalloc( &floatAgreement, sizeof(float)*(size+2*imageDims[0]*imageDims[1]) );
+    float* floatAgreementUsed = floatAgreement + imageDims[0]*imageDims[1];
+
+    kern_ConvertBuffer<<<grid,threads,0,*stream>>>(agreement, floatAgreementUsed, size);
+
+
+    if( flags & 4 ){
+        while( gaussWidth[0] > 0 && gaussWidth[1] > 0 && gaussWidth[2] > 0 ){
+            if( gaussWidth[0] > 0 ){
+                kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, floatAgreementUsed, size, 1, imageDims[0] );
+                gaussWidth[0]--;
+                    cudaThreadSynchronize();
+                    // check for error
+                    cudaError_t error = cudaGetLastError();
+                    if(error != cudaSuccess)
+                    {
+                      printf("CUDA error: %s\n", cudaGetErrorString(error));
+                      //exit(-1);
+                    }
+
+            }
+            if( gaussWidth[1] > 0 ){
+                kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, floatAgreementUsed, size, imageDims[0], imageDims[1] );
+                gaussWidth[1]--;
+                cudaThreadSynchronize();
+                // check for error
+                cudaError_t error = cudaGetLastError();
+                if(error != cudaSuccess)
+                {
+                  printf("CUDA error: %s\n", cudaGetErrorString(error));
+                  //exit(-1);
+                }
+            }
+            if( gaussWidth[2] > 0 ){
+                kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, floatAgreementUsed, size, imageDims[0]*imageDims[1], imageDims[2] );
+                gaussWidth[2]--;
+                cudaThreadSynchronize();
+                // check for error
+                cudaError_t error = cudaGetLastError();
+                if(error != cudaSuccess)
+                {
+                  printf("CUDA error: %s\n", cudaGetErrorString(error));
+                  //exit(-1);
+                }
+            }
+        }
+    }
 
 	if( flags & 1 )
 		if( flags & 2)
-			kern_NormLogBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, maxOut, size, max);
+            kern_NormLogBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, output, maxOut, size, max);
 		else
-			kern_LogBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, maxOut, size, max);
+            kern_LogBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, output, maxOut, size, max);
 	else
-		kern_ProbBuffer<<<grid,threads,0,*stream>>>(floatAgreement, output, size, max);
+        kern_ProbBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, output, size, max);
 
 	cudaFree(agreement);
-	cudaFree(floatAgreement);
+    cudaFree(floatAgreement);
 
 	#ifdef DEBUG_VTKCUDA_IALP
 		cudaThreadSynchronize();
