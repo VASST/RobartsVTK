@@ -223,17 +223,17 @@ __global__ void kern_PopulateHisto2D(float* histogramGPU, short* agreement, T* i
 }
 
 template<class T>
-__global__ void kern_PopulateOutput(float* histogramGPU, float* output, T* image, float imMin, float imMax, int imageSize){
+__global__ void kern_PopulateOutput(float* histogramGPU, int histSize, float* output, T* image, float imMin, float imMax, int imageSize){
 	__shared__ float histogram[NUMTHREADS];
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	imMin -= (imMax-imMin)*0.00625;
 	imMax += (imMax-imMin)*0.00625;
-	if( threadIdx.x < NUMTHREADS ) histogram[threadIdx.x] = histogramGPU[threadIdx.x];
+	if( threadIdx.x < histSize ) histogram[threadIdx.x] = histogramGPU[threadIdx.x];
 	__syncthreads();
 	
 	float localValue = (float) image[idx];
-	int histPos = (int) ( (float) (NUMTHREADS-1) * ((localValue-imMin) / (imMax-imMin)) + 0.5f );
-	float histVal = (histPos < NUMTHREADS && histPos >= 0) ? histogram[histPos] : 1e-10f;
+	int histPos = (int) ( (float) (histSize-1) * ((localValue-imMin) / (imMax-imMin)) + 0.5f );
+	float histVal = (histPos < histSize && histPos >= 0) ? histogram[histPos] : 1e-10f;
 	histVal = (histVal < 1e-10f) ? 1e-10f : histVal;
 	histVal = log(histVal) / log(1e-10f);
 	if(idx < imageSize) output[idx] = histVal;
@@ -334,7 +334,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 	#endif
 
 	grid = GetGrid(imageSize);
-	kern_PopulateOutput<T><<<grid,threads,0,*stream>>>(histogramGPU, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, imageSize);
+	kern_PopulateOutput<T><<<grid,threads,0,*stream>>>(histogramGPU, histSize, GPUOutputBuffer, GPUInputBuffer, imMax, imMin, imageSize);
 
 	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );
 	
