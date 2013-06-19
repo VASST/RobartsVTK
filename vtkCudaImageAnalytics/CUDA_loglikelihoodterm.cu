@@ -92,19 +92,19 @@ void CUDA_ILLT_ReturnBuffer(float* buffer){
 	cudaFree(buffer);
 }
 
-template void CUDA_ILLT_CalculateHistogramAndTerms<double>(float* outputBuffer, float* histogramGPU, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<long>(float* outputBuffer, float* histogramGPU, short* agreement, long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<long long>(float* outputBuffer, float* histogramGPU, short* agreement, long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned long long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<int>(float* outputBuffer, float* histogramGPU, short* agreement, int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned int>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<short>(float* outputBuffer, float* histogramGPU, short* agreement, short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned short>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<char>(float* outputBuffer, float* histogramGPU, short* agreement, char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<signed char>(float* outputBuffer, float* histogramGPU, short* agreement, signed char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned char>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms<float>(float* outputBuffer, float* histogramGPU, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<double>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<long>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned long>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, unsigned long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<long long>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned long long>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, unsigned long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<int>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned int>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, unsigned int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<short>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned short>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, unsigned short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<char>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<signed char>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, signed char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned char>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms<float>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
 
 
 template void CUDA_ILLT_CalculateHistogramAndTerms2D<double>(float* outputBuffer, float* histogramGPU, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
