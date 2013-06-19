@@ -409,7 +409,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 		if( this->Hierarchy->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
-			branchSmoothnessTermBuffers[this->BranchMap.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+            branchSmoothnessTermBuffers[this->BranchMap.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		
 		// add the smoothness buffer in as read only
 		if( CurrImage ){
@@ -908,16 +908,18 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateSpatialFlowsTasks(vtkI
 		newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
 		newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
 		newTask->AddBuffer(branchFlowXBuffers[BranchMap[currNode]]);
-		newTask->AddBuffer(branchFlowYBuffers[BranchMap[currNode]]);
-		newTask->AddBuffer(branchFlowZBuffers[BranchMap[currNode]]);
+        newTask->AddBuffer(branchFlowYBuffers[BranchMap[currNode]]);
+        newTask->AddBuffer(branchFlowZBuffers[BranchMap[currNode]]);
+        newTask->AddBuffer(branchSmoothnessTermBuffers[BranchMap[currNode]]);
 	}else{
 		newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
 		newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
 		newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
 		newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
 		newTask->AddBuffer(leafFlowXBuffers[LeafMap[currNode]]);
-		newTask->AddBuffer(leafFlowYBuffers[LeafMap[currNode]]);
-		newTask->AddBuffer(leafFlowZBuffers[LeafMap[currNode]]);
+        newTask->AddBuffer(leafFlowYBuffers[LeafMap[currNode]]);
+        newTask->AddBuffer(leafFlowZBuffers[LeafMap[currNode]]);
+        newTask->AddBuffer(leafSmoothnessTermBuffers[LeafMap[currNode]]);
 	}
 
 }
