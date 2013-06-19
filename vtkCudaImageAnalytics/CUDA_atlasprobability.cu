@@ -109,10 +109,10 @@ __global__ void kern_ProbBuffer(float* agreement, float* output, int size, short
 __global__ void kern_BlurBuffer(float* agreement, float* output, int size, int spread, int dim){
 	int idx = CUDASTDOFFSET;
 	int x = (idx / spread) % dim;
-	float curr = 0.7865707f * agreement[idx];
-	float down = 0.1064508f * agreement[idx-spread];
-	float up   = 0.1064508f * agreement[idx+spread];
-	float newVal = curr + (x > 0 ? down : 0.0f) + (x < dim-1 ? up : 0.0f);
+	float curr = agreement[idx];
+	float down = agreement[idx-spread];
+	float up   = agreement[idx+spread];
+	float newVal = 0.7865707f * curr + 0.1064508f * ((x > 0 ? down : curr) + (x < dim-1 ? up : curr));
 	if( idx < size ) output[idx] = newVal;
 }
 
