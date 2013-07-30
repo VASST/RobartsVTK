@@ -262,8 +262,6 @@ unsigned int random_prime(unsigned int n){
      return r;
 }
 
-#define NUMTHREADS 256
-
 void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& information, int* currentMapSize,
 								float** device_KohonenMap, float** device_tempSpace,
 								float** device_DistanceBuffer, short2** device_IndexBuffer,
