@@ -147,6 +147,7 @@ void CUDAalgo_applyKSOMLLModel( float* inputData, float* inputGMM, float* output
 		//find GMM activation and place in working buffers
 		KSOMLL_ProcessSample<<<gridN, threadsFull, 0, *stream>>>(x, dev_inputImage, dev_GMMOrig, dev_workingBuffer, scale);
 		//CopyBuffers<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer2, dev_workingBuffer, N);
+		TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, 1.0f / hostSummationBuffer[x], 0.0f, N );
 
 		//create the pro-part
 		//TranslateBuffer<<<gridN, threadsFull, 0, *stream>>>(dev_workingBuffer, (float) (N-K) / (float) (K*(N-1)),
