@@ -9,7 +9,7 @@
 #include <limits.h>
 
 #include <set>
-#include <list>
+#include <vector>
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include "vtkCudaDeviceManager.h"
@@ -51,6 +51,11 @@ public:
 	bool isRoot;
 	vtkCudaHierarchicalMaxFlowSegmentation2* const Parent;
 
+	std::vector<Task*> FinishedSignals;
+	std::vector<float*> RequiredCPUBuffers;
+
+//------------------------------------------------------------------------------------------//
+
 	//Fill in all non-transient information
 	Task( vtkCudaHierarchicalMaxFlowSegmentation2* parent, int a, int ra, int numToDeath, vtkIdType n, TaskType t )
 		: Parent(parent), Active(a), FinishDecreaseInActive(ra), Node(n), Type(t) {
@@ -72,7 +77,14 @@ public:
 		else  Parent->BlockedTasks.insert(this);
 
 	}
+
+	~Task(){
+		this->FinishedSignals.clear();
+		this->RequiredCPUBuffers.clear();
+	}
 	
+//------------------------------------------------------------------------------------------//
+
 	void Signal(){
 		this->Active++;
 		if( this->Active == 0 ){
@@ -92,23 +104,26 @@ public:
 	}
 	bool CanDo(){ return this->Active >= 0; }
 
+//------------------------------------------------------------------------------------------//
+
 	//manage signals for when this task is finished
 	//ie: allow us to signal the next task in the loop as well as
 	//    any parent or child node tasks as necessary
-	std::set<Task*> FinishedSignals;
 	void AddTaskToSignal(Task* t){
-		FinishedSignals.insert(t);
+		FinishedSignals.push_back(t);
 	}
 	void FinishedSignal(){
-		std::set<Task*>::iterator it = FinishedSignals.begin();
+		std::vector<Task*>::iterator it = FinishedSignals.begin();
 		for(; it != FinishedSignals.end(); it++ )
 			if(*it) (*it)->Signal();
 	}
+//------------------------------------------------------------------------------------------//
 
-	std::map<int,float*> RequiredCPUBuffers;
 	void AddBuffer(float* b){
-		RequiredCPUBuffers.insert(std::pair<int, float*>((int)RequiredCPUBuffers.size(),b) );
+		RequiredCPUBuffers.push_back(b);
 	}
+
+//------------------------------------------------------------------------------------------//
 
 	//Find out if we have a conflict on this task (ie: not all buffers are available on CPU or single GPU)
 	//returning an unconflicted device if false (null if conflict or any worker will suffice)
@@ -120,8 +135,8 @@ public:
 		Worker* maxGPU = 0;
 		for(std::set<Worker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
 			int buffersGot = 0;
-			for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() ) buffersGot++;
+			for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
+				if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ) buffersGot++;
 			}
 			if( buffersGot > maxBuffersGot ){
 				maxBuffersGot = buffersGot;
@@ -132,10 +147,10 @@ public:
 		//return everything that is not on that GPU
 		for(std::set<Worker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
 			if( *wit == maxGPU ) continue;
-			for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() ){
-					if( Parent->ReadOnly.find(it->second) != Parent->ReadOnly.end() ||
-						Parent->NoCopyBack.find(it->second) != Parent->NoCopyBack.end() )
+			for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
+				if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ){
+					if( Parent->ReadOnly.find(*it) != Parent->ReadOnly.end() ||
+						Parent->NoCopyBack.find(*it) != Parent->NoCopyBack.end() )
 						retVal += 1;
 					else retVal += 3;
 				}
@@ -145,6 +160,8 @@ public:
 		*w = maxGPU;
 		return retVal;
 	}
+	
+//------------------------------------------------------------------------------------------//
 
 	//find the GPU with most of the buffers and return all claimed buffers not on that GPU
 	void UnConflict(vtkCudaHierarchicalMaxFlowSegmentation2::Worker* maxGPU){
@@ -153,9 +170,9 @@ public:
 		for(std::set<Worker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
 			if( *wit == maxGPU ) continue;
 			bool flag = false;
-			for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-				if( (*wit)->CPU2GPUMap.find(it->second) != (*wit)->CPU2GPUMap.end() ){
-					(*wit)->ReturnBuffer(it->second);
+			for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
+				if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ){
+					(*wit)->ReturnBuffer(*it);
 					flag = true;
 				}
 			}
@@ -164,19 +181,23 @@ public:
 		maxGPU->CallSyncThreads();
 
 	}
+	
+//------------------------------------------------------------------------------------------//
 
 	//Calculate the weight provided that there is no conflict
 	int CalcWeight(vtkCudaHierarchicalMaxFlowSegmentation2::Worker* w){
 		int retWeight = 0;
 		int numUnused = (int) w->UnusedGPUBuffers.size();
-		for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-			if( w->CPU2GPUMap.find(it->second) == w->CPU2GPUMap.end() ){
+		for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
+			if( w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end() ){
 				if( numUnused ){numUnused--; retWeight++;
 				}else retWeight += 2;
 			}
 		}
 		return retWeight;
 	}
+	
+//------------------------------------------------------------------------------------------//
 
 	//Perform the task at hand
 	void Perform(vtkCudaHierarchicalMaxFlowSegmentation2::Worker* w){
@@ -202,13 +223,13 @@ public:
 
 		//load required buffers onto the GPU
 		w->CPUInUse.clear();
-		for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
-			if(it->second) w->CPUInUse.insert(it->second);
+		for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+			if(*it) w->CPUInUse.insert(*it);
 		w->UpdateBuffersInUse();
 		
-        for(std::map<int,float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
-            if(w->CPU2GPUMap.find(it->second) == w->CPU2GPUMap.end()){
-                std::cout << "Problem: " << it->second << std::endl;
+        for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+            if(w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end()){
+                std::cout << "Problem: " << *it << std::endl;
             }
 
 
@@ -328,15 +349,17 @@ public:
 
         if(w->CPU2GPUMap.size() != w->GPU2CPUMap.size()){
             std::cout << RequiredCPUBuffers.size() << std::endl;
-            for(std::map<int,float*>::iterator i = RequiredCPUBuffers.begin(); i != RequiredCPUBuffers.end();i++){
-                std::cout << i->first << " " << i->second << std::endl;
+			int c = 0;
+            for(std::vector<float*>::iterator i = RequiredCPUBuffers.begin(); i != RequiredCPUBuffers.end(); i++){
+                std::cout << c << " " << *i << std::endl;
+				c++;
             }
             std::cout << w->CPUInUse.size() << std::endl;
             for(std::set<float*>::iterator i = w->CPUInUse.begin(); i != w->CPUInUse.end();i++){
                 std::cout << *i << std::endl;
             }
             std::cout << w->CPU2GPUMap.size() << std::endl;
-            for(std::map<float*,float*>::iterator i = w->CPU2GPUMap.begin(); i != w->CPU2GPUMap.end();i++){
+            for(std::map<float*,float*>::iterator i = w->CPU2GPUMap.begin(); i != w->CPU2GPUMap.end(); i++){
                 std::cout << i->first << " " << i->second << std::endl;
             }
             std::cout << w->GPU2CPUMap.size() << std::endl;

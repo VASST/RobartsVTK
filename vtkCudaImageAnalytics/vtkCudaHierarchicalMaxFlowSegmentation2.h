@@ -13,6 +13,7 @@
 #include <map>
 #include <list>
 #include <set>
+#include <vector>
 
 #include <limits.h>
 #include <float.h>
@@ -163,7 +164,7 @@ private:
 		std::set<float*> CPUInUse;
 		std::list<float*> UnusedGPUBuffers;
 		std::list<float*> AllGPUBufferBlocks;
-		std::list< std::list<float*> > PriorityStacks;
+		std::vector< std::list< float* > > PriorityStacks;
 		Worker(int g, double usage, vtkCudaHierarchicalMaxFlowSegmentation2* p );
 		~Worker();
 		void UpdateBuffersInUse();

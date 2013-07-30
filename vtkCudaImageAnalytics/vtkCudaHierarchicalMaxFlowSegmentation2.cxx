@@ -135,6 +135,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::AddSmoothnessScalar(vtkIdType node
 		this->SmoothnessScalars[node] = value;
 		this->Modified();
 	}else{
+		this->SmoothnessScalars[node] = 0.0;
 		vtkErrorMacro(<<"Cannot use a negative smoothness value.");
 	}
 }
@@ -752,6 +753,35 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 
 	//deallocate structure that holds the pointers to the buffers
 	delete[] bufferPointers;
+	this->branchFlowXBuffers = 0;
+	this->branchFlowYBuffers = 0;
+	this->branchFlowZBuffers = 0;
+	this->branchDivBuffers = 0;
+	this->branchSinkBuffers = 0;
+	this->branchLabelBuffers = 0;
+	this->branchWorkingBuffers = 0;
+	this->leafFlowXBuffers = 0;
+	this->leafFlowYBuffers = 0;
+	this->leafFlowZBuffers = 0;
+	this->leafDivBuffers = 0;
+	this->leafSinkBuffers =	 0;
+
+	delete[] leafIncBuffers;
+	delete[] branchIncBuffers;
+	delete[] leafDataTermBuffers;
+	delete[] leafSmoothnessTermBuffers;
+	delete[] branchSmoothnessTermBuffers;
+	delete[] leafLabelBuffers;
+	delete[] leafSmoothnessConstants;
+	delete[] branchSmoothnessConstants;
+	leafIncBuffers = 0;
+	branchIncBuffers = 0;
+	leafDataTermBuffers = 0;
+	leafSmoothnessTermBuffers = 0;
+	branchSmoothnessTermBuffers = 0;
+	leafLabelBuffers = 0;
+	leafSmoothnessConstants = 0;
+	branchSmoothnessConstants = 0;
 
 	//clear old lists
 	this->CurrentTasks.clear();

@@ -8,6 +8,7 @@
 
 #include <set>
 #include <list>
+#include <vector>
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include "vtkCudaObject.h"
@@ -74,6 +75,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::~Worker(){
 	GPU2CPUMap.clear();
 	UnusedGPUBuffers.clear();
 	AllGPUBufferBlocks.clear();
+	CPUInUse.clear();
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
@@ -141,7 +143,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 
 		//else, we have to move something in use back to the CPU
 		flag = false;
-		std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+		std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
         for( ; !flag && stackIterator != PriorityStacks.end(); stackIterator++ ){
 			for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
 
@@ -175,7 +177,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::AddToStack( float* CPUBuffer ){
 	int neededPriority = Parent->CPU2PriorityMap.find(CPUBuffer)->second;
 	BuildStackUpToPriority( neededPriority );
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for(int count = 1; count < neededPriority; count++, stackIterator++);
 	stackIterator->push_front(CPUBuffer);
 }
@@ -183,7 +185,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::AddToStack( float* CPUBuff
 //Remove a CPU-GPU buffer pair from this workers collection
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::RemoveFromStack( float* CPUBuffer ){
 	int neededPriority = Parent->CPU2PriorityMap.find(CPUBuffer)->second;
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for(int count = 1; count < neededPriority; count++, stackIterator++);
 	for(std::list< float* >::iterator subIterator = stackIterator->begin(); subIterator != stackIterator->end(); subIterator++ ){
 		if( *subIterator == CPUBuffer ){
@@ -201,7 +203,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::BuildStackUpToPriority( in
 
 //take down the stacks
 void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::TakeDownPriorityStacks(){
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for( ; stackIterator != PriorityStacks.end(); stackIterator++ )
 		stackIterator->clear();
 	PriorityStacks.clear();
@@ -210,7 +212,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::TakeDownPriorityStacks(){
 int vtkCudaHierarchicalMaxFlowSegmentation2::Worker::LowestBufferShift(int n){
 	int retVal = 0;
 	n -= (int) this->UnusedGPUBuffers.size();
-	std::list< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
+	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for(int count = 1; stackIterator != PriorityStacks.end(); count++, stackIterator++){
 		if( n > (*stackIterator).size() ){
 			n -= (int) (*stackIterator).size();
