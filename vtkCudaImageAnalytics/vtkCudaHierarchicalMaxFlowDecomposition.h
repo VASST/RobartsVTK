@@ -37,6 +37,8 @@ public:
 	
 	vtkDataObject* GetDataInput(int idx);
 	void SetDataInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetSmoothnessInput(int idx);
+	void SetSmoothnessInput(int idx, vtkDataObject *input);
 	vtkDataObject* GetLabelInput(int idx);
 	void SetLabelInput(int idx, vtkDataObject *input);
 	
@@ -88,9 +90,12 @@ private:
 	int VolumeSize;
 	int VX, VY, VZ;
 	
-	std::map<vtkIdType,int> InputPortMapping;
-	std::map<int,vtkIdType> BackwardsInputPortMapping;
-	int FirstUnusedPort;
+	std::map<vtkIdType,int> InputDataPortMapping;
+	std::map<int,vtkIdType> BackwardsInputDataPortMapping;
+	int FirstUnusedDataPort;
+	std::map<vtkIdType,int> InputSmoothnessPortMapping;
+	std::map<int,vtkIdType> BackwardsInputSmoothnessPortMapping;
+	int FirstUnusedSmoothnessPort;
 	std::map<vtkIdType,int> InputLabelPortMapping;
 	std::map<int,vtkIdType> BackwardsInputLabelPortMapping;
 	int FirstUnusedLabelPort;
