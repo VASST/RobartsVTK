@@ -1,16 +1,3 @@
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    vtkHierarchicalMaxFlowSegmentation.h
-
-  Copyright (c) John SH Baxter, Robarts Research Institute
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-
 #ifndef __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 
@@ -24,14 +11,17 @@
 #include "vtkDirectedGraph.h"
 #include "vtkTree.h"
 #include <map>
+#include <list>
+#include <set>
 
 #include <limits.h>
+#include <float.h>
 
 //INPUT PORT DESCRIPTION
 
 //OUTPUT PORT DESCRIPTION
 
-class vtkHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm 
+class vtkHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm
 {
 public:
 	vtkTypeMacro( vtkHierarchicalMaxFlowSegmentation, vtkImageAlgorithm );
@@ -60,12 +50,12 @@ public:
 	vtkSetClampMacro(StepSize,float,0.0f,1.0f);
 	vtkGetMacro(StepSize,float);
 
-	vtkDataObject* GetInput(int idx);
-	void SetInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetDataInput(int idx);
+	void SetDataInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetSmoothnessInput(int idx);
+	void SetSmoothnessInput(int idx, vtkDataObject *input);
 	vtkDataObject* GetOutput(int idx);
-
 	
-
 	// Description:
 	// If the subclass does not define an Execute method, then the task
 	// will be broken up, multiple threads will be spawned, and each thread
@@ -94,24 +84,53 @@ private:
 	vtkHierarchicalMaxFlowSegmentation(const vtkHierarchicalMaxFlowSegmentation&){}
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
-	void PropogateLabels( vtkIdType currNode, float** branchLabels, float** leafLabels, int size );
-	void PropogateFlows( vtkIdType currNode, float* sourceSinkFlow, float** branchSinkFlows, float** leafSinkFlows,
-											 float** branchIncFlows,
-											 float** branchDivFlows, float** leafDivFlows,
-											 float** branchLabels, float** leafLabels, int size );
+	void PropogateLabels( vtkIdType currNode );
+	void SolveMaxFlow( vtkIdType currNode );
+	void UpdateLabel( vtkIdType node );
 	
 	vtkTree* Hierarchy;
 	std::map<vtkIdType,double> SmoothnessScalars;
-	std::map<vtkIdType,int> OutputPortMapping;
-	std::map<vtkIdType,int> IntermediateBufferMapping;
+	std::map<vtkIdType,int> LeafMap;
+	std::map<vtkIdType,int> BranchMap;
 
 	int NumberOfIterations;
 	float CC;
 	float StepSize;
+	int VolumeSize;
+	int VX, VY, VZ;
 	
-	std::map<vtkIdType,int> InputPortMapping;
-	std::map<int,vtkIdType> BackwardsInputPortMapping;
-	int FirstUnusedPort;
+	std::map<vtkIdType,int> InputDataPortMapping;
+	std::map<int,vtkIdType> BackwardsInputDataPortMapping;
+	int FirstUnusedDataPort;
+	std::map<vtkIdType,int> InputSmoothnessPortMapping;
+	std::map<int,vtkIdType> BackwardsInputSmoothnessPortMapping;
+	int FirstUnusedSmoothnessPort;
+
+	//pointers to variable structures, easier to keep as part of the class definition
+	float**	branchFlowXBuffers;
+	float**	branchFlowYBuffers;
+	float**	branchFlowZBuffers;
+	float**	branchDivBuffers;
+	float**	branchSinkBuffers;
+	float**	branchIncBuffers;
+	float**	branchLabelBuffers;
+	float**	branchSmoothnessTermBuffers;
+	float**	branchWorkingBuffers;
+	float*	branchSmoothnessConstants;
+
+	float**	leafFlowXBuffers;
+	float**	leafFlowYBuffers;
+	float**	leafFlowZBuffers;
+	float**	leafDivBuffers;
+	float**	leafSinkBuffers;
+	float**	leafIncBuffers;
+	float**	leafLabelBuffers;
+	float**	leafDataTermBuffers;
+	float**	leafSmoothnessTermBuffers;
+	float*	leafSmoothnessConstants;
+
+	float*	sourceFlowBuffer;
+	float*	sourceWorkingBuffer;
 
 };
 
