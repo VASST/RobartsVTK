@@ -165,7 +165,7 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetSmoothnessInput(int idx, vtkDat
 			this->InputSmoothnessPortMapping[idx] = portNumber;
 			this->BackwardsInputSmoothnessPortMapping[portNumber] = idx;
 		}
-		this->SetNthInputConnection(0, this->InputSmoothnessPortMapping[idx], input->GetProducerPort() );
+		this->SetNthInputConnection(2, this->InputSmoothnessPortMapping[idx], input->GetProducerPort() );
 
 	}else{
 		//if there is no pair in the mapping, just exit, nothing to do
@@ -232,7 +232,7 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
 		//if their is no pair in the mapping, just exit, nothing to do
 		if( this->InputLabelPortMapping.find(idx) == this->InputLabelPortMapping.end() ) return;
 
-		int portNumber = this->InputLabelPortMapping.find(idx)->second;
+		int portNumber = this->InputLabelPortMapping[idx];
 		this->InputLabelPortMapping.erase(this->InputLabelPortMapping.find(idx));
 		this->BackwardsInputLabelPortMapping.erase(this->BackwardsInputLabelPortMapping.find(portNumber));
 
@@ -247,7 +247,7 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
 			this->SetNthInputConnection(1, this->FirstUnusedLabelPort - 1, 0 );
 
 			//correct the mappings
-			vtkIdType swappedId = this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1)->second;
+			vtkIdType swappedId = this->BackwardsInputLabelPortMapping[this->FirstUnusedLabelPort - 1];
 			//this->InputLabelPortMapping.erase(this->InputLabelPortMapping.find(swappedId));
 			//this->BackwardsInputLabelPortMapping.erase(this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1));
 			this->InputLabelPortMapping[swappedId] = portNumber;
@@ -345,12 +345,6 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 				return -1;
 			}
 
-			//make sure the term is non-negative
-			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-			if( CurrImage->GetScalarRange()[0] < 0.0 ){
-				vtkErrorMacro(<<"Data prior must be non-negative.");
-				return -1;
-			}
 			
 		}
 		
@@ -364,6 +358,10 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 				vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
 				if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 ){
 					vtkErrorMacro(<<"Data type must be FLOAT and only have one component.");
+					return -1;
+				}
+				if( CurrImage->GetScalarRange()[0] < 0.0 ){
+					vtkErrorMacro(<<"Data prior must be non-negative.");
 					return -1;
 				}
 			
@@ -395,6 +393,10 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 					vtkErrorMacro(<<"Label type must be FLOAT and only have one component.");
 					return -1;
 				}
+				if( CurrImage->GetScalarRange()[0] < 0.0 ){
+					vtkErrorMacro(<<"Label map must be non-negative.");
+					return -1;
+				}
 
 				//check to make sure that the sizes are consistant
 				if( Extent[0] == -1 ){
@@ -420,6 +422,10 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 				vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[2])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
 				if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 ){
 					vtkErrorMacro(<<"Smoothness type must be FLOAT and only have one component.");
+					return -1;
+				}
+				if( CurrImage->GetScalarRange()[0] < 0.0 ){
+					vtkErrorMacro(<<"Smoothness prior must be non-negative.");
 					return -1;
 				}
 
