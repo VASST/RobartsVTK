@@ -20,7 +20,7 @@ vtkStandardNewMacro(vtkCudaHierarchicalMaxFlowSegmentation);
 vtkCudaHierarchicalMaxFlowSegmentation::vtkCudaHierarchicalMaxFlowSegmentation(){
 	
 	//configure the IO ports
-	this->SetNumberOfInputPorts(1);
+	this->SetNumberOfInputPorts(2);
 	this->SetNumberOfOutputPorts(0);
 
 	//set algorithm mathematical parameters to defaults
@@ -30,15 +30,17 @@ vtkCudaHierarchicalMaxFlowSegmentation::vtkCudaHierarchicalMaxFlowSegmentation()
 	this->MaxGPUUsage = 0.75;
 
 	//set up the input mapping structure
-	this->InputPortMapping.clear();
-	this->BackwardsInputPortMapping.clear();
-	this->FirstUnusedPort = 0;
+	this->InputDataPortMapping.clear();
+	this->BackwardsInputDataPortMapping.clear();
+	this->FirstUnusedDataPort = 0;
+	this->InputSmoothnessPortMapping.clear();
+	this->BackwardsInputSmoothnessPortMapping.clear();
+	this->FirstUnusedSmoothnessPort = 0;
 
 	//set the other values to defaults
 	this->Hierarchy = 0;
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
-	this->InputPortMapping.clear();
 	this->BranchMap.clear();
 
 }
@@ -47,8 +49,10 @@ vtkCudaHierarchicalMaxFlowSegmentation::~vtkCudaHierarchicalMaxFlowSegmentation(
 	if( this->Hierarchy ) this->Hierarchy->UnRegister(this);
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
-	this->InputPortMapping.clear();
-	this->BackwardsInputPortMapping.clear();
+	this->InputDataPortMapping.clear();
+	this->BackwardsInputDataPortMapping.clear();
+	this->InputSmoothnessPortMapping.clear();
+	this->BackwardsInputSmoothnessPortMapping.clear();
 	this->BranchMap.clear();
 }
 
@@ -110,58 +114,112 @@ int vtkCudaHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkI
 	return this->Superclass::FillInputPortInformation(i,info);
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation::SetInput(int idx, vtkDataObject *input)
+void vtkCudaHierarchicalMaxFlowSegmentation::SetDataInput(int idx, vtkDataObject *input)
 {
 	//we are adding/switching an input, so no need to resort list
 	if( input != NULL ){
 	
 		//if their is no pair in the mapping, create one
-		if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ){
-			int portNumber = this->FirstUnusedPort;
-			this->FirstUnusedPort++;
-			this->InputPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
-			this->BackwardsInputPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+		if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() ){
+			int portNumber = this->FirstUnusedDataPort;
+			this->FirstUnusedDataPort++;
+			this->InputDataPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
+			this->BackwardsInputDataPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
 		}
-		this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, input->GetProducerPort() );
+		this->SetNthInputConnection(0, this->InputDataPortMapping[idx], input->GetProducerPort() );
 
 	}else{
 		//if their is no pair in the mapping, just exit, nothing to do
-		if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ) return;
+		if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() ) return;
 
-		int portNumber = this->InputPortMapping.find(idx)->second;
-		this->InputPortMapping.erase(this->InputPortMapping.find(idx));
-		this->BackwardsInputPortMapping.erase(this->BackwardsInputPortMapping.find(portNumber));
+		int portNumber = this->InputDataPortMapping[idx];
+		this->InputDataPortMapping.erase(this->InputDataPortMapping.find(idx));
+		this->BackwardsInputDataPortMapping.erase(this->BackwardsInputDataPortMapping.find(portNumber));
 
 		//if we are the last input, no need to reshuffle
-		if(portNumber == this->FirstUnusedPort - 1){
+		if(portNumber == this->FirstUnusedDataPort - 1){
 			this->SetNthInputConnection(0, portNumber,  0);
 		
 		//if we are not, move the last input into this spot
 		}else{
-			vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedPort - 1));
+			vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
 			this->SetNthInputConnection(0, portNumber, swappedInput->GetProducerPort() );
-			this->SetNthInputConnection(0, this->FirstUnusedPort - 1, 0 );
+			this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
 
 			//correct the mappings
-			vtkIdType swappedId = this->BackwardsInputPortMapping.find(this->FirstUnusedPort - 1)->second;
-			this->InputPortMapping.erase(this->InputPortMapping.find(swappedId));
-			this->BackwardsInputPortMapping.erase(this->BackwardsInputPortMapping.find(this->FirstUnusedPort - 1));
-			this->InputPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
-			this->BackwardsInputPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+			vtkIdType swappedId = this->BackwardsInputDataPortMapping[this->FirstUnusedDataPort - 1];
+			this->InputDataPortMapping.erase(this->InputDataPortMapping.find(swappedId));
+			this->BackwardsInputDataPortMapping.erase(this->BackwardsInputDataPortMapping.find(this->FirstUnusedDataPort - 1));
+			this->InputDataPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
+			this->BackwardsInputDataPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
 
 		}
 
 		//decrement the number of unused ports
-		this->FirstUnusedPort--;
+		this->FirstUnusedDataPort--;
 
 	}
 }
 
-vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetInput(int idx)
+void vtkCudaHierarchicalMaxFlowSegmentation::SetSmoothnessInput(int idx, vtkDataObject *input)
 {
-	if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() )
+	//we are adding/switching an input, so no need to resort list
+	if( input != NULL ){
+	
+		//if their is no pair in the mapping, create one
+		if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() ){
+			int portNumber = this->FirstUnusedSmoothnessPort;
+			this->FirstUnusedSmoothnessPort++;
+			this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
+			this->BackwardsInputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+		}
+		this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], input->GetProducerPort() );
+
+	}else{
+		//if their is no pair in the mapping, just exit, nothing to do
+		if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() ) return;
+
+		int portNumber = this->InputSmoothnessPortMapping[idx];
+		this->InputSmoothnessPortMapping.erase(this->InputSmoothnessPortMapping.find(idx));
+		this->BackwardsInputSmoothnessPortMapping.erase(this->BackwardsInputSmoothnessPortMapping.find(portNumber));
+
+		//if we are the last input, no need to reshuffle
+		if(portNumber == this->FirstUnusedSmoothnessPort - 1){
+			this->SetNthInputConnection(1, portNumber,  0);
+		
+		//if we are not, move the last input into this spot
+		}else{
+			vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedSmoothnessPort - 1));
+			this->SetNthInputConnection(1, portNumber, swappedInput->GetProducerPort() );
+			this->SetNthInputConnection(1, this->FirstUnusedSmoothnessPort - 1, 0 );
+
+			//correct the mappings
+			vtkIdType swappedId = this->BackwardsInputSmoothnessPortMapping[this->FirstUnusedSmoothnessPort - 1];
+			this->InputSmoothnessPortMapping.erase(this->InputSmoothnessPortMapping.find(swappedId));
+			this->BackwardsInputSmoothnessPortMapping.erase(this->BackwardsInputSmoothnessPortMapping.find(this->FirstUnusedSmoothnessPort - 1));
+			this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
+			this->BackwardsInputSmoothnessPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+
+		}
+
+		//decrement the number of unused ports
+		this->FirstUnusedSmoothnessPort--;
+
+	}
+}
+
+vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetDataInput(int idx)
+{
+	if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
 		return 0;
-	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->InputPortMapping.find(idx)->second));
+	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->InputDataPortMapping[idx]));
+}
+
+vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetSmoothnessInput(int idx)
+{
+	if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+		return 0;
+	return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(1, this->InputSmoothnessPortMapping[idx]));
 }
 
 vtkDataObject *vtkCudaHierarchicalMaxFlowSegmentation::GetOutput(int idx)
@@ -195,57 +253,81 @@ int vtkCudaHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformatio
 		vtkIdType node = iterator->Next();
 		NumNodes++;
 
-
 		//make sure all leaf nodes have a data term
 		if( this->Hierarchy->IsLeaf(node) ){
 			NumLeaves++;
-			
-			if( this->InputPortMapping.find(node) == this->InputPortMapping.end() ){
+			if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() ){
 				vtkErrorMacro(<<"Missing data prior for leaf node.");
 				return -1;
 			}
-
-			int inputPortNumber = this->InputPortMapping.find(node)->second;
-
+			int inputPortNumber = this->InputDataPortMapping[node];
 			if( !(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ){
 				vtkErrorMacro(<<"Missing data prior for leaf node.");
 				return -1;
 			}
-
-			//make sure the term is non-negative
-			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-			if( CurrImage->GetScalarRange()[0] < 0.0 ){
-				vtkErrorMacro(<<"Data prior must be non-negative.");
-				return -1;
-			}
-			
 		}
 		
-		//if we get here, any missing mapping implies just no smoothness term (default intended)
-		if( this->InputPortMapping.find(node) == this->InputPortMapping.end() ) continue;
-		int inputPortNumber = this->InputPortMapping.find(node)->second;
-		if( ! (inputVector[0])->GetInformationObject(inputPortNumber) ||
-			! (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ) continue;
+		//check validity of data terms
+		if( this->InputDataPortMapping.find(node) != this->InputDataPortMapping.end() ){
+			int inputPortNumber = this->InputDataPortMapping[node];
+			if( (inputVector[0])->GetInformationObject(inputPortNumber) &&
+				(inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ){
 
-		//check to make sure the datatype is float
-		vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-		if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 ){
-			vtkErrorMacro(<<"Data type must be FLOAT and only have one component.");
-			return -1;
+				//check for right scalar type
+				vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
+				if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 ){
+					vtkErrorMacro(<<"Data type must be FLOAT and only have one component.");
+					return -1;
+				}
+				if( CurrImage->GetScalarRange()[0] < 0.0 ){
+					vtkErrorMacro(<<"Data prior must be non-negative.");
+					return -1;
+				}
+			
+				//check to make sure that the sizes are consistant
+				if( Extent[0] == -1 ){
+					CurrImage->GetExtent(Extent);
+				}else{
+					int CurrExtent[6];
+					CurrImage->GetExtent(CurrExtent);
+					if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
+						CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] ){
+						vtkErrorMacro(<<"Inconsistant object extent.");
+						return -1;
+					}
+				}
+
+			}
 		}
 
-		//check to make sure that the sizes are consistant
-		if( Extent[0] == -1 ){
-			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-			CurrImage->GetExtent(Extent);
-		}else{
-			int CurrExtent[6];
-			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-			CurrImage->GetExtent(CurrExtent);
-			if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
-				CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] ){
-				vtkErrorMacro(<<"Inconsistant object extent.");
-				return -1;
+		if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() ){
+			int inputPortNumber = this->InputSmoothnessPortMapping[node];
+			if( (inputVector[1])->GetInformationObject(inputPortNumber) &&
+				(inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) ){
+
+				//check for right scalar type
+				vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
+				if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 ){
+					vtkErrorMacro(<<"Smoothness type must be FLOAT and only have one component.");
+					return -1;
+				}
+				if( CurrImage->GetScalarRange()[0] < 0.0 ){
+					vtkErrorMacro(<<"Smoothness prior must be non-negative.");
+					return -1;
+				}
+
+				//check to make sure that the sizes are consistant
+				if( Extent[0] == -1 ){
+					CurrImage->GetExtent(Extent);
+				}else{
+					int CurrExtent[6];
+					CurrImage->GetExtent(CurrExtent);
+					if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
+						CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] ){
+						vtkErrorMacro(<<"Inconsistant object extent.");
+						return -1;
+					}
+				}
 			}
 		}
 
@@ -713,7 +795,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		if( this->Hierarchy->IsLeaf(node) ){
-			int inputNumber = this->InputPortMapping[node];
+			int inputNumber = this->InputDataPortMapping[node];
 			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 			leafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
 
@@ -734,14 +816,14 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkIdType node = iterator->Next();
 		if( node == this->Hierarchy->GetRoot() ) continue;
 		vtkImageData* CurrImage = 0;
-		if( this->InputPortMapping.find(this->Hierarchy->GetParent(node)) != this->InputPortMapping.end() ){
-			int parentInputNumber = this->InputPortMapping[this->Hierarchy->GetParent(node)];
-			CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(parentInputNumber)->Get(vtkDataObject::DATA_OBJECT()));
+		if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() ){
+			int inputNumber = this->InputSmoothnessPortMapping[node];
+			CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 		}
 		if( this->Hierarchy->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
-			branchSmoothnessTermBuffers[this->BranchMap.find(node)->second] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+			branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		
 		// add the smoothness buffer in as read only
 		if( CurrImage ){
@@ -772,15 +854,15 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkIdType node = iterator->Next();
 		if( node == this->Hierarchy->GetRoot() ) continue;
 		if( this->Hierarchy->IsLeaf(node) )
-			if( this->SmoothnessScalars.find(this->Hierarchy->GetParent(node)) != this->SmoothnessScalars.end() )
-				leafSmoothnessConstants[this->LeafMap.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
+			if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
+				leafSmoothnessConstants[this->LeafMap[node]] = this->SmoothnessScalars[node];
 			else
-				leafSmoothnessConstants[this->LeafMap.find(node)->second] = 1.0f;
+				leafSmoothnessConstants[this->LeafMap[node]] = 1.0f;
 		else
-			if( this->SmoothnessScalars.find(this->Hierarchy->GetParent(node)) != this->SmoothnessScalars.end() )
-				branchSmoothnessConstants[this->BranchMap.find(node)->second] = this->SmoothnessScalars.find(this->Hierarchy->GetParent(node))->second;
+			if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
+				branchSmoothnessConstants[this->BranchMap[node]] = this->SmoothnessScalars[node];
 			else
-				branchSmoothnessConstants[this->BranchMap.find(node)->second] = 1.0f;
+				branchSmoothnessConstants[this->BranchMap[node]] = 1.0f;
 	}
 	iterator->Delete();
 	
@@ -912,14 +994,14 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 		vtkIdType parent = this->Hierarchy->GetParent(node);
 		if( this->Hierarchy->IsLeaf(node) ){
 			if( parent == this->Hierarchy->GetRoot() )
-				leafIncBuffers[this->LeafMap.find(node)->second] = sourceFlowBuffer;
+				leafIncBuffers[this->LeafMap[node]] = sourceFlowBuffer;
 			else
-				leafIncBuffers[this->LeafMap.find(node)->second] = branchSinkBuffers[this->BranchMap.find(parent)->second];
+				leafIncBuffers[this->LeafMap[node]] = branchSinkBuffers[this->BranchMap[parent]];
 		}else{
 			if( parent == this->Hierarchy->GetRoot() )
-				branchIncBuffers[this->BranchMap.find(node)->second] = sourceFlowBuffer;
+				branchIncBuffers[this->BranchMap[node]] = sourceFlowBuffer;
 			else
-				branchIncBuffers[this->BranchMap.find(node)->second] = branchSinkBuffers[this->BranchMap.find(parent)->second];
+				branchIncBuffers[this->BranchMap[node]] = branchSinkBuffers[this->BranchMap[parent]];
 		}
 	}
 	iterator->Delete();
@@ -1111,7 +1193,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//Copy back any uncopied leaf label buffers (others don't matter anymore)
 	for( int i = 0; i < NumLeaves; i++ ){
 		if( CPU2GPUMap.find(leafLabelBuffers[i]) != CPU2GPUMap.end() )
-			ReturnBufferGPU2CPU(leafLabelBuffers[i], CPU2GPUMap.find(leafLabelBuffers[i])->second);
+			ReturnBufferGPU2CPU(leafLabelBuffers[i], CPU2GPUMap[leafLabelBuffers[i]]);
 	}
 	if( this->Debug )
 		vtkDebugMacro(<< "Results copied back to CPU " );

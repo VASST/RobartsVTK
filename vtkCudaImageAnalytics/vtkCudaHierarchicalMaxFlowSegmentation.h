@@ -60,8 +60,10 @@ public:
 	vtkSetMacro(Verbose,bool);
 	vtkGetMacro(Verbose,bool);
 
-	vtkDataObject* GetInput(int idx);
-	void SetInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetDataInput(int idx);
+	void SetDataInput(int idx, vtkDataObject *input);
+	vtkDataObject* GetSmoothnessInput(int idx);
+	void SetSmoothnessInput(int idx, vtkDataObject *input);
 	vtkDataObject* GetOutput(int idx);
 	
 	// Description:
@@ -113,9 +115,12 @@ private:
 	int VolumeSize;
 	int VX, VY, VZ;
 	
-	std::map<vtkIdType,int> InputPortMapping;
-	std::map<int,vtkIdType> BackwardsInputPortMapping;
-	int FirstUnusedPort;
+	std::map<vtkIdType,int> InputDataPortMapping;
+	std::map<int,vtkIdType> BackwardsInputDataPortMapping;
+	int FirstUnusedDataPort;
+	std::map<vtkIdType,int> InputSmoothnessPortMapping;
+	std::map<int,vtkIdType> BackwardsInputSmoothnessPortMapping;
+	int FirstUnusedSmoothnessPort;
 
 	//pointers to variable structures, easier to keep as part of the class definition
 	float**	branchFlowXBuffers;
