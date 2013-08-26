@@ -52,6 +52,10 @@ SET ( Kit_SRCS
   vtkCudaKSOMLikelihood.cxx
   CUDA_KSOMlikelihood.h
   CUDA_KSOMlikelihood.cu
+  vtkCudaKSOMProbability.h
+  vtkCudaKSOMProbability.cxx
+  CUDA_KSOMProbability.h
+  CUDA_KSOMProbability.cu
 
   #Accelerated hierarchical max flow algorithm
   vtkCudaHierarchicalMaxFlowSegmentation.h

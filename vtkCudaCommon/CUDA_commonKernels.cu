@@ -440,6 +440,25 @@ template __global__ void MultiplyAndStoreBuffer<double>(double* buffer1, double*
 template __global__ void MultiplyAndStoreBuffer<long long>(long long* buffer1, long long* buffer2, long long value, int size);
 template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long value, int size);
 
+template<class T>
+__global__ void MultiplyAndStoreBuffer(T* inBuffer1, T* inBuffer2, T* outBuffer, int size){
+	int idx = CUDASTDOFFSET;
+	T value = inBuffer1[idx] * inBuffer2[idx];
+	if( idx < size ) outBuffer[idx] = value;
+}
+template __global__ void MultiplyAndStoreBuffer<char>(char* buffer1, char* buffer2, char* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<signed char>(signed char* buffer1, signed char* buffer2, signed char* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, unsigned char* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<short>(short* buffer1, short* buffer2, short* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, unsigned short* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<int>(int* buffer1, int* buffer2, int* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, unsigned int* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<long>(long* buffer1, long* buffer2, long* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, unsigned long* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<float>(float* buffer1, float* buffer2, float* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<double>(double* buffer1, double* buffer2, double* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<long long>(long long* buffer1, long long* buffer2, long long* buffer3, int size);
+template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long* buffer3, int size);
 
 //---------------------------------------------------------------------------//
 //----------------------------COMMON ACCUMULATORS----------------------------//
