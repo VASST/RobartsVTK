@@ -48,15 +48,10 @@ int vtkCudaKohonenReprojector::RequestUpdateExtent(
 {
 	vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
-	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
 	vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	
-	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),kohonenData->GetExtent(),6);
 	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),kohonenData->GetExtent(),6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),inData->GetExtent(),6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
 
 	return 1;
 }
@@ -78,12 +73,10 @@ int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
 	kohonenData->GetDimensions( this->info.KohonenMapSize );
 
 	//figure out the extent of the output
-    int updateExtent[6];
-    outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(this->info.NumberOfDimensions);
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
+	outData->SetExtent( inData->GetExtent() );
+	outData->SetWholeExtent( inData->GetExtent() );
 	outData->AllocateScalars();
 	
 	//sanity check on the number of input dimensions

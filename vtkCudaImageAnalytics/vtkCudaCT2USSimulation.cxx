@@ -177,6 +177,9 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	this->densOutput->SetExtent(0,x-1,
 								0,y-1,
 								0,z-1);
+	this->densOutput->SetWholeExtent(0,x-1,
+								0,y-1,
+								0,z-1);
 	this->densOutput->SetOrigin(0,0,0);
 	this->densOutput->SetSpacing(1.0,1.0,1.0);
 	this->densOutput->Update();
@@ -190,6 +193,9 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	this->transOutput->SetExtent(0,x-1,
 								 0,y-1,
 								 0,z-1);
+	this->transOutput->SetWholeExtent(0,x-1,
+								0,y-1,
+								0,z-1);
 	this->transOutput->SetOrigin(0,0,0);
 	this->transOutput->SetSpacing(1.0,1.0,1.0);
 	this->transOutput->Update();
@@ -201,6 +207,9 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	this->reflOutput->SetNumberOfScalarComponents(1);
 	this->reflOutput->SetScalarTypeToFloat();
 	this->reflOutput->SetExtent(0,x-1,
+								0,y-1,
+								0,z-1);
+	this->reflOutput->SetWholeExtent(0,x-1,
 								0,y-1,
 								0,z-1);
 	this->reflOutput->SetOrigin(0,0,0);
@@ -215,6 +224,9 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z){
 	this->usOutput->SetNumberOfScalarComponents(3);
 	this->usOutput->SetScalarTypeToUnsignedChar();
 	this->usOutput->SetExtent(0,x-1,
+							  0,y-1,
+							  0,z-1);
+	this->usOutput->SetWholeExtent(0,x-1,
 							  0,y-1,
 							  0,z-1);
 	this->usOutput->SetOrigin(0,0,0);

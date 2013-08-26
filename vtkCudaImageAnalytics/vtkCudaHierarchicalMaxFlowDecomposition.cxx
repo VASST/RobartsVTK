@@ -474,6 +474,15 @@ int vtkCudaHierarchicalMaxFlowDecomposition::RequestUpdateExtent(
 	int Extent[6]; int NumNodes; int NumLeaves; int NumEdges;
 	int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
 	if( result || NumNodes == 0 ) return -1;
+	
+	//set up the extents
+	for(int i = 0; i < 2; i++ ){
+		for(int j = 0; j < this->GetNumberOfInputConnections(i); j++){
+			vtkInformation *inputInfo = outputVector->GetInformationObject(i);
+			vtkImageData *inputBuffer = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+			inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+		}
+	}
 
 	return 1;
 }

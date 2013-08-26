@@ -34,6 +34,7 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
 	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(seedData->GetNumberOfScalarComponents());
 	outData->SetExtent( seedData->GetExtent() );
+	outData->SetWholeExtent( seedData->GetExtent() );
 	outData->SetSpacing( seedData->GetSpacing() );
 	outData->SetOrigin( seedData->GetOrigin() );
 	outData->AllocateScalars();

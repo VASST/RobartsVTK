@@ -60,12 +60,9 @@ int vtkCudaVoxelClassifier::RequestUpdateExtent(
   vtkInformationVector* outputVector)
 {
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
-	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),inData->GetExtent(),6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
 
 	return 1;
 }
@@ -94,12 +91,10 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
 	}
 
 	//figure out the extent of the output
-    int updateExtent[6];
-    outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToShort();
 	outData->SetNumberOfScalarComponents(1);
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
+	outData->SetExtent( inData->GetExtent() );
+	outData->SetWholeExtent( inData->GetExtent() );
 	outData->SetOrigin( inData->GetOrigin() );
 	outData->SetSpacing( inData->GetSpacing() );
 	outData->AllocateScalars();

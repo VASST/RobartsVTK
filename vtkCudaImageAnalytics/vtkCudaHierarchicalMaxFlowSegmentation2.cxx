@@ -405,11 +405,12 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestUpdateExtent(
 	if( result || NumNodes == 0 ) return -1;
 
 	//set up the extents
-	for(int i = 0; i < NumLeaves; i++ ){
-		vtkInformation *outputInfo = outputVector->GetInformationObject(i);
-		vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-		outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),Extent,6);
-		outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+	for(int i = 0; i < 2; i++ ){
+		for(int j = 0; j < this->GetNumberOfInputConnections(i); j++){
+			vtkInformation *inputInfo = outputVector->GetInformationObject(i);
+			vtkImageData *inputBuffer = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+			inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+		}
 	}
 
 	return 1;
@@ -507,6 +508,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RequestData(vtkInformation *request
 		vtkInformation *outputInfo = outputVector->GetInformationObject(i);
 		vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 		outputBuffer->SetExtent(Extent);
+		outputBuffer->SetWholeExtent(Extent);
 		outputBuffer->Modified();
 		outputBuffer->AllocateScalars();
 		leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();

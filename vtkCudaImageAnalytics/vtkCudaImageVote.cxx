@@ -166,10 +166,8 @@ int vtkCudaImageVote::RequestUpdateExtent(
 	if( result || NumLabels == 0 ) return -1;				
 
 	//set up the extents
-	vtkInformation *outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),Extent,6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+	for(int inputPortNumber = 0; inputPortNumber < this->InputPortMapping.size(); inputPortNumber++)
+		(inputVector[0])->GetInformationObject(inputPortNumber)->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
 
 	return 1;
 }
@@ -235,6 +233,7 @@ int vtkCudaImageVote::RequestData(vtkInformation *request,
 	//allocate output image (using short)
 	outData->SetScalarType(this->OutputDataType);
 	outData->SetExtent(Extent);
+	outData->SetWholeExtent(Extent);
 	outData->AllocateScalars();
 
 	//call typed method

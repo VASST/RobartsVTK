@@ -64,10 +64,8 @@ int vtkCudaKohonenApplication::RequestUpdateExtent(
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	
-	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),kohonenData->GetExtent(),6);
 	kohonenInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),kohonenData->GetExtent(),6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),inData->GetExtent(),6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
 
 	return 1;
 }
@@ -87,11 +85,10 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 	
 	//figure out the extent of the output
     int updateExtent[6];
-    outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(2);
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
+	outData->SetExtent(inData->GetExtent());
+	outData->SetWholeExtent(inData->GetExtent());
 	outData->AllocateScalars();
 	
 	//update information container

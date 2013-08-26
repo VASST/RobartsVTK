@@ -83,12 +83,9 @@ int vtkCudaPAGMMEstimator::RequestUpdateExtent(
 	vtkImageData* inputDataImage = vtkImageData::SafeDownCast(inputDataInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkInformation* inputGMMInfo = (inputVector[1])->GetInformationObject(0);
 	vtkImageData* inputGMMImage = vtkImageData::SafeDownCast(inputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
-	
-	vtkInformation* outputGMMInfo = outputVector->GetInformationObject(0);
-	vtkImageData* outGMMImage = vtkImageData::SafeDownCast(outputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-	outputGMMInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),inputGMMImage->GetExtent(),6);
-	outputGMMInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputGMMImage->GetExtent(),6);
+	inputGMMInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputGMMImage->GetExtent(),6);
+	inputDataInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputDataImage->GetExtent(),6);
 
 	return 1;
 }
@@ -111,11 +108,10 @@ int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
 	//figure out the extent of the output
 	this->info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
 	this->info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
-    int updateExtent[6];
-    outputGMMInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outputGMMImage->SetScalarTypeToFloat();
 	outputGMMImage->SetNumberOfScalarComponents( this->info.NumberOfLabels );
-	outputGMMImage->SetExtent(updateExtent);
+	outputGMMImage->SetExtent(inputGMMImage->GetExtent());
+	outputGMMImage->SetWholeExtent(inputGMMImage->GetExtent());
 	outputGMMImage->AllocateScalars();
 	
 	//get volume information for containers

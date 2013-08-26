@@ -105,14 +105,6 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
         vtkInformationVector ** inputVector,
         vtkInformationVector * outputVector )
 {
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
-    int updateExtent[6];
-    outputVector->GetInformationObject(0)->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
-	outData->SetScalarTypeToFloat();
-	outData->SetNumberOfScalarComponents(1);
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
-	outData->AllocateScalars();
 
 	vtkImageData** inData = new vtkImageData*[inputVector[0]->GetNumberOfInformationObjects()];
 
@@ -126,6 +118,13 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
         vtkErrorMacro(<< "At least one label map is required." );
 		return -1;
     }
+	
+	vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+	outData->SetScalarTypeToFloat();
+	outData->SetNumberOfScalarComponents(1);
+	outData->SetExtent(inData[0]->GetExtent());
+	outData->SetWholeExtent(inData[0]->GetExtent());
+	outData->AllocateScalars();
 
     // this filter expects the output datatype to be float.
     if (outData->GetScalarType() != VTK_FLOAT)

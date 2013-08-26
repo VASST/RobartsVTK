@@ -195,12 +195,10 @@ int vtkCudaImageLogLikelihood::RequestData(
 	
 	//collect the output image data
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
-    int updateExtent[6];
-    outputVector->GetInformationObject(0)->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
 	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(1);
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
+	outData->SetExtent(inputImage->GetExtent());
+	outData->SetWholeExtent(inputImage->GetExtent());
 	outData->AllocateScalars();
 	void *outPtr = outData->GetScalarPointer();
 

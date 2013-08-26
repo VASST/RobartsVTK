@@ -177,18 +177,12 @@ int vtkCudaKohonenGenerator::RequestInformation(
 
 int vtkCudaKohonenGenerator::RequestUpdateExtent(
   vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** vtkNotUsed(inputVector),
+  vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-	vtkInformation* outputInfo = outputVector->GetInformationObject(0);
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	int outExt[6];
-	outExt[0] = outExt[2] = outExt[4] = 0;
-	outExt[1] = this->info.KohonenMapSize[0]-1;
-	outExt[3] = this->info.KohonenMapSize[1]-1;
-	outExt[5] = this->info.KohonenMapSize[2]-1;
-    outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),outExt,6);
-	outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),outExt,6);
+	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
+	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
 	return 1;
 }
 
@@ -245,12 +239,11 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		}
 	}
 
-    int updateExtent[6];
-    outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
+	int outputExtent[6] = {0, this->info.KohonenMapSize[0]-1, 0, this->info.KohonenMapSize[1]-1, 0, 0};
 	outData->SetScalarTypeToFloat();
 	outData->SetNumberOfScalarComponents(2*inData->GetNumberOfScalarComponents());
-	outData->SetExtent(updateExtent);
-	outData->SetWholeExtent(updateExtent);
+	outData->SetExtent(outputExtent);
+	outData->SetWholeExtent(outputExtent);
 	outData->AllocateScalars();
 
 	//update information container
