@@ -24,8 +24,7 @@ __global__ void ProcessSample(int samplePointLoc, float* InputData, float* Kohon
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float var = KohonenMap[(2*i+1)*bufferSize+kOffset];
 		float value = (KohonenMap[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
-		value *= info.Scale / var;
-		distance += value*value;
+		distance += value * value * info.Scale / var;
 		penalty *= var;
 	}
 	distance += 0.5 * log(penalty);

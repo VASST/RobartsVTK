@@ -23,8 +23,7 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Buffer
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float var = KohonenMap[(2*i+1)*bufferSize+kOffset];
 		float value = (KohonenMap[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
-		value *= info.Scale / var;
-		distance += value*value;
+		distance += value * value * info.Scale / var;
 		penalty *= var;
 	}
 	distance += 0.5 * log(penalty);
@@ -93,6 +92,7 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 
 			//multiply the basic amount with the probability buffer into the working buffer
 			MultiplyAndStoreBuffer<<<grid, threads, 0, *stream>>>(device_BaseBuffer, device_ProbabilityBuffer+i*MapSize, device_WorkingBuffer, MapSize );
+			//CopyBuffers<<<grid, threads, 0, *stream>>>(device_WorkingBuffer, device_BaseBuffer, MapSize);
 
 			//reduce working buffer by summation
 			int j = 1;
@@ -107,7 +107,7 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 			float result = 1.0f;
 			cudaMemcpyAsync( &result, device_WorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
-			(outputData[i])[voxel] = (result == 0.0f) ?
+			(outputData[i])[voxel] = ( result <= exp(-FLT_MAX) ) ?
 				FLT_MAX :
 				-log( result );
 

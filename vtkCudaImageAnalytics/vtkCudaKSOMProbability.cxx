@@ -133,6 +133,13 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 		vtkInformation* outputInfo = outputVector->GetInformationObject(i);
 		vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 		outData->ShallowCopy(inData);
+		outData->SetExtent(inData->GetExtent());
+		outData->SetWholeExtent(inData->GetExtent());
+		outData->SetSpacing(inData->GetSpacing());
+		outData->SetOrigin(inData->GetOrigin());
+		outData->SetScalarTypeToFloat();
+		outData->SetNumberOfScalarComponents(1);
+		outData->AllocateScalars();
 		outputBuffers[i] = (float*) outData->GetScalarPointer();
 	}
 
@@ -143,7 +150,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	kohonenData->GetDimensions( this->info.KohonenMapSize );
 	
 	//update scale
-	this->info.Scale = this->Scale;
+	this->info.Scale = 1.0 / (this->Scale*this->Scale);
 
 	//pass it over to the GPU
 	this->ReserveGPU();
