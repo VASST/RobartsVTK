@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 
-#include "vtkAlgorithm.h"
+#include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
@@ -24,32 +24,18 @@
 
 //OUTPUT PORT DESCRIPTION
 
-class vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkImageAlgorithm
+class vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
 {
 public:
-	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkImageAlgorithm );
+	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkHierarchicalMaxFlowSegmentation );
 
 	static vtkCudaHierarchicalMaxFlowSegmentation2 *New();
-
-	//Set the hierarchical model used in the segmentation, note that this has to be a 
-	// tree.
-	void SetHierarchy(vtkTree* graph);
-	vtkTree* GetHierarchy();
 
 	void AddDevice(int GPU);
 	void RemoveDevice(int GPU);
 	bool HasDevice(int GPU);
 	void ClearDevices();
 	void SetDevice(int GPU){ this->ClearDevices(); this->AddDevice(GPU); }
-
-	//Weight the smoothness term. If no scalar is provided, it is assumed to be 1. If
-	//no smoothness term is provided, it is assumed to be the unit function.
-	void AddSmoothnessScalar( vtkIdType node, double alpha );
-	
-	//Get and Set the number of iterations used by the algorithm (computing convergence term
-	//is too slow.)
-	vtkSetClampMacro(NumberOfIterations,int,0,INT_MAX);
-	vtkGetMacro(NumberOfIterations,int);
 	
 	//Get and Set the maximum 
 	vtkSetClampMacro(MaxGPUUsage,double,0.0,1.0);
@@ -57,24 +43,10 @@ public:
 	void SetMaxGPUUsage(double usage, int device);
 	double GetMaxGPUUsage(int device);
 	void ClearMaxGPUUsage();
-	
-	//Get and Set the labeling constant, CC, of the algorithm
-	vtkSetClampMacro(CC,float,0.0f,1.0f);
-	vtkGetMacro(CC,float);
-
-	//Get and Set the step size of the algorithm for updating spatial flows
-	vtkSetClampMacro(StepSize,float,0.0f,1.0f);
-	vtkGetMacro(StepSize,float);
 
 	//Get and Set the verbose flag
 	vtkSetClampMacro(ReportRate,int,0,INT_MAX);
 	vtkGetMacro(ReportRate,int);
-	
-	vtkDataObject* GetDataInput(int idx);
-	void SetDataInput(int idx, vtkDataObject *input);
-	vtkDataObject* GetSmoothnessInput(int idx);
-	void SetSmoothnessInput(int idx, vtkDataObject *input);
-	vtkDataObject* GetOutput(int idx);
 	
 	// Description:
 	// If the subclass does not define an Execute method, then the task
@@ -84,16 +56,6 @@ public:
 	virtual int RequestData(vtkInformation *request, 
 							 vtkInformationVector **inputVector, 
 							 vtkInformationVector *outputVector);
-	virtual int RequestInformation( vtkInformation* request,
-							 vtkInformationVector** inputVector,
-							 vtkInformationVector* outputVector);
-	virtual int RequestUpdateExtent( vtkInformation* request,
-							 vtkInformationVector** inputVector,
-							 vtkInformationVector* outputVector);
-	virtual int RequestDataObject( vtkInformation* request,
-							 vtkInformationVector** inputVector,
-							 vtkInformationVector* outputVector);
-	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
 	vtkCudaHierarchicalMaxFlowSegmentation2();
@@ -109,56 +71,10 @@ private:
 	std::map<int,double>	MaxGPUUsageNonDefault;
 	int						ReportRate;
 
-	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode, int* timeStep );
 	void UpdateLabel( vtkIdType node, int* timeStep );
-	
-	vtkTree* Hierarchy;
-	std::map<vtkIdType,double> SmoothnessScalars;
-	std::map<vtkIdType,int> LeafMap;
-	std::map<vtkIdType,int> BranchMap;
 
-	int NumberOfIterations;
-	float CC;
-	float StepSize;
-	int VolumeSize;
-	int VX, VY, VZ;
-	
-	std::map<vtkIdType,int> InputDataPortMapping;
-	std::map<int,vtkIdType> BackwardsInputDataPortMapping;
-	int FirstUnusedDataPort;
-	std::map<vtkIdType,int> InputSmoothnessPortMapping;
-	std::map<int,vtkIdType> BackwardsInputSmoothnessPortMapping;
-	int FirstUnusedSmoothnessPort;
-
-	//pointers to variable structures, easier to keep as part of the class definition
-	float**	branchFlowXBuffers;
-	float**	branchFlowYBuffers;
-	float**	branchFlowZBuffers;
-	float**	branchDivBuffers;
-	float**	branchSinkBuffers;
-	float**	branchIncBuffers;
-	float**	branchLabelBuffers;
-	float**	branchSmoothnessTermBuffers;
-	float**	branchWorkingBuffers;
-	float*	branchSmoothnessConstants;
-
-	float**	leafFlowXBuffers;
-	float**	leafFlowYBuffers;
-	float**	leafFlowZBuffers;
-	float**	leafDivBuffers;
-	float**	leafSinkBuffers;
-	float**	leafIncBuffers;
-	float**	leafLabelBuffers;
-	float**	leafDataTermBuffers;
-	float**	leafSmoothnessTermBuffers;
-	float*	leafSmoothnessConstants;
-
-	float*	sourceFlowBuffer;
-	float*	sourceWorkingBuffer;
-
-	
 	class Worker : public vtkCudaObject {
 	public:
 		vtkCudaHierarchicalMaxFlowSegmentation2* const Parent;
@@ -208,10 +124,6 @@ private:
 	int		TotalNumberOfBuffers;
 	int		NumMemCpies;
 	int		NumKernelRuns;
-	int		NumLeaves;
-	int		NumBranches;
-	int		NumNodes;
-	int		NumEdges;
 	int		NumTasksGoingToHappen;
 
 	std::map<vtkIdType,Task*> ClearWorkingBufferTasks;

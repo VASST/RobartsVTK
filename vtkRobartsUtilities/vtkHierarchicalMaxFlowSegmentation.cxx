@@ -462,7 +462,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestInformation(
   vtkInformationVector* outputVector)
 {
 	//check input for consistancy
-	int Extent[6]; int NumNodes; int NumLeaves; int NumEdges;
+	int Extent[6];
 	int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
 	if( result || NumNodes == 0 ) return -1;
 	

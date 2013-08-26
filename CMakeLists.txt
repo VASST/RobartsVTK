@@ -173,6 +173,14 @@ IF (RobartsVTK_USE_ANIS)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkAnis)
 ENDIF (RobartsVTK_USE_ANIS)
 
+# vtkRobartsUtilies - contains random utilities like a Read-Write lock and Image Pipe over TCI/IP
+OPTION (RobartsVTK_USE_ROBARTSUTILITIES "Build the vtkRobartsUltrasound module" OFF)
+IF (RobartsVTK_USE_ROBARTSUTILITIES)
+  SUBDIRS (vtkRobartsUtilities)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsUtilities)
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUtilities)
+ENDIF (RobartsVTK_USE_ROBARTSUTILITIES)
+
 # vtkCuda
 OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
@@ -185,18 +193,28 @@ IF (RobartsVTK_USE_CUDA)
   SUBDIRS(vtkCudaCommon)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon)
-  
-  # Add the CUDA Visualization Libraries
-  SUBDIRS(vtkCudaVisualization)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
-  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaVisualization)
-  
-  # Add the CUDA Analytics Libraries
-  SUBDIRS(vtkCudaImageAnalytics)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaImageAnalytics)
-  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaImageAnalytics)
 
 ENDIF (RobartsVTK_USE_CUDA)
+
+# Add the CUDA Visualization Libraries
+IF (RobartsVTK_USE_CUDA)
+	OPTION (RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
+	IF (RobartsVTK_USE_CUDA_VISUALIZATION)
+	  SUBDIRS(vtkCudaVisualization)
+	  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaVisualization)
+	  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaVisualization)
+	ENDIF (RobartsVTK_USE_CUDA_VISUALIZATION)
+ENDIF (RobartsVTK_USE_CUDA)
+
+# Add the CUDA Analytics Libraries
+IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_ROBARTSUTILITIES)
+	OPTION (RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
+	IF (RobartsVTK_USE_CUDA_ANALYTICS)
+	  SUBDIRS(vtkCudaImageAnalytics)
+	  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaImageAnalytics)
+	  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaImageAnalytics)
+	ENDIF ()
+ENDIF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_ROBARTSUTILITIES)
 
 # vtkRobartsUltrasound - contains new freehand ultrasound code
 OPTION (RobartsVTK_USE_ROBARTSULTRASOUND "Build the vtkRobartsUltrasound module" OFF)
@@ -205,14 +223,6 @@ IF (RobartsVTK_USE_ROBARTSULTRASOUND)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsUltrasound)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUltrasound)
 ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
-
-# vtkRobartsUtilies - contains random utilities like a Read-Write lock and Image Pipe over TCI/IP
-OPTION (RobartsVTK_USE_ROBARTSUTILITIES "Build the vtkRobartsUltrasound module" OFF)
-IF (RobartsVTK_USE_ROBARTSUTILITIES)
-  SUBDIRS (vtkRobartsUtilities)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkRobartsUtilities)
-  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUtilities)
-ENDIF (RobartsVTK_USE_ROBARTSUTILITIES)
 
 # Add RobartsVTK.py.in file.  On Win32, this has to go into
 # all config 

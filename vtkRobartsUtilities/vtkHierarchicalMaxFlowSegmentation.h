@@ -79,10 +79,6 @@ protected:
 	vtkHierarchicalMaxFlowSegmentation();
 	virtual ~vtkHierarchicalMaxFlowSegmentation();
 
-private:
-	vtkHierarchicalMaxFlowSegmentation operator=(const vtkHierarchicalMaxFlowSegmentation&){}
-	vtkHierarchicalMaxFlowSegmentation(const vtkHierarchicalMaxFlowSegmentation&){}
-
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode );
@@ -92,6 +88,10 @@ private:
 	std::map<vtkIdType,double> SmoothnessScalars;
 	std::map<vtkIdType,int> LeafMap;
 	std::map<vtkIdType,int> BranchMap;
+	int		NumLeaves;
+	int		NumBranches;
+	int		NumNodes;
+	int		NumEdges;
 
 	int NumberOfIterations;
 	float CC;
@@ -131,6 +131,10 @@ private:
 
 	float*	sourceFlowBuffer;
 	float*	sourceWorkingBuffer;
+
+private:
+	vtkHierarchicalMaxFlowSegmentation operator=(const vtkHierarchicalMaxFlowSegmentation&){}
+	vtkHierarchicalMaxFlowSegmentation(const vtkHierarchicalMaxFlowSegmentation&){}
 
 };
 
