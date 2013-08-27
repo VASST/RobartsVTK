@@ -1,15 +1,21 @@
+/** @file vtkHierarchicalMaxFlowSegmentation2.h
+ *
+ *  @brief Header file with definitions of GPU-based solver for generalized hierarchical max-flow
+ *			segmentation problems with greedy scheduling over multiple GPUs. See
+ *			vtkHierarchicalMaxFlowSegmentation.h for most of the interface documentation.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 
 #include "vtkHierarchicalMaxFlowSegmentation.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
-#include "vtkDirectedGraph.h"
-#include "vtkTree.h"
+#include "vtkCudaObject.h"
+
 #include <map>
 #include <list>
 #include <set>
@@ -18,33 +24,45 @@
 #include <limits.h>
 #include <float.h>
 
-#include "vtkCudaObject.h"
-
-//INPUT PORT DESCRIPTION
-
-//OUTPUT PORT DESCRIPTION
-
 class vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
 {
 public:
 	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkHierarchicalMaxFlowSegmentation );
-
 	static vtkCudaHierarchicalMaxFlowSegmentation2 *New();
 
+	// Description:
+	// Insert, remove, and verify a given GPU into the set of GPUs usable by the algorithm. This
+	// set defaults to {GPU0} and must be non-empty when the update is invoked.
 	void AddDevice(int GPU);
 	void RemoveDevice(int GPU);
 	bool HasDevice(int GPU);
+
+	// Description:
+	// Clears the set of GPUs usable by the algorith,
 	void ClearDevices();
+
+	// Description:
+	// Set the class to use a single GPU, the one provided.
 	void SetDevice(int GPU){ this->ClearDevices(); this->AddDevice(GPU); }
 	
-	//Get and Set the maximum 
+	// Description:
+	// Get and Set the maximum percent of GPU memory usable by the algorithm.
+	// Recommended to keep below 98% on compute-only cards, and 90% on cards
+	// used for running the monitors. The number provided will act as a de
+	// facto value for all cards. (Default is 90%.)
 	vtkSetClampMacro(MaxGPUUsage,double,0.0,1.0);
 	vtkGetMacro(MaxGPUUsage,double);
+	
+	// Description:
+	// Get, Set, and Clear exceptions, allowing for a particular card to have its
+	// memory consumption managed separately. 
 	void SetMaxGPUUsage(double usage, int device);
 	double GetMaxGPUUsage(int device);
 	void ClearMaxGPUUsage();
-
-	//Get and Set the verbose flag
+	
+	// Description:
+	// Get and Set how often the algorithm should report if in Debug mode. If set
+	// to 0, the algorithm doesn't report task completions. Default is 100 tasks.
 	vtkSetClampMacro(ReportRate,int,0,INT_MAX);
 	vtkGetMacro(ReportRate,int);
 
@@ -149,8 +167,8 @@ protected:
 	
 
 private:
-	vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
-	vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
+	vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
+	vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
 };
 
 #endif

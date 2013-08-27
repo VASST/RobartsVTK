@@ -1,33 +1,31 @@
+/** @file vtkHierarchicalMaxFlowSegmentation.h
+ *
+ *  @brief Header file with definitions of GPU-based solver for generalized hierarchical max-flow
+ *			segmentation problems with a priori known scheduling over a single GPU. See
+ *			vtkHierarchicalMaxFlowSegmentation.h for most of the interface documentation.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 
+#include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "vtkCudaObject.h"
 
-#include "vtkHierarchicalMaxFlowSegmentation.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
-#include "vtkDirectedGraph.h"
-#include "vtkTree.h"
 #include <map>
 #include <list>
 #include <set>
-
 #include <limits.h>
 #include <float.h>
-
-//INPUT PORT DESCRIPTION
-
-//OUTPUT PORT DESCRIPTION
 
 class vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public vtkCudaObject
 {
 public:
 	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkHierarchicalMaxFlowSegmentation );
-
 	static vtkCudaHierarchicalMaxFlowSegmentation *New();
 
 protected:
@@ -71,8 +69,8 @@ protected:
 	int		NumKernelRuns;
 
 private:
-	vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){}
-	vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){}
+	vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){} //not implemented
+	vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){} //not implemented
 };
 
 #endif

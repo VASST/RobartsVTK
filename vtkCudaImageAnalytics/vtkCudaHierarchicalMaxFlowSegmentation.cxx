@@ -1,3 +1,14 @@
+/** @file vtkHierarchicalMaxFlowSegmentation.cxx
+ *
+ *  @brief Implementation file with definitions of GPU-based solver for generalized hierarchical max-flow
+ *			segmentation problems with a priori known scheduling over a single GPU.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #include "vtkCudaHierarchicalMaxFlowSegmentation.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
@@ -5,11 +16,6 @@
 
 #include <assert.h>
 #include <math.h>
-#include <float.h>
-#include <limits.h>
-
-#include <set>
-#include <list>
 
 #include "CUDA_hierarchicalmaxflow.h"
 

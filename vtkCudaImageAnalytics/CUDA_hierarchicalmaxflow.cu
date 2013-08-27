@@ -1,3 +1,14 @@
+/** @file CUDA_hierarchicalmaxflow.cu
+ *
+ *  @brief Implementation file with definitions of GPU kernels used predominantly in GHMF segmentation
+ *			These are used only by vtkHierarchicalMaxFlowSegmentation and vtkHierarchicalMaxFlowSegmentation2.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #include "CUDA_hierarchicalmaxflow.h"
 #include "CUDA_commonKernels.h"
 #include "stdio.h"

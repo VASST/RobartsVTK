@@ -1,7 +1,21 @@
+/** @file vtkHierarchicalMaxFlowSegmentation.cxx
+ *
+ *  @brief Implementation file with definitions of CPU-based solver for generalized hierarchical max-flow
+ *			segmentation problems.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
+ *
+ */
+
 #include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTreeDFSIterator.h"
+#include "vtkImageData.h"
 
 #include <assert.h>
 #include <math.h>

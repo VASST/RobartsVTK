@@ -1,3 +1,14 @@
+/** @file vtkHierarchicalMaxFlowSegmentation2.cxx
+ *
+ *  @brief Implementation file with definitions of GPU-based solver for generalized hierarchical max-flow
+ *			segmentation problems with greedy scheduling over multiple GPUs.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
 #include "vtkCudaHierarchicalMaxFlowSegmentation2Task.h"
 #include "vtkObjectFactory.h"
@@ -6,25 +17,16 @@
 
 #include <assert.h>
 #include <math.h>
-#include <float.h>
-#include <limits.h>
-
-#include <set>
-#include <list>
-#include <vector>
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include "vtkCudaDeviceManager.h"
-#include "vtkCudaObject.h"
-
-#define SQR(X) X*X
 
 vtkStandardNewMacro(vtkCudaHierarchicalMaxFlowSegmentation2);
 
 vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2(){
 
 	//set algorithm mathematical parameters to defaults
-	this->MaxGPUUsage = 0.75;
+	this->MaxGPUUsage = 0.90;
 	this->ReportRate = 100;
 
 	//give default GPU selection
@@ -214,7 +216,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm(){
 		//if there are conflicts
 		//update progress
 		NumTasksDone++;
-		if( this->Debug && NumTasksDone % ReportRate == 0 ){
+		if( this->Debug && ReportRate > 0 && NumTasksDone % ReportRate == 0 ){
 			for(std::set<Worker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
 				(*workerIt)->CallSyncThreads();
 			vtkDebugMacro(<< "Finished " << NumTasksDone << " with " << NumMemCpies << " memory transfers.");

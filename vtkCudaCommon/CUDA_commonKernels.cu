@@ -1,3 +1,16 @@
+/** @file CUDA_commonKernels.cu
+ *
+ *  @brief Implementation file with definitions of GPU kernels used in several GPU-accelerated classes.
+ *			This includes simple utilities like created validly sized grids. These classes are primarily 
+ *			template-based, so there are a lot of lines of template forward declarations.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
+
 #include "CUDA_commonKernels.h"
 #include <curand_kernel.h>
 #include <limits.h>
