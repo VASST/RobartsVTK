@@ -29,26 +29,16 @@ public:
 	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkHierarchicalMaxFlowSegmentation );
 
 	static vtkCudaHierarchicalMaxFlowSegmentation *New();
-	
-	// Description:
-	// If the subclass does not define an Execute method, then the task
-	// will be broken up, multiple threads will be spawned, and each thread
-	// will call this method. It is public so that the thread functions
-	// can call this method.
-	virtual int RequestData(vtkInformation *request, 
-							 vtkInformationVector **inputVector, 
-							 vtkInformationVector *outputVector);
 
 protected:
 	vtkCudaHierarchicalMaxFlowSegmentation();
 	virtual ~vtkCudaHierarchicalMaxFlowSegmentation();
 
-private:
-	vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){}
-	vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){}
-
 	void Reinitialize(int withData);
 	void Deinitialize(int withData);
+
+	virtual int InitializeAlgorithm();
+	virtual int RunAlgorithm();
 
 	double	MaxGPUUsage;
 	void PropogateLabels( vtkIdType currNode );
@@ -59,6 +49,7 @@ private:
 	void ReturnBufferGPU2CPU(float* CPUBuffer, float* GPUBuffer);
 	void MoveBufferCPU2GPU(float* CPUBuffer, float* GPUBuffer);
 	void GetGPUBuffersV2(int reference);
+	std::list<float*> AllGPUBufferBlocks;
 	std::map<float*,float*> CPU2GPUMap;
 	std::map<float*,float*> GPU2CPUMap;
 	std::set<float*> CPUInUse;
@@ -78,6 +69,10 @@ private:
 
 	int		NumMemCpies;
 	int		NumKernelRuns;
+
+private:
+	vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){}
+	vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){}
 };
 
 #endif

@@ -47,29 +47,19 @@ public:
 	//Get and Set the verbose flag
 	vtkSetClampMacro(ReportRate,int,0,INT_MAX);
 	vtkGetMacro(ReportRate,int);
-	
-	// Description:
-	// If the subclass does not define an Execute method, then the task
-	// will be broken up, multiple threads will be spawned, and each thread
-	// will call this method. It is public so that the thread functions
-	// can call this method.
-	virtual int RequestData(vtkInformation *request, 
-							 vtkInformationVector **inputVector, 
-							 vtkInformationVector *outputVector);
 
 protected:
 	vtkCudaHierarchicalMaxFlowSegmentation2();
 	virtual ~vtkCudaHierarchicalMaxFlowSegmentation2();
-
-private:
-	vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
-	vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
 
 	std::set<int> GPUsUsed;
 
 	double					MaxGPUUsage;
 	std::map<int,double>	MaxGPUUsageNonDefault;
 	int						ReportRate;
+	
+	virtual int InitializeAlgorithm();
+	virtual int RunAlgorithm();
 
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode, int* timeStep );
@@ -120,8 +110,7 @@ private:
 
 	std::set< float* > ReadOnly;
 	std::set< float* > NoCopyBack;
-	
-	int		TotalNumberOfBuffers;
+
 	int		NumMemCpies;
 	int		NumKernelRuns;
 	int		NumTasksGoingToHappen;
@@ -157,6 +146,11 @@ private:
 	void CreateClearSourceWorkingBufferTask();
 	void CreateDivideOutLabelsTasks(vtkIdType currNode);
 	void CreatePropogateLabelsTasks(vtkIdType currNode);
+	
+
+private:
+	vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
+	vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){}
 };
 
 #endif

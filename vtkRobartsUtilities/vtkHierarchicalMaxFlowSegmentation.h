@@ -80,6 +80,10 @@ protected:
 	virtual ~vtkHierarchicalMaxFlowSegmentation();
 
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
+	
+	virtual int InitializeAlgorithm();
+	virtual int RunAlgorithm();
+
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode );
 	void UpdateLabel( vtkIdType node );
@@ -107,6 +111,9 @@ protected:
 	int FirstUnusedSmoothnessPort;
 
 	//pointers to variable structures, easier to keep as part of the class definition
+	std::list<float*> CPUBuffersAcquired;
+	std::list<int> CPUBuffersSize;
+	int TotalNumberOfBuffers;
 	float**	branchFlowXBuffers;
 	float**	branchFlowYBuffers;
 	float**	branchFlowZBuffers;
