@@ -30,8 +30,8 @@ public:
 
 	//Set the hierarchical model used in the segmentation, note that this has to be a 
 	// tree.
-	void SetHierarchy(vtkTree* graph);
-	vtkTree* GetHierarchy();
+	vtkSetObjectMacro(Hierarchy,vtkTree)
+	vtkGetObjectMacro(Hierarchy,vtkTree)
 
 	//Weight the smoothness term. If no scalar is provided, it is assumed to be 1. If
 	//no smoothness term is provided, it is assumed to be the unit function.

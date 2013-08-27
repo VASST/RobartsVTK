@@ -52,36 +52,6 @@ vtkHierarchicalMaxFlowSegmentation::~vtkHierarchicalMaxFlowSegmentation(){
 	this->BackwardsInputSmoothnessPortMapping.clear();
 	this->BranchMap.clear();
 }
-//------------------------------------------------------------
-
-void vtkHierarchicalMaxFlowSegmentation::SetHierarchy(vtkTree* graph){
-	if( graph != this->Hierarchy ){
-		if( this->Hierarchy ) this->Hierarchy->UnRegister(this);
-		this->Hierarchy = graph;
-		if( this->Hierarchy ) this->Hierarchy->Register(this);
-		this->Modified();
-
-		//update output mapping
-		this->LeafMap.clear();
-		vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
-		iterator->SetTree(this->Hierarchy);
-		iterator->SetStartVertex(this->Hierarchy->GetRoot());
-		while( iterator->HasNext() ){
-			vtkIdType node = iterator->Next();
-			if( this->Hierarchy->IsLeaf(node) )
-				this->LeafMap.insert(std::pair<vtkIdType,int>(node,(int) this->LeafMap.size()));
-		}
-		iterator->Delete();
-
-		//update number of output ports
-		this->SetNumberOfOutputPorts((int) this->LeafMap.size());
-
-	}
-}
-
-vtkTree* vtkHierarchicalMaxFlowSegmentation::GetHierarchy(){
-	return this->Hierarchy;
-}
 
 //------------------------------------------------------------
 
