@@ -2,7 +2,7 @@
  *
  *  @brief File for the transfer function information holding structure used for volume ray casting with 1D TFs
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on May 6, 2012
  *
  *  @note This is primarily an internal file used by the vtkCuda1DTransferFunctionInformationHandler and CUDA_renderAlgo to store and communicate constants

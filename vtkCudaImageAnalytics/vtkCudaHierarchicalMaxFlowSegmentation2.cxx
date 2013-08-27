@@ -3,7 +3,7 @@
  *  @brief Implementation file with definitions of GPU-based solver for generalized hierarchical max-flow
  *			segmentation problems with greedy scheduling over multiple GPUs.
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *

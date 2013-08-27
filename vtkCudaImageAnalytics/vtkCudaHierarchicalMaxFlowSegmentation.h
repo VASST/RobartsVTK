@@ -4,7 +4,7 @@
  *			segmentation problems with a priori known scheduling over a single GPU. See
  *			vtkHierarchicalMaxFlowSegmentation.h for most of the interface documentation.
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *

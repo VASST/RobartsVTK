@@ -2,7 +2,7 @@
  *
  *  @brief A singleton class to manage cards and stream interleaving
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on June 12, 2012
  *
  */

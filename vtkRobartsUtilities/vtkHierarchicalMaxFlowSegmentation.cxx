@@ -3,7 +3,7 @@
  *  @brief Implementation file with definitions of CPU-based solver for generalized hierarchical max-flow
  *			segmentation problems.
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *

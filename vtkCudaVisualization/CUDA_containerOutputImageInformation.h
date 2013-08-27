@@ -2,7 +2,7 @@
  *
  *  @brief File for output image and intermediate information holding structure used for volume ray casting
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 28, 2011
  *
  *  @note This is primarily an internal file used by the vtkCudaOutputImageInformationHandler and CUDA_renderAlgo to store and communicate constants

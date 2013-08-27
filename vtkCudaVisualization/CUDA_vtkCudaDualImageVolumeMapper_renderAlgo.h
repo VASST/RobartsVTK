@@ -2,7 +2,7 @@
  *
  *  @brief Header file with definitions for different CUDA functions for setting up and running the ray casting process
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 27, 2011
  *
  *  @note This is primarily an internal file used by the vtkCUDAVolumeMapper to manage the ray casting process

@@ -2,7 +2,7 @@
  *
  *  @brief Header file defining a writer for polygonal TF objects
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on December 14, 2011
  *
  */

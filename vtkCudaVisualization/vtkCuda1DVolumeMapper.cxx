@@ -2,7 +2,7 @@
  *
  *  @brief Implementation of a volume mapper (ray caster) using CUDA kernels for parallel ray calculation
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on May 12, 2012
  *
  */

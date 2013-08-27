@@ -2,7 +2,7 @@
  *
  *  @brief File for the volume information holding structure used for volume ray casting
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on May 18th, 2011
  *
  *  @note This is primarily an internal file used by the CUDA_renderAlgo to store and communicate constants

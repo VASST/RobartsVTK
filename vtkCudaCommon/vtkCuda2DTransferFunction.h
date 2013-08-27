@@ -2,7 +2,7 @@
  *
  *  @brief Header file defining a 2 dimensional transfer function composed of function objects
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 28, 2011
  *
  */

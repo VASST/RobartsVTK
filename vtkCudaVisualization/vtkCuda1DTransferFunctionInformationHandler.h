@@ -2,7 +2,7 @@
  *
  *  @brief Header file defining an internal class for vtkCudaVolumeMapper which manages information regarding the volume and transfer function
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on May 11, 2012
  *
  */

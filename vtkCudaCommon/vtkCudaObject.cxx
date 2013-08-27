@@ -2,7 +2,7 @@
  *
  *  @brief An abstract class which uses CUDA
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on June 12, 2012
  *
  *  @note Interacts primarily with the vtkCudaDeviceManager

@@ -2,7 +2,7 @@
  *
  *  @brief Header file defining the abstract interface for defining 2D transfer function objects
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 27, 2011
  *
  *  @note These objects hold the required information for defining a 2D transfer function with multiple colours, objects, etc...

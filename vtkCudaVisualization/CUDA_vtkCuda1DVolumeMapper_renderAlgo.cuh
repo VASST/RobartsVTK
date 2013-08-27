@@ -2,7 +2,7 @@
  *
  *  @brief Underlying CUDA implementation of the 1D volume ray caster
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on May 11, 2012
  *
  */

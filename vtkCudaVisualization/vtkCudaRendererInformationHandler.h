@@ -2,7 +2,7 @@
  *
  *  @brief Header file defining an internal class for vtkCudaVolumeMapper which manages information regarding the renderer, camera, shading model and other objects
  *
- *  @author John Stuart Haberl Baxter (Dr. Peter's Lab at Robarts Research Institute)
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 29, 2011
  *
  */
