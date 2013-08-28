@@ -11,6 +11,18 @@
 
 =========================================================================*/
 
+/** @file vtkImageVote.h
+ *
+ *  @brief Header file with definitions for the CPU-based voting operation. This module
+ *			Takes a probabilistic or weighted image, and replaces each voxel with a label corresponding
+ *			to the input image with the highest value at that location. ( argmax{} operation )
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #ifndef __VTKIMAGEVOTE_H__
 #define __VTKIMAGEVOTE_H__
 
@@ -23,20 +35,20 @@
 
 #include <limits.h>
 
-//INPUT PORT DESCRIPTION
-
-//OUTPUT PORT DESCRIPTION
-
 class vtkImageVote : public vtkThreadedImageAlgorithm 
 {
 public:
 	vtkTypeMacro( vtkImageVote, vtkThreadedImageAlgorithm );
-
 	static vtkImageVote *New();
 
+	// Description:
+	// Set the input to the filter associated with an integer
+	// label to be given.
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
-
+	
+	// Description:
+	// Set what scalar type the output is expected to be.
 	vtkSetClampMacro(OutputDataType,int,1,11);
 	vtkGetMacro(OutputDataType,int);
 

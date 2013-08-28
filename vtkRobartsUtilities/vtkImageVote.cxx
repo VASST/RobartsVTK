@@ -1,3 +1,28 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkImageVote.cxx
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file vtkImageVote.cxx
+ *
+ *  @brief Implementation file with definitions for the CPU-based voting operation. This module
+ *			Takes a probabilistic or weighted image, and replaces each voxel with a label corresponding
+ *			to the input image with the highest value at that location. ( argmax{} operation )
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+
 #include "vtkImageVote.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
