@@ -21,8 +21,6 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 *	
 *	@note August 27th 2013 - Documentation first compiled.
 *
-*  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
-*
 */
 
 #ifndef __vtkCudaImageAtlasLabelProbability_h
@@ -41,7 +39,9 @@ public:
 	static vtkCudaImageAtlasLabelProbability *New();
 	vtkTypeMacro(vtkCudaImageAtlasLabelProbability,vtkImageAlgorithm);
 	void PrintSelf(ostream& os, vtkIndent indent);
-
+	
+	// Description:
+	// Set a collection of label maps for the seeding operation.
 	virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(0,number,in->GetProducerPort()); }
   
 	// Description:

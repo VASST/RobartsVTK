@@ -21,8 +21,6 @@
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *
- *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
- *
  */
 
 #ifndef __VTKCUDAIMAGEVOTE_H__

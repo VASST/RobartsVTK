@@ -20,8 +20,6 @@
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *
- *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
- *
  */
 
 #include "vtkCudaImageLogLikelihood.h"

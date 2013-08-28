@@ -1,3 +1,27 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkImageLogLikelihood.cxx
+
+  Copyright (c) Martin Rajchl, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file vtkCudaImageLogLikelihood.cxx
+ *
+ *  @brief Implementation file with definitions for the CUDA accelerated log likelihood data term. This
+ *			generates entropy data terms based on the histogram of a set of provided seeds.
+ *
+ *  @author Martin Rajchl (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled. (jshbaxter)
+ *
+ */
+
 #include "vtkImageLogLikelihood.h"
 
 #include "vtkObjectFactory.h"
