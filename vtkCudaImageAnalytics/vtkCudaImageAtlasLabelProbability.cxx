@@ -1,3 +1,30 @@
+/*=========================================================================
+
+Program:   Visualization Toolkit
+Module:    vtkCudaImageAtlasLabelProbability.cxx
+
+Copyright (c) John SH Baxter, Robarts Research Institute
+
+    This software is distributed WITHOUT ANY WARRANTY; without even
+    the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+    PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file vtkCudaImageAtlasLabelProbability.cxx
+*
+*  @brief Implementation file with definitions for the CUDA accelerated label agreement data term. This
+*			generates entropy or probability data terms based on how many label maps agree with a particular
+*			labelling of each voxel.
+*
+*  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+*	
+*	@note August 27th 2013 - Documentation first compiled.
+*
+*  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
+*
+*/
+
 #include "vtkCudaImageAtlasLabelProbability.h"
 
 #include "vtkObjectFactory.h"

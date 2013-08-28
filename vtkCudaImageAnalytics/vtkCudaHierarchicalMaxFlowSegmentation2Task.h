@@ -1,3 +1,29 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkHierarchicalMaxFlowSegmentation2Task.cxx
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file vtkHierarchicalMaxFlowSegmentation2Task.h
+ *
+ *  @brief Header file with definitions of individual chunks of GPU based code which can be
+ *			handled semi-synchronously. 
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ *  @note This is not a front-end class.
+ *
+ */
+
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2TASK_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2TASK_H__
 

@@ -1,3 +1,16 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    CUDA_commonKernels.cu
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 /** @file CUDA_commonKernels.cu
  *
  *  @brief Implementation file with definitions of GPU kernels used in several GPU-accelerated classes.

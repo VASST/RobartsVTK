@@ -1,3 +1,27 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    CUDA_atlasprobability.cu
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file CUDA_atlasprobability.cu
+ *
+ *  @brief Implementation file with definitions of GPU kernels used for the 'atlas probability'
+ *			prior.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ */
+ 
 #include "CUDA_atlasprobability.h"
 #include "CUDA_commonKernels.h"
 #include "stdio.h"

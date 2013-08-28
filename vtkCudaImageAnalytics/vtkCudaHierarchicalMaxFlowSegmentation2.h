@@ -1,3 +1,16 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkHierarchicalMaxFlowSegmentation2.h
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 /** @file vtkHierarchicalMaxFlowSegmentation2.h
  *
  *  @brief Header file with definitions of GPU-based solver for generalized hierarchical max-flow

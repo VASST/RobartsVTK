@@ -11,11 +11,24 @@
 
 =========================================================================*/
 
+/** @file vtkCudaImageVote.h
+ *
+ *  @brief Header file with definitions for the CUDA accelerated voting operation. This module
+ *			Takes a probabilistic or weighted image, and replaces each voxel with a label corresponding
+ *			to the input image with the highest value at that location. ( argmax{} operation )
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
+ *
+ */
+
 #ifndef __VTKCUDAIMAGEVOTE_H__
 #define __VTKCUDAIMAGEVOTE_H__
 
 #include "vtkImageAlgorithm.h"
-#include "vtkImageData.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkSetGet.h"
@@ -24,20 +37,20 @@
 #include <map>
 #include <limits.h>
 
-//INPUT PORT DESCRIPTION
-
-//OUTPUT PORT DESCRIPTION
-
 class vtkCudaImageVote : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
 	vtkTypeMacro( vtkCudaImageVote, vtkImageAlgorithm );
-
 	static vtkCudaImageVote *New();
-
+	
+	// Description:
+	// Set the input to the filter associated with an integer
+	// label to be given.
 	vtkDataObject* GetInput(int idx);
 	void SetInput(int idx, vtkDataObject *input);
-
+	
+	// Description:
+	// Set what scalar type the output is expected to be.
 	vtkSetClampMacro(OutputDataType,int,1,20);
 	vtkGetMacro(OutputDataType,int);
 

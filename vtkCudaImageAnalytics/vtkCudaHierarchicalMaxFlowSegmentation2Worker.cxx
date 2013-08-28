@@ -1,3 +1,28 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkCudaHierarchicalMaxFlowSegmentation2Worker.cxx
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+/** @file vtkCudaHierarchicalMaxFlowSegmentation2Worker.cxx
+ *
+ *  @brief Implementation file with class that runs each individual GPU for GHMF.
+ *
+ *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
+ *	
+ *	@note August 27th 2013 - Documentation first compiled.
+ *
+ *  @note This is not a front-end class. Header details are in vtkCudaHierarchicalMaxFlowSegmentation2.h
+ *
+ */
+
 #include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
 #include "vtkCudaHierarchicalMaxFlowSegmentation2Task.h"
 

@@ -1,3 +1,16 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkCudaDeviceManager.cxx
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 /** @file vtkCudaDeviceManager.cxx
  *
  *  @brief A singleton class to manage cards and stream interleaving
