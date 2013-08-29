@@ -29,6 +29,7 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 #include "vtkTreeDFSIterator.h"
+#include "vtkImageData.h"
 
 #include <assert.h>
 #include <math.h>
