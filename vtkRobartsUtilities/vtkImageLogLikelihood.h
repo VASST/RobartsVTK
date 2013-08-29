@@ -60,7 +60,7 @@ public:
 
 	// Description:
 	// Determine the resolution of the histogram used for the data term.
-	vtkSetClampMacro(HistogramResolution,float, 1, 1024);
+	vtkSetClampMacro(HistogramResolution,float, FLT_MIN, FLT_MAX);
 	vtkGetMacro(HistogramResolution,float);
 	
 	// Description:
