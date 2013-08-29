@@ -46,7 +46,7 @@ vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
 	
 	//configure the IO ports
 	this->SetNumberOfInputPorts(2);
-	this->SetNumberOfOutputPorts(0);
+	this->SetNumberOfOutputPorts(1);
 
 	//set algorithm mathematical parameters to defaults
 	this->NumberOfIterations = 100;
@@ -93,6 +93,36 @@ void vtkHierarchicalMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, dou
 
 //------------------------------------------------------------
 
+void vtkHierarchicalMaxFlowSegmentation::Update(){
+	this->SetOutputPortAmount();
+	this->Superclass::Update();
+}
+
+void vtkHierarchicalMaxFlowSegmentation::UpdateInformation(){
+	this->SetOutputPortAmount();
+	this->Superclass::UpdateInformation();
+}
+
+void vtkHierarchicalMaxFlowSegmentation::UpdateWholeExtent(){
+	this->SetOutputPortAmount();
+	this->Superclass::UpdateWholeExtent();
+}
+
+void vtkHierarchicalMaxFlowSegmentation::SetOutputPortAmount(){
+	int NumLeaves = 0;
+	vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
+	iterator->SetTree(this->Hierarchy);
+	iterator->SetStartVertex(this->Hierarchy->GetRoot());
+	while( iterator->HasNext() ){
+		vtkIdType currNode = iterator->Next();
+		if( this->Hierarchy->IsLeaf(currNode) ) NumLeaves++;
+	}
+	iterator->Delete();
+	this->SetNumberOfOutputPorts(NumLeaves);
+}
+
+//------------------------------------------------------------
+
 int vtkHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkInformation* info){
 	info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
 	info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
@@ -102,6 +132,7 @@ int vtkHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkInfor
 
 void vtkHierarchicalMaxFlowSegmentation::SetDataInput(int idx, vtkDataObject *input)
 {
+
 	//we are adding/switching an input, so no need to resort list
 	if( input != NULL ){
 	
@@ -228,6 +259,9 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 		return -1;
 	}
 
+	this->LeafMap.clear();
+	this->BranchMap.clear();
+
 	//check to make sure that there is an image associated with each leaf node
 	NumLeaves = 0;
 	NumNodes = 0;
@@ -239,8 +273,15 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 		vtkIdType node = iterator->Next();
 		NumNodes++;
 
+		if( this->Hierarchy->IsLeaf(node) )
+			this->LeafMap[node] = (int) this->LeafMap.size();
+		else if(node != this->Hierarchy->GetRoot())
+			this->BranchMap[node] = (int) this->BranchMap.size();
+
 		//make sure all leaf nodes have a data term
 		if( this->Hierarchy->IsLeaf(node) ){
+
+
 			NumLeaves++;
 			if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() ){
 				vtkErrorMacro(<<"Missing data prior for leaf node.");

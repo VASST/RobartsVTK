@@ -113,10 +113,23 @@ public:
 							 vtkInformationVector* outputVector);
 	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
+	// Description:
+	// Bring this algorithm's outputs up-to-date.
+	virtual void Update();
+
+	// Description:
+	// Backward compatibility method to invoke UpdateInformation on executive.
+	virtual void UpdateInformation();
+
+	// Description:
+	// Bring this algorithm's outputs up-to-date.
+	virtual void UpdateWholeExtent();
+
 protected:
 	vtkHierarchicalMaxFlowSegmentation();
 	virtual ~vtkHierarchicalMaxFlowSegmentation();
 
+	void SetOutputPortAmount();
 	int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
 	
 	virtual int InitializeAlgorithm();
