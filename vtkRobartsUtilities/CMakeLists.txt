@@ -19,8 +19,9 @@ SET ( Kit_SRCS
   vtkImageDataTerm.h vtkImageDataTerm.cxx
   vtkImageVote.h vtkImageVote.cxx
   vtkDiceCoefficient.h vtkDiceCoefficient.cxx
-
+  
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
+  vtkImageEntropyPlaneSelection.h vtkImageEntropyPlaneSelection.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
