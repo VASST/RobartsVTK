@@ -194,6 +194,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 				break;
 
             }
+			if( flag ) break;
         }
 	}
 }
