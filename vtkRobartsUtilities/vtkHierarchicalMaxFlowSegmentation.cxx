@@ -273,14 +273,18 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 		vtkIdType node = iterator->Next();
 		NumNodes++;
 
-		if( this->Hierarchy->IsLeaf(node) )
-			this->LeafMap[node] = (int) this->LeafMap.size();
-		else if(node != this->Hierarchy->GetRoot())
-			this->BranchMap[node] = (int) this->BranchMap.size();
+        if( this->Hierarchy->IsLeaf(node) ){
+            int value = (int) this->LeafMap.size();
+            this->LeafMap[node] = value;
+        }else if(node != this->Hierarchy->GetRoot()){
+            int value = (int) this->BranchMap.size();
+            this->BranchMap[node] = value;
+        }
+
+
 
 		//make sure all leaf nodes have a data term
 		if( this->Hierarchy->IsLeaf(node) ){
-
 
 			NumLeaves++;
 			if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() ){

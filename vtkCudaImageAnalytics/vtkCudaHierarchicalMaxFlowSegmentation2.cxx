@@ -349,12 +349,15 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearWorkingBufferTasks(vtkI
 	if( NumKids == 0 ) return;
 	
 	//create the new task
-	Task* newTask = new Task(this,0,1,this->NumberOfIterations,currNode,Task::ClearWorkingBufferTask);
-	this->ClearWorkingBufferTasks[currNode] = newTask;
+    Task* newTask = 0;
+    if(currNode == this->Hierarchy->GetRoot())
+        newTask = new Task(this,-NumLeaves,1,this->NumberOfIterations,currNode,Task::ClearWorkingBufferTask);
+    else
+        newTask = new Task(this,0,1,this->NumberOfIterations,currNode,Task::ClearWorkingBufferTask);
+    this->ClearWorkingBufferTasks[currNode] = newTask;
 	
 	//modify the task accordingly
-	if(currNode == this->Hierarchy->GetRoot()){
-		newTask->Active = -NumLeaves; //wait for source buffer to finish being used
+    if(currNode == this->Hierarchy->GetRoot()){
 		newTask->AddBuffer(sourceWorkingBuffer);
 	}else{
 		NoCopyBack.insert(branchWorkingBuffers[BranchMap[currNode]]);
