@@ -32,6 +32,7 @@
 #include "vtkInformationVector.h"
 #include "vtkSetGet.h"
 #include <map>
+#include "vtkBarrierLock.h"
 
 #include <limits.h>
 
@@ -89,6 +90,8 @@ private:
 	int FirstUnusedPort;
 
 	int OutputDataType;
+
+	vtkBarrierLock* Lock;
 };
 
 #endif

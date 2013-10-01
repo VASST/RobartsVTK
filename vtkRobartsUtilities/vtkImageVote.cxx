@@ -53,6 +53,9 @@ vtkImageVote::vtkImageVote(){
 	this->OutputDataType = VTK_SHORT;
     this->SetNumberOfThreads(1);
 
+	this->Lock = vtkBarrierLock::New();
+	this->Lock->SetRepeatable(true);
+
 }
 
 vtkImageVote::~vtkImageVote(){
@@ -228,7 +231,7 @@ void vtkImageVoteExecute(vtkImageVote *self,
 	
 	int NumThreads = self->GetNumberOfThreads();
 	int VolumeSize = (outExt[1]-outExt[0]+1)*(outExt[3]-outExt[2]+1)*(outExt[5]-outExt[4]+1);
-	for(int idx = threadId; idx < VolumeSize; idx+=NumThreads){
+	for(int idx = threadId*VolumeSize/NumThreads; idx < (threadId+1)*VolumeSize/NumThreads; idx++){
 		OT maxIdentifier = -1;
 		IT maxValue = 0;
 		for( int iv = 0; iv < self->GetNumberOfInputConnections(0); iv++ )
@@ -254,9 +257,14 @@ void vtkImageVote::ThreadedRequestData(vtkInformation *request,
 	if( result || NumLabels == 0 ) return;				
 	
 	//allocate output image (using short)
-	(*outData)->SetScalarType(this->OutputDataType);
-	(*outData)->SetExtent(Extent);
-	(*outData)->AllocateScalars();
+	if( threadId == 0 ){
+		(*outData)->SetScalarType(this->OutputDataType);
+		(*outData)->SetExtent(Extent);
+		(*outData)->AllocateScalars();
+	}
+
+	this->Lock->Initialize(this->GetNumberOfThreads());
+	this->Lock->Enter();
 
 	//call typed method
 	switch (DataType) {

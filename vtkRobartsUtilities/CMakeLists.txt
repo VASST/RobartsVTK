@@ -6,8 +6,10 @@ SET(KIT_LIBS vtkCommon vtkFiltering)
 SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkCommon vtkParallel vtkFiltering)
 
 SET ( Kit_SRCS
-  vtkImagePipe.h vtkImagePipe.cxx
   vtkReadWriteLock.h vtkReadWriteLock.cxx
+  vtkBarrierLock.h vtkBarrierLock.cxx
+  
+  vtkImagePipe.h vtkImagePipe.cxx
   vtkImageSeedFilter.h vtkImageSeedFilter.cxx
   vtkImageBasicAffinityFilter.h vtkImageBasicAffinityFilter.cxx
 
