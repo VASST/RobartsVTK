@@ -104,6 +104,8 @@ private:
 	float**	branchSmoothnessTermBuffers;
 	float**	leafSmoothnessTermBuffers;
 
+	float* devGradientBuffer;
+
 };
 
 #endif

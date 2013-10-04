@@ -566,9 +566,11 @@ int vtkCudaHierarchicalMaxFlowDecomposition::RequestData(vtkInformation *request
 	for(int i = 0; i < NumBranches+NumLeaves; i++ ) this->F[i] = 0.0;
 
 	//Figure out smoothness Fi's
+	this->devGradientBuffer = CUDA_GHMFD_GetBuffer( VolumeSize, this->GetStream() );
 	this->BranchLabelBuffer.clear();
 	FigureOutSmoothness( this->Hierarchy->GetRoot(), inputVector );
 	this->BranchLabelBuffer.clear();
+	CUDA_GHMFD_ReturnBuffer( this->devGradientBuffer );
 
 	//deallocate temporary variables
 	delete[] leafSmoothnessTermBuffers;
@@ -596,6 +598,7 @@ void vtkCudaHierarchicalMaxFlowDecomposition::FigureOutSmoothness(vtkIdType curr
 
 	//pass smoothness terms onto children
 	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	vtkIdType Parent = this->Hierarchy->GetParent(currNode);
 	for(int kid = 0; kid < NumKids; kid++)
 		FigureOutSmoothness( this->Hierarchy->GetChild(currNode,kid), inputVector );
 	
@@ -603,8 +606,8 @@ void vtkCudaHierarchicalMaxFlowDecomposition::FigureOutSmoothness(vtkIdType curr
 	if( currNode == this->Hierarchy->GetRoot() ) return;
 	
 	//create parent label if not already made
-	if( this->Hierarchy->GetParent(currNode) != this->Hierarchy->GetRoot() && !this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)] )
-		this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)] = CUDA_GHMFD_GetBuffer( this->VolumeSize, this->GetStream() );
+	if( Parent != this->Hierarchy->GetRoot() && !this->BranchLabelBuffer[Parent] )
+		this->BranchLabelBuffer[Parent] = CUDA_GHMFD_GetBuffer( this->VolumeSize, this->GetStream() );
 
 	//if we are a child, we have no need for label summation
 	if(NumKids == 0){
@@ -613,11 +616,11 @@ void vtkCudaHierarchicalMaxFlowDecomposition::FigureOutSmoothness(vtkIdType curr
 		vtkImageData* CurrLabel = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(this->InputLabelPortMapping[currNode])->Get(vtkDataObject::DATA_OBJECT()));
 		int SmoothnessTermUsed = this->LeafMap[currNode] + (int) this->BranchMap.size();
 		if( this->leafSmoothnessTermBuffers[this->LeafMap[currNode]] )
-			this->F[SmoothnessTermUsed] += CUDA_GHMFD_LeafSmoothnessForLabel(this->leafSmoothnessTermBuffers[this->LeafMap[currNode]], (float*) CurrLabel->GetScalarPointer(),
-				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)], this->GetStream());
+			this->F[SmoothnessTermUsed] = CUDA_GHMFD_LeafSmoothnessForLabel(this->leafSmoothnessTermBuffers[this->LeafMap[currNode]], (float*) CurrLabel->GetScalarPointer(),
+				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[Parent], this->devGradientBuffer, this->GetStream());
 		else
-			this->F[SmoothnessTermUsed] += CUDA_GHMFD_LeafNoSmoothnessForLabel( (float*) CurrLabel->GetScalarPointer(),
-				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)], this->GetStream());
+			this->F[SmoothnessTermUsed] = CUDA_GHMFD_LeafNoSmoothnessForLabel( (float*) CurrLabel->GetScalarPointer(),
+				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[Parent], this->devGradientBuffer, this->GetStream());
 
 	//if we are a branch, we may need to sum and store child labels then compute terms
 	}else{
@@ -625,15 +628,15 @@ void vtkCudaHierarchicalMaxFlowDecomposition::FigureOutSmoothness(vtkIdType curr
 		//calculate value and add labelling to parent's buffer
 		int SmoothnessTermUsed = this->BranchMap[currNode];
 		if( this->branchSmoothnessTermBuffers[this->BranchMap[currNode]] )
-			this->F[SmoothnessTermUsed] += CUDA_GHMFD_BranchSmoothnessForLabel(this->branchSmoothnessTermBuffers[this->LeafMap[currNode]], this->BranchLabelBuffer[currNode],
-				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)], this->GetStream());
+			this->F[SmoothnessTermUsed] = CUDA_GHMFD_BranchSmoothnessForLabel(this->branchSmoothnessTermBuffers[this->BranchMap[currNode]], this->BranchLabelBuffer[currNode],
+				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[Parent], this->devGradientBuffer, this->GetStream());
 		else
-			this->F[SmoothnessTermUsed] += CUDA_GHMFD_BranchNoSmoothnessForLabel( this->BranchLabelBuffer[currNode],
-				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[this->Hierarchy->GetParent(currNode)], this->GetStream());
+			this->F[SmoothnessTermUsed] = CUDA_GHMFD_BranchNoSmoothnessForLabel( this->BranchLabelBuffer[currNode],
+				this->VX, this->VY, this->VZ, this->VolumeSize, this->BranchLabelBuffer[Parent], this->devGradientBuffer, this->GetStream());
 
 		//return own label buffer
 		CUDA_GHMFD_ReturnBuffer( this->BranchLabelBuffer[currNode] );
-		this->BranchLabelBuffer[currNode] = 0;
+		this->BranchLabelBuffer.erase( currNode );
 	}
 
 
