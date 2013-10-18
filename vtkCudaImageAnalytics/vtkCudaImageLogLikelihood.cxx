@@ -248,8 +248,8 @@ int vtkCudaImageLogLikelihood::RequestData(
 	}
 
     // this filter expects that inputs that have the same number of components
-    if (inData[0][0]->GetNumberOfScalarComponents() != 1 ) {
-        vtkErrorMacro(<< "Execute: Image can only have one component.");
+    if (inData[0][0]->GetNumberOfScalarComponents() != 1 && inData[0][0]->GetNumberOfScalarComponents() != 2 ) {
+        vtkErrorMacro(<< "Execute: Image can only have 1 or 2 components.");
         return -1;
     }
 
