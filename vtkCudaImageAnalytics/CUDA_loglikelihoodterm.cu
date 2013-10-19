@@ -131,19 +131,19 @@ template void CUDA_ILLT_CalculateHistogramAndTerms<unsigned char>(float* outputB
 template void CUDA_ILLT_CalculateHistogramAndTerms<float>(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
 
 
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<double>(float* outputBuffer, float* histogramGPU, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<long>(float* outputBuffer, float* histogramGPU, short* agreement, long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<long long>(float* outputBuffer, float* histogramGPU, short* agreement, long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long long>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<int>(float* outputBuffer, float* histogramGPU, short* agreement, int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned int>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<short>(float* outputBuffer, float* histogramGPU, short* agreement, short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned short>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<char>(float* outputBuffer, float* histogramGPU, short* agreement, char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<signed char>(float* outputBuffer, float* histogramGPU, short* agreement, signed char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned char>(float* outputBuffer, float* histogramGPU, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
-template void CUDA_ILLT_CalculateHistogramAndTerms2D<float>(float* outputBuffer, float* histogramGPU, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<double>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, double* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<long>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, unsigned long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<long long>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned long long>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, unsigned long long* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<int>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned int>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, unsigned int* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<short>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned short>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, unsigned short* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<char>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<signed char>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, signed char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<unsigned char>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, unsigned char* image,  short requiredAgreement, int imageSize, cudaStream_t* stream);
+template void CUDA_ILLT_CalculateHistogramAndTerms2D<float>(float* outputBuffer, float* histogramGPU, int histsize, short* agreement, float* image,	 short requiredAgreement, int imageSize, cudaStream_t* stream);
 
 template<class T>
 __global__ void kern_PopulateWorkingUp(float* working, short* agreement, T* image, short requiredAgreement, int imageSize){
@@ -218,7 +218,7 @@ __global__ void kern_PopulateHisto(float* histogramGPU, int histSize, short* agr
 }
 
 template<class T>
-__global__ void kern_PopulateHisto2D(float* histogramGPU, short* agreement, T* image, short requiredAgreement, float imMin, float imMax, float sMin, float sMax, int imageSize){
+__global__ void kern_PopulateHisto2D(float* histogramGPU, int histSize, short* agreement, T* image, short requiredAgreement, float imMin, float imMax, float sMin, float sMax, int imageSize){
 	__shared__ float histogram[NUMTHREADS];
 	int idx = threadIdx.x;
 	imMin -= (imMax-imMin)*0.00625;
@@ -232,7 +232,7 @@ __global__ void kern_PopulateHisto2D(float* histogramGPU, short* agreement, T* i
 		short localAgreement = agreement[idxCurr];
 		float localValue1 = (float) image[2*idxCurr];
 		float localValue2 = (float) image[2*idxCurr+1];
-		int histInPos = (int) ( (float) (NUMTHREADS-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
+		int histInPos = (int) ( (float) (histSize-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
 		int histPos = idx;
 		bool useIt = (idxCurr < imageSize && localAgreement >= requiredAgreement && localValue2 >= sMin && localValue2 < sMax);
 		for(int h = 0; h < NUMTHREADS; h++){
@@ -265,7 +265,7 @@ __global__ void kern_PopulateOutput(float* histogramGPU, int histSize, float* ou
 }
 
 template<class T>
-__global__ void kern_PopulateOutput2D(float* histogramGPU, float* output, T* image, float imMin, float imMax, float sMin, float sMax, int imageSize){
+__global__ void kern_PopulateOutput2D(float* histogramGPU, int histSize, float* output, T* image, float imMin, float imMax, float sMin, float sMax, int imageSize){
 	__shared__ float histogram[NUMTHREADS];
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	imMin -= (imMax-imMin)*0.00625;
@@ -275,9 +275,9 @@ __global__ void kern_PopulateOutput2D(float* histogramGPU, float* output, T* ima
 	
 	float localValue1 = (float) image[2*idx];
 	float localValue2 = (float) image[2*idx+1];
-	int histPos = (int) ( (float) (NUMTHREADS-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
+	int histPos = (int) ( (float) (histSize-1) * ((localValue1-imMin) / (imMax-imMin)) + 0.5f );
 	bool useIt = (localValue2 >= sMin && localValue2 < sMax);
-	float histVal = (histPos < NUMTHREADS && histPos >= 0) ? histogram[histPos] : 1e-10f;
+	float histVal = (histPos < histSize && histPos >= 0) ? histogram[histPos] : 1e-10f;
 	histVal = (histVal < 1e-10f) ? 1e-10f : histVal;
 	histVal = log(histVal) / log(1e-10f);
 	float oldHistVal = output[idx];
@@ -378,8 +378,10 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 }
 
 template< class T >
-void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogramGPU, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream){
+void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogramGPU, int histSize, short* agreement, T* image, short requiredAgreement, int imageSize, cudaStream_t* stream){
 	
+	histSize = (histSize < NUMTHREADS) ? histSize : NUMTHREADS;
+
 	T* GPUInputBuffer = 0;
 	float* GPUOutputBuffer = 0;
 	float* GPUWorkingBuffer = 0;
@@ -398,7 +400,8 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
-	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
+	int t = 1; while(t/2<imageSize) t+=t;
+	for( ; t > 1; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
 		grid = GetGrid(t);
 		kern_PropogateUp<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
@@ -417,7 +420,8 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	threads = dim3(NUMTHREADS,1,1);
 	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
 	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
-	for(int t = (imageSize-1)/2+1; t > 1; t/=2){
+	t = 1; while(t/2<imageSize) t+=t;
+	for(; t > 1; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
 		grid = GetGrid(t);
 		kern_PropogateDown<<<grid,threads,0,*stream>>>(GPUWorkingBuffer, t, imageSize);
@@ -435,10 +439,10 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	//populate unnormalized histogram
 	threads = dim3(NUMTHREADS,1,1);
 	grid = dim3( 1, 1, 1);
-	for(int comp = 0; comp < NUMTHREADS; comp++){
-		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
-		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;
-		kern_PopulateHisto2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, agreement, GPUInputBuffer, requiredAgreement, imMax.x, imMin.x, secondMin, secondMax, imageSize);
+	for(int comp = 0; comp < histSize; comp++){
+		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) histSize;
+		float secondMax = (comp != histSize-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) histSize : FLT_MAX;
+		kern_PopulateHisto2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*histSize, histSize, agreement, GPUInputBuffer, requiredAgreement, imMax.x, imMin.x, secondMin, secondMax, imageSize);
 	}
 	
 	#ifdef DEBUG_VTKCUDA_ILLT
@@ -452,18 +456,18 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	threads = dim3(NUMTHREADS,1,1);
 	grid = dim3( NUMTHREADS, 1, 1);
 	float* dev_workingBuffer = 0;
-	cudaMalloc( &dev_workingBuffer, NUMTHREADS*NUMTHREADS*sizeof(float) );
-	CopyBuffers<<<grid, threads, 0, *stream>>>(dev_workingBuffer, histogramGPU, NUMTHREADS*NUMTHREADS);
+	cudaMalloc( &dev_workingBuffer, histSize*histSize*sizeof(float) );
+	CopyBuffers<<<grid, threads, 0, *stream>>>(dev_workingBuffer, histogramGPU, histSize*histSize);
 	float sum = 1.0f;
-	for(int j = NUMTHREADS*NUMTHREADS / 2; j >= NUMTHREADS; j = j/2){
-		dim3 tempGrid( j>NUMTHREADS ? j/NUMTHREADS : 1, 1, 1);
-		SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(dev_workingBuffer,j,NUMTHREADS*NUMTHREADS);
+	for(int j = histSize*histSize / 2; j >= histSize; j = j/2){
+		dim3 tempGrid( j>histSize ? j/histSize : 1, 1, 1);
+		SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(dev_workingBuffer,j,histSize*histSize);
 	}
-	SumData( NUMTHREADS, NUMTHREADS, 1, dev_workingBuffer, stream );
+	SumData( histSize, histSize, 1, dev_workingBuffer, stream );
 	cudaMemcpyAsync( &sum, dev_workingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 	cudaStreamSynchronize(*stream);
 	cudaFree(dev_workingBuffer);
-	TranslateBuffer<<<grid,threads,0,*stream>>>(histogramGPU, 1.0f/sum, 0.0f, NUMTHREADS*NUMTHREADS);
+	TranslateBuffer<<<grid,threads,0,*stream>>>(histogramGPU, 1.0f/sum, 0.0f, histSize*histSize);
 	
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();
@@ -473,10 +477,10 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 	#endif
 	
 	grid = GetGrid(imageSize);;
-	for(int comp = 0; comp < NUMTHREADS; comp++){
-		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) NUMTHREADS;
-		float secondMax = (comp != NUMTHREADS-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) NUMTHREADS : FLT_MAX;
-		kern_PopulateOutput2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*NUMTHREADS, GPUOutputBuffer, GPUInputBuffer, imMax.x, imMin.x, secondMin, secondMax, imageSize);
+	for(int comp = 0; comp < histSize; comp++){
+		float secondMin = imMin.y + (float) comp * (imMax.y-imMin.y) / (float) histSize;
+		float secondMax = (comp != histSize-1) ? imMin.y + (float) (comp+1) * (imMax.y-imMin.y) / (float) histSize : FLT_MAX;
+		kern_PopulateOutput2D<T><<<grid,threads,0,*stream>>>(histogramGPU+comp*histSize, histSize, GPUOutputBuffer, GPUInputBuffer, imMax.x, imMin.x, secondMin, secondMax, imageSize);
 	}
 
 	cudaMemcpyAsync( outputBuffer, GPUOutputBuffer, sizeof(float)*imageSize, cudaMemcpyDeviceToHost, *stream );

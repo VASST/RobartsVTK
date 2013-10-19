@@ -145,7 +145,7 @@ void vtkCudaImageLogLikelihoodExecute(vtkCudaImageLogLikelihood *self,
 			(short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
 	}else if( in1Data->GetNumberOfScalarComponents() == 2 ){
 		CUDA_ILLT_AllocateHistogram(&histogramGPU,self->GetHistogramSize()*self->GetHistogramSize(),self->GetStream());
-		CUDA_ILLT_CalculateHistogramAndTerms2D(outBuffer,histogramGPU, agreementGPU, inputBuffer,
+		CUDA_ILLT_CalculateHistogramAndTerms2D(outBuffer,histogramGPU, self->GetHistogramSize(), agreementGPU, inputBuffer,
 			(short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
 	}
 

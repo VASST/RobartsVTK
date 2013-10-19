@@ -145,6 +145,7 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
                                   int outExt[6], int numLabels, int id)
 {
 
+	int dimens = in1Data->GetNumberOfScalarComponents();
     T* inputBuffer = (T*) in1Data->GetScalarPointer();
     int volumeSize = in1Data->GetDimensions()[0]*
                      in1Data->GetDimensions()[1]*
@@ -158,6 +159,9 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 	for(int label = 0; label < numLabels; label++ ){
 		if( in2Data[label] ) actualNumLabels++;
 	}
+	
+	float minVal[2] = {FLT_MAX, FLT_MAX};
+	float maxVal[2] = {FLT_MIN, FLT_MIN};
 
     // calculate sample size
     int szSample = 0;
@@ -168,86 +172,70 @@ void vtkImageLogLikelihoodExecute(vtkImageLogLikelihood *self,
 				if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
 					agree++;
 		}
-		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) )
+		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
 			szSample++;
-    }
-	
-    // acquire sample
-	float *sample = 0;
-	if(szSample > 0){
-		sample = new float[szSample];
-		int count = 0;
-		for(int idx = 0; idx < volumeSize; idx++ ){
-			int agree = 0;
-			for(int label = 0; label < numLabels; label++ ){
-				if( in2Data[label] )
-					if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
-						agree++;
-			}
-			if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
-				sample[count] = (float) inputBuffer[idx];
-				count++;
+			if(dimens == 1){
+				minVal[0] = (minVal[0] < inputBuffer[idx]) ? minVal[0] : inputBuffer[idx];
+				maxVal[0] = (maxVal[0] > inputBuffer[idx]) ? maxVal[0] : inputBuffer[idx];
+			}else{
+				minVal[0] = (minVal[0] < inputBuffer[2*idx  ]) ? minVal[0] : inputBuffer[2*idx  ];
+				maxVal[0] = (maxVal[0] > inputBuffer[2*idx  ]) ? maxVal[0] : inputBuffer[2*idx  ];
+				minVal[1] = (minVal[1] < inputBuffer[2*idx+1]) ? minVal[1] : inputBuffer[2*idx+1];
+				maxVal[1] = (maxVal[1] > inputBuffer[2*idx+1]) ? maxVal[1] : inputBuffer[2*idx+1];
 			}
 		}
+    }
+	if(szSample == 0){
+		std::fill_n( outBuffer, volumeSize , 1.0 );
+		return;
 	}
 
     // calculate histogram and ML data term
-    int szHist = 0;
     float resolution = self->GetHistogramResolution();
-
-    float minVal = FLT_MAX;
-    float maxVal = FLT_MIN;
-
-    // Find min and max intensity values from sample
-	if( szSample > 0 ){
-		for(int i = 0; i < szSample; i++){
-			if ( sample[i] < minVal)
-				minVal = sample[i];
-			if ( sample[i] > maxVal)
-				maxVal = sample[i];
-		}
-		szHist = ((maxVal - minVal) / resolution) + 1;
-	}else{
-		minVal = 0.0f;
-		maxVal = resolution;
-		szHist = 0;
-	}
-
-    //float resolution = 1;
-    float *hist = new float[szHist];
-
-    std::fill_n(hist, szHist , 0.0f);
-
+	int szHist[2] = {(int)(maxVal[0]-minVal[0]/resolution)+1,
+					 (int)(maxVal[1]-minVal[1]/resolution)+1};
+	int szHistTot = szHist[0]*szHist[1];
+	float *hist = new float[szHistTot];
+    std::fill_n(hist, szHistTot, 0.0f);
+	
     // Fill histogram bins
-	for (int j = 0; j < szSample; j++){
-		int histIdx = ((sample[j]-minVal)/resolution );
-		hist[histIdx]++;
+    for(int idx = 0; idx < volumeSize; idx++ ){
+		int agree = 0;
+		for(int label = 0; label < numLabels; label++ ){
+			if( in2Data[label] )
+				if( (int) ((TT*)in2Data[label]->GetScalarPointer())[idx] == self->GetLabelID() )
+					agree++;
+		}
+		if( (double) agree >= self->GetRequiredAgreement()*(double)(actualNumLabels) ){
+			if(dimens == 1){
+				hist[(int)((inputBuffer[idx]-minVal[0]) / resolution)]++;
+			}else{
+				hist[(int)((inputBuffer[2*idx]-minVal[0]) / resolution)*szHist[1] + (int)((inputBuffer[2*idx+1]-minVal[1]) / resolution)]++;
+			}
+		}
 	}
 
     // Normalize histogram
-	if(szSample > 0){
-		for (int i = 0; i < szHist; i++)
-			hist[i] = hist[i]/ (float)szSample + 1.0e-10;
-	}else{
-		for (int i = 0; i < szHist; i++)
-			hist[i] = 1.0e-10;
-	}
+	for (int i = 0; i < szHistTot; i++)
+		hist[i] = hist[i]/ (float)szSample + 1.0e-10;
 
     // Calculate log likelihood dataterm
     for (int idx = 0; idx < volumeSize; idx++){
-
-        outBuffer[idx] =( inputBuffer[idx] < minVal ||  (int)((inputBuffer[idx]-minVal) / resolution) >= szHist) ?
-            -log(1.0e-10) :
-            (-log(hist[ (int)((inputBuffer[idx]-minVal) / resolution) ]));
-
-        //// Normalize costs to [0,1]
-        if( self->GetNormalizeDataTerm()){
-            outBuffer[idx] = (outBuffer[idx] / -log(1.0e-10) );
-        }
+		if(dimens == 1)
+			outBuffer[idx] =( inputBuffer[idx] < minVal[0] ||  (int)((inputBuffer[idx]-minVal[0]) / resolution) >= szHist[0]) ?
+				-log(1.0e-10) : (-log(hist[ (int)((inputBuffer[idx]-minVal[0]) / resolution) ]));
+		else
+			outBuffer[idx] = ( inputBuffer[2*idx  ] < minVal[0] ||  (int)((inputBuffer[2*idx  ]-minVal[0]) / resolution) >= szHist[0] ) ? -log(1.0e-10) : (
+							 ( inputBuffer[2*idx+1] < minVal[1] ||  (int)((inputBuffer[2*idx+1]-minVal[1]) / resolution) >= szHist[1] ) ? -log(1.0e-10) :
+							(-log(hist[ (int)((inputBuffer[2*idx]-minVal[0]) / resolution)*szHist[1] + (int)((inputBuffer[2*idx+1]-minVal[1]) / resolution) ])) );
 
     }
 
-    delete[] sample;
+    // Normalize costs to [0,1]
+    if( self->GetNormalizeDataTerm() )
+		for (int idx = 0; idx < volumeSize; idx++)
+			outBuffer[idx] = (outBuffer[idx] / -log(1.0e-10) );
+
     delete[] hist;
 
     return;
@@ -307,9 +295,9 @@ void vtkImageLogLikelihood::ThreadedRequestData(
 	}
 
     // this filter expects that inputs that have the same number of components
-    if (inData[0][0]->GetNumberOfScalarComponents() != 1 )
+    if (inData[0][0]->GetNumberOfScalarComponents() != 1 && inData[0][0]->GetNumberOfScalarComponents() != 2)
     {
-        vtkErrorMacro(<< "Execute: Image can only have one component.");
+        vtkErrorMacro(<< "Execute: Image can only have one or two components.");
         return;
     }
 
