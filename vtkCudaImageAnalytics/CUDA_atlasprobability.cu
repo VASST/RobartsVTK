@@ -130,13 +130,14 @@ __global__ void kern_ProbBuffer(float* agreement, float* output, int size, short
 	if( idx < size ) output[idx] = probValue;
 }
 
-__global__ void kern_BlurBuffer(float* agreement, float* output, int size, int spread, int dim){
+__global__ void kern_BlurBuffer(float* input, float* output, int size, int spread, int dim){
 	int idx = CUDASTDOFFSET;
 	int x = (idx / spread) % dim;
-	float curr = agreement[idx];
-	float down = agreement[idx-spread];
-	float up   = agreement[idx+spread];
+	float curr = input[idx];
+	float down = (idx-spread >= 0)   ? input[idx-spread] : 0;
+	float up   = (idx+spread < size) ? input[idx+spread] : 0;
 	float newVal = 0.7865707f * curr + 0.1064508f * ((x > 0 ? down : curr) + (x < dim-1 ? up : curr));
+	__syncthreads();
 	if( idx < size ) output[idx] = newVal;
 }
 
@@ -153,7 +154,7 @@ void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int 
 
 
     if( flags & 4 ){
-        while( gaussWidth[0] > 0 && gaussWidth[1] > 0 && gaussWidth[2] > 0 ){
+        while( gaussWidth[0] > 0 || gaussWidth[1] > 0 || gaussWidth[2] > 0 ){
             if( gaussWidth[0] > 0 ){
                 kern_BlurBuffer<<<grid,threads,0,*stream>>>(floatAgreementUsed, floatAgreementUsed, size, 1, imageDims[0] );
                 gaussWidth[0]--;
