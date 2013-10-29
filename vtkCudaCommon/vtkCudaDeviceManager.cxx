@@ -51,7 +51,7 @@ vtkCudaDeviceManager::~vtkCudaDeviceManager(){
 	//synchronize and end all streams
 	for( std::map<cudaStream_t*,int>::iterator it = this->StreamToDeviceMap.begin();
 		 it != this->StreamToDeviceMap.end(); it++ ){
-		this->SynchronizeStream( (*it).first );
+		this->SynchronizeStreamUnlocked( (*it).first );
 		cudaStreamDestroy( *(it->first) );
 		devicesInUse.insert( it->second );
 	}
@@ -280,17 +280,14 @@ bool vtkCudaDeviceManager::ReturnStream(vtkCudaObject* caller, cudaStream_t* str
 
 }
 
-bool vtkCudaDeviceManager::SynchronizeStream( cudaStream_t* stream ){
+bool vtkCudaDeviceManager::SynchronizeStreamUnlocked( cudaStream_t* stream ){
 	
 	//find mapped result and device
-	this->regularLock->Lock();
 	if( this->StreamToDeviceMap.count(stream) != 1 ){
 		vtkErrorMacro(<<"Cannot synchronize unused stream.");
-		this->regularLock->Unlock();
 		return true;
 	}
 	int device = this->StreamToDeviceMap[stream];
-	this->regularLock->Unlock();
 
 	//synchronize the stream and return the success value
 	int oldDevice = 0;
@@ -301,6 +298,13 @@ bool vtkCudaDeviceManager::SynchronizeStream( cudaStream_t* stream ){
 
 	return cudaGetLastError() != cudaSuccess;
 
+}
+
+bool vtkCudaDeviceManager::SynchronizeStream( cudaStream_t* stream ){
+	this->regularLock->Lock();
+	bool retVal = SynchronizeStreamUnlocked(stream);
+	this->regularLock->Unlock();
+	return retVal;
 }
 
 bool vtkCudaDeviceManager::ReserveGPU( cudaStream_t* stream ){
@@ -345,7 +349,7 @@ int vtkCudaDeviceManager::QueryDeviceForStream( cudaStream_t* stream ){
 
 void vtkCudaDeviceManager::DestroyEmptyStream( cudaStream_t* stream ){
 
-	this->SynchronizeStream( stream );
+	this->SynchronizeStreamUnlocked( stream );
 
 	bool found = false;
 	std::map<cudaStream_t*,int>::iterator it = this->StreamToDeviceMap.begin();

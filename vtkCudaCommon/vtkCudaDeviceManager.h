@@ -59,6 +59,7 @@ private:
 	vtkCudaDeviceManager(const vtkCudaDeviceManager&); /**< not implemented */
 	
 	void DestroyEmptyStream( cudaStream_t* stream );
+	bool SynchronizeStreamUnlocked( cudaStream_t* stream );
 	
 	std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
 	std::multimap<int,vtkCudaObject*> DeviceToObjectMap;
