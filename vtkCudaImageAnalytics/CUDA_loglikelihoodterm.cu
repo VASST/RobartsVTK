@@ -60,7 +60,7 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 	#endif
 
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	IncrementBuffer<T><<<grid,threads,0,*stream>>>(GPUBuffer, desiredValue, agreement, size);
 	cudaFree(GPUBuffer);
 
@@ -75,7 +75,7 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* stream){
 	cudaMalloc((void**) agreement, sizeof(short)*size);
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	ZeroOutBuffer<short><<<grid,threads,0,*stream>>>(*agreement,size);
 
 	#ifdef DEBUG_VTKCUDA_ILLT
@@ -102,7 +102,7 @@ void CUDA_ILLT_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cuda
 void CUDA_ILLT_AllocateHistogram(float** histogramGPU, int size, cudaStream_t* stream){
 	cudaMalloc((void**) histogramGPU, sizeof(float)*size);
 	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	dim3 grid = GetGrid(size);
 	
 	#ifdef DEBUG_VTKCUDA_ILLT
 		cudaThreadSynchronize();
@@ -327,7 +327,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 	float imMin = 0;
 	threads = dim3(NUMTHREADS,1,1);
-	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	grid = GetGrid(imageSize);
 	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	for(int t = (imageSize-1)/2+1; t > 0; t/=2){
 		threads = dim3(NUMTHREADS,1,1);
@@ -418,7 +418,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 	float2 imMin = {0.0f, 0.0f};
 	threads = dim3(NUMTHREADS,1,1);
-	grid = dim3( (imageSize-1)/NUMTHREADS+1, 1, 1);
+	grid = GetGrid(imageSize);
 	kern_PopulateWorkingDown<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 	t = 1; while(t/2<imageSize) t+=t;
 	for(; t > 1; t/=2){
