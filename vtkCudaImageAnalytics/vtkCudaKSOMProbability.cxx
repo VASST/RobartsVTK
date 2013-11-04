@@ -40,7 +40,7 @@ void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index){
 }
 
 int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info){
-	if( i == 3 || i == 4 ){
+	if( i == 2 || i == 3 ){
 		info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
 		info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
 	}else{
