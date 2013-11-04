@@ -35,7 +35,7 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Buffer
 	
 }
 
-__global__ void SumOverLargeBuffer( float* buffer, int spread, int size ){
+__global__ void SumOverLargeBufferLogBased( float* buffer, int spread, int size ){
 	
 	int offset = CUDASTDOFFSET;
 	float value1 = buffer[offset];
@@ -118,7 +118,7 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 			while( j < MapSize ) j += j;
 			for(; j >= 1; j = j/2){
 				dim3 tempGrid = GetGrid(j);
-				SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(device_WorkingBuffer,j,MapSize);
+				SumOverLargeBufferLogBased<<<tempGrid, threads, 0, *stream>>>(device_WorkingBuffer,j,MapSize);
 				cudaStreamSynchronize(*stream);
 			}
 
