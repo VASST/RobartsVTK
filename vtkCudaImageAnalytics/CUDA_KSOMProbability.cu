@@ -29,14 +29,30 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Buffer
 	distance += 0.5 * log(penalty);
 
 	//output weight
-	float weight = exp( -1.0f * distance );
-	if(kOffset < bufferSize) Buffer[kOffset] = weight;
+	//float weight = exp( -1.0f * distance );
+	//if(kOffset < bufferSize) Buffer[kOffset] = weight;
+	if(kOffset < bufferSize) Buffer[kOffset] = distance;
 	
 }
 
+__global__ void SumOverLargeBuffer( float* buffer, int spread, int size ){
+	
+	int offset = CUDASTDOFFSET;
+	float value1 = buffer[offset];
+	float value2 = buffer[offset+spread];
+	
+	float x = max(value1,value2);
+	float n = min(value1,value2);
+	float value = x - log( 1+exp(x-n) );
+
+	if( offset+spread < size )
+		buffer[offset] = value;
+
+}
+
 void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* inputKohonen, float** probabilityData,
-									float** outputData, Kohonen_Probability_Information& information,
-									cudaStream_t* stream ){
+									float** outputData, bool useProbData, bool useEntropy,
+									Kohonen_Probability_Information& information, cudaStream_t* stream ){
 
 	//copy information to GPU
 	cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Probability_Information) );
@@ -59,8 +75,6 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 	cudaMalloc( (void**) &device_BaseBuffer, sizeof(float)*MapSize );
 	float* device_WorkingBuffer = 0;
 	cudaMalloc( (void**) &device_WorkingBuffer, sizeof(float)*MapSize );
-	float* device_ProbabilityBuffer = 0;
-	cudaMalloc( (void**) &device_ProbabilityBuffer, sizeof(float)*MapSize*information.NumberOfLabels );
 
 	//rearrange image data to be easier to work with (should parallelize)
 	float* device_InputData = 0;
@@ -68,15 +82,18 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 	cudaMemcpyAsync( device_InputData, inputData, sizeof(float)*VolumeSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
 	
 	//copy probability buffers
-	for( int i = 0; i < information.NumberOfLabels; i++)
-		cudaMemcpyAsync( device_ProbabilityBuffer+i*MapSize, probabilityData[i], sizeof(float)*MapSize, cudaMemcpyHostToDevice, *stream );
+	float* device_ProbabilityBuffer = 0;
+	if( useProbData ){
+		cudaMalloc( (void**) &device_ProbabilityBuffer, sizeof(float)*MapSize*information.NumberOfLabels );
+		for( int i = 0; i < information.NumberOfLabels; i++)
+			cudaMemcpyAsync( device_ProbabilityBuffer+i*MapSize, probabilityData[i], sizeof(float)*MapSize, cudaMemcpyHostToDevice, *stream );
+	}
 
 	//apply the map
 	dim3 grid = GetGrid(MapSize);
 	dim3 threads(NUMTHREADS,1,1);
 	for( int voxel = 0; voxel < VolumeSize; voxel++ ){
 		
-
 		//if we are not in the mask, ignore this voxel
 		if( inputMask != 0 && inputMask[voxel] == 0 ){
 			for( int i = 0; i < information.NumberOfLabels; i++)
@@ -91,8 +108,10 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 		for( int i = 0; i < information.NumberOfLabels; i++){
 
 			//multiply the basic amount with the probability buffer into the working buffer
-			MultiplyAndStoreBuffer<<<grid, threads, 0, *stream>>>(device_BaseBuffer, device_ProbabilityBuffer+i*MapSize, device_WorkingBuffer, MapSize );
-			//CopyBuffers<<<grid, threads, 0, *stream>>>(device_WorkingBuffer, device_BaseBuffer, MapSize);
+			if( useProbData )
+				MultiplyAndStoreBuffer<<<grid, threads, 0, *stream>>>(device_BaseBuffer, device_ProbabilityBuffer+i*MapSize, device_WorkingBuffer, MapSize );
+			else
+				CopyBuffers<<<grid, threads, 0, *stream>>>(device_WorkingBuffer, device_BaseBuffer, MapSize);
 
 			//reduce working buffer by summation
 			int j = 1;
@@ -104,17 +123,17 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 			}
 
 			//store resulting cost
-			float result = 1.0f;
-			cudaMemcpyAsync( &result, device_WorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
-			cudaStreamSynchronize(*stream);
-			(outputData[i])[voxel] = ( result <= exp(-FLT_MAX) ) ?
-				FLT_MAX :
-				-log( result );
+			cudaMemcpyAsync( (outputData[i])+voxel, device_WorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
 
 		}
-
-
 	}
+	cudaStreamSynchronize(*stream);
+
+	//switch to entropy
+	if( !useEntropy )
+		for( int voxel = 0; voxel < VolumeSize; voxel++ )
+			for( int i = 0; i < information.NumberOfLabels; i++)
+				(outputData[i])[voxel] =  exp(-((outputData[i])[voxel]) );
 
 	//remove allocated memory
 	cudaFree(device_KohonenMap);

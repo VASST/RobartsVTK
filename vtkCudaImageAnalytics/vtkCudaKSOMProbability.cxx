@@ -12,10 +12,11 @@ vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
 	this->SetNumberOfInputConnections(0,1);
 	this->SetNumberOfInputConnections(1,1);
 	this->SetNumberOfInputConnections(2,1);
-	this->SetNumberOfOutputPorts(0);
+	this->SetNumberOfOutputPorts(1);
 
 	//initialize the scale to 1
 	this->Scale = 1.0;
+	this->Entropy = false;
 }
 
 vtkCudaKSOMProbability::~vtkCudaKSOMProbability(){
@@ -39,7 +40,7 @@ void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index){
 }
 
 int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info){
-	if( i == 3 ){
+	if( i == 3 || i == 4 ){
 		info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
 		info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
 	}else{
@@ -58,16 +59,6 @@ void vtkCudaKSOMProbability::Reinitialize(int withData){
 }
 
 void vtkCudaKSOMProbability::Deinitialize(int withData){
-}
-
-
-//----------------------------------------------------------------------------
-
-void vtkCudaKSOMProbability::SetScale(double s){
-	if( this->Scale != s && s >= 0.0 ){
-		this->Scale = s;
-		this->Modified();
-	}
 }
 
 //------------------------------------------------------------
@@ -121,11 +112,12 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	
 	//get the probability maps
 	float** probabilityBuffers = new float* [this->GetNumberOfOutputPorts()];
-	for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
-		vtkInformation* probabilityInfo = (inputVector[3])->GetInformationObject(i);
-		vtkImageData* probabilityData = vtkImageData::SafeDownCast(probabilityInfo->Get(vtkDataObject::DATA_OBJECT()));
-		probabilityBuffers[i] = (float*) probabilityData->GetScalarPointer();
-	}
+	if( this->GetNumberOfInputConnections(3) > 0 )
+		for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
+			vtkInformation* probabilityInfo = (inputVector[3])->GetInformationObject(i);
+			vtkImageData* probabilityData = vtkImageData::SafeDownCast(probabilityInfo->Get(vtkDataObject::DATA_OBJECT()));
+			probabilityBuffers[i] = (float*) probabilityData->GetScalarPointer();
+		}
 
 	//figure out the extent of the output
 	float** outputBuffers = new float* [this->GetNumberOfOutputPorts()];
@@ -155,7 +147,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	//pass it over to the GPU
 	this->ReserveGPU();
 	CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), (char*) maskData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-							  probabilityBuffers, outputBuffers, this->info, this->GetStream() );
+									probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(3) > 0, this->Entropy, this->info, this->GetStream() );
 
 	
 	delete outputBuffers;

@@ -10,6 +10,7 @@
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
+#include "vtkSetGet.h"
 
 class vtkCudaKSOMProbability : public vtkImageAlgorithm, public vtkCudaObject
 {
@@ -18,8 +19,11 @@ public:
 
 	static vtkCudaKSOMProbability *New();
 
-	void SetScale( double s );
-	double GetScale() {return this->Scale;}
+	vtkSetClampMacro(Scale,double,0,FLT_MAX);
+	vtkGetMacro(Scale,double);
+
+	vtkSetMacro(Entropy,bool);
+	vtkGetMacro(Entropy,bool);
 	
 	void SetImageInput(vtkImageData* in);
 	void SetMapInput(vtkImageData* in);
@@ -54,6 +58,8 @@ private:
 	vtkCudaKSOMProbability(const vtkCudaKSOMProbability&){}
 
 	double Scale;
+
+	bool Entropy;
 
 	Kohonen_Probability_Information info;
 };
