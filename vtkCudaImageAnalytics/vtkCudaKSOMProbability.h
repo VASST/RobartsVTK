@@ -12,6 +12,8 @@
 #include "vtkAlgorithmOutput.h"
 #include "vtkSetGet.h"
 
+#include "float.h"
+
 class vtkCudaKSOMProbability : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
