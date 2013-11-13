@@ -47,6 +47,8 @@ template<class T, class S> __global__ void IncrementBuffer(T* labelBuffer, T des
 __global__ void SetBufferToRandom(float* buffer, float min, float max, int size);
 template<class T> __global__ void LogBuffer(T* buffer, int size);
 template<class T> __global__ void NegLogBuffer(T* buffer, int size);
+template<class T> __global__ void ExpBuffer(T* buffer, int size);
+template<class T> __global__ void NegExpBuffer(T* buffer, int size);
 
 //---------------------------------------------------------------------------//
 //-------------------------COMMON BINARY OPERATORS---------------------------//

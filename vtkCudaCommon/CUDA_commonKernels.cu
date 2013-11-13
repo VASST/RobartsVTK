@@ -174,6 +174,48 @@ template __global__ void NegLogBuffer<double> (double* buffer, int size);
 template __global__ void NegLogBuffer<long long> (long long* buffer, int size);
 template __global__ void NegLogBuffer<unsigned long long> (unsigned long long* buffer, int size);
 
+template<class T> 
+__global__ void ExpBuffer(T* buffer, int size){
+	int offset = CUDASTDOFFSET;
+	float input = (float) buffer[offset];
+	T value = (T) exp( input );
+	if(offset < size ) buffer[offset] = value;
+}
+template __global__ void ExpBuffer<char> (char* buffer, int size);
+template __global__ void ExpBuffer<signed char> (signed char* buffer, int size);
+template __global__ void ExpBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void ExpBuffer<short> (short* buffer, int size);
+template __global__ void ExpBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void ExpBuffer<int> (int* buffer, int size);
+template __global__ void ExpBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void ExpBuffer<long> (long* buffer, int size);
+template __global__ void ExpBuffer<unsigned long> (unsigned long* buffer, int size);
+template __global__ void ExpBuffer<float> (float* buffer, int size);
+template __global__ void ExpBuffer<double> (double* buffer, int size);
+template __global__ void ExpBuffer<long long> (long long* buffer, int size);
+template __global__ void ExpBuffer<unsigned long long> (unsigned long long* buffer, int size);
+
+template<class T> 
+__global__ void NegExpBuffer(T* buffer, int size){
+	int offset = CUDASTDOFFSET;
+	float input = (float) buffer[offset];
+	T value = (T) exp( -input );
+	if(offset < size ) buffer[offset] = value;
+}
+template __global__ void NegExpBuffer<char> (char* buffer, int size);
+template __global__ void NegExpBuffer<signed char> (signed char* buffer, int size);
+template __global__ void NegExpBuffer<unsigned char> (unsigned char* buffer, int size);
+template __global__ void NegExpBuffer<short> (short* buffer, int size);
+template __global__ void NegExpBuffer<unsigned short> (unsigned short* buffer, int size);
+template __global__ void NegExpBuffer<int> (int* buffer, int size);
+template __global__ void NegExpBuffer<unsigned int> (unsigned int* buffer, int size);
+template __global__ void NegExpBuffer<long> (long* buffer, int size);
+template __global__ void NegExpBuffer<unsigned long> (unsigned long* buffer, int size);
+template __global__ void NegExpBuffer<float> (float* buffer, int size);
+template __global__ void NegExpBuffer<double> (double* buffer, int size);
+template __global__ void NegExpBuffer<long long> (long long* buffer, int size);
+template __global__ void NegExpBuffer<unsigned long long> (unsigned long long* buffer, int size);
+
 template<class T, class S>
 __global__ void IncrementBuffer(T* labelBuffer, T desiredLabel, S* agreement, int size){
 	int idx = CUDASTDOFFSET;
@@ -634,7 +676,7 @@ __global__ void LogaritureOverSmallBuffer(float *buffer, unsigned int n)
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockSize*2) + tid;
 	unsigned int gridSize = blockSize*2*gridDim.x;
-	sdata[tid] = -2.0f * FLT_MAX;
+	sdata[tid] = -FLT_MAX;
 	
 	while (i < n) {
 		sdata[tid] = Logariture(sdata[tid], buffer[i]);
