@@ -28,14 +28,16 @@ public:
 	vtkGetObjectMacro(VarsAlphaSchedule,vtkPiecewiseFunction);
 	vtkSetObjectMacro(VarsWidthSchedule,vtkPiecewiseFunction);
 	vtkGetObjectMacro(VarsWidthSchedule,vtkPiecewiseFunction);
+	vtkSetObjectMacro(WeightsAlphaSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(WeightsAlphaSchedule,vtkPiecewiseFunction);
 	
 	void SetNumberOfIterations(int number);
 	int GetNumberOfIterations();
 
-	void SetWeight(int index, double weight);
-	void SetWeights(const double* weights);
-	double GetWeight(int index);
-	double* GetWeights();
+	void SetInitialVars(int index, double weight);
+	void SetInitialVars(const double* weights);
+	double GetInitialVars(int index);
+	double* GetInitialVars();
 
 	void SetBatchSize(double fraction);
 	double GetBatchSize();
@@ -85,6 +87,7 @@ private:
 	vtkPiecewiseFunction* MeansWidthSchedule;
 	vtkPiecewiseFunction* VarsAlphaSchedule;
 	vtkPiecewiseFunction* VarsWidthSchedule;
+	vtkPiecewiseFunction* WeightsAlphaSchedule;
 
 	int outExt[6];
 

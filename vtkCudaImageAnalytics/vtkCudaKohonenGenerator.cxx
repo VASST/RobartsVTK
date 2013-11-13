@@ -19,6 +19,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->MeansWidthSchedule = vtkPiecewiseFunction::New();
 	this->VarsAlphaSchedule = vtkPiecewiseFunction::New();
 	this->VarsWidthSchedule = vtkPiecewiseFunction::New();
+	this->WeightsAlphaSchedule = vtkPiecewiseFunction::New();
 
 	this->BatchPercent = 1.0/15.0;
 	this->UseAllVoxels = false;
@@ -43,6 +44,7 @@ vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator(){
 	if(this->MeansWidthSchedule) this->MeansWidthSchedule->Delete();
 	if(this->VarsAlphaSchedule) this->VarsAlphaSchedule->Delete();
 	if(this->VarsWidthSchedule) this->VarsWidthSchedule->Delete();
+	if(this->WeightsAlphaSchedule) this->WeightsAlphaSchedule->Delete();
 }
 
 //------------------------------------------------------------
@@ -89,14 +91,14 @@ void vtkCudaKohonenGenerator::SetUseMaskFlag(bool t){
 
 //------------------------------------------------------------
 
-void vtkCudaKohonenGenerator::SetWeight(int index, double weight){
+void vtkCudaKohonenGenerator::SetInitialVars(int index, double weight){
 	if( index >= 0 && index < MAX_DIMENSIONALITY && weight >= 0.0 ){
 		this->UnnormalizedWeights[index] = weight;
 		this->Modified();
 	}
 }
 
-void vtkCudaKohonenGenerator::SetWeights(const double* weights){
+void vtkCudaKohonenGenerator::SetInitialVars(const double* weights){
 	for(int i = 0; i < MAX_DIMENSIONALITY; i++)
 		try{
 			this->UnnormalizedWeights[i] = weights[i];
@@ -106,13 +108,13 @@ void vtkCudaKohonenGenerator::SetWeights(const double* weights){
 	this->Modified();
 }
 
-double vtkCudaKohonenGenerator::GetWeight(int index){
+double vtkCudaKohonenGenerator::GetInitialVars(int index){
 	if( index >= 0 && index < MAX_DIMENSIONALITY )
 		return this->UnnormalizedWeights[index];
 	return 0.0;
 }
 
-double* vtkCudaKohonenGenerator::GetWeights(){
+double* vtkCudaKohonenGenerator::GetInitialVars(){
 	return this->UnnormalizedWeights;
 }
 
@@ -203,7 +205,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	vtkImageData* inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* maskData = 0;
 	int* VolumeSize = new int[ 3*NumPictures ];
-	int SumDiagonal = 0;
+	int SumSamples = 0;
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	for(int p = 0; p < NumPictures; p++){
 		
@@ -215,9 +217,14 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		}
 
 		inData->GetDimensions( &(VolumeSize[3*p]) );
-		SumDiagonal += VolumeSize[3*p]*VolumeSize[3*p];
-		SumDiagonal += VolumeSize[3*p+1]*VolumeSize[3*p+1];
-		SumDiagonal += VolumeSize[3*p+2]*VolumeSize[3*p+2];
+		int CurrentVolumeSize = VolumeSize[3*p]*VolumeSize[3*p+1]*VolumeSize[3*p+2];
+		if( this->UseMask ){
+			char* MaskPtr = (char*) maskData->GetScalarPointer();
+			for(int i = 0; i < CurrentVolumeSize; MaskPtr++, i++)
+				if(MaskPtr) SumSamples++;
+		}else{
+			SumSamples += CurrentVolumeSize;
+		}
 
 		if( inData->GetNumberOfScalarComponents() != this->info.NumberOfDimensions ){
 			vtkErrorMacro(<<"Data objects need to have a consistant number of components");
@@ -241,13 +248,13 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 	int outputExtent[6] = {0, this->info.KohonenMapSize[0]-1, 0, this->info.KohonenMapSize[1]-1, 0, 0};
 	outData->SetScalarTypeToFloat();
-	outData->SetNumberOfScalarComponents(2*inData->GetNumberOfScalarComponents());
+	outData->SetNumberOfScalarComponents(2*inData->GetNumberOfScalarComponents()+1);
 	outData->SetExtent(outputExtent);
 	outData->SetWholeExtent(outputExtent);
 	outData->AllocateScalars();
 
 	//update information container
-	int BatchSize = (this->UseAllVoxels) ? -1 : SumDiagonal * this->BatchPercent;
+	int BatchSize = (this->UseAllVoxels) ? -1 : SumSamples * this->BatchPercent;
 
 	//get range
 	double* Range = new double[2*(this->info.NumberOfDimensions)];
@@ -283,9 +290,8 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
 
 	//update initial weights
-	for(int i = 0; i < this->info.NumberOfDimensions; i++){
+	for(int i = 0; i < this->info.NumberOfDimensions; i++)
 		this->info.Weights[i] = this->UnnormalizedWeights[i];
-	}
 
 	//create information holders
 	int KMapSize[3];
@@ -293,24 +299,28 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	float* device_tempSpace = 0;
 	float* device_DistanceBuffer = 0;
 	short2* device_IndexBuffer = 0;
+	float* device_WeightBuffer = 0;
 
 	//pass information to CUDA
 	this->ReserveGPU();
 	CUDAalgo_KSOMInitialize( Range, this->info, KMapSize,
 								&device_KohonenMap, &device_tempSpace,
-								&device_DistanceBuffer, &device_IndexBuffer,
+								&device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
 								this->MeansWidthSchedule->GetValue(0.0),
-								this->VarsWidthSchedule->GetValue(0.0), this->GetStream() );
+								this->VarsWidthSchedule->GetValue(0.0),
+								this->GetStream() );
 	for(int epoch = 0; epoch < this->MaxEpochs; epoch++)
 		CUDAalgo_KSOMIteration( inputDataPtr,  maskDataPtr, epoch, KMapSize,
 								&device_KohonenMap, &device_tempSpace,
-								&device_DistanceBuffer, &device_IndexBuffer,
+								&device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
 								VolumeSize, NumPictures, this->info, BatchSize,
 								this->MeansAlphaSchedule->GetValue(epoch), this->MeansWidthSchedule->GetValue(epoch),
 								this->VarsAlphaSchedule->GetValue(epoch), this->VarsWidthSchedule->GetValue(epoch),
+								this->WeightsAlphaSchedule->GetValue(epoch),
 								this->GetStream() );
 	CUDAalgo_KSOMOffLoad( (float*) outData->GetScalarPointer(), &device_KohonenMap, &device_tempSpace,
-							&device_DistanceBuffer, &device_IndexBuffer, this->info, this->GetStream() );
+							&device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
+							this->info, this->GetStream() );
 
 	//CUDAalgo_generateKohonenMap( inputDataPtr, (float*) outData->GetScalarPointer(), maskDataPtr,
 	//	Range, VolumeSize, NumPictures, this->info, MaxEpochs, BatchSize, 

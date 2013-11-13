@@ -5,48 +5,34 @@
 
 __constant__ Kohonen_Probability_Information info;
 
-__global__ void ProcessSample(float* InputData, float* KohonenMap, float* Buffer){
+__global__ void ProcessSample(float* InputData, float* KohonenMap, float* Accumulator){
 
-	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
+	__shared__ float ComponentLocal[2*MAX_DIMENSIONALITY+1];
 
 	//get sample co-ordinates in buffer
 	int kOffset = CUDASTDOFFSET;
-	if(threadIdx.x < MAX_DIMENSIONALITY){
-		SamplePointLocal[threadIdx.x] = InputData[threadIdx.x];
-	}
+	if(threadIdx.x < 2*MAX_DIMENSIONALITY+1)
+		ComponentLocal[threadIdx.x] = KohonenMap[threadIdx.x];
 	__syncthreads();
 	
 	//calculate the distance
 	float distance = 0.0f;
-	float penalty = 1.0f;
-	int bufferSize = info.KohonenMapSize[0] * info.KohonenMapSize[1];
+	float penalty = ComponentLocal[0]*ComponentLocal[0];
+	int VolumeSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
-		float var = KohonenMap[(2*i+1)*bufferSize+kOffset];
-		float value = (KohonenMap[(2*i)*bufferSize+kOffset] - SamplePointLocal[i]);
-		distance += value * value * info.Scale / var;
-		penalty *= var;
+		float value = InputData[i*VolumeSize+kOffset];
+		distance += (ComponentLocal[2*i+1]-value) * (ComponentLocal[2*i+1]-value) * info.Scale / ComponentLocal[2*i+2];
+		penalty *= ComponentLocal[2*i+2];
 	}
 	distance += 0.5 * log(penalty);
 
-	//output weight
-	//float weight = exp( -1.0f * distance );
-	//if(kOffset < bufferSize) Buffer[kOffset] = weight;
-	if(kOffset < bufferSize) Buffer[kOffset] = distance;
-	
-}
-
-__global__ void SumOverLargeBufferLogBased( float* buffer, int spread, int size ){
-	
-	int offset = CUDASTDOFFSET;
-	float value1 = buffer[offset];
-	float value2 = buffer[offset+spread];
-	
-	float x = max(value1,value2);
-	float n = min(value1,value2);
-	float value = x - log( 1+exp(x-n) );
-
-	if( offset+spread < size )
-		buffer[offset] = value;
+	//accumulate entropy
+	float oldEntropy = Accumulator[kOffset];
+	float x = max(oldEntropy, distance);
+	float n = min(oldEntropy, distance);
+	float newEntropy = (exp(n-x) > 0.0f) ? n + log(1+exp(n-x)): -log( exp(-x) + exp(-n));
+	newEntropy = (newEntropy < n) ? newEntropy : n;
+	if(kOffset < VolumeSize) Accumulator[kOffset] = newEntropy;
 
 }
 
@@ -60,85 +46,48 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 	//translate data onto device (need to transpose KSOM)
 	int VolumeSize = information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2];
 	int MapSize = information.KohonenMapSize[0]*information.KohonenMapSize[1];
-	float* tempKohonen = new float[2*MapSize*information.NumberOfDimensions];
-	int bufferJump = MapSize;
-	for(int i = 0; i < MapSize; i++)
-		for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
-			tempKohonen[j*bufferJump+i] = inputKohonen[i*2*information.NumberOfDimensions+j];
+	
+	//copy kohonen data to GPU
 	float* device_KohonenMap = 0;
-	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*MapSize*2*information.NumberOfDimensions );
-	cudaMemcpy( device_KohonenMap, tempKohonen, sizeof(float)*MapSize*2*information.NumberOfDimensions, cudaMemcpyHostToDevice );
-	delete[] tempKohonen;
-
-	//allocate a distance buffer
-	float* device_BaseBuffer = 0;
-	cudaMalloc( (void**) &device_BaseBuffer, sizeof(float)*MapSize );
-	float* device_WorkingBuffer = 0;
-	cudaMalloc( (void**) &device_WorkingBuffer, sizeof(float)*MapSize );
+	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*MapSize*(2*information.NumberOfDimensions+1) );
+	cudaMemcpy( device_KohonenMap, inputKohonen, sizeof(float)*MapSize*(2*information.NumberOfDimensions+1), cudaMemcpyHostToDevice );
 
 	//rearrange image data to be easier to work with (should parallelize)
+	float* tempImage = new float[2*VolumeSize*information.NumberOfDimensions];
+	int bufferJump = MapSize;
+	for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
+		for(int i = 0; i < VolumeSize; i++)
+			tempImage[j*bufferJump+i] = inputData[i*2*information.NumberOfDimensions+j];
 	float* device_InputData = 0;
 	cudaMalloc( (void**) &device_InputData, sizeof(float)*VolumeSize*information.NumberOfDimensions );
-	cudaMemcpyAsync( device_InputData, inputData, sizeof(float)*VolumeSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
-	
-	//copy probability buffers
-	float* device_ProbabilityBuffer = 0;
-	if( useProbData ){
-		cudaMalloc( (void**) &device_ProbabilityBuffer, sizeof(float)*MapSize*information.NumberOfLabels );
-		for( int i = 0; i < information.NumberOfLabels; i++)
-			cudaMemcpyAsync( device_ProbabilityBuffer+i*MapSize, probabilityData[i], sizeof(float)*MapSize, cudaMemcpyHostToDevice, *stream );
-	}
+	cudaMemcpyAsync( device_InputData, tempImage, sizeof(float)*VolumeSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
+	delete[] tempImage;
+
+	//allocate an accumulation buffer
+	dim3 grid = GetGrid(VolumeSize);
+	dim3 threads(NUMTHREADS,1,1);
+	float* device_Accumulator = 0;
+	cudaMalloc( (void**) &device_Accumulator, sizeof(float)*VolumeSize );
+	SetBufferToConst<<<grid, threads, 0, *stream>>>(device_Accumulator, FLT_MAX, VolumeSize);
 
 	//apply the map
-	dim3 grid = GetGrid(MapSize);
-	dim3 threads(NUMTHREADS,1,1);
-	for( int voxel = 0; voxel < VolumeSize; voxel++ ){
+	for( int i = 0; i < information.NumberOfLabels; i++){
+
+		for( int component = 0; component < MapSize; component++ )
+			ProcessSample<<<grid, threads, 0, *stream>>>(device_InputData, device_KohonenMap+component*(2*information.NumberOfDimensions+1),
+														 device_Accumulator);
 		
-		//if we are not in the mask, ignore this voxel
-		if( inputMask != 0 && inputMask[voxel] == 0 ){
-			for( int i = 0; i < information.NumberOfLabels; i++)
-				(outputData[i])[voxel] = FLT_MAX;
-			continue;
-		}
+		if( !useEntropy )
+			NegExpBuffer<<<grid, threads, 0, *stream>>>(device_Accumulator, VolumeSize);
 
-		//else, process it over the entire map
-		int InputBufferOffset = voxel*information.NumberOfDimensions;
-		ProcessSample<<<grid, threads, 0, *stream>>>(device_InputData+InputBufferOffset, device_KohonenMap, device_BaseBuffer );
-		
-		for( int i = 0; i < information.NumberOfLabels; i++){
-
-			//multiply the basic amount with the probability buffer into the working buffer
-			if( useProbData )
-				MultiplyAndStoreBuffer<<<grid, threads, 0, *stream>>>(device_BaseBuffer, device_ProbabilityBuffer+i*MapSize, device_WorkingBuffer, MapSize );
-			else
-				CopyBuffers<<<grid, threads, 0, *stream>>>(device_WorkingBuffer, device_BaseBuffer, MapSize);
-
-			//reduce working buffer by summation
-			int j = 1;
-			while( j < MapSize ) j += j;
-			for(; j >= 1; j = j/2){
-				dim3 tempGrid = GetGrid(j);
-				SumOverLargeBufferLogBased<<<tempGrid, threads, 0, *stream>>>(device_WorkingBuffer,j,MapSize);
-				cudaStreamSynchronize(*stream);
-			}
-
-			//store resulting cost
-			cudaMemcpyAsync( (outputData[i])+voxel, device_WorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
-
-		}
+		//move entropy to CPU
+		cudaMemcpyAsync( (outputData[i]), device_Accumulator, sizeof(float)*VolumeSize, cudaMemcpyDeviceToHost, *stream );
 	}
 	cudaStreamSynchronize(*stream);
-
-	//switch to entropy
-	if( !useEntropy )
-		for( int voxel = 0; voxel < VolumeSize; voxel++ )
-			for( int i = 0; i < information.NumberOfLabels; i++)
-				(outputData[i])[voxel] =  exp(-((outputData[i])[voxel]) );
 
 	//remove allocated memory
 	cudaFree(device_KohonenMap);
 	cudaFree(device_InputData);
-	cudaFree(device_BaseBuffer);
-	cudaFree(device_WorkingBuffer);
-	cudaFree(device_ProbabilityBuffer);
+	cudaFree(device_Accumulator);
+
 }

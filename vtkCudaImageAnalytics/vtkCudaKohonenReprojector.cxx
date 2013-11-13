@@ -68,7 +68,7 @@ int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
 	vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 	//update information container
-	this->info.NumberOfDimensions = kohonenData->GetNumberOfScalarComponents();
+	this->info.NumberOfDimensions = (kohonenData->GetNumberOfScalarComponents()-1)/2;
 	inData->GetDimensions( this->info.VolumeSize );
 	kohonenData->GetDimensions( this->info.KohonenMapSize );
 
