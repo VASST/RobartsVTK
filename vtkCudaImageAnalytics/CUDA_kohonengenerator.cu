@@ -54,8 +54,13 @@ __global__ void DoubleMapSizeInX( float* KohonenMap, float* tempStore, int currM
 		float valueNeighbour = KohonenMap[i*bufferSize+kOffset+1];
 		float difference = (xIndex != currMapSizeX-1) ? valueNeighbour - valueOld : 0.0f;
 		
-		float2 outputValue = {valueOld, valueOld + 0.5f * difference};
-		if( kOffset < bufferSize )((float2*) tempStore)[i*bufferSize+kOffset] = outputValue;
+		if(i){
+			float2 outputValue = {valueOld, valueOld + 0.5f * difference};
+			if( kOffset < bufferSize )((float2*) tempStore)[i*bufferSize+kOffset] = outputValue;
+		}else{
+			float2 outputValue = {valueOld*0.5f, valueOld*0.5f};
+			if( kOffset < bufferSize )((float2*) tempStore)[i*bufferSize+kOffset] = outputValue;
+		}
 	}
 }
 
