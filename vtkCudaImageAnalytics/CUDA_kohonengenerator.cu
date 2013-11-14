@@ -6,6 +6,8 @@
 
 #define DEBUGGING
 
+#define VTK_KSOMGen_EPSILON 0.0000001f
+
 //parameters held in constant memory
 __constant__ Kohonen_Generator_Information info;
 __constant__ float SamplePoint[MAX_DIMENSIONALITY];
@@ -23,7 +25,7 @@ __global__ void ProcessSample(float* KohonenMap, float* DistanceBuffer, short2* 
 	
 	//calculate the distance
 	float distance = 0.0f;
-	float penalty = KohonenMap[kOffset] + FLT_MIN;
+	float penalty = KohonenMap[kOffset] + VTK_KSOMGen_EPSILON;
 	penalty *= penalty;
 	int bufferSize = mapSizeX * mapSizeY;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
@@ -216,7 +218,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float weightT
 	//adjust the weights
 	float distance = 0.0f;
 	float weight = KohonenMap[kOffset];
-	float penalty = weight + FLT_MIN;
+	float penalty = weight + VTK_KSOMGen_EPSILON;
 	penalty *= penalty;
 	int bufferSize = mapSizeX * mapSizeY;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
@@ -235,7 +237,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float weightT
 		__syncthreads();
 	}
 	distance += 0.5f * log(penalty);
-	float newWeight = (exp(-distance) + FLT_MIN) / weightTot;
+	float newWeight = (exp(-distance) + VTK_KSOMGen_EPSILON) / weightTot;
 	if( kOffset < bufferSize ) KohonenMap[kOffset] = weight + wMultiplier*(newWeight-weight);
 
 }
@@ -436,7 +438,7 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 				//update the weights of each centroid
 				cudaStreamSynchronize(*stream);
 				cudaMemcpy( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost );
-				long double weightTot = currentMapSize[0]*currentMapSize[1]*FLT_MIN;
+				long double weightTot = currentMapSize[0]*currentMapSize[1]*VTK_KSOMGen_EPSILON;
 				cudaMemcpy( cpuWeights, *device_WeightBuffer, sizeof(float)*currentMapSize[0]*currentMapSize[1], cudaMemcpyDeviceToHost );
 				for(int i = 0; i < currentMapSize[0]*currentMapSize[1]; i++)
 					weightTot += (long double) cpuWeights[i];
@@ -484,7 +486,7 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 			cudaMemcpyAsync( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
 			cudaStreamSynchronize(*stream);
 			cudaMemcpy( cpuWeights, *device_WeightBuffer, sizeof(float)*currentMapSize[0]*currentMapSize[1], cudaMemcpyDeviceToHost );
-			long double weightTot = currentMapSize[0]*currentMapSize[1]*FLT_MIN;
+			long double weightTot = currentMapSize[0]*currentMapSize[1]*VTK_KSOMGen_EPSILON;
 			for(int i = 0; i < currentMapSize[0]*currentMapSize[1]; i++)
 				weightTot += (long double) cpuWeights[i];
 			UpdateWeights<<<grid, threads, 0, *stream>>>(*device_KohonenMap, minIndex, (float) weightTot, meansAlpha, meansNeigh,

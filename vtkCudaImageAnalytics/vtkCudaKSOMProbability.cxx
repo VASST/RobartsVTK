@@ -11,7 +11,6 @@ vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
 	this->SetNumberOfInputPorts(4);
 	this->SetNumberOfInputConnections(0,1);
 	this->SetNumberOfInputConnections(1,1);
-	this->SetNumberOfInputConnections(2,1);
 	this->SetNumberOfOutputPorts(1);
 
 	//initialize the scale to 1
@@ -40,8 +39,11 @@ void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index){
 }
 
 int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info){
-	if( i == 2 || i == 3 ){
+	if( i == 3 ){
 		info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
+		info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
+	}else if( i == 2 ){
+		info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 0);
 		info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
 	}else{
 		info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 0);
@@ -85,12 +87,14 @@ int vtkCudaKSOMProbability::RequestUpdateExtent(
 	inputInfo = (inputVector[1])->GetInformationObject(0);
 	inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
+\
+    if( this->GetNumberOfInputConnections(2) ){
+        inputInfo = (inputVector[2])->GetInformationObject(0);
+        inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+        inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
+    }
 
-	inputInfo = (inputVector[2])->GetInformationObject(0);
-	inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
-
-	for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
+    for(int i = 0; i < this->GetNumberOfInputConnections(3); i++){
 		inputInfo = (inputVector[3])->GetInformationObject(i);
 		inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
 		inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
@@ -105,12 +109,18 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 								
 	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
 	vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
-	vtkInformation* maskInfo = (inputVector[2])->GetInformationObject(0);
 	vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
 	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* maskData = vtkImageData::SafeDownCast(maskInfo->Get(vtkDataObject::DATA_OBJECT()));
+
 	
-	//get the probability maps
+    vtkInformation* maskInfo = 0;
+    vtkImageData* maskData = 0;
+    if( this->GetNumberOfInputConnections(2) > 0 ){
+        maskInfo = (inputVector[2])->GetInformationObject(0);
+        maskData = vtkImageData::SafeDownCast(maskInfo->Get(vtkDataObject::DATA_OBJECT()));
+	}
+	
+    //get the probability maps
 	float** probabilityBuffers = new float* [this->GetNumberOfOutputPorts()];
 	if( this->GetNumberOfInputConnections(3) > 0 )
 		for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
@@ -136,7 +146,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	}
 
 	//update information container
-	this->info.NumberOfLabels = this->GetNumberOfOutputPorts();
+	this->info.NumberOfLabels = this->GetNumberOfOutputPorts() ? this->GetNumberOfOutputPorts(): 1;
 	this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
 	inData->GetDimensions( this->info.VolumeSize );
 	kohonenData->GetDimensions( this->info.KohonenMapSize );
@@ -146,7 +156,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 
 	//pass it over to the GPU
 	this->ReserveGPU();
-	CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), (char*) maskData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
+	CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), maskData ? (char*) maskData->GetScalarPointer() : 0, (float*) kohonenData->GetScalarPointer(),
 									probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(3) > 0, this->Entropy, this->info, this->GetStream() );
 
 	

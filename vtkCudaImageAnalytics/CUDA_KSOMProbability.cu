@@ -53,11 +53,10 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* in
 	cudaMemcpy( device_KohonenMap, inputKohonen, sizeof(float)*MapSize*(2*information.NumberOfDimensions+1), cudaMemcpyHostToDevice );
 
 	//rearrange image data to be easier to work with (should parallelize)
-	float* tempImage = new float[2*VolumeSize*information.NumberOfDimensions];
-	int bufferJump = MapSize;
-	for( int j = 0; j < 2*information.NumberOfDimensions; j++ )
+    float* tempImage = new float[2*VolumeSize*information.NumberOfDimensions];
+    for( int j = 0; j < information.NumberOfDimensions; j++ )
 		for(int i = 0; i < VolumeSize; i++)
-			tempImage[j*bufferJump+i] = inputData[i*2*information.NumberOfDimensions+j];
+            tempImage[j*VolumeSize+i] = inputData[i*information.NumberOfDimensions+j];
 	float* device_InputData = 0;
 	cudaMalloc( (void**) &device_InputData, sizeof(float)*VolumeSize*information.NumberOfDimensions );
 	cudaMemcpyAsync( device_InputData, tempImage, sizeof(float)*VolumeSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );

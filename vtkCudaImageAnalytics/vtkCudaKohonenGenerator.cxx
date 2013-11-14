@@ -221,7 +221,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		if( this->UseMask ){
 			char* MaskPtr = (char*) maskData->GetScalarPointer();
 			for(int i = 0; i < CurrentVolumeSize; MaskPtr++, i++)
-				if(*MaskPtr) SumSamples++;
+                if(*MaskPtr) SumSamples++;
 		}else{
 			SumSamples += CurrentVolumeSize;
 		}
