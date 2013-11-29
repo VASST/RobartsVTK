@@ -35,7 +35,6 @@ int vtkCudaKohonenApplication::FillInputPortInformation(int i, vtkInformation* i
 {
   info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 0);
   info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 0);
-
   return this->Superclass::FillInputPortInformation(i,info);
 }
 //----------------------------------------------------------------------------
@@ -55,10 +54,6 @@ void vtkCudaKohonenApplication::SetMapInput(vtkImageData* d){
 	this->SetInput(1,d);
 }
 
-void vtkCudaKohonenApplication::SetMaskInput(vtkImageData* d){
-	this->SetInput(2,d);
-}
-
 vtkImageData* vtkCudaKohonenApplication::GetDataInput(){
 	return (vtkImageData*) this->GetInput(0);
 }
@@ -66,11 +61,6 @@ vtkImageData* vtkCudaKohonenApplication::GetDataInput(){
 vtkImageData* vtkCudaKohonenApplication::GetMapInput(){
 	return (vtkImageData*) this->GetInput(1);
 }
-
-vtkImageData* vtkCudaKohonenApplication::GetMaskInput(){
-	return (vtkImageData*) this->GetInput(2);
-}
-
 //------------------------------------------------------------
 int vtkCudaKohonenApplication::RequestInformation(
   vtkInformation* request,
@@ -131,7 +121,7 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 
 	//pass it over to the GPU
 	this->ReserveGPU();
-	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(), 0,
+	CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(),
 							  (float*) kohonenData->GetScalarPointer(),
 							  (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
 

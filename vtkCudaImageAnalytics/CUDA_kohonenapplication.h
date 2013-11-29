@@ -16,7 +16,7 @@ typedef struct __align__(16)
 
 } Kohonen_Application_Information;
 
-void CUDAalgo_applyKohonenMap( float* inputData, char* inputMask, float* inputKohonen, float* outputData,
+void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, float* outputData,
 									Kohonen_Application_Information& information,
 									cudaStream_t* stream );
 

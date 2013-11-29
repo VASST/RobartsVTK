@@ -23,10 +23,8 @@ public:
 	
 	void SetDataInput(vtkImageData* d);
 	void SetMapInput(vtkImageData* d);
-	void SetMaskInput(vtkImageData* d);
 	vtkImageData* GetDataInput();
 	vtkImageData* GetMapInput();
-	vtkImageData* GetMaskInput();
 
 	// Description:
 	// If the subclass does not define an Execute method, then the task
