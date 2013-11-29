@@ -20,6 +20,13 @@ public:
 
 	void SetScale( double s );
 	double GetScale() {return this->Scale;}
+	
+	void SetDataInput(vtkImageData* d);
+	void SetMapInput(vtkImageData* d);
+	void SetMaskInput(vtkImageData* d);
+	vtkImageData* GetDataInput();
+	vtkImageData* GetMapInput();
+	vtkImageData* GetMaskInput();
 
 	// Description:
 	// If the subclass does not define an Execute method, then the task
@@ -35,6 +42,7 @@ public:
 	virtual int RequestUpdateExtent( vtkInformation* request,
 							 vtkInformationVector** inputVector,
 							 vtkInformationVector* outputVector);
+	virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
 	vtkCudaKohonenApplication();

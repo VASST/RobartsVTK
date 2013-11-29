@@ -10,6 +10,7 @@ typedef struct __align__(16)
 	int VolumeSize[3];
 	int KohonenMapSize[3];
 	int NumberOfDimensions;
+	int BufferSize;
 
 	float Scale;
 
