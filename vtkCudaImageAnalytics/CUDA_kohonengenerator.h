@@ -11,14 +11,15 @@ typedef struct __align__(16)
 	int NumberOfDimensions;
 	int flags;
 
-	float Weights[MAX_DIMENSIONALITY];
+	float epsilon;
 
 } Kohonen_Generator_Information;
 
 void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& information, int* KMapSize,
 								float** device_KohonenMap, float** device_tempSpace,
 								float** device_DistanceBuffer, short2** device_IndexBuffer, float** device_WeightBuffer, 
-								float meansWidth, float varsWidth, cudaStream_t* stream );
+								float meansWidth, float varsWidth,
+								double* initialWeights, cudaStream_t* stream );
 
 void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 								int* KMapSize,

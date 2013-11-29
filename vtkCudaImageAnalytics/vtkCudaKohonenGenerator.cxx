@@ -28,10 +28,8 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
 	this->info.KohonenMapSize[0] = 256;
 	this->info.KohonenMapSize[1] = 256;
 	this->info.KohonenMapSize[2] = 1;
-	for(int i = 0; i < MAX_DIMENSIONALITY; i++){
+	for(int i = 0; i < MAX_DIMENSIONALITY; i++)
 		this->UnnormalizedWeights[i] = 1.0f;
-		this->info.Weights[i] = 1.0f;
-	}
 	this->MaxEpochs = 1000;
 	this->info.flags = 0;
 
@@ -288,11 +286,6 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 		}
 	}
 
-
-	//update initial weights
-	for(int i = 0; i < this->info.NumberOfDimensions; i++)
-		this->info.Weights[i] = this->UnnormalizedWeights[i];
-
 	//create information holders
 	int KMapSize[3];
 	float* device_KohonenMap = 0;
@@ -301,6 +294,10 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 	short2* device_IndexBuffer = 0;
 	float* device_WeightBuffer = 0;
 
+	//get epsilon to prevent NaNs
+	double RegularizationPercentage = 0.25;
+	this->info.epsilon = RegularizationPercentage / (double)(this->info.KohonenMapSize[0]*this->info.KohonenMapSize[1]);
+
 	//pass information to CUDA
 	this->ReserveGPU();
 	CUDAalgo_KSOMInitialize( Range, this->info, KMapSize,
@@ -308,7 +305,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 								&device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
 								this->MeansWidthSchedule->GetValue(0.0),
 								this->VarsWidthSchedule->GetValue(0.0),
-								this->GetStream() );
+								this->UnnormalizedWeights, this->GetStream() );
 	for(int epoch = 0; epoch < this->MaxEpochs; epoch++)
 		CUDAalgo_KSOMIteration( inputDataPtr,  maskDataPtr, epoch, KMapSize,
 								&device_KohonenMap, &device_tempSpace,
