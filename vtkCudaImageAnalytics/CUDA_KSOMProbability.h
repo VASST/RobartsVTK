@@ -16,7 +16,7 @@ typedef struct __align__(16)
 
 } Kohonen_Probability_Information;
 
-void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* inputKohonen, float** probabilityData,
+void CUDAalgo_applyProbabilityMaps( float* inputData, float* inputKohonen, float** probabilityData,
 									float** outputData, bool useProbData, bool useEntropy,
 									Kohonen_Probability_Information& information, cudaStream_t* stream );
 

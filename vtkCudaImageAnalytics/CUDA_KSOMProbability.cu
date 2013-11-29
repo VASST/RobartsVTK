@@ -16,16 +16,16 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Accumu
 	__syncthreads();
 	
 	//calculate the distance
-	float distance = 0.0f;
-	float penalty = ComponentLocal[0]*ComponentLocal[0];
+	float distance = -log(ComponentLocal[0]) + 0.918939f * (float) info.NumberOfDimensions;
+	float penalty = 1.0f;
 	int VolumeSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float value = InputData[i*VolumeSize+kOffset];
-		distance += (ComponentLocal[2*i+1]-value) * (ComponentLocal[2*i+1]-value) * info.Scale / ComponentLocal[2*i+2];
+		distance += 0.5f * (ComponentLocal[2*i+1]-value) * (ComponentLocal[2*i+1]-value) * info.Scale / ComponentLocal[2*i+2];
 		penalty *= ComponentLocal[2*i+2];
 	}
 	distance += 0.5 * log(penalty);
-
+	
 	//accumulate entropy
 	float oldEntropy = Accumulator[kOffset];
 	float x = max(oldEntropy, distance);
@@ -36,7 +36,7 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Accumu
 
 }
 
-void CUDAalgo_applyProbabilityMaps( float* inputData, char* inputMask, float* inputKohonen, float** probabilityData,
+void CUDAalgo_applyProbabilityMaps( float* inputData, float* inputKohonen, float** probabilityData,
 									float** outputData, bool useProbData, bool useEntropy,
 									Kohonen_Probability_Information& information, cudaStream_t* stream ){
 

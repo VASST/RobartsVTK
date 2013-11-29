@@ -29,7 +29,6 @@ public:
 	
 	void SetImageInput(vtkImageData* in);
 	void SetMapInput(vtkImageData* in);
-	void SetMaskInput(vtkImageData* in);
 	void SetProbabilityInput(vtkImageData* in, int index);
 
 	// Description:
