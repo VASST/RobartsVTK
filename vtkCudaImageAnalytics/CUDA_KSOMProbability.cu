@@ -18,7 +18,7 @@ __global__ void ProcessSample(float* InputData, float* KohonenMap, float* Accumu
 	//calculate the distance
 	float distance = -log(ComponentLocal[0]) + 0.918939f * (float) info.NumberOfDimensions;
 	float penalty = 1.0f;
-	int VolumeSize = info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2];
+	int VolumeSize = info.BufferSize;
 	for(int i = 0; i < info.NumberOfDimensions; i++){
 		float value = InputData[i*VolumeSize+kOffset];
 		distance += 0.5f * (ComponentLocal[2*i+1]-value) * (ComponentLocal[2*i+1]-value) * info.Scale / ComponentLocal[2*i+2];
@@ -40,9 +40,6 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, float* inputKohonen, float
 									float** outputData, bool useProbData, bool useEntropy,
 									Kohonen_Probability_Information& information, cudaStream_t* stream ){
 
-	//copy information to GPU
-	cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Probability_Information) );
-
 	//translate data onto device (need to transpose KSOM)
 	int VolumeSize = information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2];
 	int MapSize = information.KohonenMapSize[0]*information.KohonenMapSize[1];
@@ -52,39 +49,75 @@ void CUDAalgo_applyProbabilityMaps( float* inputData, float* inputKohonen, float
 	cudaMalloc( (void**) &device_KohonenMap, sizeof(float)*MapSize*(2*information.NumberOfDimensions+1) );
 	cudaMemcpy( device_KohonenMap, inputKohonen, sizeof(float)*MapSize*(2*information.NumberOfDimensions+1), cudaMemcpyHostToDevice );
 
-	//rearrange image data to be easier to work with (should parallelize)
-    float* tempImage = new float[2*VolumeSize*information.NumberOfDimensions];
-    for( int j = 0; j < information.NumberOfDimensions; j++ )
-		for(int i = 0; i < VolumeSize; i++)
-            tempImage[j*VolumeSize+i] = inputData[i*information.NumberOfDimensions+j];
+	//partition image into affordable sizes
+	size_t freeMemory, totalMemory;
+	cudaMemGetInfo(&freeMemory, &totalMemory);
+	int SizeAllowed = (int) ((double)freeMemory / (double)(sizeof(float)*(information.NumberOfDimensions+3)) );
+	SizeAllowed -= SizeAllowed % NUMTHREADS;
+	if(SizeAllowed > VolumeSize) SizeAllowed = VolumeSize;
+	while(VolumeSize % SizeAllowed < NUMTHREADS && VolumeSize % SizeAllowed > 0)
+		SizeAllowed -= NUMTHREADS;
+	information.BufferSize = SizeAllowed;
+
+	//copy information to GPU
+	cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Probability_Information) );
+
+	//create necessary GPU buffers
 	float* device_InputData = 0;
-	cudaMalloc( (void**) &device_InputData, sizeof(float)*VolumeSize*information.NumberOfDimensions );
-	cudaMemcpyAsync( device_InputData, tempImage, sizeof(float)*VolumeSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
-	delete[] tempImage;
-
-	//allocate an accumulation buffer
-	dim3 grid = GetGrid(VolumeSize);
-	dim3 threads(NUMTHREADS,1,1);
+	cudaMalloc( (void**) &device_InputData, sizeof(float)*SizeAllowed*information.NumberOfDimensions );
 	float* device_Accumulator = 0;
-	cudaMalloc( (void**) &device_Accumulator, sizeof(float)*VolumeSize );
-	SetBufferToConst<<<grid, threads, 0, *stream>>>(device_Accumulator, FLT_MAX, VolumeSize);
+	cudaMalloc( (void**) &device_Accumulator, sizeof(float)*SizeAllowed );
 
-	//apply the map
-	for( int i = 0; i < information.NumberOfLabels; i++){
+	//create necessary CPU buffers
+	float* tempImage = new float[SizeAllowed*information.NumberOfDimensions];
 
-		for( int component = 0; component < MapSize; component++ )
-			ProcessSample<<<grid, threads, 0, *stream>>>(device_InputData, device_KohonenMap+component*(2*information.NumberOfDimensions+1),
-														 device_Accumulator);
+	//go over each partition
+	int pConsumed = 0;
+	while(pConsumed < VolumeSize){
+
+		//figure out sizes and starting points
+		int pSize = SizeAllowed;
+		pConsumed = (VolumeSize-pConsumed > SizeAllowed) ? pConsumed : VolumeSize-SizeAllowed;
+		//int pSize = (VolumeSize-pConsumed > SizeAllowed) ? SizeAllowed : VolumeSize-pConsumed;
+		float* inputDataStart = inputData + pConsumed*information.NumberOfDimensions;
+
+		//rearrange image data to be easier to work with (should parallelize)
+		//if(pConsumed==0)
+		for( int j = 0; j < information.NumberOfDimensions; j++ )
+			for(int i = 0; i < pSize; i++)
+				tempImage[j*pSize+i] = inputDataStart[i*information.NumberOfDimensions+j];
+		cudaMemcpyAsync( device_InputData, tempImage, sizeof(float)*pSize*information.NumberOfDimensions, cudaMemcpyHostToDevice, *stream );
+		cudaStreamSynchronize(*stream);
+
+		//get the appropriate grid size
+		dim3 grid = GetGrid(pSize);
+		dim3 threads(NUMTHREADS,1,1);
 		
-		if( !useEntropy )
-			NegExpBuffer<<<grid, threads, 0, *stream>>>(device_Accumulator, VolumeSize);
+		//apply for each label
+		for( int label = 0; label < information.NumberOfLabels; label++){
+				
+			//clear the accumulator
+			SetBufferToConst<<<GetGrid(SizeAllowed), threads, 0, *stream>>>(device_Accumulator, FLT_MAX, SizeAllowed);
 
-		//move entropy to CPU
-		cudaMemcpyAsync( (outputData[i]), device_Accumulator, sizeof(float)*VolumeSize, cudaMemcpyDeviceToHost, *stream );
+			for( int component = 0; component < MapSize; component++ )
+				ProcessSample<<<grid, threads, 0, *stream>>>(device_InputData, device_KohonenMap+component*(2*information.NumberOfDimensions+1),
+																device_Accumulator);
+			if( !useEntropy )
+				NegExpBuffer<<<grid, threads, 0, *stream>>>(device_Accumulator, pSize);
+
+			//move entropy to CPU
+			float* outputDataStart = (outputData[label]) + pConsumed;
+			cudaMemcpyAsync( outputDataStart, device_Accumulator, sizeof(float)*pSize, cudaMemcpyDeviceToHost, *stream );
+			cudaStreamSynchronize(*stream);
+		}
+
+		//update the amount of consumed volume
+		pConsumed+=pSize;
+
 	}
-	cudaStreamSynchronize(*stream);
 
 	//remove allocated memory
+	delete[] tempImage;
 	cudaFree(device_KohonenMap);
 	cudaFree(device_InputData);
 	cudaFree(device_Accumulator);

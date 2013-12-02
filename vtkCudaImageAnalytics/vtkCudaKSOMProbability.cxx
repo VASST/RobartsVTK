@@ -103,7 +103,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	float** probabilityBuffers = new float* [this->GetNumberOfOutputPorts()];
 	if( this->GetNumberOfInputConnections(2) > 0 )
 		for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
-			vtkInformation* probabilityInfo = (inputVector[3])->GetInformationObject(i);
+			vtkInformation* probabilityInfo = (inputVector[2])->GetInformationObject(i);
 			vtkImageData* probabilityData = vtkImageData::SafeDownCast(probabilityInfo->Get(vtkDataObject::DATA_OBJECT()));
 			probabilityBuffers[i] = (float*) probabilityData->GetScalarPointer();
 		}
@@ -136,7 +136,7 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 	//pass it over to the GPU
 	this->ReserveGPU();
 	CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-									probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(3) > 0, this->Entropy, this->info, this->GetStream() );
+									probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(2) > 0, this->Entropy, this->info, this->GetStream() );
 
 	
 	delete outputBuffers;

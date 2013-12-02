@@ -11,6 +11,7 @@ typedef struct __align__(16)
 	int KohonenMapSize[3];
 	int NumberOfDimensions;
 	int NumberOfLabels;
+	int BufferSize;
 
 	float Scale;
 

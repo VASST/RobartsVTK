@@ -112,7 +112,9 @@ void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, float* out
 	while(pConsumed < VolumeSize){
 
 		//figure out sizes and starting points
-		int pSize = (VolumeSize-pConsumed > SizeAllowed) ? SizeAllowed : VolumeSize-pConsumed;
+		int pSize = SizeAllowed;
+		pConsumed = (VolumeSize-pConsumed > SizeAllowed) ? pConsumed : VolumeSize-SizeAllowed;
+		//int pSize = (VolumeSize-pConsumed > SizeAllowed) ? SizeAllowed : VolumeSize-pConsumed;
 		float* inputDataStart = inputData + pConsumed*information.NumberOfDimensions;
 		float* outputDataStart = outputData + pConsumed*2;
 
