@@ -200,7 +200,7 @@ __global__ void FindMinSample( float* DistanceBuffer, short2* IndexBuffer, int s
 
 }
 
-__global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float weightTot, float mAlpha, float mNeigh, float vAlpha, float vNeigh, float wAlpha, int mapSizeX, int mapSizeY ){
+__global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float weightTot, float mAlpha, float mNeigh, float vAlpha, float vNeigh, float wAlpha, float wNeigh, int mapSizeX, int mapSizeY ){
 
 	__shared__ float SamplePointLocal[MAX_DIMENSIONALITY];
 
@@ -238,7 +238,7 @@ __global__ void UpdateWeights( float* KohonenMap, short2 minIndex, float weightT
     }
 	distance += 0.5f * log(penalty);
 	float weight = KohonenMap[kOffset];
-	float newWeight = (weightTot > 0.0f) ? (weight*exp(-distance) + info.epsilon) / weightTot : 1.0f / (float) bufferSize;
+	float newWeight = exp(-0.5f*( (currIndex.x-minIndex.x)*(currIndex.x-minIndex.x) + (currIndex.y-minIndex.y)*(currIndex.y-minIndex.y) )/(wNeigh*wNeigh)) / weightTot;
     newWeight = isfinite(newWeight) ? newWeight : 1.0f;
 	if( kOffset < bufferSize ) KohonenMap[kOffset] = weight + wMultiplier * (newWeight - weight) + FLT_MIN;
 
@@ -290,11 +290,12 @@ unsigned int random_prime(unsigned int n){
      return r;
 }
 
-void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& information, int* currentMapSize,
+void CUDAalgo_KSOMInitialize( double* Means, double* Covariance, double* Eig1, double* Eig2,
+								Kohonen_Generator_Information& information, int* currentMapSize,
 								float** device_KohonenMap, float** device_tempSpace,
-								float** device_DistanceBuffer, short2** device_IndexBuffer, float** device_WeightBuffer,
-								float meansWidth, float varsWidth, 
-								double* initialWeights, cudaStream_t* stream ){
+								float** device_DistanceBuffer, short2** device_IndexBuffer, float** device_WeightBuffer, 
+								float meansWidth, float varsWidth, float weiWidth,
+								cudaStream_t* stream ){
 	
 	//make sure parametes are in reasonable range
 	meansWidth = max( meansWidth, FLT_MIN );
@@ -329,12 +330,25 @@ void CUDAalgo_KSOMInitialize( double* range, Kohonen_Generator_Information& info
 	//initialize weights
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
+	int N = information.NumberOfDimensions;
 	SetBufferToConst<<<grid, threads, 0, *stream>>>(*device_KohonenMap, (float) (1.0 / (double) currMapSize), currMapSize);
-	for(int j = 0; j < information.NumberOfDimensions; j++ ){
-		SetBufferToRandom<<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*j+1)*currMapSize, (float) range[2*j+1], (float) range[2*j], currMapSize);
-		SetBufferToConst<<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*j+2)*currMapSize, (float) initialWeights[j], currMapSize);
+	
+	//initialize means
+	float* hostMeans = new float[currMapSize];
+	for(int n = 0; n < N; n++){
+		for(int i = 0; i < currentMapSize[0]; i++) for(int j = 0; j < currentMapSize[1]; j++){
+			hostMeans[i*currentMapSize[1]+j] = Means[n] + 
+											4.0 * ( (double) i - 0.5 * (double) currentMapSize[0] ) / (double) currentMapSize[0] * Eig1[n] +
+											4.0 * ( (double) j - 0.5 * (double) currentMapSize[1] ) / (double) currentMapSize[1] * Eig2[n];
+												
+		}
+		cudaMemcpy((*device_KohonenMap)+(2*n+1)*currMapSize, hostMeans, sizeof(float)*currMapSize, cudaMemcpyHostToDevice);
 	}
+	delete hostMeans;
 
+	//initialize variances
+	for(int n = 0; n < N; n++ )
+		SetBufferToConst<float><<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*n+2)*currMapSize, (float)(Covariance[n*N+n]/(double)currMapSize), currMapSize);
 
 }
 
@@ -347,7 +361,7 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 								int BatchSize,
 								float meansAlpha, float meansWidth,
 								float varsAlpha, float varsWidth,
-								float weiAlpha,
+								float weiAlpha, float weiWidth,
 								cudaStream_t* stream ){
 
 	//make sure parameters are in a reasonable range
@@ -356,12 +370,13 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 	varsAlpha = max( varsAlpha, FLT_MIN );
 	varsWidth = max( varsWidth, FLT_MIN );
 	weiAlpha = max( weiAlpha, FLT_MIN );
+	weiWidth = max( weiWidth, FLT_MIN );
 
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
 
 	//make sure map is large enough
-	float neighbourhood = min( meansWidth, varsWidth ) * (currentMapSize[0]+currentMapSize[1]) / 2;
+	float neighbourhood = min( meansWidth, min( weiWidth, varsWidth ) ) * (currentMapSize[0]+currentMapSize[1]) / 2;
 	if( ((neighbourhood <= 8.0 ) && (currentMapSize[0] < information.KohonenMapSize[0])) ){
 		grid = dim3 ((2*currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 		DoubleMapSizeInX<<<grid, threads, 0, *stream>>>( *device_KohonenMap, *device_tempSpace, currentMapSize[0], currentMapSize[1] );
@@ -381,6 +396,7 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 	
 	float meansNeigh = meansWidth * (currentMapSize[0]+currentMapSize[1]) / 2;
 	float varsNeigh = varsWidth * (currentMapSize[0]+currentMapSize[1]) / 2;
+	float weiNeigh = weiWidth * (currentMapSize[0]+currentMapSize[1]) / 2;
 
 	//update grid size
 	grid = dim3((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
@@ -426,27 +442,29 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 				short2 minIndex = {-1,-1};
 				float distance = -1.0f;
 				cudaStreamSynchronize(*stream);
-				cudaMemcpy( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost );
-				cudaMemcpy( &distance, *device_DistanceBuffer, sizeof(float), cudaMemcpyDeviceToHost );
+				//cudaMemcpy( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost );
+				//cudaMemcpy( &distance, *device_DistanceBuffer, sizeof(float), cudaMemcpyDeviceToHost );
 
 				//find the winning centroid
-				for(int i = currentMapSize[0]*currentMapSize[1] / 2; i > NUMTHREADS; i = i/2){
+				for(int i = currentMapSize[0]*currentMapSize[1] / 2; i > 0; i = i/2){
 					dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
 					FindMinSample<<<tempGrid, threads, 0, *stream>>>(*device_DistanceBuffer, *device_IndexBuffer, i,
 																		currentMapSize[0], currentMapSize[1]);
 				}
-				getMinimum( min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), 1,
-							*device_DistanceBuffer, *device_DistanceBuffer, *device_IndexBuffer, *device_IndexBuffer, stream );
+				//getMinimum( min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), 1,
+				//			*device_DistanceBuffer, *device_DistanceBuffer, *device_IndexBuffer, *device_IndexBuffer, stream );
 
 				//update the weights of each centroid
 				cudaStreamSynchronize(*stream);
 				cudaMemcpy( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost );
-                long double weightTot = (long double)(currentMapSize[0]*currentMapSize[1])*(long double)information.epsilon;
-				cudaMemcpy( cpuWeights, *device_WeightBuffer, sizeof(float)*currentMapSize[0]*currentMapSize[1], cudaMemcpyDeviceToHost );
-                for(int i = 0; i < currentMapSize[0]*currentMapSize[1]; i++)
-                    weightTot += (long double) cpuWeights[i];
+				cudaMemcpy( &distance, *device_DistanceBuffer, sizeof(float), cudaMemcpyDeviceToHost );
+                long double weightTot = 0.0;
+				for(int i = 0; i < currentMapSize[0]; i++)
+					for(int j = 0; j < currentMapSize[1]; j++)
+						weightTot+= (long double) exp(-0.5*( (i-minIndex.x)*(i-minIndex.x) + (j-minIndex.y)*(j-minIndex.y) )/(weiNeigh*weiNeigh));
+				
                 UpdateWeights<<<grid, threads, 0, *stream>>>(*device_KohonenMap, minIndex, (float) weightTot, meansAlpha, meansNeigh,
-															 varsAlpha, varsNeigh, weiAlpha, currentMapSize[0], currentMapSize[1]);
+															 varsAlpha, varsNeigh, weiAlpha, weiNeigh, currentMapSize[0], currentMapSize[1]);
 			}
 		}
 
@@ -454,6 +472,7 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 
 	//if we are randomly sampling from the images
 	}else{
+		float* tmpOld = new float[currentMapSize[0]*currentMapSize[1]];
 
 		for( int batch = 0; batch < BatchSize; batch++ ){
 
@@ -476,34 +495,38 @@ void CUDAalgo_KSOMIteration( float** inputData,  char** maskData, int epoch,
 			ProcessSample<<<grid, threads, 0, *stream>>>(*device_KohonenMap, *device_DistanceBuffer, *device_IndexBuffer, *device_WeightBuffer, currentMapSize[0], currentMapSize[1]);
 
 			//find the winning centroid
-			for(int i = currentMapSize[0]*currentMapSize[1] / 2; i > NUMTHREADS; i = i/2){
+			for(int i = currentMapSize[0]*currentMapSize[1] / 2; i > 0; i = i/2){
 				dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
 				FindMinSample<<<tempGrid, threads, 0, *stream>>>(*device_DistanceBuffer, *device_IndexBuffer, i, currentMapSize[0], currentMapSize[1]);
 			}
-			getMinimum( min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), 1,
-						*device_DistanceBuffer, *device_DistanceBuffer, *device_IndexBuffer, *device_IndexBuffer, stream );
+			//getMinimum( min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), min(NUMTHREADS,currentMapSize[0]*currentMapSize[1]), 1,
+			//			*device_DistanceBuffer, *device_DistanceBuffer, *device_IndexBuffer, *device_IndexBuffer, stream );
 
 			//update the weights of each centroid
 			short2 minIndex;
+			float distance;
 			cudaMemcpyAsync( &minIndex, *device_IndexBuffer, sizeof(short2), cudaMemcpyDeviceToHost, *stream );
+			cudaMemcpy( &distance, *device_DistanceBuffer, sizeof(float), cudaMemcpyDeviceToHost );
 			cudaStreamSynchronize(*stream);
-			cudaMemcpy( cpuWeights, *device_WeightBuffer, sizeof(float)*currentMapSize[0]*currentMapSize[1], cudaMemcpyDeviceToHost );
-            long double weightTot = (long double)(currentMapSize[0]*currentMapSize[1])*(long double)information.epsilon;
-            for(int i = 0; i < currentMapSize[0]*currentMapSize[1]; i++)
-                weightTot += (long double) cpuWeights[i];
-			UpdateWeights<<<grid, threads, 0, *stream>>>(*device_KohonenMap, minIndex, (float) weightTot, meansAlpha, meansNeigh,
-										varsAlpha, varsNeigh, weiAlpha, currentMapSize[0], currentMapSize[1]);
+			long double weightTot = 0.0;
+			for(int i = 0; i < currentMapSize[0]; i++)
+				for(int j = 0; j < currentMapSize[1]; j++)
+					weightTot+= (long double) exp(-0.5*( (i-minIndex.x)*(i-minIndex.x) + (j-minIndex.y)*(j-minIndex.y) )/(weiNeigh*weiNeigh));
 
-          
+
+			UpdateWeights<<<grid, threads, 0, *stream>>>(*device_KohonenMap, minIndex, (float) weightTot, meansAlpha, meansNeigh,
+										varsAlpha, varsNeigh, weiAlpha, weiNeigh, currentMapSize[0], currentMapSize[1]);
 			
 		}
+		
+		delete[] tmpOld;
 	}
 	
 	#ifdef DEBUGGING
 		printf("Finished epoch %d with:\n",epoch);
 		printf("%d  M:(a,n) = (%f,%f,%f)\n",(int) time(NULL),meansAlpha, meansWidth, meansNeigh ); 
 		printf("            V:(a,n) = (%f,%f,%f)\n",varsAlpha, varsWidth, varsNeigh);
-		printf("            W:(a)   = (%f)\n",weiAlpha);
+		printf("            W:(a,n) = (%f,%f,%f)\n",weiAlpha,  weiWidth,  weiNeigh );
 	#endif
 
 	delete cpuWeights;

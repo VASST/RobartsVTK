@@ -30,14 +30,11 @@ public:
 	vtkGetObjectMacro(VarsWidthSchedule,vtkPiecewiseFunction);
 	vtkSetObjectMacro(WeightsAlphaSchedule,vtkPiecewiseFunction);
 	vtkGetObjectMacro(WeightsAlphaSchedule,vtkPiecewiseFunction);
+	vtkSetObjectMacro(WeightsWidthSchedule,vtkPiecewiseFunction);
+	vtkGetObjectMacro(WeightsWidthSchedule,vtkPiecewiseFunction);
 	
 	void SetNumberOfIterations(int number);
 	int GetNumberOfIterations();
-
-	void SetInitialVars(int index, double weight);
-	void SetInitialVars(const double* weights);
-	double GetInitialVars(int index);
-	double* GetInitialVars();
 
 	void SetBatchSize(double fraction);
 	double GetBatchSize();
@@ -88,12 +85,11 @@ private:
 	vtkPiecewiseFunction* VarsAlphaSchedule;
 	vtkPiecewiseFunction* VarsWidthSchedule;
 	vtkPiecewiseFunction* WeightsAlphaSchedule;
+	vtkPiecewiseFunction* WeightsWidthSchedule;
 
 	int outExt[6];
 
 	Kohonen_Generator_Information info;
-
-	double	UnnormalizedWeights[MAX_DIMENSIONALITY];
 
 	int		MaxEpochs;
 	double	BatchPercent;
