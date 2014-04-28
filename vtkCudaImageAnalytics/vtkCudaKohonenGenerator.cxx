@@ -362,9 +362,11 @@ int vtkCudaKohonenGenerator::RequestUpdateExtent(
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-	vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
-	vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-	inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
+		vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(i);
+		vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+		inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+	}
 	return 1;
 }
 

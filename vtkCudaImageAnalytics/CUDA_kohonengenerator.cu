@@ -331,15 +331,25 @@ void CUDAalgo_KSOMInitialize( double* Means, double* Covariance, double* Eig1, d
 	dim3 grid((currentMapSize[0]*currentMapSize[1]-1)/NUMTHREADS+1, 1, 1);
 	dim3 threads(NUMTHREADS, 1, 1);
 	int N = information.NumberOfDimensions;
-	SetBufferToConst<<<grid, threads, 0, *stream>>>(*device_KohonenMap, (float) (1.0 / (double) currMapSize), currMapSize);
-	
+	float* hostWeights = new float[currMapSize];
+	double accumulator = 0.0;
+	for(int i = 0; i < currentMapSize[0]; i++) for(int j = 0; j < currentMapSize[1]; j++){
+		hostWeights[i*currentMapSize[1]+j] = (float) ( exp( - 4.0 * ( (double) i - 0.5 * (double) currentMapSize[0] - 0.5 ) / (double) (currentMapSize[0]-1) ) *
+											 exp( - 4.0 * ( (double) j - 0.5 * (double) currentMapSize[1] - 0.5 ) / (double) (currentMapSize[1]-1) ) );
+		accumulator += (double) hostWeights[i*currentMapSize[1]+j];
+	}
+	for(int i = 0; i < currentMapSize[0]; i++) for(int j = 0; j < currentMapSize[1]; j++)
+		hostWeights[i*currentMapSize[1]+j] /= (float) accumulator;
+	cudaMemcpy(*device_KohonenMap, hostWeights, sizeof(float)*currMapSize, cudaMemcpyHostToDevice);
+	delete hostWeights;
+
 	//initialize means
 	float* hostMeans = new float[currMapSize];
 	for(int n = 0; n < N; n++){
 		for(int i = 0; i < currentMapSize[0]; i++) for(int j = 0; j < currentMapSize[1]; j++){
-			hostMeans[i*currentMapSize[1]+j] = Means[n] + 
-											4.0 * ( (double) i - 0.5 * (double) currentMapSize[0] ) / (double) currentMapSize[0] * Eig1[n] +
-											4.0 * ( (double) j - 0.5 * (double) currentMapSize[1] ) / (double) currentMapSize[1] * Eig2[n];
+			hostMeans[i*currentMapSize[1]+j] = (float) ( Means[n] + 
+											4.0 * ( (double) i - 0.5 * (double) currentMapSize[0] - 0.5 ) / (double) (currentMapSize[0]-1) * Eig1[n] +
+											4.0 * ( (double) j - 0.5 * (double) currentMapSize[1] - 0.5 ) / (double) (currentMapSize[1]-1) * Eig2[n] );
 												
 		}
 		cudaMemcpy((*device_KohonenMap)+(2*n+1)*currMapSize, hostMeans, sizeof(float)*currMapSize, cudaMemcpyHostToDevice);
@@ -348,7 +358,9 @@ void CUDAalgo_KSOMInitialize( double* Means, double* Covariance, double* Eig1, d
 
 	//initialize variances
 	for(int n = 0; n < N; n++ )
-		SetBufferToConst<float><<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*n+2)*currMapSize, (float)(Covariance[n*N+n]/(double)currMapSize), currMapSize);
+		SetBufferToConst<float><<<grid, threads, 0, *stream>>>((*device_KohonenMap)+(2*n+2)*currMapSize,
+				(float)(Covariance[n*N+n] - Eig1[n]*Eig1[n] - Eig2[n]*Eig2[n]),
+				currMapSize);
 
 }
 
