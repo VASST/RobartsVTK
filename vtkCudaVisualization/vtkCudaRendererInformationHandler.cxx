@@ -170,7 +170,8 @@ void vtkCudaRendererInformationHandler::LoadZBuffer(){
 	
 	//remove old zBuffer and get a new one
 	if(this->ZBuffer) delete this->ZBuffer;
-	this->ZBuffer = this->Renderer->GetRenderWindow()->GetZbufferData(x1,y1,x2,y2);
+	this->ZBuffer = new float[(abs(x2-x1)+1)*(abs(y2-y1)+1)];
+	this->Renderer->GetRenderWindow()->GetZbufferData(x1,y1,x2,y2,this->ZBuffer);
 	this->ReserveGPU();
 	CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y, this->GetStream() );
 
