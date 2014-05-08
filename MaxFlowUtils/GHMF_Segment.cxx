@@ -1,3 +1,24 @@
+/*------------------------------------------------------------------------------//
+GHMF_Segment.exe
+
+Description:
+This file is a utility for applying the GHMF solver. It will take a brief description
+of the GHMF hierarchy with associated smoothness/data terms and alphas as well as
+identifiers and output values
+
+Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]
+
+The tree is saved in a VTK file with the following attributes:
+"DataTerm": (mandatory) filename for the data term
+"SmoothnessTerm": (optional) filename for the smoothness term
+"OutputLocation": (optional) filename to save probabilistic label to
+"Alpha": (optional) filename for the smoothness term
+"Identifier": (mandatory iff OutputFilename is specified) unique label integer to associate
+				in merged file (discrete segmentation)
+
+//------------------------------------------------------------------------------*/
+
+
 #include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
 #include "vtkCudaImageVote.h"
 #include "vtkMetaImageReader.h"
@@ -13,90 +34,51 @@
 #include "vtkIntArray.h"
 
 #include <string>
+#include <algorithm>
 
-#include "vtkImageExtractComponents.h"
-#include "vtkImageCast.h"
-#include "vtkMutableDirectedGraph.h"
-#include "vtkTreeWriter.h"
-#include "vtkBMPReader.h"
-int main1(int argc, char** argv){
+void showHelpMessage(){
+	std::cerr << "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]" << std::endl;
+}
 
-	vtkMutableDirectedGraph* mut = vtkMutableDirectedGraph::New();
-	vtkIdType source = mut->AddVertex();
-	vtkIdType l0 = mut->AddChild(source);
-	vtkIdType l1 = mut->AddChild(source);
-	vtkIdType l2 = mut->AddChild(source);
-
-	vtkStringArray* DataTerms = vtkStringArray::New();
-	DataTerms->SetName("DataTerm");
-	DataTerms->InsertValue(source,"");
-	DataTerms->InsertValue(l0,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\cost0.mhd");
-	DataTerms->InsertValue(l1,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\cost1.mhd");
-	DataTerms->InsertValue(l2,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\cost2.mhd");
-	
-	vtkStringArray* SmoothnessTerm = vtkStringArray::New();
-	SmoothnessTerm->SetName("SmoothnessTerm");
-	SmoothnessTerm->InsertValue(source,"");
-	SmoothnessTerm->InsertValue(l0,"");
-	SmoothnessTerm->InsertValue(l1,"");
-	SmoothnessTerm->InsertValue(l2,"");
-	
-	vtkStringArray* OutputLocation = vtkStringArray::New();
-	OutputLocation->SetName("OutputLocation");
-	OutputLocation->InsertValue(source,"");
-	OutputLocation->InsertValue(l0,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\l0");
-	OutputLocation->InsertValue(l1,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\l1");
-	OutputLocation->InsertValue(l2,"E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\l2");
-
-	vtkDoubleArray* Alphas = vtkDoubleArray::New();
-	Alphas->SetName("Alphas");
-	Alphas->InsertTuple1(source,1);
-	Alphas->InsertTuple1(l0,1);
-	Alphas->InsertTuple1(l1,1);
-	Alphas->InsertTuple1(l2,1);
-	
-	vtkIntArray* Identifier = vtkIntArray::New();
-	Identifier->SetName("Identifier");
-	Identifier->InsertTuple1(source,-1);
-	Identifier->InsertTuple1(l0,0);
-	Identifier->InsertTuple1(l1,1);
-	Identifier->InsertTuple1(l2,2);
-	
-	mut->GetVertexData()->AddArray(DataTerms);
-	mut->GetVertexData()->AddArray(SmoothnessTerm);
-	mut->GetVertexData()->AddArray(OutputLocation);
-	mut->GetVertexData()->AddArray(Alphas);
-	mut->GetVertexData()->AddArray(Identifier);
-	mut->Update();
-	vtkTree* Tree = vtkTree::New();
-	Tree->CheckedDeepCopy(mut);
-
-	for(int i = 0; i < Tree->GetVertexData()->GetNumberOfArrays(); i++){
-		if( Tree->GetVertexData()->GetAbstractArray(i) ) 
-		std::cout << Tree->GetVertexData()->GetAbstractArray(i)->GetName() << "\t: " <<  Tree->GetVertexData()->GetAbstractArray(i) << std::endl;
-		else
-		std::cout << "unknown\t: " <<  Tree->GetVertexData()->GetAbstractArray(i) << std::endl;
-	}
-
-	vtkTreeWriter* Writer  = vtkTreeWriter::New();
-	Writer->SetFileName("E:\\jbaxter\\Publications\\2014_jmi_metaoptimization\\tree.vtk");
-	Writer->SetInput(Tree);
-	Writer->Write();
-
-	Writer->Delete();
-	Tree->Delete();
-	mut->Delete();
-	DataTerms->Delete();
-	SmoothnessTerm->Delete();
-	OutputLocation->Delete();
-	Alphas->Delete();
-	Identifier->Delete();
-
-	return 0;
-
+void showLongHelpMessage(){
+	std::cerr <<
+	"Description:" << std::endl <<
+	"This file is a utility for applying the GHMF solver. It will take a brief description" <<
+	"of the GHMF hierarchy with associated smoothness/data terms and alphas as well as" <<
+	"identifiers and output values" << std::endl <<
+	std::endl <<
+	"Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]" << std::endl <<
+	std::endl <<
+	"The tree is saved in a VTK file with the following attributes:" << std::endl <<
+	"\"DataTerm\": (mandatory) filename for the data term" << std::endl <<
+	"\"SmoothnessTerm\": (optional) filename for the smoothness term" << std::endl <<
+	"\"OutputLocation\": (optional) filename to save probabilistic label to" << std::endl <<
+	"\"Alpha\": (optional) filename for the smoothness term" << std::endl <<
+	"\"Identifier\": (mandatory iff OutputFilename is specified) unique label integer to associate" <<
+					" in merged file (discrete segmentation)" << std::endl;
 }
 
 int main(int argc, char** argv){
+	
+	if(argc < 2){
+		showHelpMessage();
+		return 0;
+	}
+
+	//check for explicit help message
+	std::string FirstArgument = std::string(argv[1]);
+	std::transform(FirstArgument.begin(), FirstArgument.end(), FirstArgument.begin(), ::tolower);
+	int found = (int) FirstArgument.find(std::string("help"));
+	if(found!=std::string::npos){
+		showLongHelpMessage();
+		return 0;
+	}
+
+	//make sure there are enough arguments
+	if(argc < 5){
+		showHelpMessage();
+		return 0;
+	}
 
 	//check number of iterations
 	int NumIts = std::atoi(argv[2]);
@@ -124,7 +106,7 @@ int main(int argc, char** argv){
 	vtkDoubleArray* Alphas = (vtkDoubleArray*) Tree->GetVertexData()->GetAbstractArray("Alpha");
 	vtkIntArray* Identifiers = (vtkIntArray*) Tree->GetVertexData()->GetAbstractArray("Identifier"); 
 	if(!DataTerms)
-		std::cout << "No data terms provided." << std::endl;
+		std::cout << "No data terms provided in tree file. (No field named \"DataTerm\".)" << std::endl;
 
 	//add data terms and smoothness terms
 	vtkTreeDFSIterator* Iterator = vtkTreeDFSIterator::New();
@@ -146,7 +128,7 @@ int main(int argc, char** argv){
 		//read in smoothness term
 		if( SmoothTerms && SmoothTerms->GetValue(Node).length() > 0 ){
 			vtkMetaImageReader* Reader = vtkMetaImageReader::New();
-			Reader->SetFileName( DataTerms->GetValue(Node).c_str() );
+			Reader->SetFileName( SmoothTerms->GetValue(Node).c_str() );
 			Reader->Update();
 			Segmenter->SetSmoothnessInput(Node, (vtkDataObject*) Reader->GetOutput());
 			Reader->Delete();
@@ -182,7 +164,7 @@ int main(int argc, char** argv){
 	Iterator->Delete();
 
 	//output merged file
-	if( argv[4+NumDev] ){
+	if( argv[4+NumDev] && Identifiers ){
 		std::string OutFileBase = std::string(argv[4+NumDev]);
 		std::string OutFileMHD = OutFileBase + ".mhd";
 		std::string OutFileRAW = OutFileBase + ".raw";
@@ -207,6 +189,8 @@ int main(int argc, char** argv){
 		Writer->Write();
 		Writer->Delete();
 		Voter->Delete();
+	}else if(argv[4+NumDev]){
+		std::cerr << "Identifiers not given in tree file. (No field named \"Identifier\".) " << std::endl;
 	}
 
 	//cleanup
