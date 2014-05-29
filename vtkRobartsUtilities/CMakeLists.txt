@@ -28,6 +28,7 @@ SET ( Kit_SRCS
   vtkRootedDirectedAcyclicGraph.h vtkRootedDirectedAcyclicGraph.cxx
   vtkRootedDirectedAcyclicGraphIterator.h vtkRootedDirectedAcyclicGraphIterator.cxx
   vtkRootedDirectedAcyclicGraphForwardIterator.h vtkRootedDirectedAcyclicGraphForwardIterator.cxx
+  vtkRootedDirectedAcyclicGraphBackwardIterator.h vtkRootedDirectedAcyclicGraphBackwardIterator.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
