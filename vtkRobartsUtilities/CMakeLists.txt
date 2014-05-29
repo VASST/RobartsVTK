@@ -24,6 +24,10 @@ SET ( Kit_SRCS
   
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
   vtkImageEntropyPlaneSelection.h vtkImageEntropyPlaneSelection.cxx
+  
+  vtkRootedDirectedAcyclicGraph.h vtkRootedDirectedAcyclicGraph.cxx
+  vtkRootedDirectedAcyclicGraphIterator.h vtkRootedDirectedAcyclicGraphIterator.cxx
+  vtkRootedDirectedAcyclicGraphForwardIterator.h vtkRootedDirectedAcyclicGraphForwardIterator.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
