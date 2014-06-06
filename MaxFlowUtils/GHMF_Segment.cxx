@@ -18,7 +18,6 @@ The tree is saved in a VTK file with the following attributes:
 
 //------------------------------------------------------------------------------*/
 
-
 #include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
 #include "vtkCudaImageVote.h"
 #include "vtkMetaImageReader.h"
@@ -37,7 +36,8 @@ The tree is saved in a VTK file with the following attributes:
 #include <algorithm>
 
 void showHelpMessage(){
-	std::cerr << "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]" << std::endl;
+	std::cerr << "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN " <<
+		"[-output OutputFilename] [-step StepSize] [-cc VanishingRatio]" << std::endl;
 }
 
 void showLongHelpMessage(){
@@ -47,8 +47,8 @@ void showLongHelpMessage(){
 	"of the GHMF hierarchy with associated smoothness/data terms and alphas as well as" <<
 	"identifiers and output values" << std::endl <<
 	std::endl <<
-	"Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]" << std::endl <<
-	std::endl <<
+	"Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN " <<
+		"[-output OutputFilename] [-step StepSize] [-cc VanishingRatio]" << std::endl <<
 	"The tree is saved in a VTK file with the following attributes:" << std::endl <<
 	"\"DataTerm\": (mandatory) filename for the data term" << std::endl <<
 	"\"SmoothnessTerm\": (optional) filename for the smoothness term" << std::endl <<
@@ -58,7 +58,7 @@ void showLongHelpMessage(){
 					" in merged file (discrete segmentation)" << std::endl;
 }
 
-int main(int argc, char** argv){
+int main1(int argc, char** argv){
 	
 	if(argc < 2){
 		showHelpMessage();
@@ -83,6 +83,24 @@ int main(int argc, char** argv){
 	//check number of iterations
 	int NumIts = std::atoi(argv[2]);
 	int NumDev = std::atoi(argv[3]);
+	int NumFlags = argc - (3+NumDev);
+	double Tau = 0.1;
+	double CC = 0.25;
+	bool hasOutput = false;
+	std::string OutFileBase = "";
+
+	//read in flags
+	for(int i = 0; i < NumFlags; i++){
+		std::string command = std::string(argv[4+NumDev+2*i]);
+		if( command.compare("-output") )
+			{hasOutput = true; OutFileBase = std::string(argv[5+NumDev+2*i]); }
+		else if( command.compare("-step") )
+			Tau = std::atof(argv[5+NumDev+2*i]);
+		else if( command.compare("-cc") )
+			CC = std::atof(argv[5+NumDev+2*i]);
+		else
+			{showHelpMessage(); return 0;}
+	}
 
 	//load tree filename and output filename
 	std::string TreeFilename = std::string(argv[1]);
@@ -95,6 +113,8 @@ int main(int argc, char** argv){
 	vtkCudaHierarchicalMaxFlowSegmentation2* Segmenter = vtkCudaHierarchicalMaxFlowSegmentation2::New();
 	Segmenter->SetHierarchy(Tree);
 	Segmenter->SetNumberOfIterations(NumIts);
+	Segmenter->SetStepSize(Tau);
+	Segmenter->SetCC(CC);
 	Segmenter->ClearDevices();
 	for(int i = 0; i < NumDev; i++)
 		Segmenter->AddDevice(std::atoi(argv[4+i]));
@@ -164,8 +184,7 @@ int main(int argc, char** argv){
 	Iterator->Delete();
 
 	//output merged file
-	if( argv[4+NumDev] && Identifiers ){
-		std::string OutFileBase = std::string(argv[4+NumDev]);
+	if( hasOutput && Identifiers ){
 		std::string OutFileMHD = OutFileBase + ".mhd";
 		std::string OutFileRAW = OutFileBase + ".raw";
 		
