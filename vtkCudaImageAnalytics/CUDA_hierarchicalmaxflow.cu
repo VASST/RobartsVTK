@@ -411,17 +411,11 @@ void CUDA_projectOntoSet(float* divBuffer, float* flowX, float* flowY, float* fl
 	#endif
 }
 
-__global__ void kern_Copy(float* dst, float* src, const int size){
-	int idx = CUDASTDOFFSET;
-	float value = src[idx];
-	if( idx < size ) dst[idx] = value;
-}
-
 void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	if( dst == src ) return;
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_Copy<<<grid,threads,0,*stream>>>(dst, src, size);
+	CopyBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_CopyBuffer: " );
@@ -431,19 +425,11 @@ void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	#endif
 }
 
-__global__ void kern_Min(float* dst, float* src, const int size){
-	int idx = CUDASTDOFFSET;
-	float value1 = src[idx];
-	float value2 = dst[idx];
-	float minVal = (value1 < value2) ? value1 : value2;
-	if( idx < size ) dst[idx] = minVal;
-}
-
 void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	if( dst == src ) return;
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_Min<<<grid,threads,0,*stream>>>(dst, src, size);
+	MinBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_MinBuffer: " );
@@ -473,18 +459,10 @@ void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* 
 	#endif
 }
 
-__global__ void kern_Sum(float* dst, float* src, const int size){
-	int idx = CUDASTDOFFSET;
-	float value1 = src[idx];
-	float value2 = dst[idx];
-	float minVal =  value1 + value2;
-	if( idx < size ) dst[idx] = minVal;
-}
-
 void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_Sum<<<grid,threads,0,*stream>>>(dst, src, size);
+	SumBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_SumBuffer: " );
@@ -494,18 +472,10 @@ void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	#endif
 }
 
-__global__ void kern_Div(float* dst, float* src, const int size){
-	int idx = CUDASTDOFFSET;
-	float value1 = src[idx];
-	float value2 = dst[idx];
-	float minVal =  value2 / value1;
-	if( idx < size ) dst[idx] = minVal;
-}
-
 void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	kern_Div<<<grid,threads,0,*stream>>>(dst, src, size);
+	DivideBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
 		printf( "CUDA_DivBuffer: " );

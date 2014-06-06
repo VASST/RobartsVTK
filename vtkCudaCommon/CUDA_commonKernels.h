@@ -58,6 +58,8 @@ template<class T> __global__ void SumBuffers(T* outBuffer, T* sumBuffer, int siz
 template<class T> __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size);
 template<class T> __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, int size);
 template<class T> __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size);
+template<class T> __global__ void MinBuffers(T* outBuffer, T* inBuffer, int size);
+template<class T> __global__ void DivideBuffers(T* outBuffer, T* denomBuffer, int size);
 template<class T> __global__ void MultiplyAndStoreBuffer(T* inBuffer, T* outBuffer, T number, int size);
 template<class T> __global__ void MultiplyAndStoreBuffer(T* inBuffer1, T* inBuffer2, T* outBuffer, int size);
 

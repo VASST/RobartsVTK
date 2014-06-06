@@ -528,6 +528,51 @@ template __global__ void MultiplyAndStoreBuffer<double>(double* buffer1, double*
 template __global__ void MultiplyAndStoreBuffer<long long>(long long* buffer1, long long* buffer2, long long* buffer3, int size);
 template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long* buffer3, int size);
 
+template<class T>
+__global__ void MinBuffers(T* dst, T* src, const int size){
+	int idx = CUDASTDOFFSET;
+	T value1 = src[idx];
+	T value2 = dst[idx];
+	T minVal = (value1 < value2) ? value1 : value2;
+	if( idx < size ) dst[idx] = minVal;
+}
+template __global__ void MinBuffers<char>(char* buffer1, char* buffer2, int size);
+template __global__ void MinBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
+template __global__ void MinBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, int size);
+template __global__ void MinBuffers<short>(short* buffer1, short* buffer2, int size);
+template __global__ void MinBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, int size);
+template __global__ void MinBuffers<int>(int* buffer1, int* buffer2, int size);
+template __global__ void MinBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, int size);
+template __global__ void MinBuffers<long>(long* buffer1, long* buffer2, int size);
+template __global__ void MinBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
+template __global__ void MinBuffers<float>(float* buffer1, float* buffer2, int size);
+template __global__ void MinBuffers<double>(double* buffer1, double* buffer2, int size);
+template __global__ void MinBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void MinBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
+
+template<class T>
+__global__ void DivideBuffers(T* dst, T* src, const int size){
+	int idx = CUDASTDOFFSET;
+	T value1 = src[idx];
+	T value2 = dst[idx];
+	T minVal =  value2 / value1;
+	if( idx < size ) dst[idx] = minVal;
+}
+template __global__ void DivideBuffers<char>(char* buffer1, char* buffer2, int size);
+template __global__ void DivideBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
+template __global__ void DivideBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, int size);
+template __global__ void DivideBuffers<short>(short* buffer1, short* buffer2, int size);
+template __global__ void DivideBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, int size);
+template __global__ void DivideBuffers<int>(int* buffer1, int* buffer2, int size);
+template __global__ void DivideBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, int size);
+template __global__ void DivideBuffers<long>(long* buffer1, long* buffer2, int size);
+template __global__ void DivideBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
+template __global__ void DivideBuffers<float>(float* buffer1, float* buffer2, int size);
+template __global__ void DivideBuffers<double>(double* buffer1, double* buffer2, int size);
+template __global__ void DivideBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void DivideBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
+
+
 //---------------------------------------------------------------------------//
 //----------------------------COMMON ACCUMULATORS----------------------------//
 //---------------------------------------------------------------------------//
