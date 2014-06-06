@@ -23,6 +23,7 @@ SET ( Kit_SRCS
   vtkDiceCoefficient.h vtkDiceCoefficient.cxx
   
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
+  vtkDirectedAcyclicGraphMaxFlowSegmentation.h vtkDirectedAcyclicGraphMaxFlowSegmentation.cxx
   vtkImageEntropyPlaneSelection.h vtkImageEntropyPlaneSelection.cxx
   
   vtkRootedDirectedAcyclicGraph.h vtkRootedDirectedAcyclicGraph.cxx
