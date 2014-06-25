@@ -1,4 +1,4 @@
-
+#include "limits.h"
 #include "vtkRootedDirectedAcyclicGraph.h"
 
 #include "vtkInformation.h"
