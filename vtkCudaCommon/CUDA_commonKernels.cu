@@ -429,6 +429,26 @@ template __global__ void SumBuffers<long long>(long long* buffer1, long long* bu
 template __global__ void SumBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
 
 template<class T> 
+__global__ void SumScaledBuffers(T* outBuffer, T* sumBuffer, T scale, int size){
+	int offset = CUDASTDOFFSET;
+	T value = outBuffer[offset] + scale * sumBuffer[offset];
+	if(offset < size ) outBuffer[offset] = value;
+}
+template __global__ void SumScaledBuffers<char>(char* buffer1, char* buffer2, char scale, int size);
+template __global__ void SumScaledBuffers<signed char>(signed char* buffer1, signed char* buffer2, signed char scale, int size);
+template __global__ void SumScaledBuffers<unsigned char>(unsigned char* buffer1, unsigned char* buffer2, unsigned char* scale, int size);
+template __global__ void SumScaledBuffers<short>(short* buffer1, short* buffer2, short* scale, int size);
+template __global__ void SumScaledBuffers<unsigned short>(unsigned short* buffer1, unsigned short* buffer2, unsigned short* scale, int size);
+template __global__ void SumScaledBuffers<int>(int* buffer1, int* buffer2, int scale, int size);
+template __global__ void SumScaledBuffers<unsigned int>(unsigned int* buffer1, unsigned int* buffer2, unsigned int scale, int size);
+template __global__ void SumScaledBuffers<long>(long* buffer1, long* buffer2, long scale, int size);
+template __global__ void SumScaledBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, unsigned long scale, int size);
+template __global__ void SumScaledBuffers<float>(float* buffer1, float* buffer2, float scale, int size);
+template __global__ void SumScaledBuffers<double>(double* buffer1, double* buffer2, double scale, int size);
+template __global__ void SumScaledBuffers<long long>(long long* buffer1, long long* buffer2, long long scale, int size);
+template __global__ void SumScaledBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, unsigned long long scale, int size);
+
+template<class T> 
 __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size){
 	int offset = CUDASTDOFFSET;
 	T value = inBuffer[offset];
@@ -445,7 +465,7 @@ template __global__ void CopyBuffers<long>(long* buffer1, long* buffer2, int siz
 template __global__ void CopyBuffers<unsigned long>(unsigned long* buffer1, unsigned long* buffer2, int size);
 template __global__ void CopyBuffers<float>(float* buffer1, float* buffer2, int size);
 template __global__ void CopyBuffers<double>(double* buffer1, double* buffer2, int size);
-template __global__ void CopyBuffers<long long>(long long* buffer1, long long* buffer2, int size);
+template __global__ void CopyBuffers<long long>(long long* buffer1, long long* buffer2, long long scale, int size);
 template __global__ void CopyBuffers<unsigned long long>(unsigned long long* buffer1, unsigned long long* buffer2, int size);
 
 template<class T>

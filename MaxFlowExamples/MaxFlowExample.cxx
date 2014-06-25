@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "vtkDirectedAcyclicGraphMaxFlowSegmentation.h"
+#include "vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h"
 
 #include "vtkImageExtractComponents.h"
 #include "vtkImageCast.h"
@@ -13,21 +14,31 @@
 #include "vtkMetaImageWriter.h"
 #include "vtkImageData.h"
 
+#include "vtkFloatArray.h"
+#include "vtkDataSetAttributes.h"
+
 int main(int argc, char** argv){
 	vtkMutableDirectedGraph* mut = vtkMutableDirectedGraph::New();
 	vtkIdType source = mut->AddVertex();
-	vtkIdType bkg = mut->AddChild(source);
-
-	vtkIdType c1 = mut->AddChild(source);
-	vtkIdType c2 = mut->AddChild(source);
-	vtkIdType l1 = mut->AddChild(c1);
-	vtkIdType l2 = mut->AddChild(c2);
-	mut->AddEdge(source,l1);
-	mut->AddEdge(source,l2);
+	vtkIdType bkg = mut->AddVertex();
+	vtkIdType c1 = mut->AddVertex();
+	vtkIdType c2 = mut->AddVertex();
+	vtkIdType l1 = mut->AddVertex();
+	vtkIdType l2 = mut->AddVertex();
 	vtkIdType l3 = mut->AddVertex();
-	mut->AddEdge(c1,l3);
-	mut->AddEdge(c2,l3);
-
+	
+	vtkFloatArray* Weights = vtkFloatArray::New();
+	Weights->SetName("Weights");
+	Weights->InsertValue((mut->AddEdge(source,bkg)).Id,1.0f);
+	Weights->InsertValue((mut->AddEdge(source,c1)).Id,1.0f);
+	Weights->InsertValue((mut->AddEdge(source,c2)).Id,1.0f);
+	Weights->InsertValue((mut->AddEdge(source,l1)).Id,0.5f);
+	Weights->InsertValue((mut->AddEdge(source,l2)).Id,0.5f);
+	Weights->InsertValue((mut->AddEdge(c1,l1)).Id,0.5f);
+	Weights->InsertValue((mut->AddEdge(c2,l2)).Id,0.5f);
+	Weights->InsertValue((mut->AddEdge(c1,l3)).Id,0.5f);
+	Weights->InsertValue((mut->AddEdge(c2,l3)).Id,0.5f);
+	
 	//vtkIdType c1 = mut->AddChild(source);
 	//vtkIdType c2 = mut->AddChild(c1);
 	//vtkIdType l1 = mut->AddChild(c1);
@@ -36,7 +47,8 @@ int main(int argc, char** argv){
 
 	vtkRootedDirectedAcyclicGraph* DAG = vtkRootedDirectedAcyclicGraph::New();
 	DAG->CheckedShallowCopy(mut);
-	
+	//DAG->GetEdgeData()->AddArray(Weights);
+
 	vtkBMPReader* cost0 = vtkBMPReader::New();
 	cost0->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\cost0.bmp");
 	vtkBMPReader* cost1 = vtkBMPReader::New();
@@ -71,16 +83,16 @@ int main(int argc, char** argv){
 	cast3->SetOutputScalarTypeToFloat();
 	cast3->SetInput(extract3->GetOutput());
 
-	vtkDirectedAcyclicGraphMaxFlowSegmentation* dagmf = vtkDirectedAcyclicGraphMaxFlowSegmentation::New();
-	dagmf->SetDAG(DAG);
+	vtkCudaDirectedAcyclicGraphMaxFlowSegmentation* dagmf = vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::New();
+	dagmf->SetStructure(DAG);
 	dagmf->SetDataInput(bkg,cast0->GetOutput());
 	dagmf->SetDataInput(l1,cast1->GetOutput());
 	dagmf->SetDataInput(l2,cast2->GetOutput());
 	dagmf->SetDataInput(l3,cast3->GetOutput());
-	dagmf->AddSmoothnessScalar(bkg,0.1);
-	dagmf->AddSmoothnessScalar(l1, 0.1);
-	dagmf->AddSmoothnessScalar(l2, 0.1);
-	dagmf->AddSmoothnessScalar(l3, 0.1);
+	dagmf->AddSmoothnessScalar(bkg,0.01);
+	dagmf->AddSmoothnessScalar(l1, 0.01);
+	dagmf->AddSmoothnessScalar(l2, 0.01);
+	dagmf->AddSmoothnessScalar(l3, 0.01);
 	dagmf->AddSmoothnessScalar(c1, 50);
 	dagmf->AddSmoothnessScalar(c2, 50);
 	//dagmf->AddSmoothnessScalar(bkg,0);
@@ -91,7 +103,7 @@ int main(int argc, char** argv){
 	//dagmf->AddSmoothnessScalar(c2, 0);
 	dagmf->SetCC(0.01);
 	dagmf->SetStepSize(0.1);
-	dagmf->SetNumberOfIterations(50);
+	dagmf->SetNumberOfIterations(100);
 	dagmf->Update();
 	
 	vtkImageData* test0 = vtkImageData::New();
@@ -145,5 +157,6 @@ int main(int argc, char** argv){
 	extract3->Delete();
 	DAG->Delete();
 	mut->Delete();
+	Weights->Delete();
 	return 0;
 }

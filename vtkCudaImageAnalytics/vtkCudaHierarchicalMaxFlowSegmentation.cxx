@@ -58,7 +58,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::Deinitialize(int withData = 0){
 //------------------------------------------------------------
 
 void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
 	
 	//clear own label buffer if not a leaf
 	if( NumKids > 0 ){
@@ -70,14 +70,14 @@ void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode
 
 	//update graph for all kids
 	for(int kid = 0; kid < NumKids; kid++)
-		PropogateLabels( this->Hierarchy->GetChild(currNode,kid) );
+		PropogateLabels( this->Structure->GetChild(currNode,kid) );
 
 	//find parent index
-	if( currNode == this->Hierarchy->GetRoot() ) return;
-	vtkIdType parent = 	this->Hierarchy->GetParent(currNode);
-	if( parent == this->Hierarchy->GetRoot() ) return;
+	if( currNode == this->Structure->GetRoot() ) return;
+	vtkIdType parent = 	this->Structure->GetParent(currNode);
+	if( parent == this->Structure->GetRoot() ) return;
 	int parentIndex = this->BranchMap[parent];
-	float* currVal =   this->Hierarchy->IsLeaf(currNode) ?
+	float* currVal =   this->Structure->IsLeaf(currNode) ?
 		currVal = this->leafLabelBuffers[this->LeafMap[currNode]] :
 		currVal = this->branchLabelBuffers[this->BranchMap[currNode]];
 	
@@ -93,10 +93,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode
 void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode, int* TimeStep ){
 	
 	//get number of kids
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
 
 	//figure out what type of node we are
-	bool isRoot = (currNode == this->Hierarchy->GetRoot());
+	bool isRoot = (currNode == this->Structure->GetRoot());
 	bool isLeaf = (NumKids == 0);
 	bool isBranch = (!isRoot && !isLeaf);
 
@@ -243,7 +243,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode, i
 
 	//RB : Update everything for the children
 	for(int kid = 0; kid < NumKids; kid++)
-		SolveMaxFlow( this->Hierarchy->GetChild(currNode,kid), TimeStep );
+		SolveMaxFlow( this->Structure->GetChild(currNode,kid), TimeStep );
 
 	// B : Add sink potential to working buffer
 	if( isBranch ){
@@ -347,14 +347,14 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode, i
 
 	//RB : Update children's labels
 	for(int kid = NumKids-1; kid >= 0; kid--)
-		UpdateLabel( this->Hierarchy->GetChild(currNode,kid), TimeStep );
+		UpdateLabel( this->Structure->GetChild(currNode,kid), TimeStep );
 
 	// BL: Find source potential and store in parent's working buffer
 	if( !isRoot ){
 		//get parent's working buffer
-		float* workingBuffer = (this->Hierarchy->GetParent(currNode) == this->Hierarchy->GetRoot()) ?
+		float* workingBuffer = (this->Structure->GetParent(currNode) == this->Structure->GetRoot()) ?
 								sourceWorkingBuffer :
-								branchWorkingBuffers[BranchMap[this->Hierarchy->GetParent(currNode)]];
+								branchWorkingBuffers[BranchMap[this->Structure->GetParent(currNode)]];
 
 		//organize the GPU to obtain the buffers
 		this->CPUInUse.clear();
@@ -388,9 +388,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode, i
 }
 
 void vtkCudaHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node, int* TimeStep ){
-	int NumKids = this->Hierarchy->GetNumberOfChildren(node);
+	int NumKids = this->Structure->GetNumberOfChildren(node);
 
-	if( this->Hierarchy->GetRoot() == node ) return;
+	if( this->Structure->GetRoot() == node ) return;
 	
 	//std::cout << node << "\t Update labels" << std::endl;
 	if( NumKids == 0 ){
@@ -442,8 +442,8 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm(){
 
 	//find buffer ordering by simulating a single iteration
 	int reference = 0;
-	SimulateIterationForBufferOrdering( this->Hierarchy->GetRoot(), &reference );
-	SimulateIterationForBufferOrderingUpdateLabelStep( this->Hierarchy->GetRoot(), &reference );
+	SimulateIterationForBufferOrdering( this->Structure->GetRoot(), &reference );
+	SimulateIterationForBufferOrderingUpdateLabelStep( this->Structure->GetRoot(), &reference );
 
 	//if verbose, print progress
 	if( this->Debug )
@@ -588,7 +588,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm(){
 	CUDA_CopyBuffer(CPU2GPUMap[sourceFlowBuffer], CPU2GPUMap[leafSinkBuffers[0]], VolumeSize, GetStream() );
 
 	//propogate labels up the hierarchy
-	PropogateLabels( this->Hierarchy->GetRoot() );
+	PropogateLabels( this->Structure->GetRoot() );
 	this->CallSyncThreads();
 
 	if( this->Debug )
@@ -606,7 +606,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RunAlgorithm(){
 	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
 		int oldNumMemCpies = NumMemCpies;
 		int TimeStep = 0;
-		SolveMaxFlow( this->Hierarchy->GetRoot(), &TimeStep );
+		SolveMaxFlow( this->Structure->GetRoot(), &TimeStep );
 		this->CallSyncThreads();
 		if( this->Debug )
 			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
@@ -699,8 +699,8 @@ public:
 
 void vtkCudaHierarchicalMaxFlowSegmentation::ClearBufferOrdering( vtkIdType currNode ){
 	//push down to leaves
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
-	for(int i = 0; i < NumKids; i++) ClearBufferOrdering( this->Hierarchy->GetChild(currNode,i) );
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
+	for(int i = 0; i < NumKids; i++) ClearBufferOrdering( this->Structure->GetChild(currNode,i) );
 
 	//clear all values in the Priority Set Num Uses, assuming Priority set itself is entirely empty
 	if( NumKids == 0 ){
@@ -713,7 +713,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::ClearBufferOrdering( vtkIdType curr
 		this->PrioritySetNumUses[leafFlowYBuffers[LeafMap[currNode]]] = 0;
 		this->PrioritySetNumUses[leafFlowZBuffers[LeafMap[currNode]]] = 0;
 
-	}else if( currNode == this->Hierarchy->GetRoot() ){
+	}else if( currNode == this->Structure->GetRoot() ){
 		this->PrioritySetNumUses[sourceWorkingBuffer] = 0;
 		this->PrioritySetNumUses[sourceFlowBuffer] = 0;
 
@@ -752,10 +752,10 @@ void vtkCudaHierarchicalMaxFlowSegmentation::UpdateBufferOrderingAt( float* buff
 
 void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrdering( vtkIdType currNode, int* reference ){
 	//get number of kids
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
 
 	//figure out what type of node we are
-	bool isRoot = (currNode == this->Hierarchy->GetRoot());
+	bool isRoot = (currNode == this->Structure->GetRoot());
 	bool isLeaf = (NumKids == 0);
 	bool isBranch = (!isRoot && !isLeaf);
 
@@ -818,7 +818,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrdering(
 
 	//RB : Update everything for the children
 	for(int kid = 0; kid < NumKids; kid++)
-		SimulateIterationForBufferOrdering( this->Hierarchy->GetChild(currNode,kid), reference );
+		SimulateIterationForBufferOrdering( this->Structure->GetChild(currNode,kid), reference );
 
 	// B : Add sink potential to working buffer
 	if( isBranch ){
@@ -863,14 +863,14 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrdering(
 
 	//RB : Update children's labels
 	for(int kid = NumKids-1; kid >= 0; kid--)
-		SimulateIterationForBufferOrderingUpdateLabelStep( this->Hierarchy->GetChild(currNode,kid), reference );
+		SimulateIterationForBufferOrderingUpdateLabelStep( this->Structure->GetChild(currNode,kid), reference );
 
 	// BL: Find source potential and store in parent's working buffer
 	if( !isRoot ){
 		//get parent's working buffer
-		float* workingBuffer = (this->Hierarchy->GetParent(currNode) == this->Hierarchy->GetRoot()) ?
+		float* workingBuffer = (this->Structure->GetParent(currNode) == this->Structure->GetRoot()) ?
 								sourceWorkingBuffer :
-								branchWorkingBuffers[BranchMap[this->Hierarchy->GetParent(currNode)]];
+								branchWorkingBuffers[BranchMap[this->Structure->GetParent(currNode)]];
 		UpdateBufferOrderingAt(workingBuffer,*reference);
 
 		//organize the GPU to obtain the buffers
@@ -891,8 +891,8 @@ void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrdering(
 
 //apply the reference counting for the label step
 void vtkCudaHierarchicalMaxFlowSegmentation::SimulateIterationForBufferOrderingUpdateLabelStep( vtkIdType currNode, int* reference ){
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
-	if( this->Hierarchy->GetRoot() == currNode ) return;
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
+	if( this->Structure->GetRoot() == currNode ) return;
 	if( NumKids == 0 ){
 		UpdateBufferOrderingAt(leafIncBuffers[LeafMap[currNode]],*reference);
 		UpdateBufferOrderingAt(leafSinkBuffers[LeafMap[currNode]],*reference);

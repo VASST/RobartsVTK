@@ -27,7 +27,7 @@
 #include "stdio.h"
 #include "cuda.h"
 
-//#define DEBUG_VTKCUDAHMF
+#define DEBUG_VTKCUDAHMF
 
 void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired ){
 
@@ -64,7 +64,7 @@ void CUDA_CopyBufferToCPU(float* GPUBuffer, float* CPUBuffer, int size, cudaStre
 	cudaMemcpyAsync( CPUBuffer, GPUBuffer, sizeof(float)*size, cudaMemcpyDeviceToHost, *stream );
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_CopyBufferToCPU: " );
+		printf( "\t\tCUDA_CopyBufferToCPU: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", GPUBuffer, CPUBuffer );
 		printf( "\n" );
@@ -75,7 +75,7 @@ void CUDA_CopyBufferToGPU(float* GPUBuffer, float* CPUBuffer, int size, cudaStre
 	cudaMemcpyAsync( GPUBuffer, CPUBuffer, sizeof(float)*size, cudaMemcpyHostToDevice, *stream );
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_CopyBufferToGPU: " );
+		printf( "\t\tCUDA_CopyBufferToGPU: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", CPUBuffer, GPUBuffer );
 		printf( "\n" );
@@ -88,7 +88,7 @@ void CUDA_zeroOutBuffer(float* GPUBuffer, int size, cudaStream_t* stream){
 	ZeroOutBuffer<<<grid,threads,0,*stream>>>(GPUBuffer,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_zeroOutBuffer: " );
+		printf( "\t\tCUDA_zeroOutBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -100,7 +100,7 @@ void CUDA_SetBufferToValue(float* GPUBuffer, float value, int size, cudaStream_t
 	SetBufferToConst<<<grid,threads,0,*stream>>>(GPUBuffer,value,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_SetBufferToValue: " );
+		printf( "\t\tCUDA_SetBufferToValue: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -112,7 +112,7 @@ void CUDA_divideAndStoreBuffer(float* inBuffer, float* outBuffer, float number, 
 	MultiplyAndStoreBuffer<<<grid,threads,0,*stream>>>(inBuffer,outBuffer,1.0f/number,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_divideAndStoreBuffer: " );
+		printf( "\t\tCUDA_divideAndStoreBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -130,7 +130,7 @@ void CUDA_storeSinkFlowInBuffer(float* workingBuffer, float* incBuffer, float* d
 	kern_FindSinkPotentialAndStore<<<grid,threads,0,*stream>>>(workingBuffer,incBuffer,divBuffer,labelBuffer,1.0f/CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_storeSinkFlowInBuffer: " );
+		printf( "\t\tCUDA_storeSinkFlowInBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -148,7 +148,7 @@ void CUDA_storeSourceFlowInBuffer(float* workingBuffer, float* sinkBuffer, float
 	kern_FindSourcePotentialAndStore<<<grid,threads,0,*stream>>>(workingBuffer,sinkBuffer,divBuffer,labelBuffer,1.0f/CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_storeSourceFlowInBuffer: " );
+		printf( "\t\tCUDA_storeSourceFlowInBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -166,7 +166,7 @@ void CUDA_updateLeafSinkFlow(float* sinkBuffer, float* incBuffer, float* divBuff
 	kern_FindLeafSinkPotential<<<grid,threads,0,*stream>>>(sinkBuffer,incBuffer,divBuffer,labelBuffer,1.0f/CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_updateLeafSinkFlow: " );
+		printf( "\t\tCUDA_updateLeafSinkFlow: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -187,7 +187,7 @@ void CUDA_constrainLeafSinkFlow(float* sinkBuffer, float* capBuffer, int size, c
 	kern_ApplyCapacity<<<grid,threads,0,*stream>>>(sinkBuffer,capBuffer,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_constrainLeafSinkFlow: " );
+		printf( "\t\tCUDA_constrainLeafSinkFlow: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -206,7 +206,7 @@ void CUDA_updateLabel(float* sinkBuffer, float* incBuffer, float* divBuffer, flo
 	kern_UpdateLabel<<<grid,threads,0,*stream>>>(sinkBuffer,incBuffer,divBuffer,labelBuffer,CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_updateLabel: " );
+		printf( "\t\tCUDA_updateLabel: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -224,7 +224,7 @@ void CUDA_flowGradientStep(float* sinkBuffer, float* incBuffer, float* divBuffer
 	kern_CalcGradStep<<<grid,threads,0,*stream>>>(sinkBuffer,incBuffer,divBuffer,labelBuffer,stepSize,1.0f/CC,size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_flowGradientStep: " );
+		printf( "\t\tCUDA_flowGradientStep: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -262,7 +262,7 @@ void CUDA_applyStep(float* divBuffer, float* flowX, float* flowY, float* flowZ, 
 	kern_DescentSpatialFlow<<<grid,threads,0,*stream>>>(divBuffer, flowX, flowY, flowZ, vDims, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_applyStep: " );
+		printf( "\t\tCUDA_applyStep: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -345,7 +345,7 @@ void CUDA_computeFlowMag(float* divBuffer, float* flowX, float* flowY, float* fl
 		kern_ComputeFlowMagConstSmooth<<<grid,threads,0,*stream>>>(divBuffer, flowX, flowY, flowZ, smoothnessConstant, vDims, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_computeFlowMag: " );
+		printf( "\t\tCUDA_computeFlowMag: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -405,7 +405,7 @@ void CUDA_projectOntoSet(float* divBuffer, float* flowX, float* flowY, float* fl
 	kern_Divergence<<<grid,threads,0,*stream>>>(divBuffer, flowX, flowY, flowZ, vDims, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_projectOntoSet: " );
+		printf( "\t\tCUDA_projectOntoSet: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -418,21 +418,29 @@ void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	CopyBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_CopyBuffer: " );
+		printf( "\t\tCUDA_CopyBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }
 
+__global__ void kern_MinBuffers(float* b1, float* b2, int size){
+	int idx = CUDASTDOFFSET;
+	float value1 = b1[idx];
+	float value2 = b2[idx];
+	float minVal =  (value1 < value2) ? value1 : value2;
+	if( idx < size ) b1[idx] = minVal;
+}
+
 void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	if( dst == src ) return;
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	MinBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
+	kern_MinBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_MinBuffer: " );
+		printf( "\t\tCUDA_MinBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
@@ -453,7 +461,7 @@ void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* 
 	kern_Lbl<<<grid,threads,0,*stream>>>(lbl, flo, cap, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_LblBuffer: " );
+		printf( "\t\tCUDA_LblBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
@@ -465,22 +473,113 @@ void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	SumBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_SumBuffer: " );
+		printf( "\t\tCUDA_SumBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", src, dst );
 		printf( "\n" );
 	#endif
 }
 
+void CUDA_SumScaledBuffer(float* dst, float* src, float scale, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	SumScaledBuffers<<<grid,threads,0,*stream>>>(dst, src, scale, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "\t\tCUDA_SumScaledBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p to %p ", src, dst );
+		printf( "\n" );
+	#endif
+
+}
+
+void CUDA_ShiftBuffer(float* buf, float shift, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	TranslateBuffer<<<grid,threads,0,*stream>>>(buf, 1.0f, shift, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "\t\tCUDA_ShiftBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\t%p ", buf );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_DivideBuffers(float* dst, float* src, const int size){
+	int idx = CUDASTDOFFSET;
+	float value1 = src[idx];
+	float value2 = dst[idx];
+	float minVal =  value2 / value1;
+	if( idx < size ) dst[idx] = minVal;
+}
+
 void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream){
 	dim3 threads(NUMTHREADS,1,1);
 	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
-	DivideBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
+	kern_DivideBuffers<<<grid,threads,0,*stream>>>(dst, src, size);
 	#ifdef DEBUG_VTKCUDAHMF
 		cudaThreadSynchronize();
-		printf( "CUDA_DivBuffer: " );
+		printf( "\t\tCUDA_DivBuffer: " );
 		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\t%p to %p ", src, dst );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_ResetSinkBuffer(float* sink, float* source, float* div, float* label, float ik, float iCC, int size){
+	int idx = CUDASTDOFFSET;
+	float value = (1.0f-ik)*sink[idx] + ik*(source[idx] - div[idx] + label[idx] * iCC);
+	if( idx < size ) sink[idx] = value;
+}
+
+void CUDA_ResetSinkBuffer(float* sink, float* source, float* div, float* label, float ik, float iCC, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_ResetSinkBuffer<<<grid,threads,0,*stream>>>(sink, source, div, label, ik, iCC, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "\t\tCUDA_ResetSinkBuffer: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+
+__global__ void kern_PushUpSourceFlows(float* psink, float* sink, float* source, float* div, float* label, float w, float iCC, int size){
+	int idx = CUDASTDOFFSET;
+	float value = psink[idx] + w*(sink[idx] - source[idx] + div[idx] - label[idx] * iCC);
+	if( idx < size ) psink[idx] = value;
+}
+
+void CUDA_PushUpSourceFlows(float* psink, float* sink, float* source, float* div, float* label, float w, float iCC, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_PushUpSourceFlows<<<grid,threads,0,*stream>>>(psink, sink, source, div, label, w, iCC, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "\t\tCUDA_PushUpSourceFlows: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
+		printf( "\n" );
+	#endif
+}
+
+__global__ void kern_Copy2Buffers(float* fIn, float* fOut1, float* fOut2, int size){
+	int idx = CUDASTDOFFSET;
+	float value = fIn[idx];
+	if( idx < size ) fOut1[idx] = value;
+	if( idx < size ) fOut2[idx] = value;
+}
+
+void CUDA_Copy2Buffers(float* fIn, float* fOut1, float* fOut2, int size, cudaStream_t* stream){
+	dim3 threads(NUMTHREADS,1,1);
+	dim3 grid( (size-1)/NUMTHREADS + 1, 1, 1);
+	kern_Copy2Buffers<<<grid,threads,0,*stream>>>(fIn, fOut1, fOut2, size);
+	#ifdef DEBUG_VTKCUDAHMF
+		cudaThreadSynchronize();
+		printf( "\t\tCUDA_Copy2Buffers: " );
+		printf( cudaGetErrorString( cudaGetLastError() ) );
 		printf( "\n" );
 	#endif
 }

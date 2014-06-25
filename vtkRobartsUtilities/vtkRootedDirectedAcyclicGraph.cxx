@@ -16,14 +16,17 @@ vtkStandardNewMacro(vtkRootedDirectedAcyclicGraph);
 vtkRootedDirectedAcyclicGraph::vtkRootedDirectedAcyclicGraph()
 {
   this->Root = -1;
-  this->Level = 0;
+  this->UpLevel = 0;
+  this->DownLevel = 0;
 }
 
 //----------------------------------------------------------------------------
 vtkRootedDirectedAcyclicGraph::~vtkRootedDirectedAcyclicGraph()
 {
-	if(this->Level)
-	  delete this->Level;
+	if(this->UpLevel)
+	  delete this->UpLevel;
+	if(this->DownLevel)
+	  delete this->DownLevel;
 }
 
 //----------------------------------------------------------------------------
@@ -66,13 +69,22 @@ vtkEdgeType vtkRootedDirectedAcyclicGraph::GetParentEdge(vtkIdType v, vtkIdType 
 }
 
 //----------------------------------------------------------------------------
-vtkIdType vtkRootedDirectedAcyclicGraph::GetLevel(vtkIdType vertex)
+vtkIdType vtkRootedDirectedAcyclicGraph::GetUpLevel(vtkIdType vertex)
 {
   if (vertex < 0 || vertex >= this->GetNumberOfVertices())
     {
     return -1;
     }
-  return this->Level[vertex];
+  return this->UpLevel[vertex];
+}
+
+vtkIdType vtkRootedDirectedAcyclicGraph::GetDownLevel(vtkIdType vertex)
+{
+  if (vertex < 0 || vertex >= this->GetNumberOfVertices())
+    {
+    return -1;
+    }
+  return this->DownLevel[vertex];
 }
 
 //----------------------------------------------------------------------------
@@ -135,11 +147,16 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
   // Make sure the rooted DAG is connected with no directed cycles.
   vector<bool> visited(g->GetNumberOfVertices(), false);
   vector<bool> active(g->GetNumberOfVertices(), false);
-  if(this->Level) delete this->Level;
-  this->Level = new vtkIdType[g->GetNumberOfVertices()];
+  if(this->UpLevel) delete this->UpLevel;
+  if(this->DownLevel) delete this->DownLevel;
+  this->UpLevel = new vtkIdType[g->GetNumberOfVertices()];
+  this->DownLevel = new vtkIdType[g->GetNumberOfVertices()];
   for(int i = 0; i < g->GetNumberOfVertices(); i++)
-	  this->Level[i] = -1;
-  this->Level[root] = 0;
+	  this->UpLevel[i] = -1;
+  for(int i = 0; i < g->GetNumberOfVertices(); i++)
+	  this->DownLevel[i] = INT_MAX;
+  this->UpLevel[root] = 0;
+  this->DownLevel[root] = 0;
   vector<vtkIdType> stack;
   stack.push_back(root);
   vtkSmartPointer<vtkOutEdgeIterator> outIter = 
@@ -157,8 +174,10 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
       if (!active[id])
         {
         stack.push_back(id);
-		this->Level[id] = (this->Level[v] + 1 > this->Level[id]) ?
-			this->Level[v] + 1 : this->Level[id];
+		this->UpLevel[id] = (this->UpLevel[v] + 1 > this->UpLevel[id]) ?
+			this->UpLevel[v] + 1 : this->UpLevel[id];
+		this->DownLevel[id] = (this->DownLevel[v] + 1 < this->DownLevel[id]) ?
+			this->DownLevel[v] + 1 : this->DownLevel[id];
         }
       else
         {

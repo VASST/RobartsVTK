@@ -58,7 +58,7 @@ void showLongHelpMessage(){
 					" in merged file (discrete segmentation)" << std::endl;
 }
 
-int main1(int argc, char** argv){
+int main(int argc, char** argv){
 	
 	if(argc < 2){
 		showHelpMessage();
@@ -111,7 +111,7 @@ int main1(int argc, char** argv){
 
 	//create segmenter
 	vtkCudaHierarchicalMaxFlowSegmentation2* Segmenter = vtkCudaHierarchicalMaxFlowSegmentation2::New();
-	Segmenter->SetHierarchy(Tree);
+	Segmenter->SetStructure(Tree);
 	Segmenter->SetNumberOfIterations(NumIts);
 	Segmenter->SetStepSize(Tau);
 	Segmenter->SetCC(CC);

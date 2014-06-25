@@ -62,8 +62,14 @@ SET ( Kit_SRCS
   vtkCudaHierarchicalMaxFlowSegmentation.cxx
   vtkCudaHierarchicalMaxFlowSegmentation2.h
   vtkCudaHierarchicalMaxFlowSegmentation2.cxx
-  vtkCudaHierarchicalMaxFlowSegmentation2Worker.cxx
-  vtkCudaHierarchicalMaxFlowSegmentation2Task.h
+  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h
+  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.cxx
+  vtkCudaMaxFlowSegmentationWorker.h
+  vtkCudaMaxFlowSegmentationWorker.cxx
+  vtkCudaMaxFlowSegmentationScheduler.h
+  vtkCudaMaxFlowSegmentationScheduler.cxx
+  vtkCudaMaxFlowSegmentationTask.h
+  vtkCudaMaxFlowSegmentationTask.cxx
   CUDA_hierarchicalmaxflow.h
   CUDA_hierarchicalmaxflow.cu
   

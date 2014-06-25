@@ -55,6 +55,7 @@ template<class T> __global__ void NegExpBuffer(T* buffer, int size);
 //---------------------------------------------------------------------------//
 
 template<class T> __global__ void SumBuffers(T* outBuffer, T* sumBuffer, int size);
+template<class T> __global__ void SumScaledBuffers(T* outBuffer, T* sumBuffer, T scale, int size);
 template<class T> __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size);
 template<class T> __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, int size);
 template<class T> __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size);

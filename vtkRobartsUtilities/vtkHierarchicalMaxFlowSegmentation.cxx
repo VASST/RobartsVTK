@@ -62,7 +62,7 @@ vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
 	this->FirstUnusedSmoothnessPort = 0;
 
 	//set the other values to defaults
-	this->Hierarchy = 0;
+	this->Structure = 0;
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
 	this->BranchMap.clear();
@@ -70,7 +70,7 @@ vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
 }
 
 vtkHierarchicalMaxFlowSegmentation::~vtkHierarchicalMaxFlowSegmentation(){
-	if( this->Hierarchy ) this->Hierarchy->UnRegister(this);
+	if( this->Structure ) this->Structure->UnRegister(this);
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
 	this->InputDataPortMapping.clear();
@@ -111,11 +111,11 @@ void vtkHierarchicalMaxFlowSegmentation::UpdateWholeExtent(){
 void vtkHierarchicalMaxFlowSegmentation::SetOutputPortAmount(){
 	int NumLeaves = 0;
 	vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
-	iterator->SetStartVertex(this->Hierarchy->GetRoot());
+	iterator->SetTree(this->Structure);
+	iterator->SetStartVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType currNode = iterator->Next();
-		if( this->Hierarchy->IsLeaf(currNode) ) NumLeaves++;
+		if( this->Structure->IsLeaf(currNode) ) NumLeaves++;
 	}
 	iterator->Delete();
 	this->SetNumberOfOutputPorts(NumLeaves);
@@ -254,7 +254,7 @@ vtkDataObject *vtkHierarchicalMaxFlowSegmentation::GetOutput(int idx)
 int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
 	
 	//check to make sure that the hierarchy is specified
-	if( !this->Hierarchy ){
+	if( !this->Structure ){
 		vtkErrorMacro(<<"Hierarchy must be provided.");
 		return -1;
 	}
@@ -267,16 +267,16 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 	NumNodes = 0;
 	Extent[0] = -1;
 	vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
-	iterator->SetStartVertex(this->Hierarchy->GetRoot());
+	iterator->SetTree(this->Structure);
+	iterator->SetStartVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		NumNodes++;
 
-        if( this->Hierarchy->IsLeaf(node) ){
+        if( this->Structure->IsLeaf(node) ){
             int value = (int) this->LeafMap.size();
             this->LeafMap[node] = value;
-        }else if(node != this->Hierarchy->GetRoot()){
+        }else if(node != this->Structure->GetRoot()){
             int value = (int) this->BranchMap.size();
             this->BranchMap[node] = value;
         }
@@ -284,7 +284,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
 
 
 		//make sure all leaf nodes have a data term
-		if( this->Hierarchy->IsLeaf(node) ){
+		if( this->Structure->IsLeaf(node) ){
 
 			NumLeaves++;
 			if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() ){
@@ -437,12 +437,12 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//create relevant node identifier to buffer mappings
 	this->BranchMap.clear();
 	vtkTreeDFSIterator* iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
-	iterator->SetStartVertex(this->Hierarchy->GetRoot());
+	iterator->SetTree(this->Structure);
+	iterator->SetStartVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->Hierarchy->GetRoot() ) continue;
-		if( !this->Hierarchy->IsLeaf(node) )
+		if( node == this->Structure->GetRoot() ) continue;
+		if( !this->Structure->IsLeaf(node) )
 			BranchMap.insert(std::pair<vtkIdType,int>(node,(int) this->BranchMap.size()));
 	}
 	iterator->Delete();
@@ -450,10 +450,10 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	//get the data term buffers
 	this->leafDataTermBuffers = new float* [NumLeaves];
 	iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
+	iterator->SetTree(this->Structure);
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( this->Hierarchy->IsLeaf(node) ){
+		if( this->Structure->IsLeaf(node) ){
 			int inputNumber = this->InputDataPortMapping[node];
 			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 			leafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
@@ -469,16 +469,16 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	this->leafSmoothnessTermBuffers = new float* [NumLeaves];
 	this->branchSmoothnessTermBuffers = new float* [NumBranches];
 	iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
+	iterator->SetTree(this->Structure);
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->Hierarchy->GetRoot() ) continue;
+		if( node == this->Structure->GetRoot() ) continue;
 		vtkImageData* CurrImage = 0;
 		if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() ){
 			int inputNumber = this->InputSmoothnessPortMapping[node];
 			CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 		}
-		if( this->Hierarchy->IsLeaf(node) )
+		if( this->Structure->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
 			branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
@@ -504,13 +504,13 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	
 	//convert smoothness constants mapping to two mappings
 	iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
+	iterator->SetTree(this->Structure);
 	leafSmoothnessConstants = new float[NumLeaves];
 	branchSmoothnessConstants = new float[NumBranches];
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->Hierarchy->GetRoot() ) continue;
-		if( this->Hierarchy->IsLeaf(node) )
+		if( node == this->Structure->GetRoot() ) continue;
+		if( this->Structure->IsLeaf(node) )
 			if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
 				leafSmoothnessConstants[this->LeafMap[node]] = this->SmoothnessScalars[node];
 			else
@@ -642,18 +642,18 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 	leafIncBuffers = new float* [NumLeaves];
 	branchIncBuffers = new float* [NumBranches];
 	iterator = vtkTreeDFSIterator::New();
-	iterator->SetTree(this->Hierarchy);
+	iterator->SetTree(this->Structure);
 	iterator->Next();
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		vtkIdType parent = this->Hierarchy->GetParent(node);
-		if( this->Hierarchy->IsLeaf(node) ){
-			if( parent == this->Hierarchy->GetRoot() )
+		vtkIdType parent = this->Structure->GetParent(node);
+		if( this->Structure->IsLeaf(node) ){
+			if( parent == this->Structure->GetRoot() )
 				leafIncBuffers[this->LeafMap[node]] = sourceFlowBuffer;
 			else
 				leafIncBuffers[this->LeafMap[node]] = branchSinkBuffers[this->BranchMap[parent]];
 		}else{
-			if( parent == this->Hierarchy->GetRoot() )
+			if( parent == this->Structure->GetRoot() )
 				branchIncBuffers[this->BranchMap[node]] = sourceFlowBuffer;
 			else
 				branchIncBuffers[this->BranchMap[node]] = branchSinkBuffers[this->BranchMap[parent]];
@@ -887,7 +887,7 @@ int vtkHierarchicalMaxFlowSegmentation::InitializeAlgorithm(){
 	copyBuffer(sourceFlowBuffer, leafSinkBuffers[0], VolumeSize);
 
 	//propogate labels up the hierarchy
-	PropogateLabels( this->Hierarchy->GetRoot() );
+	PropogateLabels( this->Structure->GetRoot() );
 
 	return 1;
 }
@@ -895,7 +895,7 @@ int vtkHierarchicalMaxFlowSegmentation::InitializeAlgorithm(){
 int vtkHierarchicalMaxFlowSegmentation::RunAlgorithm(){
 	//Solve maximum flow problem in an iterative bottom-up manner
 	for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ ){
-		SolveMaxFlow( this->Hierarchy->GetRoot() );
+		SolveMaxFlow( this->Structure->GetRoot() );
 		if( this->Debug )
 			vtkDebugMacro(<< "Finished iteration " << (iteration+1) << ".");
 	}
@@ -903,7 +903,7 @@ int vtkHierarchicalMaxFlowSegmentation::RunAlgorithm(){
 }
 
 void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
 	
 	//clear own label buffer if not a leaf
 	if( NumKids > 0 )
@@ -911,14 +911,14 @@ void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
 
 	//update graph for all kids
 	for(int kid = 0; kid < NumKids; kid++)
-		PropogateLabels( this->Hierarchy->GetChild(currNode,kid) );
+		PropogateLabels( this->Structure->GetChild(currNode,kid) );
 
 	//find parent index
-	if( currNode == this->Hierarchy->GetRoot() ) return;
-	vtkIdType parent = 	this->Hierarchy->GetParent(currNode);
-	if( parent == this->Hierarchy->GetRoot() ) return;
+	if( currNode == this->Structure->GetRoot() ) return;
+	vtkIdType parent = 	this->Structure->GetParent(currNode);
+	if( parent == this->Structure->GetRoot() ) return;
 	int parentIndex = this->BranchMap[parent];
-	float* currVal =   this->Hierarchy->IsLeaf(currNode) ?
+	float* currVal =   this->Structure->IsLeaf(currNode) ?
 		currVal = this->leafLabelBuffers[this->LeafMap[currNode]] :
 		currVal = this->branchLabelBuffers[this->BranchMap[currNode]];
 	
@@ -930,10 +930,10 @@ void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
 void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 	
 	//get number of kids
-	int NumKids = this->Hierarchy->GetNumberOfChildren(currNode);
+	int NumKids = this->Structure->GetNumberOfChildren(currNode);
 
 	//figure out what type of node we are
-	bool isRoot = (currNode == this->Hierarchy->GetRoot());
+	bool isRoot = (currNode == this->Structure->GetRoot());
 	bool isLeaf = (NumKids == 0);
 	bool isBranch = (!isRoot && !isLeaf);
 
@@ -1005,7 +1005,7 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 
 	//RB : Update everything for the children
 	for(int kid = 0; kid < NumKids; kid++)
-		SolveMaxFlow( this->Hierarchy->GetChild(currNode,kid) );
+		SolveMaxFlow( this->Structure->GetChild(currNode,kid) );
 
 	// B : Add sink potential to working buffer
 	if( isBranch ){
@@ -1043,14 +1043,14 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 
 	//RB : Update children's labels
 	for(int kid = NumKids-1; kid >= 0; kid--)
-		UpdateLabel( this->Hierarchy->GetChild(currNode,kid) );
+		UpdateLabel( this->Structure->GetChild(currNode,kid) );
 
 	// BL: Find source potential and store in parent's working buffer
 	if( !isRoot ){
 		//get parent's working buffer
-		float* workingBuffer = (this->Hierarchy->GetParent(currNode) == this->Hierarchy->GetRoot()) ?
+		float* workingBuffer = (this->Structure->GetParent(currNode) == this->Structure->GetRoot()) ?
 								sourceWorkingBuffer :
-								branchWorkingBuffers[BranchMap[this->Hierarchy->GetParent(currNode)]];
+								branchWorkingBuffers[BranchMap[this->Structure->GetParent(currNode)]];
 
 		//std::cout << currNode << "\t Add source potential to parent working buffer" << std::endl;
 		if( isBranch ){
@@ -1066,8 +1066,8 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 }
 
 void vtkHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
-	int NumKids = this->Hierarchy->GetNumberOfChildren(node);
-	if( this->Hierarchy->GetRoot() == node ) return;
+	int NumKids = this->Structure->GetNumberOfChildren(node);
+	if( this->Structure->GetRoot() == node ) return;
 	
 	//std::cout << node << "\t Update labels" << std::endl;
 	if( NumKids == 0 )

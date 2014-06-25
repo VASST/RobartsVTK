@@ -54,9 +54,12 @@ public:
 
   // Description:
   // Get the level of the vertex in the tree.  The root vertex has level 0.
+  // Up Level is the first integer greater than all parents, and
+  // Down Level is the first integer greater than at least one parent.
   // Returns -1 if the vertex id is < 0 or greater than the number of vertices
   // in the tree.
-  vtkIdType GetLevel(vtkIdType v);
+  vtkIdType GetUpLevel(vtkIdType v);
+  vtkIdType GetDownLevel(vtkIdType v);
 
   // Description:
   // Return whether the vertex is a leaf (i.e. it has no children).
@@ -88,7 +91,8 @@ protected:
   // Description:
   // The root of the tree.
   vtkIdType Root;
-  vtkIdType* Level;
+  vtkIdType* UpLevel;
+  vtkIdType* DownLevel;
 
 private:
   vtkRootedDirectedAcyclicGraph(const vtkRootedDirectedAcyclicGraph&);  // Not implemented.

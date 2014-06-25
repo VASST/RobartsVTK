@@ -70,7 +70,7 @@ vtkDirectedAcyclicGraphMaxFlowSegmentation::vtkDirectedAcyclicGraphMaxFlowSegmen
 	this->LeafNumParents = 0;
 
 	//set the other values to defaults
-	this->DAG = 0;
+	this->Structure = 0;
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
 	this->BranchMap.clear();
@@ -78,7 +78,7 @@ vtkDirectedAcyclicGraphMaxFlowSegmentation::vtkDirectedAcyclicGraphMaxFlowSegmen
 }
 
 vtkDirectedAcyclicGraphMaxFlowSegmentation::~vtkDirectedAcyclicGraphMaxFlowSegmentation(){
-	if( this->DAG ) this->DAG->UnRegister(this);
+	if( this->Structure ) this->Structure->UnRegister(this);
 	this->SmoothnessScalars.clear();
 	this->LeafMap.clear();
 	this->InputDataPortMapping.clear();
@@ -119,11 +119,11 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::UpdateWholeExtent(){
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetOutputPortAmount(){
 	int NumLeaves = 0;
 	vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
-	iterator->SetRootVertex(this->DAG->GetRoot());
+	iterator->SetDAG(this->Structure);
+	iterator->SetRootVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType currNode = iterator->Next();
-		if( this->DAG->IsLeaf(currNode) ) NumLeaves++;
+		if( this->Structure->IsLeaf(currNode) ) NumLeaves++;
 	}
 	iterator->Delete();
 	this->SetNumberOfOutputPorts(NumLeaves);
@@ -261,9 +261,9 @@ vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutput(int idx)
 
 int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
 	
-	//check to make sure that the DAG is specified
-	if( !this->DAG ){
-		vtkErrorMacro(<<"DAG must be provided.");
+	//check to make sure that the Structure is specified
+	if( !this->Structure ){
+		vtkErrorMacro(<<"Structure must be provided.");
 		return -1;
 	}
 
@@ -276,24 +276,24 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
 	NumEdges = 0;
 	Extent[0] = -1;
 	vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
-	iterator->SetRootVertex(this->DAG->GetRoot());
+	iterator->SetDAG(this->Structure);
+	iterator->SetRootVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
 		NumNodes++;
 
-		NumEdges += this->DAG->GetNumberOfChildren(node);
+		NumEdges += this->Structure->GetNumberOfChildren(node);
 
-        if( this->DAG->IsLeaf(node) ){
+        if( this->Structure->IsLeaf(node) ){
             int value = (int) this->LeafMap.size();
             this->LeafMap[node] = value;
-        }else if(node != this->DAG->GetRoot()){
+        }else if(node != this->Structure->GetRoot()){
             int value = (int) this->BranchMap.size();
             this->BranchMap[node] = value;
         }
 
 		//make sure all leaf nodes have a data term
-		if( this->DAG->IsLeaf(node) ){
+		if( this->Structure->IsLeaf(node) ){
 
 			NumLeaves++;
 			if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() ){
@@ -375,7 +375,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
 	iterator->Delete();
 
 	//find edges based on \sum{degree(V)} = 2E
-	NumEdges = NumEdges / 2;
+	NumEdges = Structure->GetNumberOfEdges();
 
 	return 0;
 }
@@ -447,12 +447,12 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 	//create relevant node identifier to buffer mappings
 	this->BranchMap.clear();
 	vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
-	iterator->SetRootVertex(this->DAG->GetRoot());
+	iterator->SetDAG(this->Structure);
+	iterator->SetRootVertex(this->Structure->GetRoot());
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->DAG->GetRoot() ) continue;
-		if( !this->DAG->IsLeaf(node) )
+		if( node == this->Structure->GetRoot() ) continue;
+		if( !this->Structure->IsLeaf(node) )
 			BranchMap.insert(std::pair<vtkIdType,int>(node,(int) this->BranchMap.size()));
 	}
 	iterator->Delete();
@@ -460,10 +460,10 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 	//get the data term buffers
 	this->leafDataTermBuffers = new float* [NumLeaves];
 	iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
+	iterator->SetDAG(this->Structure);
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( this->DAG->IsLeaf(node) ){
+		if( this->Structure->IsLeaf(node) ){
 			int inputNumber = this->InputDataPortMapping[node];
 			vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 			leafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
@@ -479,16 +479,16 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 	this->leafSmoothnessTermBuffers = new float* [NumLeaves];
 	this->branchSmoothnessTermBuffers = new float* [NumBranches];
 	iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
+	iterator->SetDAG(this->Structure);
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->DAG->GetRoot() ) continue;
+		if( node == this->Structure->GetRoot() ) continue;
 		vtkImageData* CurrImage = 0;
 		if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() ){
 			int inputNumber = this->InputSmoothnessPortMapping[node];
 			CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
 		}
-		if( this->DAG->IsLeaf(node) )
+		if( this->Structure->IsLeaf(node) )
 			leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
 		else
 			branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
@@ -514,13 +514,13 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 	
 	//convert smoothness constants mapping to two mappings
 	iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	iterator->SetDAG(this->DAG);
+	iterator->SetDAG(this->Structure);
 	leafSmoothnessConstants = new float[NumLeaves];
 	branchSmoothnessConstants = new float[NumBranches];
 	while( iterator->HasNext() ){
 		vtkIdType node = iterator->Next();
-		if( node == this->DAG->GetRoot() ) continue;
-		if( this->DAG->IsLeaf(node) )
+		if( node == this->Structure->GetRoot() ) continue;
+		if( this->Structure->IsLeaf(node) )
 			if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
 				leafSmoothnessConstants[this->LeafMap[node]] = this->SmoothnessScalars[node];
 			else
@@ -670,28 +670,28 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 	for(int i = 0; i < NumLeaves; i++) LeafNumParents[i] = 0.0f;
 	SourceNumChildren = 0.0f;
 	SourceWeightedNumChildren = 0.0f;
-	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->DAG->GetEdgeData()->GetArray("Weights"));
+	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 	vtkRootedDirectedAcyclicGraphBackwardIterator* Iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-	Iterator->SetDAG(this->DAG);
-	Iterator->SetRootVertex(this->DAG->GetRoot());
+	Iterator->SetDAG(this->Structure);
+	Iterator->SetRootVertex(this->Structure->GetRoot());
 	while(Iterator->HasNext()){
 		vtkIdType CurrNode = Iterator->Next();
 
 		//find the number of parents
-		if(this->DAG->IsLeaf(CurrNode))
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++)
-				LeafNumParents[LeafMap[CurrNode]] += Weights ? Weights->GetValue(this->DAG->GetInEdge(CurrNode,i).Id) : 1.0;
-		else if(this->DAG->GetRoot() != CurrNode)
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++)
-				BranchNumParents[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->DAG->GetInEdge(CurrNode,i).Id) : 1.0;
+		if(this->Structure->IsLeaf(CurrNode))
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+				LeafNumParents[LeafMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0;
+		else if(this->Structure->GetRoot() != CurrNode)
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+				BranchNumParents[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0;
 
 		//find the number of children
-		if(this->DAG->GetRoot() == CurrNode)
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++)
-				SourceNumChildren += Weights ? Weights->GetValue(this->DAG->GetOutEdge(CurrNode,i).Id) : 1.0;
+		if(this->Structure->GetRoot() == CurrNode)
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+				SourceNumChildren += Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0;
 		else
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++)
-				BranchNumChildren[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->DAG->GetOutEdge(CurrNode,i).Id) : 1.0;
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+				BranchNumChildren[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0;
 
 	}
 	Iterator->Restart();
@@ -699,18 +699,18 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 		vtkIdType CurrNode = Iterator->Next();
 
 		//find the number of children weighted
-		if(this->DAG->GetRoot() == CurrNode)
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				float temp = (Weights ? Weights->GetValue(this->DAG->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
-					(this->DAG->IsLeaf(this->DAG->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->DAG->GetChild(CurrNode,i)]] :
-					BranchNumParents[BranchMap[this->DAG->GetChild(CurrNode,i)]] );
+		if(this->Structure->GetRoot() == CurrNode)
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++){
+				float temp = (Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
+					(this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]] :
+					BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]] );
 				SourceWeightedNumChildren += temp*temp;
 			}
 		else
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				 float temp = (Weights ? Weights->GetValue(this->DAG->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
-					(this->DAG->IsLeaf(this->DAG->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->DAG->GetChild(CurrNode,i)]] :
-					BranchNumParents[BranchMap[this->DAG->GetChild(CurrNode,i)]] );
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++){
+				 float temp = (Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
+					(this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]] :
+					BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]] );
 				 BranchWeightedNumChildren[BranchMap[CurrNode]] += temp*temp;
 			}
 
@@ -786,6 +786,11 @@ void setBufferToValue(float* buffer, float value, int size){
 		buffer[x] = value;
 }
 
+void translateBuffer(float* bufferOut, float* bufferIn, float shift, float scale, int size){
+	for(int x = 0; x < size; x++)
+		bufferOut[x] = shift+scale*bufferIn[x];
+}
+
 void sumBuffer(float* bufferOut, float* bufferIn, int size){
 	for(int x = 0; x < size; x++)
 		bufferOut[x] += bufferIn[x];
@@ -842,12 +847,17 @@ void updateLabel(float* sink, float* inc, float* div, float* label, float CC, in
 
 void dagmf_storeSourceFlowInBuffer(float* working, float* sink, float* div, float* label, float* source, float* exclude, float CC, float multiplicity, int size){
 	for(int x = 0; x < size; x++)
-		working[x] += (sink[x] + div[x] -source[x] + multiplicity*exclude[x] - label[x] / CC) * multiplicity;
+		//working[x] += (sink[x] + div[x] -source[x] + multiplicity*exclude[x] - label[x] / CC) * multiplicity;
+		working[x] += (sink[x] + div[x] - source[x] - label[x] / CC) * multiplicity;
 }
 
 void storeSinkFlowInBuffer(float* working, float* inc, float* div, float* label, float CC, int size){
 	for(int x = 0; x < size; x++)
 		working[x] = inc[x] - div[x] + label[x] / CC;
+}
+void dagmf_storeSinkFlowInBuffer(float* working, float* inc, float* div, float* label, float* sink, float multiplicity, float CC, int size){
+	for(int x = 0; x < size; x++)
+		working[x] = inc[x] - div[x] + label[x] / CC + multiplicity*sink[x];
 }
 
 void dagmf_flowGradientStep(float* sink, float* inc, float* div, float* label, float StepSize, float CC, int size){
@@ -947,7 +957,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::InitializeAlgorithm(){
 	for(int i = 0; i < NumLeaves; i++ )
 		divBuffer(leafLabelBuffers[i], sourceFlowBuffer, VolumeSize);
 
-	//apply minimal sink flow over the remaining DAG
+	//apply minimal sink flow over the remaining Structure
 	for(int i = 0; i < NumBranches; i++ ){
 		copyBuffer(branchSinkBuffers[i], leafSinkBuffers[0], VolumeSize);
 		copyBuffer(branchSourceBuffers[i], leafSinkBuffers[0], VolumeSize);
@@ -956,202 +966,8 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::InitializeAlgorithm(){
 		copyBuffer(leafSourceBuffers[i], leafSinkBuffers[0], VolumeSize);
 	copyBuffer(sourceFlowBuffer, leafSinkBuffers[0], VolumeSize);
 
-	//propogate labels up the DAG
+	//propogate labels up the Structure
 	PropogateLabels( );
-
-	vtkRootedDirectedAcyclicGraphForwardIterator* ForIterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-	ForIterator->SetDAG(DAG);
-	std::cout <<"Primal:,";
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			std::cout << "Leaf "<< CurrNode <<" Cons:,";
-		}else{
-			std::cout << "Branch "<< CurrNode << " Cons:,";
-		}
-	}
-	ForIterator->Restart();
-	std::cout <<  "Overall Disc:,";
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() )
-			std::cout <<  "Source Disc:,";
-		else if(this->DAG->IsLeaf(CurrNode)){
-		}else{
-			std::cout << "Branch "<< CurrNode <<" Disc:," ;
-		}
-	}
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			std::cout << "Leaf "<< CurrNode <<" Label:,";
-		}else{
-			std::cout << "Branch "<< CurrNode <<" Label:," ;
-		}
-	}
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){
-			std::cout << "Source Flow:,";
-		}else if(this->DAG->IsLeaf(CurrNode)){
-			std::cout << "Leaf "<< CurrNode <<" Source:,";
-			std::cout << "Leaf "<< CurrNode <<" Sink:,";
-		}else{
-			std::cout << "Branch "<< CurrNode <<" Source:,";
-			std::cout << "Branch "<< CurrNode <<" Sink:," ;
-		}
-	}
-	std::cout << std::endl;
-	
-	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->DAG->GetEdgeData()->GetArray("Weights"));
-	double* workingArray = new double[VolumeSize];
-	//std::cout <<"Primal:,"<< ",";
-	long double accumD = 0;
-	for(int x = 0; x < VolumeSize; x++)
-		accumD += sourceFlowBuffer[x];
-	std::cout << accumD / VolumeSize << ",";
-	
-	//report flow conservation error
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Cons:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = leafSinkBuffers[LeafMap[CurrNode]][x]+leafDivBuffers[LeafMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = DAG->GetParent(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetInEdge(CurrNode,i).Id) : 1) / LeafNumParents[LeafMap[CurrNode]];
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * (Parent==DAG->GetRoot() ? sourceFlowBuffer[x] : branchSinkBuffers[BranchMap[Parent]][x]);
-			}
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++) accumD += workingArray[x]*workingArray[x];
-			std::cout << accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode << " Cons:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = branchSinkBuffers[BranchMap[CurrNode]][x]+branchDivBuffers[BranchMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = DAG->GetParent(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetInEdge(CurrNode,i).Id) : 1) / BranchNumParents[BranchMap[CurrNode]];
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * (Parent==DAG->GetRoot() ? sourceFlowBuffer[x] : branchSinkBuffers[BranchMap[Parent]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += workingArray[x]*workingArray[x];
-			std::cout << accumD / VolumeSize << ",";
-		}
-	}
-
-	//report label discrepency
-	ForIterator->Restart();
-	//std::cout <<  "Overall Disc:,";
-	for(int x = 0; x < VolumeSize; x++)
-		workingArray[x] = 1.0;
-	for(int i = 0; i < NumLeaves; i++)
-		for(int x = 0; x< VolumeSize; x++)
-			workingArray[x] -= leafLabelBuffers[i][x];
-	accumD = 0.0;
-	for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-	std::cout << 100 * accumD / VolumeSize << ",";
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){
-			//std::cout <<  "Source Disc:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = 1.0;
-			for(int i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				vtkIdType Child = DAG->GetChild(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetOutEdge(CurrNode,i).Id) : 1) / ( DAG->IsLeaf(Child) ? LeafNumParents[LeafMap[Child]] : BranchNumParents[BranchMap[Child]]);
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * ( DAG->IsLeaf(Child) ? leafLabelBuffers[LeafMap[Child]][x] : branchLabelBuffers[BranchMap[Child]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}else if(this->DAG->IsLeaf(CurrNode)){
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Disc:," ;
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = branchLabelBuffers[BranchMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				vtkIdType Child = DAG->GetChild(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetOutEdge(CurrNode,i).Id) : 1) / ( DAG->IsLeaf(Child) ? LeafNumParents[LeafMap[Child]] : BranchNumParents[BranchMap[Child]]);
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * ( DAG->IsLeaf(Child) ? leafLabelBuffers[LeafMap[Child]][x] : branchLabelBuffers[BranchMap[Child]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}
-	}
-
-	//report label value
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafLabelBuffers[LeafMap[CurrNode]][x];
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchLabelBuffers[BranchMap[CurrNode]][x];
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}
-	}
-
-	//report sink value
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += sourceFlowBuffer[x];
-			std::cout << accumD / VolumeSize << ",";
-		}else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafSourceBuffers[LeafMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafSinkBuffers[LeafMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchSourceBuffers[BranchMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchSinkBuffers[BranchMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-		}
-	}
-
-	ForIterator->Delete();
-
-	delete[] workingArray;
-	std::cout << std::endl;
 
 	return 1;
 }
@@ -1168,32 +984,32 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RunAlgorithm(){
 
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels( ){
 	
-	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->DAG->GetEdgeData()->GetArray("Weights"));
+	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 
 	vtkRootedDirectedAcyclicGraphBackwardIterator* Iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-	Iterator->SetDAG(this->DAG);
-	Iterator->SetRootVertex(this->DAG->GetRoot());
+	Iterator->SetDAG(this->Structure);
+	Iterator->SetRootVertex(this->Structure->GetRoot());
 	while(Iterator->HasNext()){
 		vtkIdType CurrNode = Iterator->Next();
 		
 		//if we are a leaf or root label, we are finished and can therefore leave
-		if(this->DAG->IsLeaf(CurrNode) || this->DAG->GetRoot() == CurrNode ) continue;
+		if(this->Structure->IsLeaf(CurrNode) || this->Structure->GetRoot() == CurrNode ) continue;
 
 		//clear own label buffer
 		zeroOutBuffer(branchLabelBuffers[BranchMap[CurrNode]],VolumeSize);
 
 		//sum in weighted version of child's label
-		for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++ ){
-			float W = Weights ? Weights->GetValue(this->DAG->GetOutEdge(CurrNode,i).Id) : 1.0f;
-			if(this->DAG->IsLeaf(this->DAG->GetChild(CurrNode,i)))
+		for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++ ){
+			float W = Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0f;
+			if(this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)))
 				sumScaledBuffer(branchLabelBuffers[BranchMap[CurrNode]],
-								leafLabelBuffers[LeafMap[this->DAG->GetChild(CurrNode,i)]],
-								W / LeafNumParents[LeafMap[this->DAG->GetChild(CurrNode,i)]],
+								leafLabelBuffers[LeafMap[this->Structure->GetChild(CurrNode,i)]],
+								W / LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]],
 								VolumeSize);
 			else
 				sumScaledBuffer(branchLabelBuffers[BranchMap[CurrNode]],
-								branchLabelBuffers[BranchMap[this->DAG->GetChild(CurrNode,i)]],
-								W / BranchNumParents[BranchMap[this->DAG->GetChild(CurrNode,i)]],
+								branchLabelBuffers[BranchMap[this->Structure->GetChild(CurrNode,i)]],
+								W / BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]],
 								VolumeSize);
 		}
 
@@ -1204,16 +1020,16 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels( ){
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 	vtkRootedDirectedAcyclicGraphForwardIterator* ForIterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
 	vtkRootedDirectedAcyclicGraphBackwardIterator* BackIterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-	ForIterator->SetDAG(this->DAG);
-	BackIterator->SetDAG(this->DAG);
-	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->DAG->GetEdgeData()->GetArray("Weights"));
+	ForIterator->SetDAG(this->Structure);
+	BackIterator->SetDAG(this->Structure);
+	vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 
 	//update spatial flows (order independant)
-	ForIterator->SetRootVertex(this->DAG->GetRoot());
+	ForIterator->SetRootVertex(this->Structure->GetRoot());
 	ForIterator->Restart();
 	while(ForIterator->HasNext()){
 		vtkIdType currNode = ForIterator->Next();
-		if( this->DAG->IsLeaf(currNode) ){
+		if( this->Structure->IsLeaf(currNode) ){
 
 			//compute the gradient step amount (store in div buffer for now)
 			//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
@@ -1239,7 +1055,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 							leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
 							VX, VY, VZ, VolumeSize);
 
-		}else if( currNode != this->DAG->GetRoot() ){
+		}else if( currNode != this->Structure->GetRoot() ){
 		
 			//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
 			dagmf_flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchSourceBuffers[BranchMap[currNode]],
@@ -1266,21 +1082,21 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 	}
 	
 	//clear source buffers working down 
-	ForIterator->SetRootVertex(this->DAG->GetRoot());
+	ForIterator->SetRootVertex(this->Structure->GetRoot());
 	ForIterator->Restart();
 	while(ForIterator->HasNext()){
 		vtkIdType currNode = ForIterator->Next();
-		if(this->DAG->IsLeaf(currNode))
+		if(this->Structure->IsLeaf(currNode))
 			zeroOutBuffer(leafSourceBuffers[LeafMap[currNode]],VolumeSize);
-		else if(currNode != this->DAG->GetRoot() )
+		else if(currNode != this->Structure->GetRoot() )
 			zeroOutBuffer(branchSourceBuffers[BranchMap[currNode]],VolumeSize);
 	}
 
 	//populate source for root's children
-	for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(this->DAG->GetRoot()); i++){
-		vtkIdType Child = this->DAG->GetChild(this->DAG->GetRoot(),i);
-		float W = Weights ? Weights->GetValue( this->DAG->GetOutEdge(this->DAG->GetRoot(),i).Id ) : 1.0f;
-		if(this->DAG->IsLeaf(Child))
+	for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(this->Structure->GetRoot()); i++){
+		vtkIdType Child = this->Structure->GetChild(this->Structure->GetRoot(),i);
+		float W = Weights ? Weights->GetValue( this->Structure->GetOutEdge(this->Structure->GetRoot(),i).Id ) : 1.0f;
+		if(this->Structure->IsLeaf(Child))
 			sumScaledBuffer(leafSourceBuffers[LeafMap[Child]],
 				sourceFlowBuffer, W/this->LeafNumParents[LeafMap[Child]], VolumeSize);
 		else
@@ -1289,15 +1105,15 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 	}
 		
 	//propogate source for all other children
-	ForIterator->SetRootVertex(this->DAG->GetRoot());
+	ForIterator->SetRootVertex(this->Structure->GetRoot());
 	ForIterator->Restart();
 	while(ForIterator->HasNext()){
 		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot()) continue;
-		for(vtkIdType i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-			vtkIdType Child = this->DAG->GetChild(CurrNode,i);
-			float W = Weights ? Weights->GetValue( this->DAG->GetOutEdge(CurrNode,i).Id ) : 1.0f;
-			if(this->DAG->IsLeaf(Child))
+		if(CurrNode == this->Structure->GetRoot()) continue;
+		for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++){
+			vtkIdType Child = this->Structure->GetChild(CurrNode,i);
+			float W = Weights ? Weights->GetValue( this->Structure->GetOutEdge(CurrNode,i).Id ) : 1.0f;
+			if(this->Structure->IsLeaf(Child))
 				sumScaledBuffer(leafSourceBuffers[LeafMap[Child]], branchSinkBuffers[BranchMap[CurrNode]],
 					W/this->LeafNumParents[LeafMap[Child]], VolumeSize);
 			else
@@ -1307,23 +1123,24 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 	}
 
 	//clear working buffers
-	setBufferToValue(sourceWorkingBuffer,1.0/this->CC,VolumeSize);
-	ForIterator->SetRootVertex(this->DAG->GetRoot());
+	translateBuffer(sourceWorkingBuffer,sourceFlowBuffer,1.0/this->CC,SourceWeightedNumChildren, VolumeSize);
+	ForIterator->SetRootVertex(this->Structure->GetRoot());
 	ForIterator->Restart();
 	while(ForIterator->HasNext()){
 		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() || this->DAG->IsLeaf(CurrNode)) continue;
-		storeSinkFlowInBuffer(branchWorkingBuffers[BranchMap[CurrNode]], branchSourceBuffers[BranchMap[CurrNode]],
+		if(CurrNode == this->Structure->GetRoot() || this->Structure->IsLeaf(CurrNode)) continue;
+		dagmf_storeSinkFlowInBuffer(branchWorkingBuffers[BranchMap[CurrNode]], branchSourceBuffers[BranchMap[CurrNode]],
 					branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
+					branchSinkBuffers[BranchMap[CurrNode]],this->BranchWeightedNumChildren[BranchMap[CurrNode]],
 					CC, VolumeSize);
 	}
 
 	//update sink flows and labels working up
-	BackIterator->SetRootVertex(this->DAG->GetRoot());
+	BackIterator->SetRootVertex(this->Structure->GetRoot());
 	BackIterator->Restart();
 	while(BackIterator->HasNext()){
 		vtkIdType CurrNode = BackIterator->Next();
-		if(this->DAG->IsLeaf(CurrNode)){
+		if(this->Structure->IsLeaf(CurrNode)){
 
 			//update state at this location (source, sink, labels)
 			updateLeafSinkFlow(leafSinkBuffers[LeafMap[CurrNode]], leafSourceBuffers[LeafMap[CurrNode]],
@@ -1333,10 +1150,10 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 										VolumeSize);
 				
 			//push up sink capacities
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = this->DAG->GetParent(CurrNode,i);
-				float W = Weights ? Weights->GetValue(this->DAG->GetInEdge(CurrNode,i).Id) : 1.0f;
-				if(Parent == this->DAG->GetRoot() )
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++){
+				vtkIdType Parent = this->Structure->GetParent(CurrNode,i);
+				float W = Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0f;
+				if(Parent == this->Structure->GetRoot() )
 					dagmf_storeSourceFlowInBuffer(sourceWorkingBuffer, leafSinkBuffers[LeafMap[CurrNode]],
 											leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
 											leafSourceBuffers[LeafMap[CurrNode]],sourceFlowBuffer,
@@ -1352,17 +1169,17 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 						leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
 						CC, VolumeSize);
 
-		}else if(CurrNode != this->DAG->GetRoot()){
+		}else if(CurrNode != this->Structure->GetRoot()){
 
 			//update state at this location (source, sink, labels)
 			divAndStoreBuffer(branchSinkBuffers[BranchMap[CurrNode]],branchWorkingBuffers[BranchMap[CurrNode]],
 				this->BranchWeightedNumChildren[BranchMap[CurrNode]]+1.0f,VolumeSize);
 
 			//push up sink capacities
-			for(vtkIdType i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = this->DAG->GetParent(CurrNode,i);
-				float W = Weights ? Weights->GetValue(this->DAG->GetInEdge(CurrNode,i).Id) : 1.0f;
-				if(Parent == this->DAG->GetRoot() )
+			for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++){
+				vtkIdType Parent = this->Structure->GetParent(CurrNode,i);
+				float W = Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0f;
+				if(Parent == this->Structure->GetRoot() )
 					dagmf_storeSourceFlowInBuffer(sourceWorkingBuffer, branchSinkBuffers[BranchMap[CurrNode]],
 											branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
 											branchSourceBuffers[BranchMap[CurrNode]],sourceFlowBuffer,
@@ -1383,147 +1200,6 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
 		}
 
 	}
-
-	double* workingArray = new double[VolumeSize];
-	//std::cout <<"Primal:,"<< ",";
-	long double accumD = 0;
-	for(int x = 0; x < VolumeSize; x++)
-		accumD += sourceFlowBuffer[x];
-	std::cout << accumD / VolumeSize << ",";
-	
-	//report flow conservation error
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Cons:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = leafSinkBuffers[LeafMap[CurrNode]][x]+leafDivBuffers[LeafMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = DAG->GetParent(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetInEdge(CurrNode,i).Id) : 1) / LeafNumParents[LeafMap[CurrNode]];
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * (Parent==DAG->GetRoot() ? sourceFlowBuffer[x] : branchSinkBuffers[BranchMap[Parent]][x]);
-			}
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++) accumD += workingArray[x]*workingArray[x];
-			std::cout << accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode << " Cons:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = branchSinkBuffers[BranchMap[CurrNode]][x]+branchDivBuffers[BranchMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfParents(CurrNode); i++){
-				vtkIdType Parent = DAG->GetParent(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetInEdge(CurrNode,i).Id) : 1) / BranchNumParents[BranchMap[CurrNode]];
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * (Parent==DAG->GetRoot() ? sourceFlowBuffer[x] : branchSinkBuffers[BranchMap[Parent]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += workingArray[x]*workingArray[x];
-			std::cout << accumD / VolumeSize << ",";
-		}
-	}
-
-	//report label discrepency
-	ForIterator->Restart();
-	//std::cout <<  "Overall Disc:,";
-	for(int x = 0; x < VolumeSize; x++)
-		workingArray[x] = 1.0;
-	for(int i = 0; i < NumLeaves; i++)
-		for(int x = 0; x< VolumeSize; x++)
-			workingArray[x] -= leafLabelBuffers[i][x];
-	accumD = 0.0;
-	for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-	std::cout << 100 * accumD / VolumeSize << ",";
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){
-			//std::cout <<  "Source Disc:,";
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = 1.0;
-			for(int i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				vtkIdType Child = DAG->GetChild(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetOutEdge(CurrNode,i).Id) : 1) / ( DAG->IsLeaf(Child) ? LeafNumParents[LeafMap[Child]] : BranchNumParents[BranchMap[Child]]);
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * ( DAG->IsLeaf(Child) ? leafLabelBuffers[LeafMap[Child]][x] : branchLabelBuffers[BranchMap[Child]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}else if(this->DAG->IsLeaf(CurrNode)){
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Disc:," ;
-			for(int x = 0; x < VolumeSize; x++)
-				workingArray[x] = branchLabelBuffers[BranchMap[CurrNode]][x];
-			for(int i = 0; i < this->DAG->GetNumberOfChildren(CurrNode); i++){
-				vtkIdType Child = DAG->GetChild(CurrNode,i);
-				float W = (Weights ? Weights->GetValue(DAG->GetOutEdge(CurrNode,i).Id) : 1) / ( DAG->IsLeaf(Child) ? LeafNumParents[LeafMap[Child]] : BranchNumParents[BranchMap[Child]]);
-				for(int x = 0; x < VolumeSize; x++)
-					workingArray[x] -= W * ( DAG->IsLeaf(Child) ? leafLabelBuffers[LeafMap[Child]][x] : branchLabelBuffers[BranchMap[Child]][x]);
-			}
-			accumD = 0.0;
-			for(int x = 0; x < VolumeSize; x++) accumD += abs(workingArray[x]);
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}
-	}
-
-	//report label value
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){}
-			
-		else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafLabelBuffers[LeafMap[CurrNode]][x];
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchLabelBuffers[BranchMap[CurrNode]][x];
-			std::cout << 100 * accumD / VolumeSize << ",";
-		}
-	}
-
-	//report sink value
-	ForIterator->Restart();
-	while(ForIterator->HasNext()){
-		vtkIdType CurrNode = ForIterator->Next();
-		if(CurrNode == this->DAG->GetRoot() ){
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += sourceFlowBuffer[x];
-			std::cout << accumD / VolumeSize << ",";
-		}else if(this->DAG->IsLeaf(CurrNode)){
-			//std::cout << "Leaf "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafSourceBuffers[LeafMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += leafSinkBuffers[LeafMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-		}else{
-			//std::cout << "Branch "<< CurrNode <<" Label:," ;
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchSourceBuffers[BranchMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-			accumD = 0;
-			for(int x = 0; x < VolumeSize; x++)
-				accumD += branchSinkBuffers[BranchMap[CurrNode]][x];
-			std::cout << accumD / VolumeSize << ",";
-		}
-	}
-
-	delete[] workingArray;
-	std::cout << std::endl;
 
 	ForIterator->Delete();
 	BackIterator->Delete();

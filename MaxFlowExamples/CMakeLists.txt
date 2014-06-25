@@ -2,7 +2,7 @@ PROJECT( MaxFlowExample )
 
 SET(KIT MaxFlowExample )
 SET(UKIT MaxFlowExample )
-SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkRobartsUtilities)
+SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkRobartsUtilities vtkCudaImageAnalytics vtkCudaCommon)
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS

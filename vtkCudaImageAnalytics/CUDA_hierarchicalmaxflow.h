@@ -41,6 +41,12 @@ void CUDA_CopyBuffer(float* dst, float* src, int size, cudaStream_t* stream);
 void CUDA_MinBuffer(float* dst, float* src, int size, cudaStream_t* stream);
 void CUDA_LblBuffer(float* lbl, float* flo, float* cap, int size, cudaStream_t* stream);
 void CUDA_SumBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+void CUDA_SumScaledBuffer(float* dst, float* src, float scale, int size, cudaStream_t* stream);
 void CUDA_DivBuffer(float* dst, float* src, int size, cudaStream_t* stream);
+
+void CUDA_ShiftBuffer(float* buf, float shift, int size, cudaStream_t* stream);
+void CUDA_ResetSinkBuffer(float* sink, float* source, float* div, float* label, float ik, float iCC, int size, cudaStream_t* stream);
+void CUDA_PushUpSourceFlows(float* psink, float* sink, float* source, float* div, float* label, float w, float iCC, int size, cudaStream_t* stream);
+void CUDA_Copy2Buffers(float* fIn, float* fOut1, float* fOut2, int size, cudaStream_t* stream);
 
 #endif //__CUDA_HIERARCHICALMAXFLOW_H__

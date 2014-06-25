@@ -19,12 +19,12 @@
  *	
  *	@note August 27th 2013 - Documentation first compiled.
  *
- *  @note This is not a front-end class. Header details are in vtkCudaHierarchicalMaxFlowSegmentation2.h
+ *  @note This is not a front-end class. Header details are in vtkCudaMaxFlowSegmentation.h
  *
  */
 
-#include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
-#include "vtkCudaHierarchicalMaxFlowSegmentation2Task.h"
+#include "vtkCudaMaxFlowSegmentationWorker.h"
+#include "vtkCudaMaxFlowSegmentationScheduler.h"
 
 #include <assert.h>
 #include <math.h>
@@ -40,13 +40,8 @@
 
 //-----------------------------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------------------------//
-
-vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, double usage, vtkCudaHierarchicalMaxFlowSegmentation2* p )
+vtkCudaMaxFlowSegmentationWorker::vtkCudaMaxFlowSegmentationWorker(int g, double usage, vtkCudaMaxFlowSegmentationScheduler* p )
 	: Parent(p), GPU(g), vtkCudaObject(g) {
-	
-	//if verbose, print progress
-	if( Parent->Debug )
-		vtkDebugWithObjectMacro(Parent,<<"Starting GPU buffer acquisition");
 
 	//Get GPU buffers
 	int BuffersAcquired = 0;
@@ -81,7 +76,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::Worker(int g, double usage, vtk
     NumBuffers = BuffersAcquired;
 }
 		
-vtkCudaHierarchicalMaxFlowSegmentation2::Worker::~Worker(){
+vtkCudaMaxFlowSegmentationWorker::~vtkCudaMaxFlowSegmentationWorker(){
 	this->CallSyncThreads();
 
 	//Return all GPU buffers
@@ -103,7 +98,7 @@ vtkCudaHierarchicalMaxFlowSegmentation2::Worker::~Worker(){
 	CPUInUse.clear();
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
+void vtkCudaMaxFlowSegmentationWorker::ReturnLeafLabels(){
 	//Copy back any uncopied leaf label buffers (others don't matter anymore)
 	for( int i = 0; i < Parent->NumLeaves; i++ )
 		if( CPU2GPUMap.find(Parent->leafLabelBuffers[i]) != CPU2GPUMap.end() ){
@@ -113,7 +108,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnLeafLabels(){
 		}
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnBuffer(float* CPUBuffer){
+void vtkCudaMaxFlowSegmentationWorker::ReturnBuffer(float* CPUBuffer){
 	if( !CPUBuffer ) return;
 	if( CPU2GPUMap.find(CPUBuffer) != CPU2GPUMap.end() ){
 		Parent->ReturnBufferGPU2CPU(this,CPUBuffer, CPU2GPUMap[CPUBuffer],GetStream());
@@ -124,7 +119,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::ReturnBuffer(float* CPUBuf
 	}
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
+void vtkCudaMaxFlowSegmentationWorker::UpdateBuffersInUse(){
 	for( std::set<float*>::iterator iterator = CPUInUse.begin();
 			iterator != CPUInUse.end(); iterator++ ){
 
@@ -200,7 +195,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::UpdateBuffersInUse(){
 }
 		
 //Add a CPU-GPU buffer pair from this workers collection
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::AddToStack( float* CPUBuffer ){
+void vtkCudaMaxFlowSegmentationWorker::AddToStack( float* CPUBuffer ){
 	int neededPriority = Parent->CPU2PriorityMap.find(CPUBuffer)->second;
 	BuildStackUpToPriority( neededPriority );
 	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
@@ -209,7 +204,7 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::AddToStack( float* CPUBuff
 }
 
 //Remove a CPU-GPU buffer pair from this workers collection
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::RemoveFromStack( float* CPUBuffer ){
+void vtkCudaMaxFlowSegmentationWorker::RemoveFromStack( float* CPUBuffer ){
 	int neededPriority = Parent->CPU2PriorityMap.find(CPUBuffer)->second;
 	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for(int count = 1; count < neededPriority; count++, stackIterator++);
@@ -222,20 +217,20 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::RemoveFromStack( float* CP
 }
 
 //Make sure that this buffers collection can handle the stack size
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::BuildStackUpToPriority( int priority ){
+void vtkCudaMaxFlowSegmentationWorker::BuildStackUpToPriority( int priority ){
 	while( PriorityStacks.size() < priority )
 		PriorityStacks.push_back( std::list<float*>() );
 }
 
 //take down the stacks
-void vtkCudaHierarchicalMaxFlowSegmentation2::Worker::TakeDownPriorityStacks(){
+void vtkCudaMaxFlowSegmentationWorker::TakeDownPriorityStacks(){
 	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();
 	for( ; stackIterator != PriorityStacks.end(); stackIterator++ )
 		stackIterator->clear();
 	PriorityStacks.clear();
 }
 
-int vtkCudaHierarchicalMaxFlowSegmentation2::Worker::LowestBufferShift(int n){
+int vtkCudaMaxFlowSegmentationWorker::LowestBufferShift(int n){
 	int retVal = 0;
 	n -= (int) this->UnusedGPUBuffers.size();
 	std::vector< std::list< float* > >::iterator stackIterator = PriorityStacks.begin();

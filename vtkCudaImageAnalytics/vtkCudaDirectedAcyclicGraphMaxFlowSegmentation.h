@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkHierarchicalMaxFlowSegmentation2.h
+  Module:    vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 
@@ -13,20 +13,20 @@
 
 /** @file vtkHierarchicalMaxFlowSegmentation2.h
  *
- *  @brief Header file with definitions of GPU-based solver for generalized hierarchical max-flow
+ *  @brief Header file with definitions of GPU-based solver for DAG-based max-flow
  *			segmentation problems with greedy scheduling over multiple GPUs. See
- *			vtkHierarchicalMaxFlowSegmentation.h for most of the interface documentation.
+ *			vtkDirectedAcyclicGraphMaxFlowSegmentation.h for most of the interface documentation.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *	@note June 22nd 2014 - Documentation first compiled.
  *
  */
 
-#ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
-#define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
+#ifndef __VTKCUDADIRECTEDACYCLICGRAPHMAXFLOWSEGMENTATION_H__
+#define __VTKCUDADIRECTEDACYCLICGRAPHMAXFLOWSEGMENTATION_H__
 
-#include "vtkHierarchicalMaxFlowSegmentation.h"
+#include "vtkDirectedAcyclicGraphMaxFlowSegmentation.h"
 #include "vtkCudaMaxFlowSegmentationScheduler.h"
 #include "vtkCudaMaxFlowSegmentationTask.h"
 #include "vtkCudaMaxFlowSegmentationWorker.h"
@@ -40,11 +40,11 @@
 #include <limits.h>
 #include <float.h>
 
-class vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
+class vtkCudaDirectedAcyclicGraphMaxFlowSegmentation : public vtkDirectedAcyclicGraphMaxFlowSegmentation
 {
 public:
-	vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkHierarchicalMaxFlowSegmentation );
-	static vtkCudaHierarchicalMaxFlowSegmentation2 *New();
+	vtkTypeMacro( vtkCudaDirectedAcyclicGraphMaxFlowSegmentation, vtkDirectedAcyclicGraphMaxFlowSegmentation );
+	static vtkCudaDirectedAcyclicGraphMaxFlowSegmentation *New();
 
 	// Description:
 	// Insert, remove, and verify a given GPU into the set of GPUs usable by the algorithm. This
@@ -83,8 +83,8 @@ public:
 	vtkGetMacro(ReportRate,int);
 
 protected:
-	vtkCudaHierarchicalMaxFlowSegmentation2();
-	virtual ~vtkCudaHierarchicalMaxFlowSegmentation2();
+	vtkCudaDirectedAcyclicGraphMaxFlowSegmentation();
+	virtual ~vtkCudaDirectedAcyclicGraphMaxFlowSegmentation();
 
 	vtkCudaMaxFlowSegmentationScheduler* Scheduler;
 
@@ -101,43 +101,32 @@ protected:
 	void PropogateLabels( vtkIdType currNode );
 	void SolveMaxFlow( vtkIdType currNode, int* timeStep );
 	void UpdateLabel( vtkIdType node, int* timeStep );
-
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ClearWorkingBufferTasks;
+	
 	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> UpdateSpatialFlowsTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ApplySinkPotentialBranchTasks;
+	void CreateUpdateSpatialFlowsTasks();
+	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ResetSinkFlowTasks;
+	void CreateResetSinkFlowRootTasks();
+	void CreateResetSinkFlowBranchTasks();
 	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ApplySinkPotentialLeafTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ApplySourcePotentialTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> DivideOutWorkingBufferTasks;
+	void CreateApplySinkPotentialLeafTasks();
+	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> PushUpSourceFlowsTasks;
+	void CreatePushUpSourceFlowsLeafTasks();
+	void CreatePushUpSourceFlowsBranchTasks();
+	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> PushDownSinkFlowsTasks;
+	void CreatePushDownSinkFlowsRootTasks();
+	void CreatePushDownSinkFlowsBranchTasks();
 	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> UpdateLabelsTasks;
-
-	void CreateClearWorkingBufferTasks(vtkIdType currNode);
-	void CreateUpdateSpatialFlowsTasks(vtkIdType currNode);
-	void CreateApplySinkPotentialBranchTasks(vtkIdType currNode);
-	void CreateApplySinkPotentialLeafTasks(vtkIdType currNode);
-	void CreateApplySourcePotentialTask(vtkIdType currNode);
-	void CreateDivideOutWorkingBufferTask(vtkIdType currNode);
-	void CreateUpdateLabelsTask(vtkIdType currNode);
-	void AddIterationTaskDependencies(vtkIdType currNode);
+	void CreateUpdateLabelsTasks();
+	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ClearSourceBufferTasks;
+	void CreateClearSourceBufferTasks();
+	void AssociateFinishSignals();
 	
-	std::map<int,vtkCudaMaxFlowSegmentationTask*> InitializeLeafSinkFlowsTasks;
-	std::map<int,vtkCudaMaxFlowSegmentationTask*> MinimizeLeafSinkFlowsTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> PropogateLeafSinkFlowsTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> InitialLabellingSumTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> CorrectLabellingTasks;
-	std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> PropogateLabellingTasks;
-
-	void CreateInitializeAllSpatialFlowsToZeroTasks(vtkIdType currNode);
-	void CreateInitializeLeafSinkFlowsToCapTasks(vtkIdType currNode);
-	void CreateCopyMinimalLeafSinkFlowsTasks(vtkIdType currNode);
-	void CreateFindInitialLabellingAndSumTasks(vtkIdType currNode);
-	void CreateClearSourceWorkingBufferTask();
-	void CreateDivideOutLabelsTasks(vtkIdType currNode);
-	void CreatePropogateLabelsTasks(vtkIdType currNode);
-	
+	void InitializeSpatialFlowsTasks();
+	void InitializeSinkFlowsTasks();
 
 private:
-	vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
-	vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
+	vtkCudaDirectedAcyclicGraphMaxFlowSegmentation operator=(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&){} //not implemented
+	vtkCudaDirectedAcyclicGraphMaxFlowSegmentation(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&){} //not implemented
 };
 
 #endif

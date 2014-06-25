@@ -47,8 +47,8 @@ public:
 	// Set the hierarchical model used in the segmentation. Leaves in the tree correspond
 	// to disjoint labels in the output image. Branches correspond to super-objects,
 	// collections of these labels
-	vtkSetObjectMacro(Hierarchy,vtkTree)
-	vtkGetObjectMacro(Hierarchy,vtkTree)
+	vtkSetObjectMacro(Structure,vtkTree)
+	vtkGetObjectMacro(Structure,vtkTree)
 	
 	// Description:
 	// Weight the smoothness term. If no scalar is provided, it is assumed to be 1. If
@@ -139,7 +139,7 @@ protected:
 	void SolveMaxFlow( vtkIdType currNode );
 	void UpdateLabel( vtkIdType node );
 	
-	vtkTree* Hierarchy;
+	vtkTree* Structure;
 	std::map<vtkIdType,double> SmoothnessScalars;
 	std::map<vtkIdType,int> LeafMap;
 	std::map<vtkIdType,int> BranchMap;

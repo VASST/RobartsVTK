@@ -47,8 +47,8 @@ public:
 	// Set the DirectedAcyclicGraph model used in the segmentation. Leaves in the tree correspond
 	// to disjoint labels in the output image. Branches correspond to super-objects,
 	// collections of these labels
-	vtkSetObjectMacro(DAG,vtkRootedDirectedAcyclicGraph)
-	vtkGetObjectMacro(DAG,vtkRootedDirectedAcyclicGraph)
+	vtkSetObjectMacro(Structure,vtkRootedDirectedAcyclicGraph)
+	vtkGetObjectMacro(Structure,vtkRootedDirectedAcyclicGraph)
 	
 	// Description:
 	// Weight the smoothness term. If no scalar is provided, it is assumed to be 1. If
@@ -77,7 +77,7 @@ public:
 	// Get and Set the data cost for the objects. The algorithm only uses those which
 	// correspond to leaf nodes due to the data term pushdown theorem. These must be
 	// supplied for every leaf node for the algorithm to run.
-	// The DAG must be supplied prior to invoking these methods.
+	// The Structure must be supplied prior to invoking these methods.
 	vtkDataObject* GetDataInput(int idx);
 	void SetDataInput(int idx, vtkDataObject *input);
 	
@@ -85,13 +85,13 @@ public:
 	// Get and Set the smoothness for the objects. The algorithm only uses those which
 	// correspond to non-root nodes. If not supplied, they are assumed to be the unit
 	// field (ie: S(x)=1 for all voxels x).
-	// The DAG must be supplied prior to invoking these methods.
+	// The Structure must be supplied prior to invoking these methods.
 	vtkDataObject* GetSmoothnessInput(int idx);
 	void SetSmoothnessInput(int idx, vtkDataObject *input);
 	
 	// Description:
 	// Get the final probabilistic labelling, assuming idx refers to a leaf
-	// node in the supplied DAG
+	// node in the supplied Structure
 	vtkDataObject* GetOutput(int idx);
 	
 	// Description:
@@ -138,7 +138,7 @@ protected:
 	void PropogateLabels( );
 	void SolveMaxFlow( );
 	
-	vtkRootedDirectedAcyclicGraph* DAG;
+	vtkRootedDirectedAcyclicGraph* Structure;
 	std::map<vtkIdType,double> SmoothnessScalars;
 	std::map<vtkIdType,int> LeafMap;
 	std::map<vtkIdType,int> BranchMap;
