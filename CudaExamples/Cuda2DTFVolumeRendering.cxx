@@ -562,7 +562,7 @@ int main( int argc, char** argv ){
 	segmentation->SetInput(mid_high,	midReader->GetOutput());
 	segmentation->SetInput(mid_low,		midReader->GetOutput());
 	segmentation->SetInput(low,			lowReader->GetOutput());
-	segmentation->SetHierarchy(roHierarchy);
+	segmentation->SetStructure(roHierarchy);
 	segmentation->AddSmoothnessScalar(source,10);
 	segmentation->AddSmoothnessScalar(higherSide,5);
 	segmentation->AddSmoothnessScalar(lowerSide,5);
