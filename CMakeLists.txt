@@ -181,6 +181,12 @@ IF (RobartsVTK_USE_ROBARTSUTILITIES)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsUtilities)
 ENDIF (RobartsVTK_USE_ROBARTSUTILITIES)
 
+
+OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
+IF (RobartsVTK_USE_QT)
+  FIND_PACKAGE(QT REQUIRED)
+ENDIF (RobartsVTK_USE_QT)
+
 # vtkCuda
 OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
@@ -247,6 +253,9 @@ OPTION(RobartsVTK_BUILD_EXAMPLES "Build RobartsVTK examples." OFF)
 IF(RobartsVTK_BUILD_EXAMPLES)
   IF(RobartsVTK_USE_CUDA)
     ADD_SUBDIRECTORY(CudaExamples)
+	IF(RobartsVTK_USE_QT)
+	  ADD_SUBDIRECTORY(FluoroPredViz)
+	ENDIF(RobartsVTK_USE_QT)
   ENDIF(RobartsVTK_USE_CUDA)
   IF(RobartsVTK_USE_ROBARTSUTILITIES)
     ADD_SUBDIRECTORY(MaxFlowExamples)
