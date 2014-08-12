@@ -27,7 +27,7 @@
 #include "stdio.h"
 #include "cuda.h"
 
-#define DEBUG_VTKCUDAHMF
+//#define DEBUG_VTKCUDAHMF
 
 void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired ){
 
