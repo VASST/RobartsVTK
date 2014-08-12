@@ -83,7 +83,7 @@ int main(int argc, char** argv){
 	//check number of iterations
 	int NumIts = std::atoi(argv[2]);
 	int NumDev = std::atoi(argv[3]);
-	int NumFlags = argc - (3+NumDev);
+	int NumFlags = (argc - (3+NumDev) - 1) / 2;
 	double Tau = 0.1;
 	double CC = 0.25;
 	bool hasOutput = false;
@@ -111,6 +111,7 @@ int main(int argc, char** argv){
 
 	//create segmenter
 	vtkCudaHierarchicalMaxFlowSegmentation2* Segmenter = vtkCudaHierarchicalMaxFlowSegmentation2::New();
+	//vtkHierarchicalMaxFlowSegmentation* Segmenter = vtkHierarchicalMaxFlowSegmentation::New();
 	Segmenter->SetStructure(Tree);
 	Segmenter->SetNumberOfIterations(NumIts);
 	Segmenter->SetStepSize(Tau);
