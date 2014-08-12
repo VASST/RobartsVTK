@@ -4,7 +4,7 @@ INCLUDE_DIRECTORIES(${vtkCudaCommon_SOURCE_DIR})
 
 SET(KIT vtkCudaVisualization)
 SET(UKIT vtkCudaVisualization)
-SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon cudart)
+SET(KIT_LIBS vtkCudaCommon cudart)
 SET(KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} cuda cudart cudartemu cufft cufftemu OpenCL cublas cublasemu)
 
 SET ( Kit_SRCS
