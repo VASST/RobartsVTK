@@ -7,10 +7,15 @@
 #include <QBoxLayout>
 #include <QSplitter>
 
-class QVTKWidget;
+class ResizableQVTKWidget;
 class vtkImageReader2;
 class vtkSphereSource;
 class vtkConeSource;
+class vtkImagePlaneWidget;
+class vtkActor;
+class vtkCamera;
+class vtkTransform;
+class vtkVolume;
 
 class FluoroPredViz : public QWidget {
 	Q_OBJECT
@@ -84,6 +89,7 @@ private:
 	QSlider* OrientationX;	double OrientationXVal;
 	QSlider* OrientationY;	double OrientationYVal;
 	QSlider* OrientationZ;	double OrientationZVal;
+	vtkTransform* ObjectParams;
 
 	//file management
 	QString RequestFilename();
@@ -94,15 +100,19 @@ private:
 	void ConnectUpPipeline();
 	void SetupDRRScreen(QSplitter*);
 	void SetupSchematicScreen(QSplitter*);
-	QVTKWidget*		DRRScreen;
-	QVTKWidget*		SchematicScreen;
+	ResizableQVTKWidget*		DRRScreen;
+	ResizableQVTKWidget*		SchematicScreen[3];
+	vtkVolume*		ImageVolume;
 
 	//schematic
 	void UpdateDegreeMarkers();
 	void UpdateXrayMarker();
+	void UpdateImageBoundsMarker();
 	vtkSphereSource** DegreeMarkers;
 	int NumMarkers;
 	vtkConeSource* XrayMarker;
+	vtkCamera* XraySource;
+	vtkActor* ImageBoundsMarkerActor;
 
 };
 

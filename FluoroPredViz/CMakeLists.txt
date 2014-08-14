@@ -10,6 +10,8 @@ SET ( Kit_SRCS
   main.cxx
   FluoroPredViz.h
   FluoroPredViz.cxx
+  ResizableQVTKWidget.h
+  ResizableQVTKWidget.cxx
 )
 
 SET( mocHeaders  
