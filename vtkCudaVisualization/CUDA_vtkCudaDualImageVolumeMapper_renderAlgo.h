@@ -1,16 +1,16 @@
-/** @file CUDA_vtkCuda2DVolumeMapper_renderAlgo.h
+/** @file CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h
  *
  *  @brief Header file with definitions for different CUDA functions for setting up and running the ray casting process
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
  *  @note First documented on March 27, 2011
  *
- *  @note This is primarily an internal file used by the vtkCUDAVolumeMapper to manage the ray casting process
+ *  @note This is primarily an internal file used by the vtkCudaDualImageVolumeMapper to manage the ray casting process
  *
  */
 
-#ifndef CUDA_VTKCUDA2DVOLUMEMAPPER_RENDERALGO_H
-#define CUDA_VTKCUDA2DVOLUMEMAPPER_RENDERALGO_H
+#ifndef CUDA_VTKCUDADUALIMAGEVOLUMEMAPPER_RENDERALGO_H
+#define CUDA_VTKCUDADUALIMAGEVOLUMEMAPPER_RENDERALGO_H
 #include "CUDA_containerRendererInformation.h"
 #include "CUDA_containerVolumeInformation.h"
 #include "CUDA_containerOutputImageInformation.h"

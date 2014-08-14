@@ -614,6 +614,7 @@ void CUDA_deallocateMemory(void* ptr){
 	cudaFree(ptr);
 }
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
+#include "CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh"

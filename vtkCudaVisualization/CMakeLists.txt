@@ -59,6 +59,13 @@ SET ( Kit_SRCS
   CUDA_containerDualImageTransferFunctionInformation.h
   CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
   CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h
+
+  #Digitally reconstructed radiograph rendering subclass
+  vtkCudaDRRImageVolumeMapper.cxx
+  vtkCudaDRRImageVolumeMapper.h
+  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.h
+
 )
 
 CUDA_ADD_LIBRARY( vtkCudaVisualization ${Kit_SRCS} )
