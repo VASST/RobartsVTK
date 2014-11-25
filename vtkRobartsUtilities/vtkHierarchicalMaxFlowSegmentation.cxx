@@ -25,6 +25,7 @@
  */
 
 #include "vtkHierarchicalMaxFlowSegmentation.h"
+#include "vtkMaxFlowSegmentationUtilities.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTreeDFSIterator.h"
@@ -716,134 +717,6 @@ int vtkHierarchicalMaxFlowSegmentation::RequestDataObject(
 // CPU VERSION OF THE ALGORITHM
 //----------------------------------------------------------------------------
 
-void zeroOutBuffer(float* buffer, int size){
-	for(int x = 0; x < size; x++)
-		buffer[x] = 0.0f;
-}
-
-void setBufferToValue(float* buffer, float value, int size){
-	for(int x = 0; x < size; x++)
-		buffer[x] = value;
-}
-
-void sumBuffer(float* bufferOut, float* bufferIn, int size){
-	for(int x = 0; x < size; x++)
-		bufferOut[x] += bufferIn[x];
-}
-
-void copyBuffer(float* bufferOut, float* bufferIn, int size){
-	for(int x = 0; x < size; x++)
-		bufferOut[x] = bufferIn[x];
-}
-
-void minBuffer(float* bufferOut, float* bufferIn, int size){
-	for(int x = 0; x < size; x++)
-		bufferOut[x] = (bufferOut[x] > bufferIn[x]) ? bufferIn[x] : bufferOut[x];
-}
-
-void divBuffer(float* bufferOut, float* bufferIn, int size){
-	for(int x = 0; x < size; x++)
-		bufferOut[x] /= bufferIn[x];
-}
-
-void divAndStoreBuffer(float* bufferOut, float* bufferIn, float value, int size){
-	for(int x = 0; x < size; x++)
-		bufferOut[x] = bufferIn[x] / value;
-}
-
-void lblBuffer( float* label, float* sink, float* cap, int size ){
-	for(int x = 0; x < size; x++)
-		label[x] = (sink[x] == cap[x]) ? 1.0f : 0.0f;
-}
-
-void constrainBuffer( float* sink, float* cap, int size ){
-	for(int x = 0; x < size; x++)
-		sink[x] = (sink[x] > cap[x]) ? cap[x] : sink[x];
-}
-
-void updateLeafSinkFlow(float* sink, float* inc, float* div, float* label, float CC, int size){
-	for(int x = 0; x < size; x++)
-		sink[x] = inc[x] - div[x] + label[x] / CC;
-}
-
-void updateLabel(float* sink, float* inc, float* div, float* label, float CC, int size){
-	for(int x = 0; x < size; x++)
-		label[x] += CC*(inc[x] - div[x] - sink[x]);
-	for(int x = 0; x < size; x++)
-		label[x] = (label[x] > 1.0f) ? 1.0f : label[x];
-	for(int x = 0; x < size; x++)
-		label[x] = (label[x] < 0.0f) ? 0.0f : label[x];
-}
-
-void storeSourceFlowInBuffer(float* working, float* sink, float* div, float* label, float CC, int size){
-	for(int x = 0; x < size; x++)
-		working[x] += sink[x] + div[x] - label[x] / CC;
-}
-
-void storeSinkFlowInBuffer(float* working, float* inc, float* div, float* label, float CC, int size){
-	for(int x = 0; x < size; x++)
-		working[x] += inc[x] - div[x] + label[x] / CC;
-}
-
-void flowGradientStep(float* sink, float* inc, float* div, float* label, float StepSize, float CC, int size){
-	for(int x = 0; x < size; x++)
-		div[x] = StepSize*(sink[x] + div[x] - inc[x] - label[x] / CC);
-}
-
-void applyStep(float* div, float* flowX, float* flowY, float* flowZ, int VX, int VY, int VZ, int size){
-	for(int x = 0; x < size; x++){
-		float currAllowed = div[x];
-		float xAllowed = (x % VX) ? div[x-1] : 0.0f;
-		flowX[x] *= 0.5 * (currAllowed - xAllowed);
-		float yAllowed = (x/VX % VY) ? div[x-VX] : 0.0f;
-		flowY[x] *= 0.5 * (currAllowed - yAllowed);
-		float zAllowed = (x >= VX*VY) ? div[x-VX*VY] : 0.0f;
-		flowZ[x] *= 0.5 * (currAllowed - zAllowed);
-	}
-}
-
-void computeFlowMag(float* div, float* flowX, float* flowY, float* flowZ, float* smooth, float alpha, int VX, int VY, int VZ, int size ){
-	for(int x = 0; x < size; x++)
-		div[x] = flowX[x]*flowX[x] + flowY[x]*flowY[x] + flowZ[x]*flowZ[x];
-	for(int x = 0; x < size; x++)
-		div[x] += ((x+1) % VX) ? 0.0f : flowX[x+1]*flowX[x+1];
-	for(int x = 0; x < size; x++)
-		div[x] += (((x+VX)/VX) % VY) ? 0.0f : flowX[x+VX]*flowX[x+VX];
-	for(int x = 0; x < size-VX*VY; x++)
-		div[x] += flowX[x+VX*VY]*flowX[x+VX*VY];
-	for(int x = 0; x < size; x++)
-		div[x] = sqrt(div[x]);
-	if( smooth )
-		for(int x = 0; x < size; x++)
-			div[x] = (div[x] > alpha * smooth[x]) ? alpha * smooth[x] / div[x] : 1.0f;
-	else
-		for(int x = 0; x < size; x++)
-			div[x] = (div[x] > alpha) ? alpha / div[x] : 1.0f;
-}
-		
-void projectOntoSet(float* div, float* flowX, float* flowY, float* flowZ, int VX, int VY, int VZ, int size){
-	//project flows onto valid smoothness set
-	for(int x = 0; x < size; x++){
-		float currAllowed = div[x];
-		float xAllowed = (x % VX) ? div[x-1] : -currAllowed;
-		flowX[x] *= 0.5 * (currAllowed + xAllowed);
-		float yAllowed = (x/VX % VY) ? div[x-VX] : -currAllowed;
-		flowY[x] *= 0.5 * (currAllowed + yAllowed);
-		float zAllowed = (x >= VX*VY) ? div[x-VX*VY] : -currAllowed;
-		flowZ[x] *= 0.5 * (currAllowed + zAllowed);
-	}
-
-	//compute divergence
-	for(int x = 0; x < size; x++)
-		div[x] = flowX[x] + flowY[x] + flowZ[x];
-	for(int x = 0; x < size; x++)
-		div[x] -= (x % VX) ? flowX[x-1] : 0.0f;
-	for(int x = 0; x < size; x++)
-		div[x] -= (x/VX % VY) ? flowY[x-VX] : 0.0f;
-	for(int x = 0; x < size; x++)
-		div[x] -= (x >= VX*VY) ? flowZ[x-VX*VZ] : 0.0f;
-}
-
 int vtkHierarchicalMaxFlowSegmentation::InitializeAlgorithm(){
 	//initalize all spatial flows and divergences to zero
 	for(int i = 0; i < NumBranches; i++ ){
@@ -956,49 +829,49 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 
 		//compute the gradient step amount (store in div buffer for now)
 		//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
-		flowGradientStep(leafSinkBuffers[LeafMap[currNode]], leafIncBuffers[LeafMap[currNode]],
+		ghmf_flowGradientStep(leafSinkBuffers[LeafMap[currNode]], leafIncBuffers[LeafMap[currNode]],
 							  leafDivBuffers[LeafMap[currNode]], leafLabelBuffers[LeafMap[currNode]],
 							  StepSize, CC, VolumeSize);
 
 		//apply gradient descent to the flows
 		//std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
-		applyStep(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
+		ghmf_applyStep(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
 					   leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 		
 		//std::cout << currNode << "\t Find Projection multiplier" << std::endl;
-		computeFlowMag(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
+		ghmf_computeFlowMag(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
 					   leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
 					   leafSmoothnessTermBuffers[LeafMap[currNode]], leafSmoothnessConstants[LeafMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 		
 		//project onto set and recompute the divergence
 		//std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
-		projectOntoSet(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
+		ghmf_projectOntoSet(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
 					   leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 
 	}else if( isBranch ){
 		
 		//std::cout << currNode << "\t Find gradient descent step size" << std::endl;
-		flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchIncBuffers[BranchMap[currNode]],
+		ghmf_flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchIncBuffers[BranchMap[currNode]],
 							  branchDivBuffers[BranchMap[currNode]], branchLabelBuffers[BranchMap[currNode]],
 							  StepSize, CC,VolumeSize);
 		
 		//std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
-		applyStep(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
+		ghmf_applyStep(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
 					   branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 
 		//compute the multiplier for projecting back onto the feasible flow set (and store in div buffer)
 		//std::cout << currNode << "\t Find Projection multiplier" << std::endl;
-		computeFlowMag(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
+		ghmf_computeFlowMag(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
 					   branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
 					   branchSmoothnessTermBuffers[BranchMap[currNode]], branchSmoothnessConstants[BranchMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 		
 		//project onto set and recompute the divergence
-		projectOntoSet(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
+		ghmf_projectOntoSet(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
 					   branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
 					   VX, VY, VZ, VolumeSize);
 	}

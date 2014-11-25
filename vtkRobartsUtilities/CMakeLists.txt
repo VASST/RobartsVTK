@@ -22,6 +22,7 @@ SET ( Kit_SRCS
   vtkImageVote.h vtkImageVote.cxx
   vtkDiceCoefficient.h vtkDiceCoefficient.cxx
   
+  vtkMaxFlowSegmentationUtilities.h vtkMaxFlowSegmentationUtilities.cxx
   vtkHierarchicalMaxFlowSegmentation.h vtkHierarchicalMaxFlowSegmentation.cxx
   vtkDirectedAcyclicGraphMaxFlowSegmentation.h vtkDirectedAcyclicGraphMaxFlowSegmentation.cxx
   vtkImageEntropyPlaneSelection.h vtkImageEntropyPlaneSelection.cxx
@@ -30,6 +31,8 @@ SET ( Kit_SRCS
   vtkRootedDirectedAcyclicGraphIterator.h vtkRootedDirectedAcyclicGraphIterator.cxx
   vtkRootedDirectedAcyclicGraphForwardIterator.h vtkRootedDirectedAcyclicGraphForwardIterator.cxx
   vtkRootedDirectedAcyclicGraphBackwardIterator.h vtkRootedDirectedAcyclicGraphBackwardIterator.cxx
+
+  vtkImageFrangiFilter.h vtkImageFrangiFilter.cxx
 )
 
 ADD_LIBRARY( vtkRobartsUtilities ${Kit_SRCS} )
