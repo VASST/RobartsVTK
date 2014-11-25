@@ -758,7 +758,7 @@ void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::InitializeSinkFlowsTasks(){
 				Divide[LeafMap[Child]]->AddTaskToSignal(clear);
 			else
 				for(int j = 0; j < Structure->GetNumberOfChildren(Child); j++)
-					AccumLabels[Structure->GetOutEdge(Node,j).Id]->AddTaskToSignal(clear);
+					AccumLabels[Structure->GetOutEdge(Child,j).Id]->AddTaskToSignal(clear);
 		}
 
 		//create accumulation tasks
