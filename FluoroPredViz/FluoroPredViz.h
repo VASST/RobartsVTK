@@ -6,7 +6,9 @@
 #include <QSlider>
 #include <QBoxLayout>
 #include <QSplitter>
+#include <QLineEdit>
 
+class QVTKWidget;
 class ResizableQVTKWidget;
 class vtkImageReader2;
 class vtkSphereSource;
@@ -16,6 +18,9 @@ class vtkActor;
 class vtkCamera;
 class vtkTransform;
 class vtkVolume;
+class vtkImageExtractComponents;
+class vtkCuda2DTransferFunction;
+class vtkBoxWidget;
 
 class FluoroPredViz : public QWidget {
 	Q_OBJECT
@@ -34,9 +39,10 @@ public slots:
 	void SetFocusY(double);
 	void SetPrincipleX(double);
 	void SetPrincipleY(double);
-	void SetRadius(double);
+	void SetDetectorDistance(double);
 	void SetWidth(double);
 	void SetAngle(double);
+	void SetCrAngle(double);
 
 	//object param slots
 	void SetTranslationX(double);
@@ -51,13 +57,15 @@ public slots:
 
 private slots:
 	//fluoro params slots
+	void MimicView();
 	void SetFocusX(int);
 	void SetFocusY(int);
 	void SetPrincipleX(int);
 	void SetPrincipleY(int);
-	void SetRadius(int);
+	void SetDetectorDistance(int);
 	void SetWidth(int);
 	void SetAngle(int);
+	void SetCrAngle(int);
 
 	//object params slots
 	void SetTranslationX(int);
@@ -67,42 +75,68 @@ private slots:
 	void SetOrientationY(int);
 	void SetOrientationZ(int);
 
+	//TF slots
+	void SetTFName();
+
 private:
 	
 	int SuccessInit;
 
 	//fluoro params
 	void SetupFluoroParams(QBoxLayout*);
-	QSlider* FocusX;		double FocusXVal;
-	QSlider* FocusY;		double FocusYVal;
-	QSlider* PrincipleX;	double PrincipleXVal;
-	QSlider* PrincipleY;	double PrincipleYVal;
-	QSlider* Radius;		double RadiusVal;
-	QSlider* Angle;			double AngleVal;
-	QSlider* Width;			double WidthVal;
+	QSlider* FocusX;		double			FocusXVal;
+							QLineEdit*		FocusXValBox;
+	QSlider* FocusY;		double			FocusYVal;
+							QLineEdit*		FocusYValBox;
+	QSlider* PrincipleX;	double			PrincipleXVal;
+							QLineEdit*		PrincipleXValBox;
+	QSlider* PrincipleY;	double			PrincipleYVal;
+							QLineEdit*		PrincipleYValBox;
+	QSlider* DetectorDistance;		double			DetectorDistanceVal;
+							QLineEdit*		DetectorDistanceValBox;
+	QSlider* Angle;			double			AngleVal;
+							QLineEdit*		AngleValBox;
+	QSlider* CrAngle;		double			CrAngleVal;
+							QLineEdit*		CrAngleValBox;
+	QSlider* Width;			double			WidthVal;
+							QLineEdit*		WidthValBox;
 
 	//object params
 	void SetupObjectParams(QBoxLayout*);
-	QSlider* TranslationX;	double TranslationXVal;
-	QSlider* TranslationY;	double TranslationYVal;
-	QSlider* TranslationZ;	double TranslationZVal;
-	QSlider* OrientationX;	double OrientationXVal;
-	QSlider* OrientationY;	double OrientationYVal;
-	QSlider* OrientationZ;	double OrientationZVal;
+	QSlider* TranslationX;	double			TranslationXVal;
+							QLineEdit*		TranslationXValBox;
+	QSlider* TranslationY;	double			TranslationYVal;
+							QLineEdit*		TranslationYValBox;
+	QSlider* TranslationZ;	double			TranslationZVal;
+							QLineEdit*		TranslationZValBox;
+	QSlider* OrientationX;	double			OrientationXVal;
+							QLineEdit*		OrientationXValBox;
+	QSlider* OrientationY;	double			OrientationYVal;
+							QLineEdit*		OrientationYValBox;
+	QSlider* OrientationZ;	double			OrientationZVal;
+							QLineEdit*		OrientationZValBox;
 	vtkTransform* ObjectParams;
 
 	//file management
 	QString RequestFilename();
 	int SetUpReader(QString);
 	vtkImageReader2* Reader;
+	vtkImageExtractComponents* Extractor;
 
 	//screens
+	vtkBoxWidget* ClippingPlanes;
+	vtkTransform* ClippingPlanesPosition;
 	void ConnectUpPipeline();
 	void SetupDRRScreen(QSplitter*);
+	void SetupDVRScreen(QSplitter*);
 	void SetupSchematicScreen(QSplitter*);
+	QVTKWidget*		DVRScreen;
 	ResizableQVTKWidget*		DRRScreen;
 	ResizableQVTKWidget*		SchematicScreen[3];
-	vtkVolume*		ImageVolume;
+	vtkVolume*		ImageVolumeDVR;
+	vtkVolume*		ImageVolumeDRR;
+	QLineEdit*		TFName;
+	vtkCuda2DTransferFunction* TransferFunction;
 
 	//schematic
 	void UpdateDegreeMarkers();
@@ -112,6 +146,7 @@ private:
 	int NumMarkers;
 	vtkConeSource* XrayMarker;
 	vtkCamera* XraySource;
+	vtkCamera* DVRSource;
 	vtkActor* ImageBoundsMarkerActor;
 
 };

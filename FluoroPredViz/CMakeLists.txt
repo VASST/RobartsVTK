@@ -3,7 +3,7 @@ INCLUDE( ${QT_USE_FILE} )
 
 SET(KIT FluoroPredViz )
 SET(UKIT FluoroPredViz )
-SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization QVTK)
+SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization vtkRobartsUtilities QVTK)
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS

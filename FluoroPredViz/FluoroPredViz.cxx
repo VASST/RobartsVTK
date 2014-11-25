@@ -8,43 +8,87 @@
 #include "qframe.h"
 #include "qgroupbox.h"
 #include "qfiledialog.h"
+#include "qlineedit.h"
+#include "qpushbutton.h"
 
 #include "vtkMetaImageReader.h"
 #include "vtkMINCImageReader.h"
 #include "vtkDICOMImageReader.h"
 #include "vtkTransform.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkCuda2DTransferFunction.h"
+
+//rendering pieces
+#include "vtkRenderer.h"
+#include "vtkRendererCollection.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkCamera.h"
+#include "vtkTransform.h"
+
+//pipeline pieces
+#include "vtkImageData.h"
+#include "vtkActor.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkArrowSource.h"
+#include "vtkSphereSource.h"
+#include "vtkConeSource.h"
+#include "vtkCubeSource.h"
+#include "vtkProperty.h"
+#include "vtkImagePlaneWidget.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkCudaDRRImageVolumeMapper.h"
+#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaFunctionObject.h"
+#include "vtkCudaFunctionPolygonReader.h"
+#include "vtkVolume.h"
+#include "vtkBoxWidget.h"
+
+#define pi 3.1415926
 
 FluoroPredViz::FluoroPredViz( QWidget* parent ) :
 QWidget(0), SuccessInit(0)
 {
+	
+
+	//get initial image
+	Reader = 0;
+	Extractor = 0;
+	SuccessInit = SetUpReader(RequestFilename());
+	if(SuccessInit != 0) return;
 
 	//create main layout
 	QHBoxLayout* MainLayout = new QHBoxLayout();
 	this->setLayout(MainLayout);
-	QWidget* Params = new QWidget(0);
-	QVBoxLayout* ParamsLayout = new QVBoxLayout();
-	Params->setLayout(ParamsLayout);
 	QSplitter* WindowSplitter = new QSplitter(Qt::Orientation::Vertical);
-	MainLayout->addWidget(Params);
+	QSplitter* WindowSplitter2 = new QSplitter(Qt::Orientation::Horizontal);
+	QSplitter* WindowSplitter3 = new QSplitter(Qt::Orientation::Horizontal);
+	//MainLayout->addWidget(Params);
 	MainLayout->addWidget(WindowSplitter);
+	WindowSplitter->addWidget(WindowSplitter2);
+	WindowSplitter->addWidget(WindowSplitter3);
 	WindowSplitter->setSizePolicy(QSizePolicy::Policy::Expanding,QSizePolicy::Policy::Expanding);
 	
-	//set up parameters bar
-	ParamsLayout->addStrut(20);
-	SetupFluoroParams(ParamsLayout);
-	ParamsLayout->addSpacerItem(new QSpacerItem(40, 20, QSizePolicy::Fixed, QSizePolicy::Fixed) );
-	SetupObjectParams(ParamsLayout);
-	ParamsLayout->addSpacerItem(new QSpacerItem(40, 200, QSizePolicy::Fixed, QSizePolicy::Expanding) );
-	ParamsLayout->setSizeConstraint(QLayout::SetFixedSize);
+	//set up fluoro parameters bar
+	QWidget* FluoroParams = new QWidget(0);
+	QVBoxLayout* FluoroParamsLayout = new QVBoxLayout();
+	FluoroParams->setLayout(FluoroParamsLayout);
+	SetupFluoroParams(FluoroParamsLayout);
+	WindowSplitter3->addWidget(FluoroParams);
 
+	//set up object parameters bar
+	QWidget* ObjectParams = new QWidget(0);
+	QVBoxLayout* ObjectParamsLayout = new QVBoxLayout();
+	ObjectParams->setLayout(ObjectParamsLayout);
+	SetupObjectParams(ObjectParamsLayout);
+	WindowSplitter3->addWidget(ObjectParams);
+	
 	//set up screens
-	SetupDRRScreen(WindowSplitter);
-	SetupSchematicScreen(WindowSplitter);
-
-	//get initial image
-	Reader = 0;
-	SuccessInit = SetUpReader(RequestFilename());
-	if(SuccessInit != 0) return;
+	SetupDVRScreen(WindowSplitter2);
+	SetupDRRScreen(WindowSplitter2);
+	SetupSchematicScreen(WindowSplitter3);
+	
+	//set up pipeline
 	ConnectUpPipeline();
 	UpdateDegreeMarkers();
 	UpdateXrayMarker();
@@ -54,7 +98,23 @@ QWidget(0), SuccessInit(0)
 	DRRScreen->ready = true;
 	for(int i = 0; i < 3; i++)
 		SchematicScreen[i]->ready = true;
+	
+	//do final prep on the cameras
+	Angle->setValue(Angle->maximum()/2);
+	this->DVRSource->SetPosition( this->XraySource->GetPosition() );
+	this->DVRSource->SetFocalPoint( this->XraySource->GetFocalPoint() );
+	this->DVRSource->SetViewUp( this->XraySource->GetViewUp() );
+	
 	UpdateViz();
+
+	//finalize clipping planes
+	ClippingPlanes->PlaceWidget();
+	ClippingPlanes->EnabledOn();
+	ClippingPlanesPosition = vtkTransform::New();
+	ClippingPlanes->GetTransform(ClippingPlanesPosition);
+	ClippingPlanesPosition->Translate(TranslationXVal,TranslationYVal,TranslationZVal);
+	ClippingPlanes->SetTransform(ClippingPlanesPosition);
+	ClippingPlanes->On();
 
 }
 
@@ -69,7 +129,7 @@ FluoroPredViz::~FluoroPredViz(){
 	delete FocusY;
 	delete PrincipleX;
 	delete PrincipleY;
-	delete Radius;
+	delete DetectorDistance;
 	delete Angle;
 
 	//object params sliders
@@ -85,7 +145,8 @@ FluoroPredViz::~FluoroPredViz(){
 		delete SchematicScreen[i];
 	delete DRRScreen;
 	if(Reader) Reader->Delete();
-
+	if(Extractor) Extractor->Delete();
+	TransferFunction->Delete();
 }
 
 
@@ -96,25 +157,31 @@ FluoroPredViz::~FluoroPredViz(){
 
 
 void FluoroPredViz::SetupFluoroParams(QBoxLayout* ParamsLayout){
-	
+
 	//fluoro params tab labels
 	QGroupBox* FluoroTab = new QGroupBox("Fluoro Parameters",this);
+	QPushButton* MimicView = new QPushButton("Mimic 3D View on Fluoro");
 	QGridLayout* FluoroTabLayout = new QGridLayout();
-	FluoroTabLayout->addWidget(new QLabel("Focus (x)"),0,0);
-	FluoroTabLayout->addWidget(new QLabel("Focus (y)"),1,0);
-	FluoroTabLayout->addWidget(new QLabel("Radius (d)"),2,0);
-	FluoroTabLayout->addWidget(new QLabel("Principle Point (x)"),0,3);
-	FluoroTabLayout->addWidget(new QLabel("Principle Point (y)"),1,3);
-	FluoroTabLayout->addWidget(new QLabel("Width (w)"),2,3);
-	QString ThetaName = "Angle (";
+	FluoroTabLayout->addWidget(MimicView,0,0,1,5);
+	FluoroTabLayout->addWidget(new QLabel("Focus (x)"),1,0);
+	FluoroTabLayout->addWidget(new QLabel("Focus (y)"),3,0);
+	FluoroTabLayout->addWidget(new QLabel("Detector Distance (d)"),5,0);
+	FluoroTabLayout->addWidget(new QLabel("Principle Point (x)"),1,3);
+	FluoroTabLayout->addWidget(new QLabel("Principle Point (y)"),3,3);
+	FluoroTabLayout->addWidget(new QLabel("Width (w)"),5,3);
+	QString ThetaName = "Left-Right Angle (";
 	ThetaName.append( QChar(0x98, 0x03) );
 	ThetaName.append( ")" );
-	FluoroTabLayout->addWidget(new QLabel( ThetaName ),3,0);
+	FluoroTabLayout->addWidget(new QLabel( ThetaName ),7,0);
+	ThetaName = "Cranial-Caudal Angle (";
+	ThetaName.append( QChar(0x98, 0x03) );
+	ThetaName.append( ")" );
+	FluoroTabLayout->addWidget(new QLabel( ThetaName ),9,0);
 
 	//fluoro params sliders
-	WidthVal = 200.0;
+	WidthVal = 500.0;
 	Width = new QSlider(Qt::Orientation::Horizontal);
-	Width->setMaximum(2000);		Width->setValue(200);
+	Width->setMaximum(1000); Width->setValue(500);
 	FocusXVal = 1000.0;
 	FocusX = new QSlider(Qt::Orientation::Horizontal);
 	FocusX->setMaximum(2000);		FocusX->setValue(1000);
@@ -127,28 +194,60 @@ void FluoroPredViz::SetupFluoroParams(QBoxLayout* ParamsLayout){
 	PrincipleYVal = 0.0;
 	PrincipleY = new QSlider(Qt::Orientation::Horizontal);
 	PrincipleY->setMaximum(2000);	PrincipleY->setValue(1000);
-	RadiusVal = 1000.0;
-	Radius = new QSlider(Qt::Orientation::Horizontal);
-	Radius->setMaximum(2000);		Radius->setValue(1000);
+	DetectorDistanceVal = 1000.0;
+	DetectorDistance = new QSlider(Qt::Orientation::Horizontal);
+	DetectorDistance->setMaximum(2000);		DetectorDistance->setValue(1000);
 	Angle = new QSlider(Qt::Orientation::Horizontal);
-	Angle->setMaximum(720);			Angle->setValue(360);
+	Angle->setMaximum(360);			Angle->setValue(180);
 	AngleVal = 0.0;
-	FluoroTabLayout->addWidget(FocusX,0,1);
-	FluoroTabLayout->addWidget(FocusY,1,1);
-	FluoroTabLayout->addWidget(Radius,2,1);
-	FluoroTabLayout->addWidget(PrincipleX,0,4);
-	FluoroTabLayout->addWidget(PrincipleY,1,4);
-	FluoroTabLayout->addWidget(Width,2,4);
-	FluoroTabLayout->addWidget(Angle,3,1,1,4);
+	CrAngle = new QSlider(Qt::Orientation::Horizontal);
+	CrAngle->setMaximum(110);		CrAngle->setValue(65);
+	CrAngleVal = 0.0;
+	FluoroTabLayout->addWidget(FocusX,2,1);
+	FluoroTabLayout->addWidget(FocusY,4,1);
+	FluoroTabLayout->addWidget(DetectorDistance,6,1);
+	FluoroTabLayout->addWidget(PrincipleX,2,4);
+	FluoroTabLayout->addWidget(PrincipleY,4,4);
+	FluoroTabLayout->addWidget(Width,6,4);
+	FluoroTabLayout->addWidget(Angle,8,1,1,4);
+	FluoroTabLayout->addWidget(CrAngle,10,1,1,4);
+	
+	//add line edits
+	FocusXValBox = new QLineEdit(); FocusXValBox->setText(QString::number(FocusXVal));
+	FocusYValBox = new QLineEdit(); FocusYValBox->setText(QString::number(FocusYVal));
+	PrincipleXValBox = new QLineEdit(); PrincipleXValBox->setText(QString::number(PrincipleXVal));
+	PrincipleYValBox = new QLineEdit(); PrincipleYValBox->setText(QString::number(PrincipleYVal));
+	FocusXValBox->setEnabled(false);
+	FocusYValBox->setEnabled(false);
+	PrincipleXValBox->setEnabled(false);
+	PrincipleYValBox->setEnabled(false);
+	FluoroTabLayout->addWidget(FocusXValBox,1,1);
+	FluoroTabLayout->addWidget(FocusYValBox,3,1);
+	FluoroTabLayout->addWidget(PrincipleXValBox,1,4);
+	FluoroTabLayout->addWidget(PrincipleYValBox,3,4);
+	DetectorDistanceValBox = new QLineEdit(); DetectorDistanceValBox->setText(QString::number(DetectorDistanceVal));
+	WidthValBox = new QLineEdit(); WidthValBox->setText(QString::number(WidthVal));
+	AngleValBox = new QLineEdit(); AngleValBox->setText(QString::number(AngleVal));
+	CrAngleValBox = new QLineEdit(); CrAngleValBox->setText(QString::number(CrAngleVal));
+	DetectorDistanceValBox->setEnabled(false);
+	WidthValBox->setEnabled(false);
+	AngleValBox->setEnabled(false);
+	CrAngleValBox->setEnabled(false);
+	FluoroTabLayout->addWidget(DetectorDistanceValBox,5,1);
+	FluoroTabLayout->addWidget(WidthValBox,5,4);
+	FluoroTabLayout->addWidget(AngleValBox,7,1,1,4);
+	FluoroTabLayout->addWidget(CrAngleValBox,9,1,1,4);
 
 	//fluoro slider slots
+	connect( MimicView, SIGNAL(pressed()), this, SLOT(MimicView()) );
 	connect( FocusX, SIGNAL(valueChanged(int)), this, SLOT(SetFocusX(int)) );
 	connect( FocusY, SIGNAL(valueChanged(int)), this, SLOT(SetFocusY(int)) );
 	connect( PrincipleX, SIGNAL(valueChanged(int)), this, SLOT(SetPrincipleX(int)) );
 	connect( PrincipleY, SIGNAL(valueChanged(int)), this, SLOT(SetPrincipleY(int)) );
-	connect( Radius, SIGNAL(valueChanged(int)), this, SLOT(SetRadius(int)) );
+	connect( DetectorDistance, SIGNAL(valueChanged(int)), this, SLOT(SetDetectorDistance(int)) );
 	connect( Width, SIGNAL(valueChanged(int)), this, SLOT(SetWidth(int)) );
 	connect( Angle, SIGNAL(valueChanged(int)), this, SLOT(SetAngle(int)) );
+	connect( CrAngle, SIGNAL(valueChanged(int)), this, SLOT(SetCrAngle(int)) );
 
 	//add fluoro params to main screen
 	FluoroTab->setLayout(FluoroTabLayout);
@@ -157,6 +256,43 @@ void FluoroPredViz::SetupFluoroParams(QBoxLayout* ParamsLayout){
 	ParamsLayout->addWidget(FluoroTab);
 }
 
+void FluoroPredViz::MimicView(){
+
+	//get DVR camera orientation
+	double DesiredOrientation[3] = {
+		this->DVRSource->GetFocalPoint()[0]-this->DVRSource->GetPosition()[0],
+		this->DVRSource->GetFocalPoint()[1]-this->DVRSource->GetPosition()[1],
+		this->DVRSource->GetFocalPoint()[2]-this->DVRSource->GetPosition()[2] };
+	double norm = std::sqrt( DesiredOrientation[0]*DesiredOrientation[0] + 
+							 DesiredOrientation[1]*DesiredOrientation[1] +
+							 DesiredOrientation[2]*DesiredOrientation[2] );
+	DesiredOrientation[0] /= norm;
+	DesiredOrientation[1] /= norm;
+	DesiredOrientation[2] /= norm;
+
+	//no need to correct for object rotation since DVR and DRR are rendered in the same co-ordinate frame
+
+	//find the angle for left-right 
+	double DesiredAngle = std::atan2(DesiredOrientation[1],-DesiredOrientation[0]);
+	DesiredAngle += 0.5*pi;
+	if(DesiredAngle > pi) DesiredAngle -= 2*pi;
+	if(DesiredAngle < -pi) DesiredAngle += 2*pi;
+	DesiredAngle = 180 * DesiredAngle / pi;
+
+	//find closest achievable cranial-caudal angle
+	double DesiredCrAngle = std::acos( DesiredOrientation[2] ) - 0.5 * pi ;
+	if(DesiredCrAngle > pi) DesiredCrAngle -= 2*pi;
+	if(DesiredCrAngle < -pi) DesiredCrAngle += 2*pi;
+	DesiredCrAngle = 180 * DesiredCrAngle / pi;
+	double MaxCranialAngle = 45.0;
+	double MinCranialAngle = -65.0;
+	DesiredCrAngle = std::min( MaxCranialAngle, std::max( MinCranialAngle, DesiredCrAngle ) );
+
+	//apply angles
+	this->Angle->setValue(180+DesiredAngle);
+	this->CrAngle->setValue(65+DesiredCrAngle);
+	UpdateViz();
+}
 
 void FluoroPredViz::SetFocusX(int v){
 	double Range = 2000.0; double Offset = 0.0;
@@ -182,48 +318,59 @@ void FluoroPredViz::SetPrincipleY(int v){
 	SetPrincipleY(aV);
 }
 
-void FluoroPredViz::SetRadius(int v){
-	double Range = 2000.0; double Offset = 0.0;
-	double aV = Offset + Range*((double) v / (double) (Radius->maximum() - Radius->minimum()));
-	SetRadius(aV);
+void FluoroPredViz::SetDetectorDistance(int v){
+	double Range = 300.0; double Offset = 900.0;
+	double aV = Offset + Range*((double) v / (double) (DetectorDistance->maximum() - DetectorDistance->minimum()));
+	SetDetectorDistance(aV);
 }
 
 void FluoroPredViz::SetAngle(int v){
-	double Range = 180; double Offset = -90.0;
+	double Range = 360; double Offset = -180.0;
 	double aV = Offset + Range*((double) v / (double) (Angle->maximum() - Angle->minimum()));
 	SetAngle(aV);
 }
 
+void FluoroPredViz::SetCrAngle(int v){
+	double Range = 110.0; double Offset = -65.0;
+	double aV = Offset + Range*((double) v / (double) (CrAngle->maximum() - CrAngle->minimum()));
+	SetCrAngle(aV);
+}
+
 void FluoroPredViz::SetWidth(int v){
-	double Range = 2000; double Offset = 0.0;
+	double Range = 1000; double Offset = 0.0;
 	double aV = Offset + Range*((double) v / (double) (Width->maximum() - Width->minimum()));
 	SetWidth(aV);
 }
 
 void FluoroPredViz::SetFocusX(double v){
 	FocusXVal = v;
+	FocusXValBox->setText(QString::number(v));
 	UpdateXrayMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetFocusY(double v){
 	FocusYVal = v;
+	FocusYValBox->setText(QString::number(v));
 	UpdateXrayMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetPrincipleX(double v){
-	PrincipleYVal = v;
+	PrincipleXVal = v;
+	PrincipleXValBox->setText(QString::number(v));
 	UpdateViz();
 }
 
 void FluoroPredViz::SetPrincipleY(double v){
-	PrincipleXVal = v;
+	PrincipleYVal = v;
+	PrincipleYValBox->setText(QString::number(v));
 	UpdateViz();
 }
 
-void FluoroPredViz::SetRadius(double v){
-	RadiusVal = v;
+void FluoroPredViz::SetDetectorDistance(double v){
+	DetectorDistanceVal = v;
+	DetectorDistanceValBox->setText(QString::number(v));
 	UpdateDegreeMarkers();
 	UpdateXrayMarker();
 	UpdateViz();
@@ -231,12 +378,55 @@ void FluoroPredViz::SetRadius(double v){
 
 void FluoroPredViz::SetAngle(double v){
 	AngleVal = v;
+	
+	
+	if(v > 0)
+		if(v < 90)
+			AngleValBox->setText("Anterior Left Oblique " + QString::number(v) );
+			
+		else if( v == 90 )
+			AngleValBox->setText("Left Projection");
+		else if( v == 180 )
+			AngleValBox->setText("Posterior Projection");
+		else
+			AngleValBox->setText("Posterior Left Oblique " + QString::number(180-v) );
+
+	else if(v < 0)
+		if(v > -90)
+			AngleValBox->setText("Anterior Right Oblique " + QString::number(-v) );
+		else if( v == -90 )
+			AngleValBox->setText("Right Projection");
+		else if( v == -180 )
+			AngleValBox->setText("Posterior Projection");
+		else
+			AngleValBox->setText("Posterior Right Oblique " + QString::number(v+180) );
+	
+	else
+		AngleValBox->setText("Anterior Projection");
+
+	//AngleValBox->setText(QString::number(v));
+	UpdateXrayMarker();
+	UpdateViz();
+}
+
+void FluoroPredViz::SetCrAngle(double v){
+	CrAngleVal = v;
+	
+	
+	if(v > 0)
+		CrAngleValBox->setText("Cranial " + QString::number(v) );
+	else if(v < 0)
+		CrAngleValBox->setText("Caudal " + QString::number(-v) );
+	else
+		CrAngleValBox->setText("Cranial 0" );
+
 	UpdateXrayMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetWidth(double v){
 	WidthVal = v;
+	WidthValBox->setText(QString::number(v));
 	UpdateXrayMarker();
 	UpdateViz();
 }
@@ -256,22 +446,28 @@ void FluoroPredViz::SetupObjectParams(QBoxLayout* ParamsLayout){
 	QGroupBox* ObjectTab = new QGroupBox("Object Parameters",this);
 	QGridLayout* ObjectTabLayout = new QGridLayout();
 	ObjectTabLayout->addWidget(new QLabel("Position (x)"),0,0);
-	ObjectTabLayout->addWidget(new QLabel("Position (y)"),1,0);
-	ObjectTabLayout->addWidget(new QLabel("Position (z)"),2,0);
+	ObjectTabLayout->addWidget(new QLabel("Position (y)"),2,0);
+	ObjectTabLayout->addWidget(new QLabel("Position (z)"),4,0);
 	ObjectTabLayout->addWidget(new QLabel("Orientation (x)"),0,3);
-	ObjectTabLayout->addWidget(new QLabel("Orientation (y)"),1,3);
-	ObjectTabLayout->addWidget(new QLabel("Orientation (z)"),2,3);
+	ObjectTabLayout->addWidget(new QLabel("Orientation (y)"),2,3);
+	ObjectTabLayout->addWidget(new QLabel("Orientation (z)"),4,3);
 
 	//Object params sliders
 	TranslationX = new QSlider(Qt::Orientation::Horizontal);
-	TranslationX->setMaximum(2000);		TranslationX->setValue(1000);
-	TranslationXVal = 0.0;
+	TranslationXVal = -0.5*this->Reader->GetOutput()->GetSpacing()[0]*
+						(this->Reader->GetOutput()->GetExtent()[0]+this->Reader->GetOutput()->GetExtent()[1])
+						- this->Reader->GetOutput()->GetOrigin()[0];
+	TranslationX->setMaximum(2000);		TranslationX->setValue(1000+TranslationXVal);
 	TranslationY = new QSlider(Qt::Orientation::Horizontal);
-	TranslationY->setMaximum(2000);		TranslationY->setValue(1000);
-	TranslationYVal = 0.0;
+	TranslationYVal = -0.5*this->Reader->GetOutput()->GetSpacing()[1]*
+						(this->Reader->GetOutput()->GetExtent()[2]+this->Reader->GetOutput()->GetExtent()[3])
+						- this->Reader->GetOutput()->GetOrigin()[1];
+	TranslationY->setMaximum(2000);		TranslationY->setValue(1000+TranslationYVal);
 	TranslationZ = new QSlider(Qt::Orientation::Horizontal);
-	TranslationZ->setMaximum(2000);		TranslationZ->setValue(1000);
-	TranslationZVal = 0.0;
+	TranslationZVal = -0.5*this->Reader->GetOutput()->GetSpacing()[2]*
+						(this->Reader->GetOutput()->GetExtent()[4]+this->Reader->GetOutput()->GetExtent()[5])
+						- this->Reader->GetOutput()->GetOrigin()[2];
+	TranslationZ->setMaximum(2000);		TranslationZ->setValue(1000+TranslationZVal);
 	OrientationX = new QSlider(Qt::Orientation::Horizontal);
 	OrientationX->setMaximum(720);		OrientationX->setValue(360);
 	OrientationXVal = 0.0;
@@ -281,12 +477,32 @@ void FluoroPredViz::SetupObjectParams(QBoxLayout* ParamsLayout){
 	OrientationZ = new QSlider(Qt::Orientation::Horizontal);
 	OrientationZ->setMaximum(720);		OrientationZ->setValue(360);
 	OrientationZVal = 0.0;
-	ObjectTabLayout->addWidget(TranslationX,0,1);
-	ObjectTabLayout->addWidget(TranslationY,1,1);
-	ObjectTabLayout->addWidget(TranslationZ,2,1);
-	ObjectTabLayout->addWidget(OrientationX,0,4);
-	ObjectTabLayout->addWidget(OrientationY,1,4);
-	ObjectTabLayout->addWidget(OrientationZ,2,4);
+	ObjectTabLayout->addWidget(TranslationX,1,0,1,2);
+	ObjectTabLayout->addWidget(TranslationY,3,0,1,2);
+	ObjectTabLayout->addWidget(TranslationZ,5,0,1,2);
+	ObjectTabLayout->addWidget(OrientationX,1,3,1,2);
+	ObjectTabLayout->addWidget(OrientationY,3,3,1,2);
+	ObjectTabLayout->addWidget(OrientationZ,5,3,1,2);
+	
+	//add line edits
+	TranslationXValBox = new QLineEdit(); TranslationXValBox->setText(QString::number(TranslationXVal));
+	TranslationYValBox = new QLineEdit(); TranslationYValBox->setText(QString::number(TranslationYVal));
+	TranslationZValBox = new QLineEdit(); TranslationZValBox->setText(QString::number(TranslationZVal));
+	TranslationXValBox->setEnabled(false);
+	TranslationYValBox->setEnabled(false);
+	TranslationZValBox->setEnabled(false);
+	ObjectTabLayout->addWidget(TranslationXValBox,0,1);
+	ObjectTabLayout->addWidget(TranslationYValBox,2,1);
+	ObjectTabLayout->addWidget(TranslationZValBox,4,1);
+	OrientationXValBox = new QLineEdit(); OrientationXValBox->setText(QString::number(OrientationXVal));
+	OrientationYValBox = new QLineEdit(); OrientationYValBox->setText(QString::number(OrientationYVal));
+	OrientationZValBox = new QLineEdit(); OrientationZValBox->setText(QString::number(OrientationZVal));
+	ObjectTabLayout->addWidget(OrientationXValBox,0,4);
+	ObjectTabLayout->addWidget(OrientationYValBox,2,4);
+	ObjectTabLayout->addWidget(OrientationZValBox,4,4);
+	OrientationXValBox->setEnabled(false);
+	OrientationYValBox->setEnabled(false);
+	OrientationZValBox->setEnabled(false);
 
 	//Object slider slots
 	connect( TranslationX, SIGNAL(valueChanged(int)), this, SLOT(SetTranslationX(int)) );
@@ -342,51 +558,56 @@ void FluoroPredViz::SetOrientationZ(int v){
 
 void FluoroPredViz::SetTranslationX(double v){
 	TranslationXVal = v;
+	TranslationXValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetTranslationY(double v){
 	TranslationYVal = v;
+	TranslationYValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetTranslationZ(double v){
 	TranslationZVal = v;
+	TranslationZValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationX(double v){
 	OrientationXVal = v;
+	OrientationXValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationY(double v){
 	OrientationYVal = v;
+	OrientationYValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationZ(double v){
 	OrientationZVal = v;
+	OrientationZValBox->setText(QString::number(v));
 	UpdateImageBoundsMarker();
 	UpdateViz();
 }
 
 
-
-
 //-------------------------------------------------------------------------------//
 // Manage Image
 //-------------------------------------------------------------------------------//
+#include "vtkStringArray.h"
 
 QString FluoroPredViz::RequestFilename(){
 
 	//get file name
-	QString filename = QFileDialog::getOpenFileName(this,"Open Image","", tr("Meta (*.mhd *.mha);; MINC (*.mnc *.minc)") );
+	QString filename = QFileDialog::getOpenFileName(this,"Open Image","", tr("DICOM (*.dcm);; Meta (*.mhd *.mha);; MINC (*.mnc *.minc)") );
 	return filename;
 
 }
@@ -400,19 +621,53 @@ int FluoroPredViz::SetUpReader(QString filename){
 	if( filename.endsWith(".mhd",Qt::CaseInsensitive) || filename.endsWith(".mha",Qt::CaseInsensitive) ){
 		if( this->Reader ) this->Reader->Delete();
 		this->Reader = vtkMetaImageReader::New();
+		if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
+			return -1;
+		this->Reader->SetFileName( filename.toStdString().c_str() );
+
 	}else if( filename.endsWith(".mnc",Qt::CaseInsensitive) || filename.endsWith(".minc",Qt::CaseInsensitive) ){
 		if( this->Reader ) this->Reader->Delete();
 		this->Reader = vtkMINCImageReader::New();
+		if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
+			return -1;
+		this->Reader->SetFileName( filename.toStdString().c_str() );
+
+	}else if( filename.endsWith(".dcm",Qt::CaseInsensitive) ){
+		if( this->Reader ) this->Reader->Delete();
+		vtkDICOMImageReader* dicomReader = vtkDICOMImageReader::New();
+		this->Reader =  dicomReader;
+
+		//find directory name
+		QFileInfo file(filename);
+		int length = file.fileName().length();
+		filename.chop(length+1);
+
+		//list files in directory ending in .dcm
+		QStringList nameFilter("*.dcm");
+		QDir directory(filename);
+		QStringList txtFilesAndDirectories = directory.entryList(nameFilter);
+
+		//load into array for the reader
+		vtkStringArray* filenameArray = vtkStringArray::New();
+		for(int i = 0; i < txtFilesAndDirectories.length(); i++){
+			filenameArray->InsertNextValue( txtFilesAndDirectories[i].toStdString() );
+			//if( !Reader->CanReadFile(  txtFilesAndDirectories[i].toStdString().c_str() ) )
+			//	return -1;
+		}
+		Reader->SetFileNames( filenameArray );
+		dicomReader->SetDirectoryName(filename.toStdString().c_str());
+
+		filenameArray->Delete();
+
 	}else{
 		return -1;
 	}
 
-	//check validity of reader and load file in
-	if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) ){
-		return -1;
-	}
-	this->Reader->SetFileName( filename.toStdString().c_str() );
-	this->Reader->Update();
+	Reader->Update();
+	Extractor = vtkImageExtractComponents::New();
+	Extractor->SetInputConnection(Reader->GetOutputPort());
+	Extractor->SetComponents(0);
+	Extractor->Update();
 
 	return 0;
 
@@ -437,25 +692,9 @@ int FluoroPredViz::RequestImage(){
 //-------------------------------------------------------------------------------//
 // Update Visualization
 //-------------------------------------------------------------------------------//
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
 
-#include "vtkImageData.h"
-
-#include "vtkActor.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkArrowSource.h"
-#include "vtkSphereSource.h"
-#include "vtkConeSource.h"
-#include "vtkCubeSource.h"
-#include "vtkCamera.h"
-#include "vtkProperty.h"
-#include "vtkImagePlaneWidget.h"
-#include "vtkTransform.h"
-
-#include "vtkCudaDRRImageVolumeMapper.h"
-#include "vtkVolume.h"
+// ---------------------------------------------------------------------------------------
+//Callbacks for the clipping plane widgets
 
 class vtkPlaneWidgetCallback : public vtkCommand {
 public:
@@ -471,28 +710,89 @@ private:
 	vtkRenderWindow* window;
 };
 
+// Callback for moving the planes from the box widget to the mapper
+class vtkClippingBoxWidgetCallback : public vtkCommand
+{
+public:
+	static vtkClippingBoxWidgetCallback *New()
+		{ return new vtkClippingBoxWidgetCallback; }
+	virtual void Execute(vtkObject *caller, unsigned long, void*)
+		{
+			vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
+			if (this->Mapper1 || this->Mapper2)
+				{
+				vtkPlanes *planes = vtkPlanes::New();
+				widget->GetPlanes(planes);
+				if(this->Mapper1) this->Mapper1->SetClippingPlanes(planes);
+				if(this->Mapper2) this->Mapper2->SetClippingPlanes(planes);
+				planes->Delete();
+				}
+		}
+	void SetMapper(vtkCudaVolumeMapper* m1, vtkCudaVolumeMapper* m2) 
+	{ this->Mapper1 = m1; this->Mapper2 = m2; }
+
+protected:
+	vtkClippingBoxWidgetCallback() 
+		{ this->Mapper1 = this->Mapper2 = 0; }
+	
+	vtkCudaVolumeMapper *Mapper1;
+	vtkCudaVolumeMapper *Mapper2;
+};
 
 void FluoroPredViz::UpdateViz(){
 	DRRScreen->GetRenderWindow()->Render();
+	DVRScreen->GetRenderWindow()->Render();
 	for(int i = 0; i < 3; i++)
 		SchematicScreen[i]->GetRenderWindow()->Render();
 }
 
 void FluoroPredViz::ConnectUpPipeline(){
-	
+
 	//build remaining DRR pipeline
-	vtkCudaDRRImageVolumeMapper* Mapper = vtkCudaDRRImageVolumeMapper::New();
-	Mapper->SetInput(Reader->GetOutput());
-	ImageVolume = vtkVolume::New();
-	ImageVolume->SetMapper(Mapper);
+	vtkCudaDRRImageVolumeMapper* MapperDRR = vtkCudaDRRImageVolumeMapper::New();
+	MapperDRR->SetInput(Extractor->GetOutput());
+	//MapperDRR->SetCTOffset(16.0);
+	ImageVolumeDRR = vtkVolume::New();
+	ImageVolumeDRR->SetMapper(MapperDRR);
 	vtkRenderer* DRR_Renderer = vtkRenderer::New();
 	DRR_Renderer->SetBackground(1,1,1);
-	DRR_Renderer->AddVolume(ImageVolume);
-	Mapper->Delete();
+	DRR_Renderer->AddVolume(ImageVolumeDRR);
 	DRRScreen->GetRenderWindow()->AddRenderer(DRR_Renderer);
 	XraySource = DRR_Renderer->GetActiveCamera();
 	DRR_Renderer->Delete();
 	DRRScreen->GetInteractor()->Disable();
+
+	//buidl remaining DVR pipeline
+	vtkCuda2DVolumeMapper* MapperDVR = vtkCuda2DVolumeMapper::New();
+	MapperDVR->SetInput(Extractor->GetOutput());
+	ImageVolumeDVR = vtkVolume::New();
+	ImageVolumeDVR->SetMapper(MapperDVR);
+	vtkRenderer* DVR_Renderer = vtkRenderer::New();
+	DVR_Renderer->SetBackground(0,0,0);
+	DVR_Renderer->AddVolume(ImageVolumeDVR);
+	DVRScreen->GetRenderWindow()->AddRenderer(DVR_Renderer);
+	DVR_Renderer->ResetCamera();
+	DVRSource = DVR_Renderer->GetActiveCamera();
+	TransferFunction = vtkCuda2DTransferFunction::New();
+	MapperDVR->SetFunction(TransferFunction);
+	
+	//add clipping planes
+	ClippingPlanes = vtkBoxWidget::New();
+	ClippingPlanes->SetInteractor(DVRScreen->GetInteractor());
+	ClippingPlanes->SetPlaceFactor(1.01);
+	ClippingPlanes->SetDefaultRenderer(DVR_Renderer);
+	ClippingPlanes->InsideOutOn();
+	vtkClippingBoxWidgetCallback *clippingCallback = vtkClippingBoxWidgetCallback::New();
+	clippingCallback->SetMapper(MapperDVR,MapperDRR);
+	ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, clippingCallback);
+	clippingCallback->Delete();
+	ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
+	ClippingPlanes->SetInput( Extractor->GetOutput() );
+
+	//start cleaning
+	MapperDVR->Delete();
+	DVR_Renderer->Delete();
+	MapperDRR->Delete();
 
 	//create schematic renderer
 	vtkRenderer* Schematic_Renderer[3];
@@ -505,7 +805,7 @@ void FluoroPredViz::ConnectUpPipeline(){
 
 	//build angular trajectory markers
 	double DegreeIncrements = 10.0;
-	NumMarkers = (int)(180.0/DegreeIncrements + 1.5);
+	NumMarkers = (int)(360.0/DegreeIncrements + 0.5);
 	DegreeMarkers = new vtkSphereSource*[NumMarkers];
 	for(int i = 0; i < NumMarkers; i++){
 		DegreeMarkers[i] = vtkSphereSource::New();
@@ -620,35 +920,41 @@ void FluoroPredViz::ConnectUpPipeline(){
 	//turn on the camera
 	for(int i = 0; i < 3; i++){
 		vtkCamera* schemCamera = Schematic_Renderer[i]->GetActiveCamera();
-		double pos[3] = {0,RadiusVal/2,0};
-		if(i==0)
-			pos[2] = 5*RadiusVal;
+		double pos[3] = {0,DetectorDistanceVal/2,0};
+		if(i==0){
+			pos[2] = 5*DetectorDistanceVal;
+		}
 		if(i==1)
-			pos[1] = -5*RadiusVal;
+			pos[1] = -5*DetectorDistanceVal;
 		if(i==2)
-			pos[0] = 5*RadiusVal;
+			pos[0] = 5*DetectorDistanceVal;
 		schemCamera->SetPosition(pos);
 		schemCamera->SetFocalPoint(0,0,0);
-		if(i==0)
+		if(i==0){
+			schemCamera->SetFocalPoint(0,0,0);
 			schemCamera->SetViewUp(0,0,-1);
+		}
 		if(i==1)
 			schemCamera->SetViewUp(0,0,1);
 		if(i==2)
 			schemCamera->SetViewUp(0,0,1);
-		schemCamera->SetClippingRange(RadiusVal,8*RadiusVal);
+
+		schemCamera->SetClippingRange(DetectorDistanceVal,8*DetectorDistanceVal);
 		Schematic_Renderer[i]->Delete();
 		SchematicScreen[i]->GetRenderWindow()->Render();
 	}
-
+	
+	Schematic_Renderer[0]->ResetCamera();
+	Schematic_Renderer[0]->GetActiveCamera()->Zoom(1.5);
 }
 
 
 void FluoroPredViz::UpdateDegreeMarkers(){
-	//set location of markers based on angle and C-arm radius
+	//set location of markers based on angle and C-arm Detector Distance
 	for(int i = 0; i < NumMarkers; i++){
-		double DegreeLocation = -0.5*3.1415926 + 3.1415926 * (double)i / (double) (NumMarkers-1);
-		double LX = RadiusVal*std::sin(DegreeLocation);
-		double LY = RadiusVal*std::cos(DegreeLocation);
+		double DegreeLocation = 2.0 * pi * (double)i / (double) (NumMarkers-1);
+		double LX = DetectorDistanceVal*std::sin(DegreeLocation)/2;
+		double LY = DetectorDistanceVal*std::cos(DegreeLocation)/2;
 		DegreeMarkers[i]->SetCenter(LX,LY,0);
 		DegreeMarkers[i]->Update();
 	}
@@ -659,21 +965,25 @@ void FluoroPredViz::UpdateXrayMarker(){
 	//set location and orientation of x-ray schematic marker
 	double focus = 0.5*FocusXVal + 0.5*FocusYVal;
 	double DegreeLocation = 3.141592 * AngleVal / 180;
-	double LX = RadiusVal*std::sin(DegreeLocation);
-	double LY = RadiusVal*std::cos(DegreeLocation);
-	XrayMarker->SetCenter(0.5*LX,0.5*LY,0);
-	XrayMarker->SetDirection(LX,LY,0);
-	XrayMarker->SetHeight(RadiusVal);
-	XrayMarker->SetRadius(WidthVal*RadiusVal/focus);
+	double ElevationLocation = 3.141592 * CrAngleVal / 180;
+
+	double LX = 0.5*DetectorDistanceVal*std::sin(DegreeLocation)*std::cos(ElevationLocation);
+	double LY = 0.5*DetectorDistanceVal*std::cos(DegreeLocation)*std::cos(ElevationLocation);
+	double LZ = 0.5*DetectorDistanceVal*std::sin(ElevationLocation);
+
+	XrayMarker->SetCenter(0,0,0);
+	XrayMarker->SetDirection(LX,LY,LZ);
+	XrayMarker->SetHeight(DetectorDistanceVal);
+	XrayMarker->SetRadius(WidthVal/2);
 
 	//set location and orientation of x-ray source
 	double aspect = (double) this->DRRScreen->width() /  (double) this->DRRScreen->height();
-	XraySource->SetPosition(LX,LY,0);
+	XraySource->SetPosition(LX,LY,LZ);
 	XraySource->SetFocalPoint(0,0,0);
 	XraySource->SetViewUp(0,0,-1);
-	XraySource->SetClippingRange(RadiusVal/2,RadiusVal*2);
-	double angle = 360 * atan((WidthVal*RadiusVal/focus)/(2*RadiusVal)) / 3.1415926;
-	XraySource->SetViewAngle(angle*aspect);
+	XraySource->SetClippingRange(DetectorDistanceVal/16,DetectorDistanceVal);
+	double angle = 360 * atan((WidthVal*DetectorDistanceVal/focus)/(2*DetectorDistanceVal)) / pi;
+	XraySource->SetViewAngle(angle/aspect);
 }
 
 void FluoroPredViz::UpdateImageBoundsMarker(){
@@ -688,31 +998,87 @@ void FluoroPredViz::UpdateImageBoundsMarker(){
 
 	//update image bounding box
 	ImageBoundsMarkerActor->SetUserTransform(ObjectParams);
-	ImageVolume->SetUserTransform(ObjectParams);
-
+	ImageVolumeDRR->SetUserTransform(ObjectParams);
+	ImageVolumeDVR->SetUserTransform(ObjectParams);
 }
 
 void FluoroPredViz::SetupDRRScreen(QSplitter* WindowsLayout){
 	DRRScreen = new ResizableQVTKWidget(0);
 	DRRScreen->setMinimumHeight(500);
+	DRRScreen->setMinimumWidth(500);
 	DRRScreen->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum) );
 	WindowsLayout->addWidget(DRRScreen);
 }
 
-void FluoroPredViz::SetupSchematicScreen(QSplitter* WindowsLayout){
+void FluoroPredViz::SetTFName(){
 
-	QHBoxLayout* layout = new QHBoxLayout();
-	QWidget* widget = new QWidget();
-	widget->setLayout(layout);
-	widget->setSizePolicy( QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding) );
+	//get filename and apply to view
+	QString filename = QFileDialog::getOpenFileName(this,"Open Transfer Function","", tr("2D TF (*.2tf)") );
+	if(filename.isNull() || filename.isEmpty() ) return;
+	TFName->setText(filename);
+
+	//set TF in renderer
+	int n = TransferFunction->GetNumberOfFunctionObjects();
+	for(int i = 0; i < n; i++){
+		vtkCudaFunctionObject* object = TransferFunction->GetFunctionObject(n-i-1);
+		TransferFunction->RemoveFunctionObject(object);
+		object->Delete();
+	}
+	vtkCudaFunctionPolygonReader* tfReader = vtkCudaFunctionPolygonReader::New();
+	tfReader->SetFileName(filename.toStdString());
+	tfReader->Read();
+	for(int i = 0; i < tfReader->GetNumberOfOutputs(); i++)
+		TransferFunction->AddFunctionObject(tfReader->GetOutput(i));
+	TransferFunction->Modified();
+
+	UpdateViz();
+}
+
+void FluoroPredViz::SetupDVRScreen(QSplitter* WindowsLayout){
+	
+	//set up screen
+	DVRScreen = new QVTKWidget(0);
+	DVRScreen->setMinimumHeight(500);
+	DVRScreen->setMinimumWidth(500);
+	DVRScreen->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum) );
+	QVBoxLayout* l1 = new QVBoxLayout();
+	DVRScreen->setLayout(l1);
+	//l1->addWidget(DVRScreen);
+
+	//set up line edit
+	TFName = new QLineEdit(0);
+	TFName->setEnabled(false);
+	QPushButton* button = new QPushButton("Select File",0);
+	connect(button,SIGNAL(pressed()),this,SLOT(SetTFName()));
+	l1->addStretch();
+	l1->addWidget(TFName);
+	l1->addWidget(button);
+
+	WindowsLayout->addWidget(DVRScreen);
+}
+
+void FluoroPredViz::SetupSchematicScreen(QSplitter* WindowsLayout){
+	
+	QVBoxLayout* layout1 = new QVBoxLayout();
+	QWidget* widget1 = new QWidget();
+	widget1->setLayout(layout1);
+	widget1->setSizePolicy( QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding) );
+	QHBoxLayout* layout2 = new QHBoxLayout();
+	QWidget* widget2 = new QWidget();
+	widget2->setLayout(layout2);
+	widget2->setSizePolicy( QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding) );
 	for(int i = 0; i < 3; i++){
 		SchematicScreen[i] = new ResizableQVTKWidget(0);
 		SchematicScreen[i]->setMinimumWidth(200);
-		SchematicScreen[i]->setMinimumHeight(200);
+		SchematicScreen[i]->setMinimumHeight(150);
+		SchematicScreen[i]->setMaximumHeight(150);
 		SchematicScreen[i]->setSizePolicy( QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding) );
-		layout->addWidget(SchematicScreen[i]);
 	}
+	layout1->addWidget(SchematicScreen[0]);
+	layout1->addWidget(widget2);
+	layout2->addWidget(SchematicScreen[1]);
+	layout2->addWidget(SchematicScreen[2]);
 
-	WindowsLayout->addWidget(widget);
+	WindowsLayout->addWidget(widget1);
 
 }
