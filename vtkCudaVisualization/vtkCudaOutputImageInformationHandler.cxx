@@ -32,6 +32,7 @@ vtkCudaOutputImageInformationHandler::vtkCudaOutputImageInformationHandler(){
 	this->OutputImageInfo.rayIncX = this->OutputImageInfo.rayStartX = 0;
 	this->OutputImageInfo.rayIncY = this->OutputImageInfo.rayStartY = 0;
 	this->OutputImageInfo.rayIncZ = this->OutputImageInfo.rayStartZ = 0;
+	this->OutputImageInfo.flipped = this->ImageFlipped = false;
 	this->hostOutputImage = 0;
 	this->deviceOutputImage = 0;
 	this->OutputImageInfo.renderType = 1;
@@ -69,6 +70,7 @@ void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
 	this->OutputImageInfo.rayIncX = this->OutputImageInfo.rayStartX = 0;
 	this->OutputImageInfo.rayIncY = this->OutputImageInfo.rayStartY = 0;
 	this->OutputImageInfo.rayIncZ = this->OutputImageInfo.rayStartZ = 0;
+	this->OutputImageInfo.flipped = this->ImageFlipped;
 	this->hostOutputImage = 0;
 	this->deviceOutputImage = 0;
 }
@@ -202,6 +204,9 @@ void vtkCudaOutputImageInformationHandler::Update(){
 
 	//reset the values for the old resolution to the current (for the next update)
 	this->oldResolution = this->OutputImageInfo.resolution;
+
+	//update image flip value
+	this->OutputImageInfo.flipped = this->ImageFlipped;
 
 	//allocate the buffers used for intermediate output results in rendering
 	this->ReserveGPU();

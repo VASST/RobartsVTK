@@ -12,6 +12,7 @@
 
 #include "vtkVolumeMapper.h"
 #include "vtkCudaObject.h"
+#include "vtkSetGet.h"
 
 #include "vtkCudaRendererInformationHandler.h"
 #include "vtkCudaVolumeInformationHandler.h"
@@ -186,6 +187,9 @@ public:
 	 */
 	void UseImageDataRenderering();
 
+	void SetImageFlipped(bool b){this->OutputInfoHandler->SetImageFlipped(b);};
+	bool GetImageFlipped(){return this->OutputInfoHandler->GetImageFlipped();};
+
 protected:
 	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
 	 *
@@ -226,8 +230,9 @@ protected:
 	vtkTransform	*NextVoxelsToViewTransform;					/**< Temporary storage of the next voxels to view transformation used to speed the process of switching/recalculating matrices */
 
 	bool			erroredOut;									/**< Boolean to describe whether it is safe to render */
+	bool			ImageFlipped;								/**< Boolean to describe whether the output image is flipped */
 
-	std::map<int, vtkImageData*>	inputImages;				/**< Map of the frame number to it's CPU-based buffer */
+	std::map<int,vtkImageData*> inputImages;
 
 private:
 

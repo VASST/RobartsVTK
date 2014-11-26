@@ -101,9 +101,11 @@ QWidget(0), SuccessInit(0)
 	
 	//do final prep on the cameras
 	Angle->setValue(Angle->maximum()/2);
-	this->DVRSource->SetPosition( this->XraySource->GetPosition() );
 	this->DVRSource->SetFocalPoint( this->XraySource->GetFocalPoint() );
 	this->DVRSource->SetViewUp( this->XraySource->GetViewUp() );
+	this->DVRSource->SetPosition( -this->XraySource->GetPosition()[0],
+								  -this->XraySource->GetPosition()[1],
+								  -this->XraySource->GetPosition()[2] );
 	
 	UpdateViz();
 
@@ -750,6 +752,7 @@ void FluoroPredViz::ConnectUpPipeline(){
 
 	//build remaining DRR pipeline
 	vtkCudaDRRImageVolumeMapper* MapperDRR = vtkCudaDRRImageVolumeMapper::New();
+	MapperDRR->SetImageFlipped(true);
 	MapperDRR->SetInput(Extractor->GetOutput());
 	//MapperDRR->SetCTOffset(16.0);
 	ImageVolumeDRR = vtkVolume::New();
@@ -765,6 +768,7 @@ void FluoroPredViz::ConnectUpPipeline(){
 	//buidl remaining DVR pipeline
 	vtkCuda2DVolumeMapper* MapperDVR = vtkCuda2DVolumeMapper::New();
 	MapperDVR->SetInput(Extractor->GetOutput());
+	MapperDVR->SetImageFlipped(false);
 	ImageVolumeDVR = vtkVolume::New();
 	ImageVolumeDVR->SetMapper(MapperDVR);
 	vtkRenderer* DVR_Renderer = vtkRenderer::New();
@@ -972,13 +976,13 @@ void FluoroPredViz::UpdateXrayMarker(){
 	double LZ = 0.5*DetectorDistanceVal*std::sin(ElevationLocation);
 
 	XrayMarker->SetCenter(0,0,0);
-	XrayMarker->SetDirection(LX,LY,LZ);
+	XrayMarker->SetDirection(-LX,-LY,-LZ);
 	XrayMarker->SetHeight(DetectorDistanceVal);
 	XrayMarker->SetRadius(WidthVal/2);
 
 	//set location and orientation of x-ray source
 	double aspect = (double) this->DRRScreen->width() /  (double) this->DRRScreen->height();
-	XraySource->SetPosition(LX,LY,LZ);
+	XraySource->SetPosition(-LX,-LY,-LZ);
 	XraySource->SetFocalPoint(0,0,0);
 	XraySource->SetViewUp(0,0,-1);
 	XraySource->SetClippingRange(DetectorDistanceVal/16,DetectorDistanceVal);

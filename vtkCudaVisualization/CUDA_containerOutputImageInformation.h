@@ -36,6 +36,7 @@ typedef struct
 	float*			numSteps;				/**< The number of sample points on the ray */
 	float*			excludeStart;			/**< The starting increment of the exlusion planes */
 	float*			excludeEnd;				/**< The ending increment of the exlusion planes */
+	bool			flipped;				/**< Do a left-right flip of the output image */
 	
 } cudaOutputImageInformation;
 

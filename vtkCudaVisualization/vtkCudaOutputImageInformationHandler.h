@@ -18,6 +18,7 @@
 #include "vtkImageData.h"
 #include "vtkCudaMemoryTexture.h"
 #include "vtkCudaObject.h"
+#include "vtkSetGet.h"
 
 /** @brief vtkCudaOutputImageInformationHandler handles all output image, buffering, texturing and OpenGL related information on behalf of the CUDA volume mapper to facilitate the rendering and display process
  *
@@ -85,6 +86,9 @@ public:
 	 *
 	 */
 	void Update();
+	
+	vtkSetMacro(ImageFlipped,bool);
+	vtkGetMacro(ImageFlipped,bool);
 
 protected:
 
@@ -119,6 +123,7 @@ private:
 	uchar4* deviceOutputImage;									/**< The image that will be textured to the screen stored on device memory */
 	
 	float							RenderOutputScaleFactor;	/**< The approximate factor by which the screen is resized in order to speed up the rendering process*/
+	bool							ImageFlipped;				/**< Boolean to describe whether the output image is flipped */
 
 };
 

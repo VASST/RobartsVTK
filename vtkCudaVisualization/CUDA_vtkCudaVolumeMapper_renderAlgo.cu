@@ -296,7 +296,8 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
 	//set the original estimates of the starting and ending co-ordinates in the co-ordinates of the view (not voxels)
 	//note: viewRayZ = 0 for start and viewRayZ = 1 for end
 	__syncthreads();
-	float viewRayX =  1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
+	float viewRayX =  outInfo.flipped ? ( ((float) index.x) / (float) outInfo.resolution.x ) :
+									1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
 	float viewRayY =  ( ((float) index.y) / (float) outInfo.resolution.y );
 	__syncthreads();
 	float endDepth = tex2D(zbuffer_texture, 1.0f-viewRayX, viewRayY );
