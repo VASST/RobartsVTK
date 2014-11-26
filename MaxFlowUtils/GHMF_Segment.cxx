@@ -18,14 +18,90 @@ The tree is saved in a VTK file with the following attributes:
 
 //------------------------------------------------------------------------------*/
 
-#include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
+////
+////
+////#include "vtkMutableDirectedGraph.h"
+////#include "vtkRootedDirectedAcyclicGraph.h"
+////#include "vtkGraphWriter.h"
+////#include "vtkStringArray.h"
+////#include "vtkDoubleArray.h"
+////#include "vtkIntArray.h"
+////#include "vtkDataSetAttributes.h"
+////
+////int main(int argc, char** argv){
+////	
+////	vtkStringArray* DataTerms = vtkStringArray::New();
+////	DataTerms->SetName("DataTerm");
+////	vtkStringArray* SmoothnessTerms = vtkStringArray::New();
+////	SmoothnessTerms->SetName("SmoothnessTerm");
+////	vtkStringArray* OuputLocations = vtkStringArray::New();
+////	OuputLocations->SetName("OutputLocation");
+////	vtkDoubleArray* Alphas = vtkDoubleArray::New();
+////	Alphas->SetName("Alpha");
+////	vtkIntArray* Identifiers = vtkIntArray::New();
+////	Identifiers->SetName("Identifier");
+////
+////	vtkMutableDirectedGraph* mut = vtkMutableDirectedGraph::New();
+////	vtkIdType source = mut->AddVertex();
+////	vtkIdType background = mut->AddChild(source);
+////	vtkIdType R = mut->AddChild(source);
+////	vtkIdType Y = mut->AddChild(source);
+////	vtkIdType G = mut->AddChild(source);
+////	
+////	DataTerms->InsertValue(background,"E:\\jbaxter\\data\\testingDAGMF\\cost0.mhd");
+////	DataTerms->InsertValue(R,"E:\\jbaxter\\data\\testingDAGMF\\cost1.mhd");
+////	DataTerms->InsertValue(G,"E:\\jbaxter\\data\\testingDAGMF\\cost2.mhd");
+////	DataTerms->InsertValue(Y,"E:\\jbaxter\\data\\testingDAGMF\\cost3.mhd");
+////	OuputLocations->InsertValue(background,"E:\\jbaxter\\data\\testingDAGMF\\out0");
+////	OuputLocations->InsertValue(R,"E:\\jbaxter\\data\\testingDAGMF\\out1");
+////	OuputLocations->InsertValue(G,"E:\\jbaxter\\data\\testingDAGMF\\out2");
+////	OuputLocations->InsertValue(Y,"E:\\jbaxter\\data\\testingDAGMF\\out3");
+////	Alphas->InsertValue(source,0);
+////	Alphas->InsertValue(background,-1);
+////	Alphas->InsertValue(R,1);
+////	Alphas->InsertValue(G,2);
+////	Alphas->InsertValue(Y,3);
+////	Identifiers->InsertValue(background,0);
+////	Identifiers->InsertValue(R,1);
+////	Identifiers->InsertValue(G,2);
+////	Identifiers->InsertValue(Y,3);
+////	Identifiers->InsertValue(source,-1);
+////
+////	vtkRootedDirectedAcyclicGraph* dag = vtkRootedDirectedAcyclicGraph::New();
+////	dag->CheckedDeepCopy(mut);
+////	dag->GetVertexData()->AddArray(DataTerms);
+////	dag->GetVertexData()->AddArray(SmoothnessTerms);
+////	dag->GetVertexData()->AddArray(OuputLocations);
+////	dag->GetVertexData()->AddArray(Alphas);
+////	dag->GetVertexData()->AddArray(Identifiers);
+////
+////	vtkGraphWriter* Writer = vtkGraphWriter::New();
+////	Writer->SetInput(dag);
+////	Writer->SetFileName("E:\\jbaxter\\data\\testingDAGMF\\potts.vtk");
+////	Writer->Write();
+////
+////	Writer->Delete();
+////	dag->Delete();
+////	mut->Delete();
+////	OuputLocations->Delete();
+////	SmoothnessTerms->Delete();
+////	DataTerms->Delete();
+////	Alphas->Delete();
+////	Identifiers->Delete();
+////}
+////
+
+#include "vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h"
 #include "vtkCudaImageVote.h"
 #include "vtkMetaImageReader.h"
 #include "vtkMetaImageWriter.h"
 
-#include "vtkTree.h"
+#include "vtkGraphReader.h"
 #include "vtkTreeReader.h"
-#include "vtkTreeDFSIterator.h"
+#include "vtkGraph.h"
+#include "vtkTree.h"
+#include "vtkRootedDirectedAcyclicGraph.h"
+#include "vtkRootedDirectedAcyclicGraphForwardIterator.h"
 #include "vtkType.h"
 #include "vtkDataSetAttributes.h"
 #include "vtkStringArray.h"
@@ -92,33 +168,46 @@ int main(int argc, char** argv){
 	//read in flags
 	for(int i = 0; i < NumFlags; i++){
 		std::string command = std::string(argv[4+NumDev+2*i]);
-		if( command.compare("-output") )
+		if( !command.compare("-output") )
 			{hasOutput = true; OutFileBase = std::string(argv[5+NumDev+2*i]); }
-		else if( command.compare("-step") )
-			Tau = std::atof(argv[5+NumDev+2*i]);
-		else if( command.compare("-cc") )
-			CC = std::atof(argv[5+NumDev+2*i]);
+		else if( !command.compare("-step") )
+			{Tau = std::atof(argv[5+NumDev+2*i]);}
+		else if( !command.compare("-cc") )
+			{CC = std::atof(argv[5+NumDev+2*i]);}
 		else
 			{showHelpMessage(); return 0;}
 	}
+	
 
 	//load tree filename and output filename
 	std::string TreeFilename = std::string(argv[1]);
-	vtkTreeReader* TreeReader = vtkTreeReader::New();
+	vtkGraphReader* TreeReader = vtkGraphReader::New();
 	TreeReader->SetFileName(TreeFilename.c_str());
 	TreeReader->Update();
-	vtkTree* Tree = TreeReader->GetOutput();
+	vtkRootedDirectedAcyclicGraph* Tree = vtkRootedDirectedAcyclicGraph::New();
+	if(TreeReader->GetOutput())
+		Tree->CheckedDeepCopy(TreeReader->GetOutput());
+	else{
+		vtkTreeReader* TreeReader2 = vtkTreeReader::New();
+		TreeReader2->SetFileName(TreeFilename.c_str());
+		TreeReader2->Update();
+		Tree->CheckedDeepCopy(TreeReader2->GetOutput());
+	}
 
 	//create segmenter
-	vtkCudaHierarchicalMaxFlowSegmentation2* Segmenter = vtkCudaHierarchicalMaxFlowSegmentation2::New();
-	//vtkHierarchicalMaxFlowSegmentation* Segmenter = vtkHierarchicalMaxFlowSegmentation::New();
+	vtkDirectedAcyclicGraphMaxFlowSegmentation* Segmenter;
+	if(NumDev > 0){
+		Segmenter = vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::New();
+		((vtkCudaDirectedAcyclicGraphMaxFlowSegmentation*) Segmenter)->ClearDevices();
+		for(int i = 0; i < NumDev; i++)
+			((vtkCudaDirectedAcyclicGraphMaxFlowSegmentation*) Segmenter)->AddDevice(std::atoi(argv[4+i]));
+	}else{
+		Segmenter = vtkDirectedAcyclicGraphMaxFlowSegmentation::New();
+	}
 	Segmenter->SetStructure(Tree);
 	Segmenter->SetNumberOfIterations(NumIts);
 	Segmenter->SetStepSize(Tau);
 	Segmenter->SetCC(CC);
-	Segmenter->ClearDevices();
-	for(int i = 0; i < NumDev; i++)
-		Segmenter->AddDevice(std::atoi(argv[4+i]));
 
 	//get information arrays
 	vtkStringArray* DataTerms = (vtkStringArray*) Tree->GetVertexData()->GetAbstractArray("DataTerm");
@@ -130,9 +219,9 @@ int main(int argc, char** argv){
 		std::cout << "No data terms provided in tree file. (No field named \"DataTerm\".)" << std::endl;
 
 	//add data terms and smoothness terms
-	vtkTreeDFSIterator* Iterator = vtkTreeDFSIterator::New();
-	Iterator->SetTree(Tree);
-	Iterator->SetStartVertex(Tree->GetRoot());
+	vtkRootedDirectedAcyclicGraphForwardIterator* Iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+	Iterator->SetDAG(Tree);
+	Iterator->SetRootVertex(Tree->GetRoot());
 	while(Iterator->HasNext()){
 		vtkIdType Node = Iterator->Next();
 		if( Node == Tree->GetRoot() ) continue;
@@ -147,7 +236,7 @@ int main(int argc, char** argv){
 		}
 
 		//read in smoothness term
-		if( SmoothTerms && SmoothTerms->GetValue(Node).length() > 0 ){
+		if( SmoothTerms && SmoothTerms->GetNumberOfValues() > 0 && SmoothTerms->GetValue(Node).length() > 0 ){
 			vtkMetaImageReader* Reader = vtkMetaImageReader::New();
 			Reader->SetFileName( SmoothTerms->GetValue(Node).c_str() );
 			Reader->Update();
@@ -166,9 +255,9 @@ int main(int argc, char** argv){
 	Segmenter->Update();
 
 	//output files
-	Iterator = vtkTreeDFSIterator::New();
-	Iterator->SetTree(Tree);
-	Iterator->SetStartVertex(Tree->GetRoot());
+	Iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+	Iterator->SetDAG(Tree);
+	Iterator->SetRootVertex(Tree->GetRoot());
 	while(Iterator->HasNext()){
 		vtkIdType Node = Iterator->Next();
 		if( !Tree->IsLeaf(Node) || OutLoc->GetValue(Node).length() < 1 ) continue;
@@ -192,9 +281,9 @@ int main(int argc, char** argv){
 		vtkCudaImageVote* Voter = vtkCudaImageVote::New();
 		Voter->SetDevice(std::atoi(argv[4]));
 		Voter->SetOutputDataType(VTK_INT);
-		Iterator = vtkTreeDFSIterator::New();
-		Iterator->SetTree(Tree);
-		Iterator->SetStartVertex(Tree->GetRoot());
+		Iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+		Iterator->SetDAG(Tree);
+		Iterator->SetRootVertex(Tree->GetRoot());
 		while(Iterator->HasNext()){
 			vtkIdType Node = Iterator->Next();
 			if( !Tree->IsLeaf(Node) ) continue;
