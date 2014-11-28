@@ -47,7 +47,7 @@
 #define pi 3.1415926
 
 FluoroPredViz::FluoroPredViz( QWidget* parent ) :
-QWidget(0), SuccessInit(0)
+QWidget(0), SuccessInit(0), PauseFlag(0)
 {
 	
 
@@ -92,7 +92,6 @@ QWidget(0), SuccessInit(0)
 	ConnectUpPipeline();
 	UpdateDegreeMarkers();
 	UpdateXrayMarker();
-	UpdateImageBoundsMarker();
 
 	//final prep on the screens
 	DRRScreen->ready = true;
@@ -112,11 +111,10 @@ QWidget(0), SuccessInit(0)
 	//finalize clipping planes
 	ClippingPlanes->PlaceWidget();
 	ClippingPlanes->EnabledOn();
-	ClippingPlanesPosition = vtkTransform::New();
-	ClippingPlanes->GetTransform(ClippingPlanesPosition);
-	ClippingPlanesPosition->Translate(TranslationXVal,TranslationYVal,TranslationZVal);
-	ClippingPlanes->SetTransform(ClippingPlanesPosition);
 	ClippingPlanes->On();
+	ClippingPlanesPosition = vtkTransform::New();
+	ClippingPlanesPosition->PostMultiply();
+	UpdateImageRegistration();
 
 }
 
@@ -149,6 +147,8 @@ FluoroPredViz::~FluoroPredViz(){
 	if(Reader) Reader->Delete();
 	if(Extractor) Extractor->Delete();
 	TransferFunction->Delete();
+	ClippingCallback->Delete();
+	
 }
 
 
@@ -156,6 +156,16 @@ FluoroPredViz::~FluoroPredViz(){
 //-------------------------------------------------------------------------------//
 // Manage fluoro parameters
 //-------------------------------------------------------------------------------//
+
+class FluoroPredViz::MimicViewCallback : public vtkCommand
+{
+public:
+	MimicViewCallback(FluoroPredViz* w) : window(w) {};
+	FluoroPredViz* window;
+	void Execute(vtkObject* caller, unsigned long, void*){
+		window->MimicView();
+	}
+};
 
 
 void FluoroPredViz::SetupFluoroParams(QBoxLayout* ParamsLayout){
@@ -291,8 +301,11 @@ void FluoroPredViz::MimicView(){
 	DesiredCrAngle = std::min( MaxCranialAngle, std::max( MinCranialAngle, DesiredCrAngle ) );
 
 	//apply angles
+	this->PauseFlag = true;
 	this->Angle->setValue(180+DesiredAngle);
 	this->CrAngle->setValue(65+DesiredCrAngle);
+	this->PauseFlag = false;
+	UpdateXrayMarker();
 	UpdateViz();
 }
 
@@ -561,42 +574,42 @@ void FluoroPredViz::SetOrientationZ(int v){
 void FluoroPredViz::SetTranslationX(double v){
 	TranslationXVal = v;
 	TranslationXValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetTranslationY(double v){
 	TranslationYVal = v;
 	TranslationYValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetTranslationZ(double v){
 	TranslationZVal = v;
 	TranslationZValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationX(double v){
 	OrientationXVal = v;
 	OrientationXValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationY(double v){
 	OrientationYVal = v;
 	OrientationYValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
 void FluoroPredViz::SetOrientationZ(double v){
 	OrientationZVal = v;
 	OrientationZValBox->setText(QString::number(v));
-	UpdateImageBoundsMarker();
+	UpdateImageRegistration();
 	UpdateViz();
 }
 
@@ -742,6 +755,7 @@ protected:
 };
 
 void FluoroPredViz::UpdateViz(){
+	if(PauseFlag) return;
 	DRRScreen->GetRenderWindow()->Render();
 	DVRScreen->GetRenderWindow()->Render();
 	for(int i = 0; i < 3; i++)
@@ -779,6 +793,9 @@ void FluoroPredViz::ConnectUpPipeline(){
 	DVRSource = DVR_Renderer->GetActiveCamera();
 	TransferFunction = vtkCuda2DTransferFunction::New();
 	MapperDVR->SetFunction(TransferFunction);
+	DVRScreen->GetInteractor()->AddObserver(vtkCommand::StartInteractionEvent,new MimicViewCallback(this));
+	DVRScreen->GetInteractor()->AddObserver(vtkCommand::EndInteractionEvent,new MimicViewCallback(this));
+	//DVRScreen->GetInteractor()->AddObserver(vtkCommand::AnyEvent,new MimicViewCallback(this));
 	
 	//add clipping planes
 	ClippingPlanes = vtkBoxWidget::New();
@@ -786,10 +803,9 @@ void FluoroPredViz::ConnectUpPipeline(){
 	ClippingPlanes->SetPlaceFactor(1.01);
 	ClippingPlanes->SetDefaultRenderer(DVR_Renderer);
 	ClippingPlanes->InsideOutOn();
-	vtkClippingBoxWidgetCallback *clippingCallback = vtkClippingBoxWidgetCallback::New();
-	clippingCallback->SetMapper(MapperDVR,MapperDRR);
-	ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, clippingCallback);
-	clippingCallback->Delete();
+	ClippingCallback = vtkClippingBoxWidgetCallback::New();
+	((vtkClippingBoxWidgetCallback*)ClippingCallback)->SetMapper(MapperDVR,MapperDRR);
+	ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, ClippingCallback);
 	ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
 	ClippingPlanes->SetInput( Extractor->GetOutput() );
 
@@ -954,6 +970,7 @@ void FluoroPredViz::ConnectUpPipeline(){
 
 
 void FluoroPredViz::UpdateDegreeMarkers(){
+	if(PauseFlag) return;
 	//set location of markers based on angle and C-arm Detector Distance
 	for(int i = 0; i < NumMarkers; i++){
 		double DegreeLocation = 2.0 * pi * (double)i / (double) (NumMarkers-1);
@@ -966,6 +983,8 @@ void FluoroPredViz::UpdateDegreeMarkers(){
 }
 
 void FluoroPredViz::UpdateXrayMarker(){
+	if(PauseFlag) return;
+
 	//set location and orientation of x-ray schematic marker
 	double focus = 0.5*FocusXVal + 0.5*FocusYVal;
 	double DegreeLocation = 3.141592 * AngleVal / 180;
@@ -990,9 +1009,24 @@ void FluoroPredViz::UpdateXrayMarker(){
 	XraySource->SetViewAngle(angle/aspect);
 }
 
-void FluoroPredViz::UpdateImageBoundsMarker(){
+void FluoroPredViz::UpdateImageRegistration(){
+	if(PauseFlag) return;
 	
-	//reset transform
+	//collect old transform and invert it
+	vtkTransform* OldRegistration = vtkTransform::New();
+	OldRegistration->DeepCopy(ObjectParams);
+	OldRegistration->Inverse();
+	OldRegistration->Modified();
+	OldRegistration->Update();
+
+	//get clipping planes pose sans registration
+	vtkTransform* OldPosition = vtkTransform::New();
+	ClippingPlanes->GetTransform(OldPosition);
+	ClippingPlanesPosition->DeepCopy(OldPosition);
+	ClippingPlanesPosition->PostMultiply();
+	ClippingPlanesPosition->Concatenate(OldRegistration);
+
+	//reset transform for objection
 	ObjectParams->Identity();
 	ObjectParams->RotateZ(OrientationZVal);
 	ObjectParams->RotateX(OrientationXVal);
@@ -1000,10 +1034,23 @@ void FluoroPredViz::UpdateImageBoundsMarker(){
 	ObjectParams->Translate(TranslationXVal,TranslationYVal,TranslationZVal);
 	ObjectParams->Update();
 
+	//update clipping planes
+	ClippingPlanesPosition->Concatenate(ObjectParams);
+	ClippingPlanesPosition->Modified();
+	ClippingPlanesPosition->Update();
+	ClippingPlanes->SetTransform(ClippingPlanesPosition);
+	ClippingPlanes->Modified();
+	ClippingCallback->Execute(ClippingPlanes,0,0);
+
 	//update image bounding box
 	ImageBoundsMarkerActor->SetUserTransform(ObjectParams);
 	ImageVolumeDRR->SetUserTransform(ObjectParams);
 	ImageVolumeDVR->SetUserTransform(ObjectParams);
+	UpdateViz();
+
+	//cleanup
+	OldRegistration->Delete();
+	OldPosition->Delete();
 }
 
 void FluoroPredViz::SetupDRRScreen(QSplitter* WindowsLayout){

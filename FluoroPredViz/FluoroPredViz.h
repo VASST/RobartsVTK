@@ -21,6 +21,7 @@ class vtkVolume;
 class vtkImageExtractComponents;
 class vtkCuda2DTransferFunction;
 class vtkBoxWidget;
+class vtkCommand;
 
 class FluoroPredViz : public QWidget {
 	Q_OBJECT
@@ -33,6 +34,7 @@ public:
 
 public slots:
 	void UpdateViz();
+	void UpdateImageRegistration();
 
 	//fluoro params slots
 	void SetFocusX(double);
@@ -83,6 +85,8 @@ private:
 	int SuccessInit;
 
 	//fluoro params
+	class MimicViewCallback;
+	friend class MimicViewCallback;
 	void SetupFluoroParams(QBoxLayout*);
 	QSlider* FocusX;		double			FocusXVal;
 							QLineEdit*		FocusXValBox;
@@ -123,9 +127,12 @@ private:
 	vtkImageReader2* Reader;
 	vtkImageExtractComponents* Extractor;
 
-	//screens
+	//clipping planes
 	vtkBoxWidget* ClippingPlanes;
 	vtkTransform* ClippingPlanesPosition;
+	vtkCommand* ClippingCallback;
+	
+	//screens
 	void ConnectUpPipeline();
 	void SetupDRRScreen(QSplitter*);
 	void SetupDVRScreen(QSplitter*);
@@ -141,13 +148,14 @@ private:
 	//schematic
 	void UpdateDegreeMarkers();
 	void UpdateXrayMarker();
-	void UpdateImageBoundsMarker();
 	vtkSphereSource** DegreeMarkers;
 	int NumMarkers;
 	vtkConeSource* XrayMarker;
 	vtkCamera* XraySource;
 	vtkCamera* DVRSource;
 	vtkActor* ImageBoundsMarkerActor;
+
+	bool PauseFlag;
 
 };
 
