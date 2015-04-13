@@ -20,6 +20,8 @@ class vtkTransform;
 class vtkVolume;
 class vtkImageExtractComponents;
 class vtkCuda2DTransferFunction;
+class vtkCudaDualImageVolumeMapper;
+class vtkCudaDRRImageVolumeMapper;
 class vtkBoxWidget;
 class vtkCommand;
 
@@ -141,7 +143,9 @@ private:
 	ResizableQVTKWidget*		DRRScreen;
 	ResizableQVTKWidget*		SchematicScreen[3];
 	vtkVolume*		ImageVolumeDVR;
+	vtkCudaDualImageVolumeMapper* DVRMapper;
 	vtkVolume*		ImageVolumeDRR;
+	vtkCudaDRRImageVolumeMapper* DRRMapper;
 	QLineEdit*		TFName;
 	vtkCuda2DTransferFunction* TransferFunction;
 

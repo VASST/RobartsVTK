@@ -38,7 +38,7 @@
 #include "vtkImagePlaneWidget.h"
 #include "vtkCudaVolumeMapper.h"
 #include "vtkCudaDRRImageVolumeMapper.h"
-#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkCudaFunctionObject.h"
 #include "vtkCudaFunctionPolygonReader.h"
 #include "vtkVolume.h"
@@ -285,6 +285,7 @@ void FluoroPredViz::MimicView(){
 	//no need to correct for object rotation since DVR and DRR are rendered in the same co-ordinate frame
 
 	//find the angle for left-right 
+	bool truncated = false;
 	double DesiredAngle = std::atan2(DesiredOrientation[1],-DesiredOrientation[0]);
 	DesiredAngle += 0.5*pi;
 	if(DesiredAngle > pi) DesiredAngle -= 2*pi;
@@ -298,7 +299,17 @@ void FluoroPredViz::MimicView(){
 	DesiredCrAngle = 180 * DesiredCrAngle / pi;
 	double MaxCranialAngle = 45.0;
 	double MinCranialAngle = -65.0;
+	truncated = (DesiredCrAngle > MaxCranialAngle) || (DesiredCrAngle < MinCranialAngle);
 	DesiredCrAngle = std::min( MaxCranialAngle, std::max( MinCranialAngle, DesiredCrAngle ) );
+	
+	//tint screen if required
+	if(truncated){
+		unsigned char tint[4] = {255,0,0,128};
+		DRRMapper->SetTint(tint);
+	}else{
+		unsigned char tint[4] = {255,0,0,0};
+		DRRMapper->SetTint(tint);
+	}
 
 	//apply angles
 	this->PauseFlag = true;
@@ -765,12 +776,12 @@ void FluoroPredViz::UpdateViz(){
 void FluoroPredViz::ConnectUpPipeline(){
 
 	//build remaining DRR pipeline
-	vtkCudaDRRImageVolumeMapper* MapperDRR = vtkCudaDRRImageVolumeMapper::New();
-	MapperDRR->SetImageFlipped(true);
-	MapperDRR->SetInput(Extractor->GetOutput());
+	DRRMapper = vtkCudaDRRImageVolumeMapper::New();
+	DRRMapper->SetImageFlipped(true);
+	DRRMapper->SetInput(Extractor->GetOutput());
 	//MapperDRR->SetCTOffset(16.0);
 	ImageVolumeDRR = vtkVolume::New();
-	ImageVolumeDRR->SetMapper(MapperDRR);
+	ImageVolumeDRR->SetMapper(DRRMapper);
 	vtkRenderer* DRR_Renderer = vtkRenderer::New();
 	DRR_Renderer->SetBackground(1,1,1);
 	DRR_Renderer->AddVolume(ImageVolumeDRR);
@@ -780,11 +791,12 @@ void FluoroPredViz::ConnectUpPipeline(){
 	DRRScreen->GetInteractor()->Disable();
 
 	//buidl remaining DVR pipeline
-	vtkCuda2DVolumeMapper* MapperDVR = vtkCuda2DVolumeMapper::New();
-	MapperDVR->SetInput(Extractor->GetOutput());
-	MapperDVR->SetImageFlipped(false);
+	this->DVRMapper = vtkCudaDualImageVolumeMapper::New();
+	DVRMapper->SetInput(Reader->GetOutput());
+	//DVRMapper->SetInput(Extractor->GetOutput());
+	DVRMapper->SetImageFlipped(false);
 	ImageVolumeDVR = vtkVolume::New();
-	ImageVolumeDVR->SetMapper(MapperDVR);
+	ImageVolumeDVR->SetMapper(DVRMapper);
 	vtkRenderer* DVR_Renderer = vtkRenderer::New();
 	DVR_Renderer->SetBackground(0,0,0);
 	DVR_Renderer->AddVolume(ImageVolumeDVR);
@@ -792,7 +804,7 @@ void FluoroPredViz::ConnectUpPipeline(){
 	DVR_Renderer->ResetCamera();
 	DVRSource = DVR_Renderer->GetActiveCamera();
 	TransferFunction = vtkCuda2DTransferFunction::New();
-	MapperDVR->SetFunction(TransferFunction);
+	DVRMapper->SetFunction(TransferFunction);
 	DVRScreen->GetInteractor()->AddObserver(vtkCommand::StartInteractionEvent,new MimicViewCallback(this));
 	DVRScreen->GetInteractor()->AddObserver(vtkCommand::EndInteractionEvent,new MimicViewCallback(this));
 	//DVRScreen->GetInteractor()->AddObserver(vtkCommand::AnyEvent,new MimicViewCallback(this));
@@ -804,15 +816,15 @@ void FluoroPredViz::ConnectUpPipeline(){
 	ClippingPlanes->SetDefaultRenderer(DVR_Renderer);
 	ClippingPlanes->InsideOutOn();
 	ClippingCallback = vtkClippingBoxWidgetCallback::New();
-	((vtkClippingBoxWidgetCallback*)ClippingCallback)->SetMapper(MapperDVR,MapperDRR);
+	((vtkClippingBoxWidgetCallback*)ClippingCallback)->SetMapper(DVRMapper,DRRMapper);
 	ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, ClippingCallback);
 	ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
 	ClippingPlanes->SetInput( Extractor->GetOutput() );
 
 	//start cleaning
-	MapperDVR->Delete();
+	DVRMapper->Delete();
 	DVR_Renderer->Delete();
-	MapperDRR->Delete();
+	DRRMapper->Delete();
 
 	//create schematic renderer
 	vtkRenderer* Schematic_Renderer[3];
@@ -1026,11 +1038,26 @@ void FluoroPredViz::UpdateImageRegistration(){
 	ClippingPlanesPosition->PostMultiply();
 	ClippingPlanesPosition->Concatenate(OldRegistration);
 
+	//find centering translation
+	double Centering[3];
+	Centering[0] = -0.5*this->Reader->GetOutput()->GetSpacing()[0]*
+						(this->Reader->GetOutput()->GetExtent()[0]+this->Reader->GetOutput()->GetExtent()[1])
+						- this->Reader->GetOutput()->GetOrigin()[0];
+	Centering[1] = -0.5*this->Reader->GetOutput()->GetSpacing()[1]*
+						(this->Reader->GetOutput()->GetExtent()[2]+this->Reader->GetOutput()->GetExtent()[3])
+						- this->Reader->GetOutput()->GetOrigin()[1];
+	Centering[2] = -0.5*this->Reader->GetOutput()->GetSpacing()[2]*
+						(this->Reader->GetOutput()->GetExtent()[4]+this->Reader->GetOutput()->GetExtent()[5])
+						- this->Reader->GetOutput()->GetOrigin()[2];
+	double AntiCentering[3] = {-Centering[0],-Centering[1],-Centering[2]};
+
 	//reset transform for objection
 	ObjectParams->Identity();
+	ObjectParams->Translate(Centering);
 	ObjectParams->RotateZ(OrientationZVal);
 	ObjectParams->RotateX(OrientationXVal);
 	ObjectParams->RotateY(OrientationYVal);
+	ObjectParams->Translate(AntiCentering);
 	ObjectParams->Translate(TranslationXVal,TranslationYVal,TranslationZVal);
 	ObjectParams->Update();
 
