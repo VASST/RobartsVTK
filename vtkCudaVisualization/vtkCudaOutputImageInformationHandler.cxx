@@ -38,6 +38,10 @@ vtkCudaOutputImageInformationHandler::vtkCudaOutputImageInformationHandler(){
 	this->OutputImageInfo.renderType = 1;
 	this->oldRenderType = 1;
 	this->Reinitialize();
+	this->ImageTint.w = this->OutputImageInfo.tint.w = 0;
+	this->ImageTint.x = this->OutputImageInfo.tint.x = 0;
+	this->ImageTint.y = this->OutputImageInfo.tint.y = 0;
+	this->ImageTint.z = this->OutputImageInfo.tint.z = 0;
 }
 
 
@@ -250,4 +254,18 @@ void vtkCudaOutputImageInformationHandler::Update(){
 	}
 	
 
+}
+
+void vtkCudaOutputImageInformationHandler::SetTint(unsigned char RGBA[4]){
+	this->ImageTint.x = this->OutputImageInfo.tint.x = RGBA[0];
+	this->ImageTint.y = this->OutputImageInfo.tint.y = RGBA[1];
+	this->ImageTint.z = this->OutputImageInfo.tint.z = RGBA[2];
+	this->ImageTint.w = this->OutputImageInfo.tint.w = RGBA[3];
+}
+
+void vtkCudaOutputImageInformationHandler::GetTint(unsigned char RGBA[4]){
+	RGBA[0] = this->ImageTint.x;
+	RGBA[1] = this->ImageTint.y;
+	RGBA[2] = this->ImageTint.z;
+	RGBA[3] = this->ImageTint.w;
 }

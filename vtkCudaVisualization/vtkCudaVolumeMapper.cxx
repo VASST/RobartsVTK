@@ -469,3 +469,48 @@ void vtkCudaVolumeMapper::SetKeyholePlanes(vtkPlanes *planes){
     plane->Delete();
   }
 }
+
+
+void vtkCudaVolumeMapper::SetTint(double RGBA[4]){
+	unsigned char RGBAuc[4];
+	RGBAuc[0] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[0] ) );
+	RGBAuc[1] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[1] ) );
+	RGBAuc[2] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[2] ) );
+	RGBAuc[3] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[3] ) );
+	this->OutputInfoHandler->SetTint(RGBAuc);
+}
+
+void vtkCudaVolumeMapper::GetTint(double RGBA[4]){
+	unsigned char RGBAuc[4];
+	this->OutputInfoHandler->GetTint(RGBAuc);
+	RGBA[0] = (double) RGBAuc[0] / 255.0;
+	RGBA[1] = (double) RGBAuc[1] / 255.0;
+	RGBA[2] = (double) RGBAuc[2] / 255.0;
+	RGBA[3] = (double) RGBAuc[3] / 255.0;
+}
+
+void vtkCudaVolumeMapper::SetTint(float RGBA[4]){
+	unsigned char RGBAuc[4];
+	RGBAuc[0] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[0] ) );
+	RGBAuc[1] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[1] ) );
+	RGBAuc[2] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[2] ) );
+	RGBAuc[3] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[3] ) );
+	this->OutputInfoHandler->SetTint(RGBAuc);
+}
+
+void vtkCudaVolumeMapper::GetTint(float RGBA[4]){
+	unsigned char RGBAuc[4];
+	this->OutputInfoHandler->GetTint(RGBAuc);
+	RGBA[0] = (float) RGBAuc[0] / 255.0f;
+	RGBA[1] = (float) RGBAuc[1] / 255.0f;
+	RGBA[2] = (float) RGBAuc[2] / 255.0f;
+	RGBA[3] = (float) RGBAuc[3] / 255.0f;
+}
+
+void vtkCudaVolumeMapper::SetTint(unsigned char RGBA[4]){
+	this->OutputInfoHandler->SetTint(RGBA);
+}
+
+void vtkCudaVolumeMapper::GetTint(unsigned char RGBA[4]){
+	this->OutputInfoHandler->GetTint(RGBA);
+}

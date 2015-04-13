@@ -189,6 +189,13 @@ public:
 
 	void SetImageFlipped(bool b){this->OutputInfoHandler->SetImageFlipped(b);};
 	bool GetImageFlipped(){return this->OutputInfoHandler->GetImageFlipped();};
+	
+	void SetTint(double RGBA[4]);
+	void GetTint(double RGBA[4]);
+	void SetTint(float RGBA[4]);
+	void GetTint(float RGBA[4]);
+	void SetTint(unsigned char RGBA[4]);
+	void GetTint(unsigned char RGBA[4]);
 
 protected:
 	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers

@@ -89,6 +89,9 @@ public:
 	
 	vtkSetMacro(ImageFlipped,bool);
 	vtkGetMacro(ImageFlipped,bool);
+	
+	void SetTint(unsigned char RGBA[4]);
+	void GetTint(unsigned char RGBA[4]);
 
 protected:
 
@@ -124,7 +127,7 @@ private:
 	
 	float							RenderOutputScaleFactor;	/**< The approximate factor by which the screen is resized in order to speed up the rendering process*/
 	bool							ImageFlipped;				/**< Boolean to describe whether the output image is flipped */
-
+	uchar4							ImageTint;					/**< Tint applied to the output image */
 };
 
 #endif
