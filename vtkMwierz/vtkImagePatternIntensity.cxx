@@ -84,8 +84,8 @@ vtkImageStencilData *vtkImagePatternIntensity::GetStencil()
 // Handles the two input operations
 template <class T>
 void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
-				     vtkImageData *diffData, T *diffPtr,
-				     int outExt[6], int id)
+             vtkImageData *diffData, T *diffPtr,
+             int outExt[6], int id)
 {
   int totExt[6];
   int idX, idY, idZ;
@@ -113,51 +113,51 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
   for (idZ = 0; idZ <= maxZ; idZ++)
     {
       for (idY = 0; idY <= maxY; idY++)
-  	{
-  	  // Flag that we want the complementary extents
-  	  iter = 0; if (self->GetReverseStencil()) iter = -1;
-	  
-  	  pminX = 0; pmaxX = maxX;
-  	  while ((stencil !=0 && 
-  		  stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
-  		 (stencil == 0 && iter++ == 0))
-  	    {
-  	      // Set up pointers to the sub-extents
-  	      temp1Ptr = diffPtr + (incZ * idZ + incY * idY + pminX);
-  	      // Compute over the sub-extent
-  	      for (idX = pminX; idX <= pmaxX; idX++)
-  		{
+    {
+      // Flag that we want the complementary extents
+      iter = 0; if (self->GetReverseStencil()) iter = -1;
+    
+      pminX = 0; pmaxX = maxX;
+      while ((stencil !=0 && 
+        stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
+       (stencil == 0 && iter++ == 0))
+        {
+          // Set up pointers to the sub-extents
+          temp1Ptr = diffPtr + (incZ * idZ + incY * idY + pminX);
+          // Compute over the sub-extent
+          for (idX = pminX; idX <= pmaxX; idX++)
+      {
 
-		  for (id2Z = -3; id2Z <= 3; id2Z++)
-		    {
-		      for (id2Y = -3; id2Y <= 3; id2Y++)
-			{
-			  for (id2X = -3; id2X <= 3; id2X++)
-			    {
- 			      if (sqrt((double)(id2X*id2X) + (double)(id2Y*id2Y) + (double)(id2Z*id2Z)) <= 3.0)
- 				{
-				  rX = idX+id2X;
-				  rY = idY+id2Y;
-				  rZ = idZ+id2Z;
-				  if ( (rX >= totExt[0]) && (rX <= totExt[1]) &&
-				       (rY >= totExt[2]) && (rY <= totExt[3]) &&
-				       (rZ >= totExt[4]) && (rZ <= totExt[5]) )
-				    {
-				      temp2Ptr = diffPtr + (incZ * rZ + incY * rY + rX);
-				      self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr - *temp2Ptr) * (*temp1Ptr - *temp2Ptr)); 
-				    }
-				  else
-				    {
-				     self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr * *temp1Ptr)); 
-				    }				      
-				}
-			    }
-			}
-		    }
-		  temp1Ptr++;
-		}
-	    }
-	}
+      for (id2Z = -3; id2Z <= 3; id2Z++)
+        {
+          for (id2Y = -3; id2Y <= 3; id2Y++)
+      {
+        for (id2X = -3; id2X <= 3; id2X++)
+          {
+             if (sqrt((double)(id2X*id2X) + (double)(id2Y*id2Y) + (double)(id2Z*id2Z)) <= 3.0)
+         {
+          rX = idX+id2X;
+          rY = idY+id2Y;
+          rZ = idZ+id2Z;
+          if ( (rX >= totExt[0]) && (rX <= totExt[1]) &&
+               (rY >= totExt[2]) && (rY <= totExt[3]) &&
+               (rZ >= totExt[4]) && (rZ <= totExt[5]) )
+            {
+              temp2Ptr = diffPtr + (incZ * rZ + incY * rY + rX);
+              self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr - *temp2Ptr) * (*temp1Ptr - *temp2Ptr)); 
+            }
+          else
+            {
+             self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr * *temp1Ptr)); 
+            }              
+        }
+          }
+      }
+        }
+      temp1Ptr++;
+    }
+      }
+  }
     }
 }
 
@@ -167,8 +167,8 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
-					       vtkImageData *vtkNotUsed(outData),
-					       int outExt[6], int id)
+                 vtkImageData *vtkNotUsed(outData),
+                 int outExt[6], int id)
 {
   void *diffPtr;
 
@@ -213,8 +213,8 @@ void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
   switch (diffMath->GetOutput()->GetScalarType())
     {
       vtkTemplateMacro5(vtkImagePatternIntensityExecute,this,
-			diffMath->GetOutput(), (VTK_TT *)(diffPtr), 
-			outExt, id);
+      diffMath->GetOutput(), (VTK_TT *)(diffPtr), 
+      outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

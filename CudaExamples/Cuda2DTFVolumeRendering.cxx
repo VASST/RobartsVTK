@@ -35,12 +35,12 @@ virtual void Execute(vtkObject *caller, unsigned long, void*)
  {
    vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
    if (this->Mapper)
-	 {
-	 vtkPlanes *planes = vtkPlanes::New();
-	 widget->GetPlanes(planes);
-	 this->Mapper->SetKeyholePlanes(planes);
-	 planes->Delete();
-	 }
+   {
+   vtkPlanes *planes = vtkPlanes::New();
+   widget->GetPlanes(planes);
+   this->Mapper->SetKeyholePlanes(planes);
+   planes->Delete();
+   }
 }
 void SetMapper(vtkCuda2DVolumeMapper* m) 
  { this->Mapper = m; }
@@ -56,77 +56,77 @@ vtkCuda2DVolumeMapper *Mapper;
 // Main Program
 int main(int argc, char** argv){
 
-	 //retrieve the first image
-	 std::cout << "Enter META image1 filename" << std::endl;
-	 std::string filename = "";
-	 std::getline(std::cin, filename);
-	 //filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
-	 //filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
-	 vtkMetaImageReader* imReader1 = vtkMetaImageReader::New();
-	 imReader1->SetFileName(filename.c_str());
-	 imReader1->Update();
+   //retrieve the first image
+   std::cout << "Enter META image1 filename" << std::endl;
+   std::string filename = "";
+   std::getline(std::cin, filename);
+   //filename = "E:\\jbaxter\\data\\Chamberlain.mhd";
+   //filename = "E:\\jbaxter\\data\\brain\\t1undiffused.mhd";
+   vtkMetaImageReader* imReader1 = vtkMetaImageReader::New();
+   imReader1->SetFileName(filename.c_str());
+   imReader1->Update();
 
-	 //create the transfer function (or load from file for 2D)
-	 std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
-	 std::getline(std::cin, filename);
-	 //filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
-	 //filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
-	 vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
-	 vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
-	 vizReader->SetFileName(filename.c_str());
-	 vizReader->Read();
-	 for(int i = 0; i < vizReader->GetNumberOfOutputs(); i++){
-			 viz->AddFunctionObject( vizReader->GetOutput(i) );
-	 }
-	 viz->Modified();
+   //create the transfer function (or load from file for 2D)
+   std::cout << "Enter 2D transfer function (.2tf) filename" << std::endl;
+   std::getline(std::cin, filename);
+   //filename = "E:\\jbaxter\\data\\Chamberlain.2tf";
+   //filename = "E:\\jbaxter\\data\\brain\\testingDual.2tf";
+   vtkCuda2DTransferFunction* viz = vtkCuda2DTransferFunction::New();
+   vtkCudaFunctionPolygonReader* vizReader = vtkCudaFunctionPolygonReader::New();
+   vizReader->SetFileName(filename.c_str());
+   vizReader->Read();
+   for(int i = 0; i < vizReader->GetNumberOfOutputs(); i++){
+       viz->AddFunctionObject( vizReader->GetOutput(i) );
+   }
+   viz->Modified();
 
-	 //assemble the ray caster
-	 vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
-	 mapper->SetInput( imReader1->GetOutput() );
-	 mapper->SetFunction(viz);
+   //assemble the ray caster
+   vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
+   mapper->SetInput( imReader1->GetOutput() );
+   mapper->SetFunction(viz);
 
-	 //assemble the VTK pipeline
-	 vtkVolume* volume = vtkVolume::New();
-	 volume->SetMapper( mapper );
-	 vtkRenderer* renderer = vtkRenderer::New();
-	 renderer->AddVolume( volume );
-	 renderer->ResetCamera();
-	 renderer->SetBackground(1.0,1.0,1.0);
-	 vtkRenderWindow* window = vtkRenderWindow::New();
-	 window->AddRenderer( renderer );
-	 window->Render();
+   //assemble the VTK pipeline
+   vtkVolume* volume = vtkVolume::New();
+   volume->SetMapper( mapper );
+   vtkRenderer* renderer = vtkRenderer::New();
+   renderer->AddVolume( volume );
+   renderer->ResetCamera();
+   renderer->SetBackground(1.0,1.0,1.0);
+   vtkRenderWindow* window = vtkRenderWindow::New();
+   window->AddRenderer( renderer );
+   window->Render();
 
-	 //apply keyhole planes widget and interactor
-	 vtkRenderWindowInteractor* interactor = vtkRenderWindowInteractor::New();
-	 interactor->SetRenderWindow( window );
-	 vtkBoxWidget* clippingPlanes = vtkBoxWidget::New();
-	 clippingPlanes->SetInteractor( interactor );
-	 clippingPlanes->SetPlaceFactor(1.01);
-	 clippingPlanes->SetInput( imReader1->GetOutput() );
-	 clippingPlanes->SetDefaultRenderer(renderer);
-	 clippingPlanes->InsideOutOn();
-	 clippingPlanes->PlaceWidget();
-	 vtkBoxWidgetCallback *callback = vtkBoxWidgetCallback::New();
-	 callback->SetMapper( mapper );
-	 clippingPlanes->AddObserver(vtkCommand::InteractionEvent, callback);
-	 callback->Delete();
-	 clippingPlanes->EnabledOn();
-	 clippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.0);
+   //apply keyhole planes widget and interactor
+   vtkRenderWindowInteractor* interactor = vtkRenderWindowInteractor::New();
+   interactor->SetRenderWindow( window );
+   vtkBoxWidget* clippingPlanes = vtkBoxWidget::New();
+   clippingPlanes->SetInteractor( interactor );
+   clippingPlanes->SetPlaceFactor(1.01);
+   clippingPlanes->SetInput( imReader1->GetOutput() );
+   clippingPlanes->SetDefaultRenderer(renderer);
+   clippingPlanes->InsideOutOn();
+   clippingPlanes->PlaceWidget();
+   vtkBoxWidgetCallback *callback = vtkBoxWidgetCallback::New();
+   callback->SetMapper( mapper );
+   clippingPlanes->AddObserver(vtkCommand::InteractionEvent, callback);
+   callback->Delete();
+   clippingPlanes->EnabledOn();
+   clippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.0);
 
-	 //start the process
-	 interactor->Initialize();
-	 interactor->Start();
+   //start the process
+   interactor->Initialize();
+   interactor->Start();
 
-	 //clean up pipeline
-	 interactor->Delete();
-	 window->Delete();
-	 volume->Delete();
-	 renderer->Delete();
-	 clippingPlanes->Delete();
-	 mapper->Delete();
-	 viz->Delete();
-	 vizReader->Delete();
-	 imReader1->Delete();
+   //clean up pipeline
+   interactor->Delete();
+   window->Delete();
+   volume->Delete();
+   renderer->Delete();
+   clippingPlanes->Delete();
+   mapper->Delete();
+   viz->Delete();
+   vizReader->Delete();
+   imReader1->Delete();
 
 }
 

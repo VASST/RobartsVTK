@@ -25,11 +25,11 @@ SET(MATLAB_LIB ${MATLAB_DIR}/lib/win32/microsoft/msvc60 )
 SET(MIL_DIR "C:/Program Files/Matrox Imaging/Mil" )
 
 INCLUDE_DIRECTORIES(${RobartsVTK_SOURCE_DIR}/vtkAnis/OpenCV/cv/include
-		    ${RobartsVTK_SOURCE_DIR}/vtkAnis/OpenCV/cxcore/include
-		    ${RobartsVTK_SOURCE_DIR}/vtkAnis/OpenCV/otherlibs/highgui
-		    ${GLEW_DIR}/include 
-		    ${MATLAB_DIR}/include
-		    ${MIL_DIR}/include
+        ${RobartsVTK_SOURCE_DIR}/vtkAnis/OpenCV/cxcore/include
+        ${RobartsVTK_SOURCE_DIR}/vtkAnis/OpenCV/otherlibs/highgui
+        ${GLEW_DIR}/include 
+        ${MATLAB_DIR}/include
+        ${MIL_DIR}/include
 
 )
 

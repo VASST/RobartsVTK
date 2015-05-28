@@ -78,17 +78,17 @@ double vtkDeformedVolume::GetDeformedVolume()
   double deformedvolume;
 
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  0, this->Translation[0]);
+            this->Location[1],
+            this->Location[2],
+            0, this->Translation[0]);
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  1, this->Translation[1]);
+            this->Location[1],
+            this->Location[2],
+            1, this->Translation[1]);
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  2, this->Translation[2]);
+            this->Location[1],
+            this->Location[2],
+            2, this->Translation[2]);
   this->Grid->Modified();
 
 
@@ -98,17 +98,17 @@ double vtkDeformedVolume::GetDeformedVolume()
   deformedvolume = this->Volume->GetVolume();
 
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  0, 0);
+            this->Location[1],
+            this->Location[2],
+            0, 0);
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  1, 0);
+            this->Location[1],
+            this->Location[2],
+            1, 0);
   this->Grid->SetScalarComponentFromFloat(this->Location[0],
-					  this->Location[1],
-					  this->Location[2],
-					  2, 0);
+            this->Location[1],
+            this->Location[2],
+            2, 0);
   this->Grid->Modified();
 
   return deformedvolume;

@@ -119,9 +119,9 @@ void vtkImageMean3D::SetKernelSize(int size0, int size1, int size2)
 // templated function for the mask types.
 template <class T>
 static void vtkImageMean3DExecute(vtkImageMean3D *self,
-				  vtkImageData *inData, T *inPtr, 
-				  vtkImageData *outData, T *outPtr,
-				  int outExt[6], int id)
+          vtkImageData *inData, T *inPtr, 
+          vtkImageData *outData, T *outPtr,
+          int outExt[6], int id)
 {
   int *kernelMiddle, *kernelSize;
   int NumberOfElements;
@@ -187,7 +187,7 @@ static void vtkImageMean3DExecute(vtkImageMean3D *self,
   middleMax2 = inExt[5] - (kernelSize[2] - 1) + kernelMiddle[2];
   
   target = (unsigned long)((outExt[5] - outExt[4] + 1)*
-			   (outExt[3] - outExt[2] + 1)/50.0);
+         (outExt[3] - outExt[2] + 1)/50.0);
   target++;
   
   NumberOfElements = self->GetNumberOfElements();
@@ -204,102 +204,102 @@ static void vtkImageMean3DExecute(vtkImageMean3D *self,
     hoodMin1 = hoodStartMin1;
     hoodMax1 = hoodStartMax1;
     for (outIdx1 = outExt[2]; 
-	 !self->AbortExecute && outIdx1 <= outExt[3]; ++outIdx1)
+   !self->AbortExecute && outIdx1 <= outExt[3]; ++outIdx1)
       {
       if (!id) 
-	{
-	if (!(count%target))
-	  {
-	  self->UpdateProgress(count/(50.0*target));
-	  }
-	count++;
-	}
+  {
+  if (!(count%target))
+    {
+    self->UpdateProgress(count/(50.0*target));
+    }
+  count++;
+  }
       inPtr0 = inPtr1;
       hoodMin0 = hoodStartMin0;
       hoodMax0 = hoodStartMax0;
       for (outIdx0 = outExt[0]; outIdx0 <= outExt[1]; ++outIdx0)
-	{
-	// Compute mean of neighborhood
-	// loop through neighborhood pixels
-	// This could be sped up pretty dramatically by only adding the 
+  {
+  // Compute mean of neighborhood
+  // loop through neighborhood pixels
+  // This could be sped up pretty dramatically by only adding the 
         // pixels on the leading edge of the neighborhood and subtracting
         // those on the trailing edge of the neighborhood as it moves
         // through the input data.
-	tmpPtr2 = inPtr0;
-	  
-	sumX = sumY = sumZ = 0.0;
-	numPixels = 0;
-	for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
-	  {
-	  tmpPtr1 = tmpPtr2;
-	  for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1; ++hoodIdx1)
-	    {
-	    tmpPtr0 = tmpPtr1;
-	    for (hoodIdx0 = hoodMin0; hoodIdx0 <= hoodMax0; ++hoodIdx0)
-	      {
-	      // Add this pixel to the mean
-	      if ((outIdx0-hoodIdx0) | (outIdx1-hoodIdx1) | (outIdx2-hoodIdx2))
-		{
-		numPixels++;
-		sumX+=(double)*(tmpPtr0++);
-		sumY+=(double)*(tmpPtr0++);
-		sumZ+=(double)*(tmpPtr0++);
-		}
-	      else // unless it is the center pixel, in which case we save it.
-		{
-		centerPixelX = *(tmpPtr0++);
-		centerPixelY = *(tmpPtr0++);
-		centerPixelZ = *(tmpPtr0++);
-		}
-	      }
-	    tmpPtr1 += inInc1;
-	    }
-	  tmpPtr2 += inInc2;
-	  }
-	
-	// Replace this vector with the hood mean assuming its longer 
-	// than the threshold length.
-	if (((centerPixelX*centerPixelX + 
-	      centerPixelY*centerPixelY + 
-	      centerPixelZ*centerPixelZ) > smoothThreshold) &&(numPixels))
-	  {
-	  numSmoothed++;
-	  *(outPtr++) = (T)(centerWeighting*centerPixelX + 
-			    surroundWeighting*(sumX/numPixels));
-	  *(outPtr++) = (T)(centerWeighting*centerPixelY + 
-			    surroundWeighting*(sumY/numPixels));
-	  *(outPtr++) = (T)(centerWeighting*centerPixelZ + 
-			    surroundWeighting*(sumZ/numPixels));
-	  } 
-	else 
-	  {
-	  numIgnored++;
-	  *(outPtr++) = (T)centerPixelX;
-	  *(outPtr++) = (T)centerPixelY;
-	  *(outPtr++) = (T)centerPixelZ;
-	  }	    
-	  
-	// shift neighborhood considering boundaries
-	if (outIdx0 >= middleMin0)
-	  {
-	  inPtr0 += inInc0;
-	  ++hoodMin0;
-	  }
-	if (outIdx0 < middleMax0)
-	  {
-	  ++hoodMax0;
-	  }
-	}
+  tmpPtr2 = inPtr0;
+    
+  sumX = sumY = sumZ = 0.0;
+  numPixels = 0;
+  for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
+    {
+    tmpPtr1 = tmpPtr2;
+    for (hoodIdx1 = hoodMin1; hoodIdx1 <= hoodMax1; ++hoodIdx1)
+      {
+      tmpPtr0 = tmpPtr1;
+      for (hoodIdx0 = hoodMin0; hoodIdx0 <= hoodMax0; ++hoodIdx0)
+        {
+        // Add this pixel to the mean
+        if ((outIdx0-hoodIdx0) | (outIdx1-hoodIdx1) | (outIdx2-hoodIdx2))
+    {
+    numPixels++;
+    sumX+=(double)*(tmpPtr0++);
+    sumY+=(double)*(tmpPtr0++);
+    sumZ+=(double)*(tmpPtr0++);
+    }
+        else // unless it is the center pixel, in which case we save it.
+    {
+    centerPixelX = *(tmpPtr0++);
+    centerPixelY = *(tmpPtr0++);
+    centerPixelZ = *(tmpPtr0++);
+    }
+        }
+      tmpPtr1 += inInc1;
+      }
+    tmpPtr2 += inInc2;
+    }
+  
+  // Replace this vector with the hood mean assuming its longer 
+  // than the threshold length.
+  if (((centerPixelX*centerPixelX + 
+        centerPixelY*centerPixelY + 
+        centerPixelZ*centerPixelZ) > smoothThreshold) &&(numPixels))
+    {
+    numSmoothed++;
+    *(outPtr++) = (T)(centerWeighting*centerPixelX + 
+          surroundWeighting*(sumX/numPixels));
+    *(outPtr++) = (T)(centerWeighting*centerPixelY + 
+          surroundWeighting*(sumY/numPixels));
+    *(outPtr++) = (T)(centerWeighting*centerPixelZ + 
+          surroundWeighting*(sumZ/numPixels));
+    } 
+  else 
+    {
+    numIgnored++;
+    *(outPtr++) = (T)centerPixelX;
+    *(outPtr++) = (T)centerPixelY;
+    *(outPtr++) = (T)centerPixelZ;
+    }      
+    
+  // shift neighborhood considering boundaries
+  if (outIdx0 >= middleMin0)
+    {
+    inPtr0 += inInc0;
+    ++hoodMin0;
+    }
+  if (outIdx0 < middleMax0)
+    {
+    ++hoodMax0;
+    }
+  }
       // shift neighborhood considering boundaries
       if (outIdx1 >= middleMin1)
-	{
-	inPtr1 += inInc1;
-	++hoodMin1;
-	}
+  {
+  inPtr1 += inInc1;
+  ++hoodMin1;
+  }
       if (outIdx1 < middleMax1)
-	{
-	++hoodMax1;
-	}
+  {
+  ++hoodMax1;
+  }
       outPtr += outIncY;
       }
     // shift neighborhood considering boundaries
@@ -323,8 +323,8 @@ static void vtkImageMean3DExecute(vtkImageMean3D *self,
 // This method contains the first switch statement that calls the correct
 // templated function for the input and output region types.
 void vtkImageMean3D::ThreadedExecute(vtkImageData *inData, 
-				       vtkImageData *outData,
-				       int outExt[6], int id)
+               vtkImageData *outData,
+               int outExt[6], int id)
 {
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);

@@ -280,15 +280,15 @@ void vtkLegoSignalBox::CheckForTouch()
     {
 
     // give the user time to release the button
-		#ifdef _WIN32
+    #ifdef _WIN32
       Sleep(1000);
-		#else
-		#ifdef unix
-		#ifdef linux
-			usleep(1000000);
-		#endif
-		#endif
-		#endif
+    #else
+    #ifdef unix
+    #ifdef linux
+      usleep(1000000);
+    #endif
+    #endif
+    #endif
 
     // turning motor on
     if (!this->MotorOn)
@@ -308,38 +308,38 @@ void vtkLegoSignalBox::CheckForTouch()
 static void *vtkLegoSignalBoxThread(vtkMultiThreader::ThreadInfo *data)
   {
 
-	vtkLegoSignalBox *self = (vtkLegoSignalBox *)(data->UserData);
+  vtkLegoSignalBox *self = (vtkLegoSignalBox *)(data->UserData);
   int useTouch = self->GetUseTouchSensor();
 
-	for (int i = 0;; i++)
+  for (int i = 0;; i++)
     {
 
-	  #ifdef _WIN32
-		  Sleep(self->GetSleepInterval());
-	  #else
-	  #ifdef unix
-	  #ifdef linux
-		  usleep(self->GetSleepInterval() * 1000);
-	  #endif
-	  #endif
-	  #endif
+    #ifdef _WIN32
+      Sleep(self->GetSleepInterval());
+    #else
+    #ifdef unix
+    #ifdef linux
+      usleep(self->GetSleepInterval() * 1000);
+    #endif
+    #endif
+    #endif
 
-	  // query the hardware tracker
-	  self->UpdateMutex->Lock();
+    // query the hardware tracker
+    self->UpdateMutex->Lock();
     if (useTouch)
       {
       self->CheckForTouch();
       }
-	  self->Update();
-	  self->UpdateTime.Modified();
-	  self->UpdateMutex->Unlock();
+    self->Update();
+    self->UpdateTime.Modified();
+    self->UpdateMutex->Unlock();
 
     // check to see if we are being told to quit 
     data->ActiveFlagLock->Lock();
     int activeFlag = *(data->ActiveFlag);
     data->ActiveFlagLock->Unlock();
     if (activeFlag == 0) {
-	    return NULL;
+      return NULL;
     }
   }
     
@@ -351,7 +351,7 @@ void vtkLegoSignalBox::Start()
 
   if (this->IsStarted)
     {
-		return;
+    return;
     }
 
   if (!this->IsInitialized)
@@ -382,15 +382,15 @@ void vtkLegoSignalBox::Start()
     this->StartMotor();
     }
 
-	this->UpdateMutex->Lock();
+  this->UpdateMutex->Lock();
 
-	if (this->ThreadId == -1)
+  if (this->ThreadId == -1)
     {
-		this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkLegoSignalBoxThread,this);
-	  }
-	this->UpdateMutex->Unlock();
+    this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkLegoSignalBoxThread,this);
+    }
+  this->UpdateMutex->Unlock();
 
-	this->IsStarted=1;
+  this->IsStarted=1;
   }
 
 //-------------------------------------------------------------------------
@@ -541,18 +541,18 @@ int vtkLegoSignalBox::GetECG(void) {
           std::cout << "\a";
           }
         trigger = 1;
-		    this->CalculateECGRate(this->StartSignalTimeStamp, this->Timestamp);
-		    this->StartSignalTimeStamp = this->Timestamp;
+        this->CalculateECGRate(this->StartSignalTimeStamp, this->Timestamp);
+        this->StartSignalTimeStamp = this->Timestamp;
         }
       }
 
     // the beating rate is invalid if if we are not starting a new cycle but we have
     // waited for more than two cycles without getting a new cycle
-	  else if ( (this->Timestamp - this->StartSignalTimeStamp) >= ((60*2)/this->ECGRateBPM) ) 
+    else if ( (this->Timestamp - this->StartSignalTimeStamp) >= ((60*2)/this->ECGRateBPM) ) 
       {
-		  this->ECGRateBPM = -1.0;
+      this->ECGRateBPM = -1.0;
       trigger = 0;
-	    }
+      }
 
     // we are not starting a new cycle but we are still valid
     else
@@ -561,23 +561,23 @@ int vtkLegoSignalBox::GetECG(void) {
       }
 
     // return the signal, and update the phase if the beating rate is valid
-	  if (this->ECGRateBPM < 0)
+    if (this->ECGRateBPM < 0)
       {
       if (this->PrintToFile)
         {
         this->OutStream << trigger << " " << this->Timestamp << " " << signal << " " << this->ECGRateBPM << " " << this->ECGPhase << std::endl;
         }
-		  return signal;
-	    }
-	  else
+      return signal;
+      }
+    else
       {
-		  this->CalculatePhase(this->StartSignalTimeStamp, this->Timestamp);
+      this->CalculatePhase(this->StartSignalTimeStamp, this->Timestamp);
       if (this->PrintToFile)
         {
         this->OutStream << trigger << " " << this->Timestamp << " " << signal << " " << this->ECGRateBPM << " " << this->ECGPhase << std::endl;
         }
-		  return signal;
-	    }
+      return signal;
+      }
     }
 
   // motor is not on

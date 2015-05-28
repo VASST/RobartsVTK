@@ -85,9 +85,9 @@ vtkImageStencilData *vtkImageNormalizedCrossCorrelation::GetStencil()
 // Handles the two input operations
 template <class T>
 void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelation *self,
-					       vtkImageData *in1Data, T *in1Ptr,
-					       vtkImageData *in2Data, T *in2Ptr,
-					       int outExt[6], int id)
+                 vtkImageData *in1Data, T *in1Ptr,
+                 vtkImageData *in2Data, T *in2Ptr,
+                 int outExt[6], int id)
 {
   int idX, idY, idZ;
   int incX, incY, incZ;
@@ -112,29 +112,29 @@ void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelatio
   for (idZ = 0; idZ <= maxZ; idZ++)
     {
       for (idY = 0; idY <= maxY; idY++)
-	{
-	  // Flag that we want the complementary extents
-	  iter = 0; if (self->GetReverseStencil()) iter = -1;
-	  
-	  pminX = 0; pmaxX = maxX;
-	  while ((stencil !=0 && 
-		  stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
-		 (stencil == 0 && iter++ == 0))
-	    {
-	      // Set up pointers to the sub-extents
-	      temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
-	      temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
-	      // Compute over the sub-extent
-	      for (idX = pminX; idX <= pmaxX; idX++)
-		{
-		  self->ThreadSumST[id] += (double)*temp1Ptr * (double)*temp2Ptr; 
-		  self->ThreadSumS[id] += (double)*temp1Ptr * (double)*temp1Ptr; 
-		  self->ThreadSumT[id] += (double)*temp2Ptr * (double)*temp2Ptr; 
-		  temp1Ptr++;
-		  temp2Ptr++;
-		}
-	    }
-	}
+  {
+    // Flag that we want the complementary extents
+    iter = 0; if (self->GetReverseStencil()) iter = -1;
+    
+    pminX = 0; pmaxX = maxX;
+    while ((stencil !=0 && 
+      stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
+     (stencil == 0 && iter++ == 0))
+      {
+        // Set up pointers to the sub-extents
+        temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
+        temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
+        // Compute over the sub-extent
+        for (idX = pminX; idX <= pmaxX; idX++)
+    {
+      self->ThreadSumST[id] += (double)*temp1Ptr * (double)*temp2Ptr; 
+      self->ThreadSumS[id] += (double)*temp1Ptr * (double)*temp1Ptr; 
+      self->ThreadSumT[id] += (double)*temp2Ptr * (double)*temp2Ptr; 
+      temp1Ptr++;
+      temp2Ptr++;
+    }
+      }
+  }
     }
 }
 
@@ -144,8 +144,8 @@ void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelatio
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
-						 vtkImageData *vtkNotUsed(outData),
-						 int outExt[6], int id)
+             vtkImageData *vtkNotUsed(outData),
+             int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -186,9 +186,9 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageNormalizedCrossCorrelationExecute,this,
-			inData[0], (VTK_TT *)(inPtr1), 
-			inData[1], (VTK_TT *)(inPtr2), 
-			outExt, id);
+      inData[0], (VTK_TT *)(inPtr1), 
+      inData[1], (VTK_TT *)(inPtr2), 
+      outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

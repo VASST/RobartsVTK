@@ -14,12 +14,12 @@
 /** @file CUDA_commonKernels.cu
  *
  *  @brief Implementation file with definitions of GPU kernels used in several GPU-accelerated classes.
- *			This includes simple utilities like created validly sized grids. These classes are primarily 
- *			template-based, so there are a lot of lines of template forward declarations.
+ *      This includes simple utilities like created validly sized grids. These classes are primarily 
+ *      template-based, so there are a lot of lines of template forward declarations.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
@@ -36,11 +36,11 @@
 #define MAX_GRID_SIZE 65535
 
 dim3 GetGrid(int size){
-	size = (size-1) / NUMTHREADS + 1;
-	dim3 grid( size, 1, 1 );
-	if( grid.x > MAX_GRID_SIZE ) grid.x = grid.y = (int) sqrt( (double)(size-1) ) + 1;
-	else if( grid.y > MAX_GRID_SIZE ) grid.x = grid.y = grid.z = (int) pow( (double)(size-1), (double)1.0/3.0 ) + 1;
-	return grid;
+  size = (size-1) / NUMTHREADS + 1;
+  dim3 grid( size, 1, 1 );
+  if( grid.x > MAX_GRID_SIZE ) grid.x = grid.y = (int) sqrt( (double)(size-1) ) + 1;
+  else if( grid.y > MAX_GRID_SIZE ) grid.x = grid.y = grid.z = (int) pow( (double)(size-1), (double)1.0/3.0 ) + 1;
+  return grid;
 }
 
 //---------------------------------------------------------------------------//
@@ -49,8 +49,8 @@ dim3 GetGrid(int size){
 
 template<class T> 
 __global__ void ZeroOutBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	if(offset < size ) buffer[offset] = 0;
+  int offset = CUDASTDOFFSET;
+  if(offset < size ) buffer[offset] = 0;
 }
 template __global__ void ZeroOutBuffer<char> (char* buffer, int size);
 template __global__ void ZeroOutBuffer<signed char> (signed char* buffer, int size);
@@ -68,8 +68,8 @@ template __global__ void ZeroOutBuffer<unsigned long long> (unsigned long long* 
 
 template<class T> 
 __global__ void OneOutBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	if(offset < size ) buffer[offset] = 1;
+  int offset = CUDASTDOFFSET;
+  if(offset < size ) buffer[offset] = 1;
 }
 template __global__ void OneOutBuffer<char> (char* buffer, int size);
 template __global__ void OneOutBuffer<signed char> (signed char* buffer, int size);
@@ -87,8 +87,8 @@ template __global__ void OneOutBuffer<unsigned long long> (unsigned long long* b
 
 template<class T> 
 __global__ void SetBufferToConst(T* buffer, T value, int size){
-	int offset = CUDASTDOFFSET;
-	if( offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  if( offset < size ) buffer[offset] = value;
 }
 template __global__ void SetBufferToConst<char> (char* buffer, char value, int size);
 template __global__ void SetBufferToConst<signed char> (signed char* buffer, signed char value, int size);
@@ -107,9 +107,9 @@ template __global__ void SetBufferToConst<unsigned long long> (unsigned long lon
 
 template<class T>
 __global__ void TranslateBuffer(T* buffer, T scale, T shift, int size){
-	int offset = CUDASTDOFFSET;
-	T value = scale * buffer[offset] + shift;
-	if(offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  T value = scale * buffer[offset] + shift;
+  if(offset < size ) buffer[offset] = value;
 }
 template __global__ void TranslateBuffer<char>(char* buffer, char scale, char shift, int size);
 template __global__ void TranslateBuffer<signed char>(signed char* buffer, signed char scale, signed char shift, int size);
@@ -126,18 +126,18 @@ template __global__ void TranslateBuffer<long long>(long long* buffer, long long
 template __global__ void TranslateBuffer<unsigned long long>(unsigned long long* buffer, unsigned long long scale, unsigned long long shift, int size);
 
 __global__ void ReplaceNANs(float* buffer, float value, int size){
-	int offset = CUDASTDOFFSET;
-	float current = buffer[offset];
-	current = isfinite(current) ? current : value;
-	if(offset < size ) buffer[offset] = current;
+  int offset = CUDASTDOFFSET;
+  float current = buffer[offset];
+  current = isfinite(current) ? current : value;
+  if(offset < size ) buffer[offset] = current;
 }
 
 template<class T> 
 __global__ void LogBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	float input = (float) buffer[offset];
-	T value = (T) log( input );
-	if(offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float input = (float) buffer[offset];
+  T value = (T) log( input );
+  if(offset < size ) buffer[offset] = value;
 }
 template __global__ void LogBuffer<char> (char* buffer, int size);
 template __global__ void LogBuffer<signed char> (signed char* buffer, int size);
@@ -155,10 +155,10 @@ template __global__ void LogBuffer<unsigned long long> (unsigned long long* buff
 
 template<class T> 
 __global__ void NegLogBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	float input = (float) buffer[offset];
-	T value = (T) -log( input );
-	if(offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float input = (float) buffer[offset];
+  T value = (T) -log( input );
+  if(offset < size ) buffer[offset] = value;
 }
 template __global__ void NegLogBuffer<char> (char* buffer, int size);
 template __global__ void NegLogBuffer<signed char> (signed char* buffer, int size);
@@ -176,10 +176,10 @@ template __global__ void NegLogBuffer<unsigned long long> (unsigned long long* b
 
 template<class T> 
 __global__ void ExpBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	float input = (float) buffer[offset];
-	T value = (T) exp( input );
-	if(offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float input = (float) buffer[offset];
+  T value = (T) exp( input );
+  if(offset < size ) buffer[offset] = value;
 }
 template __global__ void ExpBuffer<char> (char* buffer, int size);
 template __global__ void ExpBuffer<signed char> (signed char* buffer, int size);
@@ -197,10 +197,10 @@ template __global__ void ExpBuffer<unsigned long long> (unsigned long long* buff
 
 template<class T> 
 __global__ void NegExpBuffer(T* buffer, int size){
-	int offset = CUDASTDOFFSET;
-	float input = (float) buffer[offset];
-	T value = (T) exp( -input );
-	if(offset < size ) buffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float input = (float) buffer[offset];
+  T value = (T) exp( -input );
+  if(offset < size ) buffer[offset] = value;
 }
 template __global__ void NegExpBuffer<char> (char* buffer, int size);
 template __global__ void NegExpBuffer<signed char> (signed char* buffer, int size);
@@ -218,11 +218,11 @@ template __global__ void NegExpBuffer<unsigned long long> (unsigned long long* b
 
 template<class T, class S>
 __global__ void IncrementBuffer(T* labelBuffer, T desiredLabel, S* agreement, int size){
-	int idx = CUDASTDOFFSET;
-	S newAgreement = agreement[idx];
-	T labelValue = labelBuffer[idx];
-	newAgreement += (labelValue == desiredLabel) ? 1 : 0;
-	if( idx < size ) agreement[idx] = newAgreement;
+  int idx = CUDASTDOFFSET;
+  S newAgreement = agreement[idx];
+  T labelValue = labelBuffer[idx];
+  newAgreement += (labelValue == desiredLabel) ? 1 : 0;
+  if( idx < size ) agreement[idx] = newAgreement;
 }
 template __global__ void IncrementBuffer<char, char> (char* labelBuffer, char desiredLabel, char* agreement, int size);
 template __global__ void IncrementBuffer<signed char, char> (signed char* labelBuffer, signed char desiredLabel, char* agreement, int size);
@@ -395,13 +395,13 @@ template __global__ void IncrementBuffer<long long, unsigned long long> (long lo
 template __global__ void IncrementBuffer<unsigned long long, unsigned long long> (unsigned long long* labelBuffer, unsigned long long desiredLabel, unsigned long long* agreement, int size);
 
 __global__ void SetBufferToRandom(float* buffer, float min, float max, int size){
-	int offset = CUDASTDOFFSET;
-	curandState localState;
-	curand_init(7+offset, offset, 0, &localState);
-	__syncthreads();
+  int offset = CUDASTDOFFSET;
+  curandState localState;
+  curand_init(7+offset, offset, 0, &localState);
+  __syncthreads();
 
-	float value = min + (max-min)*curand_uniform(&localState);
-	if(offset < size ) buffer[offset] = value;
+  float value = min + (max-min)*curand_uniform(&localState);
+  if(offset < size ) buffer[offset] = value;
 }
 
 //---------------------------------------------------------------------------//
@@ -410,9 +410,9 @@ __global__ void SetBufferToRandom(float* buffer, float min, float max, int size)
 
 template<class T> 
 __global__ void SumBuffers(T* outBuffer, T* sumBuffer, int size){
-	int offset = CUDASTDOFFSET;
-	T value = outBuffer[offset] + sumBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  T value = outBuffer[offset] + sumBuffer[offset];
+  if(offset < size ) outBuffer[offset] = value;
 }
 template __global__ void SumBuffers<char>(char* buffer1, char* buffer2, int size);
 template __global__ void SumBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
@@ -430,9 +430,9 @@ template __global__ void SumBuffers<unsigned long long>(unsigned long long* buff
 
 template<class T> 
 __global__ void SumScaledBuffers(T* outBuffer, T* sumBuffer, T scale, int size){
-	int offset = CUDASTDOFFSET;
-	T value = outBuffer[offset] + scale * sumBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  T value = outBuffer[offset] + scale * sumBuffer[offset];
+  if(offset < size ) outBuffer[offset] = value;
 }
 template __global__ void SumScaledBuffers<char>(char* buffer1, char* buffer2, char scale, int size);
 template __global__ void SumScaledBuffers<signed char>(signed char* buffer1, signed char* buffer2, signed char scale, int size);
@@ -450,9 +450,9 @@ template __global__ void SumScaledBuffers<unsigned long long>(unsigned long long
 
 template<class T> 
 __global__ void CopyBuffers(T* outBuffer, T* inBuffer, int size){
-	int offset = CUDASTDOFFSET;
-	T value = inBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  T value = inBuffer[offset];
+  if(offset < size ) outBuffer[offset] = value;
 }
 template __global__ void CopyBuffers<char>(char* buffer1, char* buffer2, int size);
 template __global__ void CopyBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
@@ -470,9 +470,9 @@ template __global__ void CopyBuffers<unsigned long long>(unsigned long long* buf
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, T scale, T shift, int size){
-	int offset = CUDASTDOFFSET;
-	float value = (scale * outBuffer[offset] + shift) * multBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float value = (scale * outBuffer[offset] + shift) * multBuffer[offset];
+  if(offset < size ) outBuffer[offset] = value;
 }
 template __global__ void MultiplyBuffers<char>(char* buffer1, char* buffer2, char value1, char value2, int size);
 template __global__ void MultiplyBuffers<signed char>(signed char* buffer1, signed char* buffer2, signed char value1, signed char value2, int size);
@@ -490,9 +490,9 @@ template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long*
 
 template<class T>
 __global__ void MultiplyBuffers(T* outBuffer, T* multBuffer, int size){
-	int offset = CUDASTDOFFSET;
-	float value = outBuffer[offset] * multBuffer[offset];
-	if(offset < size ) outBuffer[offset] = value;
+  int offset = CUDASTDOFFSET;
+  float value = outBuffer[offset] * multBuffer[offset];
+  if(offset < size ) outBuffer[offset] = value;
 }
 template __global__ void MultiplyBuffers<char>(char* buffer1, char* buffer2, int size);
 template __global__ void MultiplyBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
@@ -510,9 +510,9 @@ template __global__ void MultiplyBuffers<unsigned long long>(unsigned long long*
 
 template<class T>
 __global__ void MultiplyAndStoreBuffer(T* inBuffer, T* outBuffer, T number, int size){
-	int idx = CUDASTDOFFSET;
-	T value = inBuffer[idx] * number;
-	if( idx < size ) outBuffer[idx] = value;
+  int idx = CUDASTDOFFSET;
+  T value = inBuffer[idx] * number;
+  if( idx < size ) outBuffer[idx] = value;
 }
 template __global__ void MultiplyAndStoreBuffer<char>(char* buffer1, char* buffer2, char value, int size);
 template __global__ void MultiplyAndStoreBuffer<signed char>(signed char* buffer1, signed char* buffer2, signed char value, int size);
@@ -530,9 +530,9 @@ template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned lon
 
 template<class T>
 __global__ void MultiplyAndStoreBuffer(T* inBuffer1, T* inBuffer2, T* outBuffer, int size){
-	int idx = CUDASTDOFFSET;
-	T value = inBuffer1[idx] * inBuffer2[idx];
-	if( idx < size ) outBuffer[idx] = value;
+  int idx = CUDASTDOFFSET;
+  T value = inBuffer1[idx] * inBuffer2[idx];
+  if( idx < size ) outBuffer[idx] = value;
 }
 template __global__ void MultiplyAndStoreBuffer<char>(char* buffer1, char* buffer2, char* buffer3, int size);
 template __global__ void MultiplyAndStoreBuffer<signed char>(signed char* buffer1, signed char* buffer2, signed char* buffer3, int size);
@@ -550,11 +550,11 @@ template __global__ void MultiplyAndStoreBuffer<unsigned long long>(unsigned lon
 
 template<class T>
 __global__ void MinBuffers(T* dst, T* src, const int size){
-	int idx = CUDASTDOFFSET;
-	T value1 = src[idx];
-	T value2 = dst[idx];
-	T minVal = (value1 < value2) ? value1 : value2;
-	if( idx < size ) dst[idx] = minVal;
+  int idx = CUDASTDOFFSET;
+  T value1 = src[idx];
+  T value2 = dst[idx];
+  T minVal = (value1 < value2) ? value1 : value2;
+  if( idx < size ) dst[idx] = minVal;
 }
 template __global__ void MinBuffers<char>(char* buffer1, char* buffer2, int size);
 template __global__ void MinBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
@@ -572,11 +572,11 @@ template __global__ void MinBuffers<unsigned long long>(unsigned long long* buff
 
 template<class T>
 __global__ void DivideBuffers(T* dst, T* src, const int size){
-	int idx = CUDASTDOFFSET;
-	T value1 = src[idx];
-	T value2 = dst[idx];
-	T minVal =  value2 / value1;
-	if( idx < size ) dst[idx] = minVal;
+  int idx = CUDASTDOFFSET;
+  T value1 = src[idx];
+  T value2 = dst[idx];
+  T minVal =  value2 / value1;
+  if( idx < size ) dst[idx] = minVal;
 }
 template __global__ void DivideBuffers<char>(char* buffer1, char* buffer2, int size);
 template __global__ void DivideBuffers<signed char>(signed char* buffer1, signed char* buffer2, int size);
@@ -604,103 +604,103 @@ void SumData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t*
     dim3 dimGrid(blocks, 1, 1);
 
     int smemSize = (threads <= 32) ? 2 * threads * (sizeof(float)+sizeof(short2)) : threads * (sizeof(float)+sizeof(short2));
-	switch (threads)
-	{
-	case 512:
-		SumOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 256:
-		SumOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 128:
-		SumOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 64:
-		SumOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 32:
-		SumOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 16:
-		SumOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 8:
-		SumOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 4:
-		SumOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 2:
-		SumOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 1:
-		SumOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	}
+  switch (threads)
+  {
+  case 512:
+    SumOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 256:
+    SumOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 128:
+    SumOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 64:
+    SumOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 32:
+    SumOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 16:
+    SumOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 8:
+    SumOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 4:
+    SumOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 2:
+    SumOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 1:
+    SumOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  }
 
 }
 
 template <unsigned int blockSize>
 __global__ void SumOverSmallBuffer(float *buffer, unsigned int n)
 {
-	__shared__ float sdata[blockSize];
-	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockSize*2) + tid;
-	unsigned int gridSize = blockSize*2*gridDim.x;
-	sdata[tid] = 0.0f;
-	
-	while (i < n) {
-		sdata[tid] += buffer[i];
-		sdata[tid] += buffer[i+blockSize];
-		i += gridSize;
-		__syncthreads();
-	}
-	
-	if (blockSize >= 512) { if (tid < 256) {
-			sdata[tid] += sdata[tid + 256];
-	} __syncthreads(); }
+  __shared__ float sdata[blockSize];
+  unsigned int tid = threadIdx.x;
+  unsigned int i = blockIdx.x*(blockSize*2) + tid;
+  unsigned int gridSize = blockSize*2*gridDim.x;
+  sdata[tid] = 0.0f;
+  
+  while (i < n) {
+    sdata[tid] += buffer[i];
+    sdata[tid] += buffer[i+blockSize];
+    i += gridSize;
+    __syncthreads();
+  }
+  
+  if (blockSize >= 512) { if (tid < 256) {
+      sdata[tid] += sdata[tid + 256];
+  } __syncthreads(); }
 
-	if (blockSize >= 256) { if (tid < 128) {
-			sdata[tid] += sdata[tid + 128];
-	} __syncthreads(); }
-	if (blockSize >= 128) { if (tid <  64) {
-			sdata[tid] += sdata[tid + 64];
-	} __syncthreads(); }
-	
-	if (tid < 32) {
-		if (blockSize >= 64){
-			sdata[tid] += sdata[tid + 32];
-			__syncthreads();
-		}
-		if (blockSize >= 32){
-			sdata[tid] += sdata[tid + 16];
-			__syncthreads();
-		}
-		if (blockSize >= 16){
-			sdata[tid] += sdata[tid + 8];
-			__syncthreads();
-		}
-		if (blockSize >=  8){
-			sdata[tid] += sdata[tid + 4];
-			__syncthreads();
-		}
-		if (blockSize >=  4){
-			sdata[tid] += sdata[tid + 2];
-			__syncthreads();
-		}
-		if (blockSize >=  2){
-			sdata[tid] += sdata[tid + 1];
-			__syncthreads();
-		}
-	}
-	if (tid == 0){
-		buffer[0] = sdata[0];
-	}
+  if (blockSize >= 256) { if (tid < 128) {
+      sdata[tid] += sdata[tid + 128];
+  } __syncthreads(); }
+  if (blockSize >= 128) { if (tid <  64) {
+      sdata[tid] += sdata[tid + 64];
+  } __syncthreads(); }
+  
+  if (tid < 32) {
+    if (blockSize >= 64){
+      sdata[tid] += sdata[tid + 32];
+      __syncthreads();
+    }
+    if (blockSize >= 32){
+      sdata[tid] += sdata[tid + 16];
+      __syncthreads();
+    }
+    if (blockSize >= 16){
+      sdata[tid] += sdata[tid + 8];
+      __syncthreads();
+    }
+    if (blockSize >=  8){
+      sdata[tid] += sdata[tid + 4];
+      __syncthreads();
+    }
+    if (blockSize >=  4){
+      sdata[tid] += sdata[tid + 2];
+      __syncthreads();
+    }
+    if (blockSize >=  2){
+      sdata[tid] += sdata[tid + 1];
+      __syncthreads();
+    }
+  }
+  if (tid == 0){
+    buffer[0] = sdata[0];
+  }
 }
 
 __global__ void SumOverLargeBuffer( float* buffer, int spread, int size ){
-	
-	int offset = CUDASTDOFFSET;
-	float value1 = buffer[offset];
-	float value2 = buffer[offset+spread];
+  
+  int offset = CUDASTDOFFSET;
+  float value1 = buffer[offset];
+  float value2 = buffer[offset+spread];
 
-	if( offset+spread < size )
-		buffer[offset] = value1+value2;
+  if( offset+spread < size )
+    buffer[offset] = value1+value2;
 
 }
 
-#define Logariture(value1, value2)	0.5f * ((isfinite(value1 + log(1.0f + exp(value2-value1)))?value1 + log(1.0f + exp(value2-value1)):value2 + log(1.0f + exp(value1-value2))) + \
-											(isfinite(value2 + log(1.0f + exp(value1-value2)))?value2 + log(1.0f + exp(value1-value2)):value1 + log(1.0f + exp(value2-value1))) )
+#define Logariture(value1, value2)  0.5f * ((isfinite(value1 + log(1.0f + exp(value2-value1)))?value1 + log(1.0f + exp(value2-value1)):value2 + log(1.0f + exp(value1-value2))) + \
+                      (isfinite(value2 + log(1.0f + exp(value1-value2)))?value2 + log(1.0f + exp(value1-value2)):value1 + log(1.0f + exp(value2-value1))) )
 
 void LogaritureData(int size, int threads, int blocks, float* dataBuffer, cudaStream_t* stream ){
 
@@ -708,99 +708,99 @@ void LogaritureData(int size, int threads, int blocks, float* dataBuffer, cudaSt
     dim3 dimGrid(blocks, 1, 1);
 
     int smemSize = (threads <= 32) ? 2 * threads * (sizeof(float)+sizeof(short2)) : threads * (sizeof(float)+sizeof(short2));
-	switch (threads)
-	{
-	case 512:
-		LogaritureOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 256:
-		LogaritureOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 128:
-		LogaritureOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 64:
-		LogaritureOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 32:
-		LogaritureOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 16:
-		LogaritureOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 8:
-		LogaritureOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 4:
-		LogaritureOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 2:
-		LogaritureOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	case 1:
-		LogaritureOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
-	}
+  switch (threads)
+  {
+  case 512:
+    LogaritureOverSmallBuffer<512><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 256:
+    LogaritureOverSmallBuffer<256><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 128:
+    LogaritureOverSmallBuffer<128><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 64:
+    LogaritureOverSmallBuffer< 64><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 32:
+    LogaritureOverSmallBuffer< 32><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 16:
+    LogaritureOverSmallBuffer< 16><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 8:
+    LogaritureOverSmallBuffer< 8><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 4:
+    LogaritureOverSmallBuffer< 4><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 2:
+    LogaritureOverSmallBuffer< 2><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  case 1:
+    LogaritureOverSmallBuffer< 1><<< dimGrid, dimBlock, smemSize, *stream >>>(dataBuffer, size); break;
+  }
 
 }
 
 template <unsigned int blockSize>
 __global__ void LogaritureOverSmallBuffer(float *buffer, unsigned int n)
 {
-	__shared__ float sdata[blockSize];
-	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockSize*2) + tid;
-	unsigned int gridSize = blockSize*2*gridDim.x;
-	sdata[tid] = -FLT_MAX;
-	
-	while (i < n) {
-		sdata[tid] = Logariture(sdata[tid], buffer[i]);
-		sdata[tid] = Logariture(sdata[tid], buffer[i+blockSize]);
-		i += gridSize;
-		__syncthreads();
-	}
-	
-	if (blockSize >= 512) { if (tid < 256) {
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 256]);
-	} __syncthreads(); }
+  __shared__ float sdata[blockSize];
+  unsigned int tid = threadIdx.x;
+  unsigned int i = blockIdx.x*(blockSize*2) + tid;
+  unsigned int gridSize = blockSize*2*gridDim.x;
+  sdata[tid] = -FLT_MAX;
+  
+  while (i < n) {
+    sdata[tid] = Logariture(sdata[tid], buffer[i]);
+    sdata[tid] = Logariture(sdata[tid], buffer[i+blockSize]);
+    i += gridSize;
+    __syncthreads();
+  }
+  
+  if (blockSize >= 512) { if (tid < 256) {
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 256]);
+  } __syncthreads(); }
 
-	if (blockSize >= 256) { if (tid < 128) {
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 128]);
-	} __syncthreads(); }
-	if (blockSize >= 128) { if (tid <  64) {
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 64]);
-	} __syncthreads(); }
-	
-	if (tid < 32) {
-		if (blockSize >= 64){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 32]);
-			__syncthreads();
-		}
-		if (blockSize >= 32){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 16]);
-			__syncthreads();
-		}
-		if (blockSize >= 16){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 8]);
-			__syncthreads();
-		}
-		if (blockSize >=  8){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 4]);
-			__syncthreads();
-		}
-		if (blockSize >=  4){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 2]);
-			__syncthreads();
-		}
-		if (blockSize >=  2){
-			sdata[tid] = Logariture(sdata[tid], sdata[tid + 1]);
-			__syncthreads();
-		}
-	}
-	if (tid == 0){
-		buffer[0] = sdata[0];
-	}
+  if (blockSize >= 256) { if (tid < 128) {
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 128]);
+  } __syncthreads(); }
+  if (blockSize >= 128) { if (tid <  64) {
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 64]);
+  } __syncthreads(); }
+  
+  if (tid < 32) {
+    if (blockSize >= 64){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 32]);
+      __syncthreads();
+    }
+    if (blockSize >= 32){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 16]);
+      __syncthreads();
+    }
+    if (blockSize >= 16){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 8]);
+      __syncthreads();
+    }
+    if (blockSize >=  8){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 4]);
+      __syncthreads();
+    }
+    if (blockSize >=  4){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 2]);
+      __syncthreads();
+    }
+    if (blockSize >=  2){
+      sdata[tid] = Logariture(sdata[tid], sdata[tid + 1]);
+      __syncthreads();
+    }
+  }
+  if (tid == 0){
+    buffer[0] = sdata[0];
+  }
 }
 
 __global__ void LogaritureOverLargeBuffer( float* buffer, int spread, int size ){
-	
-	int offset = CUDASTDOFFSET;
-	float value1 = buffer[offset];
-	float value2 = buffer[offset+spread];
-	
-	float result = Logariture(value1, value2);
+  
+  int offset = CUDASTDOFFSET;
+  float value1 = buffer[offset];
+  float value2 = buffer[offset+spread];
+  
+  float result = Logariture(value1, value2);
 
-	if( offset+spread < size )
-		buffer[offset] = result;
+  if( offset+spread < size )
+    buffer[offset] = result;
 
 }

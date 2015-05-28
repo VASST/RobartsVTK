@@ -48,9 +48,9 @@
 // #define VTK_YUVA          0xC004   // 4444 style YUVA
 
 // Frame grabber type is used by UnpackRasterLine
-#define FG_BASE		1
-#define FG_MIL		2
-#define FG_WIN32	3
+#define FG_BASE    1
+#define FG_MIL    2
+#define FG_WIN32  3
 
 
 class VTK_EXPORT vtkVideoFrame2 : public vtkObject

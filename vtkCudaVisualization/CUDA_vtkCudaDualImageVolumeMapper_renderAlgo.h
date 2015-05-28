@@ -27,10 +27,10 @@
  *
  */
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
-							 const cudaRendererInformation& rendererInfo,
-							 const cudaVolumeInformation& volumeInfo,
-							 const cudaDualImageTransferFunctionInformation& transInfo,
-							 cudaStream_t* stream);
+               const cudaRendererInformation& rendererInfo,
+               const cudaVolumeInformation& volumeInfo,
+               const cudaDualImageTransferFunctionInformation& transInfo,
+               cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
  *
@@ -64,11 +64,11 @@ void CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_clearImageArray(cudaStream_t* 
  *
  */
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
-								  float* ampTF, float* diffTF, float* specTF, float* powTF,
-								  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
-								  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
-								  cudaStream_t* stream);
+                  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+                  float* ampTF, float* diffTF, float* specTF, float* powTF,
+                  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
+                  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
+                  cudaStream_t* stream);
 bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_unloadTextures(cudaDualImageTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering

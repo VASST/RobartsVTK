@@ -130,35 +130,35 @@ void vtkSignalBox::PrintSelf(ostream& os, vtkIndent indent)
 static void *vtkSignalBoxThread(vtkMultiThreader::ThreadInfo *data)
 {
 
-	vtkSignalBox *self = (vtkSignalBox *)(data->UserData);
+  vtkSignalBox *self = (vtkSignalBox *)(data->UserData);
 
-	for (int i = 0;; i++) {
+  for (int i = 0;; i++) {
 
-		#ifdef _WIN32
-			Sleep(self->GetSleepInterval());
-		#else
-		#ifdef unix
-		#ifdef linux
-			usleep(self->GetSleepInterval() * 1000);
-		#endif
-		#endif
-		#endif
+    #ifdef _WIN32
+      Sleep(self->GetSleepInterval());
+    #else
+    #ifdef unix
+    #ifdef linux
+      usleep(self->GetSleepInterval() * 1000);
+    #endif
+    #endif
+    #endif
 
-		// query the hardware tracker
-		self->UpdateMutex->Lock();
-		self->Update();
-		self->UpdateTime.Modified();
-		self->UpdateMutex->Unlock();
+    // query the hardware tracker
+    self->UpdateMutex->Lock();
+    self->Update();
+    self->UpdateTime.Modified();
+    self->UpdateMutex->Unlock();
     
-		// check to see if we are being told to quit 
-		data->ActiveFlagLock->Lock();
-		int activeFlag = *(data->ActiveFlag);
-		data->ActiveFlagLock->Unlock();
+    // check to see if we are being told to quit 
+    data->ActiveFlagLock->Lock();
+    int activeFlag = *(data->ActiveFlag);
+    data->ActiveFlagLock->Unlock();
 
-	  if (activeFlag == 0) {
-			return NULL;
-		}
-	}
+    if (activeFlag == 0) {
+      return NULL;
+    }
+  }
 }
 
 //-------------------------------------------------------------------------
@@ -170,9 +170,9 @@ void vtkSignalBox::Initialize()
 //-------------------------------------------------------------------------
 void vtkSignalBox::Start()
 {
-	if (this->IsStarted)
+  if (this->IsStarted)
     {
-		return;
+    return;
     }
 
   if (!this->IsInitialized)
@@ -185,15 +185,15 @@ void vtkSignalBox::Start()
     {
     return;
     }
-		
-	this->UpdateMutex->Lock();
+    
+  this->UpdateMutex->Lock();
 
-	if (this->ThreadId == -1){
-		this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkSignalBoxThread,this);
-	}
-	this->UpdateMutex->Unlock();
+  if (this->ThreadId == -1){
+    this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkSignalBoxThread,this);
+  }
+  this->UpdateMutex->Unlock();
 
-	this->IsStarted=1;
+  this->IsStarted=1;
 }
 
 //-------------------------------------------------------------------------
@@ -212,15 +212,15 @@ void vtkSignalBox::Stop()
 //-------------------------------------------------------------------------
 void vtkSignalBox::Update()
 {
-	if (!this->IsStarted){
-		vtkWarningMacro( << "called Update() before you started reading Signal.  Starting Signal Reading for you");
-		this->Start();
-		return;
-	}
+  if (!this->IsStarted){
+    vtkWarningMacro( << "called Update() before you started reading Signal.  Starting Signal Reading for you");
+    this->Start();
+    return;
+  }
 
-	int signal = this->GetECG();
+  int signal = this->GetECG();
 
-	this->SignalPrev = this->Signal;
+  this->SignalPrev = this->Signal;
   this->Signal = signal;
 }
 
@@ -246,39 +246,39 @@ int vtkSignalBox::GetECG(void)
     }
   // the beating rate is invalid if if we are not starting a new cycle but we have
   // waited for more than two cycles without getting a new cycle
-	else if ( (this->Timestamp - this->StartSignalTimeStamp) >= ((60*2)/this->ECGRateBPM) ){
-		this->ECGRateBPM = -1.0;
+  else if ( (this->Timestamp - this->StartSignalTimeStamp) >= ((60*2)/this->ECGRateBPM) ){
+    this->ECGRateBPM = -1.0;
     signal = 0;
-	}
+  }
   else
     {
     signal = 0;
     }
 
   // return the signal, and update the phase if the beating rate is valid
-	if (this->ECGRateBPM < 0){
-		return signal;
-	}
-	else {
-		this->CalculatePhase(this->StartSignalTimeStamp, this->Timestamp);
-		return signal;
-	}
+  if (this->ECGRateBPM < 0){
+    return signal;
+  }
+  else {
+    this->CalculatePhase(this->StartSignalTimeStamp, this->Timestamp);
+    return signal;
+  }
 
 }
 
 //-------------------------------------------------------------------------
 void vtkSignalBox::CalculateECGRate(double StartSignal, double current) {
-	this->ECGRateBPM = float((1.0/(current-StartSignal))*60.0);
+  this->ECGRateBPM = float((1.0/(current-StartSignal))*60.0);
 }
 
 //-------------------------------------------------------------------------
 void vtkSignalBox::CalculatePhase(double StartSignal, double current) {
-	this->ECGPhase = int(((this->ECGRateBPM/60)*this->TotalPhases)*(current-StartSignal))%this->TotalPhases;
+  this->ECGPhase = int(((this->ECGRateBPM/60)*this->TotalPhases)*(current-StartSignal))%this->TotalPhases;
 }
 
 //-------------------------------------------------------------------------
 void vtkSignalBox::UpdateTimestamp() {
-	struct _timeb timeTmp;
-	_ftime(&timeTmp);	// seconds from Jan. 1, 1970
-	this->Timestamp = timeTmp.time + 0.001*timeTmp.millitm;
+  struct _timeb timeTmp;
+  _ftime(&timeTmp);  // seconds from Jan. 1, 1970
+  this->Timestamp = timeTmp.time + 0.001*timeTmp.millitm;
 }

@@ -85,9 +85,9 @@ vtkImageStencilData *vtkImageAbsoluteDifference::GetStencil()
 // Handles the two input operations
 template <class T>
 void vtkImageAbsoluteDifferenceExecute(vtkImageAbsoluteDifference *self,
-				       vtkImageData *in1Data, T *in1Ptr,
-				       vtkImageData *in2Data, T *in2Ptr,
-				       int outExt[6], int id)
+               vtkImageData *in1Data, T *in1Ptr,
+               vtkImageData *in2Data, T *in2Ptr,
+               int outExt[6], int id)
 {
   int idX, idY, idZ;
   int incX, incY, incZ;
@@ -110,27 +110,27 @@ void vtkImageAbsoluteDifferenceExecute(vtkImageAbsoluteDifference *self,
   for (idZ = 0; idZ <= maxZ; idZ++)
     {
       for (idY = 0; idY <= maxY; idY++)
-	{
-	  // Flag that we want the complementary extents
-	  iter = 0; if (self->GetReverseStencil()) iter = -1;
-	  
-	  pminX = 0; pmaxX = maxX;
-	  while ((stencil !=0 && 
-		  stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
-		 (stencil == 0 && iter++ == 0))
-	    {
-	      // Set up pointers to the sub-extents
-	      temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
-	      temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
-	      // Compute over the sub-extent
-	      for (idX = pminX; idX <= pmaxX; idX++)
-		{
-		  self->ThreadAbsoluteDifference[id] += fabs((double)*temp1Ptr - (double)*temp2Ptr); 
-		  temp1Ptr++;
-		  temp2Ptr++;
-		}
-	    }
-	}
+  {
+    // Flag that we want the complementary extents
+    iter = 0; if (self->GetReverseStencil()) iter = -1;
+    
+    pminX = 0; pmaxX = maxX;
+    while ((stencil !=0 && 
+      stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
+     (stencil == 0 && iter++ == 0))
+      {
+        // Set up pointers to the sub-extents
+        temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
+        temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
+        // Compute over the sub-extent
+        for (idX = pminX; idX <= pmaxX; idX++)
+    {
+      self->ThreadAbsoluteDifference[id] += fabs((double)*temp1Ptr - (double)*temp2Ptr); 
+      temp1Ptr++;
+      temp2Ptr++;
+    }
+      }
+  }
     }
 }
 
@@ -140,8 +140,8 @@ void vtkImageAbsoluteDifferenceExecute(vtkImageAbsoluteDifference *self,
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageAbsoluteDifference::ThreadedExecute(vtkImageData **inData,
-						 vtkImageData *vtkNotUsed(outData),
-						 int outExt[6], int id)
+             vtkImageData *vtkNotUsed(outData),
+             int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -182,9 +182,9 @@ void vtkImageAbsoluteDifference::ThreadedExecute(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageAbsoluteDifferenceExecute,this,
-			inData[0], (VTK_TT *)(inPtr1), 
-			inData[1], (VTK_TT *)(inPtr2), 
-			outExt, id);
+      inData[0], (VTK_TT *)(inPtr1), 
+      inData[1], (VTK_TT *)(inPtr2), 
+      outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

@@ -14,11 +14,11 @@
 /** @file CUDA_imagevote.h
  *
  *  @brief Header file with definitions of GPU kernels used predominantly in performing a voting
- *			operation to merge probabilistic labellings
+ *      operation to merge probabilistic labellings
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 

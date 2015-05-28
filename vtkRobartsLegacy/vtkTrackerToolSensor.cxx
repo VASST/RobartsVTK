@@ -72,8 +72,8 @@ vtkTrackerToolSensor::vtkTrackerToolSensor()
   this->CalibrationMatrix = vtkMatrix4x4::New();
   for (int i = 0; i < VTK_MAX_SENSORS; i++) {
     this->Transform[i] = vtkTransform::New();
-	this->Buffer[i] = vtkTrackerBuffer::New();
-	this->Buffer[i]->SetToolCalibrationMatrix(this->CalibrationMatrix);
+  this->Buffer[i] = vtkTrackerBuffer::New();
+  this->Buffer[i]->SetToolCalibrationMatrix(this->CalibrationMatrix);
   }
   this->TapeLength = 0;
   this->InterpolationInterval = 0;
@@ -87,17 +87,17 @@ vtkTrackerToolSensor::~vtkTrackerToolSensor()
 {
   for (int i = 0; i < VTK_MAX_SENSORS; i++) {
     this->Transform[i]->Delete();
-	this->Buffer[i]->Delete();
+  this->Buffer[i]->Delete();
   }
 }
 
 
 vtkTransform * vtkTrackerToolSensor::GetTransform(int num){
-	return this->Transform[num];
+  return this->Transform[num];
 }
 
 vtkTransform * vtkTrackerToolSensor::GetTransform(){
-	return this->Transform[0];
+  return this->Transform[0];
 }
 //----------------------------------------------------------------------------
 void vtkTrackerToolSensor::PrintSelf(ostream& os, vtkIndent indent)
@@ -123,15 +123,15 @@ void vtkTrackerToolSensor::PrintSelf(ostream& os, vtkIndent indent)
 void vtkTrackerToolSensor::Update()
 {
   for (int i = 0; i < this->NumberOfSensors; i++) {
-	this->Buffer[i]->Lock();
-	this->Flags = this->Buffer[i]->GetFlags(0);
+  this->Buffer[i]->Lock();
+  this->Flags = this->Buffer[i]->GetFlags(0);
 
-	if ((this->Flags & (TR_MISSING | TR_OUT_OF_VIEW))  == 0) {
-		this->Buffer[i]->GetMatrix(this->TempMatrix, 0);
-		this->Transform[i]->SetMatrix(this->TempMatrix);
+  if ((this->Flags & (TR_MISSING | TR_OUT_OF_VIEW))  == 0) {
+    this->Buffer[i]->GetMatrix(this->TempMatrix, 0);
+    this->Transform[i]->SetMatrix(this->TempMatrix);
     } 
-	this->TimeStamp = this->Buffer[i]->GetTimeStamp(0);
-	this->Buffer[i]->Unlock();
+  this->TimeStamp = this->Buffer[i]->GetTimeStamp(0);
+  this->Buffer[i]->Unlock();
   }
 }
 
@@ -144,10 +144,10 @@ void vtkTrackerToolSensor::SetCalibrationMatrix(vtkMatrix4x4 *vmat)
     {
     for (j = 0; j < 4; j++)
       {
-		if (vtkTrackerToolSensor::CalibrationMatrix->GetElement(i,j) != vmat->GetElement(i,j))
-	{
-	break;
-	}
+    if (vtkTrackerToolSensor::CalibrationMatrix->GetElement(i,j) != vmat->GetElement(i,j))
+  {
+  break;
+  }
       }
     if (j < 4)
       { 
@@ -174,9 +174,9 @@ void vtkTrackerToolSensor::SetTracker(vtkTrackerSensor *tracker)
 
 
   if (this->Tracker) {
-	for (int i = 0; i < VTK_MAX_SENSORS; i++) {
-		this->Buffer[i]->SetWorldCalibrationMatrix(NULL);
-	}
+  for (int i = 0; i < VTK_MAX_SENSORS; i++) {
+    this->Buffer[i]->SetWorldCalibrationMatrix(NULL);
+  }
     this->Tracker->Delete();
   }
 
@@ -184,8 +184,8 @@ void vtkTrackerToolSensor::SetTracker(vtkTrackerSensor *tracker)
     tracker->Register(this);
     this->Tracker = tracker;
     for (int i = 0; i < VTK_MAX_SENSORS; i++) {
-		this->Buffer[i]->SetWorldCalibrationMatrix(tracker->GetWorldCalibrationMatrix());
-	}
+    this->Buffer[i]->SetWorldCalibrationMatrix(tracker->GetWorldCalibrationMatrix());
+  }
   }
   else {
     this->Tracker = NULL;
@@ -198,7 +198,7 @@ void vtkTrackerToolSensor::SetTracker(vtkTrackerSensor *tracker)
 void vtkTrackerToolSensor::SensorUpdate(int sensor, vtkMatrix4x4 *matrix, long flags, double timestamp) 
 {
   if (sensor < 0 && sensor >= this->NumberOfSensors) {
-	  return;
+    return;
   }
   vtkTrackerBuffer *buffer = this->Buffer[sensor];
   
@@ -220,7 +220,7 @@ void vtkTrackerToolSensor::SetNumberOfSensors(int number)
 vtkTrackerBuffer * vtkTrackerToolSensor::GetBuffer(int sensor) 
 {
   if (sensor < 0 && sensor >= this->NumberOfSensors) {
-	  return NULL;
+    return NULL;
   }
 
   return this->Buffer[sensor];

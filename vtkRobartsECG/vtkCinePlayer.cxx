@@ -191,10 +191,10 @@ void vtkCinePlayer::StartPlaying()
 
 
 void vtkCinePlayer::InternalUpdate() {
-	int imageLen, surfaceLen,maxLength;
-	imageLen = this->MaxSurfaceLength;
-	surfaceLen = this->MaxSurfaceLength;
-	maxLength = max(imageLen, surfaceLen);
+  int imageLen, surfaceLen,maxLength;
+  imageLen = this->MaxSurfaceLength;
+  surfaceLen = this->MaxSurfaceLength;
+  maxLength = max(imageLen, surfaceLen);
 }
 
 
@@ -238,18 +238,18 @@ void vtkCinePlayer::Update()
 
 /*
 void vtkCinePlayer::AdvanceFrame(int value) {
-	if (value > 0)
-		this->FrameChange(value);
-	else
-		return;
+  if (value > 0)
+    this->FrameChange(value);
+  else
+    return;
 
 }
 
 void vktCinePlayer::RetreatFrame(int value) {
-	if (value > 0)
-		this->FrameChange(-1*value);
-	else
-		return;
+  if (value > 0)
+    this->FrameChange(-1*value);
+  else
+    return;
 }
 
 void vtkCinePlayer::FrameChange(int value) {
@@ -262,53 +262,53 @@ void vtkCinePlayer::GoToFrame(int value) {
 */
 
 int vtkCinePlayer::CreateNewImageGroup() {
-	Grouping newGroup;
-	this->ImageGroups.push_back(newGroup);
-	return (this->ImageGroups.size()-1);
+  Grouping newGroup;
+  this->ImageGroups.push_back(newGroup);
+  return (this->ImageGroups.size()-1);
 }
 
 int vtkCinePlayer::CreateNewSurfaceGroup() {
-	Grouping newGroup ;
-	this->SurfaceGroups.push_back(newGroup);
-	return (this->SurfaceGroups.size()-1);
+  Grouping newGroup ;
+  this->SurfaceGroups.push_back(newGroup);
+  return (this->SurfaceGroups.size()-1);
 }
 
 int vtkCinePlayer::AddActorToImageGroup(vtkActor * actor, int ImageIndex, int GroupIndex) {
-	if (ImageIndex > this->ImageGroups.size()-1 || ImageIndex < 0 || this->ImageGroups.size() == 0) {
-		return -1;
-	}
+  if (ImageIndex > this->ImageGroups.size()-1 || ImageIndex < 0 || this->ImageGroups.size() == 0) {
+    return -1;
+  }
 
-	if (GroupIndex <= this->ImageGroups[ImageIndex].size()) {
-		this->ImageGroups[ImageIndex][GroupIndex].push_back(actor);
-		return GroupIndex;
-	}
-	else if (GroupIndex == this->ImageGroups[ImageIndex].size()) {
-		ActorGroup actorGroup;
-		this->ImageGroups[ImageIndex].push_back(actorGroup);	
-		this->ImageGroups[ImageIndex][GroupIndex].push_back(actor);
-		return GroupIndex;
-	}
-	else {
-		return -1;
-	}
+  if (GroupIndex <= this->ImageGroups[ImageIndex].size()) {
+    this->ImageGroups[ImageIndex][GroupIndex].push_back(actor);
+    return GroupIndex;
+  }
+  else if (GroupIndex == this->ImageGroups[ImageIndex].size()) {
+    ActorGroup actorGroup;
+    this->ImageGroups[ImageIndex].push_back(actorGroup);  
+    this->ImageGroups[ImageIndex][GroupIndex].push_back(actor);
+    return GroupIndex;
+  }
+  else {
+    return -1;
+  }
 }
 
 int vtkCinePlayer::AddActorToSurfaceGroup(vtkActor * actor, int SurfaceIndex, int GroupIndex) {
-	if (SurfaceIndex > this->SurfaceGroups.size()-1 || SurfaceIndex < 0 || this->SurfaceGroups.size() == 0) {
-		return -1;
-	}
+  if (SurfaceIndex > this->SurfaceGroups.size()-1 || SurfaceIndex < 0 || this->SurfaceGroups.size() == 0) {
+    return -1;
+  }
 
-	if (GroupIndex <= this->SurfaceGroups[SurfaceIndex].size()) {
-		this->SurfaceGroups[SurfaceIndex][GroupIndex].push_back(actor);
-		return GroupIndex;
-	}
-	else if (GroupIndex == this->SurfaceGroups[SurfaceIndex].size()) {
-		ActorGroup actorGroup;
-		this->SurfaceGroups[SurfaceIndex].push_back(actorGroup);	
-		this->SurfaceGroups[SurfaceIndex][GroupIndex].push_back(actor);
-		return GroupIndex;
-	}
-	else {
-		return -1;
-	}
+  if (GroupIndex <= this->SurfaceGroups[SurfaceIndex].size()) {
+    this->SurfaceGroups[SurfaceIndex][GroupIndex].push_back(actor);
+    return GroupIndex;
+  }
+  else if (GroupIndex == this->SurfaceGroups[SurfaceIndex].size()) {
+    ActorGroup actorGroup;
+    this->SurfaceGroups[SurfaceIndex].push_back(actorGroup);  
+    this->SurfaceGroups[SurfaceIndex][GroupIndex].push_back(actor);
+    return GroupIndex;
+  }
+  else {
+    return -1;
+  }
 }

@@ -28,7 +28,7 @@
 #include "vtkMutexLock.h"
 #include "vtkVisionSenseNetworkSource.h"
 
-#include <vtkstd/string> 
+#include <string> 
 
 vtkVisionSenseVideoSource* vtkVisionSenseVideoSource::New()
 {

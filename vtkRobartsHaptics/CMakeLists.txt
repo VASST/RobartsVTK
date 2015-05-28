@@ -7,11 +7,11 @@ SET(KIT_EXTRA_LIBS)
 
 
 SET ( Kit_SRCS
-      	vtkHapticsDevice.cxx
-	vtkForceFeedback.cxx
-	vtkHapticForce.cxx
-	vtkImplicitSplineForce.cxx
-	vtkPolydataForce.cxx
+        vtkHapticsDevice.cxx
+  vtkForceFeedback.cxx
+  vtkHapticForce.cxx
+  vtkImplicitSplineForce.cxx
+  vtkPolydataForce.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES(
@@ -24,7 +24,7 @@ OPTION (RobartsVTK_USE_FREEDOM6S "Enable Freedom6S Device" OFF)
 IF (RobartsVTK_USE_FREEDOM6S)
   SET ( Kit_SRCS ${Kit_SRCS}
         vtkHapticsFreedom6S.cxx
-	)
+  )
   INCLUDE_DIRECTORIES(${VTK_SOURCE_DIR}
                       ${VTK_BINARY_DIR})
 

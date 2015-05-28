@@ -34,7 +34,7 @@ ABSTRACT:
 10/13/92
 12/1/96     SEB     Modified for v2.5 for new DT3010 features.
 
-04/16/2001	JSJ		Added OLDA_WM_DEVICE_REMOVAL for DT USB Modules...
+04/16/2001  JSJ    Added OLDA_WM_DEVICE_REMOVAL for DT USB Modules...
 ---------------------------------------------------------------------------*/
 
 
@@ -280,10 +280,10 @@ OLDC;
 #define OL_RETRIGGER_EXTRA             1302
 
 /* Offset value for olConfigWriteReg */
-#define OL_POWER_STATE				100
+#define OL_POWER_STATE        100
 
-#define OL_POWER_OFF				0
-#define OL_POWER_ON					1
+#define OL_POWER_OFF        0
+#define OL_POWER_ON          1
 
 
 #define OLDA_WM_TRIGGER_ERROR     (WM_USER+100)
@@ -300,7 +300,7 @@ OLDC;
 #define OLDA_WM_EVENT_DONE        (WM_USER+111)
 #define OLDA_WM_PRETRIGGER_BUFFER_DONE  (WM_USER+112)
 #define OLDA_WM_DEVICE_REMOVAL    (WM_USER+113)
-#define OLDA_WM_IO_COMPLETE		  (WM_USER+114)
+#define OLDA_WM_IO_COMPLETE      (WM_USER+114)
 
 // (WM_USER+200) is reserved in olspi.h for internal driver messages
 

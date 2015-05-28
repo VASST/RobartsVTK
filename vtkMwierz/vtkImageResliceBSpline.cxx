@@ -1406,10 +1406,10 @@ int vtkTricubicInterpolation(T *&outPtr, const T *inPtr,
 
 template <class Type>
 static inline void vtkBSplineHelper(double displacement[3], 
-				    double derivatives[3][3],
-				    int l,int m,int n,
-				    int S,int T,int U,
-				    Type *gridPtr, int gridInc[3],int ext[3]){
+            double derivatives[3][3],
+            int l,int m,int n,
+            int S,int T,int U,
+            Type *gridPtr, int gridInc[3],int ext[3]){
   int i, j, k,K,J,I,offset;
   double B_K, B_J, B_I;
   double v, dx,dy,dz;
@@ -1422,32 +1422,32 @@ static inline void vtkBSplineHelper(double displacement[3],
     for (k = 0; k < 4; k++){
       K = k + n - 1;
       if ((K >= 0) && (K <= ext[2])){
-	B_K   = vtkImageResliceBSpline::LookupTable[U][k];
-	for (j = 0; j < 4; j++){
-	  J = j + m - 1;
-	  if ((J >= 0) && (J <= ext[1])){
-	    B_J   = vtkImageResliceBSpline::LookupTable[T][j];
-	    for (i = 0; i < 4; i++){
-	      I = i + l - 1;
-	      if ((I >= 0) && (I <= ext[0])){
-		B_I   = vtkImageResliceBSpline::LookupTable[S][i];
+  B_K   = vtkImageResliceBSpline::LookupTable[U][k];
+  for (j = 0; j < 4; j++){
+    J = j + m - 1;
+    if ((J >= 0) && (J <= ext[1])){
+      B_J   = vtkImageResliceBSpline::LookupTable[T][j];
+      for (i = 0; i < 4; i++){
+        I = i + l - 1;
+        if ((I >= 0) && (I <= ext[0])){
+    B_I   = vtkImageResliceBSpline::LookupTable[S][i];
 
-		offset=I*gridInc[0]+J*gridInc[1]+K*gridInc[2];
-		dx=((double) gridPtr[offset  ]);
-		dy=((double) gridPtr[offset+1]);
-		dz=((double) gridPtr[offset+2]);
+    offset=I*gridInc[0]+J*gridInc[1]+K*gridInc[2];
+    dx=((double) gridPtr[offset  ]);
+    dy=((double) gridPtr[offset+1]);
+    dz=((double) gridPtr[offset+2]);
 
-		//		if (dx>2.0) cout << " " << dx << " ";
-		
-		v = B_I * B_J * B_K;
-		displacement[0] += dx * v;
-		displacement[1] += dy * v;
-		displacement[2] += dz * v;
+    //    if (dx>2.0) cout << " " << dx << " ";
+    
+    v = B_I * B_J * B_K;
+    displacement[0] += dx * v;
+    displacement[1] += dy * v;
+    displacement[2] += dz * v;
 
-	      } 
-	    }
-	  } 
-	}
+        } 
+      }
+    } 
+  }
       }
     }
 
@@ -1455,54 +1455,54 @@ static inline void vtkBSplineHelper(double displacement[3],
     double dB_K, dB_J, dB_I;
     for (i=0; i<3; i++) {
       for (j=0; j<3; j++) {
-	derivatives[i][j]=0.0;
+  derivatives[i][j]=0.0;
       }
     }
     
     for (k = 0; k < 4; k++){
       K = k + n - 1;
       if ((K >= 0) && (K <= ext[2])){
-	B_K   = vtkImageResliceBSpline::LookupTable[U][k];
-	dB_K = dLookupTable[U][k];
-	for (j = 0; j < 4; j++){
-	  J = j + m - 1;
-	  if ((J >= 0) && (J <= ext[1])){
-	    B_J   = vtkImageResliceBSpline::LookupTable[T][j];
-	    dB_J = dLookupTable[T][j];
-	    for (i = 0; i < 4; i++){
-	      I = i + l - 1;
-	      if ((I >= 0) && (I <= ext[0])){
-		B_I   = vtkImageResliceBSpline::LookupTable[S][i];
-		dB_I = dLookupTable[S][i];
+  B_K   = vtkImageResliceBSpline::LookupTable[U][k];
+  dB_K = dLookupTable[U][k];
+  for (j = 0; j < 4; j++){
+    J = j + m - 1;
+    if ((J >= 0) && (J <= ext[1])){
+      B_J   = vtkImageResliceBSpline::LookupTable[T][j];
+      dB_J = dLookupTable[T][j];
+      for (i = 0; i < 4; i++){
+        I = i + l - 1;
+        if ((I >= 0) && (I <= ext[0])){
+    B_I   = vtkImageResliceBSpline::LookupTable[S][i];
+    dB_I = dLookupTable[S][i];
 
-		offset=I*gridInc[0]+J*gridInc[1]+K*gridInc[2];
-		dx=((double) gridPtr[offset  ]);
-		dy=((double) gridPtr[offset+1]);
-		dz=((double) gridPtr[offset+2]);
+    offset=I*gridInc[0]+J*gridInc[1]+K*gridInc[2];
+    dx=((double) gridPtr[offset  ]);
+    dy=((double) gridPtr[offset+1]);
+    dz=((double) gridPtr[offset+2]);
 
-		v = B_I * B_J * B_K;
-		displacement[0] += dx * v;
-		displacement[1] += dy * v;
-		displacement[2] += dz * v;
+    v = B_I * B_J * B_K;
+    displacement[0] += dx * v;
+    displacement[1] += dy * v;
+    displacement[2] += dz * v;
 
-		v = B_I * B_J * dB_K;
-		derivatives[0][2] += dx * v;
-		derivatives[1][2] += dy * v;
-		derivatives[2][2] += dz * v;
+    v = B_I * B_J * dB_K;
+    derivatives[0][2] += dx * v;
+    derivatives[1][2] += dy * v;
+    derivatives[2][2] += dz * v;
 
-		v = B_I * dB_J * B_K;
-		derivatives[0][1] += dx * v;
-		derivatives[1][1] += dy * v;
-		derivatives[2][1] += dz * v;
+    v = B_I * dB_J * B_K;
+    derivatives[0][1] += dx * v;
+    derivatives[1][1] += dy * v;
+    derivatives[2][1] += dz * v;
 
-		v = dB_I * B_J * B_K;
-		derivatives[0][0] += dx * v;
-		derivatives[1][0] += dy * v;
-		derivatives[2][0] += dz * v;
-	      } 
-	    }
-	  } 
-	}
+    v = dB_I * B_J * B_K;
+    derivatives[0][0] += dx * v;
+    derivatives[1][0] += dy * v;
+    derivatives[2][0] += dz * v;
+        } 
+      }
+    } 
+  }
       }
     }
 
@@ -1520,8 +1520,8 @@ static inline void vtkBSplineHelper(double displacement[3],
 // gridInc: grid increments
 
 static void vtkBSplineInterpolation(double point[3], double displacement[3], 
-				    double derivatives[3][3], void *gridPtr, 
-				    int gridType, int gridExt[6], int gridInc[3])
+            double derivatives[3][3], void *gridPtr, 
+            int gridType, int gridExt[6], int gridInc[3])
 {
   double s, t, u;
   // double v, B_K, B_J, B_I;
@@ -1549,32 +1549,32 @@ static void vtkBSplineInterpolation(double point[3], double displacement[3],
   switch (gridType) {
   case VTK_CHAR:
     vtkBSplineHelper(displacement, derivatives, 
-		     l,m,n,S,T,U,
-		     (char *)gridPtr,gridInc,ext);
+         l,m,n,S,T,U,
+         (char *)gridPtr,gridInc,ext);
     break;
   case VTK_UNSIGNED_CHAR:
     vtkBSplineHelper(displacement, derivatives, 
-		     l,m,n,S,T,U,
-		     (unsigned char *)gridPtr,gridInc,ext);
+         l,m,n,S,T,U,
+         (unsigned char *)gridPtr,gridInc,ext);
     break;
   case VTK_SHORT:
     vtkBSplineHelper(displacement, derivatives, 
-		     l,m,n,S,T,U,
-		     (short *)gridPtr,gridInc,ext);
+         l,m,n,S,T,U,
+         (short *)gridPtr,gridInc,ext);
     break;
   case VTK_UNSIGNED_SHORT:
     vtkBSplineHelper(displacement, derivatives, 
-		     l,m,n,S,T,U, 
-		     (unsigned short *)gridPtr,gridInc,ext);
+         l,m,n,S,T,U, 
+         (unsigned short *)gridPtr,gridInc,ext);
     break;
   case VTK_FLOAT:
     vtkBSplineHelper(displacement, derivatives, 
-		     l,m,n,S,T,U,
-		     (double *)gridPtr,gridInc,ext);
+         l,m,n,S,T,U,
+         (double *)gridPtr,gridInc,ext);
     break;
   }
 
-}		  
+}      
                 
       
 

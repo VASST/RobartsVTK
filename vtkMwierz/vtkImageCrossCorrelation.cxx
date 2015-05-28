@@ -103,8 +103,8 @@ vtkImageCrossCorrelation::vtkImageCrossCorrelation()
 //----------------------------------------------------------------------------
 // This method computes the Region of input necessary to generate outRegion.
 void vtkImageCrossCorrelation::ComputeInputUpdateExtent(int inExt[6], 
-							int outExt[6],
-							int vtkNotUsed(whichInput))
+              int outExt[6],
+              int vtkNotUsed(whichInput))
 {
   int idx;
 
@@ -115,7 +115,7 @@ void vtkImageCrossCorrelation::ComputeInputUpdateExtent(int inExt[6],
       
     // For Min.
     inExt[idx*2] = vtkResliceFloor(outExt[idx*2]*this->ShrinkFactors[idx]-
-				   this->KernelRadius[idx]);
+           this->KernelRadius[idx]);
     if (inExt[idx*2] < wholeInExt[idx*2])
       {
       inExt[idx*2] = wholeInExt[idx*2];
@@ -123,7 +123,7 @@ void vtkImageCrossCorrelation::ComputeInputUpdateExtent(int inExt[6],
 
     // For Max.
     inExt[idx*2+1] = vtkResliceCeil(outExt[idx*2+1]*this->ShrinkFactors[idx]+
-				    this->KernelRadius[idx]);
+            this->KernelRadius[idx]);
     if (inExt[idx*2+1] > wholeInExt[idx*2+1]) 
       { 
       inExt[idx*2+1] = wholeInExt[idx*2+1];
@@ -141,7 +141,7 @@ void vtkImageCrossCorrelation::ComputeInputUpdateExtent(int inExt[6],
 // Bounds extend to the edges of the volume, but no cross correlation info
 // is calculated there. 
 void vtkImageCrossCorrelation::ExecuteInformation(vtkImageData **inDatas, 
-						  vtkImageData *outData)
+              vtkImageData *outData)
 {
   int idx;
   int wholeInExt[6];
@@ -157,8 +157,8 @@ void vtkImageCrossCorrelation::ExecuteInformation(vtkImageData **inDatas,
     {
       // Scale the output extent
       this->ShrinkFactors[idx] = 
-	((double)wholeInExt[2*idx+1] - (double)wholeInExt[2*idx])/ 
-	((double)this->OutputExtent[2*idx+1] - (double)this->OutputExtent[2*idx]);
+  ((double)wholeInExt[2*idx+1] - (double)wholeInExt[2*idx])/ 
+  ((double)this->OutputExtent[2*idx+1] - (double)this->OutputExtent[2*idx]);
       // Change the data spacing
       spacing[idx] *= this->ShrinkFactors[idx];
     }
@@ -182,12 +182,12 @@ void vtkImageCrossCorrelation::ExecuteInformation(vtkImageData **inDatas,
 // all 3 kernel dimensions are equal!
 template <class T>
 static void vtkImageCrossCorrelationExecute(vtkImageCrossCorrelation *self, 
-					    T *in1Ptr,
-					    T *in2Ptr,
-					    vtkImageData **inData,
-					    vtkImageData *outData,
-					    double *outPtr, int outExt[6],
-					    int id)
+              T *in1Ptr,
+              T *in2Ptr,
+              vtkImageData **inData,
+              vtkImageData *outData,
+              double *outPtr, int outExt[6],
+              int id)
 {
   int outIdxX, outIdxY, outIdxZ;
   int outIncX, outIncY, outIncZ;
@@ -249,10 +249,10 @@ static void vtkImageCrossCorrelationExecute(vtkImageCrossCorrelation *self,
     rz = 1.0 - fz;
    
     for (outIdxY = outExt[2]; 
-	 !self->AbortExecute && outIdxY <= outExt[3]; outIdxY++)
+   !self->AbortExecute && outIdxY <= outExt[3]; outIdxY++)
       {
       floorY = vtkResliceFloor((outIdxY*ShrinkFactors[1]) 
-			       - KernelRadius[1],fy);
+             - KernelRadius[1],fy);
       id0Y = floorY - wholeInExt[2];
       id1Y = floorY+1;
       factY0 = id0Y * inIncY;
@@ -264,89 +264,89 @@ static void vtkImageCrossCorrelationExecute(vtkImageCrossCorrelation *self,
       fyfz = fy*fz;
 
       for (outIdxX = outExt[0]; outIdxX <= outExt[1]; outIdxX++)
-	{
-	floorX = vtkResliceFloor((outIdxX*ShrinkFactors[0]) 
-				 - KernelRadius[0],fx);
-	id0X = floorX - wholeInExt[0];
-	id1X = floorX+1;
-	if ((id0X | (extX - (id1X+kernelDiameter-1)) |
-	     id0Y | (extY - (id1Y+kernelDiameter-1)) |
-	     id0Z | (extZ - (id1Z+kernelDiameter-1))) < 0)
-	  {
-	  *outPtr++ = 1.0f; // edges are perfect correlation!
-	  }
-	else
-	  {
-	  rx = 1.0-fx;
-	  pA000=in1Ptr+id0X+factY0+factZ0;    pB000=in2Ptr+id0X+factY0+factZ0;
-	  pA001=in1Ptr+id0X+factY0+factZ1;    pB001=in2Ptr+id0X+factY0+factZ1;
-	  pA010=in1Ptr+id0X+factY1+factZ0;    pB010=in2Ptr+id0X+factY1+factZ0;
-	  pA011=in1Ptr+id0X+factY1+factZ1;    pB011=in2Ptr+id0X+factY1+factZ1;
-	  pA100=pA000+1;    pA101=pA001+1;    pA110=pA010+1;    pA111=pA011+1;
-	  pB100=pB000+1;    pB101=pB001+1;    pB110=pB010+1;    pB111=pB011+1;
+  {
+  floorX = vtkResliceFloor((outIdxX*ShrinkFactors[0]) 
+         - KernelRadius[0],fx);
+  id0X = floorX - wholeInExt[0];
+  id1X = floorX+1;
+  if ((id0X | (extX - (id1X+kernelDiameter-1)) |
+       id0Y | (extY - (id1Y+kernelDiameter-1)) |
+       id0Z | (extZ - (id1Z+kernelDiameter-1))) < 0)
+    {
+    *outPtr++ = 1.0f; // edges are perfect correlation!
+    }
+  else
+    {
+    rx = 1.0-fx;
+    pA000=in1Ptr+id0X+factY0+factZ0;    pB000=in2Ptr+id0X+factY0+factZ0;
+    pA001=in1Ptr+id0X+factY0+factZ1;    pB001=in2Ptr+id0X+factY0+factZ1;
+    pA010=in1Ptr+id0X+factY1+factZ0;    pB010=in2Ptr+id0X+factY1+factZ0;
+    pA011=in1Ptr+id0X+factY1+factZ1;    pB011=in2Ptr+id0X+factY1+factZ1;
+    pA100=pA000+1;    pA101=pA001+1;    pA110=pA010+1;    pA111=pA011+1;
+    pB100=pB000+1;    pB101=pB001+1;    pB110=pB010+1;    pB111=pB011+1;
 
-	  irxryrz = (int)(rx*ryrz *512);
-	  irxryfz = (int)(rx*ryfz *512);
-	  irxfyrz = (int)(rx*fyrz *512);
-	  irxfyfz = (int)(rx*fyfz *512);
-	  ifxryrz = (int)(fx*ryrz *512);
-	  ifxryfz = (int)(fx*ryfz *512);
-	  ifxfyrz = (int)(fx*fyrz *512);
-	  ifxfyfz = (int)(fx*fyfz *512);
+    irxryrz = (int)(rx*ryrz *512);
+    irxryfz = (int)(rx*ryfz *512);
+    irxfyrz = (int)(rx*fyrz *512);
+    irxfyfz = (int)(rx*fyfz *512);
+    ifxryrz = (int)(fx*ryrz *512);
+    ifxryfz = (int)(fx*ryfz *512);
+    ifxfyrz = (int)(fx*fyrz *512);
+    ifxfyfz = (int)(fx*fyfz *512);
 
-	  inIdxX = kernelDiameter;
-	  inIdxY = kernelDiameter;
-	  inIdxZ = kernelDiameter;
+    inIdxX = kernelDiameter;
+    inIdxY = kernelDiameter;
+    inIdxZ = kernelDiameter;
 
-	  aSum = 0.0;
-	  bSum = 0.0;
-	  topSum = 0.0;
+    aSum = 0.0;
+    bSum = 0.0;
+    topSum = 0.0;
 
-	  do
-	    {
-	    do
-	      {
-	      do
-		{
-		data1 = ((long int) (irxryrz* *pA000++ + irxryfz* *pA001++ + 
-				     irxfyrz* *pA010++ + irxfyfz* *pA011++ +
-				     ifxryrz* *pA100++ + ifxryfz* *pA101++ + 
-				     ifxfyrz* *pA110++ + ifxfyfz* *pA111++)) >> 9;
-		data2 = ((long int) (irxryrz* *pB000++ + irxryfz* *pB001++ + 
-				     irxfyrz* *pB010++ + irxfyfz* *pB011++ +
-				     ifxryrz* *pB100++ + ifxryfz* *pB101++ + 
-				     ifxfyrz* *pB110++ + ifxfyfz* *pB111++)) >> 9;
-		
-		topSum +=  fabs((double)data1 * (double)data2);
-		aSum += ((double)data1 * (double)data1);
-		bSum += ((double)data2 * (double)data2);
-		}
-	      while (--inIdxX);
-	      pA000+=contInIncY;pA001+=contInIncY;pA010+=contInIncY;pA011+=contInIncY;
-	      pA100+=contInIncY;pA101+=contInIncY;pA110+=contInIncY;pA111+=contInIncY;
-	      pB000+=contInIncY;pB001+=contInIncY;pB010+=contInIncY;pB011+=contInIncY;
-	      pB100+=contInIncY;pB101+=contInIncY;pB110+=contInIncY;pB111+=contInIncY;
-	      inIdxX = kernelDiameter;
-	      }
-	    while (--inIdxY);
-	    pA000+=contInIncZ;pA001+=contInIncZ;pA010+=contInIncZ;pA011+=contInIncZ;
-	    pA100+=contInIncZ;pA101+=contInIncZ;pA110+=contInIncZ;pA111+=contInIncZ;
-	    pB000+=contInIncZ;pB001+=contInIncZ;pB010+=contInIncZ;pB011+=contInIncZ;
-	    pB100+=contInIncZ;pB101+=contInIncZ;pB110+=contInIncZ;pB111+=contInIncZ;
-	    inIdxY = kernelDiameter;
-	    }
-	  while (--inIdxZ);
+    do
+      {
+      do
+        {
+        do
+    {
+    data1 = ((long int) (irxryrz* *pA000++ + irxryfz* *pA001++ + 
+             irxfyrz* *pA010++ + irxfyfz* *pA011++ +
+             ifxryrz* *pA100++ + ifxryfz* *pA101++ + 
+             ifxfyrz* *pA110++ + ifxfyfz* *pA111++)) >> 9;
+    data2 = ((long int) (irxryrz* *pB000++ + irxryfz* *pB001++ + 
+             irxfyrz* *pB010++ + irxfyfz* *pB011++ +
+             ifxryrz* *pB100++ + ifxryfz* *pB101++ + 
+             ifxfyrz* *pB110++ + ifxfyfz* *pB111++)) >> 9;
+    
+    topSum +=  fabs((double)data1 * (double)data2);
+    aSum += ((double)data1 * (double)data1);
+    bSum += ((double)data2 * (double)data2);
+    }
+        while (--inIdxX);
+        pA000+=contInIncY;pA001+=contInIncY;pA010+=contInIncY;pA011+=contInIncY;
+        pA100+=contInIncY;pA101+=contInIncY;pA110+=contInIncY;pA111+=contInIncY;
+        pB000+=contInIncY;pB001+=contInIncY;pB010+=contInIncY;pB011+=contInIncY;
+        pB100+=contInIncY;pB101+=contInIncY;pB110+=contInIncY;pB111+=contInIncY;
+        inIdxX = kernelDiameter;
+        }
+      while (--inIdxY);
+      pA000+=contInIncZ;pA001+=contInIncZ;pA010+=contInIncZ;pA011+=contInIncZ;
+      pA100+=contInIncZ;pA101+=contInIncZ;pA110+=contInIncZ;pA111+=contInIncZ;
+      pB000+=contInIncZ;pB001+=contInIncZ;pB010+=contInIncZ;pB011+=contInIncZ;
+      pB100+=contInIncZ;pB101+=contInIncZ;pB110+=contInIncZ;pB111+=contInIncZ;
+      inIdxY = kernelDiameter;
+      }
+    while (--inIdxZ);
         
-	  if ((aSum>0) && (bSum>0))
-	    {
-	    *outPtr++ = topSum / (sqrt(aSum) * sqrt(bSum));
-	    }
-	  else
-	    {
-	    *outPtr++ = 1.0f; // All zeros counts as perfect correlation
-	    }
-	  }
-	}
+    if ((aSum>0) && (bSum>0))
+      {
+      *outPtr++ = topSum / (sqrt(aSum) * sqrt(bSum));
+      }
+    else
+      {
+      *outPtr++ = 1.0f; // All zeros counts as perfect correlation
+      }
+    }
+  }
       outPtr += outIncY;
       }
     outPtr += outIncZ;
@@ -361,8 +361,8 @@ static void vtkImageCrossCorrelationExecute(vtkImageCrossCorrelation *self,
 // It just executes a switch statement to call the correct function for
 // the regions data types.
 void vtkImageCrossCorrelation::ThreadedExecute(vtkImageData **inData, 
-					       vtkImageData *outData,
-					       int outExt[6], int id) 
+                 vtkImageData *outData,
+                 int outExt[6], int id) 
 {
   void *inPtr1;
   void *outPtr;
@@ -370,7 +370,7 @@ void vtkImageCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   int wholeInExt2[6];
 
   vtkDebugMacro(<< "Execute: inData = " << inData 
-		<< ", outData = " << outData);
+    << ", outData = " << outData);
 
   if (inData[0] == NULL)
     {
@@ -424,9 +424,9 @@ void vtkImageCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
     vtkTemplateMacro8(vtkImageCrossCorrelationExecute,
-		      this, (VTK_TT *)(inPtr1), (VTK_TT *)(inPtr2),inData,outData,
-		      (double *)(outPtr), outExt,
-		      id);
+          this, (VTK_TT *)(inPtr1), (VTK_TT *)(inPtr2),inData,outData,
+          (double *)(outPtr), outExt,
+          id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

@@ -16,40 +16,40 @@ class transferFunctionWindowWidgetInterface;
 
 class stereoRenderingWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
 
-	stereoRenderingWidget( transferFunctionWindowWidgetInterface* parent );
-	~stereoRenderingWidget();
-	QMenu* getMenuOptions();
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
+  stereoRenderingWidget( transferFunctionWindowWidgetInterface* parent );
+  ~stereoRenderingWidget();
+  QMenu* getMenuOptions();
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
 
 private slots:
-	
-	//stereo related slots
-	void setStereoOn();
-	void setStereoOff();
-	void toggleEyes();
+  
+  //stereo related slots
+  void setStereoOn();
+  void setStereoOff();
+  void toggleEyes();
 
 private:
-	
-	void setupMenu();
-	void setStereoEnabled(bool);
-	void toggleStereoEyes();
+  
+  void setupMenu();
+  void setStereoEnabled(bool);
+  void toggleStereoEyes();
 
-	transferFunctionWindowWidgetInterface* parent;
-	
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCudaVolumeMapper* mapper;
-	
-	//stereo menu variables
-	QMenu* stereoMenu;
-	QAction* stereoOnMenuOption;
-	QAction* stereoOffMenuOption;
-	QAction* stereoEyeToggleMenuOption;
+  transferFunctionWindowWidgetInterface* parent;
+  
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCudaVolumeMapper* mapper;
+  
+  //stereo menu variables
+  QMenu* stereoMenu;
+  QAction* stereoOnMenuOption;
+  QAction* stereoOffMenuOption;
+  QAction* stereoEyeToggleMenuOption;
 
-	unsigned int old;
+  unsigned int old;
 
 };
 

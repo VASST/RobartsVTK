@@ -18,34 +18,34 @@
  *
  */
 typedef struct __align__(16) {
-	// The scale and shift to transform intensity and gradient to indices in the transfer functions
-	float			intensityLow;			/**< Minimum intensity of the image */
-	float			intensityMultiplier;	/**< Scale factor to normalize intensities to between 0 and 1 */
-	float			gradientLow;			/**< The minimum logarithmic gradient index including the offset */
-	float			gradientMultiplier;		/**< The maximum logarithmic gradient index including the offset */
-	float			gradientOffset;			/**< The offset for the logarithmic scaling of the gradient indexes */
-	unsigned int	functionSize;			/**< The size of the lookup table */
+  // The scale and shift to transform intensity and gradient to indices in the transfer functions
+  float      intensityLow;      /**< Minimum intensity of the image */
+  float      intensityMultiplier;  /**< Scale factor to normalize intensities to between 0 and 1 */
+  float      gradientLow;      /**< The minimum logarithmic gradient index including the offset */
+  float      gradientMultiplier;    /**< The maximum logarithmic gradient index including the offset */
+  float      gradientOffset;      /**< The offset for the logarithmic scaling of the gradient indexes */
+  unsigned int  functionSize;      /**< The size of the lookup table */
 
-	//opague memory back for the transfer function
-	cudaArray* alphaTransferArray2D;
-	cudaArray* ambientTransferArray2D;
-	cudaArray* diffuseTransferArray2D;
-	cudaArray* specularTransferArray2D;
-	cudaArray* specularPowerTransferArray2D;
-	cudaArray* colorRTransferArray2D;
-	cudaArray* colorGTransferArray2D;
-	cudaArray* colorBTransferArray2D;
+  //opague memory back for the transfer function
+  cudaArray* alphaTransferArray2D;
+  cudaArray* ambientTransferArray2D;
+  cudaArray* diffuseTransferArray2D;
+  cudaArray* specularTransferArray2D;
+  cudaArray* specularPowerTransferArray2D;
+  cudaArray* colorRTransferArray2D;
+  cudaArray* colorGTransferArray2D;
+  cudaArray* colorBTransferArray2D;
 
-	//opague memory back for the keyhole transfer function
-	bool useSecondTransferFunction;
-	cudaArray* K_alphaTransferArray2D;
-	cudaArray* K_ambientTransferArray2D;
-	cudaArray* K_diffuseTransferArray2D;
-	cudaArray* K_specularTransferArray2D;
-	cudaArray* K_specularPowerTransferArray2D;
-	cudaArray* K_colorRTransferArray2D;
-	cudaArray* K_colorGTransferArray2D;
-	cudaArray* K_colorBTransferArray2D;
+  //opague memory back for the keyhole transfer function
+  bool useSecondTransferFunction;
+  cudaArray* K_alphaTransferArray2D;
+  cudaArray* K_ambientTransferArray2D;
+  cudaArray* K_diffuseTransferArray2D;
+  cudaArray* K_specularTransferArray2D;
+  cudaArray* K_specularPowerTransferArray2D;
+  cudaArray* K_colorRTransferArray2D;
+  cudaArray* K_colorGTransferArray2D;
+  cudaArray* K_colorBTransferArray2D;
 
 } cuda2DTransferFunctionInformation;
 

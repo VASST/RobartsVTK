@@ -155,7 +155,7 @@ void vtkImageSMIManipulator2::SetMaxIntensities(int maxS, int maxT)
 //----------------------------------------------------------------------------
 template <class T>
 void vtkImageSMIManipulator2EntropyT(vtkImageSMIManipulator2 *self,
-				    T  *inPtr1, T  *inPtr2, int inc2[2])
+            T  *inPtr1, T  *inPtr2, int inc2[2])
 {
   short b;
   double temp, entropyT = 0, count = 0;
@@ -164,23 +164,23 @@ void vtkImageSMIManipulator2EntropyT(vtkImageSMIManipulator2 *self,
   for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
     {
       for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	{
-	  for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-	    {
-	      if (*inPtr2)
-		{
-		  count++;
-		  b = vtkResliceRound(*inPtr1/double(self->BinWidth[1]));
-		  if (b < 0) b = 0;
-		  if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
-		  self->HistT[b]++;
-		}
-	      inPtr1++;
-	      inPtr2++;
-	    }
-	  inPtr1 += inc2[0];
-	  inPtr2 += inc2[0];
-	}
+  {
+    for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+      {
+        if (*inPtr2)
+    {
+      count++;
+      b = vtkResliceRound(*inPtr1/double(self->BinWidth[1]));
+      if (b < 0) b = 0;
+      if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
+      self->HistT[b]++;
+    }
+        inPtr1++;
+        inPtr2++;
+      }
+    inPtr1 += inc2[0];
+    inPtr2 += inc2[0];
+  }
       inPtr1 += inc2[1];
       inPtr2 += inc2[1];
     }
@@ -188,10 +188,10 @@ void vtkImageSMIManipulator2EntropyT(vtkImageSMIManipulator2 *self,
   if (count)
     {
       for (int i = 0; i < self->BinNumber[1]; i++)
-	{  
-	  temp = (double)self->HistT[i];
-	  if (temp > 0.0) entropyT += temp * log(temp);
-	}
+  {  
+    temp = (double)self->HistT[i];
+    if (temp > 0.0) entropyT += temp * log(temp);
+  }
 
       self->entropyT = -entropyT / count + log(count);
     }
@@ -221,7 +221,7 @@ void vtkImageSMIManipulator2::SetExtent(int ext[6])
   switch (this->inData[1]->GetScalarType())
     {
       vtkTemplateMacro4(vtkImageSMIManipulator2EntropyT,this, 
-			(VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]), this->inc2);
+      (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]), this->inc2);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }
@@ -237,22 +237,22 @@ void vtkImageSMIManipulator2::SetTranslation(double tran[3])
   if ( (tran[0] == 0.0) && (tran[1] == 0.0) && (tran[2] == 0.0) )
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = 0;
-	  this->loc111[i] = 0;
-	  f[i] = 0.0;
-	}
+  {
+    this->loc000[i] = 0;
+    this->loc111[i] = 0;
+    f[i] = 0.0;
+  }
     }
   // Interpolation is required.
   else
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
-	  this->loc111[i] = this->loc000[i] + 1;
-	  // No interpolation for this axis
-	  if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
-	}
+  {
+    this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
+    this->loc111[i] = this->loc000[i] + 1;
+    // No interpolation for this axis
+    if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
+  }
     }
 
   this->F000 = (1.0 - f[0]) * (1.0 - f[1]) * (1.0 - f[2]);
@@ -269,9 +269,9 @@ void vtkImageSMIManipulator2::SetTranslation(double tran[3])
 //----------------------------------------------------------------------------
 template <class T>
 void vtkImageSMIManipulator2Execute(vtkImageSMIManipulator2 *self,
-				    T  *in1Ptr, T *in2Ptr, T *in3Ptr,
-				    int inc[3], int inc2[2], int inExt[6],
-				    int loc000[3], int loc111[3])
+            T  *in1Ptr, T *in2Ptr, T *in3Ptr,
+            int inc[3], int inc2[2], int inExt[6],
+            int loc000[3], int loc111[3])
 {
   double V000, V100, V010, V110, V001, V101, V011, V111, Vxyz;
   double temp, entropyS = 0, entropyST = 0, count = 0;
@@ -299,36 +299,36 @@ void vtkImageSMIManipulator2Execute(vtkImageSMIManipulator2 *self,
        (loc000[2] == 0) && (loc111[2] == 0) )
     {
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  if (*in3Ptr)
-		    {
-		      count++;
-		      a = vtkResliceRound(*in1Ptr/double(self->BinWidth[0]));
-		      b = vtkResliceRound(*in2Ptr/double(self->BinWidth[1]));
-		      if (a < 0) a = 0;
-		      if (b < 0) b = 0;
-		      if (a >= self->BinNumber[0]) a = self->BinNumber[0] - 1;
-		      if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
-		      self->HistS[a]++;
-		      self->HistST[b * self->BinNumber[0] + a]++;
-		    }
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      if (*in3Ptr)
+        {
+          count++;
+          a = vtkResliceRound(*in1Ptr/double(self->BinWidth[0]));
+          b = vtkResliceRound(*in2Ptr/double(self->BinWidth[1]));
+          if (a < 0) a = 0;
+          if (b < 0) b = 0;
+          if (a >= self->BinNumber[0]) a = self->BinNumber[0] - 1;
+          if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
+          self->HistS[a]++;
+          self->HistST[b * self->BinNumber[0] + a]++;
+        }
 
-		  in1Ptr++;
-		  in2Ptr++;
-		  in3Ptr++;
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	      in3Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	  in3Ptr += inc2[1];
-	}
+      in1Ptr++;
+      in2Ptr++;
+      in3Ptr++;
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+        in3Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+    in3Ptr += inc2[1];
+  }
     }
 
   // CASE 3: If the above two cases don't apply, do the full calculation.
@@ -337,80 +337,80 @@ void vtkImageSMIManipulator2Execute(vtkImageSMIManipulator2 *self,
       in1Ptr += inc[2] * loc000[2] + inc[1] * loc000[1] + inc[0] * loc000[0];
 
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      // Initiate previous data
-	      V000 = *in1Ptr;
-	      in1Ptr += inc[1];
-	      V010 = *in1Ptr;
-	      in1Ptr += inc[2];
-	      V011 = *in1Ptr;
-	      in1Ptr -= inc[1];
-	      V001 = *in1Ptr;
-	      in1Ptr -= inc[2];
-	      
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  in1Ptr++;
-		  V100 = *in1Ptr;
-		  in1Ptr += inc[1];
-		  V110 = *in1Ptr;
-		  in1Ptr += inc[2];
-		  V111 = *in1Ptr;
-		  in1Ptr -= inc[1];
-		  V101 = *in1Ptr;
-		  in1Ptr -= inc[2];
-		  
-		  Vxyz = (V000 * self->F000 + V100 * self->F100 + 
-			  V010 * self->F010 + V110 * self->F110 + 
-			  V001 * self->F001 + V101 * self->F101 + 
-			  V011 * self->F011 + V111 * self->F111);
-	      
-		  V000 = V100;
-		  V010 = V110;
-		  V001 = V101;
-		  V011 = V111;	
-		  
-		  if (*in3Ptr)
-		    {
-		      count++;
-		      a = vtkResliceRound(Vxyz/double(self->BinWidth[0]));
-		      b = vtkResliceRound(*in2Ptr/double(self->BinWidth[1]));
-		      if (a < 0) a = 0;
-		      if (b < 0) b = 0;
-		      if (a >= self->BinNumber[0]) a = self->BinNumber[0] - 1;
-		      if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
-		      self->HistS[a]++;
-		      self->HistST[b * self->BinNumber[0] + a]++;
-		    }
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        // Initiate previous data
+        V000 = *in1Ptr;
+        in1Ptr += inc[1];
+        V010 = *in1Ptr;
+        in1Ptr += inc[2];
+        V011 = *in1Ptr;
+        in1Ptr -= inc[1];
+        V001 = *in1Ptr;
+        in1Ptr -= inc[2];
+        
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      in1Ptr++;
+      V100 = *in1Ptr;
+      in1Ptr += inc[1];
+      V110 = *in1Ptr;
+      in1Ptr += inc[2];
+      V111 = *in1Ptr;
+      in1Ptr -= inc[1];
+      V101 = *in1Ptr;
+      in1Ptr -= inc[2];
+      
+      Vxyz = (V000 * self->F000 + V100 * self->F100 + 
+        V010 * self->F010 + V110 * self->F110 + 
+        V001 * self->F001 + V101 * self->F101 + 
+        V011 * self->F011 + V111 * self->F111);
+        
+      V000 = V100;
+      V010 = V110;
+      V001 = V101;
+      V011 = V111;  
+      
+      if (*in3Ptr)
+        {
+          count++;
+          a = vtkResliceRound(Vxyz/double(self->BinWidth[0]));
+          b = vtkResliceRound(*in2Ptr/double(self->BinWidth[1]));
+          if (a < 0) a = 0;
+          if (b < 0) b = 0;
+          if (a >= self->BinNumber[0]) a = self->BinNumber[0] - 1;
+          if (b >= self->BinNumber[1]) b = self->BinNumber[1] - 1;
+          self->HistS[a]++;
+          self->HistST[b * self->BinNumber[0] + a]++;
+        }
 
-		  in2Ptr++;
-		  in3Ptr++;
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	      in3Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	  in3Ptr += inc2[1];
-	}
+      in2Ptr++;
+      in3Ptr++;
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+        in3Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+    in3Ptr += inc2[1];
+  }
     }
 
   // Loop over S and ST histograms.
   if (count)
     {
       for (i = 0; i < self->BinNumber[0]; i++)
-	{
-	  temp = (double)self->HistS[i];
-	  if (temp > 0.0) entropyS += temp * log(temp);
-	  for (j = 0; j < self->BinNumber[1]; j++) 
-	    {
-	      temp = (double)self->HistST[j * self->BinNumber[0] + i];
-	      if (temp > 0.0) entropyST += temp * log(temp);
-	    }
-	}
+  {
+    temp = (double)self->HistS[i];
+    if (temp > 0.0) entropyS += temp * log(temp);
+    for (j = 0; j < self->BinNumber[1]; j++) 
+      {
+        temp = (double)self->HistST[j * self->BinNumber[0] + i];
+        if (temp > 0.0) entropyST += temp * log(temp);
+      }
+  }
 
       // Calculate entropies and the SMI result based on the Metric flag.
       entropyS  = -entropyS /count + log(count);
@@ -418,42 +418,42 @@ void vtkImageSMIManipulator2Execute(vtkImageSMIManipulator2 *self,
       
       // Normalized Mutual Information
       if (self->Metric == 0)
-	{
-	  if (entropyST == 0)
-	    {
-	      self->Result = 1.0;
-	    }
-	  else
-	    {
-	      self->Result = (entropyS + self->entropyT)/entropyST/2.0;
-	    }
-	}
+  {
+    if (entropyST == 0)
+      {
+        self->Result = 1.0;
+      }
+    else
+      {
+        self->Result = (entropyS + self->entropyT)/entropyST/2.0;
+      }
+  }
       
       // Mutual Informaiton
       else if (self->Metric == 1)
-	{
-	  self->Result = entropyS + self->entropyT - entropyST;
-	}
+  {
+    self->Result = entropyS + self->entropyT - entropyST;
+  }
       
       // Entropy Correlaiton Coefficient
       else if (self->Metric == 2)
-	{
-	  if (entropyS + self->entropyT == 0)
-	    {
-	      self->Result = 0.0;
-	    }
-	  else
-	    {
-	      self->Result = sqrt ( 2.0 * (1.0 - entropyST / ( self->entropyT + entropyS ) ) );
-	    }
-	}
+  {
+    if (entropyS + self->entropyT == 0)
+      {
+        self->Result = 0.0;
+      }
+    else
+      {
+        self->Result = sqrt ( 2.0 * (1.0 - entropyST / ( self->entropyT + entropyS ) ) );
+      }
+  }
       
       // Error
       else
-	{
-	  cout << "ERROR: Wrong Metric chosen\n";
-	  exit(0);
-	}
+  {
+    cout << "ERROR: Wrong Metric chosen\n";
+    exit(0);
+  }
     }
   else
     {
@@ -498,9 +498,9 @@ double vtkImageSMIManipulator2::GetResult()
   switch (this->inData[0]->GetScalarType())
     {
       vtkTemplateMacro9(vtkImageSMIManipulator2Execute,this, 
-			(VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]),
-			this->inc, this->inc2, this->inExt,
-			this->loc000, this->loc111);
+      (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]),
+      this->inc, this->inc2, this->inExt,
+      this->loc000, this->loc111);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }

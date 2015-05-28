@@ -13,64 +13,64 @@
 class vtkVuzixARScene : public vtkObject  {
 public:
 
-	/** @brief VTK compatible constructor method
-	 *
-	 */
-	static vtkVuzixARScene* New();
+  /** @brief VTK compatible constructor method
+   *
+   */
+  static vtkVuzixARScene* New();
 
-	//
-	void			Update();
+  //
+  void      Update();
 
-	//methods for grabbing the renderers (to add to a render window)
-	vtkRenderer*	GetLeftEyeView();
-	vtkRenderer*	GetRightEyeView();
-	
-	//methods for setting the source of the video feeds
-	void			SetLeftEyeSource( vtkImageData* );
-	void			SetRightEyeSource( vtkImageData* );
+  //methods for grabbing the renderers (to add to a render window)
+  vtkRenderer*  GetLeftEyeView();
+  vtkRenderer*  GetRightEyeView();
+  
+  //methods for setting the source of the video feeds
+  void      SetLeftEyeSource( vtkImageData* );
+  void      SetRightEyeSource( vtkImageData* );
 
-	//method for setting the tracked device and rigid transforms from
-	//tracked device to camera
-	void			SetTrackedTransform( vtkTransform* ); //no assumptions about constancy
-	void			SetLeftEyeTransform( vtkTransform* ); //assumes landmark transform is constant
-	void			SetRightEyeTransform( vtkTransform* ); //assumes landmark transform is constant
-	void			SetLeftEyePixelwiseIntrinsicParameters( double fx,
-															double fy,
-															double cx,
-															double cy );
-	void			SetRightEyePixelwiseIntrinsicParameters(double fx,
-															double fy,
-															double cx,
-															double cy );
-	void			UpdateFrameSizes();
+  //method for setting the tracked device and rigid transforms from
+  //tracked device to camera
+  void      SetTrackedTransform( vtkTransform* ); //no assumptions about constancy
+  void      SetLeftEyeTransform( vtkTransform* ); //assumes landmark transform is constant
+  void      SetRightEyeTransform( vtkTransform* ); //assumes landmark transform is constant
+  void      SetLeftEyePixelwiseIntrinsicParameters( double fx,
+                              double fy,
+                              double cx,
+                              double cy );
+  void      SetRightEyePixelwiseIntrinsicParameters(double fx,
+                              double fy,
+                              double cx,
+                              double cy );
+  void      UpdateFrameSizes();
 
 protected:
-	vtkVuzixARScene();
-	~vtkVuzixARScene();
+  vtkVuzixARScene();
+  ~vtkVuzixARScene();
 
 private:
 
-	//renderer information for the two views
-	vtkRenderer*	leftEyeRenderer;
-	vtkRenderer*	rightEyeRenderer;
-	vtkVuzixARCamera*	leftEyeCamera;
-	vtkVuzixARCamera*	rightEyeCamera;
-	vtkTexture*		leftEyeTexture;
-	vtkTexture*		rightEyeTexture;
-	vtkImageData*	leftEyePhysicalWorld;
-	vtkImageData*	rightEyePhysicalWorld;
+  //renderer information for the two views
+  vtkRenderer*  leftEyeRenderer;
+  vtkRenderer*  rightEyeRenderer;
+  vtkVuzixARCamera*  leftEyeCamera;
+  vtkVuzixARCamera*  rightEyeCamera;
+  vtkTexture*    leftEyeTexture;
+  vtkTexture*    rightEyeTexture;
+  vtkImageData*  leftEyePhysicalWorld;
+  vtkImageData*  rightEyePhysicalWorld;
 
-	//pose information for the cameras
-	vtkTransform*	trackedDevice;
-	vtkTransform*	deviceToLeftEye;
-	vtkTransform*	deviceToRightEye;
+  //pose information for the cameras
+  vtkTransform*  trackedDevice;
+  vtkTransform*  deviceToLeftEye;
+  vtkTransform*  deviceToRightEye;
 
-	//temporary transforms used
-	vtkTransform*	leftFocalPoint;
-	vtkTransform*	rightFocalPoint;
-	
-	double IdealLeftFocus;
-	double IdealRightFocus;
+  //temporary transforms used
+  vtkTransform*  leftFocalPoint;
+  vtkTransform*  rightFocalPoint;
+  
+  double IdealLeftFocus;
+  double IdealRightFocus;
 
 };
 

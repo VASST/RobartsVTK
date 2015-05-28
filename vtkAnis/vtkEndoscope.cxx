@@ -52,10 +52,10 @@ enum{
 template<class T>
 T SwapErase(std::vector<T> &arr, size_t idx)
 {
-	T ret = arr[idx];
-	arr[idx] = arr.back();
-	arr.resize(arr.size()-1);
-	return(ret);
+  T ret = arr[idx];
+  arr[idx] = arr.back();
+  arr.resize(arr.size()-1);
+  return(ret);
 }
 
 //----------------------------------------------------------------------------
@@ -545,8 +545,8 @@ printf("could not find whole checkerboard \r");
       // We didn't use this view, remove it from the previous views
       PrevPos.pop_back(); 
       PrevOrient.pop_back();
-	  delete[] corners.back();
-	  corners.pop_back();
+    delete[] corners.back();
+    corners.pop_back();
     }
 
     cvReleaseImageHeader(&frame);
@@ -569,13 +569,13 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
 
     // One cannot perform an acceptable calibration with a single image
     if(nActualCalibrationViews == 1)
-	{
-	  return;
-	}
+  {
+    return;
+  }
 
-	  ///////////////////////////////////////////////////
-	  // Make some important assertions that we rely on
-	  assert(corners.size() == PrevMat.size());
+    ///////////////////////////////////////////////////
+    // Make some important assertions that we rely on
+    assert(corners.size() == PrevMat.size());
 
     //////////////////////////////////////////
     // First we do the intrinsic calibration
@@ -701,7 +701,7 @@ printf("Nonsensical result... omitting.\n");
         PrevMat.pop_back();
         PrevPos.pop_back();
         PrevOrient.pop_back();
-		delete[] corners.back();
+    delete[] corners.back();
         corners.pop_back();
 
         // Free the all the related data
@@ -751,28 +751,28 @@ printf("Nonsensical result... omitting.\n");
     diffX /= allX.size() - 1;
     diffY /= allX.size() - 1;
     diffZ /= allX.size() - 1;
-	   
-	  // Reporting on the stats
+     
+    // Reporting on the stats
     printf("%.2f %.2f %.2f\t+/-\t",
        accX, accY, accZ);
     printf("%.2f %.2f %.2f         \n", 
          sqrt(diffX), sqrt(diffY), sqrt(diffZ) );
 
-	  // Find the worst outlier
-	  float deviation = 0.f;
-	  for(i = 1; i < nActualCalibrationViews; i++)
-	  {
-		  float curDev = (allX[i] - accX)*(allX[i] - accX) + 
-					     (allY[i] - accY)*(allY[i] - accY) +
-					     (allZ[i] - accZ)*(allZ[i] - accZ);
+    // Find the worst outlier
+    float deviation = 0.f;
+    for(i = 1; i < nActualCalibrationViews; i++)
+    {
+      float curDev = (allX[i] - accX)*(allX[i] - accX) + 
+               (allY[i] - accY)*(allY[i] - accY) +
+               (allZ[i] - accZ)*(allZ[i] - accZ);
 
-		  // Record this, if it's the worst outlier
-		  if(curDev > deviation)
-		  {
-			  deviation = curDev;
-			  worstOutlier = i;
-		  }
-	  }
+      // Record this, if it's the worst outlier
+      if(curDev > deviation)
+      {
+        deviation = curDev;
+        worstOutlier = i;
+      }
+    }
 
 #ifdef QUAT_AVERAGE
     // Average the estimations
@@ -814,14 +814,14 @@ printf("Nonsensical result... omitting.\n");
 
 void vtkEndoscope::DeleteOutlier(void)
 {
-	// First, do a mock calibration
-	DoCalibration(0);
+  // First, do a mock calibration
+  DoCalibration(0);
 
-	// Now remove the worst outlier
-	delete[] SwapErase(corners, worstOutlier);
-	delete[] SwapErase(PrevPos, worstOutlier);
-	SwapErase(PrevMat, worstOutlier)->Delete();
-	delete[] SwapErase(PrevOrient, worstOutlier);
+  // Now remove the worst outlier
+  delete[] SwapErase(corners, worstOutlier);
+  delete[] SwapErase(PrevPos, worstOutlier);
+  SwapErase(PrevMat, worstOutlier)->Delete();
+  delete[] SwapErase(PrevOrient, worstOutlier);
 }
 
 void vtkEndoscope::InternalGrab()

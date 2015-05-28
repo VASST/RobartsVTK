@@ -53,11 +53,11 @@ void vtkGBEFixed::SetGridSpacing(double GridSpacing[3])
   // Loop below where 6.0 and 4.0 appeared from, absolute value is used
   // so that BE is not < 0.
   this->f1 = fabs( 6.0 * (GridSpacing[1] * GridSpacing[2]) / 
-		   (GridSpacing[0] * GridSpacing[0] * GridSpacing[0]) );
+       (GridSpacing[0] * GridSpacing[0] * GridSpacing[0]) );
   this->f2 = fabs( 6.0 * (GridSpacing[0] * GridSpacing[2]) / 
-		   (GridSpacing[1] * GridSpacing[1] * GridSpacing[1]) );
+       (GridSpacing[1] * GridSpacing[1] * GridSpacing[1]) );
   this->f3 = fabs( 6.0 * (GridSpacing[0] * GridSpacing[1]) / 
-		   (GridSpacing[2] * GridSpacing[2] * GridSpacing[2]) );
+       (GridSpacing[2] * GridSpacing[2] * GridSpacing[2]) );
   this->f4 = fabs( 4.0 * GridSpacing[2] / (GridSpacing[0] * GridSpacing[1] * 4.0) );
   this->f5 = fabs( 4.0 * GridSpacing[1] / (GridSpacing[0] * GridSpacing[2] * 4.0) );
   this->f6 = fabs( 4.0 * GridSpacing[0] / (GridSpacing[1] * GridSpacing[2] * 4.0) );

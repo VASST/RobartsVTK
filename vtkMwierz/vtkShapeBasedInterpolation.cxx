@@ -126,8 +126,8 @@ vtkImageData *vtkShapeBasedInterpolation::GetOutput()
 
 //----------------------------------------------------------------------------
 void CalculateSpacingsExtents(double inSpa[3], int inExt[6], int SliceAxis, double OutputSpacing[3], int nBins, 
-			      double liftSpa[3], double distSpa[3], double inteSpa[3], double slicSpa[3], 
-			      int liftExt[6], int distExt[6], int inteExt[6], int slicExt[6])
+            double liftSpa[3], double distSpa[3], double inteSpa[3], double slicSpa[3], 
+            int liftExt[6], int distExt[6], int inteExt[6], int slicExt[6])
 {
   memcpy(slicSpa, OutputSpacing, sizeof(double)*3);
   if (SliceAxis == 0)
@@ -200,7 +200,7 @@ void CalculateSpacingsExtents(double inSpa[3], int inExt[6], int SliceAxis, doub
 
 //----------------------------------------------------------------------------
 void LiftSlice(vtkImageData *input, int inExt[6], double inSpa[3], double inMinVal, 
-	       double inMaxVal, int SliceAxis, int nBins, int slice, vtkImageData *&lift)
+         double inMaxVal, int SliceAxis, int nBins, int slice, vtkImageData *&lift)
 {
   int i,j,k,v;
   int ext[6];
@@ -216,68 +216,68 @@ void LiftSlice(vtkImageData *input, int inExt[6], double inSpa[3], double inMinV
   for (k = ext[4]; k <= ext[5]; k++)
     {
       for (j = ext[2]; j <= ext[3]; j++)
-       	{
- 	  for (i = ext[0]; i <= ext[1]; i++)
- 	    {
-	      if (SliceAxis == 0)
-		{
-		  if ((j != ext[2]) & (j != ext[3] )& (k != ext[4]) & (k != ext[5]))
-		    {
-		      value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
-		      for (v = -1; v <= nBins; v++)
-			{
-			  if (v <= int(value)) lift->SetScalarComponentFromFloat(v,j,k,0,1.0);
-			  else lift->SetScalarComponentFromFloat(v,j,k,0,0.0);
-			}
-		    }
-		  else
-		    {
-		      for (v = -1; v <= nBins; v++)
-			{
-			  lift->SetScalarComponentFromFloat(v,j,k,0,1.0);
-			}
-		    }
-		}
-	      else if (SliceAxis == 1)
-		{
-		  if ((i != ext[0]) & (i != ext[1]) & (k != ext[4]) & (k != ext[5]))
-		    {
-		      value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
-		      for (v = -1; v <= nBins; v++)
-			{
-			  if (v <= int(value)) lift->SetScalarComponentFromFloat(i,v,k,0,1.0);
-			  else lift->SetScalarComponentFromFloat(i,v,k,0,0.0);
-			}
-		    }
-		  else
-		    {
-		      for (v = -1; v <= nBins; v++)
-			{
-			  lift->SetScalarComponentFromFloat(i,v,k,0,1.0);
-			}
-		    }
-		}
-	      else if (SliceAxis == 2)
-		{
-		  if ((i != ext[0]) & (i != ext[1]) & (j != ext[2]) & (j != ext[3]))
-		    {
-		      value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
-		      for (v = -1; v <= nBins; v++)
-			{
-			  if (v <= int(value)) lift->SetScalarComponentFromFloat(i,j,v,0,1.0);
-			  else lift->SetScalarComponentFromFloat(i,j,v,0,0.0);
-			}
-		    }
-		  else
-		    {
-		      for (v = -1; v <= nBins; v++)
-			{
-			  lift->SetScalarComponentFromFloat(i,j,v,0,1.0);
-			}
-		    }
-		}
-	    }
-	}
+         {
+     for (i = ext[0]; i <= ext[1]; i++)
+       {
+        if (SliceAxis == 0)
+    {
+      if ((j != ext[2]) & (j != ext[3] )& (k != ext[4]) & (k != ext[5]))
+        {
+          value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
+          for (v = -1; v <= nBins; v++)
+      {
+        if (v <= int(value)) lift->SetScalarComponentFromFloat(v,j,k,0,1.0);
+        else lift->SetScalarComponentFromFloat(v,j,k,0,0.0);
+      }
+        }
+      else
+        {
+          for (v = -1; v <= nBins; v++)
+      {
+        lift->SetScalarComponentFromFloat(v,j,k,0,1.0);
+      }
+        }
+    }
+        else if (SliceAxis == 1)
+    {
+      if ((i != ext[0]) & (i != ext[1]) & (k != ext[4]) & (k != ext[5]))
+        {
+          value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
+          for (v = -1; v <= nBins; v++)
+      {
+        if (v <= int(value)) lift->SetScalarComponentFromFloat(i,v,k,0,1.0);
+        else lift->SetScalarComponentFromFloat(i,v,k,0,0.0);
+      }
+        }
+      else
+        {
+          for (v = -1; v <= nBins; v++)
+      {
+        lift->SetScalarComponentFromFloat(i,v,k,0,1.0);
+      }
+        }
+    }
+        else if (SliceAxis == 2)
+    {
+      if ((i != ext[0]) & (i != ext[1]) & (j != ext[2]) & (j != ext[3]))
+        {
+          value = double(nBins - 1) / (inMaxVal - inMinVal) * (input->GetScalarComponentAsFloat(i,j,k,0) - inMinVal);
+          for (v = -1; v <= nBins; v++)
+      {
+        if (v <= int(value)) lift->SetScalarComponentFromFloat(i,j,v,0,1.0);
+        else lift->SetScalarComponentFromFloat(i,j,v,0,0.0);
+      }
+        }
+      else
+        {
+          for (v = -1; v <= nBins; v++)
+      {
+        lift->SetScalarComponentFromFloat(i,j,v,0,1.0);
+      }
+        }
+    }
+      }
+  }
     }
 }
 
@@ -307,151 +307,151 @@ void CalculateDistanceMap(vtkImageData *lift, int SliceAxis, vtkImageData *&dist
   for (k = ext[4]; k <= ext[5]; k++)
     {
       for (j = ext[2]; j <= ext[3]; j++)
- 	{
-   	  for (i = ext[0]; i <= ext[1]; i++)
-   	    {
-	      loc011 = i - 1; loc211 = i + 1;
-	      loc101 = j - 1; loc121 = j + 1;
-	      loc110 = k - 1; loc112 = k + 1;
+   {
+       for (i = ext[0]; i <= ext[1]; i++)
+         {
+        loc011 = i - 1; loc211 = i + 1;
+        loc101 = j - 1; loc121 = j + 1;
+        loc110 = k - 1; loc112 = k + 1;
 
-	      // Axis 0
-	      iniVals[0] = 1.0;
-	      if (loc011 >= ext[0]) iniVals[0] = lift->GetScalarComponentAsFloat(loc011,j,k,0);
-	      if (SliceAxis == 0) iniVals[1] = 0.0; if (SliceAxis == 1) iniVals[1] = 1.0; if (SliceAxis == 2) iniVals[1] = 1.0;
-	      if (loc211 <= ext[1]) iniVals[1] = lift->GetScalarComponentAsFloat(loc211,j,k,0);
+        // Axis 0
+        iniVals[0] = 1.0;
+        if (loc011 >= ext[0]) iniVals[0] = lift->GetScalarComponentAsFloat(loc011,j,k,0);
+        if (SliceAxis == 0) iniVals[1] = 0.0; if (SliceAxis == 1) iniVals[1] = 1.0; if (SliceAxis == 2) iniVals[1] = 1.0;
+        if (loc211 <= ext[1]) iniVals[1] = lift->GetScalarComponentAsFloat(loc211,j,k,0);
 
-	      // Axis 1
-	      iniVals[2] = 1.0;
-	      if (loc101 >= ext[2]) iniVals[2] = lift->GetScalarComponentAsFloat(i,loc101,k,0);
-	      if (SliceAxis == 0) iniVals[3] = 1.0; if (SliceAxis == 1) iniVals[3] = 0.0; if (SliceAxis == 2) iniVals[3] = 1.0;
-	      if (loc121 <= ext[3]) iniVals[3] = lift->GetScalarComponentAsFloat(i,loc121,k,0);
+        // Axis 1
+        iniVals[2] = 1.0;
+        if (loc101 >= ext[2]) iniVals[2] = lift->GetScalarComponentAsFloat(i,loc101,k,0);
+        if (SliceAxis == 0) iniVals[3] = 1.0; if (SliceAxis == 1) iniVals[3] = 0.0; if (SliceAxis == 2) iniVals[3] = 1.0;
+        if (loc121 <= ext[3]) iniVals[3] = lift->GetScalarComponentAsFloat(i,loc121,k,0);
 
-	      // Axis 2
-	      iniVals[4] = 1.0;
-	      if (loc110 >= ext[4]) iniVals[4] = lift->GetScalarComponentAsFloat(i,j,loc110,0);
-	      if (SliceAxis == 0) iniVals[5] = 1.0; if (SliceAxis == 1) iniVals[5] = 1.0; if (SliceAxis == 2) iniVals[5] = 0.0;
-	      if (loc112 <= ext[5]) iniVals[5] = lift->GetScalarComponentAsFloat(i,j,loc112,0);
+        // Axis 2
+        iniVals[4] = 1.0;
+        if (loc110 >= ext[4]) iniVals[4] = lift->GetScalarComponentAsFloat(i,j,loc110,0);
+        if (SliceAxis == 0) iniVals[5] = 1.0; if (SliceAxis == 1) iniVals[5] = 1.0; if (SliceAxis == 2) iniVals[5] = 0.0;
+        if (loc112 <= ext[5]) iniVals[5] = lift->GetScalarComponentAsFloat(i,j,loc112,0);
 
-	      iniVals[6] = lift->GetScalarComponentAsFloat(i,j,k,0);
-	      
-	      if (iniVals[6] == 1.0)
-		{
-		  ini = iniD2;
-		  for (l = 0; l <= 5; l++)
-		    {
-		      if (iniVals[l] == 0.0) ini = iniD1;
-		    }
-		}
-	      else
-		{
-		  ini = -iniD2;
-		  for (l = 0; l <= 5; l++)
-		    {
-		      if (iniVals[l] == 1.0) ini = -iniD1;
-		    }
-		}
+        iniVals[6] = lift->GetScalarComponentAsFloat(i,j,k,0);
+        
+        if (iniVals[6] == 1.0)
+    {
+      ini = iniD2;
+      for (l = 0; l <= 5; l++)
+        {
+          if (iniVals[l] == 0.0) ini = iniD1;
+        }
+    }
+        else
+    {
+      ini = -iniD2;
+      for (l = 0; l <= 5; l++)
+        {
+          if (iniVals[l] == 1.0) ini = -iniD1;
+        }
+    }
 
-	      temp->SetScalarComponentFromFloat(i,j,k,0,ini);
-	    }
-	}
+        temp->SetScalarComponentFromFloat(i,j,k,0,ini);
+      }
+  }
     }
 
   // First chamfer pass
   for (k = ext[4] + 1; k <= ext[5] - 1; k++)
     {
       for (j = ext[2] + 1; j <= ext[3] - 1; j++)
- 	{
-   	  for (i = ext[0] + 1; i <= ext[1] - 1; i++)
-   	    {
-	      finVals[13] = temp->GetScalarComponentAsFloat(i,j,k,0);
-	      if ((finVals[13] != 1.0) & (finVals[13] != -1.0))
-		{
-		  if (finVals[13] > 0)
-		    {
-		      finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k-1,0) + finD3;
-		      finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k-1,0) + finD2;
-		      finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k-1,0) + finD3;
-		      finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k-1,0) + finD2;
-		      finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k-1,0) + finD1;
-		      finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k-1,0) + finD2;
-		      finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k-1,0) + finD3;
-		      finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k-1,0) + finD2;
-		      finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k-1,0) + finD3;
-		      finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j-1,k  ,0) + finD2;
-		      finVals[10] = temp->GetScalarComponentAsFloat(i  ,j-1,k  ,0) + finD1;
-		      finVals[11] = temp->GetScalarComponentAsFloat(i+1,j-1,k  ,0) + finD2;
-		      finVals[12] = temp->GetScalarComponentAsFloat(i-1,j  ,k  ,0) + finD1;
-		      temp->SetScalarComponentFromFloat(i,j,k,0,vtkMinimum(finVals));
-		    }
-		  else
-		    {	      
-		      finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k-1,0) - finD3;
-		      finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k-1,0) - finD2;
-		      finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k-1,0) - finD3;
-		      finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k-1,0) - finD2;
-		      finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k-1,0) - finD1;
-		      finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k-1,0) - finD2;
-		      finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k-1,0) - finD3;
-		      finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k-1,0) - finD2;
-		      finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k-1,0) - finD3;
-		      finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j-1,k  ,0) - finD2;
-		      finVals[10] = temp->GetScalarComponentAsFloat(i  ,j-1,k  ,0) - finD1;
-		      finVals[11] = temp->GetScalarComponentAsFloat(i+1,j-1,k  ,0) - finD2;
-		      finVals[12] = temp->GetScalarComponentAsFloat(i-1,j  ,k  ,0) - finD1;
-		      temp->SetScalarComponentFromFloat(i,j,k,0,vtkMaximum(finVals));
-		    }
-		}
-	    }
-	}
+   {
+       for (i = ext[0] + 1; i <= ext[1] - 1; i++)
+         {
+        finVals[13] = temp->GetScalarComponentAsFloat(i,j,k,0);
+        if ((finVals[13] != 1.0) & (finVals[13] != -1.0))
+    {
+      if (finVals[13] > 0)
+        {
+          finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k-1,0) + finD3;
+          finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k-1,0) + finD2;
+          finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k-1,0) + finD3;
+          finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k-1,0) + finD2;
+          finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k-1,0) + finD1;
+          finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k-1,0) + finD2;
+          finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k-1,0) + finD3;
+          finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k-1,0) + finD2;
+          finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k-1,0) + finD3;
+          finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j-1,k  ,0) + finD2;
+          finVals[10] = temp->GetScalarComponentAsFloat(i  ,j-1,k  ,0) + finD1;
+          finVals[11] = temp->GetScalarComponentAsFloat(i+1,j-1,k  ,0) + finD2;
+          finVals[12] = temp->GetScalarComponentAsFloat(i-1,j  ,k  ,0) + finD1;
+          temp->SetScalarComponentFromFloat(i,j,k,0,vtkMinimum(finVals));
+        }
+      else
+        {        
+          finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k-1,0) - finD3;
+          finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k-1,0) - finD2;
+          finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k-1,0) - finD3;
+          finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k-1,0) - finD2;
+          finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k-1,0) - finD1;
+          finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k-1,0) - finD2;
+          finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k-1,0) - finD3;
+          finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k-1,0) - finD2;
+          finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k-1,0) - finD3;
+          finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j-1,k  ,0) - finD2;
+          finVals[10] = temp->GetScalarComponentAsFloat(i  ,j-1,k  ,0) - finD1;
+          finVals[11] = temp->GetScalarComponentAsFloat(i+1,j-1,k  ,0) - finD2;
+          finVals[12] = temp->GetScalarComponentAsFloat(i-1,j  ,k  ,0) - finD1;
+          temp->SetScalarComponentFromFloat(i,j,k,0,vtkMaximum(finVals));
+        }
+    }
+      }
+  }
     }
 
   // Second chamfer pass
   for (k = ext[5] - 1; k >= ext[4] + 1; k--)
     {
       for (j = ext[3] - 1; j >= ext[2] + 1; j--)
- 	{
-   	  for (i = ext[1] - 1; i >= ext[0] + 1; i--)
-   	    {
-	      finVals[13] = temp->GetScalarComponentAsFloat(i,j,k,0);
-	      if ((finVals[13] != 1.0 )& (finVals[13] != -1.0))
-		{
-		  if (finVals[13] > 0)
-		    {
-		      finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k+1,0) + finD3;
-		      finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k+1,0) + finD2;
-		      finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k+1,0) + finD3;
-		      finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k+1,0) + finD2;
-		      finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k+1,0) + finD1;
-		      finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k+1,0) + finD2;
-		      finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k+1,0) + finD3;
-		      finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k+1,0) + finD2;
-		      finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k+1,0) + finD3;
-		      finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j+1,k  ,0) + finD2;
-		      finVals[10] = temp->GetScalarComponentAsFloat(i  ,j+1,k  ,0) + finD1;
-		      finVals[11] = temp->GetScalarComponentAsFloat(i+1,j+1,k  ,0) + finD2;
-		      finVals[12] = temp->GetScalarComponentAsFloat(i+1,j  ,k  ,0) + finD1;
-		      temp->SetScalarComponentFromFloat(i,j,k,0,vtkMinimum(finVals));
-		    }
-		  else
-		    {	      
-		      finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k+1,0) - finD3;
-		      finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k+1,0) - finD2;
-		      finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k+1,0) - finD3;
-		      finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k+1,0) - finD2;
-		      finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k+1,0) - finD1;
-		      finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k+1,0) - finD2;
-		      finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k+1,0) - finD3;
-		      finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k+1,0) - finD2;
-		      finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k+1,0) - finD3;
-		      finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j+1,k  ,0) - finD2;
-		      finVals[10] = temp->GetScalarComponentAsFloat(i  ,j+1,k  ,0) - finD1;
-		      finVals[11] = temp->GetScalarComponentAsFloat(i+1,j+1,k  ,0) - finD2;
-		      finVals[12] = temp->GetScalarComponentAsFloat(i+1,j  ,k  ,0) - finD1;
-		      temp->SetScalarComponentFromFloat(i,j,k,0,vtkMaximum(finVals));
-		    }
-		}
-	    }
-	}
+   {
+       for (i = ext[1] - 1; i >= ext[0] + 1; i--)
+         {
+        finVals[13] = temp->GetScalarComponentAsFloat(i,j,k,0);
+        if ((finVals[13] != 1.0 )& (finVals[13] != -1.0))
+    {
+      if (finVals[13] > 0)
+        {
+          finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k+1,0) + finD3;
+          finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k+1,0) + finD2;
+          finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k+1,0) + finD3;
+          finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k+1,0) + finD2;
+          finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k+1,0) + finD1;
+          finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k+1,0) + finD2;
+          finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k+1,0) + finD3;
+          finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k+1,0) + finD2;
+          finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k+1,0) + finD3;
+          finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j+1,k  ,0) + finD2;
+          finVals[10] = temp->GetScalarComponentAsFloat(i  ,j+1,k  ,0) + finD1;
+          finVals[11] = temp->GetScalarComponentAsFloat(i+1,j+1,k  ,0) + finD2;
+          finVals[12] = temp->GetScalarComponentAsFloat(i+1,j  ,k  ,0) + finD1;
+          temp->SetScalarComponentFromFloat(i,j,k,0,vtkMinimum(finVals));
+        }
+      else
+        {        
+          finVals[0]  = temp->GetScalarComponentAsFloat(i-1,j-1,k+1,0) - finD3;
+          finVals[1]  = temp->GetScalarComponentAsFloat(i  ,j-1,k+1,0) - finD2;
+          finVals[2]  = temp->GetScalarComponentAsFloat(i+1,j-1,k+1,0) - finD3;
+          finVals[3]  = temp->GetScalarComponentAsFloat(i-1,j  ,k+1,0) - finD2;
+          finVals[4]  = temp->GetScalarComponentAsFloat(i  ,j  ,k+1,0) - finD1;
+          finVals[5]  = temp->GetScalarComponentAsFloat(i+1,j  ,k+1,0) - finD2;
+          finVals[6]  = temp->GetScalarComponentAsFloat(i-1,j+1,k+1,0) - finD3;
+          finVals[7]  = temp->GetScalarComponentAsFloat(i  ,j+1,k+1,0) - finD2;
+          finVals[8]  = temp->GetScalarComponentAsFloat(i+1,j+1,k+1,0) - finD3;
+          finVals[9]  = temp->GetScalarComponentAsFloat(i-1,j+1,k  ,0) - finD2;
+          finVals[10] = temp->GetScalarComponentAsFloat(i  ,j+1,k  ,0) - finD1;
+          finVals[11] = temp->GetScalarComponentAsFloat(i+1,j+1,k  ,0) - finD2;
+          finVals[12] = temp->GetScalarComponentAsFloat(i+1,j  ,k  ,0) - finD1;
+          temp->SetScalarComponentFromFloat(i,j,k,0,vtkMaximum(finVals));
+        }
+    }
+      }
+  }
     }
 
   ext[0] = ext[0] + 1; ext[1] = ext[1] - 1;
@@ -473,7 +473,7 @@ void CalculateDistanceMap(vtkImageData *lift, int SliceAxis, vtkImageData *&dist
 
 //----------------------------------------------------------------------------
 void InterpolateDistanceMap(vtkImageData *distanceMaps[2], int SliceAxis, double pos, 
-			    double OutputSpacing[3], vtkImageData *&interpolatedDistanceMap)
+          double OutputSpacing[3], vtkImageData *&interpolatedDistanceMap)
 {
   int i,j,k;
   int ext[6];
@@ -504,17 +504,17 @@ void InterpolateDistanceMap(vtkImageData *distanceMaps[2], int SliceAxis, double
   else
     {
       for (k = ext[4]; k <= ext[5]; k++)
-	{
-	  for (j = ext[2]; j <= ext[3]; j++)
-	    {
-	      for (i = ext[0]; i <= ext[1]; i++)
-		{
-		  newValue = ( (1.0 - pos) * distanceMaps[0]->GetScalarComponentAsFloat(i,j,k,0) + 
-			       pos * distanceMaps[1]->GetScalarComponentAsFloat(i,j,k,0) );
-		  temp->SetScalarComponentFromFloat(i,j,k,0,newValue);
-		}
-	    }
-	}
+  {
+    for (j = ext[2]; j <= ext[3]; j++)
+      {
+        for (i = ext[0]; i <= ext[1]; i++)
+    {
+      newValue = ( (1.0 - pos) * distanceMaps[0]->GetScalarComponentAsFloat(i,j,k,0) + 
+             pos * distanceMaps[1]->GetScalarComponentAsFloat(i,j,k,0) );
+      temp->SetScalarComponentFromFloat(i,j,k,0,newValue);
+    }
+      }
+  }
     }      
 
   // Interpolate pixels
@@ -536,7 +536,7 @@ void InterpolateDistanceMap(vtkImageData *distanceMaps[2], int SliceAxis, double
 
 //----------------------------------------------------------------------------
 vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double OutputSpacing[3], 
-			   int slicExt[6], double inMinVal, double inMaxVal, int nBins)
+         int slicExt[6], double inMinVal, double inMaxVal, int nBins)
 {
   int i,j,k,l;
   int ext1[6], ext2[6];
@@ -566,50 +566,50 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
   for (k = ext2[4]; k <= ext2[5]; k++)
     {
       for (j = ext2[2]; j <= ext2[3]; j++)
-       	{
- 	  for (i = ext2[0]; i <= ext2[1]; i++)
-	    {
-	      if (SliceAxis == 0)
-		{
-		  for (l = ext1[0]; l <= ext1[1]; l++)
-		    {
-		      if (threshold1->GetOutput()->GetScalarComponentAsFloat(l,j,k,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice1->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	      if (SliceAxis == 1)
-		{
-		  for (l = ext1[2]; l <= ext1[3]; l++)
-		    {
-		      if (threshold1->GetOutput()->GetScalarComponentAsFloat(i,l,k,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice1->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	      if (SliceAxis == 2)
-		{
-		  for (l = ext1[4]; l <= ext1[5]; l++)
-		    {
-		      if (threshold1->GetOutput()->GetScalarComponentAsFloat(i,j,l,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice1->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	    }
-	}
+         {
+     for (i = ext2[0]; i <= ext2[1]; i++)
+      {
+        if (SliceAxis == 0)
+    {
+      for (l = ext1[0]; l <= ext1[1]; l++)
+        {
+          if (threshold1->GetOutput()->GetScalarComponentAsFloat(l,j,k,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice1->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+        if (SliceAxis == 1)
+    {
+      for (l = ext1[2]; l <= ext1[3]; l++)
+        {
+          if (threshold1->GetOutput()->GetScalarComponentAsFloat(i,l,k,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice1->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+        if (SliceAxis == 2)
+    {
+      for (l = ext1[4]; l <= ext1[5]; l++)
+        {
+          if (threshold1->GetOutput()->GetScalarComponentAsFloat(i,j,l,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice1->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice1->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+      }
+  }
     }
 
   vtkImageData *slice2 = vtkImageData::New();
@@ -636,50 +636,50 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
   for (k = ext2[4]; k <= ext2[5]; k++)
     {
       for (j = ext2[2]; j <= ext2[3]; j++)
-       	{
- 	  for (i = ext2[0]; i <= ext2[1]; i++)
-	    {
-	      if (SliceAxis == 0)
-		{
-		  for (l = ext1[0]; l <= ext1[1]; l++)
-		    {
-		      if (threshold2->GetOutput()->GetScalarComponentAsFloat(l,j,k,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice2->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	      if (SliceAxis == 1)
-		{
-		  for (l = ext1[2]; l <= ext1[3]; l++)
-		    {
-		      if (threshold2->GetOutput()->GetScalarComponentAsFloat(i,l,k,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice2->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	      if (SliceAxis == 2)
-		{
-		  for (l = ext1[4]; l <= ext1[5]; l++)
-		    {
-		      if (threshold2->GetOutput()->GetScalarComponentAsFloat(i,j,l,0) == 0)
-			{
-			  value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
-			  slice2->SetScalarComponentFromFloat(i,j,k,0,value);
-			  break;
-			}
-		      slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
-		    }
-		}
-	    }
-	}
+         {
+     for (i = ext2[0]; i <= ext2[1]; i++)
+      {
+        if (SliceAxis == 0)
+    {
+      for (l = ext1[0]; l <= ext1[1]; l++)
+        {
+          if (threshold2->GetOutput()->GetScalarComponentAsFloat(l,j,k,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice2->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+        if (SliceAxis == 1)
+    {
+      for (l = ext1[2]; l <= ext1[3]; l++)
+        {
+          if (threshold2->GetOutput()->GetScalarComponentAsFloat(i,l,k,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice2->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+        if (SliceAxis == 2)
+    {
+      for (l = ext1[4]; l <= ext1[5]; l++)
+        {
+          if (threshold2->GetOutput()->GetScalarComponentAsFloat(i,j,l,0) == 0)
+      {
+        value = double(l) * (inMaxVal - inMinVal) / double(nBins - 1) + inMinVal;
+        slice2->SetScalarComponentFromFloat(i,j,k,0,value);
+        break;
+      }
+          slice2->SetScalarComponentFromFloat(i,j,k,0,inMaxVal);
+        }
+    }
+      }
+  }
     }
 
   vtkImageMathematics *math1 = vtkImageMathematics::New();
@@ -719,12 +719,12 @@ vtkImageData *GetOriginalSlice(vtkImageData *input, int SliceAxis, int iSlice, d
   for (k = ext[4]; k <= ext[5]; k++)
     {
       for (j = ext[2]; j <= ext[3]; j++)
-       	{
- 	  for (i = ext[0]; i <= ext[1]; i++)
-	    {
-	      slice->SetScalarComponentFromFloat(i,j,k,0,input->GetScalarComponentAsFloat(i,j,k,0));
-	    }
-	}
+         {
+     for (i = ext[0]; i <= ext[1]; i++)
+      {
+        slice->SetScalarComponentFromFloat(i,j,k,0,input->GetScalarComponentAsFloat(i,j,k,0));
+      }
+  }
     }
 
   ext[2 * SliceAxis] = 0;
@@ -744,7 +744,7 @@ void vtkShapeBasedInterpolation::Update()
   int interPix = 0;
  
   CalculateSpacingsExtents(this->inSpa, this->inExt, this->SliceAxis, this->OutputSpacing, this->NumberOfBins,
-			   liftSpa, distSpa, inteSpa, slicSpa, liftExt, distExt, inteExt, slicExt);
+         liftSpa, distSpa, inteSpa, slicSpa, liftExt, distExt, inteExt, slicExt);
 
   vtkImageData *lift = vtkImageData::New();
   lift->SetExtent(liftExt);
@@ -798,23 +798,23 @@ void vtkShapeBasedInterpolation::Update()
 
       pos = staPos; nPos = (pos - i * fabs(this->inSpa[SliceAxis])) / fabs(this->inSpa[SliceAxis]); j = 0;
       while (pos < (i + 1) * fabs(this->inSpa[SliceAxis]))
-	{
- 	  if ((nPos <= 0.01) & (interPix == 0))
- 	    {
- 	      slice = GetOriginalSlice(this->inData, this->SliceAxis, i, this->OutputSpacing);
- 	    }
- 	  else
- 	    {
-	      InterpolateDistanceMap(distanceMaps, this->SliceAxis, nPos, this->OutputSpacing, interpolatedDistanceMap);
-	      slice = ExtractSlice(interpolatedDistanceMap, this->SliceAxis, this->OutputSpacing, slicExt,
-				   this->inMinVal, this->inMaxVal, this->NumberOfBins);
- 	    }
-	  append->AddInput(slice);
-	  append->Update();
-	  j++;
-	  pos = staPos + j * fabs(this->OutputSpacing[SliceAxis]);
-	  nPos = (pos - i * fabs(this->inSpa[SliceAxis])) / fabs(this->inSpa[SliceAxis]);
-	}
+  {
+     if ((nPos <= 0.01) & (interPix == 0))
+       {
+         slice = GetOriginalSlice(this->inData, this->SliceAxis, i, this->OutputSpacing);
+       }
+     else
+       {
+        InterpolateDistanceMap(distanceMaps, this->SliceAxis, nPos, this->OutputSpacing, interpolatedDistanceMap);
+        slice = ExtractSlice(interpolatedDistanceMap, this->SliceAxis, this->OutputSpacing, slicExt,
+           this->inMinVal, this->inMaxVal, this->NumberOfBins);
+       }
+    append->AddInput(slice);
+    append->Update();
+    j++;
+    pos = staPos + j * fabs(this->OutputSpacing[SliceAxis]);
+    nPos = (pos - i * fabs(this->inSpa[SliceAxis])) / fabs(this->inSpa[SliceAxis]);
+  }
 
       staPos = pos;
       distanceMaps[0]->DeepCopy(distanceMaps[1]);
@@ -829,7 +829,7 @@ void vtkShapeBasedInterpolation::Update()
     {
       InterpolateDistanceMap(distanceMaps, this->SliceAxis, 1, this->OutputSpacing, interpolatedDistanceMap);
       slice = ExtractSlice(interpolatedDistanceMap, this->SliceAxis, this->OutputSpacing, slicExt,
-			   this->inMinVal, this->inMaxVal, this->NumberOfBins);
+         this->inMinVal, this->inMaxVal, this->NumberOfBins);
     }
 
   append->AddInput(slice);

@@ -18,33 +18,33 @@
  *
  */
 typedef struct __align__(16) {
-	// The scale and shift to transform intensity and gradient to indices in the transfer functions
-	float			intensity1Low;			/**< Minimum intensity of the first component of the image */
-	float			intensity1Multiplier;	/**< Scale factor to normalize first intensities to between 0 and 1 */
-	float			intensity2Low;			/**< Minimum intensity of the second component of the image */
-	float			intensity2Multiplier;	/**< Scale factor to normalize second intensities to between 0 and 1 */
-	unsigned int	functionSize;			/**< The size of the lookup table */
-	
-	//opague memory back for the transfer function
-	cudaArray* alphaTransferArrayDualImage;
-	cudaArray* ambientTransferArrayDualImage;
-	cudaArray* diffuseTransferArrayDualImage;
-	cudaArray* specularTransferArrayDualImage;
-	cudaArray* specularPowerTransferArrayDualImage;
-	cudaArray* colorRTransferArrayDualImage;
-	cudaArray* colorGTransferArrayDualImage;
-	cudaArray* colorBTransferArrayDualImage;
+  // The scale and shift to transform intensity and gradient to indices in the transfer functions
+  float      intensity1Low;      /**< Minimum intensity of the first component of the image */
+  float      intensity1Multiplier;  /**< Scale factor to normalize first intensities to between 0 and 1 */
+  float      intensity2Low;      /**< Minimum intensity of the second component of the image */
+  float      intensity2Multiplier;  /**< Scale factor to normalize second intensities to between 0 and 1 */
+  unsigned int  functionSize;      /**< The size of the lookup table */
+  
+  //opague memory back for the transfer function
+  cudaArray* alphaTransferArrayDualImage;
+  cudaArray* ambientTransferArrayDualImage;
+  cudaArray* diffuseTransferArrayDualImage;
+  cudaArray* specularTransferArrayDualImage;
+  cudaArray* specularPowerTransferArrayDualImage;
+  cudaArray* colorRTransferArrayDualImage;
+  cudaArray* colorGTransferArrayDualImage;
+  cudaArray* colorBTransferArrayDualImage;
 
-	//opague memory back for the keyhole transfer function
-	bool			useSecondTransferFunction;
-	cudaArray* K_alphaTransferArrayDualImage;
-	cudaArray* K_ambientTransferArrayDualImage;
-	cudaArray* K_diffuseTransferArrayDualImage;
-	cudaArray* K_specularTransferArrayDualImage;
-	cudaArray* K_specularPowerTransferArrayDualImage;
-	cudaArray* K_colorRTransferArrayDualImage;
-	cudaArray* K_colorGTransferArrayDualImage;
-	cudaArray* K_colorBTransferArrayDualImage;
+  //opague memory back for the keyhole transfer function
+  bool      useSecondTransferFunction;
+  cudaArray* K_alphaTransferArrayDualImage;
+  cudaArray* K_ambientTransferArrayDualImage;
+  cudaArray* K_diffuseTransferArrayDualImage;
+  cudaArray* K_specularTransferArrayDualImage;
+  cudaArray* K_specularPowerTransferArrayDualImage;
+  cudaArray* K_colorRTransferArrayDualImage;
+  cudaArray* K_colorGTransferArrayDualImage;
+  cudaArray* K_colorBTransferArrayDualImage;
 
 } cudaDualImageTransferFunctionInformation;
 

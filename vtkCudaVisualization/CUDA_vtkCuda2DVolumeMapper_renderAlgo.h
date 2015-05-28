@@ -28,11 +28,11 @@ struct cudaArray;
  *
  */
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
-							 const cudaRendererInformation& rendererInfo,
-							 const cudaVolumeInformation& volumeInfo,
-							 const cuda2DTransferFunctionInformation& transInfo,
-							 cudaArray* frame,
-							 cudaStream_t* stream);
+               const cudaRendererInformation& rendererInfo,
+               const cudaVolumeInformation& volumeInfo,
+               const cuda2DTransferFunctionInformation& transInfo,
+               cudaArray* frame,
+               cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
  *
@@ -61,11 +61,11 @@ void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cu
  *
  */
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
-								  float* ambTF, float* diffTF, float* specTF, float* powTF,
-								  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
-								  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
-								  cudaStream_t* stream);
+                  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+                  float* ambTF, float* diffTF, float* specTF, float* powTF,
+                  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
+                  float* kampTF, float* kdiffTF, float* kspecTF, float* kpowTF,
+                  cudaStream_t* stream);
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cuda2DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
@@ -77,6 +77,6 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(cuda2DTransferFunction
  *
  */
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData,
-	const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream);
+  const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream);
 
 #endif

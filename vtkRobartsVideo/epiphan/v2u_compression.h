@@ -55,7 +55,7 @@ extern "C" {
 /**
  * Version of the library and files generatated by the compression algorithm
  */
-#define V2U_COMPRESSION_LIB_VERSION		0x00000100
+#define V2U_COMPRESSION_LIB_VERSION    0x00000100
 
 
   
@@ -157,9 +157,9 @@ v2udec_get_videomode(
     V2U_DECOMPRESSION_LIB_CONTEXT uctx,
     const unsigned char * framebuf,
     int framebuflen,
-		V2U_VideoMode	* vmode);
+    V2U_VideoMode  * vmode);
 
-	
+  
 // Keyframe if not 0
 V2UDEC_API int
 v2udec_is_keyframe(
@@ -181,7 +181,7 @@ V2UDEC_API int
 v2udec_decompress_frame(
     V2U_DECOMPRESSION_LIB_CONTEXT uctx,
     const unsigned char * framebuf,
-	int framebuflen,
+  int framebuflen,
     unsigned char * bufout, // user-allocated buffer for decompressed frame
     int bufoutlen);
 
@@ -189,10 +189,10 @@ V2UDEC_API int
 v2udec_decompress_frame2(
     V2U_DECOMPRESSION_LIB_CONTEXT uctx,
     const unsigned char * framebuf, 
-	int framebuflen,
+  int framebuflen,
     unsigned char * bufout,
     int bufoutlen, 
-	const unsigned char *prev_frame,
+  const unsigned char *prev_frame,
     int prev_frame_len,
     int just_key_data);
 

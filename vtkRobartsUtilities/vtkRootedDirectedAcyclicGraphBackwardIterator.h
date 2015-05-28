@@ -33,7 +33,7 @@
 class vtkRootedDirectedAcyclicGraphBackwardIteratorInternals;
 class vtkIntArray;
 
-class VTK_FILTERING_EXPORT vtkRootedDirectedAcyclicGraphBackwardIterator : public vtkRootedDirectedAcyclicGraphIterator
+class VTK_EXPORT vtkRootedDirectedAcyclicGraphBackwardIterator : public vtkRootedDirectedAcyclicGraphIterator
 {
 public:
   static vtkRootedDirectedAcyclicGraphBackwardIterator* New();

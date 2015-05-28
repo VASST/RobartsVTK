@@ -204,9 +204,9 @@ public:
   // Get the clip rectangle as an extent, given a specific origin
   // spacing, and max possible extent.
   void GetClipExtent(int clipExtent[6],
-		     vtkFloatingPointType origin[3],
-		     vtkFloatingPointType spacing[3],
-		     const int extent[6]);
+         vtkFloatingPointType origin[3],
+         vtkFloatingPointType spacing[3],
+         const int extent[6]);
 
   // Description:
   // If the ultrasound probe collects a fan of data, specify the position and
@@ -483,7 +483,7 @@ public:
   // Description:
   // Execute the reconstruction thread
   void ThreadedSliceExecute(vtkImageData *inData, vtkImageData *outData,
-			    int extent[6], int threadId, int phase);
+          int extent[6], int threadId, int phase);
   
   // Description:
   // To split the extent over meany threads
@@ -491,8 +491,8 @@ public:
 
   // Description:
   // For filling holes
-  void ThreadedFillExecute(vtkImageData *outData,	
-			   int outExt[6], int threadId, int phase);
+  void ThreadedFillExecute(vtkImageData *outData,  
+         int outExt[6], int threadId, int phase);
 
   // Attributes - not protected to be accessible from reconstruction thread
 
@@ -667,10 +667,10 @@ protected:
                           vtkInformationVector** inputVector,
                           vtkInformationVector* outputVector);
   virtual int ComputePipelineMTime(vtkInformation *request,
-				   vtkInformationVector **inInfoVec,
-				   vtkInformationVector *outInfoVec,
-				   int requestFromOutputPort,
-				   unsigned long* mtime);
+           vtkInformationVector **inInfoVec,
+           vtkInformationVector *outInfoVec,
+           int requestFromOutputPort,
+           unsigned long* mtime);
 
 private:
   vtkFreehandUltrasound2(const vtkFreehandUltrasound2&);

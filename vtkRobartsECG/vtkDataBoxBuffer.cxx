@@ -79,19 +79,19 @@ vtkDataBoxBuffer::vtkDataBoxBuffer()
 }
 
 void vtkDataBoxBuffer::SetNumberOfChannels(int value){
-	while (this->SignalArrayVector.size() != 0) {
-		this->SignalArrayVector.pop_back();
-	}
-	for (int i=0; i < value; i++) {
-		vtkDoubleArray * newArray = vtkDoubleArray::New();
-		newArray->SetNumberOfValues(this->BufferSize);
-		this->SignalArrayVector.push_back(newArray);
-	}
-	this->numberOfChannels = value;
+  while (this->SignalArrayVector.size() != 0) {
+    this->SignalArrayVector.pop_back();
+  }
+  for (int i=0; i < value; i++) {
+    vtkDoubleArray * newArray = vtkDoubleArray::New();
+    newArray->SetNumberOfValues(this->BufferSize);
+    this->SignalArrayVector.push_back(newArray);
+  }
+  this->numberOfChannels = value;
 }
 
 int vtkDataBoxBuffer::GetNumberOfChannels(){
-	return this->numberOfChannels;
+  return this->numberOfChannels;
 }
 
 //----------------------------------------------------------------------------
@@ -99,14 +99,14 @@ void vtkDataBoxBuffer::DeepCopy(vtkDataBoxBuffer *buffer)
 {
   this->numberOfChannels = buffer->GetNumberOfChannels();
   this->SetNumberOfChannels(this->numberOfChannels);
-	
+  
   this->SetBufferSize(buffer->GetBufferSize());
 
   for (int i = 0; i < this->BufferSize; i++)
     {
-	  	for (int j=0; j < SignalArrayVector.size(); j++) {
-			this->SignalArrayVector[j]->SetValue(i, buffer->SignalArrayVector[j]->GetValue(i));
-		}
+      for (int j=0; j < SignalArrayVector.size(); j++) {
+      this->SignalArrayVector[j]->SetValue(i, buffer->SignalArrayVector[j]->GetValue(i));
+    }
     this->TimeStampArray->SetValue(i, buffer->TimeStampArray->GetValue(i));
     }
 
@@ -149,9 +149,9 @@ void vtkDataBoxBuffer::SetBufferSize(int n)
   this->BufferSize = n;
   this->TimeStampArray->SetNumberOfValues(this->BufferSize);
   for (int i=0; i < this->SignalArrayVector.size(); i++) {
-	  vtkDoubleArray * newArray = vtkDoubleArray::New();
-	  newArray->SetNumberOfValues(this->BufferSize);
-	  this->SignalArrayVector.push_back(newArray);
+    vtkDoubleArray * newArray = vtkDoubleArray::New();
+    newArray->SetNumberOfValues(this->BufferSize);
+    this->SignalArrayVector.push_back(newArray);
   }
 
   this->Modified();
@@ -162,10 +162,10 @@ void vtkDataBoxBuffer::AddItem(double signal, int channel, double time)
 {
   if (time < this->CurrentTimeStamp) { return; }
   else if (time == this->CurrentTimeStamp) {
-	if (++this->CurrentIndex >= this->BufferSize) {
-		this->CurrentIndex = 0;
-		this->NumberOfItems = this->BufferSize;
-	}
+  if (++this->CurrentIndex >= this->BufferSize) {
+    this->CurrentIndex = 0;
+    this->NumberOfItems = this->BufferSize;
+  }
   }
 
   this->CurrentTimeStamp = time;
@@ -233,13 +233,13 @@ int vtkDataBoxBuffer::GetIndexFromTime(double time)
     if (lo-hi == 1)
       {
       if (time - tlo > thi - time)
-	{
-	return hi;
-	}
+  {
+  return hi;
+  }
       else
-	{
-	return lo;
-	}
+  {
+  return lo;
+  }
       }
 
     int mid = (lo+hi)/2;
@@ -301,14 +301,14 @@ void vtkDataBoxBuffer::WriteToFile(const char *filename)
   while (--n >= 0){
     timestamp = this->GetTimeStamp(n);
     fprintf(file,"%14.5f\t",timestamp);
-//	fprintf(file,"%7.6f ",timestamp-timestamp0);
+//  fprintf(file,"%7.6f ",timestamp-timestamp0);
 
-	for (int i = 0; i < this->numberOfChannels; i++)  {
-		fprintf(file,"%10.6f\t", this->SignalArrayVector[i]->GetValue(n) );
-	}
-	fprintf(file,"\n");
+  for (int i = 0; i < this->numberOfChannels; i++)  {
+    fprintf(file,"%10.6f\t", this->SignalArrayVector[i]->GetValue(n) );
+  }
+  fprintf(file,"\n");
 
-	//timestamp0 = timestamp;
+  //timestamp0 = timestamp;
   }
 
   fclose(file);

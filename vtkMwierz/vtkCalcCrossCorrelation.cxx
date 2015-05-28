@@ -184,9 +184,9 @@ void vtkCalcCrossCorrelation::Update()
 
 template <class T>
 void vtkCorrelationHelper(vtkCalcCrossCorrelation *self,
-			  vtkImageData *inData1, T *in1Ptr, 
-			  vtkImageData *inData2, T *in2Ptr,
-			  double *Correlation)
+        vtkImageData *inData1, T *in1Ptr, 
+        vtkImageData *inData2, T *in2Ptr,
+        double *Correlation)
 {
   int idX, idY, idZ;
   int incX, incY, incZ;
@@ -215,44 +215,44 @@ void vtkCorrelationHelper(vtkCalcCrossCorrelation *self,
      for (idY = minY; idY <= maxY; idY++)
       {
       if (!(count%target)) 
-	{
+  {
         self->UpdateProgress(count/(50.0*target));
-	}
+  }
       count++;
 
       // loop over stencil sub-extents
       iter = 0;
       if (self->GetReverseStencil())
-	{// flag that we want the complementary extents
-	iter = -1;
-	}
+  {// flag that we want the complementary extents
+  iter = -1;
+  }
 
       pminX = minX;
       pmaxX = maxX;
       while ((stencil !=0 &&
-	      stencil->GetNextExtent(pminX, pmaxX, minX, maxX, idY, idZ, iter)) ||
-	     (stencil == 0 && iter++ == 0))
-	{
-	// set up pointers to the sub-extents
-	temp1Ptr = in1Ptr + (incZ*(idZ - minZ) +
-			     incY*(idY - minY) +
-			     (pminX-minX));
-	temp2Ptr = in2Ptr + (incZ*(idZ - minZ) +
-			     incY*(idY - minY) +
-			     (pminX-minX));
-	// compute over the sub-extent
-	for (idX = pminX; idX <= pmaxX; idX++)
-	  { // only add pixels if both are non-zero
-	  if (*temp1Ptr && *temp2Ptr) 
-	    {
-	    topSum += (double)*temp1Ptr * (double)*temp2Ptr;
-	    Sum1   += (double)*temp1Ptr * (double)*temp1Ptr;
-	    Sum2   += (double)*temp2Ptr * (double)*temp2Ptr;
-	    }
-	  temp1Ptr++;
-	  temp2Ptr++;
-	  }
-	}
+        stencil->GetNextExtent(pminX, pmaxX, minX, maxX, idY, idZ, iter)) ||
+       (stencil == 0 && iter++ == 0))
+  {
+  // set up pointers to the sub-extents
+  temp1Ptr = in1Ptr + (incZ*(idZ - minZ) +
+           incY*(idY - minY) +
+           (pminX-minX));
+  temp2Ptr = in2Ptr + (incZ*(idZ - minZ) +
+           incY*(idY - minY) +
+           (pminX-minX));
+  // compute over the sub-extent
+  for (idX = pminX; idX <= pmaxX; idX++)
+    { // only add pixels if both are non-zero
+    if (*temp1Ptr && *temp2Ptr) 
+      {
+      topSum += (double)*temp1Ptr * (double)*temp2Ptr;
+      Sum1   += (double)*temp1Ptr * (double)*temp1Ptr;
+      Sum2   += (double)*temp2Ptr * (double)*temp2Ptr;
+      }
+    temp1Ptr++;
+    temp2Ptr++;
+    }
+  }
       }
     }
   *Correlation = (double) topSum / (sqrt((double)Sum1) * sqrt((double(Sum2)))); 
@@ -302,9 +302,9 @@ void vtkCalcCrossCorrelation::Execute()
   switch (input1->GetScalarType())
     {
     vtkTemplateMacro6(vtkCorrelationHelper,this,
-		      input1, (VTK_TT *)(in1Ptr),
-		      input2, (VTK_TT *)(in2Ptr),
-		      &this->CrossCorrelation);
+          input1, (VTK_TT *)(in1Ptr),
+          input2, (VTK_TT *)(in2Ptr),
+          &this->CrossCorrelation);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType (must be char, us char, int, us int");
       return;

@@ -117,62 +117,62 @@ void vtkMeshSmootheness::GetMeanCurvature()
 
       for (v = 0; v < nv; v++)
         {
-	  // get neighbour
-	  v_l = vertices->GetId(v);
-	  v_r = vertices->GetId((v+1) % nv);
-	  v_o = vertices->GetId((v+2) % nv);
+    // get neighbour
+    v_l = vertices->GetId(v);
+    v_r = vertices->GetId((v+1) % nv);
+    v_o = vertices->GetId((v+2) % nv);
 
-	  this->mesh->GetCellEdgeNeighbors(f,v_l,v_r,neighbours);
-	  
-	  // compute only if there is really ONE neighbour
-	  // AND meanCurvature has not been computed yet!
-	  // (ensured by n > f)
-	  if (neighbours->GetNumberOfIds() == 1 && (n = neighbours->GetId(0)) > f)
-	    {
-	      // find 3 corners of f: in order!
-	      this->mesh->GetPoint(v_l,ore);
-	      this->mesh->GetPoint(v_r,end);
-	      this->mesh->GetPoint(v_o,oth);
-	      // compute normal of f
-	      facet->ComputeNormal(ore,end,oth,n_f);
-	      // compute common edge
-	      e[0] = end[0]; e[1] = end[1]; e[2] = end[2];
-	      e[0] -= ore[0]; e[1] -= ore[1]; e[2] -= ore[2];
-	      length = double(vtkMath::Normalize(e));
-	      Af = double(facet->TriangleArea(ore,end,oth));
-	      // find 3 corners of n: in order!
-	      this->mesh->GetCellPoints(n,vertices_n);
-	      this->mesh->GetPoint(vertices_n->GetId(0),vn0);
-	      this->mesh->GetPoint(vertices_n->GetId(1),vn1);
-	      this->mesh->GetPoint(vertices_n->GetId(2),vn2);
-	      Af += double(facet->TriangleArea(vn0,vn1,vn2));
-	      // compute normal of n
-	      neighbour->ComputeNormal(vn0,vn1,vn2,n_n);
-	      // the cosine is n_f * n_n
-	      cs = double(vtkMath::Dot(n_f,n_n));
-	      // the sin is (n_f x n_n) * e
-	      vtkMath::Cross(n_f,n_n,t);
-	      sn = double(vtkMath::Dot(t,e));
-	      // signed angle in [-pi,pi]
-	      if (sn!=0.0 || cs!=0.0)
-		{
-		  angle = atan2(sn,cs);
-		  Hf    = length*angle;
-		}
-	      else
-		{
-		  Hf = 0.0;
-		}
-	      // add weighted Hf to scalar at v_l and v_r
-	      if (Af!=0.0)
-		{
-		  (Hf /= Af) *=3.0;
-		}
-	      MeanCurvature[v_l] += Hf;
-	      MeanCurvature[v_r] += Hf;
-	      NumNeighb[v_l] += 1;
-	      NumNeighb[v_r] += 1;
-	    }
+    this->mesh->GetCellEdgeNeighbors(f,v_l,v_r,neighbours);
+    
+    // compute only if there is really ONE neighbour
+    // AND meanCurvature has not been computed yet!
+    // (ensured by n > f)
+    if (neighbours->GetNumberOfIds() == 1 && (n = neighbours->GetId(0)) > f)
+      {
+        // find 3 corners of f: in order!
+        this->mesh->GetPoint(v_l,ore);
+        this->mesh->GetPoint(v_r,end);
+        this->mesh->GetPoint(v_o,oth);
+        // compute normal of f
+        facet->ComputeNormal(ore,end,oth,n_f);
+        // compute common edge
+        e[0] = end[0]; e[1] = end[1]; e[2] = end[2];
+        e[0] -= ore[0]; e[1] -= ore[1]; e[2] -= ore[2];
+        length = double(vtkMath::Normalize(e));
+        Af = double(facet->TriangleArea(ore,end,oth));
+        // find 3 corners of n: in order!
+        this->mesh->GetCellPoints(n,vertices_n);
+        this->mesh->GetPoint(vertices_n->GetId(0),vn0);
+        this->mesh->GetPoint(vertices_n->GetId(1),vn1);
+        this->mesh->GetPoint(vertices_n->GetId(2),vn2);
+        Af += double(facet->TriangleArea(vn0,vn1,vn2));
+        // compute normal of n
+        neighbour->ComputeNormal(vn0,vn1,vn2,n_n);
+        // the cosine is n_f * n_n
+        cs = double(vtkMath::Dot(n_f,n_n));
+        // the sin is (n_f x n_n) * e
+        vtkMath::Cross(n_f,n_n,t);
+        sn = double(vtkMath::Dot(t,e));
+        // signed angle in [-pi,pi]
+        if (sn!=0.0 || cs!=0.0)
+    {
+      angle = atan2(sn,cs);
+      Hf    = length*angle;
+    }
+        else
+    {
+      Hf = 0.0;
+    }
+        // add weighted Hf to scalar at v_l and v_r
+        if (Af!=0.0)
+    {
+      (Hf /= Af) *=3.0;
+    }
+        MeanCurvature[v_l] += Hf;
+        MeanCurvature[v_r] += Hf;
+        NumNeighb[v_l] += 1;
+        NumNeighb[v_r] += 1;
+      }
         }
     }
   
@@ -180,9 +180,9 @@ void vtkMeshSmootheness::GetMeanCurvature()
   for (v = 0; v < this->NumPts; v++)
     {
       if (NumNeighb[v]>0)
-	{
-	  Hf = 0.5*MeanCurvature[v]/(double)NumNeighb[v];
-	}
+  {
+    Hf = 0.5*MeanCurvature[v]/(double)NumNeighb[v];
+  }
       this->Smootheness +=  Hf;
     }
   
@@ -281,7 +281,7 @@ void vtkMeshSmootheness::GetGaussCurvature()
       this->Smootheness +=  gaussCurvatureData[v];
       }
 
-    this->Smootheness =	this->Smootheness/Nv;
+    this->Smootheness =  this->Smootheness/Nv;
 
     /*******************************************************/
     if (facet) facet->Delete();

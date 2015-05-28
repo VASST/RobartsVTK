@@ -30,8 +30,8 @@ public:
     vtkTypeMacro(vtkDiceCoefficient,vtkThreadedImageAlgorithm);
     void PrintSelf(ostream& os, vtkIndent indent);
 
-    virtual void SetInput1(vtkDataObject *in) { this->SetInput(0,in); }
-    virtual void SetInput2(vtkDataObject *in) { this->SetInput(1,in); }
+    virtual void SetInput1(vtkDataObject *in) { this->SetInputDataObject(0,in); }
+    virtual void SetInput2(vtkDataObject *in) { this->SetInputDataObject(1,in); }
 
     vtkSetClampMacro(LabelID,int, 0, INT_MAX);
     vtkGetMacro(LabelID,int);

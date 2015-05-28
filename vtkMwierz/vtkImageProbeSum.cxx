@@ -149,8 +149,8 @@ static inline int vtkResliceFloor(double x, double &f)
 template <class T>
 static
 double vtkTrilinearInterpolation(const T *inPtr,
-				 const int inExt[6], const int inInc[3],
-				 const double point[3])
+         const int inExt[6], const int inInc[3],
+         const double point[3])
 {
   double fx, fy, fz;
   int floorX = vtkResliceFloor(point[0], fx);
@@ -201,9 +201,9 @@ double vtkTrilinearInterpolation(const T *inPtr,
   const T *inPtr1 = inPtr + factX1;
 
   return (rx*(ryrz*inPtr0[i00] + ryfz*inPtr0[i01] +
-	      fyrz*inPtr0[i10] + fyfz*inPtr0[i11]) +
-	  fx*(ryrz*inPtr1[i00] + ryfz*inPtr1[i01] +
-	      fyrz*inPtr1[i10] + fyfz*inPtr1[i11]));
+        fyrz*inPtr0[i10] + fyfz*inPtr0[i11]) +
+    fx*(ryrz*inPtr1[i00] + ryfz*inPtr1[i01] +
+        fyrz*inPtr1[i10] + fyfz*inPtr1[i11]));
 }
 
 //----------------------------------------------------------------------------

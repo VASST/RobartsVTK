@@ -96,34 +96,34 @@ vtkIdType vtkRootedDirectedAcyclicGraphBackwardIterator::NextInternal()
     {
     this->Color->SetValue(this->RootVertex, this->GRAY);
 
-	queue<vtkIdType> Queue;
-	Queue.push(this->RootVertex);
-	while(Queue.size() > 0)
-	  {
-	  vtkIdType currentId = Queue.front();
-	  this->Internals->Stack.push(currentId);
-	  Queue.pop();
+  queue<vtkIdType> Queue;
+  Queue.push(this->RootVertex);
+  while(Queue.size() > 0)
+    {
+    vtkIdType currentId = Queue.front();
+    this->Internals->Stack.push(currentId);
+    Queue.pop();
 
-	  for(vtkIdType childNum = 0; childNum < this->DAG->GetNumberOfChildren(currentId); childNum++)
-		{
-		  vtkIdType childId = this->DAG->GetChild(currentId, childNum);
-		  if(this->DAG->GetUpLevel(childId) != this->DAG->GetUpLevel(currentId) + 1) continue;
-		  if(this->Color->GetValue(childId) == this->WHITE)
-		  {
-		  // Found a white vertex; make it gray, add it to the queue
-		  this->Color->SetValue(childId, this->GRAY);
-		  Queue.push(childId);
-		  }
+    for(vtkIdType childNum = 0; childNum < this->DAG->GetNumberOfChildren(currentId); childNum++)
+    {
+      vtkIdType childId = this->DAG->GetChild(currentId, childNum);
+      if(this->DAG->GetUpLevel(childId) != this->DAG->GetUpLevel(currentId) + 1) continue;
+      if(this->Color->GetValue(childId) == this->WHITE)
+      {
+      // Found a white vertex; make it gray, add it to the queue
+      this->Color->SetValue(childId, this->GRAY);
+      Queue.push(childId);
+      }
         }
 
-	  this->Color->SetValue(currentId, this->BLACK);
-	  }
+    this->Color->SetValue(currentId, this->BLACK);
+    }
 
     }
 
   while (this->Internals->Stack.size() > 0)
     {
-	vtkIdType currentId = this->Internals->Stack.top();
+  vtkIdType currentId = this->Internals->Stack.top();
     this->Internals->Stack.pop();
     return currentId;
     }

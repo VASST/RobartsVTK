@@ -1093,7 +1093,7 @@ void vtkMILVideoSource2::AllocateMILDigitizer()
     format = this->MILDigitizerDCF;
     }
 
-	std::cout << this->MILSysID << " " << this->MILDigitizerNumber << " " << format << std::endl;
+  std::cout << this->MILSysID << " " << this->MILDigitizerNumber << " " << format << std::endl;
 
   this->MILDigID = MdigAlloc(this->MILSysID,this->MILDigitizerNumber,format,
                              M_DEFAULT,M_NULL);

@@ -25,26 +25,26 @@ public:
     static vtkPolydataForce *New();
     vtkTypeMacro(vtkPolydataForce,vtkForceFeedback);
 
-	void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
-	int GenerateForce(vtkMatrix4x4 * transformMatrix, double force[3]);
-	int SetGamma(double gamma);
-	void SetInput(vtkPolyData * poly);
+  int GenerateForce(vtkMatrix4x4 * transformMatrix, double force[3]);
+  int SetGamma(double gamma);
+  void SetInput(vtkPolyData * poly);
 
 protected:
-	vtkPolydataForce();
-	virtual ~vtkPolydataForce();
-	double CalculateDistance(double x, double y, double z);
-	void CalculateForce(double x, double y, double z, double force[3]);
+  vtkPolydataForce();
+  virtual ~vtkPolydataForce();
+  double CalculateDistance(double x, double y, double z);
+  void CalculateForce(double x, double y, double z, double force[3]);
 
 
 
 private:
 
-	vtkPolyData * poly;
-	double gammaSigmoid;
-	double scaleForce;
-	double lastPos[3];
+  vtkPolyData * poly;
+  double gammaSigmoid;
+  double scaleForce;
+  double lastPos[3];
 };
 
 #endif

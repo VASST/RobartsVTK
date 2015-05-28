@@ -174,8 +174,8 @@ void vtkVideoFrame2::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "FrameGrabberType: " <<
     (this->FrameGrabberType == FG_BASE ? "BASE" :
-	  (this->FrameGrabberType == FG_MIL ? "MIL" :
-		(this->FrameGrabberType == FG_WIN32 ? "WIN32" : "Unknown")));
+    (this->FrameGrabberType == FG_MIL ? "MIL" :
+    (this->FrameGrabberType == FG_WIN32 ? "WIN32" : "Unknown")));
 }
 
 //----------------------------------------------------------------------------
@@ -344,8 +344,8 @@ void *vtkVideoFrame2::GetVoidPointer(vtkIdType i)
 //----------------------------------------------------------------------------
 // Copies data from the frame's array to the array pointed to by arrayPtr.
 void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
-			     const int outExtent[6],
-			     int outFormat)
+           const int outExtent[6],
+           int outFormat)
 {
 
   if (outFormat != VTK_LUMINANCE && outFormat != VTK_RGB && outFormat != VTK_RGBA)
@@ -415,29 +415,29 @@ void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
   // (usually from frame grabbers), the rest all start at the bottom
   if (this->TopDown)
     {
-	// apply a vertical flip while copying to output
+  // apply a vertical flip while copying to output
     //inPtr += inIncZ*inPadZ+inIncY*(frameExtentY-clipExtent[3]-1);
-	inPtr += inIncZ*inPadZ+inIncY*inPadY;
+  inPtr += inIncZ*inPadZ+inIncY*inPadY;
 
     for (i = 0; i < outZ; i++)
       {
       inPtrTmp = inPtr;
       outPtrTmp = outPtr + outIncY*outY;
       for (j = 0; j < outY; j++)
-	      {
+        {
         outPtrTmp -= outIncY;
-	      if (outX > 0)
-	        {
+        if (outX > 0)
+          {
           this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX,outFormat);
-	        }
-	        inPtrTmp += inIncY;
-	      }
+          }
+          inPtrTmp += inIncY;
+        }
       outPtr += outIncZ;
       inPtr += inIncZ;
       }
     }
   else
-	{// don't apply a vertical flip
+  {// don't apply a vertical flip
     inPtr += inIncZ*inPadZ+inIncY*inPadY;
     
     for (i = 0; i < outZ; i++)
@@ -445,14 +445,14 @@ void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
       inPtrTmp = inPtr;
       outPtrTmp = outPtr;
       for (j = 0; j < outY; j++)
-	      {
-	      if (outX > 0) 
-	        {
-			this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX,outFormat);
-			}
-	      outPtrTmp += outIncY;
-	      inPtrTmp += inIncY;
-	      }
+        {
+        if (outX > 0) 
+          {
+      this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX,outFormat);
+      }
+        outPtrTmp += outIncY;
+        inPtrTmp += inIncY;
+        }
       outPtr += outIncZ;
       inPtr += inIncZ;
       }
@@ -502,8 +502,8 @@ static inline void vtkYUVToRGB(unsigned char *yuv, unsigned char *rgb)
 
 //----------------------------------------------------------------------------
 void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
-				     unsigned char *inptr, 
-				     int start, int count, int outputFormat)
+             unsigned char *inptr, 
+             int start, int count, int outputFormat)
 {
   
   unsigned char alpha = (unsigned char)(this->Opacity * 255);
@@ -552,9 +552,9 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
         case VTK_LUMINANCE:
           {
             while (--count >= 0)
-	            {
-	            *outptr++ = *inptr++; // direct copy
-	            }
+              {
+              *outptr++ = *inptr++; // direct copy
+              }
           }
         break;
         // VTK_RGB and VTK_RGBA are grayscale when BitsPerPixel = 8
@@ -667,22 +667,22 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
         {
         case VTK_RGB:
           {
-		  switch (this->FrameGrabberType)
-		    {
-		    case FG_BASE:
-		    case FG_MIL:
-			  {
-			    while (--count >= 0)
-		        {
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-			    }
-			  }
-		    break;
-			case FG_WIN32:
-			  {
-			  // must do BGR to RGB conversion because BGR is default format for
+      switch (this->FrameGrabberType)
+        {
+        case FG_BASE:
+        case FG_MIL:
+        {
+          while (--count >= 0)
+            {
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+          }
+        }
+        break;
+      case FG_WIN32:
+        {
+        // must do BGR to RGB conversion because BGR is default format for
               // 24-bit framegrabbers
               outptr += 3;
               while (--count >= 0)
@@ -692,43 +692,43 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
                 *--outptr = *inptr++;
                 outptr += 6;
                 }
-			  }
-			  break;
-			}
+        }
+        break;
+      }
           }
           break;
         case VTK_RGBA:
           {
-		    switch (this->FrameGrabberType)
-		    {
-		    case FG_BASE:
-		    case FG_MIL:
-			  {
-			    while (--count >= 0)
-		        {
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-				*outptr++ = alpha;
-			    }
-			  }
-		    break;
-			case FG_WIN32:
-			  {
-			  // must do BGR to RGBX conversion
+        switch (this->FrameGrabberType)
+        {
+        case FG_BASE:
+        case FG_MIL:
+        {
+          while (--count >= 0)
+            {
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+        *outptr++ = alpha;
+          }
+        }
+        break;
+      case FG_WIN32:
+        {
+        // must do BGR to RGBX conversion
               outptr += 4;
               while (--count >= 0)
                 {
-				*--outptr = alpha;
+        *--outptr = alpha;
                 *--outptr = *inptr++;
                 *--outptr = *inptr++;
                 *--outptr = *inptr++;
                 outptr += 8;
                 }
-			  }
-			  break;
-			}
-		  }
+        }
+        break;
+      }
+      }
           break;
         }
       }
@@ -752,35 +752,35 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
           break;
         case VTK_RGBA:
           {
-			switch (this->FrameGrabberType)
-		    {
-		    case FG_BASE:
-		    case FG_MIL:
-			  {
-			  while (--count >= 0)
-		        {
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-		        *outptr++ = *inptr++;
-				*outptr++ = 255;
-			    }
-			  }
-		    break;
-			case FG_WIN32:
-			  {
-			  // must do BGR to RGBX conversion
+      switch (this->FrameGrabberType)
+        {
+        case FG_BASE:
+        case FG_MIL:
+        {
+        while (--count >= 0)
+            {
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+            *outptr++ = *inptr++;
+        *outptr++ = 255;
+          }
+        }
+        break;
+      case FG_WIN32:
+        {
+        // must do BGR to RGBX conversion
               outptr += 4;
               while (--count >= 0)
                 {
-				*--outptr = alpha;
+        *--outptr = alpha;
                 *--outptr = *inptr++;
                 *--outptr = *inptr++;
                 *--outptr = *inptr++;
                 outptr += 8;
                 }
-			  }
-			  break;
-			}
+        }
+        break;
+      }
           }
           break;
         }

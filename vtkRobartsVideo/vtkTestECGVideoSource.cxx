@@ -155,7 +155,7 @@ void vtkTestECGVideoSource::Record()
 
     this->Recording = 1;
     this->FrameCount = 0;
-	this->pauseFeed = 0;
+  this->pauseFeed = 0;
     this->Modified();
     this->PlayerThreadId = 
       this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
@@ -164,10 +164,10 @@ void vtkTestECGVideoSource::Record()
 }
 
 void vtkTestECGVideoSource::Pause() {
-	this->pauseFeed = 1;
+  this->pauseFeed = 1;
 }
 void vtkTestECGVideoSource::UnPause() {
-	this->pauseFeed = 0;
+  this->pauseFeed = 0;
 }
 
 
@@ -185,7 +185,7 @@ void vtkTestECGVideoSource::InternalGrab()
   int *lptr;
 
   if (this->pauseFeed == 1) {
-  	  return;
+      return;
   }
 
   // get a thread lock on the frame buffer
@@ -232,11 +232,11 @@ void vtkTestECGVideoSource::InternalGrab()
     {
     //randNum = 1664525*randNum + 1013904223;
     //*lptr++ = randNum;
-		if (i % (width)  == this->phase) {
-			*lptr++ = 1013904223;
-		}
-		else 
-			*lptr++ = 0;
+    if (i % (width)  == this->phase) {
+      *lptr++ = 1013904223;
+    }
+    else 
+      *lptr++ = 0;
     }
 /*
   unsigned char *ptr1 = ptr + 4;

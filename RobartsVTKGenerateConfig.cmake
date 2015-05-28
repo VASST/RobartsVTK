@@ -9,8 +9,8 @@ SET(DOLLAR "$")
 #-----------------------------------------------------------------------------
 # Settings for the build tree.
 
-EXPORT_LIBRARY_DEPENDENCIES(
-  ${RobartsVTK_BINARY_DIR}/RobartsVTKLibraryDepends.cmake)
+#EXPORT_LIBRARY_DEPENDENCIES(
+#  ${RobartsVTK_BINARY_DIR}/RobartsVTKLibraryDepends.cmake)
 
 # Set the source dir
 SET(RobartsVTK_SOURCE_DIR_CONFIG ${RobartsVTK_SOURCE_DIR})
@@ -19,10 +19,10 @@ SET(RobartsVTK_SOURCE_DIR_CONFIG ${RobartsVTK_SOURCE_DIR})
 SET(RobartsVTK_LIBRARY_DEPENDS_FILE 
   ${RobartsVTK_BINARY_DIR}/RobartsVTKLibraryDepends.cmake)
 
-INCLUDE(${CMAKE_ROOT}/Modules/CMakeExportBuildSettings.cmake)
+#INCLUDE(${CMAKE_ROOT}/Modules/CMakeExportBuildSettings.cmake)
 
-CMAKE_EXPORT_BUILD_SETTINGS(
-  ${RobartsVTK_BINARY_DIR}/RobartsVTKBuildSettings.cmake)
+#CMAKE_EXPORT_BUILD_SETTINGS(
+#  ${RobartsVTK_BINARY_DIR}/RobartsVTKBuildSettings.cmake)
 
 # The "use" file.
 SET(RobartsVTK_USE_FILE_CONFIG

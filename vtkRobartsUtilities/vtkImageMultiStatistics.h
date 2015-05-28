@@ -14,16 +14,16 @@
 #ifndef __VTKIMAGEMULTISTATISTICS_H__
 #define __VTKIMAGEMULTISTATISTICS_H__
 
-#include "vtkProcessObject.h"
+#include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 
-class vtkImageMultiStatistics : public vtkProcessObject
+class vtkImageMultiStatistics : public vtkAlgorithm
 {
 public:
   static vtkImageMultiStatistics *New();
 
-  vtkTypeMacro(vtkImageMultiStatistics,vtkProcessObject);
+  vtkTypeMacro(vtkImageMultiStatistics,vtkAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

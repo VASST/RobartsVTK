@@ -90,11 +90,11 @@ vtkImageData *vtkImageDataStatistics::GetInput()
 //----------------------------------------------------------------------------
 template <class T>
 static void vtkImageDataStatisticsExecute(vtkImageDataStatistics *self, 
-					  T *inPtr,
-					  vtkImageData *inData,
-					  double *AverageMagnitude,
-					  double *StandardDeviation,
-					  long int *Count)
+            T *inPtr,
+            vtkImageData *inData,
+            double *AverageMagnitude,
+            double *StandardDeviation,
+            long int *Count)
 {
   int inIdxX, inIdxY, inIdxZ;
   int inIncX, inIncY, inIncZ;
@@ -116,25 +116,25 @@ static void vtkImageDataStatisticsExecute(vtkImageDataStatistics *self,
     for (inIdxY = wholeInExt[2]; !self->AbortExecute && inIdxY <= wholeInExt[3]; inIdxY++)
       {
       for (inIdxX = wholeInExt[0]; inIdxX <= wholeInExt[1]; inIdxX++)
-	{
-	if (*curPtr)
-	  {
-	  sum += *curPtr;
-	  sum_squared += *curPtr* *curPtr++;
-	  (*Count)++;
-	  }
-	else
-	  {
-	  curPtr++;
-	  }
-	}
+  {
+  if (*curPtr)
+    {
+    sum += *curPtr;
+    sum_squared += *curPtr* *curPtr++;
+    (*Count)++;
+    }
+  else
+    {
+    curPtr++;
+    }
+  }
       curPtr += inIncY;
       }
     curPtr += inIncZ;
     }
   *AverageMagnitude = sum / (double)*Count;
   *StandardDeviation = sqrt((sum_squared * (double)*Count - sum*sum) / 
-			    ((double)*Count * ((double)*Count-1.0)));
+          ((double)*Count * ((double)*Count-1.0)));
 
   
 }
@@ -177,21 +177,21 @@ void vtkImageDataStatistics::Update()
       this->AbortExecute = 0;
       this->Progress = 0.0;
       switch (input->GetScalarType())
-	{
-	vtkTemplateMacro6(vtkImageDataStatisticsExecute,
-			  this, (VTK_TT *) (inPtr), input,
-			  &(this->AverageMagnitude),
-			  &(this->StandardDeviation),
-			  &(this->Count));
-	default:
-	  vtkErrorMacro(<< "Update: Unknown ScalarType");
-	  return;
-	}
+  {
+  vtkTemplateMacro6(vtkImageDataStatisticsExecute,
+        this, (VTK_TT *) (inPtr), input,
+        &(this->AverageMagnitude),
+        &(this->StandardDeviation),
+        &(this->Count));
+  default:
+    vtkErrorMacro(<< "Update: Unknown ScalarType");
+    return;
+  }
       this->ExecuteTime.Modified();
       if (!this->AbortExecute)
-	{
-	this->UpdateProgress(1.0);
-	}
+  {
+  this->UpdateProgress(1.0);
+  }
       this->InvokeEvent(vtkCommand::EndEvent, NULL);
     }
   if (input->ShouldIReleaseData())

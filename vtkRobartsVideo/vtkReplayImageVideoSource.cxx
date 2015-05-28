@@ -59,7 +59,6 @@
 
 #include "vtkImageFlip.h"
 
-#include <vtkstd/string> 
 #include <string>
 #include <algorithm>
 
@@ -156,9 +155,9 @@ void vtkReplayImageVideoSource::InternalGrab()
     {
       this->AdvanceFrameBuffer(1);
       if (this->FrameIndex + 1 < this->FrameBufferSize)
-	{
-	  this->FrameIndex++;
-	}
+  {
+    this->FrameIndex++;
+  }
     }
 
   int index = this->FrameBufferIndex % this->FrameBufferSize;
@@ -218,18 +217,18 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 
       // check to see if we have reached the specified time
       if (remaining <= 0)
-	{
-	  if (i == 0)
-	    {
-	      vtkGenericWarningMacro("Dropped a video frame.");
-	    }
-	  return 1;
-	}
+  {
+    if (i == 0)
+      {
+        vtkGenericWarningMacro("Dropped a video frame.");
+      }
+    return 1;
+  }
       // check the ActiveFlag at least every 0.1 seconds
       if (remaining > 0.1)
-	{
-	  remaining = 0.1;
-	}
+  {
+    remaining = 0.1;
+  }
 
       // check to see if we are being told to quit 
       data->ActiveFlagLock->Lock();
@@ -237,9 +236,9 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
       data->ActiveFlagLock->Unlock();
 
       if (activeFlag == 0)
-	{
-	  break;
-	}
+  {
+    break;
+  }
 
       vtkSleep(remaining);
     }
@@ -314,8 +313,8 @@ void vtkReplayImageVideoSource::Play()
       this->Playing = 1;
       this->Modified();
       this->PlayerThreadId = 
-	this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
-					  &vtkReplayImageVideoSourcePlayThread,this);
+  this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
+            &vtkReplayImageVideoSourcePlayThread,this);
     }
 }
 
@@ -349,100 +348,100 @@ void vtkReplayImageVideoSource::Restart() {
 void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
 
-	bool applyFlip = false;
+  bool applyFlip = false;
   
-	std::string str(filename);
-	std::string ext = "";
+  std::string str(filename);
+  std::string ext = "";
   
-	for(unsigned int i=0; i<str.length(); i++)
-	{
-		if(str[i] == '.')
-		{
-			for(unsigned int j = i; j<str.length(); j++)
-			{
-				ext += str[j];
-			}
-			break;
-		}
-	}
+  for(unsigned int i=0; i<str.length(); i++)
+  {
+    if(str[i] == '.')
+    {
+      for(unsigned int j = i; j<str.length(); j++)
+      {
+        ext += str[j];
+      }
+      break;
+    }
+  }
   
-	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+  std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-	vtkImageData * data = vtkImageData::New();
+  vtkImageData * data = vtkImageData::New();
   
-	vtkSmartPointer<vtkImageReader2> reader;
+  vtkSmartPointer<vtkImageReader2> reader;
   
-	if (ext == ".jpg")
-	{
-		reader = vtkSmartPointer<vtkJPEGReader>::New();
-	}
-	else if (ext == ".png")
-	{
-		reader = vtkSmartPointer<vtkPNGReader>::New();
-	}
-	else if (ext == ".bmp")
-	{
-		reader = vtkSmartPointer<vtkBMPReader>::New();
-		
-	}
-	else if (ext == ".tif")
-	{
-		reader = vtkSmartPointer<vtkTIFFReader>::New();
-		applyFlip = true;
-	}
-	else 
-	{
-		return;
-	}
+  if (ext == ".jpg")
+  {
+    reader = vtkSmartPointer<vtkJPEGReader>::New();
+  }
+  else if (ext == ".png")
+  {
+    reader = vtkSmartPointer<vtkPNGReader>::New();
+  }
+  else if (ext == ".bmp")
+  {
+    reader = vtkSmartPointer<vtkBMPReader>::New();
+    
+  }
+  else if (ext == ".tif")
+  {
+    reader = vtkSmartPointer<vtkTIFFReader>::New();
+    applyFlip = true;
+  }
+  else 
+  {
+    return;
+  }
 
-	if (reader->CanReadFile(filename)) 
-	{
-		reader->SetFileName(filename);
-		reader->Update();
-		reader->Modified();
-		reader->GetOutput()->Update();
-	} 
-	else 
-	{
-		cerr << "Unable To Read File:" << filename << endl;
-		return;
-	}
+  if (reader->CanReadFile(filename)) 
+  {
+    reader->SetFileName(filename);
+    reader->Update();
+    reader->Modified();
+    reader->GetOutput()->Update();
+  } 
+  else 
+  {
+    cerr << "Unable To Read File:" << filename << endl;
+    return;
+  }
 
-	int extents[6];
-	reader->GetOutput()->GetExtent(extents);
-	if (extents[1]-extents[0]+1 != this->FrameSize[0] ||
-	 	extents[3]-extents[2]+1 != this->FrameSize[1] ||
-	 	extents[5]-extents[4]+1 != this->FrameSize[2] )
-	{
-		if (this->SetFrameSizeAutomatically) 
-		{
-			this->SetFrameSize(extents[1]-extents[0]+1, extents[3]-extents[2]+1,extents[5]-extents[4]+1);
-			this->SetFrameSizeAutomatically = false;
-		}
-		else 
-		{
-	 		vtkErrorMacro("Unable to open file as size doesn't match video source");
-			return;
-		}
-	}
+  int extents[6];
+  reader->GetOutput()->GetExtent(extents);
+  if (extents[1]-extents[0]+1 != this->FrameSize[0] ||
+     extents[3]-extents[2]+1 != this->FrameSize[1] ||
+     extents[5]-extents[4]+1 != this->FrameSize[2] )
+  {
+    if (this->SetFrameSizeAutomatically) 
+    {
+      this->SetFrameSize(extents[1]-extents[0]+1, extents[3]-extents[2]+1,extents[5]-extents[4]+1);
+      this->SetFrameSizeAutomatically = false;
+    }
+    else 
+    {
+       vtkErrorMacro("Unable to open file as size doesn't match video source");
+      return;
+    }
+  }
 
-	if (applyFlip == true) 
-	{
-		vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
-		flip->SetInput(reader->GetOutput());
-		flip->SetFilteredAxis(1);
-		flip->Modified();
-		flip->Update();
+  if (applyFlip == true) 
+  {
+    vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+    flip->SetInputConnection(reader->GetOutputPort());
+    flip->SetFilteredAxis(1);
+    flip->Modified();
+    flip->Update();
 
-		data->DeepCopy(flip->GetOutput());
+    data->DeepCopy(flip->GetOutput());
 
-	}
-	else
-	{
-		data->DeepCopy(reader->GetOutput());
-	}
+  }
+  else
+  {
+    data->DeepCopy(reader->GetOutput());
+  }
 
-	this->loadedData.push_back(data);
+  this->loadedData.push_back(data);
 
 }
 
@@ -486,8 +485,8 @@ void vtkReplayImageVideoSource::Clear()
 }
 
 void vtkReplayImageVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, 
-					      int z0, int z1)
+                int z0, int z1)
 {
-	vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);
+  vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);
   //return;
 }

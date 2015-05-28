@@ -37,8 +37,8 @@ public:
   // Description:
   // Set/get the 2 input images.
   virtual void SetInputData(vtkImageData *srcImage, vtkImageData *tgtImage,
-			    vtkPolyData *srcPoly, vtkPolyData *tgtPoly,
-			    vtkGeneralTransform *affTransform);
+          vtkPolyData *srcPoly, vtkPolyData *tgtPoly,
+          vtkGeneralTransform *affTransform);
   //SourceImage(vtkImageData *input);
 //   virtual void SetTargetImage(vtkImageData *input);
 //   virtual void SetSourcePolyData(vtkPolyData *input);

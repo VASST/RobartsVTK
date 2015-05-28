@@ -25,43 +25,43 @@ struct cudaArray;
 class vtkCuda1DVolumeMapper : public vtkCudaVolumeMapper {
 public:
 
-	vtkTypeMacro( vtkCuda1DVolumeMapper, vtkCudaVolumeMapper );
+  vtkTypeMacro( vtkCuda1DVolumeMapper, vtkCudaVolumeMapper );
 
-	/** @brief VTK compatible constructor method
-	 *
-	 */
-	static vtkCuda1DVolumeMapper *New();
+  /** @brief VTK compatible constructor method
+   *
+   */
+  static vtkCuda1DVolumeMapper *New();
 
-	virtual void SetInputInternal( vtkImageData * image, int frame);
-	virtual void ClearInputInternal();
-	virtual void ChangeFrameInternal(int frame);
-	virtual void InternalRender (	vtkRenderer* ren, vtkVolume* vol,
-									const cudaRendererInformation& rendererInfo,
-									const cudaVolumeInformation& volumeInfo,
-									const cudaOutputImageInformation& outputInfo );
+  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void ClearInputInternal();
+  virtual void ChangeFrameInternal(int frame);
+  virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
+                  const cudaRendererInformation& rendererInfo,
+                  const cudaVolumeInformation& volumeInfo,
+                  const cudaOutputImageInformation& outputInfo );
 
 protected:
-	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
-	 *
-	 */
-	vtkCuda1DVolumeMapper();
+  /** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
+   *
+   */
+  vtkCuda1DVolumeMapper();
 
-	/** @brief Destructor which deallocates the various information handlers and matrices
-	 *
-	 */
-	~vtkCuda1DVolumeMapper();
-	virtual void Reinitialize(int withData = 0);
-	virtual void Deinitialize(int withData = 0);
-	
-	vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
+  /** @brief Destructor which deallocates the various information handlers and matrices
+   *
+   */
+  ~vtkCuda1DVolumeMapper();
+  virtual void Reinitialize(int withData = 0);
+  virtual void Deinitialize(int withData = 0);
+  
+  vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
-	static vtkMutexLock* tfLock;
+  static vtkMutexLock* tfLock;
 
-	cudaArray* SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
+  cudaArray* SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
 
 private:
-	vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&); /**< not implemented */
-	vtkCuda1DVolumeMapper(const vtkCuda1DVolumeMapper&); /**< not implemented */
+  vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&); /**< not implemented */
+  vtkCuda1DVolumeMapper(const vtkCuda1DVolumeMapper&); /**< not implemented */
 
 };
 

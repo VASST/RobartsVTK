@@ -132,7 +132,7 @@ protected:
 
   virtual void CalculateECGRate(double StartSignal, double current);
   virtual void CalculatePhase(double StartSignal, double current);
-	virtual void UpdateTimestamp();
+  virtual void UpdateTimestamp();
 
   // Description:
   // Get the current ECG signal, and update the ECG phase, beating rate,

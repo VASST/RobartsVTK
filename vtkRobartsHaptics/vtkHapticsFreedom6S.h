@@ -86,53 +86,53 @@ public:
     vtkTypeMacro(vtkHapticsFreedom6S,vtkObject);
     void PrintSelf(ostream& os, vtkIndent indent);
 
-	double GetScale();
-	void SetScale(double scale);
-	int Probe();
-	vtkHapticForce * GetForceModel() { return forceModel; };
-	int GetSerialPort() { return 1; };
-	void SetSerialPort(int port) {};
+  double GetScale();
+  void SetScale(double scale);
+  int Probe();
+  vtkHapticForce * GetForceModel() { return forceModel; };
+  int GetSerialPort() { return 1; };
+  void SetSerialPort(int port) {};
 
-	
+  
 protected:
-	vtkCriticalSection *UpdateMutex;
-	vtkHapticsFreedom6S();
-	~vtkHapticsFreedom6S();
+  vtkCriticalSection *UpdateMutex;
+  vtkHapticsFreedom6S();
+  ~vtkHapticsFreedom6S();
 
 
-	int InternalStartTracking();
-	int InternalStopTracking();
-	void InternalUpdate();
+  int InternalStartTracking();
+  int InternalStopTracking();
+  void InternalUpdate();
 //BTX
-	void computeForceTorque(Vector3& force, Vector3& torque);
+  void computeForceTorque(Vector3& force, Vector3& torque);
 //ETX
-	int GetVersion();
-	
+  int GetVersion();
+  
 
 private:
-	//BTX
-	Freedom6S f6s;
-	int DeviceOn;
-	char SerialNumber[75];
-	char LeftHanded[20];
-	char Version[STR_SIZE];
-	char VersionDate[STR_SIZE];
+  //BTX
+  Freedom6S f6s;
+  int DeviceOn;
+  char SerialNumber[75];
+  char LeftHanded[20];
+  char Version[STR_SIZE];
+  char VersionDate[STR_SIZE];
 
-	int Started;
-	int TimerPeriod;
-	vtkHapticForce * forceModel;
-	vtkMatrix4x4 * SendMatrix;
+  int Started;
+  int TimerPeriod;
+  vtkHapticForce * forceModel;
+  vtkMatrix4x4 * SendMatrix;
 
-	int UseForce;
-	unsigned long frameCount;
+  int UseForce;
+  unsigned long frameCount;
 
-	int currentFrame;
-	int nextFrame;
+  int currentFrame;
+  int nextFrame;
 
-	double sizeHIP;
+  double sizeHIP;
     double Scale;
-	int timeSlice;
-	//ETX
+  int timeSlice;
+  //ETX
 };
 
 

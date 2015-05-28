@@ -57,25 +57,25 @@ vtkSHAPETAPETracker* vtkSHAPETAPETracker::New()
 //----------------------------------------------------------------------------
 vtkSHAPETAPETracker::vtkSHAPETAPETracker()
 {
-  this->ShapeTape = NULL;							// Shapetape C++ object
-  this->Version = NULL;								// do i need a version
-  this->SendMatrix = vtkMatrix4x4::New();			// send matrix for the tool.
-  this->IsSHAPETAPETracking = 0;					// is the shapetape tracking?  is it ever NOT tracking?
-  this->SerialPort = -1; // default is to probe?	// serialPort the shapetape is on
-  this->BaudRate = 115200;							// default baud rate
-  this->NumberOfSensors = -1;						// number of sensors?
-  this->CalibrationFile[0] = '\0';					// calibration file name
-  this->TapeLength = 0.0;							// length of the tape
-  this->InterpolationInterval = 0;					// interpolation steps between sensor boundaries
-  this->BendOnly = true;							// true for bend oly takes, false for bend/twist tapes
-  this->NumberOfRegions = 0;						// the number of sensor regions
+  this->ShapeTape = NULL;              // Shapetape C++ object
+  this->Version = NULL;                // do i need a version
+  this->SendMatrix = vtkMatrix4x4::New();      // send matrix for the tool.
+  this->IsSHAPETAPETracking = 0;          // is the shapetape tracking?  is it ever NOT tracking?
+  this->SerialPort = -1; // default is to probe?  // serialPort the shapetape is on
+  this->BaudRate = 115200;              // default baud rate
+  this->NumberOfSensors = -1;            // number of sensors?
+  this->CalibrationFile[0] = '\0';          // calibration file name
+  this->TapeLength = 0.0;              // length of the tape
+  this->InterpolationInterval = 0;          // interpolation steps between sensor boundaries
+  this->BendOnly = true;              // true for bend oly takes, false for bend/twist tapes
+  this->NumberOfRegions = 0;            // the number of sensor regions
   this->NumberOfTransforms = 0;
   for(int i=0; i < 48; i++)
-	this->RegionLength[i] = 0.0;					// arror of sensor lengths.  Allows for variable sensor lengths.
+  this->RegionLength[i] = 0.0;          // arror of sensor lengths.  Allows for variable sensor lengths.
 
-  this->SettingsFile[0] = '\0';						// to load all information from the sensor
+  this->SettingsFile[0] = '\0';            // to load all information from the sensor
 
-  this->Tool = vtkTrackerToolSensor::New();		// send matrix for the tool.
+  this->Tool = vtkTrackerToolSensor::New();    // send matrix for the tool.
 this->Tool->SetTracker(this);
   // for accurate timing
   this->Timer = vtkFrameToTimeConverter::New();
@@ -120,295 +120,295 @@ void vtkSHAPETAPETracker::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetPosition(double x, double y, double z)
 {
-	if (this->ShapeTape) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->setPosition(x, y, z);
-		this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->setPosition(x, y, z);
+    this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetPosition(float x, float y, float z)
 {
-	if (this->ShapeTape) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->setPosition((double)x, (double)y, (double)z);
-		this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->setPosition((double)x, (double)y, (double)z);
+    this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetOrientation(double baseU[3], double baseB[3])
 {
-	if (this->ShapeTape) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->setOrientation(baseU, baseB);
-		this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->setOrientation(baseU, baseB);
+    this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }    
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetOrientation(double yaw, double pitch, double roll)
 {
-	if (this->ShapeTape) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->setOrientation(yaw, pitch, roll);
-		this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->setOrientation(yaw, pitch, roll);
+    this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::GetTapeSettings()
 {
-	if (this->ShapeTape) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->getTapeSettings(this->CalibrationFile, this->NumberOfSensors, this->InterpolationInterval, this->TapeLength,
-										 this->NumberOfRegions, this->RegionLength);
-		this->UpdateMutex->Unlock();
-		return 0;
-	}
-	else
-		return 1;
+  if (this->ShapeTape) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->getTapeSettings(this->CalibrationFile, this->NumberOfSensors, this->InterpolationInterval, this->TapeLength,
+                     this->NumberOfRegions, this->RegionLength);
+    this->UpdateMutex->Unlock();
+    return 0;
+  }
+  else
+    return 1;
 }
 
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetSettingsFile(char* settings_file)
 {
-	strcpy(this->SettingsFile, settings_file);
-	return 1;
+  strcpy(this->SettingsFile, settings_file);
+  return 1;
 }
 
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SetCalibrationFile(char* calibration_file)
 {
-	strcpy(this->CalibrationFile, calibration_file);
-	return 1;
+  strcpy(this->CalibrationFile, calibration_file);
+  return 1;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::GetQuaternionData(double * value[8])
 {
-	if (this->ShapeTape) {
-//		for (int i = 0; i < this->NumberOfSensors; i++)
-			this->ShapeTape->getCartesianData(value[4], value[5], value[6], value[0], value[1], value[2], value[3]);
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape) {
+//    for (int i = 0; i < this->NumberOfSensors; i++)
+      this->ShapeTape->getCartesianData(value[4], value[5], value[6], value[0], value[1], value[2], value[3]);
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SaveAdvancedCalibration(char * filename, char * mstFile)
 {
-	if (this->ShapeTape && filename && mstFile ) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->saveAdvancedCalibration(filename, mstFile);
-	    this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape && filename && mstFile ) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->saveAdvancedCalibration(filename, mstFile);
+      this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SaveNormalCalibration(char * filename)
 {
-	if (this->ShapeTape && filename) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->saveNormalCalibration(filename);
-	    this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape && filename) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->saveNormalCalibration(filename);
+      this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SaveFlatCalibration(char * filename)
 {
-	if (this->ShapeTape && filename) {
-		this->UpdateMutex->Lock();
-		this->ShapeTape->saveFlatCalibration(filename);
-	    this->UpdateMutex->Unlock();
-		return 1;
-	}
-	else
-		return 0;
+  if (this->ShapeTape && filename) {
+    this->UpdateMutex->Lock();
+    this->ShapeTape->saveFlatCalibration(filename);
+      this->UpdateMutex->Unlock();
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::SaveHelicalCalibration(char * filename)
 {
-	if (this->ShapeTape && filename) {
-	    this->UpdateMutex->Lock();
-		this->ShapeTape->saveHelicalCalibration(filename);
-	    this->UpdateMutex->Unlock();
+  if (this->ShapeTape && filename) {
+      this->UpdateMutex->Lock();
+    this->ShapeTape->saveHelicalCalibration(filename);
+      this->UpdateMutex->Unlock();
 
-		return 1;
-	}
-	else
-		return 0;
+    return 1;
+  }
+  else
+    return 0;
 }
 
 //----------------------------------------------------------------------------
 void vtkSHAPETAPETracker::SetSerialPort(int port)
 {
-	if (this->IsSHAPETAPETracking == 0) 
-		this->SerialPort = port;
-	else {
-		vtkErrorMacro( << "Cannot Set Serial Port When Tracking");
-		return;
-	}
+  if (this->IsSHAPETAPETracking == 0) 
+    this->SerialPort = port;
+  else {
+    vtkErrorMacro( << "Cannot Set Serial Port When Tracking");
+    return;
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkSHAPETAPETracker::SetBaudRate(int baud)
 {
-	if (this->IsSHAPETAPETracking == 0) 
-		this->BaudRate = baud;
-	else {
-		vtkErrorMacro( << "Cannot Set Baud Rate When Tracking");
-		return;
-	}
+  if (this->IsSHAPETAPETracking == 0) 
+    this->BaudRate = baud;
+  else {
+    vtkErrorMacro( << "Cannot Set Baud Rate When Tracking");
+    return;
+  }
 }
 
 
 //----------------------------------------------------------------------------
 void vtkSHAPETAPETracker::SetTapeLength(double length )
 {
-	if (this->IsSHAPETAPETracking == 0) 
-		this->TapeLength = length;
-	else {
-		vtkErrorMacro( << "Cannot Set Tape Length When Tracking");
-		return;
-	}
+  if (this->IsSHAPETAPETracking == 0) 
+    this->TapeLength = length;
+  else {
+    vtkErrorMacro( << "Cannot Set Tape Length When Tracking");
+    return;
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkSHAPETAPETracker::SetBendOnly(bool bend )
 {
-	if (this->IsSHAPETAPETracking == 0) 
-		this->BendOnly = bend;
-	else {
-		vtkErrorMacro( << "Cannot Set Bend Only When Tracking");
-		return;
-	}
+  if (this->IsSHAPETAPETracking == 0) 
+    this->BendOnly = bend;
+  else {
+    vtkErrorMacro( << "Cannot Set Bend Only When Tracking");
+    return;
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkSHAPETAPETracker::SetInterpolationInterval(int interval)
 {
-	if (this->IsSHAPETAPETracking == 0) 
-		this->InterpolationInterval = interval;
-	else {
-		vtkErrorMacro( << "Cannot Set Interpolation Interval When Tracking");
-		return;
-	}
+  if (this->IsSHAPETAPETracking == 0) 
+    this->InterpolationInterval = interval;
+  else {
+    vtkErrorMacro( << "Cannot Set Interpolation Interval When Tracking");
+    return;
+  }
 }
 
 void vtkSHAPETAPETracker::SetNumberOfSensors(int num)
 {
-	if (this->IsSHAPETAPETracking == 0)  {
-		this->NumberOfSensors = num;
-		vtkTrackerSensor::SetNumberOfSensors(num);
-	}
+  if (this->IsSHAPETAPETracking == 0)  {
+    this->NumberOfSensors = num;
+    vtkTrackerSensor::SetNumberOfSensors(num);
+  }
 
-	else {
-		vtkErrorMacro( << "Cannot Set Interpolation Interval When Tracking");
-		return;
-	}
+  else {
+    vtkErrorMacro( << "Cannot Set Interpolation Interval When Tracking");
+    return;
+  }
 }
 
 
 //----------------------------------------------------------------------------
 int vtkSHAPETAPETracker::Initialize(int type) {
-	if (this->IsSHAPETAPETracking == 0) {
-		if (type == ST_EVENSPACING_BENDTWIST) {
-			if (this->NumberOfSensors < 0 || this->NumberOfSensors > VTK_SHAPETAPE_NSENSORS) {
-				vtkErrorMacro( << "Incorrect number of sensors.  Initialization failed");
-				return 1;
-			}
-			if (this->CalibrationFile == NULL) {
-				vtkErrorMacro( << "Calibration file is NULL");
-				return 1;
-			}
-			if (this->TapeLength == 0) {
-				vtkErrorMacro( << "Length of the tape is not specified");
-				return 1;
-			}
-			if (this->ShapeTape)
-				delete this->ShapeTape;
-			this->ShapeTape = new tapeAPI(this->NumberOfSensors, this->BaudRate, this->CalibrationFile, this->TapeLength, this->InterpolationInterval);
-			this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
-			this->ShapeTape->flat();
-			return 0;
-		}
-		else if (type == ST_UNEVENSPACING) {
-			if (this->NumberOfSensors < 0 || this->NumberOfSensors > VTK_SHAPETAPE_NSENSORS) {
-				vtkErrorMacro( << "Incorrect number of sensors.  Initialization failed");
-				return 1;
-			}
-			if (this->CalibrationFile == NULL) {
-				vtkErrorMacro( << "Calibration file is NULL");
-				return 1;
-			}
-			if (this->TapeLength == 0) {
-				vtkErrorMacro( << "Length of the tape is not specified");
-				return 1;
-			}
-			for (int i = 0; i < this->NumberOfRegions; i++) {
-				if (this->RegionLength[i] == 0){
-					vtkErrorMacro( << "Region Length is invalid for the number of regions specified");
-					return 1;
-				}
-			}
-			if (this->ShapeTape)
-				delete this->ShapeTape;
-			this->ShapeTape = new tapeAPI(this->NumberOfSensors, this->BaudRate, this->CalibrationFile, this->TapeLength, this->InterpolationInterval, this->BendOnly, this->NumberOfRegions, this->RegionLength);
-			this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
-			this->ShapeTape->flat();
-			return 0;
-		}
-		else if (type == ST_LOADSETTINGFILE) {
-			if (this->SettingsFile == NULL){
-				vtkErrorMacro( << "Settings file is null.  Unable to initalize");
-				return 1;
-			}
+  if (this->IsSHAPETAPETracking == 0) {
+    if (type == ST_EVENSPACING_BENDTWIST) {
+      if (this->NumberOfSensors < 0 || this->NumberOfSensors > VTK_SHAPETAPE_NSENSORS) {
+        vtkErrorMacro( << "Incorrect number of sensors.  Initialization failed");
+        return 1;
+      }
+      if (this->CalibrationFile == NULL) {
+        vtkErrorMacro( << "Calibration file is NULL");
+        return 1;
+      }
+      if (this->TapeLength == 0) {
+        vtkErrorMacro( << "Length of the tape is not specified");
+        return 1;
+      }
+      if (this->ShapeTape)
+        delete this->ShapeTape;
+      this->ShapeTape = new tapeAPI(this->NumberOfSensors, this->BaudRate, this->CalibrationFile, this->TapeLength, this->InterpolationInterval);
+      this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
+      this->ShapeTape->flat();
+      return 0;
+    }
+    else if (type == ST_UNEVENSPACING) {
+      if (this->NumberOfSensors < 0 || this->NumberOfSensors > VTK_SHAPETAPE_NSENSORS) {
+        vtkErrorMacro( << "Incorrect number of sensors.  Initialization failed");
+        return 1;
+      }
+      if (this->CalibrationFile == NULL) {
+        vtkErrorMacro( << "Calibration file is NULL");
+        return 1;
+      }
+      if (this->TapeLength == 0) {
+        vtkErrorMacro( << "Length of the tape is not specified");
+        return 1;
+      }
+      for (int i = 0; i < this->NumberOfRegions; i++) {
+        if (this->RegionLength[i] == 0){
+          vtkErrorMacro( << "Region Length is invalid for the number of regions specified");
+          return 1;
+        }
+      }
+      if (this->ShapeTape)
+        delete this->ShapeTape;
+      this->ShapeTape = new tapeAPI(this->NumberOfSensors, this->BaudRate, this->CalibrationFile, this->TapeLength, this->InterpolationInterval, this->BendOnly, this->NumberOfRegions, this->RegionLength);
+      this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
+      this->ShapeTape->flat();
+      return 0;
+    }
+    else if (type == ST_LOADSETTINGFILE) {
+      if (this->SettingsFile == NULL){
+        vtkErrorMacro( << "Settings file is null.  Unable to initalize");
+        return 1;
+      }
 
-			if (this->ShapeTape)
-				delete this->ShapeTape;
-			this->ShapeTape = new tapeAPI(this->SettingsFile, "./");
-			this->ShapeTape->flat();
-			this->ShapeTape->getTapeSettings(this->CalibrationFile, this->NumberOfSensors, this->InterpolationInterval, this->TapeLength, this->NumberOfRegions, this->RegionLength);
-			this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
-			this->SetNumberOfSensors(this->NumberOfTransforms);
-			this->Tool->SetTapeLength(this->TapeLength);
-			this->Tool->SetInterpolationInterval(this->InterpolationInterval);
-			return 0;
-		}
-		else {
-			vtkErrorMacro( << "Invalid Initialization mode");
-			return 1;
-		}
-	}
-	else {
-		vtkErrorMacro( << "Cannot Initialize Shapetape When Tracking");
-		return 1;
-	}
+      if (this->ShapeTape)
+        delete this->ShapeTape;
+      this->ShapeTape = new tapeAPI(this->SettingsFile, "./");
+      this->ShapeTape->flat();
+      this->ShapeTape->getTapeSettings(this->CalibrationFile, this->NumberOfSensors, this->InterpolationInterval, this->TapeLength, this->NumberOfRegions, this->RegionLength);
+      this->NumberOfTransforms = (this->NumberOfRegions*this->InterpolationInterval)+1;
+      this->SetNumberOfSensors(this->NumberOfTransforms);
+      this->Tool->SetTapeLength(this->TapeLength);
+      this->Tool->SetInterpolationInterval(this->InterpolationInterval);
+      return 0;
+    }
+    else {
+      vtkErrorMacro( << "Invalid Initialization mode");
+      return 1;
+    }
+  }
+  else {
+    vtkErrorMacro( << "Cannot Initialize Shapetape When Tracking");
+    return 1;
+  }
 
 }
 
@@ -420,8 +420,8 @@ int vtkSHAPETAPETracker::InternalStartTracking()
     return 1;
     }
   if (!(this->ShapeTape)) {
-	 if (this->Initialize(ST_LOADSETTINGFILE))
-		return 1;
+   if (this->Initialize(ST_LOADSETTINGFILE))
+    return 1;
   }
 
   // setup for number of breaks and matrix information
@@ -442,8 +442,8 @@ int vtkSHAPETAPETracker::InternalStopTracking()
     return 0;
     }
   if (this->ShapeTape) {
-	delete this->ShapeTape;
-	this->IsSHAPETAPETracking = 0;
+  delete this->ShapeTape;
+  this->IsSHAPETAPETracking = 0;
   }
 //  this->ShapeTape = 0;
 
@@ -483,7 +483,7 @@ void vtkSHAPETAPETracker::InternalUpdate()
   double * temp_transform[8];
 
   for (int size=0; size < 8; size++){
-	temp_transform[size] = new double[this->NumberOfTransforms];
+  temp_transform[size] = new double[this->NumberOfTransforms];
   }
 
 
@@ -497,13 +497,13 @@ void vtkSHAPETAPETracker::InternalUpdate()
   GetQuaternionData(temp_transform);
 
   for (int i=0; i < this->NumberOfTransforms; i++){
-	  for (int j=0; j < 7; j++){
-		transform[i][j] = temp_transform[j][i];
-	  }
-	  transform[i][7] = 0.0;
+    for (int j=0; j < 7; j++){
+    transform[i][j] = temp_transform[j][i];
+    }
+    transform[i][7] = 0.0;
   }
   for (int delete_loop=0; delete_loop < 8; delete_loop++){
-	delete [] temp_transform[delete_loop];
+  delete [] temp_transform[delete_loop];
   }
 
   unsigned long nextcount = this->Timer->GetLastFrame() + 1;
@@ -524,7 +524,7 @@ void vtkSHAPETAPETracker::InternalUpdate()
     // the tool transformation) the most recent timestamp is used.
     double tooltimestamp = timestamp;
     tooltimestamp = this->Timer->GetTimeStampForFrame(nextcount);
-	// HOW TO DISPLAY INDIVIDUAL TOOLS
+  // HOW TO DISPLAY INDIVIDUAL TOOLS
     this->Tool->SensorUpdate(sensor,this->SendMatrix,0,tooltimestamp);
     }
 
@@ -535,9 +535,9 @@ void vtkSHAPETAPETracker::InternalUpdate()
 void vtkSHAPETAPETracker::SetFlat()
 {
     this->UpdateMutex->Lock();
-	this->ShapeTape->flat();
-	this->UpdateMutex->Unlock();
-	return;
+  this->ShapeTape->flat();
+  this->UpdateMutex->Unlock();
+  return;
 }
 
 

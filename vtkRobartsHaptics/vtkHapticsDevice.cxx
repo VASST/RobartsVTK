@@ -48,50 +48,50 @@ POSSIBILITY OF SUCH DAMAGES.
 
 vtkHapticsDevice* vtkHapticsDevice::New()
 {
-	// First try to create the object from the vtkObjectFactory
-	vtkObject* ret = vtkObjectFactory::CreateInstance("vtkHapticsDevice");
-	if(ret)
-		{
-		return (vtkHapticsDevice*)ret;
-		}
-	// If the factory was unable to create the object, then create it here.
-	return new vtkHapticsDevice;
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkHapticsDevice");
+  if(ret)
+    {
+    return (vtkHapticsDevice*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkHapticsDevice;
 }
 
 //----------------------------------------------------------------------------
 vtkHapticsDevice::vtkHapticsDevice()
 {
 
-	this->LastUpdateTime = 0;
-	this->Initialized = 0;
-	this->Transform = vtkTransform::New();
-	this->Position = vtkMatrix4x4::New();
-	this->Transform->SetMatrix(this->Position);
-	this->Position = this->Transform->GetMatrix();
+  this->LastUpdateTime = 0;
+  this->Initialized = 0;
+  this->Transform = vtkTransform::New();
+  this->Position = vtkMatrix4x4::New();
+  this->Transform->SetMatrix(this->Position);
+  this->Position = this->Transform->GetMatrix();
 
-	// for threaded capture of transformations
-	this->Threader = vtkMultiThreader::New();
-	this->ThreadId = -1;
-	this->UpdateMutex = vtkCriticalSection::New();
-	this->RequestUpdateMutex = vtkCriticalSection::New();
-	this->forceModel = vtkHapticForce::New();
+  // for threaded capture of transformations
+  this->Threader = vtkMultiThreader::New();
+  this->ThreadId = -1;
+  this->UpdateMutex = vtkCriticalSection::New();
+  this->RequestUpdateMutex = vtkCriticalSection::New();
+  this->forceModel = vtkHapticForce::New();
 
 }
 
 //----------------------------------------------------------------------------
 vtkHapticsDevice::~vtkHapticsDevice()
 {
-	// The thread should have been stopped before the
-	// subclass destructor was called, but just in case
-	// se stop it here.
-	if (this->ThreadId != -1)
-	    {
-		this->Threader->TerminateThread(this->ThreadId);
-		this->ThreadId = -1;
-		}
+  // The thread should have been stopped before the
+  // subclass destructor was called, but just in case
+  // se stop it here.
+  if (this->ThreadId != -1)
+      {
+    this->Threader->TerminateThread(this->ThreadId);
+    this->ThreadId = -1;
+    }
 
-	this->Threader->Delete();
-	this->UpdateMutex->Delete();
+  this->Threader->Delete();
+  this->UpdateMutex->Delete();
 }
 
 
@@ -103,11 +103,11 @@ static void *vtkHapticsThread(vtkMultiThreader::ThreadInfo *data)
 
   double currtime[10];
 
-  // loop until cancelled
+  // loop until canceled
   for (int i = 0;; i++)
     {
     // get current rate over last 10 updates
-    double newtime = vtkTimerLog::GetCurrentTime();
+    double newtime = vtkTimerLog::GetUniversalTime();
     double difftime = newtime - currtime[i%10];
     currtime[i%10] = newtime;
     if (i > 10 && difftime != 0)
@@ -211,14 +211,14 @@ void vtkHapticsDevice::Update()
 
 void vtkHapticsDevice::PrintSelf(ostream& os, vtkIndent indent)
 {
-	os << indent << "Update Mutex: "  <<endl;
-	this->UpdateMutex->PrintSelf(os,indent.GetNextIndent());
-	os << indent << "Request Update Mutex: " <<endl;
-	this->RequestUpdateMutex->PrintSelf(os,indent.GetNextIndent());
-	os << indent << "Position: " <<endl;
-	this->Position->PrintSelf(os,indent.GetNextIndent());
-	os << indent << "Initialized: " <<  this->Initialized << endl;
-	os << indent << "Last Update Time: " <<  this->LastUpdateTime << endl;
-	this->Threader->PrintSelf(os,indent.GetNextIndent());
+  os << indent << "Update Mutex: "  <<endl;
+  this->UpdateMutex->PrintSelf(os,indent.GetNextIndent());
+  os << indent << "Request Update Mutex: " <<endl;
+  this->RequestUpdateMutex->PrintSelf(os,indent.GetNextIndent());
+  os << indent << "Position: " <<endl;
+  this->Position->PrintSelf(os,indent.GetNextIndent());
+  os << indent << "Initialized: " <<  this->Initialized << endl;
+  os << indent << "Last Update Time: " <<  this->LastUpdateTime << endl;
+  this->Threader->PrintSelf(os,indent.GetNextIndent());
 }
 

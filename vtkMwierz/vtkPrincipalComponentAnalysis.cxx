@@ -51,9 +51,9 @@ inline void vtkZeroMatrix(double **m, int rows, int cols)
   for(int i = 0; i < rows; i++) 
     {
       for(int j = 0; j < cols; j++) 
-	{
-	  m[i][j] = 0.0;
-	}
+  {
+    m[i][j] = 0.0;
+  }
     }
 }
 
@@ -71,13 +71,13 @@ inline void vtkMatrixMultiply(double **a, double **b, double **c,
   for(int i = 0; i < arows; i++) 
     {
       for(int j = 0; j < bcols; j++) 
-	{
-	  c[i][j] = 0.0;
-	  for(int k = 0; k < acols; k++)
-	    {
-	      c[i][j] += a[i][k]*b[k][j];
-	    }
-	}
+  {
+    c[i][j] = 0.0;
+    for(int k = 0; k < acols; k++)
+      {
+        c[i][j] += a[i][k]*b[k][j];
+      }
+  }
     }
 }
 
@@ -87,15 +87,15 @@ inline void vtkMatrixTranspose(double **a, double **b, int rows, int cols)
   for(int i = 0; i < rows; i++) 
     {
       for(int j = 0; j < cols; j++) 
-	{
-	  b[j][i] = a[i][j];
-	}
+  {
+    b[j][i] = a[i][j];
+  }
     }
 }
 
 //------------------------------------------------------------------------
 inline void vtkReduceMatrix(double **a, double **b, int arows, int acols,
-			    int brows, int bcols)
+          int brows, int bcols)
 {
   if ((arows < brows) | (acols < bcols))
   {
@@ -106,9 +106,9 @@ inline void vtkReduceMatrix(double **a, double **b, int arows, int acols,
   for(int i = 0; i < brows; i++) 
   {
     for(int j = 0; j < bcols; j++) 
-	{
-	  b[i][j] = a[i][j];
-	}
+  {
+    b[i][j] = a[i][j];
+  }
   }
 }
 
@@ -135,22 +135,22 @@ void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
       this->M++;
   
       if (this->M == 1)
-	{
+  {
 
-	  input->GetExtent(this->ext);
-	  input->GetSpacing(this->spa);
-	  input->GetOrigin(this->ori);
-	  
-	  this->OutputImage = vtkImageData::New();
-	  this->OutputImage->SetWholeExtent(this->ext);
-	  this->OutputImage->SetExtent(this->ext);
-	  this->OutputImage->SetSpacing(this->spa);
-	  this->OutputImage->SetOrigin(this->ori);
-	  this->OutputImage->SetNumberOfScalarComponents(1);
-	  this->OutputImage->SetScalarType(this->Images[0]->GetScalarType());
-	  this->OutputImage->AllocateScalars();
-	  
-	}
+    input->GetExtent(this->ext);
+    input->GetSpacing(this->spa);
+    input->GetOrigin(this->ori);
+    
+    this->OutputImage = vtkImageData::New();
+    this->OutputImage->SetWholeExtent(this->ext);
+    this->OutputImage->SetExtent(this->ext);
+    this->OutputImage->SetSpacing(this->spa);
+    this->OutputImage->SetOrigin(this->ori);
+    this->OutputImage->SetNumberOfScalarComponents(1);
+    this->OutputImage->SetScalarType(this->Images[0]->GetScalarType());
+    this->OutputImage->AllocateScalars();
+    
+  }
     }
 }
 
@@ -212,27 +212,27 @@ void vtkPrincipalComponentAnalysis::Fit()
   for (int i = ext[0]; i <= ext[1]; i++)
   {
     for (int j = ext[2]; j <= ext[3]; j++)
- 	{
- 	  for (int k = ext[4]; k <= ext[5]; k++)
- 	  {
-	    if (this->MaskImage->GetScalarComponentAsFloat(i,j,k,0))
-		{
-	 	  for (int l = 0; l < M; l++)
-		  {
-		      A[n][l] = double(this->Images[l]->GetScalarComponentAsFloat(i,j,k,0));
-		      psi[n][0] = psi[n][0] + A[n][l];
-		  }
- 		  psi[n][0] = psi[n][0] / M;
+   {
+     for (int k = ext[4]; k <= ext[5]; k++)
+     {
+      if (this->MaskImage->GetScalarComponentAsFloat(i,j,k,0))
+    {
+       for (int l = 0; l < M; l++)
+      {
+          A[n][l] = double(this->Images[l]->GetScalarComponentAsFloat(i,j,k,0));
+          psi[n][0] = psi[n][0] + A[n][l];
+      }
+       psi[n][0] = psi[n][0] / M;
 
- 		  for (int lGN = 0; lGN < M; lGN++)
- 		  {
- 		     A[n][lGN] = A[n][lGN] - psi[n][0];
- 		  }
-		  n++;
-		  this->MaskPoints->InsertNextPoint(i,j,k);
-		}
-	  }
-	}
+       for (int lGN = 0; lGN < M; lGN++)
+       {
+          A[n][lGN] = A[n][lGN] - psi[n][0];
+       }
+      n++;
+      this->MaskPoints->InsertNextPoint(i,j,k);
+    }
+    }
+  }
   }
 
   // Calculate AT and the matrix L.
@@ -252,13 +252,13 @@ void vtkPrincipalComponentAnalysis::Fit()
   {
       cout << mu[iGN] << " ";
       if (mu[iGN] > 0)
-	  {
-	     muinvsqrt[iGN][iGN] = 1.0 / sqrt(mu[iGN]);
-	  }
+    {
+       muinvsqrt[iGN][iGN] = 1.0 / sqrt(mu[iGN]);
+    }
       else
-	  {
-	      muinvsqrt[iGN][iGN] = 0.0;
-	  }
+    {
+        muinvsqrt[iGN][iGN] = 0.0;
+    }
   }
   cout << "\n\n";
   vtkMatrixMultiply(v,muinvsqrt,vtimesmu,M,M,M,M);
@@ -298,9 +298,9 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetEigenVectorsImage()
   for (int i = 0; i < N; i++)
     {
       for (int j = 0; j < M; j++)
-	{
-	  EVI->SetScalarComponentFromFloat(i,j,0,0,this->EigenVectors[i][j]);
-	}
+  {
+    EVI->SetScalarComponentFromFloat(i,j,0,0,this->EigenVectors[i][j]);
+  }
     }
 
   return EVI;
@@ -348,9 +348,9 @@ void vtkPrincipalComponentAnalysis::SetEigenVectorsImage(vtkImageData *EVI)
   for (int i = 0; i < N; i++)
     {
       for (int j = 0; j < M; j++)
- 	{
- 	  this->EigenVectors[i][j] = EVI->GetScalarComponentAsFloat(i,j,0,0);
- 	}
+   {
+     this->EigenVectors[i][j] = EVI->GetScalarComponentAsFloat(i,j,0,0);
+   }
     }
 }
 
@@ -368,7 +368,7 @@ void vtkPrincipalComponentAnalysis::SetMeanIntensitiesImage(vtkImageData *MII)
 
   for (int i = 0; i < N; i++)
     {
- 	  this->MeanIntensities[i][0] = MII->GetScalarComponentAsFloat(i,0,0,0);
+     this->MeanIntensities[i][0] = MII->GetScalarComponentAsFloat(i,0,0,0);
     }
 }
 
@@ -427,7 +427,7 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetOutput(vtkDoubleArray *weights)
     {
       this->MaskPoints->GetPoint(iGN,locs);
       this->OutputImage->SetScalarComponentFromFloat(int(locs[0]),int(locs[1]),int(locs[2]),0,
-						     int(0.5 + gamma[iGN][0] + this->MeanIntensities[iGN][0]));
+                 int(0.5 + gamma[iGN][0] + this->MeanIntensities[iGN][0]));
     }
 
   vtkDeleteMatrix(w);

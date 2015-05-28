@@ -20,84 +20,84 @@ class transferFunctionWindowWidgetInterface;
 
 class virtualToolWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
 
-	virtualToolWidget( transferFunctionWindowWidgetInterface* parent );
-	~virtualToolWidget();
-	QMenu* getMenuOptions( );
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
+  virtualToolWidget( transferFunctionWindowWidgetInterface* parent );
+  ~virtualToolWidget();
+  QMenu* getMenuOptions( );
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
 
-	void selectImage(vtkImageData*);
-	
-	vtkRenderWindow* GetXPlaneRenderWindow();
-	vtkRenderWindow* GetYPlaneRenderWindow();
-	vtkRenderWindow* GetZPlaneRenderWindow();
+  void selectImage(vtkImageData*);
+  
+  vtkRenderWindow* GetXPlaneRenderWindow();
+  vtkRenderWindow* GetYPlaneRenderWindow();
+  vtkRenderWindow* GetZPlaneRenderWindow();
 
 private slots:
-	
-	void addVTKFile();
-	void toggleVirtualTool();
-	void resetVirtualTool();
-	void changeVirtualToolColour();
+  
+  void addVTKFile();
+  void toggleVirtualTool();
+  void resetVirtualTool();
+  void changeVirtualToolColour();
 
 private:
-	
-	void setupMenu();
+  
+  void setupMenu();
 
-	transferFunctionWindowWidgetInterface* parent;
+  transferFunctionWindowWidgetInterface* parent;
 
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCudaVolumeMapper* mapper;
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCudaVolumeMapper* mapper;
 
-	unsigned int numberOfVirtualTools;
+  unsigned int numberOfVirtualTools;
 
-	//standard widgets
-	vtkBoxWidget*	clippingPlanes;
-	vtkBoxWidget*	keyholePlanes;
-	vtkRenderWindow* windowXPlane;
-	vtkRenderWindow* windowYPlane;
-	vtkRenderWindow* windowZPlane;
-	vtkImageHackedPlaneWidget* xPlaneReslice;
-	vtkImageHackedPlaneWidget* yPlaneReslice;
-	vtkImageHackedPlaneWidget* zPlaneReslice;
-	vtkImageMapper* xPlaneMapper;
-	vtkImageMapper* yPlaneMapper;
-	vtkImageMapper* zPlaneMapper;
-	vtkActor2D* xPlaneActor;
-	vtkActor2D* yPlaneActor;
-	vtkActor2D* zPlaneActor;
-	vtkRenderer* xPlaneRenderer;
-	vtkRenderer* yPlaneRenderer;
-	vtkRenderer* zPlaneRenderer;
-	
-	//push commands to model (widgets)
-	bool addVTKFile(std::string filename);
-	bool setCustomVirtualToolVisibility(int, bool);
-	void changeCustomVirtualToolColour( int tool, float r, float g, float b );
+  //standard widgets
+  vtkBoxWidget*  clippingPlanes;
+  vtkBoxWidget*  keyholePlanes;
+  vtkRenderWindow* windowXPlane;
+  vtkRenderWindow* windowYPlane;
+  vtkRenderWindow* windowZPlane;
+  vtkImageHackedPlaneWidget* xPlaneReslice;
+  vtkImageHackedPlaneWidget* yPlaneReslice;
+  vtkImageHackedPlaneWidget* zPlaneReslice;
+  vtkImageMapper* xPlaneMapper;
+  vtkImageMapper* yPlaneMapper;
+  vtkImageMapper* zPlaneMapper;
+  vtkActor2D* xPlaneActor;
+  vtkActor2D* yPlaneActor;
+  vtkActor2D* zPlaneActor;
+  vtkRenderer* xPlaneRenderer;
+  vtkRenderer* yPlaneRenderer;
+  vtkRenderer* zPlaneRenderer;
+  
+  //push commands to model (widgets)
+  bool addVTKFile(std::string filename);
+  bool setCustomVirtualToolVisibility(int, bool);
+  void changeCustomVirtualToolColour( int tool, float r, float g, float b );
 
-	void setClippingPlanesVisibility(bool);
-	void setKeyholePlanesVisibility(bool);
-	void setOrthoPlanesVisibility(bool);
-	void resetClippingPlanes();
-	void resetKeyholePlanes();
-	void resetOrthoPlanes();
-	
-	//interface connections for virtual tools
-	QMenu* widgetMenu;
-	QMenu* availableWidgetsMenu;
-	std::vector<QMenu*> availableWidgetMenus;
-	std::vector<QAction*> availableWidgetsVisibility;
-	std::vector<QAction*> availableWidgetsReset;
-	std::vector<QAction*> availableWidgetsColour;
-	std::vector<unsigned int> availableWidgetStatus;
+  void setClippingPlanesVisibility(bool);
+  void setKeyholePlanesVisibility(bool);
+  void setOrthoPlanesVisibility(bool);
+  void resetClippingPlanes();
+  void resetKeyholePlanes();
+  void resetOrthoPlanes();
+  
+  //interface connections for virtual tools
+  QMenu* widgetMenu;
+  QMenu* availableWidgetsMenu;
+  std::vector<QMenu*> availableWidgetMenus;
+  std::vector<QAction*> availableWidgetsVisibility;
+  std::vector<QAction*> availableWidgetsReset;
+  std::vector<QAction*> availableWidgetsColour;
+  std::vector<unsigned int> availableWidgetStatus;
 
-	//pipeline pieces for virtual tools
-	std::vector<vtkPolyDataReader*> virtualToolReaders;
-	std::vector<vtkPolyDataMapper*> virtualToolMappers;
-	std::vector<vtkProperty*> virtualToolProperties;
-	std::vector<vtkActor*> virtualToolActors;
+  //pipeline pieces for virtual tools
+  std::vector<vtkPolyDataReader*> virtualToolReaders;
+  std::vector<vtkPolyDataMapper*> virtualToolMappers;
+  std::vector<vtkProperty*> virtualToolProperties;
+  std::vector<vtkActor*> virtualToolActors;
 
 };
 

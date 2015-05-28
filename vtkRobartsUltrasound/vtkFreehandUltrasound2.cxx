@@ -219,14 +219,14 @@ vtkFreehandUltrasound2::~vtkFreehandUltrasound2()
     {
     this->TrackerBuffer->Delete();
     }
-	if (this->RotationClipper)
-	  {
-		this->RotationClipper->Delete();
-	  }
-	if (this->RotationThresholder)
-	  {
-		this->RotationThresholder->Delete();
-	  }
+  if (this->RotationClipper)
+    {
+    this->RotationClipper->Delete();
+    }
+  if (this->RotationThresholder)
+    {
+    this->RotationThresholder->Delete();
+    }
   if (this->ActiveFlagLock)
     {
     this->ActiveFlagLock->Delete();
@@ -468,14 +468,14 @@ void vtkFreehandUltrasound2::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::SetSlice(vtkImageData *slice)
 {  
-	if(this->VideoSource)
-	  {
-	  this->Slice = this->VideoSource->GetOutput();
-	  }
-	else if(slice)
-	  {
-	  this->Slice = slice;
-	  }
+  if(this->VideoSource)
+    {
+    this->Slice = this->VideoSource->GetOutput();
+    }
+  else if(slice)
+    {
+    this->Slice = slice;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -485,14 +485,14 @@ void vtkFreehandUltrasound2::SetSlice(vtkImageData *slice)
 //----------------------------------------------------------------------------
 vtkImageData* vtkFreehandUltrasound2::GetSlice()
 {
-	if(this->VideoSource)
-	  {
-	  return this->VideoSource->GetOutput(); 
-	  }
-	else
-	  {
-	  return this->Slice;
-	  }
+  if(this->VideoSource)
+    {
+    return this->VideoSource->GetOutput(); 
+    }
+  else
+    {
+    return this->Slice;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -585,7 +585,7 @@ void vtkFreehandUltrasound2::ClearOutput()
     {
     for (int phase = 0; phase < this->GetNumberOfOutputPorts(); phase++)
       {
-		  this->GetOutput(phase)->UpdateInformation();
+      this->GetOutput(phase)->UpdateInformation();
       this->InternalInternalClearOutput(phase);
       }
     // clear the buffers for discarding based on ECG and for keeping slice timestamps
@@ -619,23 +619,23 @@ void vtkFreehandUltrasound2::InternalInternalClearOutput(int phase)
   // Set everything in the output (within the output extent) to 0
   int *outExtent = this->OutputExtent;
   this->GetOutput(phase)->SetExtent(outExtent);
-	this->GetOutput(phase)->AllocateScalars();
+  this->GetOutput(phase)->AllocateScalars();
   void *outPtr = this->GetOutput(phase)->GetScalarPointerForExtent(outExtent);
-	memset(outPtr,0,((outExtent[1]-outExtent[0]+1)*
-	   (outExtent[3]-outExtent[2]+1)*
-	   (outExtent[5]-outExtent[4]+1)*
-	   this->GetOutput(phase)->GetScalarSize()*this->GetOutput(phase)->GetNumberOfScalarComponents()));
+  memset(outPtr,0,((outExtent[1]-outExtent[0]+1)*
+     (outExtent[3]-outExtent[2]+1)*
+     (outExtent[5]-outExtent[4]+1)*
+     this->GetOutput(phase)->GetScalarSize()*this->GetOutput(phase)->GetNumberOfScalarComponents()));
 
   // clear the accumulation buffer too if we are compounding
-	if (this->Compounding)
+  if (this->Compounding)
     {
       this->AccumulationBuffers[phase]->SetExtent(outExtent);
       this->AccumulationBuffers[phase]->AllocateScalars();
       void *accPtr = this->AccumulationBuffers[phase]->GetScalarPointerForExtent(outExtent);
       memset(accPtr,0,((outExtent[1]-outExtent[0]+1)*
-	      (outExtent[3]-outExtent[2]+1)*
-	      (outExtent[5]-outExtent[4]+1)*
-	    this->AccumulationBuffers[phase]->GetScalarSize()*this->AccumulationBuffers[phase]->GetNumberOfScalarComponents()));
+        (outExtent[3]-outExtent[2]+1)*
+        (outExtent[5]-outExtent[4]+1)*
+      this->AccumulationBuffers[phase]->GetScalarSize()*this->AccumulationBuffers[phase]->GetNumberOfScalarComponents()));
     }
 
   if (this->LastIndexMatrix)
@@ -671,7 +671,7 @@ void vtkFreehandUltrasound2::ClearSliceBuffers()
         memset(slicePtr,0,((inExtent[1]-inExtent[0]+1)*
           (inExtent[3]-inExtent[2]+1)*
           (inExtent[5]-inExtent[4]+1)*
-	      this->SliceBuffer[phase]->GetScalarSize()*this->SliceBuffer[phase]->GetNumberOfScalarComponents()));
+        this->SliceBuffer[phase]->GetScalarSize()*this->SliceBuffer[phase]->GetNumberOfScalarComponents()));
         }
       }
     
@@ -728,9 +728,9 @@ void vtkFreehandUltrasound2::ClearSliceBuffers()
 // inExt = {x0, x1, y0, y1, z0, z1} <-- min/max possible extent, in pixels
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::GetClipExtent(int clipExt[6],
-				     vtkFloatingPointType inOrigin[3],
-				     vtkFloatingPointType inSpacing[3],
-				     const int inExt[6])
+             vtkFloatingPointType inOrigin[3],
+             vtkFloatingPointType inSpacing[3],
+             const int inExt[6])
 {
   // Map the clip rectangle (millimetres) to pixels --> number of pixels (+ or -)
   // from the origin
@@ -804,11 +804,11 @@ void vtkFreehandUltrasound2::SetRotatingProbe(int probe)
     {
     // Setup the rotation objects
     this->RotationClipper = vtkImageClip::New();
-		this->RotationClipper->ClipDataOn();
+    this->RotationClipper->ClipDataOn();
     this->RotationThresholder = vtkImageThreshold::New();
-		this->RotationThresholder->ThresholdBetween(this->FanRotationImageThreshold1, this->FanRotationImageThreshold2);
-		this->RotationThresholder->SetOutValue(1);
-		this->RotationThresholder->SetInValue(0);
+    this->RotationThresholder->ThresholdBetween(this->FanRotationImageThreshold1, this->FanRotationImageThreshold2);
+    this->RotationThresholder->SetOutValue(1);
+    this->RotationThresholder->SetInValue(0);
     }
   else
     {
@@ -882,21 +882,21 @@ void vtkFreehandUltrasound2::SetPreviousFanRotation(int rot)
 void vtkFreehandUltrasound2::SetCompounding(int comp)
 {
   // TODO put back
-	// we are switching from no compounding to compounding
-	/*if (this->GetCompounding() == 0 &&  comp == 1)
-	  {
-		this->AccumulationBuffer->SetScalarType(VTK_UNSIGNED_SHORT);
-		this->AccumulationBuffer->SetUpdateExtent(this->OutputExtent);
-		this->AccumulationBuffer->SetWholeExtent(this->OutputExtent);
-		this->AccumulationBuffer->SetExtent(this->OutputExtent);
-		this->AccumulationBuffer->SetSpacing(this->OutputSpacing);
-		this->AccumulationBuffer->SetOrigin(this->OutputOrigin);
-		//this->AccumulationBuffer->AllocateScalars();
-		//this->AccumulationBuffer->Update();
-	  }
+  // we are switching from no compounding to compounding
+  /*if (this->GetCompounding() == 0 &&  comp == 1)
+    {
+    this->AccumulationBuffer->SetScalarType(VTK_UNSIGNED_SHORT);
+    this->AccumulationBuffer->SetUpdateExtent(this->OutputExtent);
+    this->AccumulationBuffer->SetWholeExtent(this->OutputExtent);
+    this->AccumulationBuffer->SetExtent(this->OutputExtent);
+    this->AccumulationBuffer->SetSpacing(this->OutputSpacing);
+    this->AccumulationBuffer->SetOrigin(this->OutputOrigin);
+    //this->AccumulationBuffer->AllocateScalars();
+    //this->AccumulationBuffer->Update();
+    }
   */ 
 
-	this->Compounding = comp;
+  this->Compounding = comp;
 }
 
 
@@ -994,117 +994,117 @@ int vtkFreehandUltrasound2::ProcessRequest(vtkInformation* request,
 // parameter has changed.
 //----------------------------------------------------------------------------
 int vtkFreehandUltrasound2::RequestInformation(
-	vtkInformation* vtkNotUsed(request),
-	vtkInformationVector** vtkNotUsed(inInfo),
-	vtkInformationVector* outInfoVector)
+  vtkInformation* vtkNotUsed(request),
+  vtkInformationVector** vtkNotUsed(inInfo),
+  vtkInformationVector* outInfoVector)
 {
-	// to avoid conflict between the main application thread and the
-	// realtime reconstruction thread
-	if (this->ReconstructionThreadId == -1)
-	  {
+  // to avoid conflict between the main application thread and the
+  // realtime reconstruction thread
+  if (this->ReconstructionThreadId == -1)
+    {
 
     for (int phase = 0; phase < this->GetNumberOfOutputPorts(); phase++)
       {
 
-		  vtkInformation *outInfo = outInfoVector->GetInformationObject(phase);
-		  // would have been created by a call to REQUEST_DATA_OBJECT, presumably handled
-		  // by vtkImageAlgorithm
-		  vtkImageData *output = 
-			  dynamic_cast<vtkImageData *>(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+      vtkInformation *outInfo = outInfoVector->GetInformationObject(phase);
+      // would have been created by a call to REQUEST_DATA_OBJECT, presumably handled
+      // by vtkImageAlgorithm
+      vtkImageData *output = 
+        dynamic_cast<vtkImageData *>(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-		  // the whole extent, spacing, origin, PIPELINE scalar type (ex double; until REQUEST_DATA
-		  // is called, the actual scalar type may be different) and number of scalar components of
-		  // the object created by the REQUEST_DATA_OBJECT call
-		  int oldwholeextent[6];
-		  vtkFloatingPointType oldspacing[3];
-		  vtkFloatingPointType oldorigin[3];
-		  int oldtype = output->GetScalarType();
-		  int oldncomponents = output->GetNumberOfScalarComponents();
-		  output->GetWholeExtent(oldwholeextent);
-		  output->GetSpacing(oldspacing);
-		  output->GetOrigin(oldorigin);
+      // the whole extent, spacing, origin, PIPELINE scalar type (ex double; until REQUEST_DATA
+      // is called, the actual scalar type may be different) and number of scalar components of
+      // the object created by the REQUEST_DATA_OBJECT call
+      int oldwholeextent[6];
+      vtkFloatingPointType oldspacing[3];
+      vtkFloatingPointType oldorigin[3];
+      int oldtype = output->GetScalarType();
+      int oldncomponents = output->GetNumberOfScalarComponents();
+      output->GetWholeExtent(oldwholeextent);
+      output->GetSpacing(oldspacing);
+      output->GetOrigin(oldorigin);
 
-		  // if we don't have a slice yet, then set the slice to be the output of the video source
-		  if (this->GetVideoSource())
-		    {
-			  if (this->GetSlice() == 0)
-			    {
-				  this->SetSlice(this->GetVideoSource()->GetOutput());
-			    } 
-		    } 
+      // if we don't have a slice yet, then set the slice to be the output of the video source
+      if (this->GetVideoSource())
+        {
+        if (this->GetSlice() == 0)
+          {
+          this->SetSlice(this->GetVideoSource()->GetOutput());
+          } 
+        } 
 
-		  // if we have a slice now...
-		  if (this->GetSlice())
-		    {
-			  // get the newest slice information - updating origin and spacing and extent from pipeline
-			  this->GetSlice()->UpdateInformation();
+      // if we have a slice now...
+      if (this->GetSlice())
+        {
+        // get the newest slice information - updating origin and spacing and extent from pipeline
+        this->GetSlice()->UpdateInformation();
 
-			  // for both the outInfo vtkInformation object and the data object associate with outInfo,
-			  // set the whole extent, spacing and origin to match those of this object, and the scalar
-			  // type and number of scalar components to match those of the slice
-			  vtkDataObject::SetPointDataActiveScalarInfo(outInfo,
-				  this->GetSlice()->GetScalarType(),
-				  this->GetSlice()->GetNumberOfScalarComponents()+1);
+        // for both the outInfo vtkInformation object and the data object associate with outInfo,
+        // set the whole extent, spacing and origin to match those of this object, and the scalar
+        // type and number of scalar components to match those of the slice
+        vtkDataObject::SetPointDataActiveScalarInfo(outInfo,
+          this->GetSlice()->GetScalarType(),
+          this->GetSlice()->GetNumberOfScalarComponents()+1);
 
-			  output->SetScalarType(this->GetSlice()->GetScalarType());
-			  output->SetNumberOfScalarComponents(this->GetSlice()->
-				  GetNumberOfScalarComponents()+1);
-			  outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), this->OutputExtent, 6);
-			  outInfo->Set(vtkDataObject::SPACING(), this->OutputSpacing, 3);
-			  outInfo->Set(vtkDataObject::ORIGIN(), this->OutputOrigin, 3);
-			  output->SetExtent(this->OutputExtent);
-			  output->SetWholeExtent(this->OutputExtent);
-			  output->SetSpacing(this->OutputSpacing);
-			  output->SetOrigin(this->OutputOrigin);
+        output->SetScalarType(this->GetSlice()->GetScalarType());
+        output->SetNumberOfScalarComponents(this->GetSlice()->
+          GetNumberOfScalarComponents()+1);
+        outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), this->OutputExtent, 6);
+        outInfo->Set(vtkDataObject::SPACING(), this->OutputSpacing, 3);
+        outInfo->Set(vtkDataObject::ORIGIN(), this->OutputOrigin, 3);
+        output->SetExtent(this->OutputExtent);
+        output->SetWholeExtent(this->OutputExtent);
+        output->SetSpacing(this->OutputSpacing);
+        output->SetOrigin(this->OutputOrigin);
 
-			  // if the output has changed, then we need to clear
-			  if (oldtype != output->GetScalarType() ||
-				  oldncomponents != output->GetNumberOfScalarComponents() ||
-				  oldwholeextent[0] != this->OutputExtent[0] ||
-				  oldwholeextent[1] != this->OutputExtent[1] ||
-				  oldwholeextent[2] != this->OutputExtent[2] ||
-				  oldwholeextent[3] != this->OutputExtent[3] ||
-				  oldwholeextent[4] != this->OutputExtent[4] ||
-				  oldwholeextent[5] != this->OutputExtent[5] ||
-				  oldspacing[0] != this->OutputSpacing[0] ||
-				  oldspacing[1] != this->OutputSpacing[1] ||
-				  oldspacing[2] != this->OutputSpacing[2] ||
-				  oldorigin[0] != this->OutputOrigin[0] ||
-				  oldorigin[1] != this->OutputOrigin[1] ||
-				  oldorigin[2] != this->OutputOrigin[2])
-			    {
-				  this->NeedsClear = 1;
-			    }
+        // if the output has changed, then we need to clear
+        if (oldtype != output->GetScalarType() ||
+          oldncomponents != output->GetNumberOfScalarComponents() ||
+          oldwholeextent[0] != this->OutputExtent[0] ||
+          oldwholeextent[1] != this->OutputExtent[1] ||
+          oldwholeextent[2] != this->OutputExtent[2] ||
+          oldwholeextent[3] != this->OutputExtent[3] ||
+          oldwholeextent[4] != this->OutputExtent[4] ||
+          oldwholeextent[5] != this->OutputExtent[5] ||
+          oldspacing[0] != this->OutputSpacing[0] ||
+          oldspacing[1] != this->OutputSpacing[1] ||
+          oldspacing[2] != this->OutputSpacing[2] ||
+          oldorigin[0] != this->OutputOrigin[0] ||
+          oldorigin[1] != this->OutputOrigin[1] ||
+          oldorigin[2] != this->OutputOrigin[2])
+          {
+          this->NeedsClear = 1;
+          }
 
-			  // if we are compounding, then adjust the accumulation buffer
-			  if (this->Compounding)
-			    {
-			    int *extent = this->AccumulationBuffers[phase]->GetExtent();
+        // if we are compounding, then adjust the accumulation buffer
+        if (this->Compounding)
+          {
+          int *extent = this->AccumulationBuffers[phase]->GetExtent();
           vtkImageData* accBuffer = this->AccumulationBuffers[phase];
-			    accBuffer->SetWholeExtent(this->OutputExtent);
-			    accBuffer->SetExtent(this->OutputExtent);
-			    accBuffer->SetSpacing(this->OutputSpacing);
-			    accBuffer->SetOrigin(this->OutputOrigin);
-			    accBuffer->SetScalarType(this->GetOutput(phase)->GetScalarType());
-			    accBuffer->SetUpdateExtent(this->OutputExtent);
-			    accBuffer->Update();
+          accBuffer->SetWholeExtent(this->OutputExtent);
+          accBuffer->SetExtent(this->OutputExtent);
+          accBuffer->SetSpacing(this->OutputSpacing);
+          accBuffer->SetOrigin(this->OutputOrigin);
+          accBuffer->SetScalarType(this->GetOutput(phase)->GetScalarType());
+          accBuffer->SetUpdateExtent(this->OutputExtent);
+          accBuffer->Update();
 
-			    // if the accumulation buffer has changed, we need to clear
-			    if (extent[0] != this->OutputExtent[0] ||
-				    extent[1] != this->OutputExtent[1] ||
-				    extent[2] != this->OutputExtent[2] ||
-				    extent[3] != this->OutputExtent[3] ||
-				    extent[4] != this->OutputExtent[4] ||
-				    extent[5] != this->OutputExtent[5])
-			      {
-				    this->NeedsClear = 1;
-			      }
+          // if the accumulation buffer has changed, we need to clear
+          if (extent[0] != this->OutputExtent[0] ||
+            extent[1] != this->OutputExtent[1] ||
+            extent[2] != this->OutputExtent[2] ||
+            extent[3] != this->OutputExtent[3] ||
+            extent[4] != this->OutputExtent[4] ||
+            extent[5] != this->OutputExtent[5])
+            {
+            this->NeedsClear = 1;
+            }
             
           }
-		    }
-	    }
+        }
+      }
     }
-	return 1;
+  return 1;
 }
 
 //----------------------------------------------------------------------------
@@ -1147,13 +1147,13 @@ void vtkFreehandUltrasound2::InternalExecuteInformation()
    
     // set up the output dimensions and info here
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),
-	         this->OutputExtent, 6);
+           this->OutputExtent, 6);
     outInfo->Set(vtkDataObject::SPACING(),
-	         this->OutputSpacing, 3);
+           this->OutputSpacing, 3);
     outInfo->Set(vtkDataObject::ORIGIN(),
-	         this->OutputOrigin, 3);
+           this->OutputOrigin, 3);
     output->SetScalarType(this->GetSlice()->GetScalarType());
-	  output->SetNumberOfScalarComponents(this->GetSlice()->GetNumberOfScalarComponents()+1);
+    output->SetNumberOfScalarComponents(this->GetSlice()->GetNumberOfScalarComponents()+1);
     output->SetExtent(this->OutputExtent);
     output->SetWholeExtent(this->OutputExtent);
     output->SetSpacing(this->OutputSpacing);
@@ -1175,7 +1175,7 @@ void vtkFreehandUltrasound2::InternalExecuteInformation()
       oldorigin[1] != this->OutputOrigin[1] ||
       oldorigin[2] != this->OutputOrigin[2])
       {
-	    this->NeedsClear = 1;
+      this->NeedsClear = 1;
       }
 
     // set up the accumulation buffer to be the same size as the
@@ -1239,8 +1239,8 @@ int  vtkFreehandUltrasound2::RequestUpdateExtent(
 // thinking that Execute has been called
 //----------------------------------------------------------------------------
 int vtkFreehandUltrasound2::RequestData(vtkInformation* request,
-				       vtkInformationVector **vtkNotUsed(inInfo),
-				       vtkInformationVector* outInfo)
+               vtkInformationVector **vtkNotUsed(inInfo),
+               vtkInformationVector* outInfo)
 {
   for (int phase = 0; phase < this->GetNumberOfOutputPorts(); phase++)
     {
@@ -1564,7 +1564,7 @@ template<class T>
 static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
                                                 double *outPoint,
                                                 double *outPoint1,
-												                        double *xAxis,
+                                                double *xAxis,
                                                 T *&inPtr, T *outPtr,
                                                 int *outExt, int *outInc,
                                                 int numscalars, 
@@ -1599,15 +1599,15 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       T *outPtr1 = outPtr + inc;
       // divide by outInc[0] to accomodate for the difference
       // in the number of scalar pointers between the output
-			// and the accumulation buffer
+      // and the accumulation buffer
       unsigned short *accPtr1 = accPtr + ((unsigned short)(inc/outInc[0]));
-	    unsigned short newa = *accPtr1 + ((unsigned short)(255)); 
-	    int i = numscalars;
+      unsigned short newa = *accPtr1 + ((unsigned short)(255)); 
+      int i = numscalars;
       do 
         {
         i--;
         *outPtr1 = ((*inPtr++)*255 + (*outPtr1)*(*accPtr1))/newa;
-		    outPtr1++;
+        outPtr1++;
         }
       while (i);
 
@@ -1650,9 +1650,9 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       do
         {
         i--;
-		    // copy the input pointer value into the output pointer (this is where the intensities get copied)
-		    *outPtr1++ = *inPtr++;
-		    }
+        // copy the input pointer value into the output pointer (this is where the intensities get copied)
+        *outPtr1++ = *inPtr++;
+        }
       while (i);
       *outPtr1 = 255;
       }
@@ -1702,7 +1702,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       T *outPtr1 = outPtr + inc;
       // divide by outInc[0] to accomodate for the difference
       // in the number of scalar pointers between the output
-			// and the accumulation buffer
+      // and the accumulation buffer
       unsigned short *accPtr1 = accPtr + ((unsigned short)(inc/outInc[0]));
       //TODO dies here
       unsigned short newa = *accPtr1 + ((unsigned short)(255));
@@ -1871,7 +1871,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
         outPtrTmp = outPtr+idx[j];
         accPtrTmp = accPtr+ ((unsigned short)(idx[j]/outInc[0]));
         f = fdx[j];
-		    r = F((*accPtrTmp)/255);
+        r = F((*accPtrTmp)/255);
         a = f + r;
 
         int i = numscalars;
@@ -1891,9 +1891,9 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
           {
           vtkUltraRound(a, *accPtrTmp);
           }
-		    }
+        }
       while (j);
-	    }
+      }
 
     // no compounding
     else 
@@ -1938,10 +1938,10 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
         *outPtrTmp = 255;
         }
       while (j);
-	  }
+    }
     return 1;
-	}
-	// if bounds check fails
+  }
+  // if bounds check fails
   return 0;
 }     
 
@@ -2426,264 +2426,264 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
 //----------------------------------------------------------------------------
 template <class F, class T>
 static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehand us
-									vtkImageData *outData, // the output volume
-									T *outPtr, // scalar pointer to the output volume over the output extent
-									unsigned short *accPtr, // scalar pointer to the accumulation buffer over the output extent
-									vtkImageData *inData, // input slice
-									T *inPtr, // scalar pointer to the input volume over the input slice extent
-									int inExt[6], // input slice extent (could have been split for threading)
-									F matrix[4][4], // index matrix, output indices -> input indices
-									int threadId) // current thread id
+                  vtkImageData *outData, // the output volume
+                  T *outPtr, // scalar pointer to the output volume over the output extent
+                  unsigned short *accPtr, // scalar pointer to the accumulation buffer over the output extent
+                  vtkImageData *inData, // input slice
+                  T *inPtr, // scalar pointer to the input volume over the input slice extent
+                  int inExt[6], // input slice extent (could have been split for threading)
+                  F matrix[4][4], // index matrix, output indices -> input indices
+                  int threadId) // current thread id
 {
-	int prevPixelCount = self->GetPixelCount();
+  int prevPixelCount = self->GetPixelCount();
 
-	// local variables
-	int id = 0;
-	int i, numscalars; // numscalars = number of scalar components in the input image
-	int idX, idY, idZ; // the x, y, and z pixel of the input image
-	int inIncX, inIncY, inIncZ; // increments for the input extent
-	int outExt[6]; // output extent
-	int outMax[3], outMin[3]; // the max and min values of the output extents -
-	// if outextent = (x0, x1, y0, y1, z0, z1), then
-	// outMax = (x1, y1, z1) and outMin = (x0, y0, z0)
-	int outInc[3]; // increments for the output extent
-	int clipExt[6];
-	unsigned long count = 0;
-	unsigned long target;
-	int r1,r2;
-	// outPoint0, outPoint1, outPoint is a fancy way of incremetally multiplying the input point by
-	// the index matrix to get the output point...  Outpoint is the result
-	F outPoint0[3]; // temp, see above
-	F outPoint1[3]; // temp, see above
-	F outPoint[3]; // this is the final output point, created using Output0 and Output1
-	F xAxis[3], yAxis[3], zAxis[3], origin[3]; // the index matrix (transform), broken up into axes and an origin
-	vtkFloatingPointType inSpacing[3],inOrigin[3]; // input spacing and origin
+  // local variables
+  int id = 0;
+  int i, numscalars; // numscalars = number of scalar components in the input image
+  int idX, idY, idZ; // the x, y, and z pixel of the input image
+  int inIncX, inIncY, inIncZ; // increments for the input extent
+  int outExt[6]; // output extent
+  int outMax[3], outMin[3]; // the max and min values of the output extents -
+  // if outextent = (x0, x1, y0, y1, z0, z1), then
+  // outMax = (x1, y1, z1) and outMin = (x0, y0, z0)
+  int outInc[3]; // increments for the output extent
+  int clipExt[6];
+  unsigned long count = 0;
+  unsigned long target;
+  int r1,r2;
+  // outPoint0, outPoint1, outPoint is a fancy way of incremetally multiplying the input point by
+  // the index matrix to get the output point...  Outpoint is the result
+  F outPoint0[3]; // temp, see above
+  F outPoint1[3]; // temp, see above
+  F outPoint[3]; // this is the final output point, created using Output0 and Output1
+  F xAxis[3], yAxis[3], zAxis[3], origin[3]; // the index matrix (transform), broken up into axes and an origin
+  vtkFloatingPointType inSpacing[3],inOrigin[3]; // input spacing and origin
 
-	// input spacing and origin
-	inData->GetSpacing(inSpacing);
-	inData->GetOrigin(inOrigin);
+  // input spacing and origin
+  inData->GetSpacing(inSpacing);
+  inData->GetOrigin(inOrigin);
 
-	// number of pixels in the x and y directions b/w the fan origin and the slice origin
-	double xf = (self->GetFanOrigin()[0]-inOrigin[0])/inSpacing[0];
-	double yf = (self->GetFanOrigin()[1]-inOrigin[1])/inSpacing[1];
+  // number of pixels in the x and y directions b/w the fan origin and the slice origin
+  double xf = (self->GetFanOrigin()[0]-inOrigin[0])/inSpacing[0];
+  double yf = (self->GetFanOrigin()[1]-inOrigin[1])/inSpacing[1];
 
-	if (self->GetFlipHorizontalOnOutput())
+  if (self->GetFlipHorizontalOnOutput())
     {
     yf = (double)self->GetNumberOfPixelsFromTipOfFanToBottomOfScreen();
     }
 
-	// fan depth squared
-	double d2 = self->GetFanDepth()*self->GetFanDepth();
-	// input spacing in the x and y directions
-	double xs = inSpacing[0];
-	double ys = inSpacing[1];
-	// tan of the left and right fan angles
-	double ml = tan(self->GetFanAngles()[0]*vtkMath::DoubleDegreesToRadians())/xs*ys;
-	double mr = tan(self->GetFanAngles()[1]*vtkMath::DoubleDegreesToRadians())/xs*ys;
-	// the tan of the right fan angle is always greater than the left one
-	if (ml > mr)
-	  {
-		double tmp = ml; ml = mr; mr = tmp;
-	  }
+  // fan depth squared
+  double d2 = self->GetFanDepth()*self->GetFanDepth();
+  // input spacing in the x and y directions
+  double xs = inSpacing[0];
+  double ys = inSpacing[1];
+  // tan of the left and right fan angles
+  double ml = tan(self->GetFanAngles()[0]*vtkMath::DoubleDegreesToRadians())/xs*ys;
+  double mr = tan(self->GetFanAngles()[1]*vtkMath::DoubleDegreesToRadians())/xs*ys;
+  // the tan of the right fan angle is always greater than the left one
+  if (ml > mr)
+    {
+    double tmp = ml; ml = mr; mr = tmp;
+    }
 
-	// get the clip rectangle as an extent
-	self->GetClipExtent(clipExt, inOrigin, inSpacing, inExt);
+  // get the clip rectangle as an extent
+  self->GetClipExtent(clipExt, inOrigin, inSpacing, inExt);
 
-	// find maximum output range
-	outData->GetExtent(outExt);
+  // find maximum output range
+  outData->GetExtent(outExt);
 
-	for (i = 0; i < 3; i++)
-	  {
-		outMin[i] = outExt[2*i];
-		outMax[i] = outExt[2*i+1];
-	  }
+  for (i = 0; i < 3; i++)
+    {
+    outMin[i] = outExt[2*i];
+    outMax[i] = outExt[2*i+1];
+    }
 
-	target = (unsigned long)
-		((inExt[5]-inExt[4]+1)*(inExt[3]-inExt[2]+1)/50.0);
-	target++;
+  target = (unsigned long)
+    ((inExt[5]-inExt[4]+1)*(inExt[3]-inExt[2]+1)/50.0);
+  target++;
 
-	int wExtent[6]; // output whole extent
-	outData->GetWholeExtent(wExtent);
-	outData->GetIncrements(outInc);
-	inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-	numscalars = inData->GetNumberOfScalarComponents();
+  int wExtent[6]; // output whole extent
+  outData->GetWholeExtent(wExtent);
+  outData->GetIncrements(outInc);
+  inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+  numscalars = inData->GetNumberOfScalarComponents();
 
-	// break matrix into a set of axes plus an origin
-	// (this allows us to calculate the transform Incrementally)
-	for (i = 0; i < 3; i++)
-	  {
-		xAxis[i]  = matrix[i][0]; // remember that the matrix is the indexMatrix, and transforms
-		yAxis[i]  = matrix[i][1];	// output pixels to input pixels
-		zAxis[i]  = matrix[i][2];
-		origin[i] = matrix[i][3];
-	  }
+  // break matrix into a set of axes plus an origin
+  // (this allows us to calculate the transform Incrementally)
+  for (i = 0; i < 3; i++)
+    {
+    xAxis[i]  = matrix[i][0]; // remember that the matrix is the indexMatrix, and transforms
+    yAxis[i]  = matrix[i][1];  // output pixels to input pixels
+    zAxis[i]  = matrix[i][2];
+    origin[i] = matrix[i][3];
+    }
 
   static int firstFrame = 1;
 
-	// Loop through INPUT pixels - remember this is a 3D cube represented by the input extent
-	for (idZ = inExt[4]; idZ <= inExt[5]; idZ++) // for each image...
-	  {
-		outPoint0[0] = origin[0]+idZ*zAxis[0]; // incremental transform
-		outPoint0[1] = origin[1]+idZ*zAxis[1];
-		outPoint0[2] = origin[2]+idZ*zAxis[2];
+  // Loop through INPUT pixels - remember this is a 3D cube represented by the input extent
+  for (idZ = inExt[4]; idZ <= inExt[5]; idZ++) // for each image...
+    {
+    outPoint0[0] = origin[0]+idZ*zAxis[0]; // incremental transform
+    outPoint0[1] = origin[1]+idZ*zAxis[1];
+    outPoint0[2] = origin[2]+idZ*zAxis[2];
 
-		for (idY = inExt[2]; idY <= inExt[3]; idY++) // for each horizontal line in the image...
-		  {
+    for (idY = inExt[2]; idY <= inExt[3]; idY++) // for each horizontal line in the image...
+      {
 
-			//TODO implement this for other options
-			if (self->GetFlipHorizontalOnOutput())
-			  {
+      //TODO implement this for other options
+      if (self->GetFlipHorizontalOnOutput())
+        {
         int dist = self->GetNumberOfPixelsFromTipOfFanToBottomOfScreen();
-			  outPoint1[0] = outPoint0[0]+(dist-idY)*yAxis[0]; // incremental transform
-			  outPoint1[1] = outPoint0[1]+(dist-idY)*yAxis[1];
-			  outPoint1[2] = outPoint0[2]+(dist-idY)*yAxis[2];
-			  }
-			else
-			  {
-			  outPoint1[0] = outPoint0[0]+idY*yAxis[0]; // incremental transform
-			  outPoint1[1] = outPoint0[1]+idY*yAxis[1];
-			  outPoint1[2] = outPoint0[2]+idY*yAxis[2];
-			  }
+        outPoint1[0] = outPoint0[0]+(dist-idY)*yAxis[0]; // incremental transform
+        outPoint1[1] = outPoint0[1]+(dist-idY)*yAxis[1];
+        outPoint1[2] = outPoint0[2]+(dist-idY)*yAxis[2];
+        }
+      else
+        {
+        outPoint1[0] = outPoint0[0]+idY*yAxis[0]; // incremental transform
+        outPoint1[1] = outPoint0[1]+idY*yAxis[1];
+        outPoint1[2] = outPoint0[2]+idY*yAxis[2];
+        }
 
-			if (!id)
-			  {
-				if (!(count%target)) 
-				  {
-					self->UpdateProgress(count/(50.0*target));  // progress between 0 and 1
-				  }
-				count++;
-			  }
+      if (!id)
+        {
+        if (!(count%target)) 
+          {
+          self->UpdateProgress(count/(50.0*target));  // progress between 0 and 1
+          }
+        count++;
+        }
 
-			// find intersections of x raster line with the output extent
+      // find intersections of x raster line with the output extent
 
       // this only changes r1 and r2
-			vtkUltraFindExtent(r1,r2,outPoint1,xAxis,outMin,outMax,inExt);
+      vtkUltraFindExtent(r1,r2,outPoint1,xAxis,outMin,outMax,inExt);
 
-			// next, handle the 'fan' shape of the input
-			double y = (yf - idY);;
-			if (ys < 0)
-			  {
-				y = -y;
-			  }
+      // next, handle the 'fan' shape of the input
+      double y = (yf - idY);;
+      if (ys < 0)
+        {
+        y = -y;
+        }
 
       // first, check the angle range of the fan - choose r1 and r2 based
       // on the triangle that the fan makes from the fan origin to the bottom
       // line of the video image
-			if (!(ml == 0 && mr == 0))
-			  {
-				// equivalent to: r1 < vtkUltraCeil(ml*y + xf + 1)
+      if (!(ml == 0 && mr == 0))
+        {
+        // equivalent to: r1 < vtkUltraCeil(ml*y + xf + 1)
         // this is what the radius would be based on tan(fanAngle)
-				if (r1 < -vtkUltraFloor(-(ml*y + xf + 1)))
-				  {
-					r1 = -vtkUltraFloor(-(ml*y + xf + 1));
-				  }
-				if (r2 > vtkUltraFloor(mr*y + xf - 1))
-				  {
-					r2 = vtkUltraFloor(mr*y + xf - 1);
-				  }
+        if (r1 < -vtkUltraFloor(-(ml*y + xf + 1)))
+          {
+          r1 = -vtkUltraFloor(-(ml*y + xf + 1));
+          }
+        if (r2 > vtkUltraFloor(mr*y + xf - 1))
+          {
+          r2 = vtkUltraFloor(mr*y + xf - 1);
+          }
 
-				// next, check the radius of the fan - crop the triangle to the fan
+        // next, check the radius of the fan - crop the triangle to the fan
         // depth
-				double dx = (d2 - (y*y)*(ys*ys))/(xs*xs);
+        double dx = (d2 - (y*y)*(ys*ys))/(xs*xs);
 
         // if we are outside the fan's radius, ex at the bottom lines
-				if (dx < 0)
-				  {
-					r1 = inExt[0];
-					r2 = inExt[0]-1;
-				  }
+        if (dx < 0)
+          {
+          r1 = inExt[0];
+          r2 = inExt[0]-1;
+          }
         // if we are within the fan's radius, we have to adjust if we are in
         // the "ellipsoidal" (bottom) part of the fan instead of the top
         // "triangular" part
-				else
-				  {
-					dx = sqrt(dx);
+        else
+          {
+          dx = sqrt(dx);
           // this is what r1 would be if we calculated it based on the
           // pythagorean theorem
-					if (r1 < -vtkUltraFloor(-(xf - dx + 1)))
-					  {
-						r1 = -vtkUltraFloor(-(xf - dx + 1));
-					  }
-					if (r2 > vtkUltraFloor(xf + dx - 1))
-					  {
-						r2 = vtkUltraFloor(xf + dx - 1);
-					  }
-				  }
-			  }
+          if (r1 < -vtkUltraFloor(-(xf - dx + 1)))
+            {
+            r1 = -vtkUltraFloor(-(xf - dx + 1));
+            }
+          if (r2 > vtkUltraFloor(xf + dx - 1))
+            {
+            r2 = vtkUltraFloor(xf + dx - 1);
+            }
+          }
+        }
 
-			// bound to the ultrasound clip rectangle
-			if (r1 < clipExt[0])
-			  {
-				r1 = clipExt[0];
-			  }
-			if (r2 > clipExt[1])
-			  {
-				r2 = clipExt[1];
-			  }
+      // bound to the ultrasound clip rectangle
+      if (r1 < clipExt[0])
+        {
+        r1 = clipExt[0];
+        }
+      if (r2 > clipExt[1])
+        {
+        r2 = clipExt[1];
+        }
 
-			if (r1 > r2)
-			  {
-				r1 = inExt[0];
-				r2 = inExt[0]-1;
-			  }
+      if (r1 > r2)
+        {
+        r1 = inExt[0];
+        r2 = inExt[0]-1;
+        }
 
-			// skip the portion of the slice to the left of the fan
-			for (idX = inExt[0]; idX < r1; idX++)
-			  {
-				inPtr += numscalars;
-			  }
+      // skip the portion of the slice to the left of the fan
+      for (idX = inExt[0]; idX < r1; idX++)
+        {
+        inPtr += numscalars;
+        }
 
       // multiplying the input point by the transform will give you fractional pixels,
       // so we need interpolation
 
-			// interpolating linearly (code 1)
-			if (self->GetInterpolationMode() == VTK_FREEHAND_LINEAR)
-			  { 
+      // interpolating linearly (code 1)
+      if (self->GetInterpolationMode() == VTK_FREEHAND_LINEAR)
+        { 
 
-				for (idX = r1; idX <= r2; idX++) // for all of the x pixels within the fan
-				  {
-					//TODO implement this for other options
-					if (self->GetFlipVerticalOnOutput())
-					  {
-					  outPoint[0] = outPoint1[0] + (r1+r2-idX)*xAxis[0];
-					  outPoint[1] = outPoint1[1] + (r1+r2-idX)*xAxis[1];
-					  outPoint[2] = outPoint1[2] + (r1+r2-idX)*xAxis[2];
-					  }
-					else
-					  {
-					  outPoint[0] = outPoint1[0] + idX*xAxis[0];
-					  outPoint[1] = outPoint1[1] + idX*xAxis[1];
-					  outPoint[2] = outPoint1[2] + idX*xAxis[2];
-					  }
+        for (idX = r1; idX <= r2; idX++) // for all of the x pixels within the fan
+          {
+          //TODO implement this for other options
+          if (self->GetFlipVerticalOnOutput())
+            {
+            outPoint[0] = outPoint1[0] + (r1+r2-idX)*xAxis[0];
+            outPoint[1] = outPoint1[1] + (r1+r2-idX)*xAxis[1];
+            outPoint[2] = outPoint1[2] + (r1+r2-idX)*xAxis[2];
+            }
+          else
+            {
+            outPoint[0] = outPoint1[0] + idX*xAxis[0];
+            outPoint[1] = outPoint1[1] + idX*xAxis[1];
+            outPoint[2] = outPoint1[2] + idX*xAxis[2];
+            }
 
-					int hit = vtkTrilinearInterpolation(outPoint, inPtr, outPtr, accPtr, 
-						numscalars, outExt, outInc); // hit is either 1 or 0
+          int hit = vtkTrilinearInterpolation(outPoint, inPtr, outPtr, accPtr, 
+            numscalars, outExt, outInc); // hit is either 1 or 0
 
-					inPtr += numscalars; // go to the next x pixel
-					self->IncrementPixelCount(threadId, hit);
-				  }
-			  }
+          inPtr += numscalars; // go to the next x pixel
+          self->IncrementPixelCount(threadId, hit);
+          }
+        }
 
-			// interpolating with nearest neighbor (code 0)
-			else 
-			  {
-				vtkFreehand2OptimizedNNHelper(r1, r2, outPoint, outPoint1, xAxis, 
-					inPtr, outPtr, outExt, outInc,
-					numscalars, accPtr);
+      // interpolating with nearest neighbor (code 0)
+      else 
+        {
+        vtkFreehand2OptimizedNNHelper(r1, r2, outPoint, outPoint1, xAxis, 
+          inPtr, outPtr, outExt, outInc,
+          numscalars, accPtr);
         // we added all the pixels between r1 and r2, so increment our count of the number of pixels added
-				self->IncrementPixelCount(threadId, r2-r1+1); 
-			  }
+        self->IncrementPixelCount(threadId, r2-r1+1); 
+        }
 
-			// skip the portion of the slice to the right of the fan
-			for (idX = r2+1; idX <= inExt[1]; idX++)
-			  {
-				inPtr += numscalars;
-			  }
+      // skip the portion of the slice to the right of the fan
+      for (idX = r2+1; idX <= inExt[1]; idX++)
+        {
+        inPtr += numscalars;
+        }
 
-			inPtr += inIncY; // move to the next line
-		  }
-		inPtr += inIncZ; // move to the next image
-	  }
+      inPtr += inIncY; // move to the next line
+      }
+    inPtr += inIncZ; // move to the next image
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -2694,9 +2694,9 @@ static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehan
 // function for the regions data types.
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input data
-						 vtkImageData *outData, // output data
-						 int inExt[6], // input extent (could be split for this thread)
-						 int threadId, // current thread id
+             vtkImageData *outData, // output data
+             int inExt[6], // input extent (could be split for this thread)
+             int threadId, // current thread id
              int phase) // phase for accumulation buffer
 {
 
@@ -2725,8 +2725,8 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
   if (inData->GetScalarType() != outData->GetScalarType())
     {
     vtkErrorMacro(<< "OptimizedInsertSlice: input ScalarType, " 
-		  << inData->GetScalarType()
-		  << ", must match out ScalarType "<<outData->GetScalarType());
+      << inData->GetScalarType()
+      << ", must match out ScalarType "<<outData->GetScalarType());
     return;
     }
 
@@ -2755,23 +2755,23 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
 
     switch (inData->GetScalarType())
       {
-	    case VTK_SHORT:
-		    vtkOptimizedInsertSlice(this, outData, (short *)(outPtr), 
+      case VTK_SHORT:
+        vtkOptimizedInsertSlice(this, outData, (short *)(outPtr), 
                                 (unsigned short *)(accPtr), 
                                 inData, (short *)(inPtr), 
-								                inExt, newmatrix, threadId);
+                                inExt, newmatrix, threadId);
         break;
-	    case VTK_UNSIGNED_SHORT:
+      case VTK_UNSIGNED_SHORT:
         vtkOptimizedInsertSlice(this,outData,(unsigned short *)(outPtr),
                                 (unsigned short *)(accPtr), 
                                 inData, (unsigned short *)(inPtr), 
-								                inExt, newmatrix, threadId);
+                                inExt, newmatrix, threadId);
         break;
       case VTK_UNSIGNED_CHAR:
         vtkOptimizedInsertSlice(this, outData,(unsigned char *)(outPtr),
                                 (unsigned short *)(accPtr), 
                                 inData, (unsigned char *)(inPtr), 
-								                inExt, newmatrix, threadId);
+                                inExt, newmatrix, threadId);
         break;
       default:
         vtkErrorMacro(<< "OptimizedInsertSlice: Unknown input ScalarType");
@@ -2841,16 +2841,16 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
 // split - from 1 to "total".  If 1 is returned, the extent cannot be split.
 //----------------------------------------------------------------------------
 int vtkFreehandUltrasound2::SplitSliceExtent(int splitExt[6], // the extent of this split
-					    int startExt[6],  //the original extent to be split up
-					    int num, // current thread id
-					    int total) // the maximum number of threads (pieces)
+              int startExt[6],  //the original extent to be split up
+              int num, // current thread id
+              int total) // the maximum number of threads (pieces)
 {
   int splitAxis; // the axis we should split along
   int min, max; // the min and max indices of the axis of interest
 
   // prints where we are, the starting extent, num and total for debugging
    vtkDebugMacro("SplitSliceExtent: ( " << startExt[0] << ", " << startExt[1]
-		<< ", "
+    << ", "
                 << startExt[2] << ", " << startExt[3] << ", "
                 << startExt[4] << ", " << startExt[5] << "), " 
                 << num << " of " << total);
@@ -2934,7 +2934,7 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedExecute( void *arg )
   if (threadId < total)
     {
     str->Filter->ThreadedSliceExecute(str->Input, str->Output,
-				      splitExt, threadId, str->Phase);
+              splitExt, threadId, str->Phase);
     }
   // else
   //   {
@@ -3001,7 +3001,7 @@ void vtkFreehandUltrasound2::OptimizedInsertSlice(int phase)
 {
   if (this->ReconstructionThreadId == -1)
     {
-		this->UpdateInformation();
+    this->UpdateInformation();
     }
   if (this->NeedsClear)
     {
@@ -3037,12 +3037,12 @@ void vtkFreehandUltrasound2::OptimizedInsertSlice(int phase)
     {
     int clipExt[6];
     this->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),
-			inData->GetWholeExtent());
+      inData->GetWholeExtent());
     inData->SetUpdateExtentToWholeExtent();
     inData->Update();
     }
   this->ActiveFlagLock->Unlock();
-	this->MultiThread(inData, outData, phase);
+  this->MultiThread(inData, outData, phase);
   this->Modified();
 }
 
@@ -3061,10 +3061,10 @@ void vtkFreehandUltrasound2::OptimizedInsertSlice(int phase)
 template <class T>
 static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
                                              vtkImageData *outData,
-					                                   T *outPtr,
+                                             T *outPtr,
                                              unsigned short *accPtr,
                                              vtkImageData *inData,
-					                                   T *inPtr,
+                                             T *inPtr,
                                              int inExt[6],
                                              vtkMatrix4x4 *matrix)
 {
@@ -3081,7 +3081,7 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
 
   // pointer to the nearest neighbor or trilinear interpolation function
   int (*interpolate)(double *point, T *inPtr, T *outPtr,
-		     unsigned short *accPtr, int numscalars, int outExt[6], int outInc[3]);
+         unsigned short *accPtr, int numscalars, int outExt[6], int outInc[3]);
   
   // slice spacing and origin
   inData->GetSpacing(inSpacing);
@@ -3122,18 +3122,18 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
     {
       for (idY = inExt[2]; idY <= inExt[3]; idY++)
       {
-	      for (idX = inExt[0]; idX <= inExt[1]; idX++)
+        for (idX = inExt[0]; idX <= inExt[1]; idX++)
         {
 
-	      // if we are within the current clip extent
+        // if we are within the current clip extent
         if (idX >= clipExt[0] && idX <= clipExt[1] && 
-	          idY >= clipExt[2] && idY <= clipExt[3])
+            idY >= clipExt[2] && idY <= clipExt[3])
           {
-	        // current x/y index minus num pixels in the x/y direction b/w the fan origin and the slice origin
-	        double x = (idX-xf);
+          // current x/y index minus num pixels in the x/y direction b/w the fan origin and the slice origin
+          double x = (idX-xf);
           double y = (idY-yf);
 
-	        // if we are within the fan
+          // if we are within the fan
           if (((ml == 0 && mr == 0) || y > 0 &&
               ((x*x)*(xs*xs)+(y*y)*(ys*ys) < d2 && x/y >= ml && x/y <= mr)))
             {  
@@ -3142,22 +3142,22 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
             inPoint[2] = idZ;
             inPoint[3] = 1;
 
-	          //recall matrix = the index matrix --> transform voxels in the slice to indices in the output
+            //recall matrix = the index matrix --> transform voxels in the slice to indices in the output
             //formula: outPoint = matrix * inPoint
             matrix->MultiplyPoint(inPoint,outPoint);
             
-	          // deal with w (homogeneous transform) if the transform was a perspective transform
+            // deal with w (homogeneous transform) if the transform was a perspective transform
             outPoint[0] /= outPoint[3]; 
             outPoint[1] /= outPoint[3]; 
             outPoint[2] /= outPoint[3];
             outPoint[3] = 1;
         
-	          // interpolation functions return 1 if the interpolation was successful, 0 otherwise
+            // interpolation functions return 1 if the interpolation was successful, 0 otherwise
             int hit = interpolate(outPoint, inPtr, outPtr, accPtr, numscalars, 
                         outExt, outInc);
-	    
-	          // increment the number of pixels inserted
-	          self->IncrementPixelCount(0, hit);
+      
+            // increment the number of pixels inserted
+            self->IncrementPixelCount(0, hit);
             }
           }
 
@@ -3365,7 +3365,7 @@ vtkMatrix4x4 *vtkFreehandUltrasound2::GetIndexMatrix(int phase)
     {
     if (this->SliceAxes)
       {
-		  // cutting this out prevents the transform from being applied
+      // cutting this out prevents the transform from being applied
       transform->SetMatrix(this->GetSliceAxes());
       }
 
@@ -3427,7 +3427,7 @@ vtkMatrix4x4 *vtkFreehandUltrasound2::GetIndexMatrix(int phase)
     outMatrix->Element[i][3] = -outOrigin[i]/outSpacing[i];
     }
 
-	// outMatrix * (sliceTransform * sliceAxes) * inMatrix
+  // outMatrix * (sliceTransform * sliceAxes) * inMatrix
   if (!isIdentity)
     {
     transform->PostMultiply();
@@ -3478,7 +3478,7 @@ void  vtkFreehandUltrasound2::IncrementPixelCount(int threadId, int increment)
 int  vtkFreehandUltrasound2::GetPixelCount()
 {
   return ( this->PixelCount[0] + this->PixelCount[1] +
-	   this->PixelCount[2] + this->PixelCount[3] );
+     this->PixelCount[2] + this->PixelCount[3] );
 }
 
 //----------------------------------------------------------------------------
@@ -3507,12 +3507,12 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
   // the tracker tool provides the position of each inserted slice
   if (!self->GetTrackerTool())
     {
-	  cout << "Couldn't find tracker tool " << endl;
+    cout << "Couldn't find tracker tool " << endl;
     return NULL;
     }
   else
     {
-	  cout << "Found Tracker Tool"<<endl;
+    cout << "Found Tracker Tool"<<endl;
     }
 
   vtkMatrix4x4 *matrix = self->GetSliceAxes();
@@ -3533,20 +3533,20 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
     while (lastcurrtime == 0 || currtime == lastcurrtime)
       {
       int clipExt[6];
-	    self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),
-			  inData->GetWholeExtent());
+      self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),
+        inData->GetWholeExtent());
       // TODO 3DPanoramicVolumeReconstructor has SetUpdateExtent(clipExt) instead of
       // SetUpdateExtentToWholeExtent()
       inData->SetUpdateExtentToWholeExtent();
       inData->Update();
-	    if (self->GetCompounding())
-	      {
+      if (self->GetCompounding())
+        {
         for (int j = 0; j < numOutputVolumes; j++)
           {
-		      self->GetAccumulationBuffer(j)->SetUpdateExtentToWholeExtent();
-		      self->GetAccumulationBuffer(j)->Update();
+          self->GetAccumulationBuffer(j)->SetUpdateExtentToWholeExtent();
+          self->GetAccumulationBuffer(j)->Update();
           }
-	      }
+        }
 
       lastcurrtime = currtime;
       currtime = video->GetFrameTimeStamp();
@@ -3554,8 +3554,8 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       double sleepuntil = currtime + 0.010;
       if (sleepuntil > timenow)
         {
-		    vtkThreadSleep(data, sleepuntil);
-	      }
+        vtkThreadSleep(data, sleepuntil);
+        }
       }
     }
 
@@ -3599,27 +3599,27 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
 
     if (!discard)
       {
-      self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),	inData->GetWholeExtent());
+      self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),  inData->GetWholeExtent());
       inData->SetUpdateExtentToWholeExtent();
       inData->Update();
       }
     else
       {
-      self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),	inData->GetWholeExtent());
+      self->GetClipExtent(clipExt, inData->GetOrigin(), inData->GetSpacing(),  inData->GetWholeExtent());
       self->GetSliceBuffer(phase)->SetUpdateExtent(inData->GetWholeExtent());
       inData->Update();
       }
 
     // get the timestamp for the video frame data
-	  if (video)
+    if (video)
       {
       currtime = video->GetFrameTimeStamp();
       timestamp = currtime - videolag;
-	    }
+      }
 
-	  if (starttime == 0)
+    if (starttime == 0)
       {
-		  starttime = timestamp;
+      starttime = timestamp;
       }
 
     // Get the tracking matrix, using videolag if it's nonzero
@@ -3634,10 +3634,10 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       {
       buffer->GetMatrix(matrix, 0);
       flags = buffer->GetFlags(0);
-	    if (!video)
+      if (!video)
         {
-		    currtime = buffer->GetTimeStamp(0);
-	      }
+        currtime = buffer->GetTimeStamp(0);
+        }
       }
     buffer->Unlock();
 
@@ -3646,7 +3646,7 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       printf("Overflowing tracker buffer!\n");
       }
 
-	  // get the rotation
+    // get the rotation
     if (rotating)
       {
       clipper->SetInput(inData);
@@ -3657,8 +3657,8 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       // ignore rotations of -1 or rotation differences greater than 20
       if (rot > 0 && abs(self->GetPreviousFanRotation() - rot) < 20)
         {
-	      self->SetPreviousFanRotation(self->GetFanRotation());
-	      self->SetFanRotation(rot);
+        self->SetPreviousFanRotation(self->GetFanRotation());
+        self->SetFanRotation(rot);
         }
       else
         {
@@ -3668,13 +3668,13 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
 
     // if we are not rotating, then fan rotation and previous fan rotation are zero
 
-	  // now use the rotation to change the SliceTransform (vtkTransform)
+    // now use the rotation to change the SliceTransform (vtkTransform)
     vtkMatrix4x4::Invert(matrix, sliceAxesInverseMatrix);
-	  if (self->GetSliceTransform())
-	    {
-		    // TODO the code assumes the image is flipped
-		    if (self->GetFanRotation() != self->GetPreviousFanRotation())
-		    {
+    if (self->GetSliceTransform())
+      {
+        // TODO the code assumes the image is flipped
+        if (self->GetFanRotation() != self->GetPreviousFanRotation())
+        {
           tempTransform = (vtkTransform *) (self->GetSliceTransform());
           tempTransform->Identity();
           tempTransform->RotateY(self->GetFanRotation());
@@ -3683,8 +3683,8 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
           tempTransform->Concatenate(matrix);
           tempTransform->PreMultiply();
           tempTransform->Concatenate(sliceAxesInverseMatrix);
-		    }
-	    }
+        }
+      }
 
     // sleep until the next video frame if we don't have an updated time
     if (currtime == lastcurrtime && self->RealTimeReconstruction)
@@ -3694,11 +3694,11 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       if (sleepuntil > timenow)
         {
         // return if abort occurred during sleep
-		    if (vtkThreadSleep(data, sleepuntil) == 0)
+        if (vtkThreadSleep(data, sleepuntil) == 0)
           {
-			    return NULL;
-		      }
-	      }
+          return NULL;
+          }
+        }
       }
     // sleep until the next video frame if tool is not tracking properly
     else if (flags & (TR_MISSING | TR_OUT_OF_VIEW))
@@ -3709,12 +3709,12 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       if (sleepuntil > timenow)
         {
         // return if abort occurred during sleep
-		    if (vtkThreadSleep(data, sleepuntil) == 0)
+        if (vtkThreadSleep(data, sleepuntil) == 0)
           {
-			    return NULL;
-		      }
-	      }
-	    }
+          return NULL;
+          }
+        }
+      }
     // do the reconstruction
     else
       {
@@ -3803,22 +3803,22 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
           }
         }
 
-		  // get current reconstruction rate over last 10 updates
-		  double tmptime = currtime;
+      // get current reconstruction rate over last 10 updates
+      double tmptime = currtime;
 
       // calculate frame rate using computer clock, not timestamps
-		  if (!self->RealTimeReconstruction)
+      if (!self->RealTimeReconstruction)
         { 
-			  tmptime = vtkTimerLog::GetUniversalTime();
-		    }
-		  double difftime = tmptime - prevtimes[i%10];
-		  prevtimes[i%10] = tmptime;
-		  if (i > 10 && difftime != 0)
+        tmptime = vtkTimerLog::GetUniversalTime();
+        }
+      double difftime = tmptime - prevtimes[i%10];
+      prevtimes[i%10] = tmptime;
+      if (i > 10 && difftime != 0)
         {
-			  self->ReconstructionRate = (10.0/difftime);
-		    }
-		  i++;
-	    }
+        self->ReconstructionRate = (10.0/difftime);
+        }
+      i++;
+      }
 
     // check to see if we are being told to quit 
     int activeFlag = *(data->ActiveFlag);
@@ -3835,12 +3835,12 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
 
       if (video)
         {
-		    if (--self->ReconstructionFrameCount == 0)
+        if (--self->ReconstructionFrameCount == 0)
           {
-			    return NULL;
-		      }
-		    video->Seek(1);
-	      }
+          return NULL;
+          }
+        video->Seek(1);
+        }
       }
     }
 }
@@ -3898,8 +3898,8 @@ void vtkFreehandUltrasound2::StartRealTimeReconstruction()
     //this->ActiveFlagLock->Lock(); // TODO needed?
     this->ReconstructionThreadId = \
       this->Threader->SpawnThread((vtkThreadFunctionType)\
-				  &vtkReconstructionThread,
-				  this);
+          &vtkReconstructionThread,
+          this);
     //this->ActiveFlagLock->Unlock(); // TODO needed?
     }
 }
@@ -3909,27 +3909,27 @@ void vtkFreehandUltrasound2::StartRealTimeReconstruction()
 // Stop the reconstruction started with StartRealTimeReconstruction
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::StopRealTimeReconstruction()
-{	
+{  
   // if a reconstruction is currently running
   if (this->ReconstructionThreadId != -1)
     {
-	  this->ActiveFlagLock->Lock();
-	  cout << "Thread : " << this->ReconstructionThreadId <<" should terminate"<<endl;
-	  int killingThread = this->ReconstructionThreadId;
-	  Sleep(2000);
-	  this->Threader->TerminateThread(killingThread);
-	  cout << "Thread : " << this->ReconstructionThreadId <<" terminated"<<endl;
-	  this->ReconstructionThreadId = -1;
-	  this->ActiveFlagLock->Unlock();
-	  if (this->TrackerTool)
-	    {
-	      // the vtkTrackerBuffer should be locked before changing or
-	      // accessing the data in the buffer if the buffer is being used from
-	      // multiple threads
-	      this->TrackerTool->GetBuffer()->Lock();
-	      this->TrackerBuffer->DeepCopy(this->TrackerTool->GetBuffer());
-	      this->TrackerTool->GetBuffer()->Unlock();
-	    }
+    this->ActiveFlagLock->Lock();
+    cout << "Thread : " << this->ReconstructionThreadId <<" should terminate"<<endl;
+    int killingThread = this->ReconstructionThreadId;
+    Sleep(2000);
+    this->Threader->TerminateThread(killingThread);
+    cout << "Thread : " << this->ReconstructionThreadId <<" terminated"<<endl;
+    this->ReconstructionThreadId = -1;
+    this->ActiveFlagLock->Unlock();
+    if (this->TrackerTool)
+      {
+        // the vtkTrackerBuffer should be locked before changing or
+        // accessing the data in the buffer if the buffer is being used from
+        // multiple threads
+        this->TrackerTool->GetBuffer()->Lock();
+        this->TrackerBuffer->DeepCopy(this->TrackerTool->GetBuffer());
+        this->TrackerTool->GetBuffer()->Unlock();
+      }
     }
 }
 
@@ -3974,11 +3974,11 @@ void vtkFreehandUltrasound2::StartReconstruction(int frames)
       {
       this->GetOutput(phase)->Update();
       }
-	
+  
     this->ReconstructionThreadId = \
       this->Threader->SpawnThread((vtkThreadFunctionType)\
-				  &vtkReconstructionThread,
-				  this);
+          &vtkReconstructionThread,
+          this);
     }
 }
 
@@ -4015,63 +4015,63 @@ int vtkFreehandUltrasound2::StopReconstruction()
 //----------------------------------------------------------------------------
 int vtkFreehandUltrasound2::GetFanRepresentation (vtkImageThreshold* threshold, int array[12])
 {
-	int list[6];
-	int B = 0;
-	int W = 1;
-	int result = -1;
+  int list[6];
+  int B = 0;
+  int W = 1;
+  int result = -1;
 
-	for (int i = 0; i < 6; i++)
-	  {
-		list[i] = threshold->GetOutput()->GetScalarComponentAsFloat(array[2*i], array[2*i+1],0,0);
-	  }
+  for (int i = 0; i < 6; i++)
+    {
+    list[i] = threshold->GetOutput()->GetScalarComponentAsFloat(array[2*i], array[2*i+1],0,0);
+    }
 
   if ((list[0] == B) && (list[1] == W) && (list[2] == W) && (list[3] == B) && (list[4] == W) && (list[5] == W))
-	  {
+    {
     result = 0;
-	  }
-	else if ((list[0] == W) && (list[1] == B) && (list[2] == W) && (list[3] == W) && (list[4] == B) && (list[5] == B))
-	  {
+    }
+  else if ((list[0] == W) && (list[1] == B) && (list[2] == W) && (list[3] == W) && (list[4] == B) && (list[5] == B))
+    {
     result = 1;  
-	  }
-	else if ((list[0] == B) && (list[1] == W) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == B))
-	  {
+    }
+  else if ((list[0] == B) && (list[1] == W) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == B))
+    {
     result = 2;
-	  }
-	else if ((list[0] == B) && (list[1] == B) && (list[2] == W) && (list[3] == B) && (list[4] == B) && (list[5] == W))
-	  {
+    }
+  else if ((list[0] == B) && (list[1] == B) && (list[2] == W) && (list[3] == B) && (list[4] == B) && (list[5] == W))
+    {
     result = 3;
-	  }
-	else if ((list[0] == W) && (list[1] == W) && (list[2] == W) && (list[3] == W) && (list[4] == W) && (list[5] == W))
-	  {    
-		result = 4;
-	  }
-	else if ((list[0] == B) && (list[1] == B) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == W))
-	  {
+    }
+  else if ((list[0] == W) && (list[1] == W) && (list[2] == W) && (list[3] == W) && (list[4] == W) && (list[5] == W))
+    {    
+    result = 4;
+    }
+  else if ((list[0] == B) && (list[1] == B) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == W))
+    {
     result = 5;
-	  }
+    }
   else if ((list[0] == W) && (list[1] == B) && (list[2] == B) && (list[3] == B) && (list[4] == W) && (list[5] == W))
-	  {
+    {
     result = 6;
-	  }
+    }
   else if ((list[0] == B) && (list[1] == W) && (list[2] == W) && (list[3] == B) && (list[4] == W) && (list[5] == B))
-	  {
+    {
     result = 7;
-	  }
+    }
   else if ((list[0] == B) && (list[1] == B) && (list[2] == B) && (list[3] == B) && (list[4] == W) && (list[5] == W))
-	  {
+    {
     result = 8;
-	  }
+    }
   else if ((list[0] == B) && (list[1] == B) && (list[2] == B) && (list[3] == W) && (list[4] == B) && (list[5] == W))
-	  {
+    {
     result = 9;
-	  }
-	else
-	  {
-		result = -1;
-	  }
+    }
+  else
+    {
+    result = -1;
+    }
 
-	delete[] &list;
-	return result;
+  delete[] &list;
+  return result;
 }
 
 //----------------------------------------------------------------------------
@@ -4082,74 +4082,74 @@ int vtkFreehandUltrasound2::GetFanRepresentation (vtkImageThreshold* threshold, 
 int vtkFreehandUltrasound2::CalculateFanRotationValue(vtkImageThreshold* threshold)
 {
   // rotation digits (ex for rotation 158, d1 = 1, d2 = 5, d3 = 8
-	int d1, d2, d3;
+  int d1, d2, d3;
 
-	// not flipped
-	if (this->GetImageIsFlipped() == 0)
-	  {
-		// first rotation digit
-		int array3[12] = {72+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 72+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
-											75+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 75+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
-											71+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 77+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
-		d3 = this->GetFanRepresentation(threshold, array3);
-		// second rotation digit
-		int array2[12] = {62+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 62+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
-												65+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 65+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
-												61+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 67+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
-		d2 = this->GetFanRepresentation(threshold, array2);
-		// third rotation digit
-		int array1[12] = {52+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 52+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
-												55+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 55+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
-												51+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 57+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
-		d1 = this->GetFanRepresentation(threshold, array1);
-	  }
+  // not flipped
+  if (this->GetImageIsFlipped() == 0)
+    {
+    // first rotation digit
+    int array3[12] = {72+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 72+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
+                      75+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 75+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
+                      71+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 77+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
+    d3 = this->GetFanRepresentation(threshold, array3);
+    // second rotation digit
+    int array2[12] = {62+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 62+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
+                        65+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 65+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
+                        61+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 67+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
+    d2 = this->GetFanRepresentation(threshold, array2);
+    // third rotation digit
+    int array1[12] = {52+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 52+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(),
+                        55+this->GetFanRotationXShift(), 479-294+this->GetFanRotationYShift(), 55+this->GetFanRotationXShift(), 479-299+this->GetFanRotationYShift(),
+                        51+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift(), 57+this->GetFanRotationXShift(), 479-298+this->GetFanRotationYShift()};
+    d1 = this->GetFanRepresentation(threshold, array1);
+    }
 
-	// flipped
-	else
-	  {
-		// first rotation digit
-		int array3[12] = {502+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 502+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
-														505+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 505+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
-														501+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 507+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
-		d3 = this->GetFanRepresentation(threshold, array3);
+  // flipped
+  else
+    {
+    // first rotation digit
+    int array3[12] = {502+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 502+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
+                            505+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 505+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
+                            501+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 507+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
+    d3 = this->GetFanRepresentation(threshold, array3);
 
-		// second rotation digit
-		int array2[12] = {492+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 492+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
-														495+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 495+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
-														491+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 497+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
-		d2 = this->GetFanRepresentation(threshold, array2);
+    // second rotation digit
+    int array2[12] = {492+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 492+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
+                            495+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 495+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
+                            491+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 497+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
+    d2 = this->GetFanRepresentation(threshold, array2);
 
-		// third rotation digit
-		int array1[12] = {482+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 482+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
-														485+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 485+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
-														481+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 487+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
-		d1 = this->GetFanRepresentation(threshold, array1);
-	  }
+    // third rotation digit
+    int array1[12] = {482+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 482+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(),
+                            485+this->GetFanRotationXShift(), 479-126+this->GetFanRotationYShift(), 485+this->GetFanRotationXShift(), 479-131+this->GetFanRotationYShift(),
+                            481+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift(), 487+this->GetFanRotationXShift(), 479-130+this->GetFanRotationYShift()};
+    d1 = this->GetFanRepresentation(threshold, array1);
+    }
 
   // combine rotation digits to return rotation
 
   if (d3 >= 0)
-	  {
+    {
     if (d2 >=0)
-		  {
+      {
       if (d1 >=0)
-			  {
+        {
         return d1*100+d2*10+d3;
-			  }
+        }
       else
-			  {
+        {
         return d2*10+d3;
-			  }
-		  }
+        }
+      }
     else
-		  {
+      {
       return d3;
-		  }
-	  }
-	else
-	  {
-		return -1;
-	  }
+      }
+    }
+  else
+    {
+    return -1;
+    }
 }
 
 //****************************************************************************
@@ -4162,10 +4162,10 @@ int vtkFreehandUltrasound2::CalculateFanRotationValue(vtkImageThreshold* thresho
 //----------------------------------------------------------------------------
 template <class T>
 static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self,
-						   vtkImageData *outData,
-						   T *outPtr,
-						   unsigned short *accPtr,
-						   int outExt[6])
+               vtkImageData *outData,
+               T *outPtr,
+               unsigned short *accPtr,
+               int outExt[6])
 {
   int idX, idY, idZ;
   int incX, incY, incZ;
@@ -4216,209 +4216,209 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
       // find entry point
       alphaPtr = outPtrY + numscalars;
       for (startX = outExt[0]; startX <= outExt[1]; startX++)
-	      {
-	      // check the point on the row as well as the 4-connected voxels
+        {
+        // check the point on the row as well as the 4-connected voxels
         // break when alpha component is nonzero
-	      if (*alphaPtr |
-	          *(alphaPtr-incY) | *(alphaPtr+incY) |
-	          *(alphaPtr-incZ) | *(alphaPtr+incZ))
-	        {
-	        break;
-	        }
-	      alphaPtr += incX;
-	      }
+        if (*alphaPtr |
+            *(alphaPtr-incY) | *(alphaPtr+incY) |
+            *(alphaPtr-incZ) | *(alphaPtr+incZ))
+          {
+          break;
+          }
+        alphaPtr += incX;
+        }
 
       if (startX > outExt[1])
-	      { // the whole row is empty, do nothing
-	      continue;
-	      }
+        { // the whole row is empty, do nothing
+        continue;
+        }
 
       // find exit point
       alphaPtr = outPtrY + (outExt[1]-outExt[0])*incX + numscalars;
       for (endX = outExt[1]; endX >= outExt[0]; endX--)
-	      {
-	      // check the point on the row as well as the 4-connected voxels 
-	      if (*alphaPtr |
-	          *(alphaPtr-incY) | *(alphaPtr+incY) |
-	          *(alphaPtr-incZ) | *(alphaPtr+incZ))
-	        {
-	        break;
-	        }
-	      alphaPtr -= incX;
-	      }
+        {
+        // check the point on the row as well as the 4-connected voxels 
+        if (*alphaPtr |
+            *(alphaPtr-incY) | *(alphaPtr+incY) |
+            *(alphaPtr-incZ) | *(alphaPtr+incZ))
+          {
+          break;
+          }
+        alphaPtr -= incX;
+        }
 
       // go through the row, skip first and last voxel in row
       if (startX == outWholeExt[0])
-	      {
-	      startX++;
-	      }
+        {
+        startX++;
+        }
       if (endX == outWholeExt[1])
-	      {
-	      endX--;
-	      }
+        {
+        endX--;
+        }
       outPtrX = outPtrY + (startX - outExt[0])*incX;
       accPtrX = accPtrY + (startX - outExt[0])*accIncX;
       
       for (idX = startX; idX <= endX; idX++)
-	      {
+        {
         // only do this for voxels that haven't been hit
-	      if (outPtrX[numscalars] == 0)
-	        { 
-	        double sum[32];
-	        for (c = 0; c < numscalars; c++) 
-	          {
-	          sum[c] = 0;
-	          }
-	        double asum = 0; 
-	        int n = 0;
-	        int nmin = 14; // half of the connected voxels plus one
-	        T *blockPtr;
-	        unsigned short *accBlockPtr;
+        if (outPtrX[numscalars] == 0)
+          { 
+          double sum[32];
+          for (c = 0; c < numscalars; c++) 
+            {
+            sum[c] = 0;
+            }
+          double asum = 0; 
+          int n = 0;
+          int nmin = 14; // half of the connected voxels plus one
+          T *blockPtr;
+          unsigned short *accBlockPtr;
 
           // for accumulation buffer
-	        // sum the pixel values for the 3x3x3 block
+          // sum the pixel values for the 3x3x3 block
           // START TURNED OFF FOR NOW
-	        if (0) // (accPtr)
-	          { // use accumulation buffer to do weighted average
-	          for (int k = -accIncZ; k <= accIncZ; k += accIncZ)
-	            {
-	            for (int j = -accIncY; j <= accIncY; j += accIncY)
-		            {
-		            for (int i = -accIncX; i <= accIncX; i += accIncX)
-		              {
-		              int inc = j + k + i;
-		              blockPtr = outPtrX + inc*incX;
-		              accBlockPtr = accPtrX + inc;
-		              if (blockPtr[numscalars] == 255)
-		                {
-		                n++;
-		                for (c = 0; c < numscalars; c++)
-		                  { // use accumulation buffer as weight
-		                  sum[c] += blockPtr[c]*(*accBlockPtr);
-		                  }
-		                asum += *accBlockPtr;
-		                }
-		              }
-		            }
-	            }
-	          
+          if (0) // (accPtr)
+            { // use accumulation buffer to do weighted average
+            for (int k = -accIncZ; k <= accIncZ; k += accIncZ)
+              {
+              for (int j = -accIncY; j <= accIncY; j += accIncY)
+                {
+                for (int i = -accIncX; i <= accIncX; i += accIncX)
+                  {
+                  int inc = j + k + i;
+                  blockPtr = outPtrX + inc*incX;
+                  accBlockPtr = accPtrX + inc;
+                  if (blockPtr[numscalars] == 255)
+                    {
+                    n++;
+                    for (c = 0; c < numscalars; c++)
+                      { // use accumulation buffer as weight
+                      sum[c] += blockPtr[c]*(*accBlockPtr);
+                      }
+                    asum += *accBlockPtr;
+                    }
+                  }
+                }
+              }
+            
             // if less than half the neighbors have data, use larger block
-	          if (n <= nmin && idX != startX && idX != endX &&
-		            idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
-		            idY - outWholeExt[2] > 2 && outWholeExt[3] - idY > 2 &&
-		            idZ - outWholeExt[4] > 2 && outWholeExt[5] - idZ > 2)
-	            {
-	            // weigh inner block by a factor of four (multiply three,
-	            // plus we will be counting it again as part of the 5x5x5
-	            // block)
-	            asum *= 3;
-	            for (c = 0; c < numscalars; c++) 
-		            {
-		            sum[c]*= 3;
-		            }	      
-	            nmin = 63;
-	            n = 0;
-	            for (int k = -accIncZ*2; k <= accIncZ*2; k += accIncZ)
-		            {
-		            for (int j = -accIncY*2; j <= accIncY*2; j += accIncY)
-		              {
-		              for (int i = -accIncX*2; i <= accIncX*2; i += accIncX)
-		                {
-		                int inc = j + k + i;
-		                blockPtr = outPtrX + inc*incX;
-		                accBlockPtr = accPtrX + inc;
+            if (n <= nmin && idX != startX && idX != endX &&
+                idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
+                idY - outWholeExt[2] > 2 && outWholeExt[3] - idY > 2 &&
+                idZ - outWholeExt[4] > 2 && outWholeExt[5] - idZ > 2)
+              {
+              // weigh inner block by a factor of four (multiply three,
+              // plus we will be counting it again as part of the 5x5x5
+              // block)
+              asum *= 3;
+              for (c = 0; c < numscalars; c++) 
+                {
+                sum[c]*= 3;
+                }        
+              nmin = 63;
+              n = 0;
+              for (int k = -accIncZ*2; k <= accIncZ*2; k += accIncZ)
+                {
+                for (int j = -accIncY*2; j <= accIncY*2; j += accIncY)
+                  {
+                  for (int i = -accIncX*2; i <= accIncX*2; i += accIncX)
+                    {
+                    int inc = j + k + i;
+                    blockPtr = outPtrX + inc*incX;
+                    accBlockPtr = accPtrX + inc;
                     // use accumulation buffer as weight
-		                if (blockPtr[numscalars] == 255)
-		                  { 
-		                  n++;
-		                  for (c = 0; c < numscalars; c++)
-			                  {
-			                  sum[c] += blockPtr[c]*(*accBlockPtr);
-			                  }
-		                  asum += *accBlockPtr; 
-		                  }
-		                }
-		              }
-		            }
-	            }
-	          }
+                    if (blockPtr[numscalars] == 255)
+                      { 
+                      n++;
+                      for (c = 0; c < numscalars; c++)
+                        {
+                        sum[c] += blockPtr[c]*(*accBlockPtr);
+                        }
+                      asum += *accBlockPtr; 
+                      }
+                    }
+                  }
+                }
+              }
+            }
           // END TURNED OFF FOR NOW
 
           // no accumulation buffer
-	        else 
-	          {
-	          for (int k = -incZ; k <= incZ; k += incZ)
-	            {
-	            for (int j = -incY; j <= incY; j += incY)
-		            {
-		            for (int i = -incX; i <= incX; i += incX)
-		              {
-		              blockPtr = outPtrX + j + k + i;
-		              if (blockPtr[numscalars] == 255)
-		                {
-		                n++;
-		                for (int c = 0; c < numscalars; c++)
-		                  {
-		                  sum[c] += blockPtr[c];
-		                  }
-		                }
-		              }
-		            }
-	            }
-	          asum = n;
-	    
-            // if less than half the neighbors have data, use larger block,
-	          // and count inner 3x3 block again to weight it by 2
-	          if (n <= nmin && idX != startX && idX != endX &&
-		            idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
-		            idY - outWholeExt[2] > 2 && outWholeExt[3] - idY > 2 &&
-		            idZ - outWholeExt[4] > 2 && outWholeExt[5] - idZ > 2)
-	            { 
-	            // weigh inner block by a factor of four (multiply three,
-	            // plus we will be counting it again as part of the 5x5x5
-	            // block)
-	            asum *= 3;
-	            for (c = 0; c < numscalars; c++) 
-		            {
-		            sum[c]*= 3;
-		            }
-	            nmin = 63;
-	            n = 0;
-	            for (int k = -incZ*2; k <= incZ*2; k += incZ)
-		            {
-		            for (int j = -incY*2; j <= incY*2; j += incY)
-		              {
-		              for (int i = -incX*2; i <= incX*2; i += incX)
-		                {
-		                blockPtr = outPtrX + j + k + i;
-		                if (blockPtr[numscalars] == 255)
-		                  {
-		                  n++;
-		                  for (int c = 0; c < numscalars; c++)
-			                  {
-			                  sum[c] += blockPtr[c];
-			                  }
-		                  }
-		                }
-		              }
-		            }
-	            asum += n;
+          else 
+            {
+            for (int k = -incZ; k <= incZ; k += incZ)
+              {
+              for (int j = -incY; j <= incY; j += incY)
+                {
+                for (int i = -incX; i <= incX; i += incX)
+                  {
+                  blockPtr = outPtrX + j + k + i;
+                  if (blockPtr[numscalars] == 255)
+                    {
+                    n++;
+                    for (int c = 0; c < numscalars; c++)
+                      {
+                      sum[c] += blockPtr[c];
+                      }
+                    }
+                  }
+                }
               }
-	          }
+            asum = n;
+      
+            // if less than half the neighbors have data, use larger block,
+            // and count inner 3x3 block again to weight it by 2
+            if (n <= nmin && idX != startX && idX != endX &&
+                idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
+                idY - outWholeExt[2] > 2 && outWholeExt[3] - idY > 2 &&
+                idZ - outWholeExt[4] > 2 && outWholeExt[5] - idZ > 2)
+              { 
+              // weigh inner block by a factor of four (multiply three,
+              // plus we will be counting it again as part of the 5x5x5
+              // block)
+              asum *= 3;
+              for (c = 0; c < numscalars; c++) 
+                {
+                sum[c]*= 3;
+                }
+              nmin = 63;
+              n = 0;
+              for (int k = -incZ*2; k <= incZ*2; k += incZ)
+                {
+                for (int j = -incY*2; j <= incY*2; j += incY)
+                  {
+                  for (int i = -incX*2; i <= incX*2; i += incX)
+                    {
+                    blockPtr = outPtrX + j + k + i;
+                    if (blockPtr[numscalars] == 255)
+                      {
+                      n++;
+                      for (int c = 0; c < numscalars; c++)
+                        {
+                        sum[c] += blockPtr[c];
+                        }
+                      }
+                    }
+                  }
+                }
+              asum += n;
+              }
+            }
 
-	        // if more than half of neighboring voxels are occupied, then fill
-	        if (n >= nmin)
-	          {
-	          for (int c = 0; c < numscalars; c++)
-	            {
-	            vtkUltraRound(sum[c]/asum, outPtrX[c]);
-	            }
-	          // set alpha to 1 now, change to 255 later
-	          outPtrX[numscalars] = 1;
-	          }
-	        }
-	        outPtrX += incX;
-	      }
+          // if more than half of neighboring voxels are occupied, then fill
+          if (n >= nmin)
+            {
+            for (int c = 0; c < numscalars; c++)
+              {
+              vtkUltraRound(sum[c]/asum, outPtrX[c]);
+              }
+            // set alpha to 1 now, change to 255 later
+            outPtrX[numscalars] = 1;
+            }
+          }
+          outPtrX += incX;
+        }
       }
     }
 
@@ -4430,14 +4430,14 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
     for (idY = outExt[2]; idY <= outExt[3]; idY++)
       {
       for (idX = outExt[0]; idX <= outExt[1]; idX++)
-	      {
-	      // convert '1' to 255
-	      if (*alphaPtr == 1)
-	        {
-	        *alphaPtr = 255;
-	        }
-	      alphaPtr += incX;
-	      }
+        {
+        // convert '1' to 255
+        if (*alphaPtr == 1)
+          {
+          *alphaPtr = 255;
+          }
+        alphaPtr += incX;
+        }
       // add the continuous increment
       alphaPtr += (incY - (outExt[1]-outExt[0]+1)*incX);
       }
@@ -4451,8 +4451,8 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
 // Calls vtkFreehandUltrasound2FillHolesInOutput, with templating for different
 // types
 //----------------------------------------------------------------------------
-void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,	
-                                            	int outExt[6], int threadId, int phase)
+void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,  
+                                              int outExt[6], int threadId, int phase)
 {
   vtkImageData *accData = this->AccumulationBuffers[phase];
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
@@ -5488,9 +5488,9 @@ void vtkFreehandUltrasound2::SaveRawData(const char *directory, int frames)
 
   fprintf(file, "# vtkFreehandUltrasound2 output\n\n");
   fprintf(file, "VideoSpacing = %7.5f %7.5f %7.5f;\n",
-	  image->GetSpacing()[0], image->GetSpacing()[1], image->GetSpacing()[2]);
+    image->GetSpacing()[0], image->GetSpacing()[1], image->GetSpacing()[2]);
   fprintf(file, "VideoOrigin = %7.3f %7.3f %7.3f;\n",
-	  image->GetOrigin()[0], image->GetOrigin()[1], image->GetOrigin()[2]);
+    image->GetOrigin()[0], image->GetOrigin()[1], image->GetOrigin()[2]);
   fprintf(file, "VideoFrameSize = %d %d %d;\n",
     this->VideoSource->GetFrameSize()[0], this->VideoSource->GetFrameSize()[1],
     this->VideoSource->GetFrameSize()[2]);
@@ -5503,18 +5503,18 @@ void vtkFreehandUltrasound2::SaveRawData(const char *directory, int frames)
   fprintf(file, "OutputSpacing = %7.5f %7.5f %7.5f;\n",
     this->OutputSpacing[0], this->OutputSpacing[1], this->OutputSpacing[2]);
   fprintf(file, "OutputOrigin = %7.3f %7.3f %7.3f;\n",
-	  this->OutputOrigin[0], this->OutputOrigin[1], this->OutputOrigin[2]);
+    this->OutputOrigin[0], this->OutputOrigin[1], this->OutputOrigin[2]);
   fprintf(file, "OutputExtent = %d %d %d %d %d %d;\n",
-	  this->OutputExtent[0], this->OutputExtent[1],
-	  this->OutputExtent[2], this->OutputExtent[3],
-	  this->OutputExtent[4], this->OutputExtent[5]);
+    this->OutputExtent[0], this->OutputExtent[1],
+    this->OutputExtent[2], this->OutputExtent[3],
+    this->OutputExtent[4], this->OutputExtent[5]);
   fprintf(file, "ClipRectangle = %7.3f %7.3f %7.3f %7.3f;\n",
-	  this->ClipRectangle[0], this->ClipRectangle[1],
-	  this->ClipRectangle[2], this->ClipRectangle[3]);
+    this->ClipRectangle[0], this->ClipRectangle[1],
+    this->ClipRectangle[2], this->ClipRectangle[3]);
   fprintf(file, "FanAngles = %7.2f %7.2f;\n",
-	  this->FanAngles[0], this->FanAngles[1]);
+    this->FanAngles[0], this->FanAngles[1]);
   fprintf(file, "FanOrigin = %7.3f %7.3f;\n",
-	  this->FanOrigin[0], this->FanOrigin[1]);
+    this->FanOrigin[0], this->FanOrigin[1]);
   fprintf(file, "FanDepth = %7.3f;\n", this->FanDepth);
   fprintf(file, "VideoLag = %5.3f;\n", this->VideoLag);
   fprintf(file, "RotatingProbe = %d;\n", this->RotatingProbe);

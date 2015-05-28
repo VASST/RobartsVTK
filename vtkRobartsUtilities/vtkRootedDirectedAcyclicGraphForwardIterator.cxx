@@ -104,7 +104,7 @@ vtkIdType vtkRootedDirectedAcyclicGraphForwardIterator::NextInternal()
     for(vtkIdType childNum = 0; childNum < this->DAG->GetNumberOfChildren(currentId); childNum++)
       {
       vtkIdType childId = this->DAG->GetChild(currentId, childNum);
-	  if(this->DAG->GetUpLevel(childId) != this->DAG->GetUpLevel(currentId) + 1) continue;
+    if(this->DAG->GetUpLevel(childId) != this->DAG->GetUpLevel(currentId) + 1) continue;
       if(this->Color->GetValue(childId) == this->WHITE)
         {
         // Found a white vertex; make it gray, add it to the queue

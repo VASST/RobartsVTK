@@ -18,7 +18,7 @@
 
 class vtkRootedDirectedAcyclicGraph;
 
-class vtkRootedDirectedAcyclicGraphIterator : public vtkObject
+class VTK_EXPORT vtkRootedDirectedAcyclicGraphIterator : public vtkObject
 {
 public:
   vtkTypeMacro(vtkRootedDirectedAcyclicGraphIterator, vtkObject);

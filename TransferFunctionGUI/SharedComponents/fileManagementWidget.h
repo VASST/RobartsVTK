@@ -21,58 +21,58 @@ class transferFunctionWindowWidgetInterface;
 
 class fileManagementWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
-	fileManagementWidget( transferFunctionWindowWidgetInterface* parent );
-	~fileManagementWidget();
-	QMenu* getMenuOptions( );
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
-	vtkImageData* getCurrentImage();
-	unsigned int getNumFrames();
+  fileManagementWidget( transferFunctionWindowWidgetInterface* parent );
+  ~fileManagementWidget();
+  QMenu* getMenuOptions( );
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
+  vtkImageData* getCurrentImage();
+  unsigned int getNumFrames();
 
 public slots:
-	
-	//file related slots
-	void addMNCFile();
-	void addMHDFile();
-	void addDICOMFile();
-	void selectFrame();
-	void toggleMode();
-	void nextFrame();
+  
+  //file related slots
+  void addMNCFile();
+  void addMHDFile();
+  void addDICOMFile();
+  void selectFrame();
+  void toggleMode();
+  void nextFrame();
 
 private:
 
-	transferFunctionWindowWidgetInterface* parent;
-	
-	bool addMetaImage(std::string filename);
-	bool addMincImage(std::string filename);
-	bool addDICOMImage(std::string dirname);
-	bool addImageToMapper(vtkImageData* data);
-	bool selectFrame(std::string dirname);
-	bool removeImage(std::string filename);
-	
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCudaVolumeMapper* mapper;
-	vtkVolume* volume;
-	
-	void setupMenu();
-	QMenu* fileMenu;
-	
-	//file related viewing
-	QListWidget* files;
-	QPushButton* toggleModeButton;
+  transferFunctionWindowWidgetInterface* parent;
+  
+  bool addMetaImage(std::string filename);
+  bool addMincImage(std::string filename);
+  bool addDICOMImage(std::string dirname);
+  bool addImageToMapper(vtkImageData* data);
+  bool selectFrame(std::string dirname);
+  bool removeImage(std::string filename);
+  
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCudaVolumeMapper* mapper;
+  vtkVolume* volume;
+  
+  void setupMenu();
+  QMenu* fileMenu;
+  
+  //file related viewing
+  QListWidget* files;
+  QPushButton* toggleModeButton;
 
-	//control variables
-	bool isStatic;
-	QTimer* timer;
+  //control variables
+  bool isStatic;
+  QTimer* timer;
 
-	//image management variables
-	std::vector<std::string> nameVector;
-	std::vector<vtkImageReader2*> readers;
-	unsigned int maxframes;
-	unsigned int numFrames;
-	unsigned int currFrame;
+  //image management variables
+  std::vector<std::string> nameVector;
+  std::vector<vtkImageReader2*> readers;
+  unsigned int maxframes;
+  unsigned int numFrames;
+  unsigned int currFrame;
 
 };
 

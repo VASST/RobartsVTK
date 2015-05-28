@@ -154,7 +154,7 @@ protected:
   vtkEndoscope();
   ~vtkEndoscope();
 
-  bool bCalibrated;	// Is the endoscope calibrated?
+  bool bCalibrated;  // Is the endoscope calibrated?
 
   bool bOddField;
 

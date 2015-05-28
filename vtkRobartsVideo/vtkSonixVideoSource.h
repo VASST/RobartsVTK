@@ -49,10 +49,10 @@ POSSIBILITY OF SUCH DAMAGE.
 // You must call the ReleaseSystemResources() method before the application
 // exits.  Otherwise the application might hang while trying to exit.
 // .SECTION Usage
-//	sonixGrabber->SetSonixIP("130.15.7.212");
-//	sonixGrabber->SetImagingMode(0);
-//	sonixGrabber->SetAcquisitionDataType(0x00000004);
-//	sonixGrabber->Record();	
+//  sonixGrabber->SetSonixIP("130.15.7.212");
+//  sonixGrabber->SetImagingMode(0);
+//  sonixGrabber->SetAcquisitionDataType(0x00000004);
+//  sonixGrabber->Record();  
 //  imageviewer->SetInput(sonixGrabber->GetOutput());
 //  See SonixVideoSourceTest.cxx for more details
 // .SECTION See Also
@@ -166,10 +166,10 @@ public:
   // Description:
   // Request a particular data type from sonix machine by means of a mask.
   // Range of types supported:  1) Screen (800 x 600); 2) B Pre Scan Converted; 3) B Post Scan Converted (8 bit);
-  //							4) B Post Scan Converted (32 bit); 5) RF; 6) M Pre Scan Converted;
-  //							7) M Post Scan Converted; 8) PW RF; 9) PW Spectrum;
-  //							10)Color RF; 11) Color Post; 12) Color Sigma;
-  //							13)Color Velocity; 14) Elasto + B-image (32); 15) Elasto Overlay (8 bit); 16) Elasto Pre Scan Coverted (8 bit)
+  //              4) B Post Scan Converted (32 bit); 5) RF; 6) M Pre Scan Converted;
+  //              7) M Post Scan Converted; 8) PW RF; 9) PW Spectrum;
+  //              10)Color RF; 11) Color Post; 12) Color Sigma;
+  //              13)Color Velocity; 14) Elasto + B-image (32); 15) Elasto Overlay (8 bit); 16) Elasto Pre Scan Coverted (8 bit)
   // Currently supported data masks: 1) Screen
   // The mask must be applied before any data can be acquired via realtime imaging or cine retreival
   vtkGetMacro(AcquisitionDataType, int);

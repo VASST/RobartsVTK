@@ -1526,78 +1526,78 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
 
 
   if(!minMax){
-	  this->ResliceR->SetInput(this->ImageData);
-	  int interpolate = this->ResliceInterpolate;
-	  this->ResliceInterpolate = -1; // Force change
-	  this->SetResliceInterpolate(interpolate);
-	  this->ColorMap->SetInput(this->ResliceR->GetOutput());
-	  this->Texture->SetInput(this->ColorMap->GetOutput());
+    this->ResliceR->SetInput(this->ImageData);
+    int interpolate = this->ResliceInterpolate;
+    this->ResliceInterpolate = -1; // Force change
+    this->SetResliceInterpolate(interpolate);
+    this->ColorMap->SetInput(this->ResliceR->GetOutput());
+    this->Texture->SetInput(this->ColorMap->GetOutput());
   }else{
-	
-	vtkImageExtractComponents* Extractor0 = vtkImageExtractComponents::New();
-	Extractor0->SetInput(this->ImageData);
-	Extractor0->SetComponents(0);
-	vtkImageExtractComponents* Extractor1 = vtkImageExtractComponents::New();
-	Extractor1->SetInput(this->ImageData);
-	Extractor1->SetComponents(1);
-	vtkImageExtractComponents* Extractor2 = vtkImageExtractComponents::New();
-	Extractor2->SetInput(this->ImageData);
-	Extractor2->SetComponents(2);
+  
+  vtkImageExtractComponents* Extractor0 = vtkImageExtractComponents::New();
+  Extractor0->SetInput(this->ImageData);
+  Extractor0->SetComponents(0);
+  vtkImageExtractComponents* Extractor1 = vtkImageExtractComponents::New();
+  Extractor1->SetInput(this->ImageData);
+  Extractor1->SetComponents(1);
+  vtkImageExtractComponents* Extractor2 = vtkImageExtractComponents::New();
+  Extractor2->SetInput(this->ImageData);
+  Extractor2->SetComponents(2);
 
-	this->ResliceR->SetInput(Extractor0->GetOutput());
-	this->ResliceG->SetInput(Extractor1->GetOutput());
-	this->ResliceB->SetInput(Extractor2->GetOutput());
-	int comps = this->ResliceR->GetOutput()->GetNumberOfScalarComponents();
-	
-	vtkImageMathematics* Shift0 = vtkImageMathematics::New();
-	Shift0->SetOperationToAddConstant();
-	Shift0->SetConstantC(-minMax[0]);
-	Shift0->SetInput1(this->ResliceR->GetOutput());
-	vtkImageMathematics* Shift1 = vtkImageMathematics::New();
-	Shift1->SetOperationToAddConstant();
-	Shift1->SetConstantC(-minMax[2]);
-	Shift1->SetInput1(this->ResliceG->GetOutput());
-	vtkImageMathematics* Shift2 = vtkImageMathematics::New();
-	Shift2->SetOperationToAddConstant();
-	Shift2->SetConstantC(-minMax[4]);
-	Shift2->SetInput1(this->ResliceB->GetOutput());
-	
-	vtkImageMathematics* Scale0 = vtkImageMathematics::New();
-	Scale0->SetOperationToMultiplyByK();
-	Scale0->SetConstantK(255.0/(minMax[1]-minMax[0]));
-	Scale0->SetInput1(Shift0->GetOutput());
-	vtkImageMathematics* Scale1 = vtkImageMathematics::New();
-	Scale1->SetOperationToMultiplyByK();
-	Scale1->SetConstantK(255.0/(minMax[3]-minMax[2]));
-	Scale1->SetInput1(Shift1->GetOutput());
-	vtkImageMathematics* Scale2 = vtkImageMathematics::New();
-	Scale2->SetOperationToMultiplyByK();
-	Scale2->SetConstantK(255.0/(minMax[5]-minMax[4]));
-	Scale2->SetInput1(Shift2->GetOutput());
-	
-	vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
-	Appender->SetInput(0,Scale0->GetOutput());
-	Appender->SetInput(1,Scale1->GetOutput());
-	Appender->SetInput(2,Scale2->GetOutput());
-	Appender->Update();
+  this->ResliceR->SetInput(Extractor0->GetOutput());
+  this->ResliceG->SetInput(Extractor1->GetOutput());
+  this->ResliceB->SetInput(Extractor2->GetOutput());
+  int comps = this->ResliceR->GetOutput()->GetNumberOfScalarComponents();
+  
+  vtkImageMathematics* Shift0 = vtkImageMathematics::New();
+  Shift0->SetOperationToAddConstant();
+  Shift0->SetConstantC(-minMax[0]);
+  Shift0->SetInput1(this->ResliceR->GetOutput());
+  vtkImageMathematics* Shift1 = vtkImageMathematics::New();
+  Shift1->SetOperationToAddConstant();
+  Shift1->SetConstantC(-minMax[2]);
+  Shift1->SetInput1(this->ResliceG->GetOutput());
+  vtkImageMathematics* Shift2 = vtkImageMathematics::New();
+  Shift2->SetOperationToAddConstant();
+  Shift2->SetConstantC(-minMax[4]);
+  Shift2->SetInput1(this->ResliceB->GetOutput());
+  
+  vtkImageMathematics* Scale0 = vtkImageMathematics::New();
+  Scale0->SetOperationToMultiplyByK();
+  Scale0->SetConstantK(255.0/(minMax[1]-minMax[0]));
+  Scale0->SetInput1(Shift0->GetOutput());
+  vtkImageMathematics* Scale1 = vtkImageMathematics::New();
+  Scale1->SetOperationToMultiplyByK();
+  Scale1->SetConstantK(255.0/(minMax[3]-minMax[2]));
+  Scale1->SetInput1(Shift1->GetOutput());
+  vtkImageMathematics* Scale2 = vtkImageMathematics::New();
+  Scale2->SetOperationToMultiplyByK();
+  Scale2->SetConstantK(255.0/(minMax[5]-minMax[4]));
+  Scale2->SetInput1(Shift2->GetOutput());
+  
+  vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
+  Appender->SetInput(0,Scale0->GetOutput());
+  Appender->SetInput(1,Scale1->GetOutput());
+  Appender->SetInput(2,Scale2->GetOutput());
+  Appender->Update();
 
-	vtkImageCast* Caster = vtkImageCast::New();
-	Caster->SetInput(Appender->GetOutput());
-	Caster->SetOutputScalarTypeToUnsignedChar();
-	Caster->Update();
+  vtkImageCast* Caster = vtkImageCast::New();
+  Caster->SetInput(Appender->GetOutput());
+  Caster->SetOutputScalarTypeToUnsignedChar();
+  Caster->Update();
 
-	this->Texture->SetInput(Caster->GetOutput());
-	Extractor0->Delete();
-	Extractor1->Delete();
-	Extractor2->Delete();
-	Appender->Delete();
-	Caster->Delete();
-	Shift0->Delete();
-	Shift1->Delete();
-	Shift2->Delete();
-	Scale0->Delete();
-	Scale1->Delete();
-	Scale2->Delete();
+  this->Texture->SetInput(Caster->GetOutput());
+  Extractor0->Delete();
+  Extractor1->Delete();
+  Extractor2->Delete();
+  Appender->Delete();
+  Caster->Delete();
+  Shift0->Delete();
+  Shift1->Delete();
+  Shift2->Delete();
+  Scale0->Delete();
+  Scale1->Delete();
+  Scale2->Delete();
   }
 
 

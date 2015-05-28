@@ -103,7 +103,7 @@ public:
   //vtkGetMacro(Timestamp,double);
   //void SetNumberOfPhases(double phases) { this->TotalPhases=phases; }
   //int GetNumberOfPhases() { return this->TotalPhases; }
-	// Get the ECG Signal
+  // Get the ECG Signal
   //int GetECGSignal() { return this->Signal; };
 
   void ShowSystemDevices();
@@ -127,7 +127,7 @@ protected:
   int ThreadId;
 
 //BTX
-//  int Signal;	//ECG signal
+//  int Signal;  //ECG signal
 //  double Timestamp;
   double StartSignalTimeStamp;
   double ExpectedSignalTimeStamp;
@@ -147,26 +147,26 @@ protected:
   int OPTIONS;
   int Average;
 
-  int Gain;			// Gain range
-			/*
-			1 = -10 to +10 Volts
-			0 = -5 to +5 Volts
-		    2 = -2.5 to +2.5 Volts
-			3 = -1.25 to +1.25 Volts
-			4 = -1 to +1 Volts
-			5 = -.625 to +.625 Volts
-			6 = -.5 to +.5 Volts
-			7 = -.1 to +.1 Volts
-			100 = 0 to 10 Volts
-			101 = 0 to 5 Volts 
-			114 = 0 to 4 Volts 
-			102 = 0 to 2.5 Volts 
-			103 = 0 to 2 Volts 
-			109 = 0 to 1.67 Volts 
-			104 = 0 to 1.25 Volts 
-			105 = 0 to 1 Volt 
-			110 = 0 to .5 Volt 
-			*/
+  int Gain;      // Gain range
+      /*
+      1 = -10 to +10 Volts
+      0 = -5 to +5 Volts
+        2 = -2.5 to +2.5 Volts
+      3 = -1.25 to +1.25 Volts
+      4 = -1 to +1 Volts
+      5 = -.625 to +.625 Volts
+      6 = -.5 to +.5 Volts
+      7 = -.1 to +.1 Volts
+      100 = 0 to 10 Volts
+      101 = 0 to 5 Volts 
+      114 = 0 to 4 Volts 
+      102 = 0 to 2.5 Volts 
+      103 = 0 to 2 Volts 
+      109 = 0 to 1.67 Volts 
+      104 = 0 to 1.25 Volts 
+      105 = 0 to 1 Volt 
+      110 = 0 to .5 Volt 
+      */
 
   long SampleRate;
 #define sampleSize 100000

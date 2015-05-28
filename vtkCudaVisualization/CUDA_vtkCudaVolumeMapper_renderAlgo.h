@@ -45,7 +45,7 @@ void CUDA_deallocateMemory( void* memory );
  *
  */
 bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX,
-													 const int zBufferSizeY, cudaStream_t* stream);
+                           const int zBufferSizeY, cudaStream_t* stream);
 bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream);
 
 /** @brief Loads an random image into a 2D CUDA array for de-artifacting
@@ -56,7 +56,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream);
  *
  */
 bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets,
-															  cudaStream_t* stream);
+                                cudaStream_t* stream);
 
 
 /** @brief Unloads the random image from the 2D CUDA array set before

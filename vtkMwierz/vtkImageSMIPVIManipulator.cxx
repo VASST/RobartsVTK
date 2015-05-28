@@ -179,7 +179,7 @@ void vtkImageSMIPVIManipulator::SetMaxIntensities(int maxS, int maxT)
 //----------------------------------------------------------------------------
 template <class T>
 void vtkImageSMIPVIManipulatorEntropyT(vtkImageSMIPVIManipulator *self,
-				     T  *inPtr, int inc2[2], double count)
+             T  *inPtr, int inc2[2], double count)
 {
   short b;
   double temp, entropyT = 0;
@@ -188,15 +188,15 @@ void vtkImageSMIPVIManipulatorEntropyT(vtkImageSMIPVIManipulator *self,
   for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
     {
       for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	{
-	  for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-	    {
-   	      b = (short)*inPtr;
-   	      self->HistT[b]++;
-	      inPtr++;
-	    }
-	  inPtr += inc2[0];
-	}
+  {
+    for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+      {
+           b = (short)*inPtr;
+           self->HistT[b]++;
+        inPtr++;
+      }
+    inPtr += inc2[0];
+  }
       inPtr += inc2[1];
     }
 
@@ -229,7 +229,7 @@ void vtkImageSMIPVIManipulator::SetExtent(int ext[6])
   switch (this->inDataScl[1]->GetScalarType())
     {
       vtkTemplateMacro4(vtkImageSMIPVIManipulatorEntropyT,this, 
-			(VTK_TT *)(this->inPtr[1]), this->inc2, this->count);
+      (VTK_TT *)(this->inPtr[1]), this->inc2, this->count);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }
@@ -245,22 +245,22 @@ void vtkImageSMIPVIManipulator::SetTranslation(double tran[3])
   if ( (tran[0] == 0.0) && (tran[1] == 0.0) && (tran[2] == 0.0) )
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = 0;
-	  this->loc111[i] = 0;
-	  f[i] = 0.0;
-	}
+  {
+    this->loc000[i] = 0;
+    this->loc111[i] = 0;
+    f[i] = 0.0;
+  }
     }
   // Interpolation is required.
   else
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
-	  this->loc111[i] = this->loc000[i] + 1;
-	  // No interpolation for this axis
-	  if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
-	}
+  {
+    this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
+    this->loc111[i] = this->loc000[i] + 1;
+    // No interpolation for this axis
+    if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
+  }
     }
 
   this->F000 = (1.0 - f[0]) * (1.0 - f[1]) * (1.0 - f[2]);
@@ -276,9 +276,9 @@ void vtkImageSMIPVIManipulator::SetTranslation(double tran[3])
 //----------------------------------------------------------------------------
 template <class T>
 void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
-				   T  *in1Ptr, T *in2Ptr,
-				   int inc[3], int inc2[2], int inExt[6],
-				   int loc000[3], int loc111[3], double count)
+           T  *in1Ptr, T *in2Ptr,
+           int inc[3], int inc2[2], int inExt[6],
+           int loc000[3], int loc111[3], double count)
 {
   short V000, V100, V010, V110, V001, V101, V011, V111;
   double temp1, temp2, entropyS = 0, entropyST = 0;
@@ -304,26 +304,26 @@ void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
        (loc000[2] == 0) && (loc111[2] == 0) )
     {
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  a = (short)*in1Ptr;
-		  b = (short)*in2Ptr;
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      a = (short)*in1Ptr;
+      b = (short)*in2Ptr;
 
-		  self->HistS[a]++;
-		  self->HistST[b * self->BinNumber[0] + a]++;
+      self->HistS[a]++;
+      self->HistST[b * self->BinNumber[0] + a]++;
 
-		  in1Ptr++;
-		  in2Ptr++;
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	}
+      in1Ptr++;
+      in2Ptr++;
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+  }
     }
 
   // CASE 3: If the above two cases don't apply, do the full calculation.
@@ -332,55 +332,55 @@ void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
       in1Ptr += inc[2] * loc000[2] + inc[1] * loc000[1] + inc[0] * loc000[0];
 
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      // Initiate previous data
-	      V000 = (short)*in1Ptr;
-	      in1Ptr += inc[1];
-	      V010 = (short)*in1Ptr;
-	      in1Ptr += inc[2];
-	      V011 = (short)*in1Ptr;
-	      in1Ptr -= inc[1];
-	      V001 = (short)*in1Ptr;
-	      in1Ptr -= inc[2];
-	      
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  in1Ptr++;
-		  V100 = (short)*in1Ptr;
-		  in1Ptr += inc[1];
-		  V110 = (short)*in1Ptr;
-		  in1Ptr += inc[2];
-		  V111 = (short)*in1Ptr;
-		  in1Ptr -= inc[1];
-		  V101 = (short)*in1Ptr;
-		  in1Ptr -= inc[2];
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        // Initiate previous data
+        V000 = (short)*in1Ptr;
+        in1Ptr += inc[1];
+        V010 = (short)*in1Ptr;
+        in1Ptr += inc[2];
+        V011 = (short)*in1Ptr;
+        in1Ptr -= inc[1];
+        V001 = (short)*in1Ptr;
+        in1Ptr -= inc[2];
+        
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      in1Ptr++;
+      V100 = (short)*in1Ptr;
+      in1Ptr += inc[1];
+      V110 = (short)*in1Ptr;
+      in1Ptr += inc[2];
+      V111 = (short)*in1Ptr;
+      in1Ptr -= inc[1];
+      V101 = (short)*in1Ptr;
+      in1Ptr -= inc[2];
 
-		  b = (short)*in2Ptr * self->BinNumber[0];
+      b = (short)*in2Ptr * self->BinNumber[0];
 
-		  self->HistST[b + V000] +=  self->F000;
-		  self->HistST[b + V100] +=  self->F100;
-		  self->HistST[b + V010] +=  self->F010;
-		  self->HistST[b + V110] +=  self->F110;
-		  self->HistST[b + V001] +=  self->F001;
-		  self->HistST[b + V101] +=  self->F101;
-		  self->HistST[b + V011] +=  self->F011;
-		  self->HistST[b + V111] +=  self->F111;
-		  
-		  V000 = V100;
-		  V010 = V110;
-		  V001 = V101;
-		  V011 = V111;
+      self->HistST[b + V000] +=  self->F000;
+      self->HistST[b + V100] +=  self->F100;
+      self->HistST[b + V010] +=  self->F010;
+      self->HistST[b + V110] +=  self->F110;
+      self->HistST[b + V001] +=  self->F001;
+      self->HistST[b + V101] +=  self->F101;
+      self->HistST[b + V011] +=  self->F011;
+      self->HistST[b + V111] +=  self->F111;
+      
+      V000 = V100;
+      V010 = V110;
+      V001 = V101;
+      V011 = V111;
 
-		  in2Ptr++;
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	}
+      in2Ptr++;
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+  }
     }
 
   // Loop over S and ST histograms.
@@ -388,11 +388,11 @@ void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
     {
       temp2 = 0.0;
       for (j = 0; j < self->BinNumber[1]; j++) 
- 	{
-	  temp1 = self->HistST[j * self->BinNumber[0] + i];
- 	  temp2 += temp1;
-	  if (temp1 > 0.0) entropyST += temp1 * log(temp1);
- 	}
+   {
+    temp1 = self->HistST[j * self->BinNumber[0] + i];
+     temp2 += temp1;
+    if (temp1 > 0.0) entropyST += temp1 * log(temp1);
+   }
       if (temp2 > 0.0) entropyS += temp2 * log(temp2);
     }
 
@@ -404,13 +404,13 @@ void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
   if (self->Metric == 0)
     {
       if (entropyST == 0)
-	{
-	  self->Result = 1.0;
-	}
+  {
+    self->Result = 1.0;
+  }
       else
-	{
-	  self->Result = (entropyS + self->entropyT)/entropyST/2.0;
-	}
+  {
+    self->Result = (entropyS + self->entropyT)/entropyST/2.0;
+  }
     }
 
   // Mutual Informaiton
@@ -423,13 +423,13 @@ void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
   else if (self->Metric == 2)
     {
       if (entropyS + self->entropyT == 0)
-	{
-	  self->Result = 0.0;
-	}
+  {
+    self->Result = 0.0;
+  }
       else
-	{
-	  self->Result = sqrt ( 2.0 * (1.0 - entropyST / ( self->entropyT + entropyS ) ) );
-	}
+  {
+    self->Result = sqrt ( 2.0 * (1.0 - entropyST / ( self->entropyT + entropyS ) ) );
+  }
     }
 
   // Error
@@ -470,9 +470,9 @@ double vtkImageSMIPVIManipulator::GetResult()
   switch (this->inDataScl[0]->GetScalarType())
     {
       vtkTemplateMacro9(vtkImageSMIPVIManipulatorExecute,this, 
-       			(VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
-			this->inc, this->inc2, this->inExt,
-			this->loc000, this->loc111, this->count);
+             (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
+      this->inc, this->inc2, this->inExt,
+      this->loc000, this->loc111, this->count);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }

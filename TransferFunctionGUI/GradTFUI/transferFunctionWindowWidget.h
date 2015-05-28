@@ -41,65 +41,65 @@ class deviceManagementWidget;
 
 class transferFunctionWindowWidget : public transferFunctionWindowWidgetInterface
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	transferFunctionWindowWidget(QWidget *parent = 0);
-	~transferFunctionWindowWidget();
+  transferFunctionWindowWidget(QWidget *parent = 0);
+  ~transferFunctionWindowWidget();
 
-	//keyboard options
-	void keyPressEvent(QKeyEvent* e);
-	void keyReleaseEvent(QKeyEvent* e);
-	
-	void LoadedImageData();
-	void UpdateScreen();
+  //keyboard options
+  void keyPressEvent(QKeyEvent* e);
+  void keyReleaseEvent(QKeyEvent* e);
+  
+  void LoadedImageData();
+  void UpdateScreen();
 
 private slots:
 
-	//tab changing slot
-	void changeTab();
+  //tab changing slot
+  void changeTab();
 
 private:
 
-	//shared and communally modified pipeline pieces
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCuda2DVolumeMapper* mapper;
+  //shared and communally modified pipeline pieces
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCuda2DVolumeMapper* mapper;
 
-	//tab bar to manage multiple property options
-	QMenuBar* menubar;
-	QTabWidget* tabbar;
+  //tab bar to manage multiple property options
+  QMenuBar* menubar;
+  QTabWidget* tabbar;
 
-	//additional widgets and their menus
-	shadingWidget* shWidget;
-	fileManagementWidget* fmWidget;
-	QMenu* fileMenu;
-	virtualToolWidget* vtWidget;
-	QMenu* widgetMenu;
-	stereoRenderingWidget* srWidget;
-	QMenu* stereoRenderingMenu;
-	transferFunctionDefinitionWidget* tfWidget;
-	QMenu* transferFunctionMenu;
-	transferFunctionDefinitionWidget* ktfWidget;
-	QMenu* ktransferFunctionMenu;
-	segmentationWidget* segWidget;
-	QMenu*segmentationMenu;
-	deviceManagementWidget* devWidget;
-	
-	//screens for viewing
-	QVTKWidget* screen;
-	QVTKWidget* planeXScreen;
-	QVTKWidget* planeYScreen;
-	QVTKWidget* planeZScreen;
-	QVBoxLayout* screenMainLayout;
-	QHBoxLayout* screenPlanesLayout;
-	vtkInteractorStyleTrackballActor* actorManipulationStyle;
-	vtkInteractorStyleTrackballCamera* cameraManipulationStyle;
-	bool usingCamera;
+  //additional widgets and their menus
+  shadingWidget* shWidget;
+  fileManagementWidget* fmWidget;
+  QMenu* fileMenu;
+  virtualToolWidget* vtWidget;
+  QMenu* widgetMenu;
+  stereoRenderingWidget* srWidget;
+  QMenu* stereoRenderingMenu;
+  transferFunctionDefinitionWidget* tfWidget;
+  QMenu* transferFunctionMenu;
+  transferFunctionDefinitionWidget* ktfWidget;
+  QMenu* ktransferFunctionMenu;
+  segmentationWidget* segWidget;
+  QMenu*segmentationMenu;
+  deviceManagementWidget* devWidget;
+  
+  //screens for viewing
+  QVTKWidget* screen;
+  QVTKWidget* planeXScreen;
+  QVTKWidget* planeYScreen;
+  QVTKWidget* planeZScreen;
+  QVBoxLayout* screenMainLayout;
+  QHBoxLayout* screenPlanesLayout;
+  vtkInteractorStyleTrackballActor* actorManipulationStyle;
+  vtkInteractorStyleTrackballCamera* cameraManipulationStyle;
+  bool usingCamera;
 
-	//layout managers
-	QVBoxLayout* menuLayout;
-	QHBoxLayout* mainLayout;
+  //layout managers
+  QVBoxLayout* menuLayout;
+  QHBoxLayout* mainLayout;
 
 };
 

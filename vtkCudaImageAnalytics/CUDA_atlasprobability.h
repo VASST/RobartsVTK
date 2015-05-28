@@ -14,11 +14,11 @@
 /** @file CUDA_atlasprobability.h
  *
  *  @brief Header file with definitions of GPU kernels used for the 'atlas probability'
- *			prior.
+ *      prior.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 

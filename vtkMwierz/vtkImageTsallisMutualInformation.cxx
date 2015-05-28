@@ -171,14 +171,14 @@ vtkImageData *vtkImageTsallisMutualInformation::GetOutput()
   for (i = 0; i < this->BinNumber[0]; i++)
     {  
       for (j = 0; j < this->BinNumber[1]; j++) 
-	{
-	  temp = 0;
-	  for (int id = 0; id < n; id++)
-	    {
-	      temp += (double)this->ThreadHistST[id][i][j];
-	    }
-	  HistST->SetScalarComponentFromFloat(i,j,0,0,temp);
-	}
+  {
+    temp = 0;
+    for (int id = 0; id < n; id++)
+      {
+        temp += (double)this->ThreadHistST[id][i][j];
+      }
+    HistST->SetScalarComponentFromFloat(i,j,0,0,temp);
+  }
     }
 
   return (vtkImageData *)(this->Outputs[0]);
@@ -189,9 +189,9 @@ vtkImageData *vtkImageTsallisMutualInformation::GetOutput()
 // Handles the two input operations
 template <class T>
 void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *self,
-						vtkImageData *in1Data, T *in1Ptr,
-						vtkImageData *in2Data, T *in2Ptr,
-						int inExt[6], int id)
+            vtkImageData *in1Data, T *in1Ptr,
+            vtkImageData *in2Data, T *in2Ptr,
+            int inExt[6], int id)
 {
   int i,j,a,b;
   int idX, idY, idZ;
@@ -206,9 +206,9 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
       self->ThreadHistS[id][i] = 0;
       self->ThreadHistT[id][i] = 0;
       for (j = 0; j < self->BinNumber[1]; j++) 
- 	{
- 	  self->ThreadHistST[id][i][j] = 0;
- 	}
+   {
+     self->ThreadHistST[id][i][j] = 0;
+   }
     }
 
   // Find the region to loop over
@@ -224,39 +224,39 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
     {
      for (idY = 0; idY <= maxY; idY++)
        {
-	 // Flag that we want the complementary extents
-	 iter = 0; if (self->GetReverseStencil()) iter = -1;
+   // Flag that we want the complementary extents
+   iter = 0; if (self->GetReverseStencil()) iter = -1;
 
-	 pminX = 0; pmaxX = maxX;
-	 while ((stencil !=0 && 
-		 stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
-		(stencil == 0 && iter++ == 0))
-	   {
-	     // Set up pointers to the sub-extents
-	     temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
-	     temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
-	     // Compute over the sub-extent
-	     for (idX = pminX; idX <= pmaxX; idX++)
-	       {
-		 a = vtkResliceRound(*temp1Ptr/double(self->BinWidth[0]));
-		 b = vtkResliceRound(*temp2Ptr/double(self->BinWidth[1]));
-		 if ((a < 0) | (a > 4095))
-		   {
-		     cout << "ERROR: Input 0 contains values < 0 or > 4095\n";
-		     exit(0);
-		   }
-		 if ((b < 0) | (b > 4095))
-		   {
-		     cout << "ERROR: Input 1 contains values < 0 or > 4095\n";
-		     exit(0);
-		   }
-		 self->ThreadHistS[id][a]++;
-		 self->ThreadHistT[id][b]++;
-		 self->ThreadHistST[id][a][b]++;
-		 temp1Ptr++;
-		 temp2Ptr++;
-	       }
-	   }
+   pminX = 0; pmaxX = maxX;
+   while ((stencil !=0 && 
+     stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
+    (stencil == 0 && iter++ == 0))
+     {
+       // Set up pointers to the sub-extents
+       temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
+       temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
+       // Compute over the sub-extent
+       for (idX = pminX; idX <= pmaxX; idX++)
+         {
+     a = vtkResliceRound(*temp1Ptr/double(self->BinWidth[0]));
+     b = vtkResliceRound(*temp2Ptr/double(self->BinWidth[1]));
+     if ((a < 0) | (a > 4095))
+       {
+         cout << "ERROR: Input 0 contains values < 0 or > 4095\n";
+         exit(0);
+       }
+     if ((b < 0) | (b > 4095))
+       {
+         cout << "ERROR: Input 1 contains values < 0 or > 4095\n";
+         exit(0);
+       }
+     self->ThreadHistS[id][a]++;
+     self->ThreadHistT[id][b]++;
+     self->ThreadHistST[id][a][b]++;
+     temp1Ptr++;
+     temp2Ptr++;
+         }
+     }
        }
     }
 }
@@ -267,8 +267,8 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageTsallisMutualInformation::ThreadedExecute1(vtkImageData **inData,
-							   vtkImageData *vtkNotUsed(outData),
-							   int inExt[6], int id)
+                 vtkImageData *vtkNotUsed(outData),
+                 int inExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -316,9 +316,9 @@ void vtkImageTsallisMutualInformation::ThreadedExecute1(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageTsallisMutualInformationExecute,this,
-			inData[0], (VTK_TT *)(inPtr1), 
-			inData[1], (VTK_TT *)(inPtr2), 
-			inExt, id);
+      inData[0], (VTK_TT *)(inPtr1), 
+      inData[1], (VTK_TT *)(inPtr2), 
+      inExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
@@ -344,9 +344,9 @@ void vtkImageTsallisMutualInformation::ThreadedExecute2(int extS[6], int extST[6
     {  
       temp1 = 0.0;
       for (n = 0; n < N; n++)
-	{
-	  temp1 += (double)this->ThreadHistS[n][i];
-	}
+  {
+    temp1 += (double)this->ThreadHistS[n][i];
+  }
       this->ThreadEntropyS1[id] += pow(temp1,this->qValue);
       this->ThreadEntropyS2[id] += temp1;
     }
@@ -356,22 +356,22 @@ void vtkImageTsallisMutualInformation::ThreadedExecute2(int extS[6], int extST[6
     {  
       temp2 = 0.0;
       for (n = 0; n < N; n++)
-	{
-	  temp2 += (double)this->ThreadHistT[n][j];
-	}
+  {
+    temp2 += (double)this->ThreadHistT[n][j];
+  }
       this->ThreadEntropyT1[id] += pow(temp2,this->qValue);
       this->ThreadEntropyT2[id] += temp2;
       for (i = extST[0]; i <= extST[1]; i++) 
-	{
- 	  temp1 = 0.0;
- 	  for (n = 0; n < N; n++)
- 	    {
- 	      temp1 += (double)this->ThreadHistST[n][i][j];
- 	      this->ThreadCount[id] += (double)this->ThreadHistST[n][i][j];
- 	    }
-	  this->ThreadEntropyST1[id] += pow(temp1,this->qValue);
-	  this->ThreadEntropyST2[id] += temp1;
-	}
+  {
+     temp1 = 0.0;
+     for (n = 0; n < N; n++)
+       {
+         temp1 += (double)this->ThreadHistST[n][i][j];
+         this->ThreadCount[id] += (double)this->ThreadHistST[n][i][j];
+       }
+    this->ThreadEntropyST1[id] += pow(temp1,this->qValue);
+    this->ThreadEntropyST2[id] += temp1;
+  }
     }
 }
 
@@ -400,11 +400,11 @@ double vtkImageTsallisMutualInformation::GetResult()
   if (this->qValue != 1.0)
     {
       entropyS = ( 1.0 / (1.0 - this->qValue) * 
-		   (entropyS1 / pow(count,this->qValue) - entropyS2 / count) );
+       (entropyS1 / pow(count,this->qValue) - entropyS2 / count) );
       entropyT = ( 1.0 / (1.0 - this->qValue) * 
-		   (entropyT1 / pow(count,this->qValue) - entropyT2 / count) );
+       (entropyT1 / pow(count,this->qValue) - entropyT2 / count) );
       entropyST = ( 1.0 / (1.0 - this->qValue) * 
-		   (entropyST1 / pow(count,this->qValue) - entropyST2 / count) );
+       (entropyST1 / pow(count,this->qValue) - entropyST2 / count) );
     }
   else
     {
@@ -418,10 +418,10 @@ double vtkImageTsallisMutualInformation::GetResult()
 //   else
 //     {
   result = ( ( entropyS + entropyT + (1 - this->qValue) *
-	       entropyS * entropyT - entropyST ) );// /
-		 //		 ( entropyT + (1 - this->qValue) * entropyS * entropyT ) ) ;
-		 //		 ( entropyST * ( 1 + (1-this->qValue) * entropyST ) ) );
-		 //    }
+         entropyS * entropyT - entropyST ) );// /
+     //     ( entropyT + (1 - this->qValue) * entropyS * entropyT ) ) ;
+     //     ( entropyST * ( 1 + (1-this->qValue) * entropyST ) ) );
+     //    }
 
   return result;
 }
@@ -429,8 +429,8 @@ double vtkImageTsallisMutualInformation::GetResult()
 //----------------------------------------------------------------------------
 // Get ALL of the input.
 void vtkImageTsallisMutualInformation::ComputeInputUpdateExtent(int inExt[6],
-								   int outExt[6],
-								   int vtkNotUsed(whichInput))
+                   int outExt[6],
+                   int vtkNotUsed(whichInput))
 {
   int *wholeExtent = this->GetInput()->GetWholeExtent();
   memcpy(inExt, wholeExtent, 6*sizeof(int));
@@ -559,7 +559,7 @@ void vtkImageTsallisMutualInformation::ExecuteData(vtkDataObject *out)
 
 //----------------------------------------------------------------------------
 void vtkImageTsallisMutualInformation::ExecuteInformation(vtkImageData **inData, 
-							     vtkImageData *outData)
+                   vtkImageData *outData)
 {
   // the two inputs are required to be of the same data type and extents.
   inData[0]->Update();

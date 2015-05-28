@@ -4,14 +4,14 @@
 
       This is unpublished proprietary source code of MPB Technologies Inc.
             No part of this software may be disclosed or published 
-	        without the expressed written consent of MPB Technologies Inc.
+          without the expressed written consent of MPB Technologies Inc.
 ==============================================================================
     For the Linux kernel-mode library, this file defines IOCTL values
-	to be used in kernel module for starting, stopping, and configuring
-	the driver.  If these IOCTL values are used, the f6sconfig program
-	can be used to start and stop the servoloop.
-	When handling the IOCTL_F6S_CONFIG operation, use the f6s_SetConfig_IOCTL
-	routine defined in f6s.h to load a configuration file.
+  to be used in kernel module for starting, stopping, and configuring
+  the driver.  If these IOCTL values are used, the f6sconfig program
+  can be used to start and stop the servoloop.
+  When handling the IOCTL_F6S_CONFIG operation, use the f6s_SetConfig_IOCTL
+  routine defined in f6s.h to load a configuration file.
 ============================================================================*/
 
 #ifndef _F6S_IOCTL_H_

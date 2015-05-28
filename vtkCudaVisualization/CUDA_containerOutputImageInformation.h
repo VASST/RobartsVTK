@@ -19,26 +19,25 @@
  */
 typedef struct
 {
-	uint2			resolution;				/**< The resolution of the texture/image that will be textured to the screen */
-	uchar4*			deviceOutputImage;		/**< The texture/image that will be textured to the screen on device memory */
+  uint2      resolution;        /**< The resolution of the texture/image that will be textured to the screen */
+  uchar4*      deviceOutputImage;    /**< The texture/image that will be textured to the screen on device memory */
 
-	unsigned int	renderType;				/**< Whether to render to a CUDA-OpenGL texture (0), or to a display helper (1), or to vtkImageData (2) */
-	
-	float*			depthBuffer;			/**< The ray termination depth buffer */
-	float*			maxDepthBuffer;			/**< The maximum depth buffer used for normalizing depth */
-	float*			minDepthBuffer;			/**< The minimum depth buffer used for normalizing depth */
-	float*			rayStartX;				/**< The ray starting location buffer (x component) */
-	float*			rayStartY;				/**< The ray starting location buffer (y component) */
-	float*			rayStartZ;				/**< The ray starting location buffer (z component) */
-	float*			rayIncX;				/**< The ray increment amount buffer (x component) */
-	float*			rayIncY;				/**< The ray increment amount buffer (y component) */
-	float*			rayIncZ;				/**< The ray increment amount buffer (z component) */
-	float*			numSteps;				/**< The number of sample points on the ray */
-	float*			excludeStart;			/**< The starting increment of the exlusion planes */
-	float*			excludeEnd;				/**< The ending increment of the exlusion planes */
-	bool			flipped;				/**< Do a left-right flip of the output image */
-	uchar4			tint;					/**< Tint the output image with a particular RGBA */
-	
+  unsigned int  renderType;        /**< Whether to render to a CUDA-OpenGL texture (0), or to a display helper (1), or to vtkImageData (2) */
+  
+  float*      depthBuffer;      /**< The ray termination depth buffer */
+  float*      maxDepthBuffer;      /**< The maximum depth buffer used for normalizing depth */
+  float*      minDepthBuffer;      /**< The minimum depth buffer used for normalizing depth */
+  float*      rayStartX;        /**< The ray starting location buffer (x component) */
+  float*      rayStartY;        /**< The ray starting location buffer (y component) */
+  float*      rayStartZ;        /**< The ray starting location buffer (z component) */
+  float*      rayIncX;        /**< The ray increment amount buffer (x component) */
+  float*      rayIncY;        /**< The ray increment amount buffer (y component) */
+  float*      rayIncZ;        /**< The ray increment amount buffer (z component) */
+  float*      numSteps;        /**< The number of sample points on the ray */
+  float*      excludeStart;      /**< The starting increment of the exlusion planes */
+  float*      excludeEnd;        /**< The ending increment of the exlusion planes */
+  bool      flipped;        /**< Do a left-right flip of the output image */
+  
 } cudaOutputImageInformation;
 
 #endif

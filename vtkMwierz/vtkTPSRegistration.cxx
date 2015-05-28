@@ -65,8 +65,8 @@ vtkTPSRegistration::~vtkTPSRegistration()
 
 //----------------------------------------------------------------------------
 void vtkTPSRegistration::SetInputData(vtkImageData *srcImage, vtkImageData *tgtImage,
-				      vtkPolyData *srcPoly, vtkPolyData *tgtPoly,
-				      vtkGeneralTransform *affTransform)
+              vtkPolyData *srcPoly, vtkPolyData *tgtPoly,
+              vtkGeneralTransform *affTransform)
 {
   cout;
 }
@@ -112,9 +112,9 @@ void vtkTPSRegistration::SetInputData(vtkImageData *srcImage, vtkImageData *tgtI
 // //----------------------------------------------------------------------------
 // template <class T>
 // void vtkTPSRegistrationExecute(vtkTPSRegistration *self,
-// 			       T  *in1Ptr, T *in2Ptr,
-// 			       int inc[3], int inc2[2], int inExt[6],
-// 			       int loc000[3], int loc111[3], double count)
+//              T  *in1Ptr, T *in2Ptr,
+//              int inc[3], int inc2[2], int inExt[6],
+//              int loc000[3], int loc111[3], double count)
 // {
 //   cout;
 // }

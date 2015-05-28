@@ -7,7 +7,7 @@
   Copyright : King's College London
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
-	      http://www-ipg.umds.ac.uk/cisg
+        http://www-ipg.umds.ac.uk/cisg
   Date      : $Date: 2007/05/04 14:34:34 $
   Version   : $Revision: 1.1 $
 
@@ -119,48 +119,48 @@ void vtkCISGSubdivideGridTransform::Execute(vtkImageData *grid) {
   for (i = 0; i < _x; i++)
     {
       for (j = 0; j < _y; j++)
-	{
-	  for (k = 0; k < _z; k++)
-	    {
-	      for (i1 = 0; i1 < 2; i1++)
-		{
-		  for (j1 = 0; j1 < 2; j1++)
-		    {
-		      for (k1 = 0; k1 < 2; k1++)
-			{
+  {
+    for (k = 0; k < _z; k++)
+      {
+        for (i1 = 0; i1 < 2; i1++)
+    {
+      for (j1 = 0; j1 < 2; j1++)
+        {
+          for (k1 = 0; k1 < 2; k1++)
+      {
 
-			  dx=0.0; dy=0.0; dz=0.0;
-			  for (i2 = 0; i2 < 3; i2++)
-			    {
-			      for (j2 = 0; j2 < 3; j2++)
-				{
-				  for (k2 = 0; k2 < 3; k2++)
-				    {
-				      if (i+i2-1 >= 0 && i+i2-1 < indim[0] &&
-					  j+j2-1 >= 0 && j+j2-1 < indim[1] &&
-					  k+k2-1 >= 0 && k+k2-1 < indim[2])
-					{
-					  dispPtr=(double *)
-					    inputgrid->GetScalarPointer(i+i2-1,j+j2-1,k+k2-1);
-					  dx += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
-					  dy += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
-					  dz += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
-					}
-				    }
-				}
-			    }
-			  if (2*i+i1 < outdim[0] && 2*j+j1 < outdim[1] && 2*k+k1 < outdim[2])
-			    {
-			      dispPtr=(double *)grid->GetScalarPointer(2*i+i1,2*j+j1,2*k+k1);
-			      *dispPtr++ = dx;
-			      *dispPtr++ = dy; 
-			      *dispPtr++ = dz;
-			    }			  
-			}
-		    }
-		}
-	    }
-	}
+        dx=0.0; dy=0.0; dz=0.0;
+        for (i2 = 0; i2 < 3; i2++)
+          {
+            for (j2 = 0; j2 < 3; j2++)
+        {
+          for (k2 = 0; k2 < 3; k2++)
+            {
+              if (i+i2-1 >= 0 && i+i2-1 < indim[0] &&
+            j+j2-1 >= 0 && j+j2-1 < indim[1] &&
+            k+k2-1 >= 0 && k+k2-1 < indim[2])
+          {
+            dispPtr=(double *)
+              inputgrid->GetScalarPointer(i+i2-1,j+j2-1,k+k2-1);
+            dx += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
+            dy += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
+            dz += w[i1][i2]*w[j1][j2]*w[k1][k2] * (*dispPtr++);
+          }
+            }
+        }
+          }
+        if (2*i+i1 < outdim[0] && 2*j+j1 < outdim[1] && 2*k+k1 < outdim[2])
+          {
+            dispPtr=(double *)grid->GetScalarPointer(2*i+i1,2*j+j1,2*k+k1);
+            *dispPtr++ = dx;
+            *dispPtr++ = dy; 
+            *dispPtr++ = dz;
+          }        
+      }
+        }
+    }
+      }
+  }
     }
   
 }

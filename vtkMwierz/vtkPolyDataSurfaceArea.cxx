@@ -76,10 +76,10 @@ double vtkPolyDataSurfaceArea::GetSurfaceArea()
 
       // store current vertix (x,y,z) coordinates ...
       for (int pointId=0; pointId < 3; pointId++)
-	{
-	  p = this->inData->GetPoint(pointIds->GetId(pointId));
-	  x[pointId] = (double)p[0]; y[pointId] = (double)p[1]; z[pointId] = (double)p[2];
-	}
+  {
+    p = this->inData->GetPoint(pointIds->GetId(pointId));
+    x[pointId] = (double)p[0]; y[pointId] = (double)p[1]; z[pointId] = (double)p[2];
+  }
       
       i[0] = ( x[1] - x[0]); j[0] = (y[1] - y[0]); k[0] = (z[1] - z[0]);
       i[1] = ( x[2] - x[0]); j[1] = (y[2] - y[0]); k[1] = (z[2] - z[0]);

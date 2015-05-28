@@ -14,11 +14,11 @@
 /** @file CUDA_loglikelihoodterm.h
  *
  *  @brief Header file with definitions of GPU kernels used predominantly in calculating
- *			log likelihood components of data terms for GHMF.
+ *      log likelihood components of data terms for GHMF.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 

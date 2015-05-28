@@ -242,9 +242,9 @@ void vtkVideoBuffer2::SetFrameFormat(vtkVideoFrame2 *format)
   if (format)
     {
     int frameSize[3];
-	int frameExtent[6];
-	int frameFormatSize[3];
-	int frameFormatExtent[6];
+  int frameExtent[6];
+  int frameFormatSize[3];
+  int frameFormatExtent[6];
     format->GetFrameSize(frameSize);
     format->GetFrameExtent(frameExtent);
     this->FrameFormat->GetFrameSize(frameFormatSize);
@@ -265,8 +265,8 @@ void vtkVideoBuffer2::SetFrameFormat(vtkVideoFrame2 *format)
       format->GetTopDown() == this->FrameFormat->GetTopDown() &&
       format->GetBytesInFrame() == this->FrameFormat->GetBytesInFrame() &&
       format->GetOpacity() == this->FrameFormat->GetOpacity() &&
-	  format->GetCompression() == this->FrameFormat->GetCompression() &&
-	  format->GetFrameGrabberType() == this->FrameFormat->GetFrameGrabberType() )
+    format->GetCompression() == this->FrameFormat->GetCompression() &&
+    format->GetFrameGrabberType() == this->FrameFormat->GetFrameGrabberType() )
       {
       return;
       }
@@ -333,8 +333,8 @@ void vtkVideoBuffer2::AddItem(vtkVideoFrame2* frame, double time)
     frame->GetRowAlignment() != this->FrameFormat->GetRowAlignment() ||
     frame->GetTopDown() != this->FrameFormat->GetTopDown() ||
     frame->GetOpacity() != this->FrameFormat->GetOpacity() ||
-	frame->GetCompression() != this->FrameFormat->GetCompression() ||
-	frame->GetFrameGrabberType() != this->FrameFormat->GetFrameGrabberType() )
+  frame->GetCompression() != this->FrameFormat->GetCompression() ||
+  frame->GetFrameGrabberType() != this->FrameFormat->GetFrameGrabberType() )
     {
     return;
     }

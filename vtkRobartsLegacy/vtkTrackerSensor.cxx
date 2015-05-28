@@ -223,7 +223,7 @@ void vtkTrackerSensor::StartTracking()
   if (this->Tracking && !tracking && this->ThreadId == -1)
     {
     this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)\
-						 &vtkTrackerThread,this);
+             &vtkTrackerThread,this);
     }
 
   this->UpdateMutex->Unlock();
@@ -261,7 +261,7 @@ void vtkTrackerSensor::Update()
       waittime += 5.0;
       }
     while (this->LastUpdateTime == this->UpdateTime.GetMTime() &&
-	   vtkTimerLog::GetCurrentTime() < waittime) 
+     vtkTimerLog::GetCurrentTime() < waittime) 
       {
 #ifdef _WIN32
       Sleep(10);
@@ -301,10 +301,10 @@ void vtkTrackerSensor::SetWorldCalibrationMatrix(vtkMatrix4x4 *vmat)
     for (j = 0; j < 4; j++)
       {
       if (this->WorldCalibrationMatrix->GetElement(i,j) 
-	  != vmat->GetElement(i,j))
-	{
-	break;
-	}
+    != vmat->GetElement(i,j))
+  {
+  break;
+  }
       }
     if (j < 4)
       { 

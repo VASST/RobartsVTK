@@ -15,30 +15,30 @@ class DUALTF_transferFunctionWindowWidget;
 
 class DUALTF_segmentationWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
 
-	DUALTF_segmentationWidget( DUALTF_transferFunctionWindowWidget* parent );
-	~DUALTF_segmentationWidget();
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaDualImageVolumeMapper* caster );
-	QMenu* getMenuOptions();
+  DUALTF_segmentationWidget( DUALTF_transferFunctionWindowWidget* parent );
+  ~DUALTF_segmentationWidget();
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaDualImageVolumeMapper* caster );
+  QMenu* getMenuOptions();
 
 private slots:
-	
-	//shading related slots
-	void segment();
+  
+  //shading related slots
+  void segment();
 
 private:
-	
-	void setupMenu();
-	QMenu* segmentationMenu;
-	QAction* segmentNowOption;
+  
+  void setupMenu();
+  QMenu* segmentationMenu;
+  QAction* segmentNowOption;
 
-	DUALTF_transferFunctionWindowWidget* parent;
-	
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCudaDualImageVolumeMapper* mapper;
+  DUALTF_transferFunctionWindowWidget* parent;
+  
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCudaDualImageVolumeMapper* mapper;
 
 
 };

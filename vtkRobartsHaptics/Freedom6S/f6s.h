@@ -4,7 +4,7 @@
 
       This is unpublished proprietary source code of MPB Technologies Inc.
             No part of this software may be disclosed or published 
-    	    without the expressed written consent of MPB Technologies Inc.
+          without the expressed written consent of MPB Technologies Inc.
 ==============================================================================
     This file defines the interface for the Freedom6S API DLL for use with
     MPB Technologies' force-feedback hand controller devices.
@@ -19,13 +19,13 @@
 #ifdef WIN32
   #ifdef F6S_EXPORTS
     #define F6S_API
-	#include <d3d.h>
+  #include <d3d.h>
   #else
-	#ifdef __cplusplus
-	  #define F6S_API extern "C" __declspec(dllimport)
-	#else
-	  #define F6S_API __declspec(dllimport)
-	#endif
+  #ifdef __cplusplus
+    #define F6S_API extern "C" __declspec(dllimport)
+  #else
+    #define F6S_API __declspec(dllimport)
+  #endif
     #ifndef _D3D_H_
       #define LPD3DMATRIX void*
     #endif
@@ -55,9 +55,9 @@
 
 typedef enum
 {
-    F6SET_ERROR,	// Fatal
-    F6SET_WARNING,	// Abnormal
-    F6SET_DEBUG		// Informational
+    F6SET_ERROR,  // Fatal
+    F6SET_WARNING,  // Abnormal
+    F6SET_DEBUG    // Informational
 } F6sErrorType;
 
 // Prototype for the application-defined error handler function (obsolete)
@@ -70,19 +70,19 @@ typedef void (__stdcall APPERRORHANDLER) (F6sErrorType nErrorType, char *szError
 // Power status can be retrieved via Freedom6S::GetPowerStatus().
 // Note that not all configurations support power detection.
 
-#define F6SPS_SENSORS	0x01
-#define F6SPS_MOTORS	0x02
-#define F6SPS_OFF		0
-#define F6SPS_UNKNOWN	-1
-#define F6SPS_UNPLUGGED	-2
+#define F6SPS_SENSORS  0x01
+#define F6SPS_MOTORS  0x02
+#define F6SPS_OFF    0
+#define F6SPS_UNKNOWN  -1
+#define F6SPS_UNPLUGGED  -2
 
 ////////////////////////
 // Safety Feature Flags
 
-#define F6SSF_RUNAWAY	0x01	// turn off motors when high velocity is detected (default on)
-#define F6SSF_SIGNAL	0x02	// turn off motors when a signal is triggered - ie. segmentation fault (default on)
-#define F6SSF_BOUNDARY	0x04	// use virtual box to keep controller within workspace boundaries (default off)
-#define F6SSF_BOUNDBUZZ	0x08	// create a haptic buzz when user is close to workspace boundary (default off)
+#define F6SSF_RUNAWAY  0x01  // turn off motors when high velocity is detected (default on)
+#define F6SSF_SIGNAL  0x02  // turn off motors when a signal is triggered - ie. segmentation fault (default on)
+#define F6SSF_BOUNDARY  0x04  // use virtual box to keep controller within workspace boundaries (default off)
+#define F6SSF_BOUNDBUZZ  0x08  // create a haptic buzz when user is close to workspace boundary (default off)
 
 ////////////////////////
 // F6sDiagData struct
@@ -93,11 +93,11 @@ typedef void (__stdcall APPERRORHANDLER) (F6sErrorType nErrorType, char *szError
 
 typedef struct
 {
-    float	m_Sensors[8];				// sensor voltages
-    double	m_Angles[7];				// computed sensor angles
-    float	m_O5a, m_O5b, m_O5c, m_O5d;	// Sensor 4-5 overlaps, in degrees.
-    char	m_bZeroSide;				// true if Sensor 4 is on + side of zero angle
-	double	m_MotorJacobian[36];		// 6x6 jacobian used to compute joint torques
+    float  m_Sensors[8];        // sensor voltages
+    double  m_Angles[7];        // computed sensor angles
+    float  m_O5a, m_O5b, m_O5c, m_O5d;  // Sensor 4-5 overlaps, in degrees.
+    char  m_bZeroSide;        // true if Sensor 4 is on + side of zero angle
+  double  m_MotorJacobian[36];    // 6x6 jacobian used to compute joint torques
 } F6sDiagData;
 
 ////////////////
@@ -105,25 +105,25 @@ typedef struct
 
 typedef enum
 {
-	F6SRC_NOERROR			=	0,
-	F6SRC_ALREADYEXIST		=	-1,		/* A Freedom6S device is already open in the system                                */
-	F6SRC_BADVALUE			=	-2,		/* Value out of range                                                              */
-	F6SRC_BADPOINTER		=	-3,		/* Bad pointer passed to function                                                  */
-	F6SRC_MEMORY			=	-4,		/* Out of memory                                                                   */
-	F6SRC_REGISTRY			=	-5,		/* Error reading registry values (will user defaults)                              */
-	F6SRC_INIFILE_READ		=	-6,		/* Error reading ini file (settings)                                               */
-	F6SRC_INIFILE_WRITE		=	-7,		/* Error writing ini file (settings)                                               */
-	F6SRC_NOTINITIALIZED	=	-8,		/* Attempt to call a function before f6s_Initialize()                              */
-	F6SRC_BADHANDLE			=	-9,		/* A function received a bad HF6S value                                            */
-	F6SRC_BADMOTORTEMP		=	-10,	/* Motor temperatures were out of range or not read correctly (warning only)       */
-	F6SRC_JOINTVELINIT		=	-11,	/* Attempt to read velocity without joint velocity computation enabled             */
-	F6SRC_CALIBRATION		=	-12,	/* Unable to calibrate, require mechanical calibration                             */
-	F6SRC_ROLLANGLE			=	-13,	/* Unable to calculate roll angle, sensors 4 & 5 require mechanical re-calibration */
-	F6SRC_DRIVERINIT		=	-14,	/* Unable to initialize the drivers for ADC or DAC hardware                        */
-	F6SRC_IOERROR			=	-15,	/* Error returned from ADC or DAC drivers                                          */
-	F6SRC_DAQCONFIG			=	-16,	/* Unknown DAQ configuration													   */
-	F6SRC_HOTMOTOR			=   -17,   	/* One or more motors have been flagged hot, causing the max current to decrease   */
-	F6SRC_FAILURE           =   -18     /* Operation failed                                                                */
+  F6SRC_NOERROR      =  0,
+  F6SRC_ALREADYEXIST    =  -1,    /* A Freedom6S device is already open in the system                                */
+  F6SRC_BADVALUE      =  -2,    /* Value out of range                                                              */
+  F6SRC_BADPOINTER    =  -3,    /* Bad pointer passed to function                                                  */
+  F6SRC_MEMORY      =  -4,    /* Out of memory                                                                   */
+  F6SRC_REGISTRY      =  -5,    /* Error reading registry values (will user defaults)                              */
+  F6SRC_INIFILE_READ    =  -6,    /* Error reading ini file (settings)                                               */
+  F6SRC_INIFILE_WRITE    =  -7,    /* Error writing ini file (settings)                                               */
+  F6SRC_NOTINITIALIZED  =  -8,    /* Attempt to call a function before f6s_Initialize()                              */
+  F6SRC_BADHANDLE      =  -9,    /* A function received a bad HF6S value                                            */
+  F6SRC_BADMOTORTEMP    =  -10,  /* Motor temperatures were out of range or not read correctly (warning only)       */
+  F6SRC_JOINTVELINIT    =  -11,  /* Attempt to read velocity without joint velocity computation enabled             */
+  F6SRC_CALIBRATION    =  -12,  /* Unable to calibrate, require mechanical calibration                             */
+  F6SRC_ROLLANGLE      =  -13,  /* Unable to calculate roll angle, sensors 4 & 5 require mechanical re-calibration */
+  F6SRC_DRIVERINIT    =  -14,  /* Unable to initialize the drivers for ADC or DAC hardware                        */
+  F6SRC_IOERROR      =  -15,  /* Error returned from ADC or DAC drivers                                          */
+  F6SRC_DAQCONFIG      =  -16,  /* Unknown DAQ configuration                             */
+  F6SRC_HOTMOTOR      =   -17,     /* One or more motors have been flagged hot, causing the max current to decrease   */
+  F6SRC_FAILURE           =   -18     /* Operation failed                                                                */
 } F6SRC;
 
 ////////////////////////
@@ -136,15 +136,15 @@ typedef enum { F6SHT_NORMAL, F6SHT_BUTTON } F6sHandleType;
 // because it remains unchanged througout the life of the HF6S handle.
 typedef struct F6sDeviceInfo_
 {
-	char *m_strSerialNo;			// serial number
-	F6sDeviceType m_nDeviceType;	// device type identifier
-	F6sHandleType m_nHandleType;	// type of handle featured on the device
-	char m_nDOF;					// degrees of freedom
-	char m_nJoints;					// number of joints
-	char m_nMotors;					// number of motors
-	char m_nSensors;				// number of sensors
-	char m_bLeftDevice;				// true for left-handed devices
-	char m_bLeftHandle;				// true for left-handled devices
+  char *m_strSerialNo;      // serial number
+  F6sDeviceType m_nDeviceType;  // device type identifier
+  F6sHandleType m_nHandleType;  // type of handle featured on the device
+  char m_nDOF;          // degrees of freedom
+  char m_nJoints;          // number of joints
+  char m_nMotors;          // number of motors
+  char m_nSensors;        // number of sensors
+  char m_bLeftDevice;        // true for left-handed devices
+  char m_bLeftHandle;        // true for left-handled devices
 } F6sDeviceInfo;
 
 ///////////////////////////////
@@ -197,7 +197,7 @@ F6S_API F6SRC f6s_GetButtonPressed( HF6S hf6s, int *pbPressed );
 F6S_API F6SRC f6s_GetDiagData( HF6S hf6s, F6sDiagData* pDiag, int nDiagDataSize );
 F6S_API F6SRC f6s_GetVersion( HF6S hf6s, char* strVersion, int nVersionLen, char* strDate, int nDateLen );
 F6S_API F6SRC f6s_GetDeviceInfo( HF6S hf6s, F6sDeviceInfo* pDevInfo, int nDevInfoLen );
-F6S_API	F6SRC f6s_GetPowerStatus( HF6S hf6s, int *pnPowerStatus );
+F6S_API  F6SRC f6s_GetPowerStatus( HF6S hf6s, int *pnPowerStatus );
 F6S_API F6SRC f6s_GetForceTorque( HF6S hf6s, double force[3],  double torque[3] );
 F6S_API F6SRC f6s_GetJointTorques( HF6S hf6s, double *jointTorques, int nJoints );
 F6S_API F6SRC f6s_GetBoundaryDetect( HF6S hf6s, int *pbOutsideBoundary );

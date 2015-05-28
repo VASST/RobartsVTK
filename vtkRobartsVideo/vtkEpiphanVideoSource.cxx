@@ -48,7 +48,7 @@
 #include "vtkUnsignedCharArray.h"
 #include "vtkMutexLock.h"
 
-#include <vtkstd/string> 
+#include <string> 
 
 vtkEpiphanVideoSource* vtkEpiphanVideoSource::New()
 {
@@ -78,7 +78,7 @@ vtkEpiphanVideoSource::vtkEpiphanVideoSource()
   this->vtkVideoSource::SetFrameRate( 25.0f );
 
   for (unsigned int i =0; i < 15; i++){
-	  this->serialNumber[i] ='\0';
+    this->serialNumber[i] ='\0';
   }
   
 }
@@ -88,7 +88,7 @@ vtkEpiphanVideoSource::~vtkEpiphanVideoSource()
 {
   this->vtkEpiphanVideoSource::ReleaseSystemResources();
   if (this->fg) {
-	  FrmGrab_Deinit(); // not sure if this stops all devices??
+    FrmGrab_Deinit(); // not sure if this stops all devices??
   }
 }  
 
@@ -97,11 +97,11 @@ bool vtkEpiphanVideoSource::CheckDevice()
 {
   if (this->fg != NULL)
   { 
-	  return true;
+    return true;
   }
   else 
   {
-	  return false;
+    return false;
   }
 }
 
@@ -131,21 +131,21 @@ void vtkEpiphanVideoSource::Initialize()
   this->fg = FrmGrab_Open(this->serialNumber);
   
   if (this->fg) {
-	this->fg = FrmGrabLocal_Open();
-	vtkErrorMacro(<<"Epiphan Device with set serial number not found, looking for any available device instead");
+  this->fg = FrmGrabLocal_Open();
+  vtkErrorMacro(<<"Epiphan Device with set serial number not found, looking for any available device instead");
   }
 
   if (this->fg == NULL) {
-	  vtkErrorMacro(<<"Epiphan Device Not found");
-	  return;
+    vtkErrorMacro(<<"Epiphan Device Not found");
+    return;
   }
 
   V2U_VideoMode vm;
   if (FrmGrab_DetectVideoMode(this->fg,&vm) && vm.width && vm.height) {
-	  this->SetFrameSize(vm.width,vm.height,1);
-	  //this->SetFrameRate((vm.vfreq+50)/1000);
+    this->SetFrameSize(vm.width,vm.height,1);
+    //this->SetFrameRate((vm.vfreq+50)/1000);
   } else {
-	vtkErrorMacro(<<"No signal detected");
+  vtkErrorMacro(<<"No signal detected");
   }
 
   FrmGrab_SetMaxFps(this->fg, 25.0);
@@ -162,8 +162,8 @@ void vtkEpiphanVideoSource::ReleaseSystemResources()
 {
   this->Initialized = 0;
   if (this->fg != NULL) {
-	FrmGrab_Close(this->fg);
-	this->fg = NULL;
+  FrmGrab_Close(this->fg);
+  this->fg = NULL;
   }
 }
 
@@ -186,28 +186,28 @@ void vtkEpiphanVideoSource::InternalGrab()
   V2U_UINT32 format = V2U_GRABFRAME_BOTTOM_UP_FLAG; // seems to be needed to orientate correctly.
 
   if (this->OutputFormat == VTK_LUMINANCE) {
-	format |= V2U_GRABFRAME_FORMAT_YUY2;
+  format |= V2U_GRABFRAME_FORMAT_YUY2;
   } else if (this->OutputFormat == VTK_RGB) {
-	format |= V2U_GRABFRAME_FORMAT_RGB24;
+  format |= V2U_GRABFRAME_FORMAT_RGB24;
   } else if (this->OutputFormat == VTK_RGBA) {
-	format |= V2U_GRABFRAME_FORMAT_ARGB32;
+  format |= V2U_GRABFRAME_FORMAT_ARGB32;
   } else {
-	  // no clue what format to grab, you can add more.
-	  return;
+    // no clue what format to grab, you can add more.
+    return;
   }
 
   frame= FrmGrab_Frame(this->fg, format, cropRect);
 
   if (frame == NULL || frame->imagelen <= 0) {
-	  this->FrameBufferMutex->Unlock();
-	  this->Stop();
-	  return;
+    this->FrameBufferMutex->Unlock();
+    this->Stop();
+    return;
   }
   if (frame->retcode != V2UERROR_OK) { 
-	  cout << "Error: " << frame->retcode << endl;
-	  this->FrameBufferMutex->Unlock();
-	  this->Stop();
-	  return;
+    cout << "Error: " << frame->retcode << endl;
+    this->FrameBufferMutex->Unlock();
+    this->Stop();
+    return;
   } 
 
 
@@ -248,12 +248,12 @@ void vtkEpiphanVideoSource::InternalGrab()
 }
 
 void vtkEpiphanVideoSource::SetSerialNumber(char * serial) {
-	strncpy_s(this->serialNumber, serial, 15);
+  strncpy_s(this->serialNumber, serial, 15);
 }
 
 char * vtkEpiphanVideoSource::GetSerialNumber()
 {
-	return this->serialNumber;
+  return this->serialNumber;
 }
 
 
@@ -351,7 +351,7 @@ void vtkEpiphanVideoSource::Record()
 
     this->Recording = 1;
     this->FrameCount = 0;
-	this->pauseFeed = 0;
+  this->pauseFeed = 0;
     this->Modified();
     this->PlayerThreadId = 
       this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
@@ -418,17 +418,17 @@ void vtkEpiphanVideoSource::Stop()
 } 
 
 void vtkEpiphanVideoSource::Pause() {
-	this->pauseFeed = 1;
+  this->pauseFeed = 1;
 }
 void vtkEpiphanVideoSource::UnPause() {
-	this->pauseFeed = 0;
+  this->pauseFeed = 0;
 }
 
 void vtkEpiphanVideoSource::SetFrameRate(float rate) {
-	vtkVideoSource::SetFrameRate(rate);
-	if (this->fg) {
-		FrmGrab_SetMaxFps(this->fg, rate);
-	}
+  vtkVideoSource::SetFrameRate(rate);
+  if (this->fg) {
+    FrmGrab_SetMaxFps(this->fg, rate);
+  }
 }
 
 void vtkEpiphanVideoSource::SetOutputFormat(int format)
@@ -445,13 +445,13 @@ void vtkEpiphanVideoSource::SetOutputFormat(int format)
     {
     case VTK_RGBA:
       numComponents = 4;
-	  break;
+    break;
     case VTK_RGB:
       numComponents = 3;
-	  break;
-	case VTK_LUMINANCE:
-	  numComponents = 2;
-	  break;
+    break;
+  case VTK_LUMINANCE:
+    numComponents = 2;
+    break;
     default:
       vtkErrorMacro(<< "SetOutputFormat: Unrecognized color format.");
       return;
@@ -486,8 +486,8 @@ void vtkEpiphanVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, int z0
 
   int difference = ((x1-x0)*(y1-y0));
   if ((difference > -200 ) && (difference < 200)) {
-	vtkErrorMacro(<<"Epiphan Device must have a size of minimum 200 pixels");
-	return;
+  vtkErrorMacro(<<"Epiphan Device must have a size of minimum 200 pixels");
+  return;
   }
 
   vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);

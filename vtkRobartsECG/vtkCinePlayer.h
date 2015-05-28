@@ -162,8 +162,8 @@ protected:
   //std::vector<vtkForceFeedback *>  forceModel;
   typedef std::vector<vtkActor *> ActorGroup; // Each ActorGroup can is one actor that can be inside multiple renders
   typedef std::vector<ActorGroup> Grouping;   // Each Grouping is a series of images (Example, 20 phases of the heart beating)
-  std::vector<Grouping> ImageGroups;		  // Group of ALL Images that will be involved in the CinePlayer
-  std::vector<Grouping> SurfaceGroups;		  // Group of ALL Surfaces that will be involved in the CinePlayer
+  std::vector<Grouping> ImageGroups;      // Group of ALL Images that will be involved in the CinePlayer
+  std::vector<Grouping> SurfaceGroups;      // Group of ALL Surfaces that will be involved in the CinePlayer
   int NumberOfFrames;
   //ETX
 

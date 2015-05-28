@@ -10,60 +10,60 @@ class vtkCudaMemoryTexture : public vtkObject, public vtkCudaObject
 {
 public:
 
-	vtkTypeMacro( vtkCudaMemoryTexture, vtkObject );
+  vtkTypeMacro( vtkCudaMemoryTexture, vtkObject );
 
-	static vtkCudaMemoryTexture* New();
+  static vtkCudaMemoryTexture* New();
 
-	void SetWidth(unsigned int width) { this->SetSize(width, this->GetHeight()); }
-	void SetHeight(unsigned int height) { this->SetSize(this->GetWidth(), height); }
-	void SetSize(unsigned int width, unsigned int height);
+  void SetWidth(unsigned int width) { this->SetSize(width, this->GetHeight()); }
+  void SetHeight(unsigned int height) { this->SetSize(this->GetWidth(), height); }
+  void SetSize(unsigned int width, unsigned int height);
 
-	unsigned int GetWidth() const { return this->Width; }
-	unsigned int GetHeight() const { return this->Height; }
+  unsigned int GetWidth() const { return this->Width; }
+  unsigned int GetHeight() const { return this->Height; }
 
-	unsigned int GetTexture() const { return this->TextureID; }
+  unsigned int GetTexture() const { return this->TextureID; }
 
-	void BindTexture();
-	void BindBuffer();
-	unsigned char* GetRenderDestination() const { return this->RenderDestination; }
-	void UnbindBuffer();
-	void UnbindTexture();
+  void BindTexture();
+  void BindBuffer();
+  unsigned char* GetRenderDestination() const { return this->RenderDestination; }
+  void UnbindBuffer();
+  void UnbindTexture();
 
-	bool CopyToVtkImageData(vtkImageData* data);
+  bool CopyToVtkImageData(vtkImageData* data);
 
-	typedef enum 
-	{
-		RenderToTexture,
-		RenderToMemory,
-	} RenderMode;
-	void SetRenderMode(int mode);
-	int GetCurrentRenderMode() const { return this->CurrentRenderMode; }
+  typedef enum 
+  {
+    RenderToTexture,
+    RenderToMemory,
+  } RenderMode;
+  void SetRenderMode(int mode);
+  int GetCurrentRenderMode() const { return this->CurrentRenderMode; }
 
 
 protected:
-	vtkCudaMemoryTexture();
-	~vtkCudaMemoryTexture();
-	void Reinitialize(int withData = 0);
-	void Deinitialize(int withData = 0);
+  vtkCudaMemoryTexture();
+  ~vtkCudaMemoryTexture();
+  void Reinitialize(int withData = 0);
+  void Deinitialize(int withData = 0);
 
 private:
-	void Initialize();
-	void RebuildBuffer();
+  void Initialize();
+  void RebuildBuffer();
 
 private:
-	unsigned char*	RenderDestination;
+  unsigned char*  RenderDestination;
 
-	unsigned int	TextureID;
-	unsigned int	BufferObjectID;
+  unsigned int  TextureID;
+  unsigned int  BufferObjectID;
 
-	unsigned int	Width;
-	unsigned int	Height;
+  unsigned int  Width;
+  unsigned int  Height;
 
-	int				CurrentRenderMode;
+  int        CurrentRenderMode;
 
-	uchar4*			CudaOutputData;
-	uchar4*			LocalOutputData;
+  uchar4*      CudaOutputData;
+  uchar4*      LocalOutputData;
 
-	static bool  GLBufferObjectsAvailiable;
+  static bool  GLBufferObjectsAvailiable;
 };
 #endif /* __VTKCUDAMEMORYTEXTURE_H__ */

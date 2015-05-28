@@ -14,11 +14,11 @@
 /** @file CUDA_imagevote.cu
  *
  *  @brief Implementation file with definitions of GPU kernels used predominantly in performing a voting
- *			operation to merge probabilistic labellings
+ *      operation to merge probabilistic labellings
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
@@ -27,19 +27,19 @@
 
 template<typename IT, typename OT>
 __global__ void CUDA_CIV_kernMinWithMap(IT* inputBuffer, IT* currentMax, OT* outputBuffer, OT newMapVal, int size){
-	int idx = CUDASTDOFFSET;
+  int idx = CUDASTDOFFSET;
 
-	IT inputValue = inputBuffer[idx];
-	IT previValue = currentMax[idx];
-	OT previMap   = outputBuffer[idx];
-	
-	OT newMap = (inputValue >= previValue) ? newMapVal: previMap;
-	IT newVal = (inputValue >= previValue) ? inputValue: previValue;
+  IT inputValue = inputBuffer[idx];
+  IT previValue = currentMax[idx];
+  OT previMap   = outputBuffer[idx];
+  
+  OT newMap = (inputValue >= previValue) ? newMapVal: previMap;
+  IT newVal = (inputValue >= previValue) ? inputValue: previValue;
 
-	if( idx < size ){
-		currentMax[idx] = newVal;
-		outputBuffer[idx] = newMap;
-	}
+  if( idx < size ){
+    currentMax[idx] = newVal;
+    outputBuffer[idx] = newMap;
+  }
 
 }
 
@@ -227,39 +227,39 @@ template void CUDA_CIV_COMPUTE<float,float>( float** inputBuffers, int inputNum,
 
 template<typename IT, typename OT>
 void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* map, int size, cudaStream_t* stream){
-	
-	dim3 threads(NUMTHREADS,1,1);
-	dim3 grid = GetGrid(size);
+  
+  dim3 threads(NUMTHREADS,1,1);
+  dim3 grid = GetGrid(size);
 
-	//allocate GPU output buffer and maximum value buffer
-	IT* gpuMaxBuffer = 0;
-	IT* gpuInBuffer  = 0;
-	OT* gpuOutBuffer = 0;
-	cudaMalloc( &gpuMaxBuffer, sizeof(IT)*size );
-	cudaMalloc( &gpuInBuffer,  sizeof(IT)*size );
-	cudaMalloc( &gpuOutBuffer, sizeof(OT)*size );
+  //allocate GPU output buffer and maximum value buffer
+  IT* gpuMaxBuffer = 0;
+  IT* gpuInBuffer  = 0;
+  OT* gpuOutBuffer = 0;
+  cudaMalloc( &gpuMaxBuffer, sizeof(IT)*size );
+  cudaMalloc( &gpuInBuffer,  sizeof(IT)*size );
+  cudaMalloc( &gpuOutBuffer, sizeof(OT)*size );
 
-	//initialize max buffer
-	cudaMemcpyAsync( gpuMaxBuffer, inputBuffers[0], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
+  //initialize max buffer
+  cudaMemcpyAsync( gpuMaxBuffer, inputBuffers[0], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
 
-	for(int i = 0; i < inputNum; i++){
+  for(int i = 0; i < inputNum; i++){
 
-		//copy current input in
-		cudaMemcpyAsync( gpuInBuffer, inputBuffers[i], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
+    //copy current input in
+    cudaMemcpyAsync( gpuInBuffer, inputBuffers[i], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
 
-		//perform kernel
-		CUDA_CIV_kernMinWithMap<IT,OT><<<grid,threads,0,*stream>>>(gpuInBuffer, gpuMaxBuffer, gpuOutBuffer, map[i], size);
+    //perform kernel
+    CUDA_CIV_kernMinWithMap<IT,OT><<<grid,threads,0,*stream>>>(gpuInBuffer, gpuMaxBuffer, gpuOutBuffer, map[i], size);
 
-	}
-	
-	//copy output back
-	cudaMemcpyAsync( outputBuffer, gpuOutBuffer, sizeof(OT)*size, cudaMemcpyDeviceToHost, *stream);
-	
-	//sync everything
-	cudaStreamSynchronize(*stream);
+  }
+  
+  //copy output back
+  cudaMemcpyAsync( outputBuffer, gpuOutBuffer, sizeof(OT)*size, cudaMemcpyDeviceToHost, *stream);
+  
+  //sync everything
+  cudaStreamSynchronize(*stream);
 
-	//deallocate buffers
-	cudaFree(gpuMaxBuffer);
-	cudaFree(gpuInBuffer);
-	cudaFree(gpuOutBuffer);
+  //deallocate buffers
+  cudaFree(gpuMaxBuffer);
+  cudaFree(gpuInBuffer);
+  cudaFree(gpuOutBuffer);
 }

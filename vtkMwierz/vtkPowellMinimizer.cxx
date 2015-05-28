@@ -19,8 +19,8 @@ static double maxarg1, maxarg2;
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a): -fabs(a))
 
 static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
-		   double *xi, void (*funk)(void *data), double *curParms, double *parms, 
-		   double *retParm, int n, void *data)
+       double *xi, void (*funk)(void *data), double *curParms, double *parms, 
+       double *retParm, int n, void *data)
 {
   double ulim, u,r,q,fu,dum;
   int i;
@@ -64,30 +64,30 @@ static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, d
     if ((*bx-u)*(u-*cx) > 0.0) 
       {
       for (i=0;i<n;i++) 
-	{
-	parms[i] = curParms[i]+xi[i]*u;
-	}
+  {
+  parms[i] = curParms[i]+xi[i]*u;
+  }
       (*funk)(data);
       fu = (*retParm);
       if (fu < *fc) 
-	{
-	*ax = (*bx);
-	*bx = u;
-	*fa=(*fb);
-	*fb = fu;
-	return;
-	} 
+  {
+  *ax = (*bx);
+  *bx = u;
+  *fa=(*fb);
+  *fb = fu;
+  return;
+  } 
       else if (fu > *fb) 
-	{
-	*cx = u;
-	*fc = fu;
-	return;
-	}
+  {
+  *cx = u;
+  *fc = fu;
+  return;
+  }
       u = (*cx)+GOLD*(*cx-*bx);
       for (i=0;i<n;i++)
-	{
-	parms[i] = curParms[i]+xi[i]*u;
-	}
+  {
+  parms[i] = curParms[i]+xi[i]*u;
+  }
       (*funk)(data);
       fu = (*retParm);
       } 
@@ -96,10 +96,10 @@ static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, d
       (*funk)(data);
       fu = (*retParm);
       if (fu < *fc) {
-	SHFT (*bx, *cx, u, *cx+GOLD*(*cx-*bx));
-	for (i=0;i<n;i++) parms[i] = curParms[i]+xi[i]*u;
-	(*funk)(data);
-	SHFT (*fb, *fc, fu, (*retParm));
+  SHFT (*bx, *cx, u, *cx+GOLD*(*cx-*bx));
+  for (i=0;i<n;i++) parms[i] = curParms[i]+xi[i]*u;
+  (*funk)(data);
+  SHFT (*fb, *fc, fu, (*retParm));
       }
     } else if ((u-ulim)*(ulim-*cx) >= 0.0) {
       u = ulim;
@@ -128,8 +128,8 @@ static void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, d
 #define CGOLD 0.3819660
 #define ZEPS 1.0e-10;
 static double brent (double ax, double bx, double cx, double tol, int n,
-		    double *xmin, double *xi, void (*funk)(void *data), double *curParms,
-		    double *parms, double *retParm, void *data)
+        double *xmin, double *xi, void (*funk)(void *data), double *curParms,
+        double *parms, double *retParm, void *data)
 {
   int i,iter;
   double a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
@@ -163,13 +163,13 @@ static double brent (double ax, double bx, double cx, double tol, int n,
       etemp = e;
       e=d;
       if (fabs(p) >= fabs(0.5*q*etemp) || p <= q*(a-x) || p >= q*(b-x)) {
-	e = (x >= xm ? a-x : b-x);
-	d = CGOLD*e;
+  e = (x >= xm ? a-x : b-x);
+  d = CGOLD*e;
       } else {
-	d=p/q;
-	u=x+d;
-	if (u-a < tol2 || b-u < tol2)
-	  d = SIGN(tol1,xm-x);
+  d=p/q;
+  u=x+d;
+  if (u-a < tol2 || b-u < tol2)
+    d = SIGN(tol1,xm-x);
       }
     } else {
       e=(x >= xm ? a-x : b-x);
@@ -190,13 +190,13 @@ static double brent (double ax, double bx, double cx, double tol, int n,
     } else {
       if (u < x) a=u; else b=u;
       if (fu <= fw || w==x) {
-	v=w;
-	w=u;
-	fv=fw;
-	fw=fu;
+  v=w;
+  w=u;
+  fv=fw;
+  fw=fu;
       } else if (fu <= fv || v== x || v == w) {
-	v=u;
-	fv=fu;
+  v=u;
+  fv=fu;
       }
     }
   }
@@ -208,8 +208,8 @@ static double brent (double ax, double bx, double cx, double tol, int n,
 
 #define TOL 0.005
 static void linmin(double *p, double *xi, int n, double *fret,
-		   void (*funk)(void *data), double *parms, double *retParm,
-		   void *data)
+       void (*funk)(void *data), double *parms, double *retParm,
+       void *data)
 {
   int j;
   double xx, xmin, fx, fb, fa, bx, ax;
@@ -228,8 +228,8 @@ static void linmin(double *p, double *xi, int n, double *fret,
 
 
 static void powell(double *p, double **xi, int n, double ftol, 
-		   int *iter, double *retParm, void (*funk)(void *data), 
-		   double *parms, void *data)
+       int *iter, double *retParm, void (*funk)(void *data), 
+       double *parms, void *data)
 {
   int i, ibig, j;
   double del, fp, fptt, t;
@@ -256,8 +256,8 @@ static void powell(double *p, double **xi, int n, double ftol,
       linmin (p, xit, n, &fret, funk, parms, retParm, data);
       //    cout << "fret after linmin "<< fret<<"\n";
       if (fabs(fptt-fret) > del) {
-	del = fabs(fptt-fret);
-	ibig = i;
+  del = fabs(fptt-fret);
+  ibig = i;
       }
     }
     if (2.0*fabs(fp-fret) <= ftol*(fabs(fp)+fabs(fret))) {
@@ -279,17 +279,17 @@ static void powell(double *p, double **xi, int n, double ftol,
     if (fptt < fp) {
       t=2.0*(fp-2.0*fret+fptt)*sqrt(fp-fret-del)-del*sqrt(fp-fptt);
       if (t < 0.0) {
-	linmin(p, xit, n, &fret, funk, parms, retParm, data);
-	if (ibig>2) cout << "bad shit going down\n";
-	for (j=0;j<n;j++) {
-	  xi[j][ibig] = xi[j][n-1];
-	  xi[j][n-1]=xit[j];
-	}
+  linmin(p, xit, n, &fret, funk, parms, retParm, data);
+  if (ibig>2) cout << "bad shit going down\n";
+  for (j=0;j<n;j++) {
+    xi[j][ibig] = xi[j][n-1];
+    xi[j][n-1]=xit[j];
+  }
       }
     }
   }
 }
-	
+  
 
 
 void vtkPowellMinimizerFunction(void *data)
@@ -299,7 +299,7 @@ void vtkPowellMinimizerFunction(void *data)
     {
     self->Function(self->FunctionArg);
     }
-}					   
+}             
 
 //----------------------------------------------------------------------------
 vtkPowellMinimizer *vtkPowellMinimizer::New()
@@ -352,9 +352,9 @@ vtkPowellMinimizer::~vtkPowellMinimizer()
     for (int i = 0; i < this->NumberOfParameters; i++)
       {
       if (this->ParameterNames[i])
-	{
+  {
         delete [] this->ParameterNames[i];
-	}
+  }
       }
     delete [] this->ParameterNames;
     this->ParameterNames = NULL;
@@ -457,7 +457,7 @@ int vtkPowellMinimizer::Initialize()
 
 //----------------------------------------------------------------------------
 void vtkPowellMinimizer::SetScalarVariableBracket(const char *name, 
-						    double bmin, double bmax)
+                double bmin, double bmax)
 {
   int i;
 
@@ -466,12 +466,12 @@ void vtkPowellMinimizer::SetScalarVariableBracket(const char *name,
     if (strcmp(name,this->ParameterNames[i]) == 0)
       {
       if (this->ParameterBrackets[i][0] != bmin ||
-	  this->ParameterBrackets[i][1] != bmax)
-	{
-	this->ParameterBrackets[i][0] = bmin;
-	this->ParameterBrackets[i][1] = bmax;
-	this->Modified();
-	}
+    this->ParameterBrackets[i][1] != bmax)
+  {
+  this->ParameterBrackets[i][0] = bmin;
+  this->ParameterBrackets[i][1] = bmax;
+  this->Modified();
+  }
       return;
       }
     }
@@ -533,20 +533,20 @@ void vtkPowellMinimizer::Minimize()
       Vertices[l] = new double[this->NumberOfParameters];
       // set up the initial matrix
       for (int m = 0; m < this->NumberOfParameters; m++)
-	{
-	  if (m-l)
-	    Vertices[l][m] = 0.0f;
-	  else
-	    Vertices[l][m] = 1.0f;
-	}
+  {
+    if (m-l)
+      Vertices[l][m] = 0.0f;
+    else
+      Vertices[l][m] = 1.0f;
+  }
     }
 
   double *p = new double[this->NumberOfParameters];
   for (int i=0;i<this->NumberOfParameters;i++) p[i] = this->Parameters[i];
 
   powell(p, Vertices, this->NumberOfParameters, 
-	 this->Tolerance, &this->Iterations, &this->ScalarResult, 
-	 &vtkPowellMinimizerFunction, this->Parameters, this);
+   this->Tolerance, &this->Iterations, &this->ScalarResult, 
+   &vtkPowellMinimizerFunction, this->Parameters, this);
 
   for (int iGN=0; iGN<this->NumberOfParameters;iGN++) 
     {

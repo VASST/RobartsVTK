@@ -32,7 +32,7 @@ IF (RobartsVTK_USE_DATABOX)
           vtkDataBox.cxx
           vtkDataBoxBuffer.cxx
          )
-    SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}	${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox/Graph32.lib
+    SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}  ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox/Graph32.lib
                                           ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox//oldaapi32.lib
                                           ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/databox//OLMEM32.lib )
 ENDIF (RobartsVTK_USE_DATABOX)
@@ -44,7 +44,7 @@ IF (RobartsVTK_USE_USBECGBOX)
   SET ( Kit_SRCS ${Kit_SRCS}
         vtkUSBECGBox.cxx
       )
-  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}	${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/cbw/cbw32.lib )
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS}  ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/cbw/cbw32.lib )
 ENDIF (RobartsVTK_USE_USBECGBOX)
 
 ###### Lego signal box ######
@@ -52,7 +52,7 @@ OPTION (RobartsVTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
   IF (RobartsVTK_USE_LEGO)
     SET ( Kit_SRCS ${Kit_SRCS}
           vtkLegoSignalBox.cxx
-	  )
+    )
 
   # include the libusb directory
   SET(USB_INCLUDE_DIR ${RobartsVTK_SOURCE_DIR}/vtkRobartsECG/LegoFiles/include/ )
@@ -66,7 +66,7 @@ OPTION (RobartsVTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
   INCLUDE_DIRECTORIES(${VTKLEGO_SOURCE_DIR}
                       ${VTKLEGO_BINARY_DIR}
                       ${USB_INCLUDE_DIR}
-			   )
+         )
 
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtklego)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${USB_LIBRARIES})

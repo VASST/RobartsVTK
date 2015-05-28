@@ -24,42 +24,42 @@
 class vtkImageSeedFilter : public vtkImageAlgorithm {
 public:
 
-	vtkTypeMacro( vtkImageSeedFilter, vtkImageAlgorithm )
+  vtkTypeMacro( vtkImageSeedFilter, vtkImageAlgorithm )
 
-	static vtkImageSeedFilter *New();
+  static vtkImageSeedFilter *New();
 
-	void Clear();
+  void Clear();
 
-	void AddPointInVoxelCoordinates(double point[3], int component);
-	void AddPointInVolumeCoordinates(double point[3], int component);
-	
-	//get/set the number of components (separate objects represented)
-	vtkSetClampMacro( NumberOfComponents, int, 1, 1000 );
-	vtkGetMacro( NumberOfComponents, int );
+  void AddPointInVoxelCoordinates(double point[3], int component);
+  void AddPointInVolumeCoordinates(double point[3], int component);
+  
+  //get/set the number of components (separate objects represented)
+  vtkSetClampMacro( NumberOfComponents, int, 1, 1000 );
+  vtkGetMacro( NumberOfComponents, int );
 
 protected:
-	
-	int RequestData(vtkInformation* request,
+  
+  int RequestData(vtkInformation* request,
                           vtkInformationVector** inputVector,
                           vtkInformationVector* outputVector);
 
-	vtkImageSeedFilter();
-	~vtkImageSeedFilter();
+  vtkImageSeedFilter();
+  ~vtkImageSeedFilter();
 
-	int	NumberOfComponents;
+  int  NumberOfComponents;
 
 private:
-	vtkImageSeedFilter operator=(const vtkImageSeedFilter&){}
-	vtkImageSeedFilter(const vtkImageSeedFilter&){}
-	
-	std::vector<double> pointsInVoxelX;
-	std::vector<double> pointsInVoxelY;
-	std::vector<double> pointsInVoxelZ;
-	std::vector<int>	pointsInVoxelW;
-	std::vector<double> pointsInVolumeX;
-	std::vector<double> pointsInVolumeY;
-	std::vector<double> pointsInVolumeZ;
-	std::vector<int>	pointsInVolumeW;
+  vtkImageSeedFilter operator=(const vtkImageSeedFilter&){}
+  vtkImageSeedFilter(const vtkImageSeedFilter&){}
+  
+  std::vector<double> pointsInVoxelX;
+  std::vector<double> pointsInVoxelY;
+  std::vector<double> pointsInVoxelZ;
+  std::vector<int>  pointsInVoxelW;
+  std::vector<double> pointsInVolumeX;
+  std::vector<double> pointsInVolumeY;
+  std::vector<double> pointsInVolumeZ;
+  std::vector<int>  pointsInVolumeW;
 
 };
 

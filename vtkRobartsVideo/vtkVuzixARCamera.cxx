@@ -6,12 +6,12 @@ vtkStandardNewMacro(vtkVuzixARCamera);
 
 //----------------------------------------------------------------------------
 vtkVuzixARCamera::vtkVuzixARCamera(){
-	fx = 854.067993; //Hmmmm...Are we sure about this?
-	fy = 856.185364;
-	cx = 307.904205;
-	cy = 249.460327;
-	sizeX = 640.0;
-	sizeY = 480.0;
+  fx = 854.067993; //Hmmmm...Are we sure about this?
+  fy = 856.185364;
+  cx = 307.904205;
+  cy = 249.460327;
+  sizeX = 640.0;
+  sizeY = 480.0;
 }
 
 //----------------------------------------------------------------------------
@@ -20,15 +20,15 @@ vtkVuzixARCamera::~vtkVuzixARCamera(){
 
 //----------------------------------------------------------------------------
 void vtkVuzixARCamera::SetPixelwiseIntrinsicParameters( double fx, double fy, double cx, double cy){
-	this->fx = fx;
-	this->fy = fy;
-	this->cx = cx;
-	this->cy = cy;
+  this->fx = fx;
+  this->fy = fy;
+  this->cx = cx;
+  this->cy = cy;
 }
 
 void vtkVuzixARCamera::SetFrameSize( double x, double y ){
-	this->sizeX = x;
-	this->sizeY = y;
+  this->sizeX = x;
+  this->sizeY = y;
 }
 
 
@@ -76,35 +76,35 @@ vtkPerspectiveTransform* vtkVuzixARCamera::GetProjectionTransformObject(double a
 void vtkVuzixARCamera::ComputeProjectionTransform(double nearz, double farz)
 {
 
-	this->ProjectionTransform->Identity();
-	this->ProjectionTransform->PreMultiply();
-	this->ProjectionTransform->AdjustZBuffer(-1.0,1.0,nearz,farz);
+  this->ProjectionTransform->Identity();
+  this->ProjectionTransform->PreMultiply();
+  this->ProjectionTransform->AdjustZBuffer(-1.0,1.0,nearz,farz);
 
-	double elements[16];
-	elements[0] = 2.0 * this->fx / this->sizeX;
-	elements[1] = 0.0;
-	elements[2] = 2.0 * this->cx / this->sizeX - 1.0;
-	elements[3] = 0.0;
-	
-	elements[4] = 0.0;
-	elements[5] = 2.0 * this->fy / this->sizeY;
-	elements[6] = 2.0 * this->cy / this->sizeY - 1.0;
-	elements[7] = 0.0;
-	
-	elements[8] = 0.0;
-	elements[9] = 0.0;
-	elements[10] = (this->ClippingRange[1] + this->ClippingRange[0]) / (this->ClippingRange[0] - this->ClippingRange[1]);
-	elements[11] = 2.0 * ( this->ClippingRange[1] * this->ClippingRange[0] / (this->ClippingRange[0] - this->ClippingRange[1]));
-	
-	elements[12] = 0.0;
-	elements[13] = 0.0;
-	elements[14] = -1.0;
-	elements[15] = 0.0;
-	
-	this->ProjectionTransform->Concatenate( elements );
+  double elements[16];
+  elements[0] = 2.0 * this->fx / this->sizeX;
+  elements[1] = 0.0;
+  elements[2] = 2.0 * this->cx / this->sizeX - 1.0;
+  elements[3] = 0.0;
+  
+  elements[4] = 0.0;
+  elements[5] = 2.0 * this->fy / this->sizeY;
+  elements[6] = 2.0 * this->cy / this->sizeY - 1.0;
+  elements[7] = 0.0;
+  
+  elements[8] = 0.0;
+  elements[9] = 0.0;
+  elements[10] = (this->ClippingRange[1] + this->ClippingRange[0]) / (this->ClippingRange[0] - this->ClippingRange[1]);
+  elements[11] = 2.0 * ( this->ClippingRange[1] * this->ClippingRange[0] / (this->ClippingRange[0] - this->ClippingRange[1]));
+  
+  elements[12] = 0.0;
+  elements[13] = 0.0;
+  elements[14] = -1.0;
+  elements[15] = 0.0;
+  
+  this->ProjectionTransform->Concatenate( elements );
 
-	// apply user defined transform last if there is one
-	//if ( this->UserTransform ) this->ProjectionTransform->Concatenate( this->UserTransform->GetMatrix() );
+  // apply user defined transform last if there is one
+  //if ( this->UserTransform ) this->ProjectionTransform->Concatenate( this->UserTransform->GetMatrix() );
 
 
 

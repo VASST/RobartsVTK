@@ -14,11 +14,11 @@
 /** @file CUDA_commonKernels.h
  *
  *  @brief Header file with definitions of GPU kernels used in several GPU-accelerated classes.
- *			This includes simple utilities like created validly sized grids.
+ *      This includes simple utilities like created validly sized grids.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 

@@ -26,7 +26,7 @@ vtkStandardNewMacro(vtkMILECGVideoSource2);
 //----------------------------------------------------------------------------
 vtkMILECGVideoSource2::vtkMILECGVideoSource2()
 {
-		this->CurrentPhase = -1;
+    this->CurrentPhase = -1;
 }
 
 //----------------------------------------------------------------------------

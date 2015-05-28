@@ -15,30 +15,30 @@ class transferFunctionWindowWidget;
 
 class segmentationWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 public:
 
-	segmentationWidget( transferFunctionWindowWidget* parent );
-	~segmentationWidget();
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCuda2DVolumeMapper* caster );
-	QMenu* getMenuOptions();
+  segmentationWidget( transferFunctionWindowWidget* parent );
+  ~segmentationWidget();
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCuda2DVolumeMapper* caster );
+  QMenu* getMenuOptions();
 
 private slots:
-	
-	//shading related slots
-	void segment();
+  
+  //shading related slots
+  void segment();
 
 private:
-	
-	void setupMenu();
-	QMenu* segmentationMenu;
-	QAction* segmentNowOption;
+  
+  void setupMenu();
+  QMenu* segmentationMenu;
+  QAction* segmentNowOption;
 
-	transferFunctionWindowWidget* parent;
-	
-	vtkRenderWindow* window;
-	vtkRenderer* renderer;
-	vtkCuda2DVolumeMapper* mapper;
+  transferFunctionWindowWidget* parent;
+  
+  vtkRenderWindow* window;
+  vtkRenderer* renderer;
+  vtkCuda2DVolumeMapper* mapper;
 
 
 };

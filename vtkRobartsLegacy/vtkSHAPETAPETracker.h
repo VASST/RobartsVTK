@@ -133,13 +133,13 @@ protected:
   int BaudRate;
   int IsSHAPETAPETracking;
 
-  int NumberOfSensors;						// number of sensors
-  char CalibrationFile[150];					// calibration file name
-  char SettingsFile[150];						// settings file
-  double TapeLength;						// length of the tape
-  int InterpolationInterval;				// interpolation steps between sensor boundaries
-  bool BendOnly;							// true for bend oly takes, false for bend/twist tapes
-  int NumberOfRegions;						// the number of sensor regions
+  int NumberOfSensors;            // number of sensors
+  char CalibrationFile[150];          // calibration file name
+  char SettingsFile[150];            // settings file
+  double TapeLength;            // length of the tape
+  int InterpolationInterval;        // interpolation steps between sensor boundaries
+  bool BendOnly;              // true for bend oly takes, false for bend/twist tapes
+  int NumberOfRegions;            // the number of sensor regions
   double RegionLength[VTK_SHAPETAPE_NSENSORS];
   int NumberOfTransforms;
 
@@ -153,8 +153,8 @@ private:
 };
 
 // type values for 'int Initialize(int type)'.
-#define ST_LOADSETTINGFILE			0
-#define ST_EVENSPACING_BENDTWIST	1
-#define ST_UNEVENSPACING			2
+#define ST_LOADSETTINGFILE      0
+#define ST_EVENSPACING_BENDTWIST  1
+#define ST_UNEVENSPACING      2
 
 #endif

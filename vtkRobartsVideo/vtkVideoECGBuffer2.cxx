@@ -89,9 +89,9 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
   {
     if (bufsize > 0)
     {
-	  this->ECGPhaseArray->SetNumberOfValues(this->BufferSize);
+    this->ECGPhaseArray->SetNumberOfValues(this->BufferSize);
       for (i = 0; i < bufsize; i++) {
-		  this->ECGPhaseArray->SetValue(i, -1.0);
+      this->ECGPhaseArray->SetValue(i, -1.0);
       } 
       this->Modified();
     }
@@ -101,7 +101,7 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
   {
     if (bufsize > 0)
     {
-	  phase = vtkIntArray::New();
+    phase = vtkIntArray::New();
       phase->SetNumberOfValues(bufsize);
     }
     else
@@ -156,7 +156,7 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
           index = index + this->BufferSize;
           }
         }
-	}
+  }
 
     if (this->ECGPhaseArray)
       {
@@ -164,7 +164,7 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
       }
     this->ECGPhaseArray = phase;
 
-	vtkVideoBuffer2::SetBufferSize(bufsize);
+  vtkVideoBuffer2::SetBufferSize(bufsize);
 
     this->Modified();
     }
@@ -178,7 +178,7 @@ void vtkVideoECGBuffer2::AddItem(vtkVideoFrame2* frame, double time, int phase)
     return;
     }
 
-	// don't add a frame if it doesn't match the buffer frame format
+  // don't add a frame if it doesn't match the buffer frame format
   int frameSize[3];
   int frameExtent[6];
   int frameFormatSize[3];
@@ -201,8 +201,8 @@ void vtkVideoECGBuffer2::AddItem(vtkVideoFrame2* frame, double time, int phase)
     frame->GetRowAlignment() != this->FrameFormat->GetRowAlignment() ||
     frame->GetTopDown() != this->FrameFormat->GetTopDown() ||
     frame->GetOpacity() != this->FrameFormat->GetOpacity() ||
-	frame->GetCompression() != this->FrameFormat->GetCompression() ||
-	frame->GetFrameGrabberType() != this->FrameFormat->GetFrameGrabberType() )
+  frame->GetCompression() != this->FrameFormat->GetCompression() ||
+  frame->GetFrameGrabberType() != this->FrameFormat->GetFrameGrabberType() )
     {
     return;
     }

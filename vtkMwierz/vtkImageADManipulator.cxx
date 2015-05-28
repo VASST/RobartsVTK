@@ -115,22 +115,22 @@ void vtkImageADManipulator::SetTranslation(double tran[3])
   if ( (tran[0] == 0.0) && (tran[1] == 0.0) && (tran[2] == 0.0) )
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = 0;
-	  this->loc111[i] = 0;
-	  f[i] = 0.0;
-	}
+  {
+    this->loc000[i] = 0;
+    this->loc111[i] = 0;
+    f[i] = 0.0;
+  }
     }
   // Interpolation is required.
   else
     {
       for (int i = 0; i <= 2; i++)
-	{
-	  this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
-	  this->loc111[i] = this->loc000[i] + 1;
-	  // No interpolation for this axis
-	  if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
-	}
+  {
+    this->loc000[i] = vtkResliceFloor(tran[i]/this->inSpa[i], f[i]);
+    this->loc111[i] = this->loc000[i] + 1;
+    // No interpolation for this axis
+    if (tran[i] == 0.0) this->loc111[i] = this->loc000[i];
+  }
     }
 
   this->F000 = (1.0 - f[0]) * (1.0 - f[1]) * (1.0 - f[2]);
@@ -146,9 +146,9 @@ void vtkImageADManipulator::SetTranslation(double tran[3])
 //----------------------------------------------------------------------------
 template <class T>
 void vtkImageADManipulatorExecute(vtkImageADManipulator *self,
-				  T  *in1Ptr, T *in2Ptr,
-				  int inc[3], int inc2[2], int inExt[6],
-				  int loc000[3], int loc111[3])
+          T  *in1Ptr, T *in2Ptr,
+          int inc[3], int inc2[2], int inExt[6],
+          int loc000[3], int loc111[3])
 {
   double V000, V100, V010, V110, V001, V101, V011, V111, Vxyz;
 
@@ -171,21 +171,21 @@ void vtkImageADManipulatorExecute(vtkImageADManipulator *self,
        (loc000[2] == 0) && (loc111[2] == 0) )
     {
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  self->Result += fabs((double)*in1Ptr - (double)*in2Ptr);
-		  in1Ptr++;
-		  in2Ptr++;
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	}
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      self->Result += fabs((double)*in1Ptr - (double)*in2Ptr);
+      in1Ptr++;
+      in2Ptr++;
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+  }
     }
   
   // CASE 3: If the above two cases don't apply, do the full calculation.
@@ -194,52 +194,52 @@ void vtkImageADManipulatorExecute(vtkImageADManipulator *self,
       in1Ptr += inc[2] * loc000[2] + inc[1] * loc000[1] + inc[0] * loc000[0];
 
       for (int idZ = self->Extent[4]; idZ <= self->Extent[5]; idZ++)
-	{
-	  for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
-	    {
-	      // Initiate previous data
-	      V000 = *in1Ptr;
-	      in1Ptr += inc[1];
-	      V010 = *in1Ptr;
-	      in1Ptr += inc[2];
-	      V011 = *in1Ptr;
-	      in1Ptr -= inc[1];
-	      V001 = *in1Ptr;
-	      in1Ptr -= inc[2];
+  {
+    for (int idY = self->Extent[2]; idY <= self->Extent[3]; idY++)
+      {
+        // Initiate previous data
+        V000 = *in1Ptr;
+        in1Ptr += inc[1];
+        V010 = *in1Ptr;
+        in1Ptr += inc[2];
+        V011 = *in1Ptr;
+        in1Ptr -= inc[1];
+        V001 = *in1Ptr;
+        in1Ptr -= inc[2];
 
-	      for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
-		{
-		  in1Ptr++;
-		  V100 = *in1Ptr;
-		  in1Ptr += inc[1];
-		  V110 = *in1Ptr;
-		  in1Ptr += inc[2];
-		  V111 = *in1Ptr;
-		  in1Ptr -= inc[1];
-		  V101 = *in1Ptr;
-		  in1Ptr -= inc[2];
-	      
-		  Vxyz = (V000 * self->F000 + V100 * self->F100 + 
-			  V010 * self->F010 + V110 * self->F110 + 
-			  V001 * self->F001 + V101 * self->F101 + 
-			  V011 * self->F011 + V111 * self->F111);
-	      
-		  V000 = V100;
-		  V010 = V110;
-		  V001 = V101;
-		  V011 = V111;
+        for (int idX = self->Extent[0]; idX <= self->Extent[1]; idX++)
+    {
+      in1Ptr++;
+      V100 = *in1Ptr;
+      in1Ptr += inc[1];
+      V110 = *in1Ptr;
+      in1Ptr += inc[2];
+      V111 = *in1Ptr;
+      in1Ptr -= inc[1];
+      V101 = *in1Ptr;
+      in1Ptr -= inc[2];
+        
+      Vxyz = (V000 * self->F000 + V100 * self->F100 + 
+        V010 * self->F010 + V110 * self->F110 + 
+        V001 * self->F001 + V101 * self->F101 + 
+        V011 * self->F011 + V111 * self->F111);
+        
+      V000 = V100;
+      V010 = V110;
+      V001 = V101;
+      V011 = V111;
 
-		  self->Result += fabs(Vxyz - *in2Ptr);
-		  
-		  in2Ptr++;
-		  
-		}
-	      in1Ptr += inc2[0];
-	      in2Ptr += inc2[0];
-	    }
-	  in1Ptr += inc2[1];
-	  in2Ptr += inc2[1];
-	}
+      self->Result += fabs(Vxyz - *in2Ptr);
+      
+      in2Ptr++;
+      
+    }
+        in1Ptr += inc2[0];
+        in2Ptr += inc2[0];
+      }
+    in1Ptr += inc2[1];
+    in2Ptr += inc2[1];
+  }
     }
 
 }
@@ -248,7 +248,7 @@ void vtkImageADManipulatorExecute(vtkImageADManipulator *self,
 double vtkImageADManipulator::GetResult()
 {
 
-	if (this->inData[0] == NULL)
+  if (this->inData[0] == NULL)
     {
       vtkErrorMacro(<< "Input " << 0 << " must be specified.");
       return 0;
@@ -271,9 +271,9 @@ double vtkImageADManipulator::GetResult()
   switch (this->inData[0]->GetScalarType())
     {
       vtkTemplateMacro8(vtkImageADManipulatorExecute,this, 
-			(VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
- 			this->inc, this->inc2, this->inExt,
-			this->loc000, this->loc111);
+      (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
+       this->inc, this->inc2, this->inExt,
+      this->loc000, this->loc111);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }

@@ -21,28 +21,28 @@
 class vtkCudaFunctionPolygonWriter : public vtkObject {
 public:
 
-	/** @brief VTK compatible constructor method
-	 *
-	 */
-	static vtkCudaFunctionPolygonWriter* New();
+  /** @brief VTK compatible constructor method
+   *
+   */
+  static vtkCudaFunctionPolygonWriter* New();
 
-	void SetFileName( std::string filename );
-	void Write();
-	void Clear();
-	void AddInput( vtkCudaFunctionPolygon* object );
-	void RemoveInput( vtkCudaFunctionPolygon* object );
-	
+  void SetFileName( std::string filename );
+  void Write();
+  void Clear();
+  void AddInput( vtkCudaFunctionPolygon* object );
+  void RemoveInput( vtkCudaFunctionPolygon* object );
+  
 protected:
-	vtkCudaFunctionPolygonWriter();
-	~vtkCudaFunctionPolygonWriter();
+  vtkCudaFunctionPolygonWriter();
+  ~vtkCudaFunctionPolygonWriter();
 
-	void printTFPolygon( vtkCudaFunctionPolygon* e );
+  void printTFPolygon( vtkCudaFunctionPolygon* e );
 
-	std::list<vtkCudaFunctionPolygon*> objects;
-	std::string filename;
-	bool fileNameSet;
+  std::list<vtkCudaFunctionPolygon*> objects;
+  std::string filename;
+  bool fileNameSet;
 
-	std::ofstream* file;
+  std::ofstream* file;
 
 };
 #endif

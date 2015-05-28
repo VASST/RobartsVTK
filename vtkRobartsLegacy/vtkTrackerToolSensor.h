@@ -124,8 +124,8 @@ protected:
 
 private:
   double TapeLength;
-  int NumberOfSensors;						// number of sensors
-  int InterpolationInterval;				// interpolation steps between sensor boundaries
+  int NumberOfSensors;            // number of sensors
+  int InterpolationInterval;        // interpolation steps between sensor boundaries
 
 
   vtkTrackerToolSensor(const vtkTrackerToolSensor&);

@@ -14,11 +14,11 @@
 /** @file vtkCudaImageLogLikelihood.cxx
  *
  *  @brief Header file with definitions for the CUDA accelerated log likelihood data term. This
- *			generates entropy data terms based on the histogram of a set of provided seeds.
+ *      generates entropy data terms based on the histogram of a set of provided seeds.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *	
- *	@note August 27th 2013 - Documentation first compiled.
+ *  
+ *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
@@ -42,8 +42,8 @@ vtkCudaImageLogLikelihood::vtkCudaImageLogLikelihood()
 {
     this->NormalizeDataTerm = 0;
     this->LabelID = 1.0;
-	this->HistogramSize = 512;
-	this->RequiredAgreement = 0.8;
+  this->HistogramSize = 512;
+  this->RequiredAgreement = 0.8;
     this->SetNumberOfInputPorts(2);
 }
 
@@ -63,9 +63,9 @@ int vtkCudaImageLogLikelihood::RequestInformation (
     vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
     vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
 
-	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
-		numLabelMaps++;
+  int numLabelMaps = 0;
+  for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
+    numLabelMaps++;
 
     int ext[6], ext2[6], idx;
 
@@ -78,22 +78,22 @@ int vtkCudaImageLogLikelihood::RequestInformation (
         vtkErrorMacro(<< "At least one label map must be specified.");
         return 1;
     }
-	
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
-		vtkInformation *inInfo2 = inputVector[1]->GetInformationObject(i);
-		inInfo2->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
-		for (idx = 0; idx < 3; ++idx)
-		{
-			if (ext2[idx*2] > ext[idx*2])
-			{
-				ext[idx*2] = ext2[idx*2];
-			}
-			if (ext2[idx*2+1] < ext[idx*2+1])
-			{
-				ext[idx*2+1] = ext2[idx*2+1];
-			}
-		}
-	}
+  
+  for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
+    vtkInformation *inInfo2 = inputVector[1]->GetInformationObject(i);
+    inInfo2->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
+    for (idx = 0; idx < 3; ++idx)
+    {
+      if (ext2[idx*2] > ext[idx*2])
+      {
+        ext[idx*2] = ext2[idx*2];
+      }
+      if (ext2[idx*2+1] < ext[idx*2+1])
+      {
+        ext[idx*2+1] = ext2[idx*2+1];
+      }
+    }
+  }
 
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext,6);
 
@@ -117,40 +117,40 @@ void vtkCudaImageLogLikelihoodExecute(vtkCudaImageLogLikelihood *self,
                      in1Data->GetDimensions()[1]*
                      in1Data->GetDimensions()[2];
 
-	//initialize output and temporary memory
+  //initialize output and temporary memory
     float* outBuffer =  (float*)outData->GetScalarPointer();
-	short* agreementGPU;
-	CUDA_ILLT_GetRelevantBuffers(&agreementGPU,VolumeSize,self->GetStream());
+  short* agreementGPU;
+  CUDA_ILLT_GetRelevantBuffers(&agreementGPU,VolumeSize,self->GetStream());
 
-	//figure out the agreement at each pixel
-	short actualNumLabels = 0;
-	for(int i = 0; i < numLabels; i++){
-		if( !in2Data[i] ) continue;
-		actualNumLabels++;
-		self->ReserveGPU();
-		switch (in2Data[i]->GetScalarType()){
-		vtkTemplateMacro(
-			CUDA_ILLT_IncrementInformation((VTK_TT *) in2Data[i]->GetScalarPointer(), (VTK_TT) self->GetLabelID(), agreementGPU, VolumeSize,self->GetStream()));
-		default:
-			vtkErrorWithObjectMacro(self,<< "Execute: Unknown ScalarType");
-			return;
-		}
-	}
+  //figure out the agreement at each pixel
+  short actualNumLabels = 0;
+  for(int i = 0; i < numLabels; i++){
+    if( !in2Data[i] ) continue;
+    actualNumLabels++;
+    self->ReserveGPU();
+    switch (in2Data[i]->GetScalarType()){
+    vtkTemplateMacro(
+      CUDA_ILLT_IncrementInformation((VTK_TT *) in2Data[i]->GetScalarPointer(), (VTK_TT) self->GetLabelID(), agreementGPU, VolumeSize,self->GetStream()));
+    default:
+      vtkErrorWithObjectMacro(self,<< "Execute: Unknown ScalarType");
+      return;
+    }
+  }
 
     // calculate normalized histogram and Calculate log likelihood dataterm
-	float* histogramGPU = 0;
-	if( in1Data->GetNumberOfScalarComponents() == 1 ){
-		CUDA_ILLT_AllocateHistogram(&histogramGPU,self->GetHistogramSize(),self->GetStream());
-		CUDA_ILLT_CalculateHistogramAndTerms(outBuffer,histogramGPU, self->GetHistogramSize(), agreementGPU, inputBuffer,
-			(short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
-	}else if( in1Data->GetNumberOfScalarComponents() == 2 ){
-		CUDA_ILLT_AllocateHistogram(&histogramGPU,self->GetHistogramSize()*self->GetHistogramSize(),self->GetStream());
-		CUDA_ILLT_CalculateHistogramAndTerms2D(outBuffer,histogramGPU, self->GetHistogramSize(), agreementGPU, inputBuffer,
-			(short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
-	}
+  float* histogramGPU = 0;
+  if( in1Data->GetNumberOfScalarComponents() == 1 ){
+    CUDA_ILLT_AllocateHistogram(&histogramGPU,self->GetHistogramSize(),self->GetStream());
+    CUDA_ILLT_CalculateHistogramAndTerms(outBuffer,histogramGPU, self->GetHistogramSize(), agreementGPU, inputBuffer,
+      (short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
+  }else if( in1Data->GetNumberOfScalarComponents() == 2 ){
+    CUDA_ILLT_AllocateHistogram(&histogramGPU,self->GetHistogramSize()*self->GetHistogramSize(),self->GetStream());
+    CUDA_ILLT_CalculateHistogramAndTerms2D(outBuffer,histogramGPU, self->GetHistogramSize(), agreementGPU, inputBuffer,
+      (short)((double)actualNumLabels*self->GetRequiredAgreement()+0.99), VolumeSize, self->GetStream());
+  }
 
-	//return GPU memory
-	//CUDA_ILLT_CopyBackResult(outputGPU,outBuffer,VolumeSize,self->GetStream());
+  //return GPU memory
+  //CUDA_ILLT_CopyBackResult(outputGPU,outBuffer,VolumeSize,self->GetStream());
 
 }
 //----------------------------------------------------------------------------
@@ -163,22 +163,22 @@ void vtkCudaImageLogLikelihoodExecute2(vtkCudaImageLogLikelihood *self,
                                   vtkImageData *outData, float *outPtr,
                                   int numLabels, int lblType )
 {
-	//get some scalar pointer to appease the compiler
-	void* scalarPtr = 0;
-	for(int i = 0; i < numLabels; i++)
-		if( in2Data[i] ){
-			scalarPtr = in2Data[i]->GetScalarPointer();
-			break;
-		}
+  //get some scalar pointer to appease the compiler
+  void* scalarPtr = 0;
+  for(int i = 0; i < numLabels; i++)
+    if( in2Data[i] ){
+      scalarPtr = in2Data[i]->GetScalarPointer();
+      break;
+    }
 
-	//move down another type
-	switch (lblType)
+  //move down another type
+  switch (lblType)
     {
     vtkTemplateMacro(
                 vtkCudaImageLogLikelihoodExecute(self,in1Data,
                                              (T*) in1Ptr,
                                              in2Data,
-											 static_cast<VTK_TT *>(scalarPtr),
+                       static_cast<VTK_TT *>(scalarPtr),
                                              outData,
                                              outPtr,
                                              numLabels));
@@ -200,31 +200,31 @@ int vtkCudaImageLogLikelihood::RequestData(
         vtkInformationVector * outputVector )
 {
 
-	//collect the input image data
-	vtkImageData**	inData[2];
-	vtkImageData*	inputImage = vtkImageData::SafeDownCast(inputVector[0]->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
-	inData[0] = &inputImage;
-	void *inPtr1 = inputImage->GetScalarPointer();
-	inData[1] = new vtkImageData* [inputVector[1]->GetNumberOfInformationObjects()];
-		
-	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
-		inData[1][i] = vtkImageData::SafeDownCast(inputVector[1]->GetInformationObject(i)->Get(vtkDataObject::DATA_OBJECT()));
-		if(inData[1][i]) numLabelMaps++;
-	}
+  //collect the input image data
+  vtkImageData**  inData[2];
+  vtkImageData*  inputImage = vtkImageData::SafeDownCast(inputVector[0]->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+  inData[0] = &inputImage;
+  void *inPtr1 = inputImage->GetScalarPointer();
+  inData[1] = new vtkImageData* [inputVector[1]->GetNumberOfInformationObjects()];
+    
+  int numLabelMaps = 0;
+  for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
+    inData[1][i] = vtkImageData::SafeDownCast(inputVector[1]->GetInformationObject(i)->Get(vtkDataObject::DATA_OBJECT()));
+    if(inData[1][i]) numLabelMaps++;
+  }
     if (numLabelMaps == 0) {
         vtkErrorMacro(<< "At least one label map is required." );
         return -1;
     }
-	
-	//collect the output image data
-	vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
-	outData->SetScalarTypeToFloat();
-	outData->SetNumberOfScalarComponents(1);
-	outData->SetExtent(inputImage->GetExtent());
-	outData->SetWholeExtent(inputImage->GetExtent());
-	outData->AllocateScalars();
-	void *outPtr = outData->GetScalarPointer();
+  
+  //collect the output image data
+  vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+  outData->SetScalarTypeToFloat();
+  outData->SetNumberOfScalarComponents(1);
+  outData->SetExtent(inputImage->GetExtent());
+  outData->SetWholeExtent(inputImage->GetExtent());
+  outData->AllocateScalars();
+  void *outPtr = outData->GetScalarPointer();
 
     // this filter expects the output datatype to be float.
     if (outData->GetScalarType() != VTK_FLOAT) {
@@ -232,20 +232,20 @@ int vtkCudaImageLogLikelihood::RequestData(
         return -1;
     }
 
-	// this filter expects the label map to be of type char
-	int LabelType = -1;
-	for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
-		if( !inData[1][i] ) continue;
-		if( LabelType == -1 ) LabelType = inData[1][i]->GetScalarType();
-		if (inData[1][i]->GetScalarType() != LabelType) {
-			vtkErrorMacro(<< "Label maps must be of same type." );
-			return -1;
-		}
-		if ( inData[1][i]->GetNumberOfScalarComponents() != 1 ) {
-			vtkErrorMacro(<< "Label map can only have 1 component." );
-			return -1;
-		}
-	}
+  // this filter expects the label map to be of type char
+  int LabelType = -1;
+  for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++){
+    if( !inData[1][i] ) continue;
+    if( LabelType == -1 ) LabelType = inData[1][i]->GetScalarType();
+    if (inData[1][i]->GetScalarType() != LabelType) {
+      vtkErrorMacro(<< "Label maps must be of same type." );
+      return -1;
+    }
+    if ( inData[1][i]->GetNumberOfScalarComponents() != 1 ) {
+      vtkErrorMacro(<< "Label map can only have 1 component." );
+      return -1;
+    }
+  }
 
     // this filter expects that inputs that have the same number of components
     if (inData[0][0]->GetNumberOfScalarComponents() != 1 && inData[0][0]->GetNumberOfScalarComponents() != 2 ) {
@@ -261,22 +261,22 @@ int vtkCudaImageLogLikelihood::RequestData(
                                              outData,
                                              static_cast<float *>(outPtr),
                                              inputVector[1]->GetNumberOfInformationObjects(),
-											 LabelType));
+                       LabelType));
     default:
         vtkErrorMacro(<< "Execute: Unknown ScalarType");
         return -1;
     }
 
-	delete[] inData[1];
+  delete[] inData[1];
 
-	return 1;
+  return 1;
 }
 
 //----------------------------------------------------------------------------
 int vtkCudaImageLogLikelihood::FillInputPortInformation(
         int port, vtkInformation* info)
 {
-	if( port == 1 ) info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
+  if( port == 1 ) info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
 }

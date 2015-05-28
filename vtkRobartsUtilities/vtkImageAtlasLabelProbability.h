@@ -14,12 +14,12 @@
 /** @file vtkImageAtlasLabelProbability.h
 *
 *  @brief Header file with definitions for the CPU-based label agreement data term. This generates 
-*			entropy or probability data terms based on how many label maps agree with a particular
-*			labelling of each voxel.
+*      entropy or probability data terms based on how many label maps agree with a particular
+*      labelling of each voxel.
 *
 *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
-*	
-*	@note August 27th 2013 - Documentation first compiled.
+*  
+*  @note August 27th 2013 - Documentation first compiled.
 *
 */
 
@@ -35,67 +35,67 @@
 class vtkImageAtlasLabelProbability : public vtkThreadedImageAlgorithm
 {
 public:
-	static vtkImageAtlasLabelProbability *New();
-	vtkTypeMacro(vtkImageAtlasLabelProbability,vtkThreadedImageAlgorithm);
-	void PrintSelf(ostream& os, vtkIndent indent);
-	
-	// Description:
-	// Set a collection of label maps for the seeding operation.
-	virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(0,number,in->GetProducerPort()); }
-	
-	// Description:
-	// Determine whether to normalize entropy data terms over [0,1] or [0,inf). This
-	// does not effect probability terms.
-	void SetNormalizeDataTermOn() {this->NormalizeDataTerm = 1; }
-	void SetNormalizeDataTermOff() {this->NormalizeDataTerm = 0; }
-	int GetNormalizeDataTerm() {return (this->NormalizeDataTerm); }
-	
-	// Description:
-	// Determine which label is being used as the seed.
-	vtkSetClampMacro(LabelID,int, 0, INT_MAX);
-	vtkGetMacro(LabelID,int);
-	
-	// Description:
-	// Determine whether or not to use entropy rather than probability in the output
-	// image.
-	vtkSetMacro(Entropy,bool);
-	vtkGetMacro(Entropy,bool);
-	void SetOutputToEntropy(){ this->SetEntropy(true); }
-	void SetOutputToProbability(){ this->SetEntropy(false); }
-	
-	// Description:
-	// If no labels seed a particular voxel, theoretically, the entropy cost is infinity,
-	// here is where you define the cut off, which does effect the scaling of the normalized
-	// terms.
-	vtkSetClampMacro(MaxValueToGive,double,0.0,DBL_MAX);
-	vtkGetMacro(MaxValueToGive,double);
+  static vtkImageAtlasLabelProbability *New();
+  vtkTypeMacro(vtkImageAtlasLabelProbability,vtkThreadedImageAlgorithm);
+  void PrintSelf(ostream& os, vtkIndent indent);
+  
+  // Description:
+  // Set a collection of label maps for the seeding operation.
+  virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(0,number,in->GetProducerPort()); }
+  
+  // Description:
+  // Determine whether to normalize entropy data terms over [0,1] or [0,inf). This
+  // does not effect probability terms.
+  void SetNormalizeDataTermOn() {this->NormalizeDataTerm = 1; }
+  void SetNormalizeDataTermOff() {this->NormalizeDataTerm = 0; }
+  int GetNormalizeDataTerm() {return (this->NormalizeDataTerm); }
+  
+  // Description:
+  // Determine which label is being used as the seed.
+  vtkSetClampMacro(LabelID,int, 0, INT_MAX);
+  vtkGetMacro(LabelID,int);
+  
+  // Description:
+  // Determine whether or not to use entropy rather than probability in the output
+  // image.
+  vtkSetMacro(Entropy,bool);
+  vtkGetMacro(Entropy,bool);
+  void SetOutputToEntropy(){ this->SetEntropy(true); }
+  void SetOutputToProbability(){ this->SetEntropy(false); }
+  
+  // Description:
+  // If no labels seed a particular voxel, theoretically, the entropy cost is infinity,
+  // here is where you define the cut off, which does effect the scaling of the normalized
+  // terms.
+  vtkSetClampMacro(MaxValueToGive,double,0.0,DBL_MAX);
+  vtkGetMacro(MaxValueToGive,double);
 
 protected:
-	vtkImageAtlasLabelProbability();
-	~vtkImageAtlasLabelProbability();
+  vtkImageAtlasLabelProbability();
+  ~vtkImageAtlasLabelProbability();
 
-	int LabelID;
-	int NormalizeDataTerm;
-	bool Entropy;
-	int NumberOfLabelMaps;
-	double MaxValueToGive;
+  int LabelID;
+  int NormalizeDataTerm;
+  bool Entropy;
+  int NumberOfLabelMaps;
+  double MaxValueToGive;
 
-	virtual int RequestInformation (vtkInformation *,
+  virtual int RequestInformation (vtkInformation *,
                                 vtkInformationVector **,
                                 vtkInformationVector *);
 
-	virtual void ThreadedRequestData(vtkInformation *request,
+  virtual void ThreadedRequestData(vtkInformation *request,
                                     vtkInformationVector **inputVector,
                                     vtkInformationVector *outputVector,
                                     vtkImageData ***inData,
                                     vtkImageData **outData,
                                     int extent[6], int threadId);
   
-	virtual int FillInputPortInformation(int port, vtkInformation* info);
+  virtual int FillInputPortInformation(int port, vtkInformation* info);
 
 private:
-	vtkImageAtlasLabelProbability(const vtkImageAtlasLabelProbability&);  // Not implemented.
-	void operator=(const vtkImageAtlasLabelProbability&);  // Not implemented.
+  vtkImageAtlasLabelProbability(const vtkImageAtlasLabelProbability&);  // Not implemented.
+  void operator=(const vtkImageAtlasLabelProbability&);  // Not implemented.
 };
 
 #endif

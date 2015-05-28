@@ -80,8 +80,8 @@ vtkImage3DNoiseSource::vtkImage3DNoiseSource()
 
 //----------------------------------------------------------------------------
 void vtkImage3DNoiseSource::SetWholeExtent(int xMin, int xMax, 
-					 int yMin, int yMax,
-					 int zMin, int zMax)
+           int yMin, int yMax,
+           int zMin, int zMax)
 {
   int modified = 0;
   
@@ -174,16 +174,16 @@ void vtkImage3DNoiseExecute(vtkImage3DNoiseSource *self, vtkImageData *data, T *
     for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
       {
       if (!(count%target))
-	{
-	self->UpdateProgress(count/(50.0*target));
-	}
+  {
+  self->UpdateProgress(count/(50.0*target));
+  }
       count++;
       for (idxR = 0; idxR < rowLength; idxR++)
-	{
-	// Pixel operation
-	*outPtr = (T) (min + (max - min) * vtkMath::Random());
-	outPtr++;
-	}
+  {
+  // Pixel operation
+  *outPtr = (T) (min + (max - min) * vtkMath::Random());
+  outPtr++;
+  }
       outPtr += outIncY;
       }
     outPtr += outIncZ;

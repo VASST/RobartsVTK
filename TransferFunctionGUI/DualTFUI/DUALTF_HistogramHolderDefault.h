@@ -17,68 +17,68 @@ class DUALTF_transferFunctionWindowWidget;
 
 class DUALTF_HistogramHolderDefault : public QLabel
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	DUALTF_HistogramHolderDefault(DUALTF_transferFunctionDefinitionWidget* parent, vtkCuda2DTransferFunction* f);
-	~DUALTF_HistogramHolderDefault();
-	void paintEvent( QPaintEvent * );
-	void setObject(vtkCudaFunctionPolygon* object);
-	void setSize(unsigned int size);
+  DUALTF_HistogramHolderDefault(DUALTF_transferFunctionDefinitionWidget* parent, vtkCuda2DTransferFunction* f);
+  ~DUALTF_HistogramHolderDefault();
+  void paintEvent( QPaintEvent * );
+  void setObject(vtkCudaFunctionPolygon* object);
+  void setSize(unsigned int size);
 
-	void giveHistogramDimensions(float maxI1,float minI1, float maxI2, float minI2);
+  void giveHistogramDimensions(float maxI1,float minI1, float maxI2, float minI2);
 
-	void mouseMoveEvent(QMouseEvent*);
-	void mousePressEvent(QMouseEvent*);
-	void mouseReleaseEvent(QMouseEvent*);
-	
-	void keyPressEvent(QKeyEvent* e);
-	void keyReleaseEvent(QKeyEvent* e);
+  void mouseMoveEvent(QMouseEvent*);
+  void mousePressEvent(QMouseEvent*);
+  void mouseReleaseEvent(QMouseEvent*);
+  
+  void keyPressEvent(QKeyEvent* e);
+  void keyReleaseEvent(QKeyEvent* e);
 
-	void setZoomSquare(float maxI1,float minI1, float maxI2, float minI2);
-	void setAutoUpdate(bool au);
+  void setZoomSquare(float maxI1,float minI1, float maxI2, float minI2);
+  void setAutoUpdate(bool au);
 
-	void visualizeAllObjects(bool b);
+  void visualizeAllObjects(bool b);
 
 private slots:
 
 private:
 
-	DUALTF_transferFunctionDefinitionWidget* manager;
-	vtkCuda2DTransferFunction* func;
-	vtkCudaFunctionPolygon* object;
-	
-	float minIntensity1;
-	float maxIntensity1;
-	float minIntensity2;
-	float maxIntensity2;
-	double size;
-	bool histogram;
-	bool visAll;
+  DUALTF_transferFunctionDefinitionWidget* manager;
+  vtkCuda2DTransferFunction* func;
+  vtkCudaFunctionPolygon* object;
+  
+  float minIntensity1;
+  float maxIntensity1;
+  float minIntensity2;
+  float maxIntensity2;
+  double size;
+  bool histogram;
+  bool visAll;
 
-	float zoomMinIntensity1;
-	float zoomMaxIntensity1;
-	float zoomMinIntensity2;
-	float zoomMaxIntensity2;
-	bool hasZoomSquare;
+  float zoomMinIntensity1;
+  float zoomMaxIntensity1;
+  float zoomMinIntensity2;
+  float zoomMaxIntensity2;
+  bool hasZoomSquare;
 
-	//original click locations
-	float origClickI1;
-	float origClickI2;
-	float centroidI1;
-	float centroidI2;
-	float rotationCentreI1;
-	float rotationCentreI2;
-	float closenessRadius;
+  //original click locations
+  float origClickI1;
+  float origClickI2;
+  float centroidI1;
+  float centroidI2;
+  float rotationCentreI1;
+  float rotationCentreI2;
+  float closenessRadius;
 
-	//booleans to interpret click by
-	bool shiftHeld;
-	bool ctrlHeld;
-	bool translating;
-	bool scaling;
-	bool vertexDragging;
-	bool autoUpdate;
-	unsigned int vertexInUse;
+  //booleans to interpret click by
+  bool shiftHeld;
+  bool ctrlHeld;
+  bool translating;
+  bool scaling;
+  bool vertexDragging;
+  bool autoUpdate;
+  unsigned int vertexInUse;
 
 };
 

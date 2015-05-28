@@ -10,24 +10,24 @@
 
 class deviceManagementWidget : public QWidget
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	deviceManagementWidget( transferFunctionWindowWidgetInterface* parent );
-	~deviceManagementWidget();
-	void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
-	
+  deviceManagementWidget( transferFunctionWindowWidgetInterface* parent );
+  ~deviceManagementWidget();
+  void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
+  
 private slots:
-	
-	//shading related slots
-	void changeDevice(int d);
+  
+  //shading related slots
+  void changeDevice(int d);
 
 private:
 
-	transferFunctionWindowWidgetInterface* parent;
+  transferFunctionWindowWidgetInterface* parent;
 
-	vtkCudaVolumeMapper* caster;
-	QSlider* device;
+  vtkCudaVolumeMapper* caster;
+  QSlider* device;
 };
 
 #endif

@@ -108,147 +108,147 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
   double constantc2 = ((op == VTK_CONSTANT || op == VTK_SPIKE) && entropy) ? -log(self->GetConstantC2()) : self->GetConstantC1();
 
   // Loop through output pixels
-	switch (op){
-	case VTK_CONSTANT:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = constantc1;
-					outPtr++;
-					in1Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-		}
-		break;
-		
-	case VTK_LOGISTIC:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = (T)( entropy ? 
-						log(1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) :
-						1.0 / (1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) );
-					outPtr++;
-					in1Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-		}
-		break;
+  switch (op){
+  case VTK_CONSTANT:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = constantc1;
+          outPtr++;
+          in1Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+    }
+    break;
+    
+  case VTK_LOGISTIC:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = (T)( entropy ? 
+            log(1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) :
+            1.0 / (1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) );
+          outPtr++;
+          in1Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+    }
+    break;
 
-	case VTK_GAUSSIAN:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = (T)( entropy ? 
-						0.5*(((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) :
-						exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1)));
-					outPtr++;
-					in1Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-		}
-		break;
+  case VTK_GAUSSIAN:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = (T)( entropy ? 
+            0.5*(((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) :
+            exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1)));
+          outPtr++;
+          in1Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+    }
+    break;
 
-	case VTK_SPIKE:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = (*in1Ptr == constantk1) ? constantc1: constantc2 ;
-					outPtr++;
-					in1Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-		}
-		break;
-	}
-	
-	//if we are not normalizing, we can leave now
-	if( !self->GetNormalize() ) return;
+  case VTK_SPIKE:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = (*in1Ptr == constantk1) ? constantc1: constantc2 ;
+          outPtr++;
+          in1Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+    }
+    break;
+  }
+  
+  //if we are not normalizing, we can leave now
+  if( !self->GetNormalize() ) return;
 
   // Get normalization constants
   double normOffset = 0.0;
   double normMultiply = 1.0 / constantc1;
   double Range[2]; in1Data->GetScalarRange(Range); 
   if( op == VTK_GAUSSIAN && entropy){
-	  double valAtMax = 0.5*((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1);
-	  double valAtMin = 0.5*((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1);
-	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
-	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
-	  if( constantc1 > Range[0] && constantc1 < Range[1] ) minValue = 0.0f;
-	  normOffset = -minValue;
-	  normMultiply = 1.0 / (maxValue-minValue);
+    double valAtMax = 0.5*((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1);
+    double valAtMin = 0.5*((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1);
+    double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+    double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+    if( constantc1 > Range[0] && constantc1 < Range[1] ) minValue = 0.0f;
+    normOffset = -minValue;
+    normMultiply = 1.0 / (maxValue-minValue);
   }else if( op == VTK_GAUSSIAN && !entropy){
-	  double Range[2]; in1Data->GetScalarRange(Range); 
-	  double valAtMax = exp(-0.5 * ((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1));
-	  double valAtMin = exp(-0.5 * ((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1));
-	  double minValue = exp( -((valAtMax >= valAtMin) ? valAtMax : valAtMin) );
-	  double maxValue = exp( -((valAtMax <  valAtMin) ? valAtMax : valAtMin) );
-	  if( constantc1 > Range[0] && constantc1 < Range[1] ) maxValue = 1.0f;
-	  normOffset = -minValue;
-	  normMultiply = 1.0 / (maxValue-minValue);
-  }else if( op == VTK_LOGISTIC && entropy){	  double Range[2]; in1Data->GetScalarRange(Range); 
-	  double valAtMax = log(1.0 + exp(-(constantk1*(Range[1] - constantc1))) );
-	  double valAtMin = log(1.0 + exp(-(constantk1*(Range[0] - constantc1))) );
-	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
-	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
-	  normOffset = -minValue;
-	  normMultiply = 1.0 / (maxValue-minValue);
+    double Range[2]; in1Data->GetScalarRange(Range); 
+    double valAtMax = exp(-0.5 * ((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1));
+    double valAtMin = exp(-0.5 * ((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1));
+    double minValue = exp( -((valAtMax >= valAtMin) ? valAtMax : valAtMin) );
+    double maxValue = exp( -((valAtMax <  valAtMin) ? valAtMax : valAtMin) );
+    if( constantc1 > Range[0] && constantc1 < Range[1] ) maxValue = 1.0f;
+    normOffset = -minValue;
+    normMultiply = 1.0 / (maxValue-minValue);
+  }else if( op == VTK_LOGISTIC && entropy){    double Range[2]; in1Data->GetScalarRange(Range); 
+    double valAtMax = log(1.0 + exp(-(constantk1*(Range[1] - constantc1))) );
+    double valAtMin = log(1.0 + exp(-(constantk1*(Range[0] - constantc1))) );
+    double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+    double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+    normOffset = -minValue;
+    normMultiply = 1.0 / (maxValue-minValue);
   }else if( op == VTK_LOGISTIC && !entropy){
-	  double valAtMax = 1.0 / (1.0 + exp(-(constantk1*(Range[1] - constantc1))));
-	  double valAtMin = 1.0 / (1.0 + exp(-(constantk1*(Range[0] - constantc1))));
-	  double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
-	  double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
-	  normOffset = -minValue;
-	  normMultiply = 1.0 / (maxValue-minValue);
+    double valAtMax = 1.0 / (1.0 + exp(-(constantk1*(Range[1] - constantc1))));
+    double valAtMin = 1.0 / (1.0 + exp(-(constantk1*(Range[0] - constantc1))));
+    double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
+    double minValue = (valAtMax <  valAtMin) ? valAtMax : valAtMin;
+    normOffset = -minValue;
+    normMultiply = 1.0 / (maxValue-minValue);
   }
 
   //apply the normalization
   outPtr = origOutPtr;
   for(idxZ = 0; idxZ <= maxZ; idxZ++){
-	  for (idxY = 0; idxY <= maxY; idxY++){
-			if( !id ){
-				if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-				count++;
-			}
-			for (idxR = 0; idxR < rowLength; idxR++){
-				*outPtr = (T)( ((double)(*outPtr) + normOffset) * normMultiply );
-				outPtr++;
-			}
-			outPtr += outIncY;
-		}
-		outPtr += outIncZ;
+    for (idxY = 0; idxY <= maxY; idxY++){
+      if( !id ){
+        if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+        count++;
+      }
+      for (idxR = 0; idxR < rowLength; idxR++){
+        *outPtr = (T)( ((double)(*outPtr) + normOffset) * normMultiply );
+        outPtr++;
+      }
+      outPtr += outIncY;
+    }
+    outPtr += outIncZ;
   }
 
 }
@@ -296,84 +296,84 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
     // Loop through output pixels
-	switch (op){
-	case VTK_CONSTANT:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = constantc1;
-					outPtr++;
-					in1Ptr++;
-					in2Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-				in2Ptr += in2IncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-			in2Ptr += in2IncZ;
-		}
-		break;
-		
-	case VTK_LOGISTIC:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = (T)( entropy ? 
-						log((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
-						    (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ) :
-						1.0 / ((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
-							   (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ));
-					outPtr++;
-					in1Ptr++;
-					in2Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-				in2Ptr += in2IncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-			in2Ptr += in2IncZ;
-		}
-		break;
+  switch (op){
+  case VTK_CONSTANT:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = constantc1;
+          outPtr++;
+          in1Ptr++;
+          in2Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+        in2Ptr += in2IncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+      in2Ptr += in2IncZ;
+    }
+    break;
+    
+  case VTK_LOGISTIC:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = (T)( entropy ? 
+            log((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
+                (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ) :
+            1.0 / ((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
+                 (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ));
+          outPtr++;
+          in1Ptr++;
+          in2Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+        in2Ptr += in2IncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+      in2Ptr += in2IncZ;
+    }
+    break;
 
-	case VTK_GAUSSIAN:
-		for(idxZ = 0; idxZ <= maxZ; idxZ++){
-			for (idxY = 0; idxY <= maxY; idxY++){
-				if( !id ){
-					if (!(count%target)) self->UpdateProgress(count/(50.0*target));
-					count++;
-				}
-				for (idxR = 0; idxR < rowLength; idxR++){
-					*outPtr = (T)( entropy ? 
-						0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) +
-						0.5 * (((double)*in2Ptr - constantc2)/constantk2) * (((double)*in2Ptr - constantc2)/constantk2) :
-						exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) -
-							 0.5 * (((double)*in2Ptr  - constantc2)/constantk2 * (((double)*in2Ptr - constantc2)/constantk2) )) );
-					outPtr++;
-					in1Ptr++;
-					in2Ptr++;
-				}
-				outPtr += outIncY;
-				in1Ptr += inIncY;
-				in2Ptr += in2IncY;
-			}
-			outPtr += outIncZ;
-			in1Ptr += inIncZ;
-			in2Ptr += in2IncZ;
-		}
-		break;
-	}
+  case VTK_GAUSSIAN:
+    for(idxZ = 0; idxZ <= maxZ; idxZ++){
+      for (idxY = 0; idxY <= maxY; idxY++){
+        if( !id ){
+          if (!(count%target)) self->UpdateProgress(count/(50.0*target));
+          count++;
+        }
+        for (idxR = 0; idxR < rowLength; idxR++){
+          *outPtr = (T)( entropy ? 
+            0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) +
+            0.5 * (((double)*in2Ptr - constantc2)/constantk2) * (((double)*in2Ptr - constantc2)/constantk2) :
+            exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) -
+               0.5 * (((double)*in2Ptr  - constantc2)/constantk2 * (((double)*in2Ptr - constantc2)/constantk2) )) );
+          outPtr++;
+          in1Ptr++;
+          in2Ptr++;
+        }
+        outPtr += outIncY;
+        in1Ptr += inIncY;
+        in2Ptr += in2IncY;
+      }
+      outPtr += outIncZ;
+      in1Ptr += inIncZ;
+      in2Ptr += in2IncZ;
+    }
+    break;
+  }
 
 }
 
@@ -401,8 +401,8 @@ void vtkImageDataTerm::ThreadedRequestData(
 
   if (inData[1] && inData[1][0])
     {
-	void *inPtr2;
-	inPtr2 = inData[1][0]->GetScalarPointerForExtent(outExt);
+  void *inPtr2;
+  inPtr2 = inData[1][0]->GetScalarPointerForExtent(outExt);
 
     // this filter expects that input is the same type as output.
     if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())

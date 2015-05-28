@@ -24,69 +24,69 @@
 class vtkCuda2DInExLogicVolumeMapper : public vtkCudaVolumeMapper {
 public:
 
-	vtkTypeMacro( vtkCuda2DInExLogicVolumeMapper, vtkCudaVolumeMapper );
+  vtkTypeMacro( vtkCuda2DInExLogicVolumeMapper, vtkCudaVolumeMapper );
 
-	/** @brief VTK compatible constructor method
-	 *
-	 */
-	static vtkCuda2DInExLogicVolumeMapper *New();
+  /** @brief VTK compatible constructor method
+   *
+   */
+  static vtkCuda2DInExLogicVolumeMapper *New();
 
-	virtual void SetInputInternal( vtkImageData * image, int frame);
-	virtual void ClearInputInternal();
-	virtual void ChangeFrameInternal(int frame);
-	virtual void InternalRender (	vtkRenderer* ren, vtkVolume* vol,
-									const cudaRendererInformation& rendererInfo,
-									const cudaVolumeInformation& volumeInfo,
-									const cudaOutputImageInformation& outputInfo );
+  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void ClearInputInternal();
+  virtual void ChangeFrameInternal(int frame);
+  virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
+                  const cudaRendererInformation& rendererInfo,
+                  const cudaVolumeInformation& volumeInfo,
+                  const cudaOutputImageInformation& outputInfo );
 
-	/** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
-	 *
-	 *  @param func The 2 dimensional transfer function
-	 */
-	void SetVisualizationFunction(vtkCuda2DTransferFunction* func);
-	
-	/** @brief Get the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
-	 *
-	 */
-	vtkCuda2DTransferFunction* GetVisualizationFunction();
+  /** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
+   *
+   *  @param func The 2 dimensional transfer function
+   */
+  void SetVisualizationFunction(vtkCuda2DTransferFunction* func);
+  
+  /** @brief Get the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
+   *
+   */
+  vtkCuda2DTransferFunction* GetVisualizationFunction();
 
-	/** @brief Set the transfer function used for determining inclusion and exclusion in the volume rendering process which is given to the volume information handler
-	 *
-	 *  @param func The 2 dimensional transfer function
-	 */
-	void SetInExLogicFunction(vtkCuda2DTransferFunction* func);
-	
-	/** @brief Get the transfer function used for determining inclusion and exclusion in the volume rendering process which is given to the volume information handler
-	 *
-	 */
-	vtkCuda2DTransferFunction* GetInExLogicFunction();
-	
-	void SetUseBlackKeyhole( bool t );
-	vtkGetMacro( UseBlackKeyhole, bool );
+  /** @brief Set the transfer function used for determining inclusion and exclusion in the volume rendering process which is given to the volume information handler
+   *
+   *  @param func The 2 dimensional transfer function
+   */
+  void SetInExLogicFunction(vtkCuda2DTransferFunction* func);
+  
+  /** @brief Get the transfer function used for determining inclusion and exclusion in the volume rendering process which is given to the volume information handler
+   *
+   */
+  vtkCuda2DTransferFunction* GetInExLogicFunction();
+  
+  void SetUseBlackKeyhole( bool t );
+  vtkGetMacro( UseBlackKeyhole, bool );
 
 protected:
-	/** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
-	 *
-	 */
-	vtkCuda2DInExLogicVolumeMapper();
+  /** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
+   *
+   */
+  vtkCuda2DInExLogicVolumeMapper();
 
-	/** @brief Destructor which deallocates the various information handlers and matrices
-	 *
-	 */
-	~vtkCuda2DInExLogicVolumeMapper();
+  /** @brief Destructor which deallocates the various information handlers and matrices
+   *
+   */
+  ~vtkCuda2DInExLogicVolumeMapper();
 
-	virtual void Reinitialize(int withData = 0);
-	virtual void Deinitialize(int withData = 0);
-	
-	vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
+  virtual void Reinitialize(int withData = 0);
+  virtual void Deinitialize(int withData = 0);
+  
+  vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
-	static vtkMutexLock* tfLock;
+  static vtkMutexLock* tfLock;
 
-	bool UseBlackKeyhole;
+  bool UseBlackKeyhole;
 
 private:
-	vtkCuda2DInExLogicVolumeMapper operator=(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
-	vtkCuda2DInExLogicVolumeMapper(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
+  vtkCuda2DInExLogicVolumeMapper operator=(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
+  vtkCuda2DInExLogicVolumeMapper(const vtkCuda2DInExLogicVolumeMapper&); /**< not implemented */
 
 };
 

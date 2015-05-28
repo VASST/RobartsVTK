@@ -21,31 +21,31 @@
 class vtkCudaFunctionPolygonReader : public vtkObject {
 public:
 
-	vtkTypeMacro( vtkCudaFunctionPolygonReader, vtkObject );
+  vtkTypeMacro( vtkCudaFunctionPolygonReader, vtkObject );
 
-	/** @brief VTK compatible constructor method
-	 *
-	 */
-	static vtkCudaFunctionPolygonReader* New();
+  /** @brief VTK compatible constructor method
+   *
+   */
+  static vtkCudaFunctionPolygonReader* New();
 
-	void SetFileName( std::string filename );
-	void Read();
-	void Clear();
-	vtkCudaFunctionPolygon* GetOutput( int n );
-	int GetNumberOfOutputs( );
-	
+  void SetFileName( std::string filename );
+  void Read();
+  void Clear();
+  vtkCudaFunctionPolygon* GetOutput( int n );
+  int GetNumberOfOutputs( );
+  
 protected:
-	vtkCudaFunctionPolygonReader();
-	~vtkCudaFunctionPolygonReader();
+  vtkCudaFunctionPolygonReader();
+  ~vtkCudaFunctionPolygonReader();
 
-	vtkCudaFunctionPolygon* readTFPolygon();
+  vtkCudaFunctionPolygon* readTFPolygon();
 
-	std::list<vtkCudaFunctionPolygon*> objects;
-	std::string filename;
-	bool fileNameSet;
-	
+  std::list<vtkCudaFunctionPolygon*> objects;
+  std::string filename;
+  bool fileNameSet;
+  
 
-	std::ifstream* file;
+  std::ifstream* file;
 
 };
 #endif

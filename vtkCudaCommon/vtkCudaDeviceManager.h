@@ -34,42 +34,42 @@ class vtkCudaDeviceManager : public vtkObject
 {
 public:
 
-	vtkTypeMacro( vtkCudaDeviceManager, vtkObject );
+  vtkTypeMacro( vtkCudaDeviceManager, vtkObject );
 
-	static vtkCudaDeviceManager* Singleton();
+  static vtkCudaDeviceManager* Singleton();
 
-	int GetNumberOfDevices();
-	bool GetDevice(vtkCudaObject* caller, int device);
-	bool ReturnDevice(vtkCudaObject* caller, int device);
-	bool GetStream(vtkCudaObject* caller, cudaStream_t** stream, int device);
-	bool ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
+  int GetNumberOfDevices();
+  bool GetDevice(vtkCudaObject* caller, int device);
+  bool ReturnDevice(vtkCudaObject* caller, int device);
+  bool GetStream(vtkCudaObject* caller, cudaStream_t** stream, int device);
+  bool ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
 
-	bool SynchronizeStream( cudaStream_t* stream );
-	bool ReserveGPU( cudaStream_t* stream );
-	
-	int QueryDeviceForObject( vtkCudaObject* object );
-	int QueryDeviceForStream( cudaStream_t* stream );
+  bool SynchronizeStream( cudaStream_t* stream );
+  bool ReserveGPU( cudaStream_t* stream );
+  
+  int QueryDeviceForObject( vtkCudaObject* object );
+  int QueryDeviceForStream( cudaStream_t* stream );
 
 protected:
 
 private:
-	vtkCudaDeviceManager();
-	~vtkCudaDeviceManager();
-	vtkCudaDeviceManager operator=(const vtkCudaDeviceManager&); /**< not implemented */
-	vtkCudaDeviceManager(const vtkCudaDeviceManager&); /**< not implemented */
-	
-	void DestroyEmptyStream( cudaStream_t* stream );
-	bool SynchronizeStreamUnlocked( cudaStream_t* stream );
-	
-	std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
-	std::multimap<int,vtkCudaObject*> DeviceToObjectMap;
+  vtkCudaDeviceManager();
+  ~vtkCudaDeviceManager();
+  vtkCudaDeviceManager operator=(const vtkCudaDeviceManager&); /**< not implemented */
+  vtkCudaDeviceManager(const vtkCudaDeviceManager&); /**< not implemented */
+  
+  void DestroyEmptyStream( cudaStream_t* stream );
+  bool SynchronizeStreamUnlocked( cudaStream_t* stream );
+  
+  std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
+  std::multimap<int,vtkCudaObject*> DeviceToObjectMap;
 
-	std::map<cudaStream_t*,int> StreamToDeviceMap;
-	std::multimap<cudaStream_t*, vtkCudaObject*> StreamToObjectMap;
+  std::map<cudaStream_t*,int> StreamToDeviceMap;
+  std::multimap<cudaStream_t*, vtkCudaObject*> StreamToObjectMap;
 
-	static vtkCudaDeviceManager* singletonManager;
+  static vtkCudaDeviceManager* singletonManager;
 
-	vtkMutexLock* regularLock;
+  vtkMutexLock* regularLock;
 
 };
 

@@ -24,7 +24,7 @@
 
 #include "vtkThreadedImageAlgorithm.h"
 
-class VTK_IMAGING_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
+class VTK_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageDataTerm *New();
@@ -79,8 +79,8 @@ public:
   // Description:
   // Set the two inputs to this filter. For some operations, the second input
   // is not used.
-  virtual void SetInput1(vtkDataObject *in) { this->SetInput(0,in); }
-  virtual void SetInput2(vtkDataObject *in) { this->SetInput(1,in); }
+  virtual void SetInput1(vtkDataObject *in) { this->SetInputDataObject(0,in); }
+  virtual void SetInput2(vtkDataObject *in) { this->SetInputDataObject(1,in); }
 
   // Description:
   // Take the negative log of the output to convert from a probability to an

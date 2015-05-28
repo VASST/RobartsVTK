@@ -14,12 +14,12 @@
 /** @file vtkImageAtlasLabelProbability.cxx
 *
 *  @brief Implementation file with definitions for the CPU-based label agreement data term. This generates 
-*			entropy or probability data terms based on how many label maps agree with a particular
-*			labelling of each voxel.
+*      entropy or probability data terms based on how many label maps agree with a particular
+*      labelling of each voxel.
 *
 *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
-*	
-*	@note August 27th 2013 - Documentation first compiled.
+*  
+*  @note August 27th 2013 - Documentation first compiled.
 *
 */
 
@@ -42,10 +42,10 @@ vtkImageAtlasLabelProbability::vtkImageAtlasLabelProbability()
 {
     this->NormalizeDataTerm = 0;
     this->LabelID = 1.0;
-	this->Entropy = false;
+  this->Entropy = false;
     this->SetNumberOfInputPorts(1);
     this->SetNumberOfThreads(10);
-	this->MaxValueToGive = 100.0;
+  this->MaxValueToGive = 100.0;
 }
 
 vtkImageAtlasLabelProbability::~vtkImageAtlasLabelProbability(){
@@ -64,29 +64,29 @@ int vtkImageAtlasLabelProbability::RequestInformation (
     vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
     vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
 
-	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
-		numLabelMaps++;
+  int numLabelMaps = 0;
+  for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
+    numLabelMaps++;
 
     int ext[6], ext2[6], idx;
 
     inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext);
-	
-	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
-		vtkInformation *inInfo2 = inputVector[0]->GetInformationObject(i);
-		inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
-		for (idx = 0; idx < 3; ++idx)
-		{
-			if (ext2[idx*2] > ext[idx*2])
-			{
-				ext[idx*2] = ext2[idx*2];
-			}
-			if (ext2[idx*2+1] < ext[idx*2+1])
-			{
-				ext[idx*2+1] = ext2[idx*2+1];
-			}
-		}
-	}
+  
+  for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
+    vtkInformation *inInfo2 = inputVector[0]->GetInformationObject(i);
+    inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
+    for (idx = 0; idx < 3; ++idx)
+    {
+      if (ext2[idx*2] > ext[idx*2])
+      {
+        ext[idx*2] = ext2[idx*2];
+      }
+      if (ext2[idx*2+1] < ext[idx*2+1])
+      {
+        ext[idx*2+1] = ext2[idx*2+1];
+      }
+    }
+  }
 
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext,6);
 
@@ -112,41 +112,41 @@ void vtkImageAtlasLabelProbabilityExecute(vtkImageAtlasLabelProbability *self,
     float* outBuffer =  (float*)outData->GetScalarPointer();
     //std::fill_n(outBuffer, volumeSize , 0.0f);
 
-	//find the actual number of non-null labels
-	int actualNumLabels = 0;
-	for(int label = 0; label < numLabels; label++ ){
-		if( inData[label] ) actualNumLabels++;
-	}
+  //find the actual number of non-null labels
+  int actualNumLabels = 0;
+  for(int label = 0; label < numLabels; label++ ){
+    if( inData[label] ) actualNumLabels++;
+  }
 
     
-	for(int idx = id; idx < volumeSize; idx+=self->GetNumberOfThreads() ){
-	
-		//find the number of agreed on pixels
-		int agree = 0;
-		for(int label = 0; label < numLabels; label++ ){
-			if( inData[label] )
-				if( (int) ((T*)inData[label]->GetScalarPointer())[idx] == self->GetLabelID() )
-					agree++;
-		}
+  for(int idx = id; idx < volumeSize; idx+=self->GetNumberOfThreads() ){
+  
+    //find the number of agreed on pixels
+    int agree = 0;
+    for(int label = 0; label < numLabels; label++ ){
+      if( inData[label] )
+        if( (int) ((T*)inData[label]->GetScalarPointer())[idx] == self->GetLabelID() )
+          agree++;
+    }
 
-		//there is no agreement, assign the maximum value
-		if( agree == 0 ){
-			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
-				outBuffer[idx] = 1.0f;
-			else if( self->GetEntropy() )
-				self->GetMaxValueToGive();
-			else
-				outBuffer[idx] = 0.0f;
-		}else{
-			if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
-				outBuffer[idx] = (log((float)actualNumLabels) - log((float)agree) < self->GetMaxValueToGive()) ?
-				  (log((float)actualNumLabels) - log((float)agree)) / self->GetMaxValueToGive() :
-				  1.0f ;
-			else if( self->GetEntropy() )
-				outBuffer[idx] = log((float)actualNumLabels) - log((float)agree);
-			else
-				outBuffer[idx] = (float) agree / (float) actualNumLabels;
-		}
+    //there is no agreement, assign the maximum value
+    if( agree == 0 ){
+      if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
+        outBuffer[idx] = 1.0f;
+      else if( self->GetEntropy() )
+        self->GetMaxValueToGive();
+      else
+        outBuffer[idx] = 0.0f;
+    }else{
+      if( self->GetEntropy() && self->GetNormalizeDataTerm() == 1 )
+        outBuffer[idx] = (log((float)actualNumLabels) - log((float)agree) < self->GetMaxValueToGive()) ?
+          (log((float)actualNumLabels) - log((float)agree)) / self->GetMaxValueToGive() :
+          1.0f ;
+      else if( self->GetEntropy() )
+        outBuffer[idx] = log((float)actualNumLabels) - log((float)agree);
+      else
+        outBuffer[idx] = (float) agree / (float) actualNumLabels;
+    }
 
     }
 
@@ -173,17 +173,18 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 
     inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
     outPtr = outData[0]->GetScalarPointerForExtent(outExt);
-	outData[0]->SetScalarTypeToFloat();
-	
-	int numLabelMaps = 0;
-	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
-		if(inData[0][i]) numLabelMaps++;
+  outData[0]->SetScalarTypeToFloat();
+  
+  int numLabelMaps = 0;
+  for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
+    if(inData[0][i]) numLabelMaps++;
 
     if (numLabelMaps == 0) {
         vtkErrorMacro(<< "At least one label map is required." );
         return;
     }
 
+  // TODO: why is this check here if the above always sets it to float?
     // this filter expects the output datatype to be float.
     if (outData[0]->GetScalarType() != VTK_FLOAT)
     {
@@ -191,21 +192,21 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
         return;
     }
 
-	// this filter expects the label map to be of type char
-	int LabelType = -1;
-	for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
-		if( !inData[0][i] ) continue;
-		if( LabelType == -1 ) LabelType = inData[0][i]->GetScalarType();
-		if (inData[0][i]->GetScalarType() != LabelType) {
-			vtkErrorMacro(<< "Label maps must be of same type." );
-			return;
-		}
-		if ( inData[0][i]->GetNumberOfScalarComponents() != 1 ) {
-			vtkErrorMacro(<< "Label map can only have 1 component." );
-			return;
+  // this filter expects the label map to be of type char
+  int LabelType = -1;
+  for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++){
+    if( !inData[0][i] ) continue;
+    if( LabelType == -1 ) LabelType = inData[0][i]->GetScalarType();
+    if (inData[0][i]->GetScalarType() != LabelType) {
+      vtkErrorMacro(<< "Label maps must be of same type." );
+      return;
+    }
+    if ( inData[0][i]->GetNumberOfScalarComponents() != 1 ) {
+      vtkErrorMacro(<< "Label map can only have 1 component." );
+      return;
 
-		}
-	}
+    }
+  }
 
     // this filter expects that inputs that have the same number of components
     if (inData[0][0]->GetNumberOfScalarComponents() != 1 )
@@ -222,7 +223,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
                                              outData[0],
                                              static_cast<float *>(outPtr), outExt,
                                              inputVector[0]->GetNumberOfInformationObjects(),
-											 id));
+                       id));
     default:
         vtkErrorMacro(<< "Execute: Unknown ScalarType");
         return;
@@ -235,7 +236,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 int vtkImageAtlasLabelProbability::FillInputPortInformation(
         int port, vtkInformation* info)
 {
-	info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
+  info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(),1);
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
 }

@@ -18,24 +18,24 @@
  *
  */
 typedef struct __align__(16) {
-	// The scale and shift to transform intensity and gradient to indices in the transfer functions
-	float			intensityLow;			/**< Minimum intensity of the image */
-	float			intensityMultiplier;	/**< Scale factor to normalize intensities to between 0 and 1 */
-	float			gradientLow;			/**< Minimum intensity of the image */
-	float			gradientMultiplier;		/**< Scale factor to normalize intensities to between 0 and 1 */
-	unsigned int	functionSize;			/**< The size of the lookup table */
+  // The scale and shift to transform intensity and gradient to indices in the transfer functions
+  float      intensityLow;      /**< Minimum intensity of the image */
+  float      intensityMultiplier;  /**< Scale factor to normalize intensities to between 0 and 1 */
+  float      gradientLow;      /**< Minimum intensity of the image */
+  float      gradientMultiplier;    /**< Scale factor to normalize intensities to between 0 and 1 */
+  unsigned int  functionSize;      /**< The size of the lookup table */
 
-	//opague memory back for the transfer function
-	cudaArray* alphaTransferArray1D;
-	cudaArray* galphaTransferArray1D;
-	cudaArray* colorRTransferArray1D;
-	cudaArray* colorGTransferArray1D;
-	cudaArray* colorBTransferArray1D;
+  //opague memory back for the transfer function
+  cudaArray* alphaTransferArray1D;
+  cudaArray* galphaTransferArray1D;
+  cudaArray* colorRTransferArray1D;
+  cudaArray* colorGTransferArray1D;
+  cudaArray* colorBTransferArray1D;
 
-	// Shading of the volume
-	float			Ambient;
-	float			Diffuse;
-	float2			Specular;
+  // Shading of the volume
+  float      Ambient;
+  float      Diffuse;
+  float2      Specular;
 } cuda1DTransferFunctionInformation;
 
 #endif

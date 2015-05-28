@@ -45,7 +45,7 @@
 #define BADDAVAL           19   /* Invalid D/A output value specified */
 #define BADDACHAN          20   /* Invalid D/A channel specified */
 #define ALREADYACTIVE      22   /* A background process is already in progress */
-#define PAGEOVERRUN		   23   /* DMA transfer crossed page boundary, may have gaps in data */
+#define PAGEOVERRUN       23   /* DMA transfer crossed page boundary, may have gaps in data */
 #define BADRATE            24   /* Inavlid sampling rate specified */
 #define COMPATMODE         25   /* Board switches set for "compatible" mode */
 #define TRIGSTATE          26   /* Incorrect intial trigger state D0 must=TTL low) */
@@ -150,10 +150,10 @@
 #define NOWINDOWSMEMORY         128   /* No Windows memory available */
 #define OUTOFDOSMEMORY          129   /* ISR data struct alloc failure */
 #define OBSOLETEOPTION          130   /* Obsolete option for cbGetConfig/cbSetConfig */
-#define NOPCMREGKEY             131	  /* No registry entry for this PCMCIA board */
-#define NOCBUL32SYS             132	  /* CBUL32.SYS device driver is not loaded */
+#define NOPCMREGKEY             131    /* No registry entry for this PCMCIA board */
+#define NOCBUL32SYS             132    /* CBUL32.SYS device driver is not loaded */
 #define NODMAMEMORY             133   /* No DMA buffer available to device driver */
-#define IRQNOTAVAILABLE         134	  /* IRQ in being used by another device */	
+#define IRQNOTAVAILABLE         134    /* IRQ in being used by another device */  
 #define NOT7266CTR              135   /* This board does not have an LS7266 counter */
 #define BADQUADRATURE           136   /* Invalid quadrature specified */
 #define BADCOUNTMODE            137   /* Invalid counting mode specified */
@@ -161,8 +161,8 @@
 #define BADINDEXMODE            139   /* Invalid index mode specified */
 #define BADINVERTINDEX          140   /* Invalid invert index specified */
 #define BADFLAGPINS             141   /* Invalid flag pins specified */
-#define NOCTRSTATUS             142	  /* This board does not support cbCStatus() */
-#define NOGATEALLOWED           143	  /* Gating and indexing not allowed simultaneously */		     
+#define NOCTRSTATUS             142    /* This board does not support cbCStatus() */
+#define NOGATEALLOWED           143    /* Gating and indexing not allowed simultaneously */         
 #define NOINDEXALLOWED          144   /* Indexing not allowed in non-quadratue mode */   
 #define OPENCONNECTION          145   /* Temperature input has open connection */
 #define BMCONTINUOUSCOUNT       146   /* Count must be integer multiple of packetsize for recycle mode. */
@@ -170,9 +170,9 @@
 #define MBUSINUSE               148   /* MetraBus in use */
 #define MBUSNOCTLR              149   /* MetraBus I/O card has no configured controller card */
 #define BADEVENTTYPE            150   /* Invalid event type specified for this board. */
-#define ALREADYENABLED          151	  /* An event handler has already been enabled for this event type */
+#define ALREADYENABLED          151    /* An event handler has already been enabled for this event type */
 #define BADEVENTSIZE            152   /* Invalid event count specified. */
-#define CANTINSTALLEVENT        153	  /* Unable to install event handler */
+#define CANTINSTALLEVENT        153    /* Unable to install event handler */
 #define BADBUFFERSIZE           154   /* Buffer is too small for operation */
 #define BADAIMODE               155   /* Invalid analog input mode(RSE, NRSE, or DIFF) */ 
 #define BADSIGNAL               156   /* Invalid signal type specified. */
@@ -193,28 +193,28 @@
 #define BADTRIGCHAN             174    /* Invalid trigger channel specified. */
 #define BADTRIGLEVEL            175    /* Invalid trigger level specified. */
 #define NOPRETRIGMODE           176    /* Pre-trigger mode is not supported for the specified trigger type. */
-#define BADDEBOUNCETIME	        177    /* Invalid debounce time specified. */
+#define BADDEBOUNCETIME          177    /* Invalid debounce time specified. */
 #define BADDEBOUNCETRIGMODE     178    /* Invalid debounce trigger mode specified. */
 #define BADMAPPEDCOUNTER        179    /* Invalid mapped counter specified. */
 #define BADCOUNTERMODE          180    /* This function can not be used with the current mode of the specified counter. */
 #define BADTCCHANMODE           181    /* Single-Ended mode can not be used for temperature input. */
 #define BADFREQUENCY            182    /* Invalid frequency specified. */
 #define BADEVENTPARAM           183    /* Invalid event parameter specified. */
-#define NONETIFC                184		/* No interface devices were found with required PAN ID and/or RF Channel. */
-#define DEADNETIFC              185		/* The interface device(s) with required PAN ID and RF Channel has failed. Please check connection. */
-#define NOREMOTEACK             186		/* The remote device is not responding to commands and queries. Please check device. */
-#define INPUTTIMEOUT            187		/* The device acknowledged the operation, but has not completed before the timeout. */
-#define MISMATCHSETPOINTCOUNT		188		/* Number of Setpoints not equal to number of channels with setpoint flag set */
-#define INVALIDSETPOINTLEVEL		189		/* Setpoint Level is outside channel range */
-#define INVALIDSETPOINTOUTPUTTYPE	190		/* Setpoint Output Type is invalid*/
-#define INVALIDSETPOINTOUTPUTVALUE  	191		/* Setpoint Output Value is outside channel range */
-#define INVALIDSETPOINTLIMITS		192		/* Setpoint Comparison limit B greater than Limit A */
-#define STRINGTOOLONG				193	/* The string entered is too long for the operation and/or device. */
-#define INVALIDLOGIN					194   /* The account name and/or password entered is incorrect. */
-#define SESSIONINUSE					195	/* The device session is already in use. */
-#define NOEXTPOWER					196	/* External power is not connected. */
-#define BADDUTYCYCLE				197 /* Invalid duty cycle specified. */
-#define BADINITIALDELAY				199 /* Invalid initial delay specified */
+#define NONETIFC                184    /* No interface devices were found with required PAN ID and/or RF Channel. */
+#define DEADNETIFC              185    /* The interface device(s) with required PAN ID and RF Channel has failed. Please check connection. */
+#define NOREMOTEACK             186    /* The remote device is not responding to commands and queries. Please check device. */
+#define INPUTTIMEOUT            187    /* The device acknowledged the operation, but has not completed before the timeout. */
+#define MISMATCHSETPOINTCOUNT    188    /* Number of Setpoints not equal to number of channels with setpoint flag set */
+#define INVALIDSETPOINTLEVEL    189    /* Setpoint Level is outside channel range */
+#define INVALIDSETPOINTOUTPUTTYPE  190    /* Setpoint Output Type is invalid*/
+#define INVALIDSETPOINTOUTPUTVALUE    191    /* Setpoint Output Value is outside channel range */
+#define INVALIDSETPOINTLIMITS    192    /* Setpoint Comparison limit B greater than Limit A */
+#define STRINGTOOLONG        193  /* The string entered is too long for the operation and/or device. */
+#define INVALIDLOGIN          194   /* The account name and/or password entered is incorrect. */
+#define SESSIONINUSE          195  /* The device session is already in use. */
+#define NOEXTPOWER          196  /* External power is not connected. */
+#define BADDUTYCYCLE        197 /* Invalid duty cycle specified. */
+#define BADINITIALDELAY        199 /* Invalid initial delay specified */
 
 #define AIFUNCTION      1    /* Analog Input Function    */
 #define AOFUNCTION      2    /* Analog Output Function   */
@@ -222,7 +222,7 @@
 #define DOFUNCTION      4    /* Digital Output Function  */
 #define CTRFUNCTION     5    /* Counter Function         */
 #define DAQIFUNCTION    6    /* Daq Input Function       */
-#define DAQOFUNCTION	7    /* Daq Output Function      */
+#define DAQOFUNCTION  7    /* Daq Output Function      */
 
 /* Calibration coefficient types */
 #define COARSE_GAIN     0x01
@@ -292,30 +292,30 @@
 #define BAD_RTD_CONVERSION      325     /* Overflow in RTD calculation */
 #define NO_PCI_BIOS             326     /* PCI BIOS not present in the PC */
 #define BAD_PCI_INDEX           327     /* Invalid PCI board index passed to PCI BIOS */
-#define NO_PCI_BOARD			328		/* Can't detact specified PCI board */
-#define PCI_ASSIGN_FAILED		329		/* PCI resource assignment failed */
-#define PCI_NO_ADDRESS			330     /* No PCI address returned */
-#define PCI_NO_IRQ				331		/* No PCI IRQ returned */
-#define CANT_INIT_ISR_INFO		332		/* IOCTL call failed on VDD_API_INIT_ISR_INFO */
-#define CANT_PASS_USER_BUFFER	333		/* IOCTL call failed on VDD_API_PASS_USER_BUFFER */
-#define CANT_INSTALL_INT		334		/* IOCTL call failed on VDD_API_INSTALL_INT */
-#define CANT_UNINSTALL_INT		335		/* IOCTL call failed on VDD_API_UNINSTALL_INT */
-#define CANT_START_DMA	        336		/* IOCTL call failed on VDD_API_START_DMA */
-#define CANT_GET_STATUS         337		/* IOCTL call failed on VDD_API_GET_STATUS */
-#define CANT_GET_PRINT_PORT		338		/* IOCTL call failed on VDD_API_GET_PRINT_PORT */
-#define CANT_MAP_PCM_CIS		339		/* IOCTL call failed on VDD_API_MAP_PCM_CIS */
+#define NO_PCI_BOARD      328    /* Can't detact specified PCI board */
+#define PCI_ASSIGN_FAILED    329    /* PCI resource assignment failed */
+#define PCI_NO_ADDRESS      330     /* No PCI address returned */
+#define PCI_NO_IRQ        331    /* No PCI IRQ returned */
+#define CANT_INIT_ISR_INFO    332    /* IOCTL call failed on VDD_API_INIT_ISR_INFO */
+#define CANT_PASS_USER_BUFFER  333    /* IOCTL call failed on VDD_API_PASS_USER_BUFFER */
+#define CANT_INSTALL_INT    334    /* IOCTL call failed on VDD_API_INSTALL_INT */
+#define CANT_UNINSTALL_INT    335    /* IOCTL call failed on VDD_API_UNINSTALL_INT */
+#define CANT_START_DMA          336    /* IOCTL call failed on VDD_API_START_DMA */
+#define CANT_GET_STATUS         337    /* IOCTL call failed on VDD_API_GET_STATUS */
+#define CANT_GET_PRINT_PORT    338    /* IOCTL call failed on VDD_API_GET_PRINT_PORT */
+#define CANT_MAP_PCM_CIS    339    /* IOCTL call failed on VDD_API_MAP_PCM_CIS */
 #define CANT_GET_PCM_CFG        340     /* IOCTL call failed on VDD_API_GET_PCM_CFG */
-#define CANT_GET_PCM_CCSR		341		/* IOCTL call failed on VDD_API_GET_PCM_CCSR */
-#define CANT_GET_PCI_INFO		342		/* IOCTL call failed on VDD_API_GET_PCI_INFO */
-#define NO_USB_BOARD			343		/* Can't detect specified USB board */
-#define NOMOREFILES				344		/* No more files in the directory */
-#define BADFILENUMBER			345		/* Invalid file number */
-#define INVALIDSTRUCTSIZE		346		/* Invalid structure size */
-#define LOSSOFDATA				347		/* EOF marker not found, possible loss of data */
-#define INVALIDBINARYFILE		348		/* File is not a valid MCC binary file */
+#define CANT_GET_PCM_CCSR    341    /* IOCTL call failed on VDD_API_GET_PCM_CCSR */
+#define CANT_GET_PCI_INFO    342    /* IOCTL call failed on VDD_API_GET_PCI_INFO */
+#define NO_USB_BOARD      343    /* Can't detect specified USB board */
+#define NOMOREFILES        344    /* No more files in the directory */
+#define BADFILENUMBER      345    /* Invalid file number */
+#define INVALIDSTRUCTSIZE    346    /* Invalid structure size */
+#define LOSSOFDATA        347    /* EOF marker not found, possible loss of data */
+#define INVALIDBINARYFILE    348    /* File is not a valid MCC binary file */
 
 /* DOS errors are remapped by adding DOS_ERR_OFFSET to them */
-#define DOS_ERR_OFFSET      		500
+#define DOS_ERR_OFFSET          500
 
 /* These are the commonly occurring remapped DOS error codes */
 #define DOSBADFUNC         501
@@ -335,10 +335,10 @@
 #define DOSGENERALFAULT    531
 
 /* Windows internal error codes */
-#define WIN_CANNOT_ENABLE_INT	603
-#define WIN_CANNOT_DISABLE_INT	605
-#define	WIN_CANT_PAGE_LOCK_BUFFER	606
-#define NO_PCM_CARD			630
+#define WIN_CANNOT_ENABLE_INT  603
+#define WIN_CANNOT_DISABLE_INT  605
+#define  WIN_CANT_PAGE_LOCK_BUFFER  606
+#define NO_PCM_CARD      630
 
 /* Maximum length of error string */
 #define ERRSTRLEN          256
@@ -422,68 +422,68 @@
 #define STOPALL          2
 
 /* channel types           */
-#define ANALOG			 0      // Analog channel
-#define DIGITAL8		 1		// 8-bit digital port
-#define DIGITAL16		 2      // 16-bit digital port
-#define CTR16			 3      // 16-bit counter
-#define CTR32LOW		 4		// Lower 16-bits of 32-bit counter
-#define CTR32HIGH		 5		// Upper 16-bits of 32-bit counter
-#define CJC			 6      // CJC channel
-#define TC			 7      // Thermocouple channel
-#define ANALOG_SE		 8      // Analog channel, singel-ended mode
-#define ANALOG_DIFF		 9      // Analog channel, Differential mode
-#define SETPOINTSTATUS   	 10     // Setpoint status channel
+#define ANALOG       0      // Analog channel
+#define DIGITAL8     1    // 8-bit digital port
+#define DIGITAL16     2      // 16-bit digital port
+#define CTR16       3      // 16-bit counter
+#define CTR32LOW     4    // Lower 16-bits of 32-bit counter
+#define CTR32HIGH     5    // Upper 16-bits of 32-bit counter
+#define CJC       6      // CJC channel
+#define TC       7      // Thermocouple channel
+#define ANALOG_SE     8      // Analog channel, singel-ended mode
+#define ANALOG_DIFF     9      // Analog channel, Differential mode
+#define SETPOINTSTATUS      10     // Setpoint status channel
 
 /* channel type flags*/
-#define SETPOINT_ENABLE  	0x100  // Enable setpoint detection
+#define SETPOINT_ENABLE    0x100  // Enable setpoint detection
 
 /* setpoint flags*/
-#define SF_EQUAL_LIMITA					0x00 // Channel = LimitA value 
-#define	SF_LESSTHAN_LIMITA				0x01 // Channel < LimitA value
-#define SF_INSIDE_LIMITS				0x02 // Channel Inside LimitA and LimitB (LimitA < Channel < LimitB)
-#define SF_GREATERTHAN_LIMITB			0x03 // Channel > LimitB
-#define SF_OUTSIDE_LIMITS				0x04 // Channel Outside LimitA and LimitB (LimitA < Channel or Channel > LimitB)
-#define SF_HYSTERESIS					0x05 // Use As Hysteresis
-#define	SF_UPDATEON_TRUEONLY			0x00 // Latch output condition (output = output1 for duration of acquisition)
-#define	SF_UPDATEON_TRUEANDFALSE		0x08 // Do not latch output condition (output = output1 when criteria met else output = output2)
+#define SF_EQUAL_LIMITA          0x00 // Channel = LimitA value 
+#define  SF_LESSTHAN_LIMITA        0x01 // Channel < LimitA value
+#define SF_INSIDE_LIMITS        0x02 // Channel Inside LimitA and LimitB (LimitA < Channel < LimitB)
+#define SF_GREATERTHAN_LIMITB      0x03 // Channel > LimitB
+#define SF_OUTSIDE_LIMITS        0x04 // Channel Outside LimitA and LimitB (LimitA < Channel or Channel > LimitB)
+#define SF_HYSTERESIS          0x05 // Use As Hysteresis
+#define  SF_UPDATEON_TRUEONLY      0x00 // Latch output condition (output = output1 for duration of acquisition)
+#define  SF_UPDATEON_TRUEANDFALSE    0x08 // Do not latch output condition (output = output1 when criteria met else output = output2)
  
 /* Setpoint output channels */
-#define SO_NONE			0 // No Output 
-#define SO_FIRSTPORTC	1 // Output to first PortC
-#define	SO_DAC0			2 // Output to DAC0
-#define	SO_DAC1			3 // Output to DAC1
-#define SO_DAC2			4 // Output to DAC2
-#define SO_DAC3			5 // Output to DAC3
-#define SO_TMR0			6 // Output to TMR0
-#define SO_TMR1			7 // Output to TMR1
+#define SO_NONE      0 // No Output 
+#define SO_FIRSTPORTC  1 // Output to first PortC
+#define  SO_DAC0      2 // Output to DAC0
+#define  SO_DAC1      3 // Output to DAC1
+#define SO_DAC2      4 // Output to DAC2
+#define SO_DAC3      5 // Output to DAC3
+#define SO_TMR0      6 // Output to TMR0
+#define SO_TMR1      7 // Output to TMR1
 
 /* cbDaqSetTrigger trigger sources */
 #define TRIG_IMMEDIATE       0
-#define TRIG_EXTTTL			 1
-#define TRIG_ANALOG_HW		 2
-#define TRIG_ANALOG_SW		 3
-#define TRIG_DIGPATTERN		 4
-#define TRIG_COUNTER		 5
-#define TRIG_SCANCOUNT		 6
+#define TRIG_EXTTTL       1
+#define TRIG_ANALOG_HW     2
+#define TRIG_ANALOG_SW     3
+#define TRIG_DIGPATTERN     4
+#define TRIG_COUNTER     5
+#define TRIG_SCANCOUNT     6
 
 /* cbDaqSetTrigger trigger sensitivities */
-#define RISING_EDGE		0
+#define RISING_EDGE    0
 #define FALLING_EDGE    1
-#define ABOVE_LEVEL		2
-#define BELOW_LEVEL		3
-#define EQ_LEVEL		4
-#define NE_LEVEL		5
+#define ABOVE_LEVEL    2
+#define BELOW_LEVEL    3
+#define EQ_LEVEL    4
+#define NE_LEVEL    5
 
 /* trigger events */
-#define START_EVENT		0
-#define STOP_EVENT		1
+#define START_EVENT    0
+#define STOP_EVENT    1
 
 /* settling time settings */
-#define SETTLE_DEFAULT		0
-#define SETTLE_1us		1
-#define SETTLE_5us		2
-#define SETTLE_10us		3
-#define SETTLE_1ms		4
+#define SETTLE_DEFAULT    0
+#define SETTLE_1us    1
+#define SETTLE_5us    2
+#define SETTLE_10us    3
+#define SETTLE_1ms    4
 
 /* Types of digital input ports */
 #define DIGITALOUT       1
@@ -501,11 +501,11 @@
 #define CELSIUS          0
 #define FAHRENHEIT       1
 #define KELVIN           2
-#define VOLTS			 4		/* special scale for DAS-TC boards */
-#define NOSCALE			 5
+#define VOLTS       4    /* special scale for DAS-TC boards */
+#define NOSCALE       5
 
 /* Default option */
-#define DEFAULTOPTION	 0x0000
+#define DEFAULTOPTION   0x0000
 
 
 /* Types of digital I/O Ports */
@@ -513,7 +513,7 @@
 #define FIRSTPORTA       10
 #define FIRSTPORTB       11
 #define FIRSTPORTCL      12
-#define FIRSTPORTC		 12
+#define FIRSTPORTC     12
 #define FIRSTPORTCH      13
 #define SECONDPORTA      14
 #define SECONDPORTB      15
@@ -568,9 +568,9 @@
 #define BIPPT01VOLTS     9              /* -.01 to +.01 Volts */
 #define BIPPT005VOLTS    10             /* -.005 to +.005 Volts */
 #define BIP1PT67VOLTS    11             /* -1.67 to +1.67 Volts */
-#define BIPPT312VOLTS    17				 /* -0.312 to +0.312 Volts */
-#define BIPPT156VOLTS    18				 /* -0.156 to +0.156 Volts */
-#define BIPPT078VOLTS    19				 /* -0.078 to +0.078 Volts */
+#define BIPPT312VOLTS    17         /* -0.312 to +0.312 Volts */
+#define BIPPT156VOLTS    18         /* -0.156 to +0.156 Volts */
+#define BIPPT078VOLTS    19         /* -0.078 to +0.078 Volts */
 
 #define UNI10VOLTS       100            /* 0 to 10 Volts*/
 #define UNI5VOLTS        101            /* 0 to 5 Volts */
@@ -594,8 +594,8 @@
 #define MAPT5TO2PT5      203            /* .5 to 2.5 ma */
 #define MA0TO20          204            /* 0 to 20 ma */
 
-#define UNIPOLAR		 300
-#define BIPOLAR			 301
+#define UNIPOLAR     300
+#define BIPOLAR       301
 
 /* Types of D/A    */
 #define ADDA1     0
@@ -608,9 +608,9 @@
 #define INCTR2              3
 
 /* 8536 trigger types */
-#define  HW_START_TRIG	0
+#define  HW_START_TRIG  0
 #define  HW_RETRIG      1
-#define	 SW_START_TRIG	2
+#define   SW_START_TRIG  2
 
 /* Types of 8254 counter configurations */
 #define HIGHONLASTCOUNT     0
@@ -799,8 +799,8 @@
 #define MODULO_N        3
 
 /* 7266 Counter encodings */
-#define BCD_ENCODING	1
-#define BINARY_ENCODING	2
+#define BCD_ENCODING  1
+#define BINARY_ENCODING  2
 
 /* 7266 Counter Index Modes */
 #define INDEX_DISABLED  0
@@ -824,26 +824,26 @@
 #define C_INDEX         0x0040
 
 /* 25xx series counter mode constants */
-#define TOTALIZE	0x0000
-#define CLEAR_ON_READ	0x0001
-#define ROLLOVER	0x0000
-#define STOP_AT_MAX	0x0002
-#define DECREMENT_OFF	0x0000
-#define DECREMENT_ON	0x0020
-#define BIT_16		0x0000
-#define BIT_32		0x0004
-#define GATING_OFF	0x0000
-#define GATING_ON	0x0010
-#define LATCH_ON_SOS	0x0000
-#define LATCH_ON_MAP	0x0008
+#define TOTALIZE  0x0000
+#define CLEAR_ON_READ  0x0001
+#define ROLLOVER  0x0000
+#define STOP_AT_MAX  0x0002
+#define DECREMENT_OFF  0x0000
+#define DECREMENT_ON  0x0020
+#define BIT_16    0x0000
+#define BIT_32    0x0004
+#define GATING_OFF  0x0000
+#define GATING_ON  0x0010
+#define LATCH_ON_SOS  0x0000
+#define LATCH_ON_MAP  0x0008
 
-#define ENCODER	        0x0500
-#define ENCODER_MODE_X1	0x0000
-#define ENCODER_MODE_X2	0x0001
-#define ENCODER_MODE_X4	0x0002
+#define ENCODER          0x0500
+#define ENCODER_MODE_X1  0x0000
+#define ENCODER_MODE_X2  0x0001
+#define ENCODER_MODE_X4  0x0002
 #define LATCH_ON_Z      0x0008
-#define CLEAR_ON_Z_OFF	0x0000
-#define CLEAR_ON_Z_ON	0x0020
+#define CLEAR_ON_Z_OFF  0x0000
+#define CLEAR_ON_Z_ON  0x0020
 
 
 /* 25xx series counter debounce time constants */
@@ -890,8 +890,8 @@
 #define TRIG_NEG_EDGE       13
 
 /* Timer idle state */
-#define IDLE_LOW			0
-#define IDLE_HIGH			1
+#define IDLE_LOW      0
+#define IDLE_HIGH      1
 
 /* Signal I/O Configuration Parameters */
 /* --Connections */
@@ -948,7 +948,7 @@
 #define COUNTERINFO        4
 #define EXPANSIONINFO      5
 #define MISCINFO           6
-#define EXPINFOARRAY	   7
+#define EXPINFOARRAY     7
 #define MEMINFO            8
 
 /* Types of global configuration information */
@@ -1045,11 +1045,11 @@
 #define BICTR12SRC           163     /* CTR 12 source */
 #define BICTR13SRC           164     /* CTR 13 source */
 #define BICTR14SRC           165     /* CTR 14 source */
-#define BITCGLOBALAVG		  166	 /* DASTC global average */
-#define BITCCJCSTATE		     167	 /* DASTC CJC State(=ON or OFF) */
-#define BITCCHANRANGE		  168	 /* DASTC Channel Gain */
-#define BITCCHANTYPE		     169	 /* DASTC Channel thermocouple type */
-#define BITCFWVERSION		  170	 /* DASTC Firmware Version */
+#define BITCGLOBALAVG      166   /* DASTC global average */
+#define BITCCJCSTATE         167   /* DASTC CJC State(=ON or OFF) */
+#define BITCCHANRANGE      168   /* DASTC Channel Gain */
+#define BITCCHANTYPE         169   /* DASTC Channel thermocouple type */
+#define BITCFWVERSION      170   /* DASTC Firmware Version */
 #define BIFWVERSION          BITCFWVERSION /* Firmware Version */
 #define BIPHACFG             180     /* Quad PhaseA config (devNo =ch) */
 #define BIPHBCFG             190     /* Quad PhaseB config (devNo =ch) */
@@ -1058,7 +1058,7 @@
 #define BIAIWAVETYPE         202     /* analog input wave type (for demo board) */
 #define BIPWRUPSTATE         203     /* DDA06 pwr up state jumper */
 #define BIIRQCONNECT         204     /* DAS08 pin6 to 24 jumper */
-#define BITRIGPOLARITY		  205 	 /* PCM DAS16xx Trig Polarity */
+#define BITRIGPOLARITY      205    /* PCM DAS16xx Trig Polarity */
 #define BICTLRNUM            206     /* MetraBus controller board number */
 #define BIPWRJMPR            207     /* MetraBus controller board Pwr jumper */
 #define BINUMTEMPCHANS       208     /* Number of Temperature channels */
@@ -1094,11 +1094,11 @@
 #define BINODEID              262
 #define BIDEVNOTES            263
 
-#define BIADCSETTLETIME		   270
+#define BIADCSETTLETIME       270
 
 #define BIFACTORYID           272
-#define BIHTTPPORT				273
-#define BIHIDELOGINDLG			274
+#define BIHTTPPORT        273
+#define BIHIDELOGINDLG      274
 
 
 /* Type of digital device information */
@@ -1140,71 +1140,71 @@
 #define XIGND               105     /* ICAL DATA - exp grounding */
 #define XIVADCHAN           106     /* ICAL DATA - Vexe A/D chan */
 #define XIRESISTANCE        107     /* exp Data - resistance @0 (devNo =ch) */
-#define XIFACGAIN           108	    /* ICAL DATA - RTD factory gain */
-#define XICUSTOMGAIN        109 	/* ICAL DATA - RTD custom gain */
-#define XICHCUSTOM          110		/* ICAL DATA - RTD custom gain setting*/
-#define XIIEXE              111 	/* ICAL DATA - RTD Iexe */
+#define XIFACGAIN           108      /* ICAL DATA - RTD factory gain */
+#define XICUSTOMGAIN        109   /* ICAL DATA - RTD custom gain */
+#define XICHCUSTOM          110    /* ICAL DATA - RTD custom gain setting*/
+#define XIIEXE              111   /* ICAL DATA - RTD Iexe */
 
 /* Types of memory board information */
-#define MIBASEADR           100 	/* mem data - base address */
-#define MIINTLEVEL          101 	/* mem data - intr level */
-#define MIMEMSIZE		    102		/* MEGA-FIFO module size */
-#define MIMEMCOUNT		    103		/* MEGA-FIFO # of modules */
+#define MIBASEADR           100   /* mem data - base address */
+#define MIINTLEVEL          101   /* mem data - intr level */
+#define MIMEMSIZE        102    /* MEGA-FIFO module size */
+#define MIMEMCOUNT        103    /* MEGA-FIFO # of modules */
 
 
 
 /* Types of events */
-#define	ON_SCAN_ERROR				0x0001
-#define ON_EXTERNAL_INTERRUPT		0x0002
-#define ON_PRETRIGGER				0x0004
-#define ON_DATA_AVAILABLE			0x0008
-#define ON_END_OF_AI_SCAN			0x0010
-#define ON_END_OF_AO_SCAN			0x0020
+#define  ON_SCAN_ERROR        0x0001
+#define ON_EXTERNAL_INTERRUPT    0x0002
+#define ON_PRETRIGGER        0x0004
+#define ON_DATA_AVAILABLE      0x0008
+#define ON_END_OF_AI_SCAN      0x0010
+#define ON_END_OF_AO_SCAN      0x0020
 #define ON_CHANGE_DI             0x0040
 #define ALL_EVENT_TYPES          0xffff
 
-#define NUM_EVENT_TYPES		6
+#define NUM_EVENT_TYPES    6
 #define MAX_NUM_EVENT_TYPES 32
 
-#define SCAN_ERROR_IDX				0
-#define EXTERNAL_INTERRUPT_IDX	1
-#define PRETRIGGER_IDX				2
-#define DATA_AVAILABLE_IDX			3
-#define END_OF_AI_IDX				4
-#define END_OF_AO_IDX				5
+#define SCAN_ERROR_IDX        0
+#define EXTERNAL_INTERRUPT_IDX  1
+#define PRETRIGGER_IDX        2
+#define DATA_AVAILABLE_IDX      3
+#define END_OF_AI_IDX        4
+#define END_OF_AO_IDX        5
 
 /* ON_EXTERNAL_INTERRUPT event parameters*/
-#define LATCH_DI			1
-#define LATCH_DO			2
+#define LATCH_DI      1
+#define LATCH_DO      2
 
 
 // time zone constants
-#define TIMEZONE_LOCAL		0
-#define TIMEZONE_GMT		1
+#define TIMEZONE_LOCAL    0
+#define TIMEZONE_GMT    1
 
 
 // time format constants
-#define TIMEFORMAT_12HOUR	0
-#define TIMEFORMAT_24HOUR	1
+#define TIMEFORMAT_12HOUR  0
+#define TIMEFORMAT_24HOUR  1
 
 
 // delimiter constants
-#define DELIMITER_COMMA		0
-#define DELIMITER_SEMICOLON	1
-#define DELIMITER_SPACE		2
-#define DELIMITER_TAB		3
+#define DELIMITER_COMMA    0
+#define DELIMITER_SEMICOLON  1
+#define DELIMITER_SPACE    2
+#define DELIMITER_TAB    3
 
 
 // AI channel units in binary file
-#define UNITS_TEMPERATURE	0
-#define UNITS_RAW			1
+#define UNITS_TEMPERATURE  0
+#define UNITS_RAW      1
 
 
 #ifndef USHORT
   typedef unsigned short USHORT;
 #endif
 
-#define EXTCCONV 	__stdcall
+#define EXTCCONV   __stdcall
 
 
 
@@ -1222,7 +1222,7 @@
 #endif  
 
 #if defined (_WIN32)
-	/* Win32 prototypes */
+  /* Win32 prototypes */
 
 #ifdef EVENTCALLBACK
 #undef EVENTCALLBACK
@@ -1236,26 +1236,26 @@
     int EXTCCONV cbLoadConfig(char *CfgFileName);
     int EXTCCONV cbSaveConfig(char *CfgFileName);
     int EXTCCONV cbAConvertData (int BoardNum, long NumPoints, USHORT *ADData, 
-		                         USHORT *ChanTags);
+                             USHORT *ChanTags);
     int EXTCCONV cbAConvertPretrigData (int BoardNum, long PreTrigCount, 
-		                                long TotalCount, USHORT *ADData, 
-										USHORT *ChanTags);
+                                    long TotalCount, USHORT *ADData, 
+                    USHORT *ChanTags);
     int EXTCCONV cbAIn (int BoardNum, int Chan, int Gain, USHORT *DataValue);
     int EXTCCONV cbAIn32 (int BoardNum, int Chan, int Gain, ULONG *DataValue, int Options);
     int EXTCCONV cbAInScan (int BoardNum, int LowChan, int HighChan, long Count,
                             long *Rate, int Gain, HGLOBAL MemHandle, 
-							int Options);
+              int Options);
     int EXTCCONV cbALoadQueue (int BoardNum, short *ChanArray, short *GainArray, 
-		                       int NumChans);
+                           int NumChans);
     int EXTCCONV cbAOut (int BoardNum, int Chan, int Gain, USHORT DataValue);
     int EXTCCONV cbAOutScan (int BoardNum, int LowChan, int HighChan, 
-		                     long Count, long *Rate, int Gain, 
-							 HGLOBAL MemHandle, int Options);
+                         long Count, long *Rate, int Gain, 
+               HGLOBAL MemHandle, int Options);
     int EXTCCONV cbAPretrig (int BoardNum, int LowChan, int HighChan,
                              long *PreTrigCount, long *TotalCount, long *Rate, 
-							 int Gain, HGLOBAL MemHandle, int Options);
+               int Gain, HGLOBAL MemHandle, int Options);
     int EXTCCONV cbATrig (int BoardNum, int Chan, int TrigType, 
-		                  USHORT TrigValue, int Gain, USHORT *DataValue);
+                      USHORT TrigValue, int Gain, USHORT *DataValue);
     int EXTCCONV cbC7266Config (int BoardNum, int CounterNum, int Quadrature,
                                 int CountingMode, int DataEncoding, int IndexMode,
                                 int InvertIndex, int FlagPins, int GateEnable);
@@ -1264,13 +1264,13 @@
                                 int RecycleMode, int TrigType);
     int EXTCCONV cbC9513Config (int BoardNum, int CounterNum, int GateControl,
                                 int CounterEdge, int CountSource, 
-								int SpecialGate, int Reload, int RecycleMode, 
-								int BCDMode, int CountDirection, 
-								int OutputControl);
+                int SpecialGate, int Reload, int RecycleMode, 
+                int BCDMode, int CountDirection, 
+                int OutputControl);
     int EXTCCONV cbC8536Init (int BoardNum, int ChipNum, int Ctr1Output);
     int EXTCCONV cbC9513Init (int BoardNum, int ChipNum, int FOutDivider, 
-		                      int FOutSource, int Compare1, int Compare2, 
-							  int TimeOfDay);
+                          int FOutSource, int Compare1, int Compare2, 
+                int TimeOfDay);
     int EXTCCONV cbCFreqIn (int BoardNum, int SigSource, int GateInterval,
                             USHORT *Count, long *Freq);
     int EXTCCONV cbCIn (int BoardNum, int CounterNum, USHORT *Count);
@@ -1280,15 +1280,15 @@
     int EXTCCONV cbCStatus (int BoardNum, int CounterNum, ULONG *StatusBits);
     int EXTCCONV cbCStoreOnInt (int BoardNum, int IntCount, short *CntrControl,
                                 HGLOBAL MemHandle);
-	int EXTCCONV cbCInScan(int BoardNum, int FirstCtr,int LastCtr, LONG Count,
-							LONG *Rate, HGLOBAL MemHandle, ULONG Options);
-	int EXTCCONV cbCConfigScan(int BoardNum, int CounterNum, int Mode,int DebounceTime,
-								int DebounceMode, int EdgeDetection,
-								int TickSize, int MappedChannel);
+  int EXTCCONV cbCInScan(int BoardNum, int FirstCtr,int LastCtr, LONG Count,
+              LONG *Rate, HGLOBAL MemHandle, ULONG Options);
+  int EXTCCONV cbCConfigScan(int BoardNum, int CounterNum, int Mode,int DebounceTime,
+                int DebounceMode, int EdgeDetection,
+                int TickSize, int MappedChannel);
     int EXTCCONV cbCClear (int BoardNum, int CounterNum);
     int EXTCCONV cbTimerOutStart (int BoardNum, int TimerNum, double *Frequency);
     int EXTCCONV cbTimerOutStop (int BoardNum, int TimerNum);
-	int EXTCCONV cbPulseOutStart (int BoardNum, int TimerNum, double *Frequency, double *DutyCycle, ULONG PulseCount, double *InitialDelay, INT IdleState);
+  int EXTCCONV cbPulseOutStart (int BoardNum, int TimerNum, double *Frequency, double *DutyCycle, ULONG PulseCount, double *InitialDelay, INT IdleState);
     int EXTCCONV cbPulseOutStop (int BoardNum, int TimerNum);
     int EXTCCONV cbDBitIn (int BoardNum, int PortType, int BitNum, 
                            USHORT *BitValue);
@@ -1304,14 +1304,14 @@
     int EXTCCONV cbErrHandling (int ErrReporting, int ErrHandling);
     int EXTCCONV cbFileAInScan (int BoardNum, int LowChan, int HighChan,
                                 long Count, long *Rate, int Gain, 
-								char *FileName, int Options);
+                char *FileName, int Options);
     int EXTCCONV cbFileGetInfo (char *FileName, short *LowChan, short *HighChan,
-		                        long *PreTrigCount, long *TotalCount, 
-								long *Rate, int *Gain);
+                            long *PreTrigCount, long *TotalCount, 
+                long *Rate, int *Gain);
     int EXTCCONV cbFilePretrig (int BoardNum, int LowChan, int HighChan,
                                 long *PreTrigCount, long *TotalCount, 
-								long *Rate, int Gain, char *FileName, 
-								int Options);
+                long *Rate, int Gain, char *FileName, 
+                int Options);
     int EXTCCONV cbFileRead (char *FileName, long FirstPoint, long *NumPoints,
                              USHORT *DataBuffer);
     int EXTCCONV cbFlashLED(int BoardNum);
@@ -1327,19 +1327,19 @@
     int EXTCCONV cbMemSetDTMode (int BoardNum, int Mode);
     int EXTCCONV cbMemReset (int BoardNum);
     int EXTCCONV cbMemRead (int BoardNum, USHORT *DataBuffer, long FirstPoint, 
-		                    long Count);
+                        long Count);
     int EXTCCONV cbMemWrite (int BoardNum, USHORT *DataBuffer,long FirstPoint, 
-		                     long Count);
+                         long Count);
     int EXTCCONV cbMemReadPretrig (int BoardNum, USHORT *DataBuffer,
                                    long FirstPoint, long Count);
     int EXTCCONV cbWinBufToArray (HGLOBAL MemHandle, USHORT *DataArray, 
-		                          long StartPt, long Count);
+                              long StartPt, long Count);
      int EXTCCONV cbWinBufToArray32 (HGLOBAL MemHandle, ULONG *DataArray, 
-		                          long StartPt, long Count);
+                              long StartPt, long Count);
      int EXTCCONV cbScaledWinBufToArray32 (HGLOBAL MemHandle, double *DataArray, 
-		                          long StartPt, long Count);
+                              long StartPt, long Count);
     int EXTCCONV cbWinArrayToBuf (USHORT *DataArray, HGLOBAL MemHandle, 
-		                          long StartPt, long Count);
+                              long StartPt, long Count);
     HGLOBAL EXTCCONV cbWinBufAlloc (long NumPoints);
     HGLOBAL EXTCCONV cbWinBufAlloc32 (long NumPoints);
     HGLOBAL EXTCCONV cbWinBufAlloc64 (long NumPoints);
@@ -1355,25 +1355,25 @@
                               int ConfigItem, char* ConfigVal, int* maxConfigLen);
 
     int EXTCCONV cbSetConfig (int InfoType, int BoardNum, int DevNum, 
-		                      int ConfigItem, int ConfigVal);
+                          int ConfigItem, int ConfigVal);
     int EXTCCONV cbSetConfigString (int InfoType, int BoardNum, int DevNum, 
-		                      int ConfigItem, char* ConfigVal, int* configLen);
+                          int ConfigItem, char* ConfigVal, int* configLen);
 
     int EXTCCONV cbToEngUnits (int BoardNum, int Range, USHORT DataVal, 
-		                       float *EngUnits);
+                           float *EngUnits);
     int EXTCCONV cbToEngUnits32 (int BoardNum, int Range, ULONG DataVal, 
-		                       double *EngUnits);
+                           double *EngUnits);
     int EXTCCONV cbFromEngUnits (int BoardNum, int Range, float EngUnits, 
-		                         USHORT *DataVal);
+                             USHORT *DataVal);
     int EXTCCONV cbGetBoardName (int BoardNum, char *BoardName);
     int EXTCCONV cbDeclareRevision(float *RevNum);
     int EXTCCONV cbSetTrigger (int BoardNum, int TrigType, USHORT LowThreshold, 
-		                       USHORT HighThreshold);
+                           USHORT HighThreshold);
  
-	int EXTCCONV cbEnableEvent(int BoardNum, unsigned EventType, unsigned Count, 
-					EVENTCALLBACK CallbackFunc, void *UserData);
+  int EXTCCONV cbEnableEvent(int BoardNum, unsigned EventType, unsigned Count, 
+          EVENTCALLBACK CallbackFunc, void *UserData);
 
-	int EXTCCONV cbDisableEvent(int BoardNum, unsigned EventType);
+  int EXTCCONV cbDisableEvent(int BoardNum, unsigned EventType);
    int EXTCCONV cbSelectSignal(int BoardNum,  int Direction, int Signal, int Connection, int Polarity);
    int EXTCCONV cbGetSignal(int BoardNum, int Direction, int Signal, int Index, int* Connection, int* Polarity);
 
@@ -1381,70 +1381,70 @@
    int EXTCCONV cbGetCalCoeff(int BoardNum, int FunctionType, int Channel, int Range, int Item, int* Value);
 
 
-	// Get log file name
+  // Get log file name
 
-	// store the preferences
-	int EXTCCONV cbLogSetPreferences(int timeFormat, int timeZone, int units);
+  // store the preferences
+  int EXTCCONV cbLogSetPreferences(int timeFormat, int timeZone, int units);
 
-	// get the preferences
-	int EXTCCONV cbLogGetPreferences(int* timeFormat, int* timeZone, int* units);
+  // get the preferences
+  int EXTCCONV cbLogGetPreferences(int* timeFormat, int* timeZone, int* units);
 
-	// Get log file name
-	int EXTCCONV cbLogGetFileName(int fileNumber, char* path, char* filename);
+  // Get log file name
+  int EXTCCONV cbLogGetFileName(int fileNumber, char* path, char* filename);
 
-	// Get info for log file
-	int EXTCCONV cbLogGetFileInfo(char* filename, int* version, int* fileSize);
+  // Get info for log file
+  int EXTCCONV cbLogGetFileInfo(char* filename, int* version, int* fileSize);
 
-	// Get sample info for log file
-	int EXTCCONV cbLogGetSampleInfo(char* filename, int* sampleInterval, int* sampleCount, 
-									int* startDate, int* startTime);
+  // Get sample info for log file
+  int EXTCCONV cbLogGetSampleInfo(char* filename, int* sampleInterval, int* sampleCount, 
+                  int* startDate, int* startTime);
 
-	// Get the AI channel count for log file
-	int EXTCCONV cbLogGetAIChannelCount(char* filename, int* aiCount);
+  // Get the AI channel count for log file
+  int EXTCCONV cbLogGetAIChannelCount(char* filename, int* aiCount);
 
-	// Get AI info for log file
-	int EXTCCONV cbLogGetAIInfo(char* filename, int* channelNumbers, int* units);
+  // Get AI info for log file
+  int EXTCCONV cbLogGetAIInfo(char* filename, int* channelNumbers, int* units);
 
-	// Get CJC info for log file
-	int EXTCCONV cbLogGetCJCInfo(char* filename, int* cjcCount);
+  // Get CJC info for log file
+  int EXTCCONV cbLogGetCJCInfo(char* filename, int* cjcCount);
 
-	// Get DIO info for log file
-	int EXTCCONV cbLogGetDIOInfo(char* filename, int* dioCount);
+  // Get DIO info for log file
+  int EXTCCONV cbLogGetDIOInfo(char* filename, int* dioCount);
 
-	// read the time tags to an array
-	int EXTCCONV cbLogReadTimeTags(char* filename, int startSample, int count, int* dateTags, int*timeTags);
+  // read the time tags to an array
+  int EXTCCONV cbLogReadTimeTags(char* filename, int startSample, int count, int* dateTags, int*timeTags);
 
-	// read the analog data to an array
-	int EXTCCONV cbLogReadAIChannels(char* filename, int startSample, int count, float* analog);
+  // read the analog data to an array
+  int EXTCCONV cbLogReadAIChannels(char* filename, int startSample, int count, float* analog);
 
-	// read the CJC data to an array
-	int EXTCCONV cbLogReadCJCChannels(char* filename, int startSample, int count, float* cjc);
+  // read the CJC data to an array
+  int EXTCCONV cbLogReadCJCChannels(char* filename, int startSample, int count, float* cjc);
 
-	// read the DIO data to an array
-	int EXTCCONV cbLogReadDIOChannels(char* filename, int startSample, int count, int* dio);
+  // read the DIO data to an array
+  int EXTCCONV cbLogReadDIOChannels(char* filename, int startSample, int count, int* dio);
 
-	// convert the log file to a .TXT or .CSV file
-	int EXTCCONV cbLogConvertFile(char* srcFilename, char* destFilename, int startSample, int count, int delimiter);
+  // convert the log file to a .TXT or .CSV file
+  int EXTCCONV cbLogConvertFile(char* srcFilename, char* destFilename, int startSample, int count, int delimiter);
 
-	int EXTCCONV cbDaqInScan(int BoardNum, short *ChanArray, short *ChanTypeArray, short *GainArray, int ChanCount, long *Rate,
-							long *PretrigCount, long *TotalCount, HGLOBAL MemHandle, int Options);
-	int EXTCCONV cbDaqSetTrigger(int BoardNum, int TrigSource, int TrigSense, int TrigChan, int ChanType, 
-							   int Gain, float Level, float Variance, int TrigEvent);
-	int EXTCCONV cbDaqSetSetpoints (int BoardNum, float *LimitAArray, float *LimitBArray, float *Reserved, int *SetpointFlagsArray,
-		                       int *SetpointOutputArray, float *Output1Array, float *Output2Array, float *OutputMask1Array,
-				       float *OutputMask2Array, int SetpointCount);
+  int EXTCCONV cbDaqInScan(int BoardNum, short *ChanArray, short *ChanTypeArray, short *GainArray, int ChanCount, long *Rate,
+              long *PretrigCount, long *TotalCount, HGLOBAL MemHandle, int Options);
+  int EXTCCONV cbDaqSetTrigger(int BoardNum, int TrigSource, int TrigSense, int TrigChan, int ChanType, 
+                 int Gain, float Level, float Variance, int TrigEvent);
+  int EXTCCONV cbDaqSetSetpoints (int BoardNum, float *LimitAArray, float *LimitBArray, float *Reserved, int *SetpointFlagsArray,
+                           int *SetpointOutputArray, float *Output1Array, float *Output2Array, float *OutputMask1Array,
+               float *OutputMask2Array, int SetpointCount);
 
-	int EXTCCONV cbDaqOutScan(int BoardNum, short *ChanArray, short *ChanTypeArray, short *GainArray, int ChanCount, long *Rate,
-							 long Count, HGLOBAL MemHandle, int Options);
-	int EXTCCONV cbGetTCValues(int BoardNum, short *ChanArray, short *ChanTypeArray, int ChanCount, HGLOBAL MemHandle, int FirstPoint,
-							 long Count, int Scale, float *TempValArray);
+  int EXTCCONV cbDaqOutScan(int BoardNum, short *ChanArray, short *ChanTypeArray, short *GainArray, int ChanCount, long *Rate,
+               long Count, HGLOBAL MemHandle, int Options);
+  int EXTCCONV cbGetTCValues(int BoardNum, short *ChanArray, short *ChanTypeArray, int ChanCount, HGLOBAL MemHandle, int FirstPoint,
+               long Count, int Scale, float *TempValArray);
 
-	int EXTCCONV cbVIn (int BoardNum, int Chan, int Gain, float *DataValue, int Options);
-	int EXTCCONV cbVIn32 (int BoardNum, int Chan, int Gain, double *DataValue, int Options);
-	int EXTCCONV cbVOut (int BoardNum, int Chan, int Gain, float DataValue, int Options);
-	
-	int EXTCCONV cbDeviceLogin(int BoardNum, char* AccountName, char* Password);
-	int EXTCCONV cbDeviceLogout(int BoardNum);
+  int EXTCCONV cbVIn (int BoardNum, int Chan, int Gain, float *DataValue, int Options);
+  int EXTCCONV cbVIn32 (int BoardNum, int Chan, int Gain, double *DataValue, int Options);
+  int EXTCCONV cbVOut (int BoardNum, int Chan, int Gain, float DataValue, int Options);
+  
+  int EXTCCONV cbDeviceLogin(int BoardNum, char* AccountName, char* Password);
+  int EXTCCONV cbDeviceLogout(int BoardNum);
 
 //****************************************************************************
 //   Legacy Function Prototypes: to revert to legacy calls, un-comment the

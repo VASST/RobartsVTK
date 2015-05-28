@@ -26,22 +26,22 @@
 
 class vtkReadWriteLock : public vtkObject {
 public:
-	static vtkReadWriteLock *New();
+  static vtkReadWriteLock *New();
 
-	void ReaderLock();
-	void ReaderUnlock();
-	void WriterLock();
-	void WriterUnlock();
+  void ReaderLock();
+  void ReaderUnlock();
+  void WriterLock();
+  void WriterUnlock();
 
 protected:
-	vtkReadWriteLock();
-	~vtkReadWriteLock();
-	
-	vtkMutexLock* noWriters;
-	vtkMutexLock* noReaders;
-	vtkMutexLock* counter;
-	
-	unsigned int readerCount;
+  vtkReadWriteLock();
+  ~vtkReadWriteLock();
+  
+  vtkMutexLock* noWriters;
+  vtkMutexLock* noReaders;
+  vtkMutexLock* counter;
+  
+  unsigned int readerCount;
 
 private:
 

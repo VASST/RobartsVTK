@@ -67,36 +67,36 @@ public:
 
     virtual int InternalStartDevice() { return 1; };
     virtual int InternalStopDevice() { return 1; };
-	virtual int InternalUpdate() { return 1;};
-	vtkHapticForce * GetForceModel() { return forceModel; };
+  virtual int InternalUpdate() { return 1;};
+  vtkHapticForce * GetForceModel() { return forceModel; };
 //BTX
-	friend static void *vtkHapticsThread(vtkMultiThreader::ThreadInfo *data);
+  friend static void *vtkHapticsThread(vtkMultiThreader::ThreadInfo *data);
 //ETX
-	void StopDevice();
-	void StartDevice();
+  void StopDevice();
+  void StartDevice();
 
     double GetInternalUpdateRate() { return this->InternalUpdateRate; };
-	void Update();
+  void Update();
     vtkGetMacro(LastUpdateTime,double);
     vtkGetObjectMacro(Transform,vtkTransform);
 
 protected:
-	vtkHapticsDevice();
-	~vtkHapticsDevice();
+  vtkHapticsDevice();
+  ~vtkHapticsDevice();
 
-	double InternalUpdateRate;
-	vtkCriticalSection * UpdateMutex;
-	vtkCriticalSection * RequestUpdateMutex;
-	vtkTransform * Transform;
-	vtkMatrix4x4 * Position;
-	int Initialized;
-	unsigned long LastUpdateTime;
-	vtkTimeStamp UpdateTime;
-	vtkHapticForce * forceModel;
+  double InternalUpdateRate;
+  vtkCriticalSection * UpdateMutex;
+  vtkCriticalSection * RequestUpdateMutex;
+  vtkTransform * Transform;
+  vtkMatrix4x4 * Position;
+  int Initialized;
+  unsigned long LastUpdateTime;
+  vtkTimeStamp UpdateTime;
+  vtkHapticForce * forceModel;
     
 private:
-	vtkMultiThreader * Threader;
-	int ThreadId;
+  vtkMultiThreader * Threader;
+  int ThreadId;
 
 };
 

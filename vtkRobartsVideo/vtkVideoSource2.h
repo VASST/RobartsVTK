@@ -48,9 +48,9 @@ class vtkImageReader2;
 #define FILETYPE_TIFF 4
 
 // Frame grabber type is used by UnpackRasterLine in vtkVideoFrame2
-#define FG_BASE		1
-#define FG_MIL		2
-#define FG_WIN32	3
+#define FG_BASE    1
+#define FG_MIL    2
+#define FG_WIN32  3
 
 class VTK_EXPORT vtkVideoSource2 : public vtkImageAlgorithm
 {

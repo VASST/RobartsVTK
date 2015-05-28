@@ -6,12 +6,12 @@
 
 class ResizableQVTKWidget : public QVTKWidget {
 public:
-	ResizableQVTKWidget(QWidget* p = 0);
-	bool ready;
+  ResizableQVTKWidget(QWidget* p = 0);
+  bool ready;
 private:
-	void resizeEvent(QResizeEvent * event );
-	void changeEvent ( QEvent * event );
-	void paintEvent ( QPaintEvent * event );
+  void resizeEvent(QResizeEvent * event );
+  void changeEvent ( QEvent * event );
+  void paintEvent ( QPaintEvent * event );
 };
 
 

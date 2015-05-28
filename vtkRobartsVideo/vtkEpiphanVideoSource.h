@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  File:		 vtkEpiphanVideoSource.h
+  File:     vtkEpiphanVideoSource.h
   Creator:   Chris Wedlake <cwedlake@robarts.ca>
 
   ==========================================================================
@@ -39,14 +39,14 @@
   =========================================================================*/
 // .NAME vtkEpiphanVideoSource - Epiphan Video Source for VTK (http://www.epiphan.com/products/dvi-frame-grabbers/dvi2usb-solo/)
 // .SECTION Description provides an interface to Epiphan USB capture devices
-//	through their API which is provided.  In order to use this class, you must link with frmgrab.lib.
+//  through their API which is provided.  In order to use this class, you must link with frmgrab.lib.
 //
 //  Layouts can be added and removed from the screen as required but typically once they
 //  are added they are left in the application.
 //
 // .SECTION Caveats
 //  Have only tested with the DVI2USB-SOLO but should work with the other units as well.  some assumptions are made about the image size.
-//	I am positive this will not compile under linux and only works/tested on windows.  The device should work with linux/mac however.  
+//  I am positive this will not compile under linux and only works/tested on windows.  The device should work with linux/mac however.  
 // .SECTION see also
 //  vtkVideoSource
 //

@@ -15,13 +15,13 @@ OPTION (VTK_USE_SHAPETAPE "Enable Shape Tape" ON)
 IF (VTK_USE_SHAPETAPE)
   SET ( Kit_SRCS ${Kit_SRCS}
         vtkSHAPETAPETracker.cxx
-	vtkTrackerSensor.cxx
-	vtkTrackerToolSensor.cxx)
+  vtkTrackerSensor.cxx
+  vtkTrackerToolSensor.cxx)
 
-	SET(KIT_EXTRA_LIBS)
-	
-	SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ShapeApi)
-	INCLUDE_DIRECTORIES(${VTKSHAPEAPI_SOURCE_DIR}
+  SET(KIT_EXTRA_LIBS)
+  
+  SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ShapeApi)
+  INCLUDE_DIRECTORIES(${VTKSHAPEAPI_SOURCE_DIR}
                       ${VTKSHAPEAPI_BINARY_DIR})
 
   #SUBDIRS(vtkShapeApi vtkRobartsLegacy)

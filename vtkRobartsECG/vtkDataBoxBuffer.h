@@ -74,10 +74,10 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
 
-	void AddItem(double signal, int channel, double time);
-	int GetSignal(int i, int channel);
-	//void GetVec(double *vec, int i);
-	void WriteToFile(const char *filename);
+  void AddItem(double signal, int channel, double time);
+  int GetSignal(int i, int channel);
+  //void GetVec(double *vec, int i);
+  void WriteToFile(const char *filename);
 
   // Description:
   // Set the size of the buffer, all new transforms are set to unity.
@@ -116,11 +116,11 @@ public:
   int GetNumberOfChannels();
 
   /*
-	int GetNumCurrentChannels(){return this->numCurrentChannels;}
-	void SetNumCurrentChannels(int channels){	
-		this->numCurrentChannels = channels;
-	  this->MatrixArray->SetNumberOfComponents(this->numCurrentChannels);
-	}
+  int GetNumCurrentChannels(){return this->numCurrentChannels;}
+  void SetNumCurrentChannels(int channels){  
+    this->numCurrentChannels = channels;
+    this->MatrixArray->SetNumberOfComponents(this->numCurrentChannels);
+  }
 */
 protected:
   vtkDataBoxBuffer();

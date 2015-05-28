@@ -43,7 +43,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include "vtkMutexLock.h"
 
 #define NUM_BUFFERS 6
-#define THERMOGAIN	100
+#define THERMOGAIN  100
 #define STRLEN 80        /* string size for general text manipulation   */
 #define MAXCHANNELS 16
 
@@ -64,7 +64,7 @@ typedef BOARD* LPBOARD;
 
 class VTK_EXPORT vtkDataBox : public vtkObject
 {
-	 //BTX
+   //BTX
 public:
      //ETX
   vtkCriticalSection *UpdateMutex;
@@ -94,8 +94,8 @@ public:
   int GetNumCurrentChannels(){return this->numCurrentChannels;}
   //Not likely going to be accessable!
   void SetNumCurrentChannels(int channels){
-		this->numCurrentChannels = channels;
-		data->SetNumCurrentChannels(channels);
+    this->numCurrentChannels = channels;
+    data->SetNumCurrentChannels(channels);
   }
 */
 
@@ -121,7 +121,7 @@ public:
 
   // NOT LIKELY!
   // Write the tracking information to a file
-//	void WriteToFile2D(const char *filename){ data->WriteToFile(filename); }
+//  void WriteToFile2D(const char *filename){ data->WriteToFile(filename); }
 
   int PrintCapabilitiesAll();
   vtkDataBoxBuffer * GetBuffer(); 
@@ -143,7 +143,7 @@ protected:
   void GetNotificationProcedure(OLNOTIFYPROC procedure);
 
   void GetInternalTimeStamp(HBUF buffer, LPTDS timestamp);
-	
+  
   unsigned long GetInternalTimeStamp(HBUF buffer);
 
 
@@ -370,7 +370,7 @@ private:
 
   //ETX
 
-	int bufferStarted;
+  int bufferStarted;
 };
 
 

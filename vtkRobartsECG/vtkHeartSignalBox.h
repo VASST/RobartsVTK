@@ -74,7 +74,7 @@ protected:
 
   int signalChannel1; //pin ID 10
   int signalChannel2; //pin ID 13
-					            //Ground is Pin ID 24
+                      //Ground is Pin ID 24
   int basePort;
   int Channel1Pin;
   int Channel2Pin;

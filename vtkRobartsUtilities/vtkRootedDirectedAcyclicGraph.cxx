@@ -23,10 +23,10 @@ vtkRootedDirectedAcyclicGraph::vtkRootedDirectedAcyclicGraph()
 //----------------------------------------------------------------------------
 vtkRootedDirectedAcyclicGraph::~vtkRootedDirectedAcyclicGraph()
 {
-	if(this->UpLevel)
-	  delete this->UpLevel;
-	if(this->DownLevel)
-	  delete this->DownLevel;
+  if(this->UpLevel)
+    delete this->UpLevel;
+  if(this->DownLevel)
+    delete this->DownLevel;
 }
 
 //----------------------------------------------------------------------------
@@ -152,9 +152,9 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
   this->UpLevel = new vtkIdType[g->GetNumberOfVertices()];
   this->DownLevel = new vtkIdType[g->GetNumberOfVertices()];
   for(int i = 0; i < g->GetNumberOfVertices(); i++)
-	  this->UpLevel[i] = -1;
+    this->UpLevel[i] = -1;
   for(int i = 0; i < g->GetNumberOfVertices(); i++)
-	  this->DownLevel[i] = INT_MAX;
+    this->DownLevel[i] = INT_MAX;
   this->UpLevel[root] = 0;
   this->DownLevel[root] = 0;
   vector<vtkIdType> stack;
@@ -174,17 +174,17 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
       if (!active[id])
         {
         stack.push_back(id);
-		this->UpLevel[id] = (this->UpLevel[v] + 1 > this->UpLevel[id]) ?
-			this->UpLevel[v] + 1 : this->UpLevel[id];
-		this->DownLevel[id] = (this->DownLevel[v] + 1 < this->DownLevel[id]) ?
-			this->DownLevel[v] + 1 : this->DownLevel[id];
+    this->UpLevel[id] = (this->UpLevel[v] + 1 > this->UpLevel[id]) ?
+      this->UpLevel[v] + 1 : this->UpLevel[id];
+    this->DownLevel[id] = (this->DownLevel[v] + 1 < this->DownLevel[id]) ?
+      this->DownLevel[v] + 1 : this->DownLevel[id];
         }
       else
         {
         return false;
         }
       }
-	active[v] = false;
+  active[v] = false;
     }
   for (vtkIdType v = 0; v < g->GetNumberOfVertices(); ++v)
     {

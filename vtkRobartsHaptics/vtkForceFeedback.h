@@ -18,12 +18,12 @@ public:
 
     void PrintSelf(ostream& os, vtkIndent indent);
 
-	virtual int GenerateForce(vtkMatrix4x4 * hapticPosition, double force[3]);
-	~vtkForceFeedback();
+  virtual int GenerateForce(vtkMatrix4x4 * hapticPosition, double force[3]);
+  ~vtkForceFeedback();
 
 protected:
-	vtkForceFeedback();
-	
+  vtkForceFeedback();
+  
 
 private:
 

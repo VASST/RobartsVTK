@@ -26,24 +26,24 @@
 class vtkOpenCVVideoSourceInternal
 {
 public:
-	vtkOpenCVVideoSourceInternal(vtkOpenCVVideoSource* s) {
-		parent = s;
-		capture = 0;
-		cvRawImage = 0;
-		cvProcImage = 0;
-	}
-	~vtkOpenCVVideoSourceInternal() {
-		if( this->capture ) cvReleaseCapture( &(this->capture) );
-		if( this->cvRawImage ) cvReleaseImage( &(this->cvRawImage) );
-		if( this->cvProcImage ) cvReleaseImage( &(this->cvProcImage) );
-	}
+  vtkOpenCVVideoSourceInternal(vtkOpenCVVideoSource* s) {
+    parent = s;
+    capture = 0;
+    cvRawImage = 0;
+    cvProcImage = 0;
+  }
+  ~vtkOpenCVVideoSourceInternal() {
+    if( this->capture ) cvReleaseCapture( &(this->capture) );
+    if( this->cvRawImage ) cvReleaseImage( &(this->cvRawImage) );
+    if( this->cvProcImage ) cvReleaseImage( &(this->cvProcImage) );
+  }
 
-	vtkOpenCVVideoSource*	parent;
-	double					lastTime;
+  vtkOpenCVVideoSource*  parent;
+  double          lastTime;
 
-	CvCapture*				capture;
-	IplImage*				cvRawImage;
-	IplImage*				cvProcImage;
+  CvCapture*        capture;
+  IplImage*        cvRawImage;
+  IplImage*        cvProcImage;
 
 };
 
@@ -52,20 +52,20 @@ vtkStandardNewMacro(vtkOpenCVVideoSource);
 //----------------------------------------------------------------------------
 vtkOpenCVVideoSource::vtkOpenCVVideoSource()
 {
-	
-	//set up the internal class (handles pretty much everything)
-	this->Internal = new vtkOpenCVVideoSourceInternal(this);
-	this->OpenCVFirstBufferLock = vtkMutexLock::New();
-	this->OpenCVSecondBufferLock = vtkMutexLock::New();
+  
+  //set up the internal class (handles pretty much everything)
+  this->Internal = new vtkOpenCVVideoSourceInternal(this);
+  this->OpenCVFirstBufferLock = vtkMutexLock::New();
+  this->OpenCVSecondBufferLock = vtkMutexLock::New();
 
-	//set some reasonable default values
-	this->vtkVideoSource::SetFrameRate( 5.0f );
-	this->videoSourceNumber = 0;
-	this->FrameBufferBitsPerPixel = 24;
-	this->vtkVideoSource::SetOutputFormat(VTK_RGB);
-	
-	this->EnumerateSources();
-	this->Initialized = false;
+  //set some reasonable default values
+  this->vtkVideoSource::SetFrameRate( 5.0f );
+  this->videoSourceNumber = 0;
+  this->FrameBufferBitsPerPixel = 24;
+  this->vtkVideoSource::SetOutputFormat(VTK_RGB);
+  
+  this->EnumerateSources();
+  this->Initialized = false;
 }
 
 //----------------------------------------------------------------------------
@@ -85,93 +85,93 @@ void vtkOpenCVVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::EnumerateSources(){
-	this->maxSource = 0;
-	bool stillLooking = true;
-	while( stillLooking ){
-		if( !cvCreateCameraCapture( this->maxSource ) ){
-			stillLooking = false;
-		}
-		this->maxSource++;
-	}
+  this->maxSource = 0;
+  bool stillLooking = true;
+  while( stillLooking ){
+    if( !cvCreateCameraCapture( this->maxSource ) ){
+      stillLooking = false;
+    }
+    this->maxSource++;
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::SetVideoSourceNumber(unsigned int n){
-	
-	//determine is source is available
-	if( n < 0 || n > maxSource ){
-		vtkErrorMacro(<<"Cannot use that video source number. Must be an available source");
-		return;
-	}
+  
+  //determine is source is available
+  if( n < 0 || n > maxSource ){
+    vtkErrorMacro(<<"Cannot use that video source number. Must be an available source");
+    return;
+  }
 
-	//if we haven't changed number, don't do anything
-	if( this->videoSourceNumber == n ) return;
+  //if we haven't changed number, don't do anything
+  if( this->videoSourceNumber == n ) return;
 
-	//create a new capture device for the specified identifier, and re-initialize
-	this->videoSourceNumber = n;
-	if( this->Initialized ){
-		this->ReleaseSystemResources();
-		this->Initialize();
-	}
+  //create a new capture device for the specified identifier, and re-initialize
+  this->videoSourceNumber = n;
+  if( this->Initialized ){
+    this->ReleaseSystemResources();
+    this->Initialize();
+  }
 
 }
 
 unsigned int vtkOpenCVVideoSource::GetVideoSourceNumber(){
-	return this->videoSourceNumber;
+  return this->videoSourceNumber;
 }
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::SetFrameSize(int x, int y, int z) {
-	vtkErrorMacro(<<"Frame size cannot be set, but is automatically determined by OpenCV.");
+  vtkErrorMacro(<<"Frame size cannot be set, but is automatically determined by OpenCV.");
 }
 
 void vtkOpenCVVideoSource::SetOutputFormat(int format) {
-	
-	//vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the output format.");
+  
+  //vtkErrorMacro(<<"Use the VideoFormatDialog() method to set the output format.");
 }
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::Initialize()
 {
-	//INITIALIZE OPENCV
-	if( this->Initialized ) return;
+  //INITIALIZE OPENCV
+  if( this->Initialized ) return;
 
-	//Grab the appropriate capture device
-	cvReleaseCapture( &(this->Internal->capture) );
-	this->Internal->capture = cvCreateCameraCapture( this->videoSourceNumber );
-	if( !this->Internal->capture ){
-		vtkErrorMacro(<<"Could not create OpenCV capture device.");
-		ReleaseSystemResources();
-		return;
-	}
+  //Grab the appropriate capture device
+  cvReleaseCapture( &(this->Internal->capture) );
+  this->Internal->capture = cvCreateCameraCapture( this->videoSourceNumber );
+  if( !this->Internal->capture ){
+    vtkErrorMacro(<<"Could not create OpenCV capture device.");
+    ReleaseSystemResources();
+    return;
+  }
 
-	//collect information regarding image size, frame dimensions, etc...
-	this->Internal->cvRawImage = cvQueryFrame( this->Internal->capture );
-	if( !this->Internal->cvRawImage ){
-		vtkErrorMacro(<<"Could not create OpenCV capture device.");
-		ReleaseSystemResources();
-		return;
-	}
-	this->ImageSize = this->Internal->cvRawImage->imageSize;
-	this->vtkVideoSource::SetFrameSize( this->Internal->cvRawImage->width, this->Internal->cvRawImage->height, 1 );
-	this->Internal->cvProcImage = (IplImage*) cvClone( this->Internal->cvRawImage );
+  //collect information regarding image size, frame dimensions, etc...
+  this->Internal->cvRawImage = cvQueryFrame( this->Internal->capture );
+  if( !this->Internal->cvRawImage ){
+    vtkErrorMacro(<<"Could not create OpenCV capture device.");
+    ReleaseSystemResources();
+    return;
+  }
+  this->ImageSize = this->Internal->cvRawImage->imageSize;
+  this->vtkVideoSource::SetFrameSize( this->Internal->cvRawImage->width, this->Internal->cvRawImage->height, 1 );
+  this->Internal->cvProcImage = (IplImage*) cvClone( this->Internal->cvRawImage );
 
-	// Initialization worked
-	this->Initialized = 1;
+  // Initialization worked
+  this->Initialized = 1;
 
-	// Update frame buffer  to reflect any changes
-	this->UpdateFrameBuffer();
+  // Update frame buffer  to reflect any changes
+  this->UpdateFrameBuffer();
 }  
 
 //----------------------------------------------------------------------------
 void vtkOpenCVVideoSource::ReleaseSystemResources()
 {
 
-	//UNINITIALIZE OPENCV
-	delete this->Internal;
-	this->Internal = new vtkOpenCVVideoSourceInternal( this );
+  //UNINITIALIZE OPENCV
+  delete this->Internal;
+  this->Internal = new vtkOpenCVVideoSourceInternal( this );
 
-	this->Initialized = 0;
+  this->Initialized = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -265,9 +265,9 @@ void vtkOpenCVVideoSource::InternalGrab()
   
   //if we can't find the buffer, error and return
   if( !buffer || !ptr ){
-	  vtkErrorMacro(<<"Could not access both buffers.");
+    vtkErrorMacro(<<"Could not access both buffers.");
   }else{
-	  memcpy(ptr, buffer, this->ImageSize);
+    memcpy(ptr, buffer, this->ImageSize);
   }
 
   // Copy image into frame buffer and release the old image

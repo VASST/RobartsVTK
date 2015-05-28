@@ -69,7 +69,7 @@ vtkTestECGSignalBox* vtkTestECGSignalBox::New()
 //-------------------------------------------------------------------------
 vtkTestECGSignalBox::vtkTestECGSignalBox()
 {
-	this->videoSource = NULL; 
+  this->videoSource = NULL; 
 }
 
 //-------------------------------------------------------------------------
@@ -86,46 +86,46 @@ void vtkTestECGSignalBox::PrintSelf(ostream& os, vtkIndent indent)
 
 //-------------------------------------------------------------------------
 int vtkTestECGSignalBox::GetECG(void) {
-	int signal = vtkSignalBox::GetECG();
-	if (this->videoSource) {
-		this->videoSource->SetECGPhase(ECGPhase);
-	}
-	return signal;
+  int signal = vtkSignalBox::GetECG();
+  if (this->videoSource) {
+    this->videoSource->SetECGPhase(ECGPhase);
+  }
+  return signal;
 }
 
 //-------------------------------------------------------------------------
 static void *vtkTestECGSignalBoxThread(vtkMultiThreader::ThreadInfo *data)
 {
 
-	vtkTestECGSignalBox *self = (vtkTestECGSignalBox *)(data->UserData);
+  vtkTestECGSignalBox *self = (vtkTestECGSignalBox *)(data->UserData);
 
-	for (int i = 0;; i++) {
+  for (int i = 0;; i++) {
 
-		#ifdef _WIN32
-			Sleep(self->GetSleepInterval());
-		#else
-		#ifdef unix
-		#ifdef linux
-			usleep(self->GetSleepInterval() * 1000);
-		#endif
-		#endif
-		#endif
+    #ifdef _WIN32
+      Sleep(self->GetSleepInterval());
+    #else
+    #ifdef unix
+    #ifdef linux
+      usleep(self->GetSleepInterval() * 1000);
+    #endif
+    #endif
+    #endif
 
-		// query the hardware tracker
-		self->UpdateMutex->Lock();
-		self->Update();
-		self->UpdateTime.Modified();
-		self->UpdateMutex->Unlock();
+    // query the hardware tracker
+    self->UpdateMutex->Lock();
+    self->Update();
+    self->UpdateTime.Modified();
+    self->UpdateMutex->Unlock();
     
-		// check to see if we are being told to quit 
-		data->ActiveFlagLock->Lock();
-		int activeFlag = *(data->ActiveFlag);
-		data->ActiveFlagLock->Unlock();
+    // check to see if we are being told to quit 
+    data->ActiveFlagLock->Lock();
+    int activeFlag = *(data->ActiveFlag);
+    data->ActiveFlagLock->Unlock();
 
-	  if (activeFlag == 0) {
-			return NULL;
-		}
-	}
+    if (activeFlag == 0) {
+      return NULL;
+    }
+  }
 }
 
 void vtkTestECGSignalBox::SetVideoSource(vtkTestECGVideoSource * video) {
@@ -136,9 +136,9 @@ void vtkTestECGSignalBox::SetVideoSource(vtkTestECGVideoSource * video) {
 void vtkTestECGSignalBox::Start()
 {
 
-	if (this->IsStarted)
+  if (this->IsStarted)
     {
-		return;
+    return;
     }
 
   if (!this->IsInitialized)
@@ -151,14 +151,14 @@ void vtkTestECGSignalBox::Start()
     {
     return;
     }
-		
-	this->UpdateMutex->Lock();
+    
+  this->UpdateMutex->Lock();
 
-	if (this->ThreadId == -1)
+  if (this->ThreadId == -1)
     {
-		this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkTestECGSignalBoxThread,this);
-	  }
-	this->UpdateMutex->Unlock();
+    this->ThreadId = this->Threader->SpawnThread((vtkThreadFunctionType)&vtkTestECGSignalBoxThread,this);
+    }
+  this->UpdateMutex->Unlock();
 
-	this->IsStarted=1;
+  this->IsStarted=1;
 }

@@ -27,32 +27,32 @@
 
 class vtkBarrierLock : public vtkObject {
 public:
-	static vtkBarrierLock *New();
+  static vtkBarrierLock *New();
 
-	void Initialize(int numThreads);
-	void DeInitialize();
-	
-	vtkSetMacro(Repeatable,bool);
-	vtkGetMacro(Repeatable,bool);
+  void Initialize(int numThreads);
+  void DeInitialize();
+  
+  vtkSetMacro(Repeatable,bool);
+  vtkGetMacro(Repeatable,bool);
 
-	bool Query();
-	void Enter();
+  bool Query();
+  void Enter();
 
 protected:
-	vtkBarrierLock();
-	~vtkBarrierLock();
-	
-	vtkMutexLock* EntryLock;
-	vtkConditionVariable* Condition;
+  vtkBarrierLock();
+  ~vtkBarrierLock();
+  
+  vtkMutexLock* EntryLock;
+  vtkConditionVariable* Condition;
 
-	bool Repeatable;
-	bool BarrierUsed;
-	int NumEntered;
-	int NumEnteredMax;
+  bool Repeatable;
+  bool BarrierUsed;
+  int NumEntered;
+  int NumEnteredMax;
 
 private:
-	vtkBarrierLock(const vtkBarrierLock&);  // Not implemented.
-	void operator=(const vtkBarrierLock&);  // Not implemented.
+  vtkBarrierLock(const vtkBarrierLock&);  // Not implemented.
+  void operator=(const vtkBarrierLock&);  // Not implemented.
 };
 
 #endif //__VTKBARRIERLOCK_H

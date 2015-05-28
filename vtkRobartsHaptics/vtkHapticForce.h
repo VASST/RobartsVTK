@@ -19,20 +19,20 @@ public:
     vtkTypeMacro(vtkHapticForce,vtkObject);
 
     void PrintSelf(ostream& os, vtkIndent indent);
-	void AddForceModel(vtkForceFeedback * force);
+  void AddForceModel(vtkForceFeedback * force);
 void InsertForceModel(int position, vtkForceFeedback * force);
 vtkForceFeedback * GetForceModel(int position);
 int GetNumberOfFrames();
 
 protected:
-	vtkHapticForce();
-	~vtkHapticForce();
+  vtkHapticForce();
+  ~vtkHapticForce();
 
 private:
-	//BTX
-	std::vector<vtkForceFeedback *>  forceModel;
-	int NumberOfFrames;
-	//ETX
+  //BTX
+  std::vector<vtkForceFeedback *>  forceModel;
+  int NumberOfFrames;
+  //ETX
 };
 
 #endif

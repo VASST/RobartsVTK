@@ -13,12 +13,12 @@ programs that come included with the package.
 Files Description
 -----------------
 
-/readme.txt			    This file
-/doc/ulterius.chm	    API reference guide
+/readme.txt          This file
+/doc/ulterius.chm      API reference guide
 /bin                    Binary files required to run the SDK
 /lib                    Library linker files
-/inc/ulterius.h			Class interface
-/inc/ulterius_def.h		Data definitions
-/inc/ulterius_net.h		Network protocol definitions
-/demo/console			Console demo program
-/demo/gui			    Graphical demo program
+/inc/ulterius.h      Class interface
+/inc/ulterius_def.h    Data definitions
+/inc/ulterius_net.h    Network protocol definitions
+/demo/console      Console demo program
+/demo/gui          Graphical demo program

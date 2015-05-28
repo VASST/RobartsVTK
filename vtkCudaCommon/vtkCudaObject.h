@@ -33,30 +33,30 @@ class vtkCudaObject
 {
 public:
 
-	void SetDevice( int d, int withData = 0 );
-	int GetDevice(){ return this->DeviceNumber; };
-	
-	void ReserveGPU( );
-	void CallSyncThreads( );
-	cudaStream_t* GetStream( );
+  void SetDevice( int d, int withData = 0 );
+  int GetDevice(){ return this->DeviceNumber; };
+  
+  void ReserveGPU( );
+  void CallSyncThreads( );
+  cudaStream_t* GetStream( );
 
-	void ReplicateObject( vtkCudaObject* object, int withData = 0  );
+  void ReplicateObject( vtkCudaObject* object, int withData = 0  );
 
 protected:
-	vtkCudaObject(int d = 0);
-	~vtkCudaObject();
-	
-	virtual void Reinitialize(int withData = 0) = 0;
-	virtual void Deinitialize(int withData = 0) = 0;
+  vtkCudaObject(int d = 0);
+  ~vtkCudaObject();
+  
+  virtual void Reinitialize(int withData = 0) = 0;
+  virtual void Deinitialize(int withData = 0) = 0;
 
 private:
 
-	int DeviceNumber;
-	cudaStream_t* DeviceStream;
+  int DeviceNumber;
+  cudaStream_t* DeviceStream;
 
-	vtkCudaDeviceManager* DeviceManager;
+  vtkCudaDeviceManager* DeviceManager;
 
-	int withDataStatus;
+  int withDataStatus;
 
 };
 #endif /* __VTKCUDAOBJECT_H__ */

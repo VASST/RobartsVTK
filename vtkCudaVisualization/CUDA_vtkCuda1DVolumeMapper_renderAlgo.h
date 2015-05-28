@@ -27,10 +27,10 @@
  *
  */
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
-							 const cudaRendererInformation& rendererInfo,
-							 const cudaVolumeInformation& volumeInfo,
-							 const cuda1DTransferFunctionInformation& transInfo,
-							 cudaArray* frame, cudaStream_t* stream);
+               const cudaRendererInformation& rendererInfo,
+               const cudaVolumeInformation& volumeInfo,
+               const cuda1DTransferFunctionInformation& transInfo,
+               cudaArray* frame, cudaStream_t* stream);
 
 /** @brief Changes the current volume to be rendered to this particular frame, used in 4D visualization
  *
@@ -59,8 +59,8 @@ void CUDA_vtkCuda1DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cu
  *
  */
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadTextures(cuda1DTransferFunctionInformation& transInfo,
-								  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* galphaTF,
-								  cudaStream_t* stream);
+                  float* redTF, float* greenTF, float* blueTF, float* alphaTF, float* galphaTF,
+                  cudaStream_t* stream);
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunctionInformation& transInfo, cudaStream_t* stream);
 
 /** @brief Loads an image into a 3D CUDA array which will be bound to a 3D texture for rendering
@@ -72,6 +72,6 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(cuda1DTransferFunction
  *
  */
 bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* imageData, const cudaVolumeInformation& volumeInfo, cudaArray** frame,
-														 cudaStream_t* stream);
+                             cudaStream_t* stream);
 
 #endif

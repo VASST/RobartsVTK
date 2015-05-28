@@ -280,7 +280,7 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
       double tmp = fabs(values[i]);
       if (tmp > maxValue)
         {
-	  maxValue = tmp;
+    maxValue = tmp;
         }
     } 
 
@@ -288,13 +288,13 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
     {
       for (j = 0; j < N; j++)
         {
-	  w[i][j] = 0.0;
+    w[i][j] = 0.0;
         }
       // here's the trick: don't invert the singular values
       if (fabs(values[i]/maxValue) > 1e-16)
-	{
-	  w[i][i] = 1.0/values[i];
-	}
+  {
+    w[i][i] = 1.0/values[i];
+  }
     }
   delete [] values;
     
@@ -367,12 +367,12 @@ inline void vtkCompactSupportRBFForwardTransformPoint(vtkCompactSupportRBFTransf
 }
 
 void vtkCompactSupportRBFTransform::ForwardTransformPoint(const double point[3], 
-							  double output[3])
+                double output[3])
 {
   vtkCompactSupportRBFForwardTransformPoint(this, this->MatrixW, 
-					    this->NumberOfPoints, 
-					    this->BasisFunction,
-					    point, output);
+              this->NumberOfPoints, 
+              this->BasisFunction,
+              point, output);
 }
 
 //----------------------------------------------------------------------------
@@ -388,11 +388,11 @@ inline void vtkCompactSupportRBFForwardTransformDerivative(
   if (N == 0)
     {
       for (int i = 0; i < 3; i++)
-	{
-	  output[i] = point[i];
-	  derivative[i][0] = derivative[i][1] = derivative[i][2] = 0.0;
-	  derivative[i][i] = 1.0;
-	}
+  {
+    output[i] = point[i];
+    derivative[i][0] = derivative[i][1] = derivative[i][2] = 0.0;
+    derivative[i][i] = 1.0;
+  }
       return;
     }
 
@@ -460,9 +460,9 @@ void vtkCompactSupportRBFTransform::ForwardTransformDerivative(
                                                   double derivative[3][3])
 {
   vtkCompactSupportRBFForwardTransformDerivative(this, this->MatrixW, 
-						 this->NumberOfPoints,
-						 this->BasisDerivative,
-						 point, output, derivative);
+             this->NumberOfPoints,
+             this->BasisDerivative,
+             point, output, derivative);
 }
 
 //------------------------------------------------------------------------

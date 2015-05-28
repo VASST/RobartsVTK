@@ -175,14 +175,14 @@ vtkImageData *vtkImageShannonMutualInformation::GetOutput()
   for (i = 0; i < this->BinNumber[0]; i++)
     {  
       for (j = 0; j < this->BinNumber[1]; j++) 
-	{
-	  temp = 0;
-	  for (int id = 0; id < n; id++)
-	    {
-	      temp += (double)this->ThreadHistST[id][i][j];
-	    }
-	  HistST->SetScalarComponentFromFloat(i,j,0,0,temp);
-	}
+  {
+    temp = 0;
+    for (int id = 0; id < n; id++)
+      {
+        temp += (double)this->ThreadHistST[id][i][j];
+      }
+    HistST->SetScalarComponentFromFloat(i,j,0,0,temp);
+  }
     }
 
   return (vtkImageData *)(this->Outputs[0]);
@@ -193,9 +193,9 @@ vtkImageData *vtkImageShannonMutualInformation::GetOutput()
 // Handles the two input operations
 template <class T>
 void vtkImageShannonMutualInformationExecute(vtkImageShannonMutualInformation *self,
-						vtkImageData *in1Data, T *in1Ptr,
-						vtkImageData *in2Data, T *in2Ptr,
-						int inExt[6], int id)
+            vtkImageData *in1Data, T *in1Ptr,
+            vtkImageData *in2Data, T *in2Ptr,
+            int inExt[6], int id)
 {
   int i,j,a,b;
   int idX, idY, idZ;
@@ -210,9 +210,9 @@ void vtkImageShannonMutualInformationExecute(vtkImageShannonMutualInformation *s
       self->ThreadHistS[id][i] = 0;
       self->ThreadHistT[id][i] = 0;
       for (j = 0; j < self->BinNumber[1]; j++) 
- 	{
- 	  self->ThreadHistST[id][i][j] = 0;
- 	}
+   {
+     self->ThreadHistST[id][i][j] = 0;
+   }
     }
 
   // Find the region to loop over
@@ -228,47 +228,47 @@ void vtkImageShannonMutualInformationExecute(vtkImageShannonMutualInformation *s
     {
      for (idY = 0; idY <= maxY; idY++)
        {
-	 // Flag that we want the complementary extents
-	 iter = 0; if (self->GetReverseStencil()) iter = -1;
+   // Flag that we want the complementary extents
+   iter = 0; if (self->GetReverseStencil()) iter = -1;
 
-	 pminX = 0; pmaxX = maxX;
-	 while ((stencil !=0 && 
-		 stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
-		(stencil == 0 && iter++ == 0))
-	   {
-	     // Set up pointers to the sub-extents
-	     temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
-	     temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
-	     // Compute over the sub-extent
-	     for (idX = pminX; idX <= pmaxX; idX++)
-	       {
-		 a = vtkResliceRound(*temp1Ptr/double(self->BinWidth[0]));
-		 b = vtkResliceRound(*temp2Ptr/double(self->BinWidth[1]));
+   pminX = 0; pmaxX = maxX;
+   while ((stencil !=0 && 
+     stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
+    (stencil == 0 && iter++ == 0))
+     {
+       // Set up pointers to the sub-extents
+       temp1Ptr = in1Ptr + (incZ * idZ + incY * idY + pminX);
+       temp2Ptr = in2Ptr + (incZ * idZ + incY * idY + pminX);
+       // Compute over the sub-extent
+       for (idX = pminX; idX <= pmaxX; idX++)
+         {
+     a = vtkResliceRound(*temp1Ptr/double(self->BinWidth[0]));
+     b = vtkResliceRound(*temp2Ptr/double(self->BinWidth[1]));
 
-		 if (a < 0)
-		   {
-		     a = 0;
-		   }
-		 if (a >= self->BinNumber[0])
-		   {
-		     a = self->BinNumber[0] - 1;
-		   }
-		 if (b < 0)
-		   {
-		     b = 0;
-		   }
-		 if (b >= self->BinNumber[1])
-		   {
-		     b = self->BinNumber[1] - 1;
-		   }
+     if (a < 0)
+       {
+         a = 0;
+       }
+     if (a >= self->BinNumber[0])
+       {
+         a = self->BinNumber[0] - 1;
+       }
+     if (b < 0)
+       {
+         b = 0;
+       }
+     if (b >= self->BinNumber[1])
+       {
+         b = self->BinNumber[1] - 1;
+       }
 
-		 self->ThreadHistS[id][a]++;
-		 self->ThreadHistT[id][b]++;
-		 self->ThreadHistST[id][a][b]++;
-		 temp1Ptr++;
-		 temp2Ptr++;
-	       }
-	   }
+     self->ThreadHistS[id][a]++;
+     self->ThreadHistT[id][b]++;
+     self->ThreadHistST[id][a][b]++;
+     temp1Ptr++;
+     temp2Ptr++;
+         }
+     }
        }
     }
 }
@@ -279,8 +279,8 @@ void vtkImageShannonMutualInformationExecute(vtkImageShannonMutualInformation *s
 // It just executes a switch statement to call the correct function for
 // the datas data types.
 void vtkImageShannonMutualInformation::ThreadedExecute1(vtkImageData **inData,
-							   vtkImageData *vtkNotUsed(outData),
-							   int inExt[6], int id)
+                 vtkImageData *vtkNotUsed(outData),
+                 int inExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -328,9 +328,9 @@ void vtkImageShannonMutualInformation::ThreadedExecute1(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageShannonMutualInformationExecute,this,
-			inData[0], (VTK_TT *)(inPtr1), 
-			inData[1], (VTK_TT *)(inPtr2), 
-			inExt, id);
+      inData[0], (VTK_TT *)(inPtr1), 
+      inData[1], (VTK_TT *)(inPtr2), 
+      inExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
@@ -353,9 +353,9 @@ void vtkImageShannonMutualInformation::ThreadedExecute2(int extS[6], int extST[6
     {  
       temp1 = 0.0;
       for (n = 0; n < N; n++)
-	{
-	  temp1 += (double)this->ThreadHistS[n][i];
-	}
+  {
+    temp1 += (double)this->ThreadHistS[n][i];
+  }
       if (temp1 > 0.0) this->ThreadEntropyS[id] += temp1 * log(temp1);
     }
 
@@ -364,21 +364,21 @@ void vtkImageShannonMutualInformation::ThreadedExecute2(int extS[6], int extST[6
     {  
       temp2 = 0.0;
       for (n = 0; n < N; n++)
-	{
-	  temp2 += (double)this->ThreadHistT[n][j];
-	}
+  {
+    temp2 += (double)this->ThreadHistT[n][j];
+  }
       if (temp2 > 0.0) this->ThreadEntropyT[id] += temp2 * log(temp2);
 
       for (i = extST[0]; i <= extST[1]; i++) 
-	{
- 	  temp1 = 0.0;
- 	  for (n = 0; n < N; n++)
- 	    {
- 	      temp1 += (double)this->ThreadHistST[n][i][j];
- 	      this->ThreadCount[id] += (double)this->ThreadHistST[n][i][j];
- 	    }
-	  if (temp1 > 0.0) this->ThreadEntropyST[id] += temp1 * log(temp1);
-	}
+  {
+     temp1 = 0.0;
+     for (n = 0; n < N; n++)
+       {
+         temp1 += (double)this->ThreadHistST[n][i][j];
+         this->ThreadCount[id] += (double)this->ThreadHistST[n][i][j];
+       }
+    if (temp1 > 0.0) this->ThreadEntropyST[id] += temp1 * log(temp1);
+  }
     }
 }
 
@@ -416,13 +416,13 @@ double vtkImageShannonMutualInformation::GetResult()
   if (this->Metric == 0)
     {
       if (entropyST == 0)
-	{
-	  result = 1.0;
-	}
+  {
+    result = 1.0;
+  }
       else
-	{
-	  result = (entropyS + entropyT)/entropyST/2.0;
-	}
+  {
+    result = (entropyS + entropyT)/entropyST/2.0;
+  }
     }
 
   // Mutual Informaiton
@@ -435,13 +435,13 @@ double vtkImageShannonMutualInformation::GetResult()
   else if (this->Metric == 2)
     {
       if (entropyS + entropyT == 0)
-	{
-	  result = 1.0;
-	}
+  {
+    result = 1.0;
+  }
       else
-	{
-	  result = sqrt ( 2.0 * (1.0 - entropyST / ( entropyT + entropyS ) ) );
-	}
+  {
+    result = sqrt ( 2.0 * (1.0 - entropyST / ( entropyT + entropyS ) ) );
+  }
     }
 
   // Error
@@ -458,8 +458,8 @@ double vtkImageShannonMutualInformation::GetResult()
 //----------------------------------------------------------------------------
 // Get ALL of the input.
 void vtkImageShannonMutualInformation::ComputeInputUpdateExtent(int inExt[6],
-								   int outExt[6],
-								   int vtkNotUsed(whichInput))
+                   int outExt[6],
+                   int vtkNotUsed(whichInput))
 {
   int *wholeExtent = this->GetInput()->GetWholeExtent();
   memcpy(inExt, wholeExtent, 6*sizeof(int));
@@ -588,7 +588,7 @@ void vtkImageShannonMutualInformation::ExecuteData(vtkDataObject *out)
 
 //----------------------------------------------------------------------------
 void vtkImageShannonMutualInformation::ExecuteInformation(vtkImageData **inData, 
-							     vtkImageData *outData)
+                   vtkImageData *outData)
 {
   // the two inputs are required to be of the same data type and extents.
   inData[0]->Update();

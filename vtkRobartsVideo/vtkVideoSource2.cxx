@@ -601,8 +601,8 @@ void vtkVideoSource2::UpdateFrameBuffer()
     currTopDown = currFrame->GetTopDown();
     currOpacity = currFrame->GetOpacity();
     currPixelFormat = currFrame->GetPixelFormat();
-	currCompression = currFrame->GetCompression();
-	currFrameGrabberType = currFrame->GetFrameGrabberType();
+  currCompression = currFrame->GetCompression();
+  currFrameGrabberType = currFrame->GetFrameGrabberType();
 
     if (currFrameSize[0] != formatFrameSize[0] ||
       currFrameSize[1] != formatFrameSize[1] ||
@@ -646,15 +646,15 @@ void vtkVideoSource2::UpdateFrameBuffer()
       currFrame->SetPixelFormat(formatPixelFormat);
       }
     
-	if (currCompression != formatCompression)
-	  {
-	  currFrame->SetCompression(formatCompression);
-	  }
+  if (currCompression != formatCompression)
+    {
+    currFrame->SetCompression(formatCompression);
+    }
 
     if (currFrameGrabberType != formatFrameGrabberType)
-	  {
+    {
       currFrame->SetFrameGrabberType(formatFrameGrabberType);
-	  }
+    }
 
     currFrame->Allocate();
   }
@@ -1213,7 +1213,7 @@ void vtkVideoSource2::WriteFramesToFile(vtkImageWriter *writer, const char *summ
     image = this->GetOutput();
     sprintf(fileName, filePattern, filePrefix, i);
     writer->SetFileName(fileName);
-    writer->SetInput(image);
+    writer->SetInputDataObject(image);
     writer->Write();
 
     // write a line in the summary file
@@ -1398,7 +1398,7 @@ void vtkVideoSource2::CopyImageToFrame(unsigned char *outPtr, unsigned char *inP
           *outPtr++ = *inPtr++;
           *outPtr++ = *inPtr++;
           *outPtr = (unsigned char)(opacity * 255);
-	  outPtr++;
+    outPtr++;
           }
         }
       else if (fileType == FILETYPE_PNG || /*fileType == FILETYPE_MINC ||*/ fileType == FILETYPE_TIFF)

@@ -7,7 +7,7 @@
   Copyright : King's College London
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
-	      http://www-ipg.umds.ac.uk/cisg
+        http://www-ipg.umds.ac.uk/cisg
   Date      : $Date: 2007/05/04 14:34:34 $
   Version   : $Revision: 1.1 $
 

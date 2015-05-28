@@ -104,10 +104,10 @@ void vtkDiceCoefficient::vtkDiceCoefficientExecute(vtkDiceCoefficient *self,
     vtkImageCast *in1Cast = vtkImageCast::New();
     vtkImageCast *in2Cast = vtkImageCast::New();
 
-    in1Cast->SetInput(in1Data);
+    in1Cast->SetInputDataObject(in1Data);
     in1Cast->SetOutputScalarTypeToUnsignedChar();
     in1Cast->Update();
-    in2Cast->SetInput(in2Data);
+    in2Cast->SetInputDataObject(in2Data);
     in2Cast->SetOutputScalarTypeToUnsignedChar();
     in2Cast->Update();
 
@@ -135,13 +135,13 @@ void vtkDiceCoefficient::vtkDiceCoefficientExecute(vtkDiceCoefficient *self,
     for(unsigned int idx = 0; idx < volumeSize; idx++){
 
         if (lbl1Buffer[idx] == this->LabelID)
-	    numVx1++;
+      numVx1++;
 
     if (lbl2Buffer[idx] == this->LabelID)
-	    numVx2++;
+      numVx2++;
 
     if (lbl1Buffer[idx] == this->LabelID && lbl2Buffer[idx] == this->LabelID)
-	    numVxOverlap++;
+      numVxOverlap++;
 
     }
 

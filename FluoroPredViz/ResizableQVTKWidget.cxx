@@ -6,16 +6,16 @@ QVTKWidget(p), ready(false) {}
 
 
 void ResizableQVTKWidget::resizeEvent(QResizeEvent * e ){
-	if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
-	this->QVTKWidget::resizeEvent(e);
+  if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
+  this->QVTKWidget::resizeEvent(e);
 }
 
 void ResizableQVTKWidget::changeEvent ( QEvent * e ){
-	if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
-	this->QVTKWidget::changeEvent(e);
+  if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
+  this->QVTKWidget::changeEvent(e);
 }
 
 void ResizableQVTKWidget::paintEvent ( QPaintEvent * e ){
-	if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
-	this->QVTKWidget::paintEvent(e);
+  if( ready && this->GetRenderWindow() ) this->GetRenderWindow()->Render();
+  this->QVTKWidget::paintEvent(e);
 }

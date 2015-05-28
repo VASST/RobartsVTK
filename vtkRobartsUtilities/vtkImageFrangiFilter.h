@@ -7,43 +7,43 @@
 
 class vtkImageFrangiFilter : public vtkSimpleImageToImageFilter {
 public:
-	vtkTypeMacro( vtkImageFrangiFilter, vtkSimpleImageToImageFilter );
-	static vtkImageFrangiFilter *New();
+  vtkTypeMacro( vtkImageFrangiFilter, vtkSimpleImageToImageFilter );
+  static vtkImageFrangiFilter *New();
 
-	virtual void SimpleExecute(vtkImageData* input, vtkImageData* output);
-	
-	vtkSetMacro(Sheet, double);
-	vtkGetMacro(Sheet, double);
-	vtkSetMacro(Line, double);
-	vtkGetMacro(Line, double);
-	vtkSetMacro(Blob, double);
-	vtkGetMacro(Blob, double);
-	vtkSetMacro(AssymmetrySensitivity, double);
-	vtkGetMacro(AssymmetrySensitivity, double);
-	vtkSetMacro(StructureSensitivity, double);
-	vtkGetMacro(StructureSensitivity, double);
-	vtkSetMacro(BlobnessSensitivity, double);
-	vtkGetMacro(BlobnessSensitivity, double);
-	vtkSetMacro(GradientSensitivity, double);
-	vtkGetMacro(GradientSensitivity, double);
+  virtual void SimpleExecute(vtkImageData* input, vtkImageData* output);
+  
+  vtkSetMacro(Sheet, double);
+  vtkGetMacro(Sheet, double);
+  vtkSetMacro(Line, double);
+  vtkGetMacro(Line, double);
+  vtkSetMacro(Blob, double);
+  vtkGetMacro(Blob, double);
+  vtkSetMacro(AssymmetrySensitivity, double);
+  vtkGetMacro(AssymmetrySensitivity, double);
+  vtkSetMacro(StructureSensitivity, double);
+  vtkGetMacro(StructureSensitivity, double);
+  vtkSetMacro(BlobnessSensitivity, double);
+  vtkGetMacro(BlobnessSensitivity, double);
+  vtkSetMacro(GradientSensitivity, double);
+  vtkGetMacro(GradientSensitivity, double);
 
 protected:
-	vtkImageFrangiFilter();
-	~vtkImageFrangiFilter();
+  vtkImageFrangiFilter();
+  ~vtkImageFrangiFilter();
 
 private:
 
-	template<class T>
-	void SimpleExecute(vtkImageData* input, vtkImageData* output);
+  template<class T>
+  void SimpleExecute(vtkImageData* input, vtkImageData* output);
 
-	double Sheet;
-	double Line;
-	double Blob;
-	
-	double AssymmetrySensitivity;
-	double StructureSensitivity;
-	double BlobnessSensitivity;
-	double GradientSensitivity;
+  double Sheet;
+  double Line;
+  double Blob;
+  
+  double AssymmetrySensitivity;
+  double StructureSensitivity;
+  double BlobnessSensitivity;
+  double GradientSensitivity;
 };
 
 #endif

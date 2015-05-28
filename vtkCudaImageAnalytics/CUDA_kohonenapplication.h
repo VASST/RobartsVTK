@@ -7,17 +7,17 @@
 
 typedef struct __align__(16)
 {
-	int VolumeSize[3];
-	int KohonenMapSize[3];
-	int NumberOfDimensions;
-	int BufferSize;
+  int VolumeSize[3];
+  int KohonenMapSize[3];
+  int NumberOfDimensions;
+  int BufferSize;
 
-	float Scale;
+  float Scale;
 
 } Kohonen_Application_Information;
 
 void CUDAalgo_applyKohonenMap( float* inputData, float* inputKohonen, float* outputData,
-									Kohonen_Application_Information& information,
-									cudaStream_t* stream );
+                  Kohonen_Application_Information& information,
+                  cudaStream_t* stream );
 
 #endif //__KOHONENAPPLICATION_H__

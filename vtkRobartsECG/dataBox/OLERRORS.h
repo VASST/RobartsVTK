@@ -166,8 +166,8 @@ ABSTRACT:
 #define OLREQUESTPENDING            OLIWBASE+126 // Defer Completion of Open Layers call
 #define OLUNSUPPORTEDSYSTEM         OLIWBASE+127 // Operating System not supported
 
-#define OLBADFILENAME			    OLIWBASE+128 // Invalid Filename
-#define OLBADBUFFER					OLIWBASE+129 // Invalid buffer pointer
+#define OLBADFILENAME          OLIWBASE+128 // Invalid Filename
+#define OLBADBUFFER          OLIWBASE+129 // Invalid buffer pointer
 
 #define OLBMBASE                    ((ECODE)200)
 
@@ -191,7 +191,7 @@ ABSTRACT:
 #define OLNOSAMPLES                 OLBMBASE+17  // Buffer has no valid samples
 #define OLTOOMANYSAMPLES            OLBMBASE+18  // Valid Samples cannot be larger than buffer
 #define OLBUFFERTOOSMALL            OLBMBASE+19  // Specified buffer too small for requested copy operation
-#define OLODDSIZEDBUFFER		    OLBMBASE+20  // Num buffer points must be multiple 2 for this operation
+#define OLODDSIZEDBUFFER        OLBMBASE+20  // Num buffer points must be multiple 2 for this operation
 #endif
 
 

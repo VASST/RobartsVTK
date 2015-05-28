@@ -80,8 +80,8 @@ protected:
   vtkMultiThreader* threader;
   int mainServerThread;
   vtkSocketController* controller;
-  vtkServerSocket*	serverSocket;
-  vtkClientSocket*	clientSocket;
+  vtkServerSocket*  serverSocket;
+  vtkClientSocket*  clientSocket;
   
   vtkImageData* buffer;
   vtkMutexLock* newThreadLock;
@@ -89,7 +89,7 @@ protected:
   
   //structures for the read/write lock
 
-  int		ImageSize;
+  int    ImageSize;
 
 private:
   vtkImagePipe(const vtkImagePipe&);  // Not implemented.

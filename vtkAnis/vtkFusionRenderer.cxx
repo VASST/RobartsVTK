@@ -105,19 +105,19 @@ void vtkFusionRenderer::SetTranslucency(double t)
 void vtkFusionRenderer::Initialize(void)
 {
     this->RenderWindow->MakeCurrent();
-	  GLenum err = glewInit();
-	  if (GLEW_OK != err)
-	  {
-	    vtkErrorMacro(<< "GLEW failed to initialize");
-	  }
-	  if (!GLEW_VERSION_2_0)
-	  {
-	    vtkErrorMacro(<< "OpenGL 2.0 not supported");
-	  }
-	  if (!GLEW_ARB_shading_language_100)
-	  {
-	    vtkErrorMacro(<< "GLSL not supported");
-	  }
+    GLenum err = glewInit();
+    if (GLEW_OK != err)
+    {
+      vtkErrorMacro(<< "GLEW failed to initialize");
+    }
+    if (!GLEW_VERSION_2_0)
+    {
+      vtkErrorMacro(<< "OpenGL 2.0 not supported");
+    }
+    if (!GLEW_ARB_shading_language_100)
+    {
+      vtkErrorMacro(<< "GLSL not supported");
+    }
 
     // Load the shaders
     undistortShader = new GLSLShader;
@@ -245,18 +245,18 @@ void vtkFusionRenderer::LoadTextures(void)
   glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mFrame);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
   glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-	 0, GL_RGB, 
-	 WIDTH, HEIGHT, 0, EndoscopeFormat, 
-	 GL_UNSIGNED_BYTE, ptr);
+   0, GL_RGB, 
+   WIDTH, HEIGHT, 0, EndoscopeFormat, 
+   GL_UNSIGNED_BYTE, ptr);
 
   glGenTextures(1, &mUSFrame);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mUSFrame);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
   glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-  	 0, GL_RGB, 
+     0, GL_RGB, 
      WIDTH, HEIGHT, 0, USFormat, 
-  	 GL_UNSIGNED_BYTE, US->GetOutput()->GetScalarPointer());
+     GL_UNSIGNED_BYTE, US->GetOutput()->GetScalarPointer());
 
   Endoscope->CreateUndistortMap(WIDTH, HEIGHT, mUndistortImg);
   glActiveTexture(GL_TEXTURE1);
@@ -348,7 +348,7 @@ void vtkFusionRenderer::DeviceRender(void)
     if(Endoscope)
     {
       Endoscope->Update();
-	  
+    
       undistortShader->Use();
       int SamplerIdx = glGetUniformLocation(undistortShader->GetProgram(), "baseTex");
       glUniform1i(SamplerIdx, 0);
@@ -357,13 +357,13 @@ void vtkFusionRenderer::DeviceRender(void)
 
       // Update the textures
       Endoscope->GetRawImageAndTransform(&ptr, mat);
-	    endoscopeTransform->DeepCopy(mat);
+      endoscopeTransform->DeepCopy(mat);
       endoscopeTransform->Invert(); // Invert the matrix to get us a transform into endoscope space
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mFrame);
       glEnable(GL_TEXTURE_RECTANGLE_ARB);
-	    glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, EndoscopeFormat, 
+      glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, EndoscopeFormat, 
                       GL_UNSIGNED_BYTE, ptr);
 
       glActiveTexture(GL_TEXTURE1);
@@ -382,15 +382,15 @@ void vtkFusionRenderer::DeviceRender(void)
         glVertex3f(-0.5, -0.5/this->Aspect[0], -1.0);
       glEnd();
     
-	    // Our calibrated endoscope goes from tracking space into the space defined by OpenCV
-	    // We need to transform into OpenGL's camera space too
+      // Our calibrated endoscope goes from tracking space into the space defined by OpenCV
+      // We need to transform into OpenGL's camera space too
       vtkMatrix4x4::Multiply4x4(OpenCVtoOpenGL, endoscopeTransform, TrackingToOpenGL);
-	  }
+    }
 
     // Save the Endoscope-only image and the tracking data
     if(mbSave)
     {
-	    char filename[80];
+      char filename[80];
 
       glFinish();
 
@@ -399,11 +399,11 @@ void vtkFusionRenderer::DeviceRender(void)
       DestImage = cvCreateImage(cvSize(WIDTH, HEIGHT), IPL_DEPTH_8U, 3);
       DestImageGray = cvCreateImage(cvSize(WIDTH, HEIGHT), IPL_DEPTH_8U, 1);
 
-	    // Save image data
+      // Save image data
       unsigned char *imgptr;
       cvGetRawData(SourceImage, &imgptr);
-	    glReadPixels(orig[0], orig[1], size[0], size[1], GL_RGB, GL_UNSIGNED_BYTE, imgptr);
-	    sprintf(filename, "Endoscope%d.png", mImgNo);
+      glReadPixels(orig[0], orig[1], size[0], size[1], GL_RGB, GL_UNSIGNED_BYTE, imgptr);
+      sprintf(filename, "Endoscope%d.png", mImgNo);
       cvResize(SourceImage, DestImage, CV_INTER_AREA);
       cvSaveImage(filename, DestImage);
 
@@ -411,33 +411,33 @@ void vtkFusionRenderer::DeviceRender(void)
       if(US->GetOutput()->GetNumberOfScalarComponents() == 1)
       {
         cvGetRawData(DestImageGray, &imgptr);
-			  memcpy(imgptr, US->GetOutput()->GetScalarPointer(), WIDTH*HEIGHT);
-			  sprintf(filename, "Ultrasound%d.png", mImgNo);
+        memcpy(imgptr, US->GetOutput()->GetScalarPointer(), WIDTH*HEIGHT);
+        sprintf(filename, "Ultrasound%d.png", mImgNo);
         cvSaveImage(filename, DestImageGray);
       }
       else
       {
         cvGetRawData(DestImage, &imgptr);
-			  memcpy(imgptr, US->GetOutput()->GetScalarPointer(), WIDTH*HEIGHT*3);
-			  sprintf(filename, "Ultrasound%d.png", mImgNo);
+        memcpy(imgptr, US->GetOutput()->GetScalarPointer(), WIDTH*HEIGHT*3);
+        sprintf(filename, "Ultrasound%d.png", mImgNo);
         cvSaveImage(filename, DestImage);
       }
 
       // Save tracking data
-	    sprintf(filename, "WorldToCamera%d.matrix", mImgNo);
-	    FILE *fpMat = fopen(filename, "w");
-	    if(fpMat)
-	    {
-		    for(size_t u = 0; u < 4; ++u)
-		    {
+      sprintf(filename, "WorldToCamera%d.matrix", mImgNo);
+      FILE *fpMat = fopen(filename, "w");
+      if(fpMat)
+      {
+        for(size_t u = 0; u < 4; ++u)
+        {
           for(size_t v = 0; v < 4; ++v)
           {
-		        fprintf(fpMat, "%f ", endoscopeTransform->GetElement(u, v));
-		      }
-		      fprintf(fpMat, "\n");
-	      }
-	      fclose(fpMat);
-	    }
+            fprintf(fpMat, "%f ", endoscopeTransform->GetElement(u, v));
+          }
+          fprintf(fpMat, "\n");
+        }
+        fclose(fpMat);
+      }
     }
 
     /////////////////////////////
@@ -461,9 +461,9 @@ void vtkFusionRenderer::DeviceRender(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glLoadTransposeMatrixd(&TrackingToOpenGL->Element[0][0]);	// Transpose when loading
-																// because opengl stores matrices
-																// in column major order
+    glLoadTransposeMatrixd(&TrackingToOpenGL->Element[0][0]);  // Transpose when loading
+                                // because opengl stores matrices
+                                // in column major order
 
     // Draw the ultrasound fan
     if(US && USTool && MaskReader)
@@ -498,9 +498,9 @@ void vtkFusionRenderer::DeviceRender(void)
 
         // image endpoints in pixel coordinates
         float USImgCoords[4][2] = {{0,0}, {WIDTH,0}, {WIDTH,HEIGHT}, {0,HEIGHT}};
-		
-		    // Draw the ultrasoudn plane
-		    glBegin(GL_QUADS);
+    
+        // Draw the ultrasoudn plane
+        glBegin(GL_QUADS);
         for(int i = 0; i < 4; i++)
         {
           static vtkMatrix4x4 *USTransform = vtkMatrix4x4::New();
@@ -550,15 +550,15 @@ void vtkFusionRenderer::DeviceRender(void)
         // Save the US and Fused images
         if(mbSave)
         {
-		      char filename[80];
+          char filename[80];
 
           glFinish();
 
-			    // Save the fused image
+          // Save the fused image
           unsigned char *imgptr;
           cvGetRawData(SourceImage, &imgptr);
           glReadPixels(orig[0], orig[1], size[0], size[1], GL_RGB, GL_UNSIGNED_BYTE, imgptr);
-			    sprintf(filename, "Fused%d.png", mImgNo);
+          sprintf(filename, "Fused%d.png", mImgNo);
           cvResize(SourceImage, DestImage, CV_INTER_AREA);
           cvSaveImage(filename, DestImage);
         }
@@ -571,7 +571,7 @@ void vtkFusionRenderer::DeviceRender(void)
       }
     }
 
-    // Turn off all the textures	
+    // Turn off all the textures  
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_RECTANGLE_ARB);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);
@@ -585,47 +585,47 @@ void vtkFusionRenderer::DeviceRender(void)
     surfShader->Use();
     glColor4f(1,0,0,1);
 
-	  for(i = 0; i < mMeshes.size(); i++)
+    for(i = 0; i < mMeshes.size(); i++)
     {
-		  int npts;
-		  vtkCellArray *polys = mMeshes[i]->GetPolys();
-		  vtkDataArray *normals = mMeshes[i]->GetPointData()->GetNormals();
-		  vtkPoints *vectors = mMeshes[i]->GetPoints();
+      int npts;
+      vtkCellArray *polys = mMeshes[i]->GetPolys();
+      vtkDataArray *normals = mMeshes[i]->GetPointData()->GetNormals();
+      vtkPoints *vectors = mMeshes[i]->GetPoints();
 
-		  // Load the mesh
-		  polys->InitTraversal();
-		  while(polys->GetNextCell(npts, mPts))
-		  {
-			  glBegin(GL_POLYGON);
-			  for(int j = 0; j < npts; j++)
-			  {
-				  if(normals)
-				  {
-				    glNormal3dv(normals->GetTuple3(mPts[j]));
-				  }
-				  glVertex3dv(vectors->GetPoint(mPts[j]));
-			  }
-			  glEnd();
-		  }
+      // Load the mesh
+      polys->InitTraversal();
+      while(polys->GetNextCell(npts, mPts))
+      {
+        glBegin(GL_POLYGON);
+        for(int j = 0; j < npts; j++)
+        {
+          if(normals)
+          {
+            glNormal3dv(normals->GetTuple3(mPts[j]));
+          }
+          glVertex3dv(vectors->GetPoint(mPts[j]));
+        }
+        glEnd();
+      }
     }
 
     GLSLShader::Release();
 
     if(DebugTool)
-	  {
-		  float pos[4];
-		  DebugTool->GetTransform()->GetPosition(pos); pos[3] = 1.f;
-		  /*printf("Camera Space Position: %f %f %f\n", 
-			  TrackingToOpenGL->MultiplyFloatPoint(pos)[0],
-			  TrackingToOpenGL->MultiplyFloatPoint(pos)[1],
-			  TrackingToOpenGL->MultiplyFloatPoint(pos)[2]);*/
+    {
+      float pos[4];
+      DebugTool->GetTransform()->GetPosition(pos); pos[3] = 1.f;
+      /*printf("Camera Space Position: %f %f %f\n", 
+        TrackingToOpenGL->MultiplyFloatPoint(pos)[0],
+        TrackingToOpenGL->MultiplyFloatPoint(pos)[1],
+        TrackingToOpenGL->MultiplyFloatPoint(pos)[2]);*/
 
-		  glPointSize(5.0);
-		  glColor4f(0,1,0,1);
-		  glBegin(GL_POINTS);
-			  glVertex3fv(pos);
-		  glEnd();
-	  }
+      glPointSize(5.0);
+      glColor4f(0,1,0,1);
+      glBegin(GL_POINTS);
+        glVertex3fv(pos);
+      glEnd();
+    }
 
     glLoadIdentity();
   }
@@ -688,5 +688,5 @@ void vtkFusionRenderer::AddPolyData(int mesh, vtkPolyData *pd)
         return;
     }
 
-	mMeshes[mesh]->DeepCopy(pd);
+  mMeshes[mesh]->DeepCopy(pd);
 }
