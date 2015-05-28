@@ -29,7 +29,7 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
   this->RendererInfoHandler->ReplicateObject(this);
   this->OutputInfoHandler = vtkCudaOutputImageInformationHandler::New();
   this->OutputInfoHandler->ReplicateObject(this);
-  
+
   this->KeyholePlanes = NULL;
   erroredOut = false;
 
@@ -44,7 +44,7 @@ vtkCudaVolumeMapper::vtkCudaVolumeMapper()
   this->volModified = 0;
   this->currFrame = 0;
   this->numFrames = 1;
-  
+
   this->Reinitialize();
 }
 
@@ -224,7 +224,7 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
   this->vtkVolumeMapper::SetInput(input);
   this->VolumeInfoHandler->SetInputData(input, 0);
   this->inputImages.insert( std::pair<int,vtkImageData*>(0,input) );
-  
+
   //pass down to subclass
   this->SetInputInternal( input, 0 );
   if( this->currFrame == 0 ) this->ChangeFrame(0);
@@ -316,7 +316,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkErrorMacro(<< "Error propogation in rendering - cause error flag previously set - MARKER 3");
   }else{
     try{
-      this->InternalRender(renderer, volume, 
+      this->InternalRender(renderer, volume,
                  this->RendererInfoHandler->GetRendererInfo(),
                  this->VolumeInfoHandler->GetVolumeInfo(),
                  this->OutputInfoHandler->GetOutputImageInfo() );
@@ -349,7 +349,7 @@ void vtkCudaVolumeMapper::ComputeMatrices()
 
     // Get the camera from the renderer
     vtkCamera *cam = ren->GetActiveCamera();
-    
+
     // Get the aspect ratio from the renderer. This is needed for the
     // computation of the perspective matrix
     ren->ComputeAspect();
@@ -358,13 +358,13 @@ void vtkCudaVolumeMapper::ComputeMatrices()
     // Keep track of the projection matrix - we'll need it in a couple of places
     // Get the projection matrix. The method is called perspective, but
     // the matrix is valid for perspective and parallel viewing transforms.
-    // Don't replace this with the GetCompositePerspectiveTransformMatrix 
+    // Don't replace this with the GetCompositePerspectiveTransformMatrix
     // because that turns off stereo rendering!!!
     this->PerspectiveTransform->Identity();
     this->PerspectiveTransform->Concatenate(cam->GetProjectionTransformMatrix(aspect[0]/aspect[1], 0.0, 1.0 ));
     this->PerspectiveTransform->Concatenate(cam->GetViewTransformMatrix());
   }
-  
+
   if( vol->GetMTime() > this->volModified ){
     this->volModified = vol->GetMTime();
     flag = true;
@@ -385,15 +385,15 @@ void vtkCudaVolumeMapper::ComputeMatrices()
     extentOrigin[0] = inputOrigin[0] + inputExtent[0]*inputSpacing[0];
     extentOrigin[1] = inputOrigin[1] + inputExtent[2]*inputSpacing[1];
     extentOrigin[2] = inputOrigin[2] + inputExtent[4]*inputSpacing[2];
-    
+
     // Create a transform that will account for the scaling and translation of
     // the scalar data. The is the volume to voxels matrix.
     this->VoxelsTransform->Identity();
     this->VoxelsTransform->Translate( extentOrigin[0], extentOrigin[1], extentOrigin[2] );
     this->VoxelsTransform->Scale( inputSpacing[0], inputSpacing[1], inputSpacing[2] );
 
-    // Get the volume matrix. This is a volume to world matrix right now. 
-    // We'll need to invert it, translate by the origin and scale by the 
+    // Get the volume matrix. This is a volume to world matrix right now.
+    // We'll need to invert it, translate by the origin and scale by the
     // spacing to change it to a world to voxels matrix.
     if(vol->GetUserMatrix() != NULL){
       this->VoxelsToViewTransform->SetMatrix( vol->GetUserMatrix() );
@@ -416,7 +416,7 @@ void vtkCudaVolumeMapper::ComputeMatrices()
   if(flag){
 
     this->Modified();
-    
+
     // Compute the voxels to view transform by concatenating the
     // voxels to world matrix with the projection matrix (world to view)
     this->NextVoxelsToViewTransform->DeepCopy( this->VoxelsToViewTransform );
@@ -468,4 +468,49 @@ void vtkCudaVolumeMapper::SetKeyholePlanes(vtkPlanes *planes){
     this->AddKeyholePlane(plane);
     plane->Delete();
   }
+}
+
+
+void vtkCudaVolumeMapper::SetTint(double RGBA[4]){
+  unsigned char RGBAuc[4];
+  RGBAuc[0] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[0] ) );
+  RGBAuc[1] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[1] ) );
+  RGBAuc[2] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[2] ) );
+  RGBAuc[3] = std::min( 255.0, std::max( 0.0, 255.0*RGBA[3] ) );
+  this->OutputInfoHandler->SetTint(RGBAuc);
+}
+
+void vtkCudaVolumeMapper::GetTint(double RGBA[4]){
+  unsigned char RGBAuc[4];
+  this->OutputInfoHandler->GetTint(RGBAuc);
+  RGBA[0] = (double) RGBAuc[0] / 255.0;
+  RGBA[1] = (double) RGBAuc[1] / 255.0;
+  RGBA[2] = (double) RGBAuc[2] / 255.0;
+  RGBA[3] = (double) RGBAuc[3] / 255.0;
+}
+
+void vtkCudaVolumeMapper::SetTint(float RGBA[4]){
+  unsigned char RGBAuc[4];
+  RGBAuc[0] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[0] ) );
+  RGBAuc[1] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[1] ) );
+  RGBAuc[2] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[2] ) );
+  RGBAuc[3] = std::min( 255.0f, std::max( 0.0f, 255.0f*RGBA[3] ) );
+  this->OutputInfoHandler->SetTint(RGBAuc);
+}
+
+void vtkCudaVolumeMapper::GetTint(float RGBA[4]){
+  unsigned char RGBAuc[4];
+  this->OutputInfoHandler->GetTint(RGBAuc);
+  RGBA[0] = (float) RGBAuc[0] / 255.0f;
+  RGBA[1] = (float) RGBAuc[1] / 255.0f;
+  RGBA[2] = (float) RGBAuc[2] / 255.0f;
+  RGBA[3] = (float) RGBAuc[3] / 255.0f;
+}
+
+void vtkCudaVolumeMapper::SetTint(unsigned char RGBA[4]){
+       this->OutputInfoHandler->SetTint(RGBA);
+}
+
+void vtkCudaVolumeMapper::GetTint(unsigned char RGBA[4]){
+       this->OutputInfoHandler->GetTint(RGBA);
 }

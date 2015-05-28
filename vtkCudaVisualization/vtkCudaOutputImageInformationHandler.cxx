@@ -38,6 +38,10 @@ vtkCudaOutputImageInformationHandler::vtkCudaOutputImageInformationHandler(){
   this->OutputImageInfo.renderType = 1;
   this->oldRenderType = 1;
   this->Reinitialize();
+  this->ImageTint.w = this->OutputImageInfo.tint.w = 0;
+  this->ImageTint.x = this->OutputImageInfo.tint.x = 0;
+  this->ImageTint.y = this->OutputImageInfo.tint.y = 0;
+  this->ImageTint.z = this->OutputImageInfo.tint.z = 0;
 }
 
 
@@ -46,7 +50,7 @@ vtkCudaOutputImageInformationHandler::~vtkCudaOutputImageInformationHandler(){
   this->Displayer->Delete();
 }
 
-void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){  
+void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
   this->MemoryTexture->Delete();
   if(this->OutputImageInfo.numSteps) cudaFree(this->OutputImageInfo.numSteps);
   if(this->OutputImageInfo.excludeStart) cudaFree(this->OutputImageInfo.excludeStart);
@@ -75,7 +79,7 @@ void vtkCudaOutputImageInformationHandler::Deinitialize(int withData){
   this->deviceOutputImage = 0;
 }
 
-void vtkCudaOutputImageInformationHandler::Reinitialize(int withData){  
+void vtkCudaOutputImageInformationHandler::Reinitialize(int withData){
   this->MemoryTexture = vtkCudaMemoryTexture::New();
   this->MemoryTexture->ReplicateObject(this, withData);
 }
@@ -116,7 +120,7 @@ void vtkCudaOutputImageInformationHandler::Prepare(){
 }
 
 void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRenderer* renderer){
-  
+
   this->ReserveGPU();
   cudaStreamSynchronize(*(this->GetStream()));
 
@@ -173,20 +177,20 @@ void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRendere
 
   }else if(this->OutputImageInfo.renderType == 2){
     cudaMemcpyAsync( this->hostOutputImage, this->deviceOutputImage, 4*sizeof(unsigned char)*this->OutputImageInfo.resolution.x*this->OutputImageInfo.resolution.y, cudaMemcpyDeviceToHost, *(this->GetStream()));
-    
+
   }else{
     //error
   }
-  
+
   this->ReserveGPU();
   cudaStreamSynchronize(*(this->GetStream()));
 
 }
 
 void vtkCudaOutputImageInformationHandler::Update(){
-  
+
   if (this->Renderer == 0) return;
-  
+
   // Image size update.
   int *size = this->Renderer->GetSize();
   this->OutputImageInfo.resolution.x = size[0] / this->RenderOutputScaleFactor;
@@ -216,7 +220,7 @@ void vtkCudaOutputImageInformationHandler::Update(){
   cudaMalloc( (void**) &this->OutputImageInfo.excludeStart, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
   if(this->OutputImageInfo.excludeEnd) cudaFree(this->OutputImageInfo.excludeEnd);
   cudaMalloc( (void**) &this->OutputImageInfo.excludeEnd, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
-  
+
   if(this->OutputImageInfo.depthBuffer) cudaFree(this->OutputImageInfo.depthBuffer);
   cudaMalloc( (void**) &this->OutputImageInfo.depthBuffer, sizeof(float)*this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y);
   if(this->OutputImageInfo.maxDepthBuffer) cudaFree(this->OutputImageInfo.maxDepthBuffer);
@@ -248,6 +252,20 @@ void vtkCudaOutputImageInformationHandler::Update(){
     if(this->hostOutputImage) delete this->hostOutputImage;
     this->hostOutputImage = new uchar4[this->OutputImageInfo.resolution.x * this->OutputImageInfo.resolution.y];
   }
-  
 
+
+}
+
+void vtkCudaOutputImageInformationHandler::SetTint(unsigned char RGBA[4]){
+  this->ImageTint.x = this->OutputImageInfo.tint.x = RGBA[0];
+  this->ImageTint.y = this->OutputImageInfo.tint.y = RGBA[1];
+  this->ImageTint.z = this->OutputImageInfo.tint.z = RGBA[2];
+  this->ImageTint.w = this->OutputImageInfo.tint.w = RGBA[3];
+}
+
+void vtkCudaOutputImageInformationHandler::GetTint(unsigned char RGBA[4]){
+  RGBA[0] = this->ImageTint.x;
+  RGBA[1] = this->ImageTint.y;
+  RGBA[2] = this->ImageTint.z;
+  RGBA[3] = this->ImageTint.w;
 }

@@ -20,6 +20,8 @@ class vtkTransform;
 class vtkVolume;
 class vtkImageExtractComponents;
 class vtkCuda2DTransferFunction;
+class vtkCudaDualImageVolumeMapper;
+class vtkCudaDRRImageVolumeMapper;
 class vtkBoxWidget;
 class vtkCommand;
 
@@ -29,7 +31,7 @@ class FluoroPredViz : public QWidget {
 public:
   FluoroPredViz( QWidget* parent = 0 );
   ~FluoroPredViz();
-  
+
   int GetSuccessInit();
 
 public slots:
@@ -81,7 +83,7 @@ private slots:
   void SetTFName();
 
 private:
-  
+
   int SuccessInit;
 
   //fluoro params
@@ -131,7 +133,7 @@ private:
   vtkBoxWidget* ClippingPlanes;
   vtkTransform* ClippingPlanesPosition;
   vtkCommand* ClippingCallback;
-  
+
   //screens
   void ConnectUpPipeline();
   void SetupDRRScreen(QSplitter*);
@@ -141,7 +143,9 @@ private:
   ResizableQVTKWidget*    DRRScreen;
   ResizableQVTKWidget*    SchematicScreen[3];
   vtkVolume*    ImageVolumeDVR;
+  vtkCudaDualImageVolumeMapper* DVRMapper;
   vtkVolume*    ImageVolumeDRR;
+  vtkCudaDRRImageVolumeMapper* DRRMapper;
   QLineEdit*    TFName;
   vtkCuda2DTransferFunction* TransferFunction;
 

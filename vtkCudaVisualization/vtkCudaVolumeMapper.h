@@ -45,7 +45,7 @@ public:
   /** @brief Sets the 3D image data for the first frame in the 4D sequence
    *
    *  @param image The 3D image data.
-   
+
    *  @pre All dataset being rendered are the same size, anatomy, patient and modality
    */
   virtual void SetInput( vtkImageData * image);
@@ -61,7 +61,7 @@ public:
   virtual void SetInputInternal( vtkImageData * image, int frame) = 0;
 
   /** @brief Sets the 3D image data for the first frame in the 4D sequence
-   
+
    */
   virtual vtkImageData * GetInput();
 
@@ -81,7 +81,7 @@ public:
    *  @note This is an internal method used primarily by the rendering pipeline
    */
   void Render(vtkRenderer* renderer, vtkVolume* volume);
-  
+
   /** @brief Perform specific rendering process
    *
    *  @note This is an internal method used primarily by the raycasting hierarchy structure
@@ -96,7 +96,7 @@ public:
    *  @param scaleFactor The factor by which the screen is undersampled in each direction (must be equal or greater than 1.0f, where 1.0f means full sampling)
    */
   void SetRenderOutputScaleFactor(float scaleFactor);
-  
+
   /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
@@ -112,7 +112,7 @@ public:
    *  @param b The shading stop value
    */
   void SetDistanceShadingConstants(float darkness, float a, float b);
-  
+
   /** @brief Changes the next frame to be rendered to the provided frame
    *
    *  @param frame The next frame to be rendered
@@ -145,7 +145,7 @@ public:
    *
    */
   int GetNumberOfFrames() {return this->numFrames;}
-  
+
   /** @brief Gets a 2D image data consisting of the output of the most current render
    *
    *  @pre The volume mapper is currently rendering to vtkImageData (using the UseImageDataRenderering method), else this method returns NULL
@@ -189,6 +189,13 @@ public:
 
   void SetImageFlipped(bool b){this->OutputInfoHandler->SetImageFlipped(b);};
   bool GetImageFlipped(){return this->OutputInfoHandler->GetImageFlipped();};
+
+  void SetTint(double RGBA[4]);
+  void GetTint(double RGBA[4]);
+  void SetTint(float RGBA[4]);
+  void GetTint(float RGBA[4]);
+  void SetTint(unsigned char RGBA[4]);
+  void GetTint(unsigned char RGBA[4]);
 
 protected:
   /** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers

@@ -23,7 +23,7 @@ typedef struct
   uchar4*      deviceOutputImage;    /**< The texture/image that will be textured to the screen on device memory */
 
   unsigned int  renderType;        /**< Whether to render to a CUDA-OpenGL texture (0), or to a display helper (1), or to vtkImageData (2) */
-  
+
   float*      depthBuffer;      /**< The ray termination depth buffer */
   float*      maxDepthBuffer;      /**< The maximum depth buffer used for normalizing depth */
   float*      minDepthBuffer;      /**< The minimum depth buffer used for normalizing depth */
@@ -36,8 +36,9 @@ typedef struct
   float*      numSteps;        /**< The number of sample points on the ray */
   float*      excludeStart;      /**< The starting increment of the exlusion planes */
   float*      excludeEnd;        /**< The ending increment of the exlusion planes */
-  bool      flipped;        /**< Do a left-right flip of the output image */
-  
+  bool        flipped;        /**< Do a left-right flip of the output image */
+  uchar4      tint;           /**< Tint the output image with a particular RGBA */
+
 } cudaOutputImageInformation;
 
 #endif
