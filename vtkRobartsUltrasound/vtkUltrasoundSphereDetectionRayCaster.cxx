@@ -25,6 +25,7 @@
 //#include "vtkImageThreshold.h"
 #include "vtkImageMask.h"
 #include <math.h>
+#include <vtkVersion.h>
 
 vtkCxxRevisionMacro(vtkUltrasoundSphereDetectionRayCaster, "$Revision: 1.1 $");
 vtkStandardNewMacro(vtkUltrasoundSphereDetectionRayCaster);
@@ -99,7 +100,7 @@ static inline int vtkUltraFloor(double x, double &f)
 // point is in indices, relative to inPtr, inPtr should be the pointer to point
 // if edgeValue != 0, then thresholds every pixel above zero to edgeValue
 template <class T>
-static T vtkTrilinearInterpolation(vtkUltrasoundSphereDetectionRayCaster *self, double *point, T *inPtr, int inExt[6], int inInc[3], T edgeValue)
+static T vtkTrilinearInterpolation(vtkUltrasoundSphereDetectionRayCaster *self, double *point, T *inPtr, int inExt[6], vtkIdType inInc[3], T edgeValue)
   {
   int idX0, idY0, idZ0; // floors
   double fx, fy, fz; // fractions
@@ -506,7 +507,13 @@ void vtkUltrasoundSphereDetectionPickEdgePointsAccordingToSeedConnectivity(vtkUl
 
   // setup the extract voi filter
   extractVOI = vtkExtractVOI::New();
+
+#if (VTK_MAJOR_VERSION <= 5)
   extractVOI->SetInput(inData);
+#else
+  extractVOI->SetInputData(inData);
+#endif
+
   extractVOI->SetSampleRate(1,1,1);
 
   // setup the seed connectivity filter

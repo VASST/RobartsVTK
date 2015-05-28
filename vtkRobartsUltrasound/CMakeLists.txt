@@ -2,7 +2,11 @@ PROJECT(ROBARTSULTRASOUND)
 
 SET(KIT RobartsUltrasound)
 SET(UKIT ROBARTSULTRASOUND)
-SET(KIT_LIBS vtkFiltering vtkHybrid )
+if(VTK_LIBRARIES)
+  SET(KIT_LIBS ${VTK_LIBRARIES})
+else()
+  SET(KIT_LIBS vtkFiltering vtkHybrid)
+endif()
 SET(KIT_EXTRA_LIBS)
 
 SET (Kit_SRCS ${Kit_SRCS} 

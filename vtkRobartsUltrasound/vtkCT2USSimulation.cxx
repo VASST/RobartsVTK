@@ -3,6 +3,7 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include <vtkVersion.h>
 
 struct vtkCT2USSimulationInformation {
 
@@ -320,7 +321,16 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
   }
   if(reallocateScalars){
     outData->SetExtent(extent);
-    outData->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+
+#if (VTK_MAJOR_VERSION <= 5)
+	//outData->SetWholeExtent(extent);
+	outData->SetScalarTypeToUnsignedChar();
+	outData->SetNumberOfScalarComponents(3);
+	outData->AllocateScalars();
+#else
+	outData->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+#endif
+
   }
 
   //create an interpolating function out of the volume

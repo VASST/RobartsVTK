@@ -28,6 +28,7 @@
 
 #include "vtkImageAlgorithm.h"
 #include "vtkImageData.h" // makes things a bit easier
+#include <vtkVersion.h>
 
 class VTK_EXPORT vtkUltrasoundSphereDetectionRayCaster : public vtkImageAlgorithm
 {
@@ -38,7 +39,11 @@ public:
   
   // Description:
   // Set the canny edge detection input
+#if (VTK_MAJOR_VERSION <= 5)
   void SetCannyInput (vtkImageData *input) {this->SetInput(0,input);};
+#else
+  void SetCannyInput (vtkImageData *input) {this->SetInputData(0,input);};
+#endif
 
   // Description:
   // Set the seed point (should be approximately in the center of the sphere),
