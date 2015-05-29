@@ -82,7 +82,11 @@ int main(int argc, char** argv){
 
    //assemble the ray caster
    vtkCuda2DVolumeMapper* mapper = vtkCuda2DVolumeMapper::New();
+#if VTK_MAJOR_VERSION <= 5
    mapper->SetInput( imReader1->GetOutput() );
+#else
+   mapper->SetInputConnection(imReader1->GetOutputPort());
+#endif
    mapper->SetFunction(viz);
 
    //assemble the VTK pipeline
@@ -102,7 +106,11 @@ int main(int argc, char** argv){
    vtkBoxWidget* clippingPlanes = vtkBoxWidget::New();
    clippingPlanes->SetInteractor( interactor );
    clippingPlanes->SetPlaceFactor(1.01);
+#if VTK_MAJOR_VERSION <= 5
    clippingPlanes->SetInput( imReader1->GetOutput() );
+#else
+   clippingPlanes->SetInputConnection(imReader1->GetOutputPort());
+#endif
    clippingPlanes->SetDefaultRenderer(renderer);
    clippingPlanes->InsideOutOn();
    clippingPlanes->PlaceWidget();

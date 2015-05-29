@@ -17,7 +17,7 @@
  *      segmentation problems.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
@@ -44,7 +44,7 @@
 vtkStandardNewMacro(vtkHierarchicalMaxFlowSegmentation);
 
 vtkHierarchicalMaxFlowSegmentation::vtkHierarchicalMaxFlowSegmentation(){
-  
+
   //configure the IO ports
   this->SetNumberOfInputPorts(2);
   this->SetNumberOfOutputPorts(1);
@@ -136,7 +136,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetDataInput(int idx, vtkDataObject *in
 
   //we are adding/switching an input, so no need to resort list
   if( input != NULL ){
-  
+
     //if their is no pair in the mapping, create one
     if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() ){
       int portNumber = this->FirstUnusedDataPort;
@@ -157,7 +157,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetDataInput(int idx, vtkDataObject *in
     //if we are the last input, no need to reshuffle
     if(portNumber == this->FirstUnusedDataPort - 1){
       this->SetNthInputConnection(0, portNumber,  0);
-    
+
     //if we are not, move the last input into this spot
     }else{
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
@@ -183,7 +183,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetSmoothnessInput(int idx, vtkDataObje
 {
   //we are adding/switching an input, so no need to resort list
   if( input != NULL ){
-  
+
     //if their is no pair in the mapping, create one
     if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() ){
       int portNumber = this->FirstUnusedSmoothnessPort;
@@ -204,7 +204,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetSmoothnessInput(int idx, vtkDataObje
     //if we are the last input, no need to reshuffle
     if(portNumber == this->FirstUnusedSmoothnessPort - 1){
       this->SetNthInputConnection(1, portNumber,  0);
-    
+
     //if we are not, move the last input into this spot
     }else{
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedSmoothnessPort - 1));
@@ -253,7 +253,7 @@ vtkDataObject *vtkHierarchicalMaxFlowSegmentation::GetOutput(int idx)
 //----------------------------------------------------------------------------
 
 int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
-  
+
   //check to make sure that the hierarchy is specified
   if( !this->Structure ){
     vtkErrorMacro(<<"Hierarchy must be provided.");
@@ -298,7 +298,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
         return -1;
       }
     }
-    
+
     //check validity of data terms
     if( this->InputDataPortMapping.find(node) != this->InputDataPortMapping.end() ){
       int inputPortNumber = this->InputDataPortMapping[node];
@@ -315,7 +315,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
           vtkErrorMacro(<<"Data prior must be non-negative.");
           return -1;
         }
-      
+
         //check to make sure that the sizes are consistant
         if( Extent[0] == -1 ){
           CurrImage->GetExtent(Extent);
@@ -380,7 +380,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestInformation(
   int Extent[6];
   int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
   if( result || NumNodes == 0 ) return -1;
-  
+
   //set the number of output ports
   outputVector->SetNumberOfInformationObjects(NumLeaves);
   this->SetNumberOfOutputPorts(NumLeaves);
@@ -409,10 +409,10 @@ int vtkHierarchicalMaxFlowSegmentation::RequestUpdateExtent(
   return 1;
 }
 
-int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request, 
-              vtkInformationVector **inputVector, 
+int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
+              vtkInformationVector **inputVector,
               vtkInformationVector *outputVector){
-                
+
   //check input consistancy
   int Extent[6];
   int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
@@ -465,7 +465,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
     }
   }
   iterator->Delete();
-  
+
   //get the smoothness term buffers
   this->leafSmoothnessTermBuffers = new float* [NumLeaves];
   this->branchSmoothnessTermBuffers = new float* [NumBranches];
@@ -483,7 +483,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
       leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
     else
       branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
-    
+
     // add the smoothness buffer in as read only
     if( CurrImage ){
       TotalNumberOfBuffers++;
@@ -502,7 +502,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
     leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
-  
+
   //convert smoothness constants mapping to two mappings
   iterator = vtkTreeDFSIterator::New();
   iterator->SetTree(this->Structure);
@@ -523,7 +523,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
         branchSmoothnessConstants[this->BranchMap[node]] = 1.0f;
   }
   iterator->Delete();
-  
+
   //if verbose, print progress
   if( this->Debug ){
     vtkDebugMacro(<<"Starting CPU buffer acquisition");
@@ -633,7 +633,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
       bufferNameIt++;
     }
   }
-  
+
   //if verbose, print progress
   if( this->Debug ){
     vtkDebugMacro(<<"Relate parent sink with child source buffer pointers.");
@@ -694,16 +694,20 @@ int vtkHierarchicalMaxFlowSegmentation::RequestDataObject(
   if (!inInfo)
     return 0;
   vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkImageData::DATA_OBJECT()));
- 
+
   if (input) {
     for(int i=0; i < outputVector->GetNumberOfInformationObjects(); ++i) {
       vtkInformation* info = outputVector->GetInformationObject(0);
       vtkDataSet *output = vtkDataSet::SafeDownCast(
       info->Get(vtkDataObject::DATA_OBJECT()));
- 
+
       if (!output || !output->IsA(input->GetClassName())) {
         vtkImageData* newOutput = input->NewInstance();
+#if (VTK_MAJOR_VERSION <= 5)
         newOutput->SetPipelineInformation(info);
+#else
+        newOutput->CopyInformationFromPipeline(info);
+#endif
         newOutput->Delete();
       }
       return 1;
@@ -777,7 +781,7 @@ int vtkHierarchicalMaxFlowSegmentation::RunAlgorithm(){
 
 void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
-  
+
   //clear own label buffer if not a leaf
   if( NumKids > 0 )
     zeroOutBuffer(branchLabelBuffers[BranchMap[currNode]],VolumeSize);
@@ -794,14 +798,14 @@ void vtkHierarchicalMaxFlowSegmentation::PropogateLabels( vtkIdType currNode ){
   float* currVal =   this->Structure->IsLeaf(currNode) ?
     currVal = this->leafLabelBuffers[this->LeafMap[currNode]] :
     currVal = this->branchLabelBuffers[this->BranchMap[currNode]];
-  
+
   //sum value into parent (if parent exists and is not the root)
   sumBuffer(branchLabelBuffers[parentIndex],currVal,VolumeSize);
-  
+
 }
 
 void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
-  
+
   //get number of kids
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
 
@@ -838,13 +842,13 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
     ghmf_applyStep(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
              leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
              VX, VY, VZ, VolumeSize);
-    
+
     //std::cout << currNode << "\t Find Projection multiplier" << std::endl;
     ghmf_computeFlowMag(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
              leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
              leafSmoothnessTermBuffers[LeafMap[currNode]], leafSmoothnessConstants[LeafMap[currNode]],
              VX, VY, VZ, VolumeSize);
-    
+
     //project onto set and recompute the divergence
     //std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
     ghmf_projectOntoSet(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
@@ -852,12 +856,12 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
              VX, VY, VZ, VolumeSize);
 
   }else if( isBranch ){
-    
+
     //std::cout << currNode << "\t Find gradient descent step size" << std::endl;
     ghmf_flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchIncBuffers[BranchMap[currNode]],
                 branchDivBuffers[BranchMap[currNode]], branchLabelBuffers[BranchMap[currNode]],
                 StepSize, CC,VolumeSize);
-    
+
     //std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
     ghmf_applyStep(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
              branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
@@ -869,7 +873,7 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
              branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
              branchSmoothnessTermBuffers[BranchMap[currNode]], branchSmoothnessConstants[BranchMap[currNode]],
              VX, VY, VZ, VolumeSize);
-    
+
     //project onto set and recompute the divergence
     ghmf_projectOntoSet(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
              branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
@@ -894,7 +898,7 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
     //std::cout << currNode << "\t Update sink flow" << std::endl;
     divAndStoreBuffer(branchWorkingBuffers[BranchMap[currNode]],branchSinkBuffers[BranchMap[currNode]],
       (float)(NumKids+1),VolumeSize);
-    
+
   }
 
   //R  : Divide working buffer by N and store in sink buffer
@@ -941,7 +945,7 @@ void vtkHierarchicalMaxFlowSegmentation::SolveMaxFlow( vtkIdType currNode ){
 void vtkHierarchicalMaxFlowSegmentation::UpdateLabel( vtkIdType node ){
   int NumKids = this->Structure->GetNumberOfChildren(node);
   if( this->Structure->GetRoot() == node ) return;
-  
+
   //std::cout << node << "\t Update labels" << std::endl;
   if( NumKids == 0 )
     updateLabel(leafSinkBuffers[LeafMap[node]], leafIncBuffers[LeafMap[node]],

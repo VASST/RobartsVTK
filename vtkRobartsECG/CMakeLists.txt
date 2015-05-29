@@ -2,7 +2,11 @@ PROJECT(ROBARTSECG)
 
 SET(KIT RobartsECG)
 SET(UKIT ROBARTSECG)
-SET(KIT_LIBS vtkHybrid)
+if(VTK_LIBRARIES)
+  SET(KIT_LIBS ${VTK_LIBRARIES})
+else()
+  SET(KIT_LIBS vtkHybrid)
+endif()
 SET(KIT_EXTRA_LIBS)
 
 ###### Base signal box ######
