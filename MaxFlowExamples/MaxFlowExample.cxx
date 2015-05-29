@@ -17,8 +17,10 @@
 #include "vtkFloatArray.h"
 #include "vtkDataSetAttributes.h"
 
+#include <vtkSmartPointer.h>
+
 int main(int argc, char** argv){
-  vtkMutableDirectedGraph* mut = vtkMutableDirectedGraph::New();
+  vtkSmartPointer<vtkMutableDirectedGraph> mut = vtkSmartPointer<vtkMutableDirectedGraph>::New();
   vtkIdType source = mut->AddVertex();
   vtkIdType bkg = mut->AddVertex();
   vtkIdType c1 = mut->AddVertex();
@@ -27,7 +29,7 @@ int main(int argc, char** argv){
   vtkIdType l2 = mut->AddVertex();
   vtkIdType l3 = mut->AddVertex();
   
-  vtkFloatArray* Weights = vtkFloatArray::New();
+  vtkSmartPointer<vtkFloatArray> Weights = vtkSmartPointer<vtkFloatArray>::New();
   Weights->SetName("Weights");
   Weights->InsertValue((mut->AddEdge(source,bkg)).Id,1.0f);
   Weights->InsertValue((mut->AddEdge(source,c1)).Id,1.0f);
@@ -45,45 +47,46 @@ int main(int argc, char** argv){
   //vtkIdType l2 = mut->AddChild(c2);
   //vtkIdType l3 = mut->AddChild(c2);
 
-  vtkRootedDirectedAcyclicGraph* DAG = vtkRootedDirectedAcyclicGraph::New();
+  vtkSmartPointer<vtkRootedDirectedAcyclicGraph> DAG = vtkSmartPointer<vtkRootedDirectedAcyclicGraph>::New();
   DAG->CheckedShallowCopy(mut);
   //DAG->GetEdgeData()->AddArray(Weights);
 
-  vtkBMPReader* cost0 = vtkBMPReader::New();
+  vtkSmartPointer<vtkBMPReader> cost0 = vtkSmartPointer<vtkBMPReader>::New();
   cost0->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\cost0.bmp");
-  vtkBMPReader* cost1 = vtkBMPReader::New();
+  vtkSmartPointer<vtkBMPReader> cost1 = vtkSmartPointer<vtkBMPReader>::New();
   cost1->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\cost1.bmp");
-  vtkBMPReader* cost2 = vtkBMPReader::New();
+  vtkSmartPointer<vtkBMPReader> cost2 = vtkSmartPointer<vtkBMPReader>::New();
   cost2->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\cost2.bmp");
-  vtkBMPReader* cost3 = vtkBMPReader::New();
+  vtkSmartPointer<vtkBMPReader> cost3 = vtkSmartPointer<vtkBMPReader>::New();
   cost3->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\cost3.bmp");
 
-  vtkImageExtractComponents* extract0 = vtkImageExtractComponents::New();
+  vtkSmartPointer<vtkImageExtractComponents> extract0 = vtkSmartPointer<vtkImageExtractComponents>::New();
   extract0->SetComponents(0);
-  extract0->SetInput(cost0->GetOutput());
-  vtkImageCast* cast0 = vtkImageCast::New();
+  extract0->SetInputConnection(cost0->GetOutputPort());
+  vtkSmartPointer<vtkImageCast> cast0 = vtkSmartPointer<vtkImageCast>::New();
   cast0->SetOutputScalarTypeToFloat();
-  cast0->SetInput(extract0->GetOutput());
-  vtkImageExtractComponents* extract1 = vtkImageExtractComponents::New();
+  cast0->SetInputConnection(extract0->GetOutputPort());
+  vtkSmartPointer<vtkImageExtractComponents> extract1 = vtkSmartPointer<vtkImageExtractComponents>::New();
   extract1->SetComponents(0);
-  extract1->SetInput(cost1->GetOutput());
-  vtkImageCast* cast1 = vtkImageCast::New();
+  extract1->SetInputConnection(cost1->GetOutputPort());
+  vtkSmartPointer<vtkImageCast> cast1 = vtkSmartPointer<vtkImageCast>::New();
   cast1->SetOutputScalarTypeToFloat();
-  cast1->SetInput(extract1->GetOutput());
-  vtkImageExtractComponents* extract2 = vtkImageExtractComponents::New();
+  cast1->SetInputConnection(extract1->GetOutputPort());
+  vtkSmartPointer<vtkImageExtractComponents> extract2 = vtkSmartPointer<vtkImageExtractComponents>::New();
   extract2->SetComponents(0);
-  extract2->SetInput(cost2->GetOutput());
-  vtkImageCast* cast2 = vtkImageCast::New();
+  extract2->SetInputConnection(cost2->GetOutputPort());
+  vtkSmartPointer<vtkImageCast> cast2 = vtkSmartPointer<vtkImageCast>::New();
   cast2->SetOutputScalarTypeToFloat();
-  cast2->SetInput(extract2->GetOutput());
-  vtkImageExtractComponents* extract3 = vtkImageExtractComponents::New();
+  cast2->SetInputConnection(extract2->GetOutputPort());
+  vtkSmartPointer<vtkImageExtractComponents> extract3 = vtkSmartPointer<vtkImageExtractComponents>::New();
   extract3->SetComponents(0);
-  extract3->SetInput(cost3->GetOutput());
-  vtkImageCast* cast3 = vtkImageCast::New();
+  extract3->SetInputConnection(cost3->GetOutputPort());
+  vtkSmartPointer<vtkImageCast> cast3 = vtkSmartPointer<vtkImageCast>::New();
   cast3->SetOutputScalarTypeToFloat();
-  cast3->SetInput(extract3->GetOutput());
+  cast3->SetInputConnection(extract3->GetOutputPort());
 
-  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation* dagmf = vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::New();
+  vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
+	  vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation>::New();
   dagmf->SetStructure(DAG);
   dagmf->SetDataInput(bkg,cast0->GetOutput());
   dagmf->SetDataInput(l1,cast1->GetOutput());
@@ -106,57 +109,52 @@ int main(int argc, char** argv){
   dagmf->SetNumberOfIterations(100);
   dagmf->Update();
   
-  vtkImageData* test0 = vtkImageData::New();
+  vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
   test0->ShallowCopy((vtkImageData*) dagmf->GetOutput(bkg));
-  vtkImageData* test1 = vtkImageData::New();
+  vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();
   test1->ShallowCopy((vtkImageData*) dagmf->GetOutput(l1));
-  vtkImageData* test2 = vtkImageData::New();
+  vtkSmartPointer<vtkImageData> test2 = vtkSmartPointer<vtkImageData>::New();
   test2->ShallowCopy((vtkImageData*) dagmf->GetOutput(l2));
-  vtkImageData* test3 = vtkImageData::New();
+  vtkSmartPointer<vtkImageData> test3 = vtkSmartPointer<vtkImageData>::New();
   test3->ShallowCopy((vtkImageData*) dagmf->GetOutput(l3));
 
-  vtkMetaImageWriter* writer = vtkMetaImageWriter::New();
-  writer->SetInput(test0);
+  vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
+#if (VTK_MAJOR_VERSION <= 5)
+	writer->SetInput(test0);
+#else
+	writer->SetInputData(test0);
+#endif
   writer->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\l0.mhd");
   writer->SetRAWFileName("E:\\jbaxter\\data\\DAGMF_testing\\l0.raw");
   writer->Update();
   writer->Write();
-  writer->SetInput(test1);
+#if (VTK_MAJOR_VERSION <= 5)
+	writer->SetInput(test1);
+#else
+	writer->SetInputData(test1);
+#endif
   writer->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\l1.mhd");
   writer->SetRAWFileName("E:\\jbaxter\\data\\DAGMF_testing\\l1.raw");
   writer->Update();
   writer->Write();
-  writer->SetInput(test2);
+#if (VTK_MAJOR_VERSION <= 5)
+	writer->SetInput(test2);
+#else
+	writer->SetInputData(test2);
+#endif
   writer->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\l2.mhd");
   writer->SetRAWFileName("E:\\jbaxter\\data\\DAGMF_testing\\l2.raw");
   writer->Update();
   writer->Write();
-  writer->SetInput(test3);
+#if (VTK_MAJOR_VERSION <= 5)
+	writer->SetInput(test3);
+#else
+	writer->SetInputData(test3);
+#endif
   writer->SetFileName("E:\\jbaxter\\data\\DAGMF_testing\\l3.mhd");
   writer->SetRAWFileName("E:\\jbaxter\\data\\DAGMF_testing\\l3.raw");
   writer->Update();
   writer->Write();
-  writer->Delete();
 
-  test0->Delete();
-  test1->Delete();
-  test2->Delete();
-  test3->Delete();
-  dagmf->Delete();
-  cost0->Delete();
-  cost1->Delete();
-  cost2->Delete();
-  cost3->Delete();
-  cast0->Delete();
-  cast1->Delete();
-  cast2->Delete();
-  cast3->Delete();
-  extract0->Delete();
-  extract1->Delete();
-  extract2->Delete();
-  extract3->Delete();
-  DAG->Delete();
-  mut->Delete();
-  Weights->Delete();
   return 0;
 }
