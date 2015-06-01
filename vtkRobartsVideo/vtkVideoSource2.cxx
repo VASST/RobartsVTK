@@ -90,7 +90,9 @@
 // Finally, when Execute() is reading from the frame buffer it must do
 // so from within a mutex lock.  Otherwise tearing artifacts might result.
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkVideoSource2, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkVideoSource2);
 
 #if ( _MSC_VER >= 1300 ) // Visual studio .NET
@@ -1213,7 +1215,11 @@ void vtkVideoSource2::WriteFramesToFile(vtkImageWriter *writer, const char *summ
     image = this->GetOutput();
     sprintf(fileName, filePattern, filePrefix, i);
     writer->SetFileName(fileName);
-    writer->SetInputDataObject(image);
+#if (VTK_MAJOR_VERSION <= 5)
+    writer->SetInput(image);
+#else
+	writer->SetInputDataObject(image);
+#endif
     writer->Write();
 
     // write a line in the summary file
