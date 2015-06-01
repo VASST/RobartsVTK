@@ -3,7 +3,11 @@ PROJECT(ROBARTSVIDEO)
 SET(KIT RobartsVideo)
 SET(UKIT RobartsVideo)
 SET(KIT_PYTHON_LIBS vtkHybridPythonD RobartsVideoPythonD)
-SET(KIT_LIBS vtkHybrid)
+if(VTK_LIBRARIES)
+  SET(KIT_LIBS ${VTK_LIBRARIES})
+else()
+  SET(KIT_LIBS vtkHybrid)
+endif()
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS

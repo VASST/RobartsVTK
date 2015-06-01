@@ -92,12 +92,20 @@ vtkRenderer* vtkVuzixARScene::GetRightEyeView(){
 }
 
 void vtkVuzixARScene::SetLeftEyeSource( vtkImageData* eye ){
+#if (VTK_MAJOR_VERSION <= 5)
   this->leftEyeTexture->SetInput( (vtkDataObject*) eye );
+#else
+  this->leftEyeTexture->SetInputData( (vtkDataObject*) eye );
+#endif
   leftEyePhysicalWorld = eye;
 }
 
-void vtkVuzixARScene::SetRightEyeSource( vtkImageData* eye ){
-  this->rightEyeTexture->SetInput( (vtkDataObject*) eye );
+void vtkVuzixARScene::SetRightEyeSource( vtkImageData* eye ){  
+#if (VTK_MAJOR_VERSION <= 5)
+	this->rightEyeTexture->SetInput( (vtkDataObject*) eye );
+#else
+	this->rightEyeTexture->SetInputData( (vtkDataObject*) eye );
+#endif
   rightEyePhysicalWorld = eye;
 
 }

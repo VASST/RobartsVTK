@@ -90,7 +90,9 @@
 // Finally, when Execute() is reading from the frame buffer it must do
 // so from within a mutex lock.  Otherwise tearing artifacts might result.
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkVideoSource2, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkVideoSource2);
 
 #if ( _MSC_VER >= 1300 ) // Visual studio .NET
@@ -1104,6 +1106,7 @@ int vtkVideoSource2::RequestInformation(
 // The Execute method is fairly complex, so I would not recommend overriding
 // it unless you have to.  Override the UnpackRasterLine() method in
 // vtkVideoFrame2 instead.
+#if (VTK_MAJOR_VERSION <= 5)
 int vtkVideoSource2::RequestData(
   vtkInformation *vtkNotUsed(request),
   vtkInformationVector **vtkNotUsed(inputVector),
@@ -1112,6 +1115,20 @@ int vtkVideoSource2::RequestData(
   // the output data
   vtkImageData *data = this->AllocateOutputData(this->GetOutput());
   int i;
+#else
+int vtkVideoSource2::RequestData(
+  vtkInformation *vtkNotUsed(request),
+  vtkInformationVector **vtkNotUsed(inputVector),
+  vtkInformationVector *outputVector)
+{
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkImageData *output = vtkImageData::SafeDownCast(
+    outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  // the output data
+  vtkImageData *data = this->AllocateOutputData(output, outInfo);
+  int i;
+#endif
+
 
   // extent of the output, will later be clipped in Z to a single frame
   int outputExtent[6];
@@ -1213,7 +1230,11 @@ void vtkVideoSource2::WriteFramesToFile(vtkImageWriter *writer, const char *summ
     image = this->GetOutput();
     sprintf(fileName, filePattern, filePrefix, i);
     writer->SetFileName(fileName);
-    writer->SetInputDataObject(image);
+#if (VTK_MAJOR_VERSION <= 5)
+    writer->SetInput(image);
+#else
+	writer->SetInputDataObject(image);
+#endif
     writer->Write();
 
     // write a line in the summary file

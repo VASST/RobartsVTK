@@ -399,7 +399,11 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
     reader->SetFileName(filename);
     reader->Update();
     reader->Modified();
+#if (VTK_MAJOR_VERSION <= 5)
     reader->GetOutput()->Update();
+#else
+    reader->Update();
+#endif
   } 
   else 
   {
