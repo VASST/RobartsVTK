@@ -622,12 +622,25 @@ int vtkSonixVideoSource::RequestInformation(
 
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 int vtkSonixVideoSource::RequestData(
   vtkInformation *vtkNotUsed(request),
   vtkInformationVector **vtkNotUsed(inputVector),
   vtkInformationVector *vtkNotUsed(outputVector))
 {
   vtkImageData *data = this->AllocateOutputData(this->GetOutput());
+#else
+int vtkSonixVideoSource::RequestData(
+  vtkInformation *vtkNotUsed(request),
+  vtkInformationVector **vtkNotUsed(inputVector),
+  vtkInformationVector *outputVector)
+{
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkImageData *output = vtkImageData::SafeDownCast(
+  outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  // the output data
+  vtkImageData *data = this->AllocateOutputData(output, outInfo);
+#endif
   int i,j;
 
   int outputExtent[6];     // will later be clipped in Z to a single frame
