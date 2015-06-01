@@ -1106,6 +1106,7 @@ int vtkVideoSource2::RequestInformation(
 // The Execute method is fairly complex, so I would not recommend overriding
 // it unless you have to.  Override the UnpackRasterLine() method in
 // vtkVideoFrame2 instead.
+#if (VTK_MAJOR_VERSION <= 5)
 int vtkVideoSource2::RequestData(
   vtkInformation *vtkNotUsed(request),
   vtkInformationVector **vtkNotUsed(inputVector),
@@ -1114,6 +1115,20 @@ int vtkVideoSource2::RequestData(
   // the output data
   vtkImageData *data = this->AllocateOutputData(this->GetOutput());
   int i;
+#else
+int vtkVideoSource2::RequestData(
+  vtkInformation *vtkNotUsed(request),
+  vtkInformationVector **vtkNotUsed(inputVector),
+  vtkInformationVector *outputVector)
+{
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkImageData *output = vtkImageData::SafeDownCast(
+    outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  // the output data
+  vtkImageData *data = this->AllocateOutputData(output, outInfo);
+  int i;
+#endif
+
 
   // extent of the output, will later be clipped in Z to a single frame
   int outputExtent[6];
