@@ -2,7 +2,7 @@
 #
 # RobartsVTKConfig.cmake - CMake configuration file for external projects.
 #
-# This file is configured by RobartsVTK and used by the UseRobartsVTK.cmake 
+# This file is configured by RobartsVTK and used by the UseRobartsVTK.cmake
 # module to load RobartsVTK's settings for an external project.
 
 # The source dir
@@ -58,8 +58,3 @@ SET (RobartsVTK_USE_MWIERZ     "@RobartsVTK_USE_MWIERZ@")
 SET (RobartsVTK_USE_CUDA     "@RobartsVTK_USE_CUDA@")
 SET (RobartsVTK_USE_ANIS     "@RobartsVTK_USE_ANIS@")
 SET (RobartsVTK_USE_ROBARTSULTRASOUND  "@RobartsVTK_USE_ROBARTSULTRASOUND@")
-
-# The library dependencies file.
-IF(NOT RobartsVTK_NO_LIBRARY_DEPENDS)
-  INCLUDE("@RobartsVTK_LIBRARY_DEPENDS_FILE@")
-ENDIF(NOT RobartsVTK_NO_LIBRARY_DEPENDS)
