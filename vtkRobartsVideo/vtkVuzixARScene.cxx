@@ -1,5 +1,6 @@
 #include "vtkVuzixARScene.h"
 #include "vtkObjectFactory.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkVuzixARScene);
 
@@ -100,7 +101,7 @@ void vtkVuzixARScene::SetLeftEyeSource( vtkImageData* eye ){
   leftEyePhysicalWorld = eye;
 }
 
-void vtkVuzixARScene::SetRightEyeSource( vtkImageData* eye ){  
+void vtkVuzixARScene::SetRightEyeSource( vtkImageData* eye ){
 #if (VTK_MAJOR_VERSION <= 5)
 	this->rightEyeTexture->SetInput( (vtkDataObject*) eye );
 #else
@@ -124,7 +125,7 @@ void vtkVuzixARScene::SetLeftEyeTransform( vtkTransform* t){
   leftFocalPoint->Identity();
   leftFocalPoint->Translate( 0, 0, IdealLeftFocus );
   leftFocalPoint->Concatenate( deviceToLeftEye );
-  
+
   //find the viewUp vector and position of the left camera
   double* leftViewUp = deviceToLeftEye->TransformDoublePoint(0,-1,0);
   double leftPosition[3];
@@ -148,7 +149,7 @@ void vtkVuzixARScene::SetRightEyeTransform( vtkTransform* t){
   rightFocalPoint->Identity();
   rightFocalPoint->Translate( 0, 0, IdealRightFocus );
   rightFocalPoint->Concatenate( deviceToRightEye );
-  
+
   //find the viewUp vector and position of the right camera
   double* rightViewUp = deviceToRightEye->TransformDoublePoint(0,-1,0);
   double rightPosition[3];
@@ -174,7 +175,7 @@ void vtkVuzixARScene::SetLeftEyePixelwiseIntrinsicParameters(  double fx,
   leftFocalPoint->Identity();
   leftFocalPoint->Translate( 0, 0, IdealLeftFocus );
   leftFocalPoint->Concatenate( deviceToLeftEye );
-  
+
   //find the viewUp vector and position of the left camera
   double* leftViewUp = deviceToLeftEye->TransformDoublePoint(0,-1,0);
   double leftPosition[3];
@@ -200,7 +201,7 @@ void vtkVuzixARScene::SetRightEyePixelwiseIntrinsicParameters(  double fx,
   rightFocalPoint->Identity();
   rightFocalPoint->Translate( 0, 0, IdealRightFocus );
   rightFocalPoint->Concatenate( deviceToRightEye );
-  
+
   //find the viewUp vector and position of the right camera
   double* rightViewUp = deviceToRightEye->TransformDoublePoint(0,-1,0);
   double rightPosition[3];

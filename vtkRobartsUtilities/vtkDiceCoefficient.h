@@ -22,6 +22,7 @@
 
 #include <float.h>
 #include <limits.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkDiceCoefficient : public vtkThreadedImageAlgorithm
 {

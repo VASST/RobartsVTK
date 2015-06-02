@@ -66,9 +66,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #pragma warning (pop)
 #endif
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkSonixVideoSource, "$Revision: 1.0$");
+#endif
 //vtkStandardNewMacro(vtkWin32VideoSource);
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -85,11 +87,11 @@ vtkSonixVideoSourceCleanup vtkSonixVideoSource::Cleanup;
 #  define vtkGetWindowLong GetWindowLongPtr
 #  define vtkSetWindowLong SetWindowLongPtr
 #  define vtkGWL_USERDATA GWLP_USERDATA
-#else // regular Visual studio 
+#else // regular Visual studio
 #  define vtkGetWindowLong GetWindowLong
 #  define vtkSetWindowLong SetWindowLong
 #  define vtkGWL_USERDATA GWL_USERDATA
-#endif // 
+#endif //
 
 vtkSonixVideoSourceCleanup::vtkSonixVideoSourceCleanup()
 {
@@ -110,26 +112,26 @@ vtkSonixVideoSource::vtkSonixVideoSource()
   this->FrameSize[0] = 800;
   this->FrameSize[1] = 600;
   this->FrameSize[2] = 1;
-  
+
   this->SonixHostIP = "";
   this->FrameRate = 13; // in fps
   this->Frequency = 1; //in Mhz
   this->Depth = 150; //in mm
-  this->AcquisitionDataType = 0x00000004; //corresponds to type: BPost 8-bit  
-  this->ImagingMode = 0; //corresponds to BMode imaging  
+  this->AcquisitionDataType = 0x00000004; //corresponds to type: BPost 8-bit
+  this->ImagingMode = 0; //corresponds to BMode imaging
 
-  //note, input data i.e. data from sonix machine is always uncompressed rgb 
+  //note, input data i.e. data from sonix machine is always uncompressed rgb
   //so, by default we set the output format as rgb
   this->OutputFormat = VTK_LUMINANCE;
   this->NumberOfScalarComponents = 1;
   this->FrameBufferBitsPerPixel = 8;
   this->FlipFrames = 1;
-  this->FrameBufferRowAlignment = 1;  
+  this->FrameBufferRowAlignment = 1;
 }
 
 //----------------------------------------------------------------------------
 vtkSonixVideoSource::~vtkSonixVideoSource()
-{ 
+{
   this->vtkSonixVideoSource::ReleaseSystemResources();
   delete this->ult;
 }
@@ -150,10 +152,10 @@ vtkSonixVideoSource* vtkSonixVideoSource::GetInstance()
   if(!vtkSonixVideoSource::Instance)
     {
     // Try the factory first
-   vtkSonixVideoSource::Instance = (vtkSonixVideoSource*)vtkObjectFactory::CreateInstance("vtkSonixVideoSource");    
+   vtkSonixVideoSource::Instance = (vtkSonixVideoSource*)vtkObjectFactory::CreateInstance("vtkSonixVideoSource");
    if(!vtkSonixVideoSource::Instance)
      {
-     vtkSonixVideoSource::Instance = new vtkSonixVideoSource();     
+     vtkSonixVideoSource::Instance = new vtkSonixVideoSource();
      }
    if(!vtkSonixVideoSource::Instance)
      {
@@ -191,32 +193,32 @@ void vtkSonixVideoSource::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Imaging mode: " << this->ImagingMode << "\n";
   os << indent << "Frequency: " << this->Frequency << "MHz\n";
   os << indent << "Frame rate: " << this->FrameRate << "fps\n";
-  
+
 }
 
 
 // the callback function used when there is a new frame of data received
 bool vtkSonixVideoSource::vtkSonixVideoSourceNewFrameCallback(void * data, int type, int sz, bool cine, int frmnum)
-{    
+{
     if(!data || !sz)
     {
         printf("Error: no actual frame data received\n");
         return false;
     }
-    
+
     /*if(BUFFERSIZE < sz)
     {
         printf("Error: frame too large for current buffer\n");
         return false;
     }
-      */  
+      */
     //printf("[Rx] type:(%d) size:(%d) cine:(%d) tag:(%d)\n", type, sz, cine, ((int*)data)[0]);
 
     // make sure we dont do an operation that takes longer than the acquisition frame rate
     //memcpy(gBuffer, data, sz);
   if(data)
     {
-    vtkSonixVideoSource::GetInstance()->LocalInternalGrab(data, type, sz, cine, frmnum);    
+    vtkSonixVideoSource::GetInstance()->LocalInternalGrab(data, type, sz, cine, frmnum);
     }
     return true;;
 }
@@ -231,8 +233,8 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
   // 2) Do time stamping
   // 3) decode the data according to type
   // 4) copy data to the local vtk frame buffer
-    
-  
+
+
   // get the pointer to data
   // use the information about data type and frmnum to do cross checking that you are maintaining correct frame index, & receiving
   // expected data type
@@ -240,7 +242,7 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
 
   // get a thread lock on the frame buffer
   this->FrameBufferMutex->Lock();
- 
+
   //error check for data type, size
   if ((uData)type!= (uData)this->AcquisitionDataType)
     {
@@ -273,9 +275,9 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
     this->StartTimeStamp = this->FrameBufferTimeStamps[index];
     }
 
-  
+
   // 3) read the data, based on the data type and clip region information, which is reflected in frame buffer extents
-  // this is necessary as there would be cases when there is a clip region defined i.e. only data from the desired extents should be copied 
+  // this is necessary as there would be cases when there is a clip region defined i.e. only data from the desired extents should be copied
   // to the local buffer, which demands necessary advancement of deviceDataPtr
 
 
@@ -286,19 +288,19 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
   // do what?
     }
 
-    
+
   // get the pointer to actual incoming data on to a local pointer
   unsigned char *deviceDataPtr = static_cast<unsigned char*>(dataPtr);
 
   // get the pointer to the correct location in the frame buffer, where this data needs to be copied
   unsigned char *frameBufferPtr = (unsigned char *)((reinterpret_cast<vtkUnsignedCharArray*>(this->FrameBuffer[index]))->GetPointer(0));
 
-   
+
   int outBytesPerRow = ((this->FrameBufferExtent[1]- this->FrameBufferExtent[0]+1)* this->FrameBufferBitsPerPixel + 7)/8;
   outBytesPerRow += outBytesPerRow % this->FrameBufferRowAlignment;
 
   int inBytesPerRow = this->FrameSize[0] * this->FrameBufferBitsPerPixel/8;
-  
+
   int rows = this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1;
 
   //check if the data received has the same size in bytes as expected
@@ -309,7 +311,7 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
     }
 
   // for frame containing FC (frame count) in the beginning for data coming from cine, jump 2 bytes
-  if(    (type == udtBPre) || (type == udtRF) 
+  if(    (type == udtBPre) || (type == udtRF)
     ||  (type == udtMPre) || (type == udtPWRF)
     ||  (type == udtColorRF)
     )
@@ -335,7 +337,7 @@ void vtkSonixVideoSource::LocalInternalGrab(void* dataPtr, int type, int sz, boo
     deviceDataPtr += inBytesPerRow;
     }
     }
- 
+
   this->Modified();
 
   this->FrameBufferMutex->Unlock();
@@ -358,11 +360,11 @@ void vtkSonixVideoSource::Initialize()
     return;
     }
 
-   
+
   // 1) connect to sonix machine.
   if(!this->ult->connect(this->SonixHostIP))
     {
-  char *err = new char[256]; 
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
   vtkErrorMacro(<< "Initialize: couldn't connect to Sonix RP"<<" (" << err << ")");
@@ -373,7 +375,7 @@ void vtkSonixVideoSource::Initialize()
   // 2) set the imaging mode
   if (!this->ult->selectMode(this->ImagingMode))
     {
-  char *err = new char[256]; 
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't select imaging mode (" << err << ")");
@@ -389,7 +391,7 @@ void vtkSonixVideoSource::Initialize()
   // double-check to see if the mode has actually been set
   if (this->ImagingMode != this->ult->getActiveImagingMode())
     {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: Requested imaging mode could not be selected(" << err << ")");
@@ -401,7 +403,7 @@ void vtkSonixVideoSource::Initialize()
   // check if the desired acquisition type is actually available on desired imaging mode
   if (!this->ult->isDataAvailable((uData)(AcquisitionDataType)))
     {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: Requested the data aquisition type not available for selected imaging mode(" << err << ")");
@@ -411,7 +413,7 @@ void vtkSonixVideoSource::Initialize()
   // actually request data, now that its available
   if (!this->ult->setDataToAcquire(AcquisitionDataType))
     {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't request the data aquisition type (" << err << ")");
@@ -422,7 +424,7 @@ void vtkSonixVideoSource::Initialize()
   // 4) get the data descriptor
   if (!this->ult->getDataDescriptor((uData)AcquisitionDataType, *this->DataDescriptor))
     {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't retrieve data descriptor (" << err << ")");
@@ -441,7 +443,7 @@ void vtkSonixVideoSource::Initialize()
   //if (!this->ult->setParamValue(VARID_FREQ, Frequency))
   if (!this->ult->setParamValue( "b-freq", Frequency) )
   {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't set desired frequency (" << err << ")");
@@ -452,7 +454,7 @@ void vtkSonixVideoSource::Initialize()
   //if (!this->ult->setParamValue(VARID_FRATE, FrameRate))
   if (!this->ult->setParamValue("max fr", FrameRate))
     {
-  char *err = new char[256]; 
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't set desired frame rate (" << err << ")");
@@ -463,7 +465,7 @@ void vtkSonixVideoSource::Initialize()
   //if (!this->ult->setParamValue(VARID_DEPTH, Depth))
   if (!this->ult->setParamValue("b-depth", Depth))
     {
-  char *err = new char[256];  
+  char *err = new char[256];
   int sz = 256;
   this->ult->getLastError(err,sz);
     vtkErrorMacro(<< "Initialize: couldn't set desired depth (" << err << ")");
@@ -474,7 +476,7 @@ void vtkSonixVideoSource::Initialize()
   // 7) set callback for receiving new frames
   this->ult->setCallback(vtkSonixVideoSourceNewFrameCallback);
 
-  // 8)update framebuffer 
+  // 8)update framebuffer
   this->UpdateFrameBuffer();
 
   this->Initialized = 1;
@@ -528,13 +530,13 @@ void vtkSonixVideoSource::Record()
     this->ult->toggleFreeze();
     }
 }
-    
+
 //----------------------------------------------------------------------------
 void vtkSonixVideoSource::Play()
 {
   this->vtkVideoSource::Play();
 }
-    
+
 //----------------------------------------------------------------------------
 void vtkSonixVideoSource::Stop()
 {
@@ -576,7 +578,7 @@ int vtkSonixVideoSource::RequestInformation(
     // if 'flag' is set in output extent, use the FrameBufferExtent instead
     if (extent[2*i+1] < extent[2*i])
       {
-      extent[2*i] = 0; 
+      extent[2*i] = 0;
       extent[2*i+1] = \
         this->FrameBufferExtent[2*i+1] - this->FrameBufferExtent[2*i];
       }
@@ -598,7 +600,7 @@ int vtkSonixVideoSource::RequestInformation(
   extent[5] = extent[4] + (extent[5]-extent[4]+1) * numFrames - 1;
 
   outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),extent,6);
-  
+
   outInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),extent,6);
   // set the spacing
   outInfo->Set(vtkDataObject::SPACING(),this->DataSpacing,3);
@@ -608,13 +610,13 @@ int vtkSonixVideoSource::RequestInformation(
 
   if((this->AcquisitionDataType == udtRF) || (this->AcquisitionDataType == udtColorRF) || (this->AcquisitionDataType == udtPWRF))
     {
-  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_SHORT, 
+  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_SHORT,
     this->NumberOfScalarComponents);
   }
   else
     {
-  // set default data type (8 bit greyscale)  
-  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_UNSIGNED_CHAR, 
+  // set default data type (8 bit greyscale)
+  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_UNSIGNED_CHAR,
     this->NumberOfScalarComponents);
   }
   return 1;
@@ -650,9 +652,9 @@ int vtkSonixVideoSource::RequestData(
     {
     saveOutputExtent[i] = outputExtent[i];
     }
-  // clip to extent to the Z size of one frame  
-  outputExtent[4] = this->FrameOutputExtent[4]; 
-  outputExtent[5] = this->FrameOutputExtent[5]; 
+  // clip to extent to the Z size of one frame
+  outputExtent[4] = this->FrameOutputExtent[4];
+  outputExtent[5] = this->FrameOutputExtent[5];
 
   int frameExtentX = this->FrameBufferExtent[1]-this->FrameBufferExtent[0]+1;
   int frameExtentY = this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1;
@@ -706,8 +708,8 @@ int vtkSonixVideoSource::RequestData(
     outPadY = 0;
     }
 
-  int outX = frameExtentX - inPadX; 
-  int outY = frameExtentY - inPadY; 
+  int outX = frameExtentX - inPadX;
+  int outY = frameExtentY - inPadY;
   int outZ; // do outZ later
 
   if (outX > extentX - outPadX)
@@ -730,7 +732,7 @@ int vtkSonixVideoSource::RequestData(
     }
 
   // ditto for number of scalar components
-  if (data->GetNumberOfScalarComponents() != 
+  if (data->GetNumberOfScalarComponents() !=
       this->LastNumberOfScalarComponents)
     {
     this->LastNumberOfScalarComponents = data->GetNumberOfScalarComponents();
@@ -745,7 +747,7 @@ int vtkSonixVideoSource::RequestData(
            (saveOutputExtent[3]-saveOutputExtent[2]+1)*
            (saveOutputExtent[5]-saveOutputExtent[4]+1)*outIncX);
     this->OutputNeedsInitialization = 0;
-    } 
+    }
 
   // we have to modify the outputExtent of the first frame,
   // because it might be complete (it will be restored after
@@ -756,7 +758,7 @@ int vtkSonixVideoSource::RequestData(
   this->FrameBufferMutex->Lock();
 
   int index = this->FrameBufferIndex;
-  this->FrameTimeStamp = 
+  this->FrameTimeStamp =
     this->FrameBufferTimeStamps[index % this->FrameBufferSize];
 
   int frame;
@@ -765,8 +767,8 @@ int vtkSonixVideoSource::RequestData(
     if (frame == finalFrame)
       {
       outputExtent[5] = finalOutputExtent5;
-      } 
-    
+      }
+
     vtkDataArray *frameBuffer = reinterpret_cast<vtkDataArray *>(this->FrameBuffer[(index + frame) % this->FrameBufferSize]);
 
     char *inPtr = reinterpret_cast<char*>(frameBuffer->GetVoidPointer(0));
@@ -775,7 +777,7 @@ int vtkSonixVideoSource::RequestData(
     extentZ = outputExtent[5]-outputExtent[4]+1;
     inPadZ = 0;
     outPadZ = -outputExtent[4];
-    
+
     if (outPadZ < 0)
       {
       inPadZ -= outPadZ;
@@ -822,7 +824,7 @@ int vtkSonixVideoSource::RequestData(
         outPtrTmp = outPtr;
         for (j = 0; j < outY; j++)
           {
-          if (outX > 0) 
+          if (outX > 0)
             {
             this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX);
             }
@@ -847,7 +849,7 @@ int vtkSonixVideoSource::RequestData(
 
 
 //----------------------------------------------------------------------------
-void vtkSonixVideoSource::UnpackRasterLine(char *outptr, char *inptr, 
+void vtkSonixVideoSource::UnpackRasterLine(char *outptr, char *inptr,
                                            int start, int count)
 {
   char alpha = (char)(this->Opacity*255);
@@ -893,10 +895,10 @@ void vtkSonixVideoSource::UnpackRasterLine(char *outptr, char *inptr,
           }
           //*shOutPtr++ = *shInPtr++;
       //*outptr++ = *inptr++;
-                      
-      
+
+
     //memcpy(outptr,inptr,2*count);
-    
+
         }
     break;
 
@@ -973,7 +975,7 @@ void vtkSonixVideoSource::SetOutputFormat(int format)
     this->FrameBufferBitsPerPixel = numComponents*8;
     if (this->Initialized)
       {
-    this->UpdateFrameBuffer();    
+    this->UpdateFrameBuffer();
       this->DoFormatSetup();
     }
     this->FrameBufferMutex->Unlock();
@@ -1029,7 +1031,7 @@ void vtkSonixVideoSource::DoFormatSetup()
   */
 
 
-  //set the frame size from the data descriptor, 
+  //set the frame size from the data descriptor,
   this->FrameSize[0] = this->DataDescriptor->w;
   this->FrameSize[1] = this->DataDescriptor->h;
   this->FrameBufferBitsPerPixel = this->DataDescriptor->ss;
@@ -1048,7 +1050,7 @@ void vtkSonixVideoSource::DoFormatSetup()
   case udtMPre:
   case udtElastoPre: //this data type does not have a FC at the start
     this->FrameSize[0] = this->DataDescriptor->h;
-    this->FrameSize[1] = this->DataDescriptor->w;      
+    this->FrameSize[1] = this->DataDescriptor->w;
     this->OutputFormat = VTK_LUMINANCE;
         this->NumberOfScalarComponents = 1;
         break;
@@ -1058,7 +1060,7 @@ void vtkSonixVideoSource::DoFormatSetup()
   case udtPWRF:
   case udtRF:
     this->FrameSize[0] = this->DataDescriptor->h;
-    this->FrameSize[1] = this->DataDescriptor->w;  
+    this->FrameSize[1] = this->DataDescriptor->w;
     this->OutputFormat = VTK_LUMINANCE;
         this->NumberOfScalarComponents = 1;
         break;
@@ -1076,7 +1078,7 @@ void vtkSonixVideoSource::DoFormatSetup()
   //case udtColorPost:
   case udtElastoCombined:
     this->OutputFormat = VTK_RGBA;
-        this->NumberOfScalarComponents = 4;        
+        this->NumberOfScalarComponents = 4;
     break;
     }
 
@@ -1090,6 +1092,6 @@ void vtkSonixVideoSource::SetSonixIP(char *SonixIP)
   if (SonixIP)
     {
     this->SonixHostIP = new char[256];
-    sprintf(this->SonixHostIP, "%s", SonixIP);    
+    sprintf(this->SonixHostIP, "%s", SonixIP);
     }
 }

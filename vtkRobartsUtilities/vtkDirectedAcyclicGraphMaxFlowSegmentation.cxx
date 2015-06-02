@@ -17,7 +17,7 @@
  *      segmentation problems.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note May 20th 2014 - Documentation first compiled.
  *
  *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
@@ -41,13 +41,14 @@
 #include <set>
 #include <list>
 #include <vector>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define SQR(X) X*X
 
 vtkStandardNewMacro(vtkDirectedAcyclicGraphMaxFlowSegmentation);
 
 vtkDirectedAcyclicGraphMaxFlowSegmentation::vtkDirectedAcyclicGraphMaxFlowSegmentation(){
-  
+
   //configure the IO ports
   this->SetNumberOfInputPorts(2);
   this->SetNumberOfOutputPorts(1);
@@ -143,7 +144,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataOb
 
   //we are adding/switching an input, so no need to resort list
   if( input != NULL ){
-  
+
     //if their is no pair in the mapping, create one
     if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() ){
       int portNumber = this->FirstUnusedDataPort;
@@ -164,7 +165,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataOb
     //if we are the last input, no need to reshuffle
     if(portNumber == this->FirstUnusedDataPort - 1){
       this->SetNthInputConnection(0, portNumber,  0);
-    
+
     //if we are not, move the last input into this spot
     }else{
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
@@ -190,7 +191,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtk
 {
   //we are adding/switching an input, so no need to resort list
   if( input != NULL ){
-  
+
     //if their is no pair in the mapping, create one
     if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() ){
       int portNumber = this->FirstUnusedSmoothnessPort;
@@ -211,7 +212,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtk
     //if we are the last input, no need to reshuffle
     if(portNumber == this->FirstUnusedSmoothnessPort - 1){
       this->SetNthInputConnection(1, portNumber,  0);
-    
+
     //if we are not, move the last input into this spot
     }else{
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedSmoothnessPort - 1));
@@ -260,7 +261,7 @@ vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutput(int idx)
 //----------------------------------------------------------------------------
 
 int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges ){
-  
+
   //check to make sure that the Structure is specified
   if( !this->Structure ){
     vtkErrorMacro(<<"Structure must be provided.");
@@ -306,7 +307,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
         return -1;
       }
     }
-    
+
     //check validity of data terms
     if( this->InputDataPortMapping.find(node) != this->InputDataPortMapping.end() ){
       int inputPortNumber = this->InputDataPortMapping[node];
@@ -323,7 +324,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
           vtkErrorMacro(<<"Data prior must be non-negative.");
           return -1;
         }
-      
+
         //check to make sure that the sizes are consistant
         if( Extent[0] == -1 ){
           CurrImage->GetExtent(Extent);
@@ -389,7 +390,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestInformation(
   int Extent[6];
   int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
   if( result || NumNodes == 0 ) return -1;
-  
+
   //set the number of output ports
   outputVector->SetNumberOfInformationObjects(NumLeaves);
   this->SetNumberOfOutputPorts(NumLeaves);
@@ -418,10 +419,10 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestUpdateExtent(
   return 1;
 }
 
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *request, 
-              vtkInformationVector **inputVector, 
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *request,
+              vtkInformationVector **inputVector,
               vtkInformationVector *outputVector){
-                
+
   //check input consistancy
   int Extent[6];
   int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
@@ -474,7 +475,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
     }
   }
   iterator->Delete();
-  
+
   //get the smoothness term buffers
   this->leafSmoothnessTermBuffers = new float* [NumLeaves];
   this->branchSmoothnessTermBuffers = new float* [NumBranches];
@@ -492,7 +493,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
       leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
     else
       branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
-    
+
     // add the smoothness buffer in as read only
     if( CurrImage ){
       TotalNumberOfBuffers++;
@@ -511,7 +512,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
     leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
-  
+
   //convert smoothness constants mapping to two mappings
   iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
   iterator->SetDAG(this->Structure);
@@ -532,12 +533,12 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
         branchSmoothnessConstants[this->BranchMap[node]] = 1.0f;
   }
   iterator->Delete();
-  
+
   //if verbose, print progress
   if( this->Debug ){
     vtkDebugMacro(<<"Starting CPU buffer acquisition");
   }
-  
+
 
   //allocate required memory buffers for the brach nodes
   int NumBuffersPerBranch = 8;
@@ -558,7 +559,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
   //        1 sink flow buffer
   //        1 incoming flow buffer
   int NumberOfAdditionalCPUBuffersNeeded = 0;
-  
+
   //source flow and working buffers
   std::list<float**> BufferPointerLocs;
   NumberOfAdditionalCPUBuffersNeeded += NumBuffersSource;
@@ -654,7 +655,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
       bufferNameIt++;
     }
   }
-  
+
   //if verbose, print progress
   if( this->Debug )
     vtkDebugMacro(<<"Relate parent sink with child source buffer pointers.");
@@ -753,13 +754,13 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(
   if (!inInfo)
     return 0;
   vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkImageData::DATA_OBJECT()));
- 
+
   if (input) {
     for(int i=0; i < outputVector->GetNumberOfInformationObjects(); ++i) {
       vtkInformation* info = outputVector->GetInformationObject(0);
       vtkDataSet *output = vtkDataSet::SafeDownCast(
       info->Get(vtkDataObject::DATA_OBJECT()));
- 
+
 #if (VTK_MAJOR_VERSION <= 5)
       if (!output || !output->IsA(input->GetClassName())) {
         vtkImageData* newOutput = input->NewInstance();
@@ -837,7 +838,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RunAlgorithm(){
 }
 
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels( ){
-  
+
   vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 
   vtkRootedDirectedAcyclicGraphBackwardIterator* Iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
@@ -845,7 +846,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels( ){
   Iterator->SetRootVertex(this->Structure->GetRoot());
   while(Iterator->HasNext()){
     vtkIdType CurrNode = Iterator->Next();
-    
+
     //if we are a leaf or root label, we are finished and can therefore leave
     if(this->Structure->IsLeaf(CurrNode) || this->Structure->GetRoot() == CurrNode ) continue;
 
@@ -896,13 +897,13 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
       dagmf_applyStep(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
               leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
               VX, VY, VZ, VolumeSize);
-    
+
       //std::cout << currNode << "\t Find Projection multiplier" << std::endl;
       dagmf_computeFlowMag(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
               leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
               leafSmoothnessTermBuffers[LeafMap[currNode]], leafSmoothnessConstants[LeafMap[currNode]],
               VX, VY, VZ, VolumeSize);
-    
+
       //project onto set and recompute the divergence
       //std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
       dagmf_projectOntoSet(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
@@ -910,12 +911,12 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
               VX, VY, VZ, VolumeSize);
 
     }else if( currNode != this->Structure->GetRoot() ){
-    
+
       //std::cout << currNode << "\t Find gradient descent step size" << std::endl;
       dagmf_flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchSourceBuffers[BranchMap[currNode]],
                   branchDivBuffers[BranchMap[currNode]], branchLabelBuffers[BranchMap[currNode]],
                   StepSize, CC,VolumeSize);
-    
+
       //std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
       dagmf_applyStep(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
               branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
@@ -927,15 +928,15 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
               branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
               branchSmoothnessTermBuffers[BranchMap[currNode]], branchSmoothnessConstants[BranchMap[currNode]],
               VX, VY, VZ, VolumeSize);
-    
+
       //project onto set and recompute the divergence
       dagmf_projectOntoSet(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
               branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
               VX, VY, VZ, VolumeSize);
     }
   }
-  
-  //clear source buffers working down 
+
+  //clear source buffers working down
   ForIterator->SetRootVertex(this->Structure->GetRoot());
   ForIterator->Restart();
   while(ForIterator->HasNext()){
@@ -957,7 +958,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
       sumScaledBuffer(branchSourceBuffers[BranchMap[Child]],
         sourceFlowBuffer, W/this->BranchNumParents[BranchMap[Child]], VolumeSize);
   }
-    
+
   //propogate source for all other children
   ForIterator->SetRootVertex(this->Structure->GetRoot());
   ForIterator->Restart();
@@ -1002,7 +1003,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
           CC, VolumeSize);
       constrainBuffer(leafSinkBuffers[LeafMap[CurrNode]], leafDataTermBuffers[LeafMap[CurrNode]],
                     VolumeSize);
-        
+
       //push up sink capacities
       for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++){
         vtkIdType Parent = this->Structure->GetParent(CurrNode,i);
@@ -1018,7 +1019,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
                       leafSourceBuffers[LeafMap[CurrNode]],branchSinkBuffers[BranchMap[Parent]],
                       CC, W/LeafNumParents[LeafMap[CurrNode]], VolumeSize);
       }
-      
+
       updateLabel(leafSinkBuffers[LeafMap[CurrNode]], leafSourceBuffers[LeafMap[CurrNode]],
             leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
             CC, VolumeSize);
@@ -1044,7 +1045,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( ){
                       branchSourceBuffers[BranchMap[CurrNode]],branchSinkBuffers[BranchMap[Parent]],
                       CC, W/BranchNumParents[BranchMap[CurrNode]], VolumeSize);
       }
-      
+
       updateLabel(branchSinkBuffers[BranchMap[CurrNode]], branchSourceBuffers[BranchMap[CurrNode]],
             branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
             CC, VolumeSize);

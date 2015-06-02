@@ -17,7 +17,7 @@
  *      generates entropy data terms based on the histogram of a set of provided seeds.
  *
  *  @author Martin Rajchl (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled. (jshbaxter)
  *
  */
@@ -31,6 +31,7 @@
 
 #include <float.h>
 #include <limits.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkImageLogLikelihood : public vtkThreadedImageAlgorithm
 {
@@ -38,7 +39,7 @@ public:
   static vtkImageLogLikelihood *New();
   vtkTypeMacro(vtkImageLogLikelihood,vtkThreadedImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   // Description:
   // Set the input image who you want to define a log likelihood data term for.
 #if (VTK_MAJOR_VERSION <= 5)
@@ -50,13 +51,13 @@ public:
   // Description:
   // Set a collection of label maps for the seeding operation.
   virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(1,number,in->GetProducerPort()); }
-  
+
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] (on) or [0,inf) (off).
   void SetNormalizeDataTermOn() {this->NormalizeDataTerm = 1; }
   void SetNormalizeDataTermOff() {this->NormalizeDataTerm = 0; }
   int GetNormalizeDataTerm() {return (this->NormalizeDataTerm); }
-  
+
   // Description:
   // Determine which label is being used as the seed.
   vtkSetClampMacro(LabelID,int, 0, INT_MAX);
@@ -66,7 +67,7 @@ public:
   // Determine the resolution of the histogram used for the data term.
   vtkSetClampMacro(HistogramResolution,float, FLT_MIN, FLT_MAX);
   vtkGetMacro(HistogramResolution,float);
-  
+
   // Description:
   // Determine what fraction of the input labels need to agree before a seed is considered valid. For
   // example, if RequiredAgreement=0.5, then at least half of the input label maps must have the same
@@ -94,7 +95,7 @@ protected:
                                     vtkImageData ***inData,
                                     vtkImageData **outData,
                                     int extent[6], int threadId);
-  
+
   virtual int FillInputPortInformation(int port, vtkInformation* info);
 
 private:

@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include <float.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 
 vtkStandardNewMacro(vtkDiceCoefficient);
@@ -133,11 +134,11 @@ void vtkDiceCoefficient::vtkDiceCoefficientExecute(vtkDiceCoefficient *self,
     std::fill_n(outBuffer, volumeSize , 0.0f);
 
     // Calculate Dice Coefficient
-    
+
     unsigned int numVx1 = 0;
     unsigned int numVx2 = 0;
     unsigned int numVxOverlap = 0;
-    
+
 
 
     for(unsigned int idx = 0; idx < volumeSize; idx++){

@@ -3,11 +3,12 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkImageBasicAffinityFilter);
 
 void vtkImageBasicAffinityFilter::ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads){
-  
+
   //cast the call down to handle the input data differences properly
   switch (inData->GetScalarType()){
     vtkTemplateMacro(
@@ -38,7 +39,7 @@ void vtkImageBasicAffinityFilter::ThreadedExecuteCasted(vtkImageData *inData, vt
     coordinates[2] = idInUse / inData->GetDimensions()[0];
     coordinates[1] = coordinates[2] % inData->GetDimensions()[1] + inData->GetExtent()[2];
     coordinates[2] = coordinates[2] / inData->GetDimensions()[1] + inData->GetExtent()[4];
-    
+
     //if we are not the last in the X direction, update the X affinity
     float xAffinity = 0.0f;
     if( coordinates[0] != inData->GetExtent()[1] ){
@@ -92,10 +93,10 @@ struct vtkImageBasicAffinityFilterThreadStruct {
 VTK_THREAD_RETURN_TYPE vtkImageBasicAffinityFilterThreadedExecute( void *arg ) {
   vtkImageBasicAffinityFilterThreadStruct *str;
   int threadId, threadCount;
-  
+
   threadId = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->ThreadID;
   threadCount = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->NumberOfThreads;
-  
+
   str = static_cast<vtkImageBasicAffinityFilterThreadStruct *>
   (static_cast<vtkMultiThreader::ThreadInfo *>(arg)->UserData);
 
@@ -135,14 +136,14 @@ int vtkImageBasicAffinityFilter::RequestData(vtkInformation* request,
   //set all the spacing and origin parameters
   outData->SetSpacing( inData->GetSpacing() );
   outData->SetOrigin( inData->GetOrigin() );
-  
+
   //set up the threader
   vtkImageBasicAffinityFilterThreadStruct str;
   str.Filter = this;
   str.inData = inData;
   str.outData = outData;
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  this->Threader->SetSingleMethod(vtkImageBasicAffinityFilterThreadedExecute, &str);  
+  this->Threader->SetSingleMethod(vtkImageBasicAffinityFilterThreadedExecute, &str);
 
   // always shut off debugging to avoid threading problems with GetMacros
   int debug = this->Debug;

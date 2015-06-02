@@ -23,6 +23,7 @@
 #define VTK_SPIKE           3
 
 #include "vtkThreadedImageAlgorithm.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTK_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
 {
@@ -45,7 +46,7 @@ public:
   // Set each pixel to sigmoid(K1*(x1-C1))*sigmoid(K2*(x2-C2)) where K and C are the constants
   // and x is the pixel value. If image 2 is not provided, sigm0id(K2*x2+C2) <= 1.
   void SetOperationToLogistic() {this->SetOperation(VTK_LOGISTIC);};
-  
+
   // Description:
   // Set each pixel to gaussian(x-C,K^2) where K and C are the constants
   // and x is the pixel value. Image 2 can be used.
@@ -86,7 +87,7 @@ public:
   virtual void SetInput1(vtkDataObject *in) { this->SetInputDataObject(0,in); }
   virtual void SetInput2(vtkDataObject *in) { this->SetInputDataObject(1,in); }
 #endif
-  
+
 
   // Description:
   // Take the negative log of the output to convert from a probability to an
@@ -128,4 +129,3 @@ private:
 };
 
 #endif
-

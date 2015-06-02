@@ -24,6 +24,8 @@
 #include "vtkProperty.h"
 #include "vtkCamera.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 // ---------------------------------------------------------------------------------------------------
 // Callback for moving the planes from the box widget to the mapper
 class vtkBoxWidgetCallback : public vtkCommand
@@ -42,11 +44,11 @@ virtual void Execute(vtkObject *caller, unsigned long, void*)
    planes->Delete();
    }
 }
-void SetMapper(vtkCuda2DVolumeMapper* m) 
+void SetMapper(vtkCuda2DVolumeMapper* m)
  { this->Mapper = m; }
 
 protected:
-vtkBoxWidgetCallback() 
+vtkBoxWidgetCallback()
  { this->Mapper = 0; }
 
 vtkCuda2DVolumeMapper *Mapper;
@@ -137,4 +139,3 @@ int main(int argc, char** argv){
    imReader1->Delete();
 
 }
-

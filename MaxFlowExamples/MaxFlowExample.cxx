@@ -17,6 +17,8 @@
 #include "vtkFloatArray.h"
 #include "vtkDataSetAttributes.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 #include <vtkSmartPointer.h>
 
 int main(int argc, char** argv){
@@ -28,7 +30,7 @@ int main(int argc, char** argv){
   vtkIdType l1 = mut->AddVertex();
   vtkIdType l2 = mut->AddVertex();
   vtkIdType l3 = mut->AddVertex();
-  
+
   vtkSmartPointer<vtkFloatArray> Weights = vtkSmartPointer<vtkFloatArray>::New();
   Weights->SetName("Weights");
   Weights->InsertValue((mut->AddEdge(source,bkg)).Id,1.0f);
@@ -40,7 +42,7 @@ int main(int argc, char** argv){
   Weights->InsertValue((mut->AddEdge(c2,l2)).Id,0.5f);
   Weights->InsertValue((mut->AddEdge(c1,l3)).Id,0.5f);
   Weights->InsertValue((mut->AddEdge(c2,l3)).Id,0.5f);
-  
+
   //vtkIdType c1 = mut->AddChild(source);
   //vtkIdType c2 = mut->AddChild(c1);
   //vtkIdType l1 = mut->AddChild(c1);
@@ -108,7 +110,7 @@ int main(int argc, char** argv){
   dagmf->SetStepSize(0.1);
   dagmf->SetNumberOfIterations(100);
   dagmf->Update();
-  
+
   vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
   test0->ShallowCopy((vtkImageData*) dagmf->GetOutput(bkg));
   vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();

@@ -28,7 +28,7 @@
 
 #include "vtkImageAlgorithm.h"
 #include "vtkImageData.h" // makes things a bit easier
-#include <vtkVersion.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTK_EXPORT vtkUltrasoundSphereDetectionRayCaster : public vtkImageAlgorithm
 {
@@ -36,7 +36,7 @@ public:
   static vtkUltrasoundSphereDetectionRayCaster *New();
   vtkTypeRevisionMacro(vtkUltrasoundSphereDetectionRayCaster,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   // Description:
   // Set the canny edge detection input
 #if (VTK_MAJOR_VERSION <= 5)
@@ -84,7 +84,7 @@ public:
   // Description:
   // Set the dimensionality
   vtkGetMacro(Dimensionality, int);
- 
+
 protected:
   vtkUltrasoundSphereDetectionRayCaster();
   ~vtkUltrasoundSphereDetectionRayCaster() {};
@@ -98,17 +98,14 @@ protected:
   //double MeanDistance;
 
   int Dimensionality; // considering 3D images only for now
-  
+
   virtual int RequestData(vtkInformation *,
                           vtkInformationVector **,
                           vtkInformationVector *);
-  
+
 private:
   vtkUltrasoundSphereDetectionRayCaster(const vtkUltrasoundSphereDetectionRayCaster&);  // Not implemented.
   void operator=(const vtkUltrasoundSphereDetectionRayCaster&);  // Not implemented.
 };
 
 #endif
-
-
-

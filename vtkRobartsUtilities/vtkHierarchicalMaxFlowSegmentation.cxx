@@ -39,6 +39,8 @@
 #include <set>
 #include <list>
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 #define SQR(X) X*X
 
 vtkStandardNewMacro(vtkHierarchicalMaxFlowSegmentation);

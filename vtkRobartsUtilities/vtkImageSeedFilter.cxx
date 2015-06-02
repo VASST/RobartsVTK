@@ -1,4 +1,5 @@
 #include "vtkImageSeedFilter.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkImageSeedFilter::vtkImageSeedFilter(){
 }
@@ -96,7 +97,7 @@ int vtkImageSeedFilter::RequestData(vtkInformation* request,
     itX++; itY++; itZ++; itW++;
   }
 
-  
+
   //cycle through input points in volume co-ordinates
   itX = this->pointsInVolumeX.begin();
   itY = this->pointsInVolumeY.begin();

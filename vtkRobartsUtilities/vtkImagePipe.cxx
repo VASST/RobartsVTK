@@ -22,6 +22,7 @@
 #include "vtkPointData.h"
 
 #include <iostream>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkImagePipe);
 
@@ -70,7 +71,7 @@ vtkImagePipe::~vtkImagePipe()
   this->newThreadLock->Delete();
   this->rwBufferLock->Delete();
   this->threader->Delete();
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkImagePipe::ReleaseSystemResources()
@@ -152,7 +153,7 @@ void vtkImagePipe::SetAsServer( bool isServer ){
 }
 
 void vtkImagePipe::SetSourceAddress( char* ipAddress, int portNumber ){
-  
+
   // if we are already initialized, you cannot set the server status
   if (this->Initialized){
     vtkErrorMacro(<<"Must uninitialize before changing parameters.");
@@ -196,7 +197,7 @@ void vtkImagePipe::Initialize()
     return;
   }
 
-  //if we haven't set the client-server status, 
+  //if we haven't set the client-server status,
   if ( !this->serverSet || this->portNumber == -1 ){
     vtkErrorMacro(<<"Set the client/server settings before initialization.");
     return;
@@ -228,7 +229,7 @@ void vtkImagePipe::Initialize()
   // Initialization worked
   this->Initialized = 1;
 
-}  
+}
 
 //----------------------------------------------------------------------------
 // platform-independent sleep function
@@ -248,9 +249,9 @@ static inline void vtkSleep(double duration)
 //----------------------------------------------------------------------------
 
 void* vtkImagePipe::FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
-  
+
   vtkImagePipe *self = (vtkImagePipe *)(data->UserData);
-  
+
   //enter the infinite loop
   while(true){
     //check for any new clients
@@ -268,7 +269,7 @@ void* vtkImagePipe::FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
 }
 
 void* vtkImagePipe::ServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
-  
+
   //collect server and client information
   vtkImagePipe *self = (vtkImagePipe *)(data->UserData);
   vtkClientSocket* client = self->clientSocket;
@@ -283,7 +284,7 @@ void* vtkImagePipe::ServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
     if( amount == 0 ) break;
     else if( amount < sizeof(request) ) continue;
     else if( request != 1 ) break;
-    
+
     //read lock the buffer
     self->rwBufferLock->ReaderLock();
 
@@ -304,7 +305,7 @@ void* vtkImagePipe::ServerSideUpdate(vtkMultiThreader::ThreadInfo *data){
     //send over the data
     client->Send( (void*) &initData, sizeof(initData) );
     client->Send( self->buffer->GetScalarPointer(), self->ImageSize );
-    
+
     //read unlock the buffer
     self->rwBufferLock->ReaderUnlock();
 

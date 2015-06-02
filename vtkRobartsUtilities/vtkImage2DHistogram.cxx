@@ -2,9 +2,10 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int threadId, int numThreads){
-  
+
   //cast the call down to handle the input data differences properly
   switch (inData->GetScalarType()){
     vtkTemplateMacro(
@@ -13,7 +14,7 @@ void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *ou
       if(threadId == 0) vtkErrorMacro(<< "Execute: Unknown input ScalarType");
       return;
   }
-  
+
   //configure the input ports
   this->SetNumberOfInputPorts(1);
   this->SetNumberOfInputConnections(0,1);
@@ -27,7 +28,7 @@ void vtkImage2DHistogram::ThreadedExecuteCasted(vtkImageData *inData, vtkImageDa
   int* outPtr = (int*) outData->GetScalarPointer();
   T* inPtr = (T*) inData->GetScalarPointer();
   int numIComp = inData->GetNumberOfScalarComponents();
-  
+
   double* OutSpacing = outData->GetSpacing();
   double* OutMinimum = outData->GetOrigin();
 
@@ -37,7 +38,7 @@ void vtkImage2DHistogram::ThreadedExecuteCasted(vtkImageData *inData, vtkImageDa
   //iterate over all the pixels we're responsible for and fill the histogram bins
   int idInUse = threadId;
   while( idInUse < totalVolumeSize ){
-    
+
     //find the index of the appropriate bin
     T value1 = inPtr[idInUse*2];
     T value2 = inPtr[idInUse*2+1];
@@ -62,10 +63,10 @@ struct vtkImage2DHistogramThreadStruct {
 VTK_THREAD_RETURN_TYPE vtkImage2DHistogramThreadedExecute( void *arg ) {
   vtkImage2DHistogramThreadStruct *str;
   int threadId, threadCount;
-  
+
   threadId = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->ThreadID;
   threadCount = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->NumberOfThreads;
-  
+
   str = static_cast<vtkImage2DHistogramThreadStruct *>
   (static_cast<vtkMultiThreader::ThreadInfo *>(arg)->UserData);
 
@@ -109,7 +110,7 @@ int vtkImage2DHistogram::RequestUpdateExtent(
 int vtkImage2DHistogram::RequestData(vtkInformation* request,
                           vtkInformationVector** inputVector,
                           vtkInformationVector* outputVector){
-                
+
   vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
   vtkInformation* outputInfo = outputVector->GetInformationObject(0);
   vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
@@ -130,21 +131,21 @@ int vtkImage2DHistogram::RequestData(vtkInformation* request,
 #else
   outData->AllocateScalars(VTK_INT, 1);
 #endif
-  
+
 
   //set all the spacing and origin parameters
   double* Range1 = inData->GetPointData()->GetScalars()->GetRange(0);
   double* Range2 = inData->GetPointData()->GetScalars()->GetRange(1);
   outData->SetSpacing( (Range1[1]-Range1[0]) / (Resolution[0]-1), (Range2[1]-Range2[0]) / (Resolution[1]-1),0 );
   outData->SetOrigin( Range1[0], Range2[0], 0 );
-  
+
   //set up the threader
   vtkImage2DHistogramThreadStruct str;
   str.Filter = this;
   str.inData = inData;
   str.outData = outData;
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  this->Threader->SetSingleMethod(vtkImage2DHistogramThreadedExecute, &str);  
+  this->Threader->SetSingleMethod(vtkImage2DHistogramThreadedExecute, &str);
 
   // always shut off debugging to avoid threading problems with GetMacros
   int debug = this->Debug;

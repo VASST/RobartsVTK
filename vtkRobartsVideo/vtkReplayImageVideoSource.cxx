@@ -4,8 +4,8 @@
   Author: Chris Wedlake <cwedlake@robarts.ca>
 
   Language: C++
-  Description: 
-     
+  Description:
+
   =========================================================================
 
   Copyright (c) Chris Wedlake, cwedlake@robarts.ca
@@ -17,7 +17,7 @@
   1) Redistribution of the source code, in verbatim or modified
   form, must retain the above copyright notice, this license,
   the following disclaimer, and any notices that refer to this
-  license and/or the following disclaimer.  
+  license and/or the following disclaimer.
 
   2) Redistribution in binary form must include the above copyright
   notice, a copy of this license and the following disclaimer
@@ -63,7 +63,7 @@
 #include <algorithm>
 
 // #include <windows.h>
-// #include <tchar.h> 
+// #include <tchar.h>
 #include <stdio.h>
 //#include <strsafe.h>
 
@@ -71,6 +71,7 @@
 #include <vtkDirectory.h>
 #include <vtkSortFileNames.h>
 #include <vtkStringArray.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 //#pragma comment(lib, "User32.lib")
 
@@ -97,7 +98,7 @@ vtkReplayImageVideoSource::vtkReplayImageVideoSource()
   this->vtkVideoSource::SetOutputFormat(VTK_RGB);
   this->vtkVideoSource::SetFrameBufferSize( 54 );
   this->vtkVideoSource::SetFrameRate( 15.0f );
-  this->SetFrameSize(1680,1048,1); 
+  this->SetFrameSize(1680,1048,1);
   this->SetFrameSizeAutomatically = true;
   this->imageIndex=-1;
 }
@@ -110,29 +111,29 @@ vtkReplayImageVideoSource::~vtkReplayImageVideoSource()
     this->loadedData[i]->Delete();
   }
   this->loadedData.clear();
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkReplayImageVideoSource::PrintSelf(ostream& os, vtkIndent indent)
 {
-  this->Superclass::PrintSelf(os,indent); 
+  this->Superclass::PrintSelf(os,indent);
 }
 
 //----------------------------------------------------------------------------
 void vtkReplayImageVideoSource::Initialize()
 {
-  if (this->Initialized) 
+  if (this->Initialized)
     {
       return;
     }
- 
+
 
   // Initialization worked
   this->Initialized = 1;
-  
+
   // Update frame buffer  to reflect any changes
   this->UpdateFrameBuffer();
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkReplayImageVideoSource::ReleaseSystemResources()
@@ -167,7 +168,7 @@ void vtkReplayImageVideoSource::InternalGrab()
     }
 
   this->imageIndex = ++this->imageIndex % this->loadedData.size();
-  
+
   void *buffer = this->loadedData[this->imageIndex]->GetScalarPointer();
 
   unsigned char *ptr = reinterpret_cast<vtkUnsignedCharArray *>(this->FrameBuffer[index])->GetPointer(0);
@@ -206,7 +207,7 @@ static inline void vtkSleep(double duration)
 
 //----------------------------------------------------------------------------
 // Sleep until the specified absolute time has arrived.
-// You must pass a handle to the current thread.  
+// You must pass a handle to the current thread.
 // If '0' is returned, then the thread was aborted before or during the wait.
 static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 {
@@ -230,7 +231,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
     remaining = 0.1;
   }
 
-      // check to see if we are being told to quit 
+      // check to see if we are being told to quit
       data->ActiveFlagLock->Lock();
       int activeFlag = *(data->ActiveFlag);
       data->ActiveFlagLock->Unlock();
@@ -251,7 +252,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 static void *vtkReplayImageVideoSourceRecordThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkReplayImageVideoSource *self = (vtkReplayImageVideoSource *)(data->UserData);
-  
+
   double startTime = vtkTimerLog::GetUniversalTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -268,7 +269,7 @@ static void *vtkReplayImageVideoSourceRecordThread(vtkMultiThreader::ThreadInfo 
 
 //----------------------------------------------------------------------------
 // Set the source to grab frames continuously.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkReplayImageVideoSource::Record()
 {
   // We don't actually record data.
@@ -281,7 +282,7 @@ void vtkReplayImageVideoSource::Record()
 static void *vtkReplayImageVideoSourcePlayThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkVideoSource *self = (vtkVideoSource *)(data->UserData);
- 
+
   double startTime = vtkTimerLog::GetUniversalTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -295,10 +296,10 @@ static void *vtkReplayImageVideoSourcePlayThread(vtkMultiThreader::ThreadInfo *d
 
   return NULL;
 }
- 
+
 //----------------------------------------------------------------------------
 // Set the source to play back recorded frames.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkReplayImageVideoSource::Play()
 {
   if (this->Recording)
@@ -312,7 +313,7 @@ void vtkReplayImageVideoSource::Play()
 
       this->Playing = 1;
       this->Modified();
-      this->PlayerThreadId = 
+      this->PlayerThreadId =
   this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
             &vtkReplayImageVideoSourcePlayThread,this);
     }
@@ -331,7 +332,7 @@ void vtkReplayImageVideoSource::Stop()
       this->Recording = 0;
       this->Modified();
     }
-} 
+}
 
 void vtkReplayImageVideoSource::Pause() {
   this->pauseFeed = 1;
@@ -349,10 +350,10 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 {
 
   bool applyFlip = false;
-  
+
   std::string str(filename);
   std::string ext = "";
-  
+
   for(unsigned int i=0; i<str.length(); i++)
   {
     if(str[i] == '.')
@@ -364,13 +365,13 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
       break;
     }
   }
-  
+
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
   vtkImageData * data = vtkImageData::New();
-  
+
   vtkSmartPointer<vtkImageReader2> reader;
-  
+
   if (ext == ".jpg")
   {
     reader = vtkSmartPointer<vtkJPEGReader>::New();
@@ -382,19 +383,19 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
   else if (ext == ".bmp")
   {
     reader = vtkSmartPointer<vtkBMPReader>::New();
-    
+
   }
   else if (ext == ".tif")
   {
     reader = vtkSmartPointer<vtkTIFFReader>::New();
     applyFlip = true;
   }
-  else 
+  else
   {
     return;
   }
 
-  if (reader->CanReadFile(filename)) 
+  if (reader->CanReadFile(filename))
   {
     reader->SetFileName(filename);
     reader->Update();
@@ -404,8 +405,8 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
 #else
     reader->Update();
 #endif
-  } 
-  else 
+  }
+  else
   {
     cerr << "Unable To Read File:" << filename << endl;
     return;
@@ -417,19 +418,19 @@ void vtkReplayImageVideoSource::LoadFile(char * filename)
      extents[3]-extents[2]+1 != this->FrameSize[1] ||
      extents[5]-extents[4]+1 != this->FrameSize[2] )
   {
-    if (this->SetFrameSizeAutomatically) 
+    if (this->SetFrameSizeAutomatically)
     {
       this->SetFrameSize(extents[1]-extents[0]+1, extents[3]-extents[2]+1,extents[5]-extents[4]+1);
       this->SetFrameSizeAutomatically = false;
     }
-    else 
+    else
     {
        vtkErrorMacro("Unable to open file as size doesn't match video source");
       return;
     }
   }
 
-  if (applyFlip == true) 
+  if (applyFlip == true)
   {
     vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
     flip->SetInputConnection(reader->GetOutputPort());
@@ -458,7 +459,7 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
 
   fullPath = strncpy( fullPath, folder,1024);
   fullPath = strncat( fullPath, "/",1024);
-  
+
   int hFind = dir->Open(fullPath);
 
   if(hFind != 1){
@@ -469,14 +470,14 @@ int vtkReplayImageVideoSource::LoadFolder(char * folder, char * filetype)
   sort->SetInputFileNames(dir->GetFiles());
   sort->SkipDirectoriesOn();
   sort->NumericSortOn();
-  
+
   for(int i = 0; i < sort->GetFileNames()->GetNumberOfValues(); i++){
-  
+
     char *file = new char[1024];
     file = strncpy(file, fullPath,1024);
     file = strncat(file, sort->GetFileNames()->GetValue(i),1024);
     //std::cout << file << std::endl;
-  
+
     this->LoadFile(file);
   }
 
@@ -488,7 +489,7 @@ void vtkReplayImageVideoSource::Clear()
 
 }
 
-void vtkReplayImageVideoSource::SetClipRegion(int x0, int x1, int y0, int y1, 
+void vtkReplayImageVideoSource::SetClipRegion(int x0, int x1, int y0, int y1,
                 int z0, int z1)
 {
   vtkVideoSource::SetClipRegion(x0,x1,y0,y1,z0,z1);

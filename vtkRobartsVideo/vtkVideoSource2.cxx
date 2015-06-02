@@ -48,12 +48,13 @@
 
 #include <ctype.h>
 #include <time.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 //---------------------------------------------------------------
 // Important Mutex rules:
-// 
+//
 // The frame grabs are generally done asynchronously, and it is necessary
-// to ensure that when the frame buffer is valid when it is being written 
+// to ensure that when the frame buffer is valid when it is being written
 // to or read from
 //
 // The following information can only be changed within a mutex lock,
@@ -80,8 +81,8 @@
 //
 // AdvanceFrameBuffer()
 //
-// Any methods which might be called asynchronously must lock the 
-// mutex before reading the above information, and you must be very 
+// Any methods which might be called asynchronously must lock the
+// mutex before reading the above information, and you must be very
 // careful when accessing any information except for the above.
 // These methods include the following:
 //
@@ -98,7 +99,7 @@ vtkStandardNewMacro(vtkVideoSource2);
 #if ( _MSC_VER >= 1300 ) // Visual studio .NET
 #pragma warning ( disable : 4311 )
 #pragma warning ( disable : 4312 )
-#endif 
+#endif
 
 /*//----------------------------------------------------------------------------
 // keep a list of all the existing vtkVideoSource2 objects, to ensure
@@ -112,7 +113,7 @@ static int vtkVideoSourceExitFuncRegistered = 0;
 static void vtkVideoSourceExitFunc()
 {
   int i = 0;
-  
+
   for (i = 0; i < vtkVideoSourcesLen; i++)
     {
     vtkVideoSources[i]->ReleaseSystemResources();
@@ -148,7 +149,7 @@ static void vtkVideoSourceAdd(vtkVideoSource2 *o)
   vtkVideoSources = newlist;
 }
 
-// this function is called to remove a source from the list 
+// this function is called to remove a source from the list
 static void vtkVideoSourceRemove(vtkVideoSource2 *o)
 {
   int i,j,n;
@@ -169,17 +170,17 @@ static void vtkVideoSourceRemove(vtkVideoSource2 *o)
     free((void *)vtkVideoSources);
     vtkVideoSources = 0;
     }
-}*/   
+}*/
 
 //----------------------------------------------------------------------------
 vtkVideoSource2::vtkVideoSource2()
 {
   int i;
-  
+
   this->Initialized = 0;
 
   this->AutoAdvance = 1;
-  
+
   this->Playing = 0;
   this->Recording = 0;
 
@@ -226,8 +227,8 @@ vtkVideoSource2::vtkVideoSource2()
 
 //----------------------------------------------------------------------------
 vtkVideoSource2::~vtkVideoSource2()
-{ 
-  // we certainly don't want to access a virtual 
+{
+  // we certainly don't want to access a virtual
   // function after the subclass has destructed!!
   this->vtkVideoSource2::ReleaseSystemResources();
 
@@ -243,7 +244,7 @@ vtkVideoSource2::~vtkVideoSource2()
 void vtkVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
-  
+
   this->Superclass::PrintSelf(os,indent);
 
   os << indent << "ClipRegion: (" << this->ClipRegion[0];
@@ -252,7 +253,7 @@ void vtkVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
     os << ", " << this->ClipRegion[idx];
     }
   os << ")\n";
-  
+
   os << indent << "DataSpacing: (" << this->DataSpacing[0];
   for (idx = 1; idx < 3; ++idx)
     {
@@ -273,7 +274,7 @@ void vtkVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
     os << ", " << this->OutputWholeExtent[idx];
     }
   os << ")\n";
-  
+
   os << indent << "FrameRate: " << this->FrameRate << "\n";
 
   os << indent << "FrameCount: " << this->FrameCount << "\n";
@@ -283,7 +284,7 @@ void vtkVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Playing: " << (this->Playing ? "On\n" : "Off\n");
 
   os << indent << "NumberOfOutputFrames: " << this->NumberOfOutputFrames << "\n";
-  
+
   os << indent << "AutoAdvance: " << (this->AutoAdvance ? "On\n" : "Off\n");
 
   os << indent << "Buffer:\n";
@@ -297,20 +298,20 @@ void vtkVideoSource2::SetFrameSize(int x, int y, int z)
   int frameSize[3];
   this->Buffer->GetFrameFormat()->GetFrameSize(frameSize);
 
-  if (x == frameSize[0] && 
-      y == frameSize[1] && 
+  if (x == frameSize[0] &&
+      y == frameSize[1] &&
       z == frameSize[2])
     {
     return;
     }
 
-  if (x < 1 || y < 1 || z < 1) 
+  if (x < 1 || y < 1 || z < 1)
     {
     vtkErrorMacro(<< "SetFrameSize: Illegal frame size");
     return;
     }
 
-  if (this->Initialized) 
+  if (this->Initialized)
     {
     this->Buffer->Lock();
     this->Buffer->GetFrameFormat()->SetFrameSize(x,y,z);
@@ -330,7 +331,7 @@ int* vtkVideoSource2::GetFrameSize()
 {
   return this->Buffer->GetFrameFormat()->GetFrameSize();
 }
-    
+
 //----------------------------------------------------------------------------
 void vtkVideoSource2::GetFrameSize(int &x, int &y, int &z)
 {
@@ -361,7 +362,7 @@ void vtkVideoSource2::SetFrameRate(float rate)
 }
 
 //----------------------------------------------------------------------------
-void vtkVideoSource2::SetClipRegion(int x0, int x1, int y0, int y1, 
+void vtkVideoSource2::SetClipRegion(int x0, int x1, int y0, int y1,
                                    int z0, int z1)
 {
   if (this->ClipRegion[0] == x0 && this->ClipRegion[1] == x1 &&
@@ -371,7 +372,7 @@ void vtkVideoSource2::SetClipRegion(int x0, int x1, int y0, int y1,
     return;
     }
 
-  if (this->Initialized) 
+  if (this->Initialized)
     {
     this->Buffer->Lock();
     this->ClipRegion[0] = x0; this->ClipRegion[1] = x1;
@@ -452,7 +453,7 @@ int vtkVideoSource2::GetOutputFormat()
 
 //----------------------------------------------------------------------------
 // set or change the circular buffer size
-// you will have to override this if you want the buffers 
+// you will have to override this if you want the buffers
 // to be device-specific (i.e. something other than vtkDataArray)
 void vtkVideoSource2::SetFrameBufferSize(int bufsize)
 {
@@ -544,11 +545,11 @@ void vtkVideoSource2::UpdateFrameBuffer()
   for (i = 0; i < 3; i++)
     {
     oldExt = frameBufferExtent[2*i+1] - frameBufferExtent[2*i] + 1;
-    frameBufferExtent[2*i] = ((this->ClipRegion[2*i] > 0) 
+    frameBufferExtent[2*i] = ((this->ClipRegion[2*i] > 0)
                              ? this->ClipRegion[2*i] : 0);
-    frameBufferExtent[2*i+1] = ((this->ClipRegion[2*i+1] < frameSize[i]-1) 
+    frameBufferExtent[2*i+1] = ((this->ClipRegion[2*i+1] < frameSize[i]-1)
                              ? this->ClipRegion[2*i+1] : frameSize[i]-1);
-    
+
     ext = frameBufferExtent[2*i+1] - frameBufferExtent[2*i] +1;
     if (ext < 0)
       {
@@ -564,7 +565,7 @@ void vtkVideoSource2::UpdateFrameBuffer()
     }
   this->Buffer->GetFrameFormat()->SetFrameExtent(frameBufferExtent);
   this->Buffer->GetFrameFormat()->Allocate();
-  
+
   // for each of the frames in the buffer, make sure that its format matches
   // the buffer's FrameFormat and allocate
   vtkVideoFrame2 *currFrame;
@@ -580,7 +581,7 @@ void vtkVideoSource2::UpdateFrameBuffer()
   int currPixelFormat, formatPixelFormat;
   int currCompression, formatCompression;
   int currFrameGrabberType, formatFrameGrabberType;
- 
+
   frameFormat = this->Buffer->GetFrameFormat();
   frameFormat->GetFrameSize(formatFrameSize);
   frameFormat->GetFrameExtent(formatFrameExtent);
@@ -647,7 +648,7 @@ void vtkVideoSource2::UpdateFrameBuffer()
       {
       currFrame->SetPixelFormat(formatPixelFormat);
       }
-    
+
   if (currCompression != formatCompression)
     {
     currFrame->SetCompression(formatCompression);
@@ -737,7 +738,7 @@ void vtkVideoSource2::InternalGrab()
     ptr1 += 16;
     }
   randsave = randNum;
- 
+
   // add the new frame and the current time to the buffer
   this->Buffer->AddItem(this->Buffer->GetFrame(0), vtkTimerLog::GetUniversalTime());
 
@@ -769,7 +770,7 @@ static inline void vtkSleep(double duration)
 
 //----------------------------------------------------------------------------
 // Sleep until the specified absolute time has arrived.
-// You must pass a handle to the current thread.  
+// You must pass a handle to the current thread.
 // If '0' is returned, then the thread was aborted before or during the wait.
 static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 {
@@ -793,7 +794,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
       remaining = 0.1;
       }
 
-    // check to see if we are being told to quit 
+    // check to see if we are being told to quit
     data->ActiveFlagLock->Lock();
     int activeFlag = *(data->ActiveFlag);
     data->ActiveFlagLock->Unlock();
@@ -814,7 +815,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 static void *vtkVideoSourceRecordThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkVideoSource2 *self = (vtkVideoSource2 *)(data->UserData);
-  
+
   double startTime = vtkTimerLog::GetUniversalTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -831,7 +832,7 @@ static void *vtkVideoSourceRecordThread(vtkMultiThreader::ThreadInfo *data)
 
 //----------------------------------------------------------------------------
 // Set the source to grab frames continuously.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkVideoSource2::Record()
 {
   if (this->Playing)
@@ -845,19 +846,19 @@ void vtkVideoSource2::Record()
     this->Recording = 1;
     this->FrameCount = 0;
     this->Modified();
-    this->PlayerThreadId = 
+    this->PlayerThreadId =
       this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
                                 &vtkVideoSourceRecordThread,this);
     }
 }
-    
+
 //----------------------------------------------------------------------------
 // this function runs in an alternate thread to 'play the tape' at the
 // specified frame rate.
 static void *vtkVideoSourcePlayThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkVideoSource2 *self = (vtkVideoSource2 *)(data->UserData);
- 
+
   double startTime = vtkTimerLog::GetUniversalTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -874,7 +875,7 @@ static void *vtkVideoSourcePlayThread(vtkMultiThreader::ThreadInfo *data)
 
 //----------------------------------------------------------------------------
 // Set the source to play back recorded frames.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkVideoSource2::Play()
 {
   if (this->Recording)
@@ -888,12 +889,12 @@ void vtkVideoSource2::Play()
 
     this->Playing = 1;
     this->Modified();
-    this->PlayerThreadId = 
+    this->PlayerThreadId =
       this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
                                         &vtkVideoSourcePlayThread,this);
     }
 }
-    
+
 //----------------------------------------------------------------------------
 // Stop continuous grabbing or playback.  You will have to override this
 // if your class overrides Play() and Record()
@@ -907,7 +908,7 @@ void vtkVideoSource2::Stop()
     this->Recording = 0;
     this->Modified();
     }
-} 
+}
 
 //----------------------------------------------------------------------------
 // Rewind back to the frame with the earliest timestamp.
@@ -939,7 +940,7 @@ void vtkVideoSource2::Rewind()
       }
     }
   stamp = this->Buffer->GetTimeStamp(-i);
-  
+
   // update the buffer's current index
   if (stamp != 0 && stamp < 980000000.0)
     {
@@ -956,7 +957,7 @@ void vtkVideoSource2::Rewind()
     }
 
   this->Buffer->Unlock();
-}  
+}
 
 //----------------------------------------------------------------------------
 // Fast-forward to the frame with the latest timestamp.
@@ -1005,12 +1006,12 @@ void vtkVideoSource2::FastForward()
     }
 
   this->Buffer->Unlock();
-}  
+}
 
 //----------------------------------------------------------------------------
 // Rotate the buffers
 void vtkVideoSource2::Seek(int n)
-{ 
+{
   this->Buffer->Lock();
   this->AdvanceFrameBuffer(n);
   this->FrameIndex = (this->FrameIndex + n) % this->Buffer->GetBufferSize();
@@ -1019,7 +1020,7 @@ void vtkVideoSource2::Seek(int n)
     this->FrameIndex += this->Buffer->GetBufferSize();
     }
   this->Buffer->Unlock();
-  this->Modified(); 
+  this->Modified();
 }
 
 //----------------------------------------------------------------------------
@@ -1068,7 +1069,7 @@ int vtkVideoSource2::RequestInformation(
     // if 'flag' is set in output extent, use the FrameBufferExtent instead
     if (extent[2*i+1] < extent[2*i])
       {
-      extent[2*i] = 0; 
+      extent[2*i] = 0;
       extent[2*i+1] = \
         frameExtent[2*i+1] - frameExtent[2*i];
       }
@@ -1096,7 +1097,7 @@ int vtkVideoSource2::RequestInformation(
   outInfo->Set(vtkDataObject::ORIGIN(),this->DataOrigin,3);
 
   // set default data type
-  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_UNSIGNED_CHAR, 
+  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_UNSIGNED_CHAR,
     this->NumberOfScalarComponents);
 
   return 1;
@@ -1141,9 +1142,9 @@ int vtkVideoSource2::RequestData(
     saveOutputExtent[i] = outputExtent[i];
     }
 
-  // clip the output extent to the Z size of one frame  
-  outputExtent[4] = this->FrameOutputExtent[4]; 
-  outputExtent[5] = this->FrameOutputExtent[5]; 
+  // clip the output extent to the Z size of one frame
+  outputExtent[4] = this->FrameOutputExtent[4];
+  outputExtent[5] = this->FrameOutputExtent[5];
 
   // if the output is more than a single frame,
   // then the output will cover a partial or full first frame,
@@ -1163,7 +1164,7 @@ int vtkVideoSource2::RequestData(
     }
 
   // ditto for number of scalar components
-  if (data->GetNumberOfScalarComponents() != 
+  if (data->GetNumberOfScalarComponents() !=
       this->LastNumberOfScalarComponents)
     {
     this->LastNumberOfScalarComponents = data->GetNumberOfScalarComponents();
@@ -1178,7 +1179,7 @@ int vtkVideoSource2::RequestData(
            (saveOutputExtent[3]-saveOutputExtent[2]+1)*
            (saveOutputExtent[5]-saveOutputExtent[4]+1)*this->NumberOfScalarComponents);
     this->OutputNeedsInitialization = 0;
-    } 
+    }
 
   this->Buffer->Lock();
   this->FrameTimeStamp = this->Buffer->GetTimeStamp(0);
@@ -1594,7 +1595,7 @@ void vtkVideoSource2::ReadFramesFromFile(vtkImageReader2 *reader, const char *su
       ptr = reinterpret_cast<unsigned char*>(this->Buffer->GetFrame(0)->GetVoidPointer(0));
       imgPtr = reinterpret_cast<unsigned char *>(image->GetScalarPointer());
       this->CopyImageToFrame(ptr, imgPtr, this->Buffer->GetFrameFormat()->GetBytesInFrame(), this->GetOutputFormat(), image->GetDimensions(), opacity, fileType);
-      
+
       // add the frame
       this->Buffer->AddItem(this->Buffer->GetFrame(0), timestamp);
       if (this->FrameCount++ == 0)

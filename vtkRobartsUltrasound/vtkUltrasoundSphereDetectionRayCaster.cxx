@@ -25,7 +25,7 @@
 //#include "vtkImageThreshold.h"
 #include "vtkImageMask.h"
 #include <math.h>
-#include <vtkVersion.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkCxxRevisionMacro(vtkUltrasoundSphereDetectionRayCaster, "$Revision: 1.1 $");
 vtkStandardNewMacro(vtkUltrasoundSphereDetectionRayCaster);
@@ -95,7 +95,7 @@ static inline int vtkUltraFloor(double x, double &f)
 
 //----------------------------------------------------------------------------
 // Performs trilinear interpolation-  use the pixel values to interpolate something
-// in the middle 
+// in the middle
 // Returns the intensity at the interpolated value
 // point is in indices, relative to inPtr, inPtr should be the pointer to point
 // if edgeValue != 0, then thresholds every pixel above zero to edgeValue
@@ -313,7 +313,7 @@ void vtkUltrasoundSphereDetectionRayCasterExecute(vtkUltrasoundSphereDetectionRa
       pointInc[0] = (pointWorld[0] - origin[0]) / spacing[0] - wholeExtent[0];
       pointInc[1] = (pointWorld[1] - origin[1]) / spacing[1] - wholeExtent[2];
       pointInc[2] = (pointWorld[2] - origin[2]) / spacing[2] - wholeExtent[4];
-     
+
       // iterate along the vector away from the seed, until we hit the edge
       haveNotReachedTheEdge = 1;
       maxAwayIntensityFirst = 0;
@@ -563,7 +563,7 @@ void vtkUltrasoundSphereDetectionPickEdgePointsAccordingToSeedConnectivity(vtkUl
           tempData->SetExtent(outExt[0],outExt[1],outExt[2],outExt[3],pointZ+outExt[4],pointZ+outExt[4]);
           tempData->SetWholeExtent(tempData->GetExtent());
           tempData->SetUpdateExtent(tempData->GetUpdateExtent());
-          
+
           extractVOI->SetVOI(outExt[0],outExt[1],outExt[2],outExt[3],pointZ+outExt[4],pointZ+outExt[4]);
           seedConnectivity->RemoveAllSeeds();
           seedConnectivity->AddSeed(pointX+outExt[0], pointY+outExt[2], pointZ+outExt[4]);
@@ -575,7 +575,7 @@ void vtkUltrasoundSphereDetectionPickEdgePointsAccordingToSeedConnectivity(vtkUl
     std::cout << (((double)pointX) / ((double)(maxX+1)) * 100.0) << "% ";
     }
   std::cout << "100.000%" << std::endl;
-  
+
   //-----------
   // for each pixel in the image, find the pixels between it and the seed (in the 2D Z plane)
   // and pick the pixels with the two highest number of neighbors
@@ -766,7 +766,7 @@ void vtkUltrasoundSphereDetectionFinalEdgeSelection(vtkUltrasoundSphereDetection
   self->GetSeed(seed);
   seedX = seed[0];
   seedY = seed[1];
-  seedZ = seed[2]; 
+  seedZ = seed[2];
   outData->GetOrigin(origin);
   outData->GetSpacing(spacing);
   spacingMagnitude = spacing[0]; // assuming isotropic spacing
@@ -920,7 +920,7 @@ void vtkUltrasoundSphereDetectionFinalEdgeSelection(vtkUltrasoundSphereDetection
               haveNotReachedTheEdge = 0;
               }
             }
-          
+
           if (!foundPtAlongVector)
             {
             //*ptPtrOut = *ptPtrIn;
@@ -1015,7 +1015,7 @@ void vtkUltrasoundSphereDetectionFinalEdgeSelection(vtkUltrasoundSphereDetection
         // pointer to this point
         currPtrIn = inPtr + (currIncX*outIncs[0]) + (currIncY*outIncs[1]) + (currIncZ*outIncs[2]);
         currPtrOut = outPtr + (currIncX*outIncs[0]) + (currIncY*outIncs[1]) + (currIncZ*outIncs[2]);
-        currDistPtr = distPtr + (currIncX*outIncs[0]) + (currIncY*outIncs[1]) + (currIncZ*outIncs[2]);       
+        currDistPtr = distPtr + (currIncX*outIncs[0]) + (currIncY*outIncs[1]) + (currIncZ*outIncs[2]);
 
         // break out of loop if we've hit the edge
         if (currIncX > maxX || currIncY > maxY || currIncZ > maxZ || currIncX < 0 || currIncY < 0 || currIncZ < 0)
@@ -1181,14 +1181,14 @@ for (pointIndX = 0; pointIndX <= maxX; pointIndX++)
 }
 
 
- 
+
 
 
 
 
 //----------------------------------------------------------------------------
 // This method uses the input data to fill the output data.
-// It can handle any type data, but the two datas must have the same 
+// It can handle any type data, but the two datas must have the same
 // data type.  Assumes that in and out have the same lower extent.
 // It just executes a switch statement to call the correct function for
 // the regions data types.
@@ -1202,7 +1202,7 @@ int vtkUltrasoundSphereDetectionRayCaster::RequestData(
   vtkImageData *inData = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
   vtkImageData *outData = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
-  
+
   // we need to allocate our own scalars
   int wholeExtent[6];
   int extent[6];
@@ -1220,7 +1220,7 @@ int vtkUltrasoundSphereDetectionRayCaster::RequestData(
   // this filter expects that input is the same type as output.
   if (inData->GetScalarType() != outData->GetScalarType())
     {
-    vtkErrorMacro(<< "Execute: input ScalarType, " 
+    vtkErrorMacro(<< "Execute: input ScalarType, "
                   << vtkImageScalarTypeNameMacro(inData->GetScalarType())
                   << ", must match out ScalarType "
                   << vtkImageScalarTypeNameMacro(outData->GetScalarType()));

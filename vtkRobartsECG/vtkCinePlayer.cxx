@@ -19,7 +19,7 @@ conditions are met:
 1) Redistribution of the source code, in verbatim or modified
    form, must retain the above copyright notice, this license,
    the following disclaimer, and any notices that refer to this
-   license and/or the following disclaimer.  
+   license and/or the following disclaimer.
 
 2) Redistribution in binary form must include the above copyright
    notice, a copy of this license and the following disclaimer
@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include "vtkCriticalSection.h"
 #include "vtkObjectFactory.h"
 #include "vtkCinePlayer.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 //----------------------------------------------------------------------------
 vtkCinePlayer* vtkCinePlayer::New()
@@ -93,14 +94,14 @@ vtkCinePlayer::~vtkCinePlayer()
   this->UpdateMutex->Delete();
   this->RequestUpdateMutex->Delete();
 }
-  
+
 //----------------------------------------------------------------------------
 void vtkCinePlayer::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkObject::PrintSelf(os,indent);
 
 }
- 
+
 //----------------------------------------------------------------------------
 // this thread is run whenever the tracker is tracking
 static void *vtkCinePlayerThread(vtkMultiThreader::ThreadInfo *data)
@@ -134,8 +135,8 @@ static void *vtkCinePlayerThread(vtkMultiThreader::ThreadInfo *data)
     // check to see if main thread wants to lock the UpdateMutex
     self->RequestUpdateMutex->Lock();
     self->RequestUpdateMutex->Unlock();
-    
-    // check to see if we are being told to quit 
+
+    // check to see if we are being told to quit
     data->ActiveFlagLock->Lock();
     int activeFlag = *(data->ActiveFlag);
     data->ActiveFlagLock->Unlock();
@@ -215,8 +216,8 @@ void vtkCinePlayer::StopPlaying()
 void vtkCinePlayer::Update()
 {
 /*  if (!this->Tracking)
-    { 
-    return; 
+    {
+    return;
     }
 
   for (int tool = 0; tool < this->NumberOfTools; tool++)
@@ -284,7 +285,7 @@ int vtkCinePlayer::AddActorToImageGroup(vtkActor * actor, int ImageIndex, int Gr
   }
   else if (GroupIndex == this->ImageGroups[ImageIndex].size()) {
     ActorGroup actorGroup;
-    this->ImageGroups[ImageIndex].push_back(actorGroup);  
+    this->ImageGroups[ImageIndex].push_back(actorGroup);
     this->ImageGroups[ImageIndex][GroupIndex].push_back(actor);
     return GroupIndex;
   }
@@ -304,7 +305,7 @@ int vtkCinePlayer::AddActorToSurfaceGroup(vtkActor * actor, int SurfaceIndex, in
   }
   else if (GroupIndex == this->SurfaceGroups[SurfaceIndex].size()) {
     ActorGroup actorGroup;
-    this->SurfaceGroups[SurfaceIndex].push_back(actorGroup);  
+    this->SurfaceGroups[SurfaceIndex].push_back(actorGroup);
     this->SurfaceGroups[SurfaceIndex][GroupIndex].push_back(actor);
     return GroupIndex;
   }

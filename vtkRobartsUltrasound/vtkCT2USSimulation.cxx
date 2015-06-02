@@ -3,7 +3,7 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include <vtkVersion.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 struct vtkCT2USSimulationInformation {
 
@@ -21,7 +21,7 @@ struct vtkCT2USSimulationInformation {
   double fanAngle[2];
   double StartDepth;
   double EndDepth;
-  
+
   //input scaling to Hounsfield units
   double HounsfieldScale;
   double HounsfieldOffset;
@@ -64,7 +64,7 @@ void vtkCT2USSimulation::ThreadedExecute(vtkImageData *inData, vtkImageData *out
     double normIndex[2];
     normIndex[0] = (double) (index[0]+index[0]) / (double) this->CT2USInformation->Resolution[0] - 1.0;
     normIndex[1] = (double) (index[1]+index[1]) / (double) this->CT2USInformation->Resolution[1] - 1.0;
-  
+
     //find the vector for the ray through the volume
     double rayStart[3];
     double rayInc[3];
@@ -154,7 +154,7 @@ void vtkCT2USSimulation::SampleAlongRay(const int index[2], double rayStart[2], 
     else
       if( pointReflection > 1.0 )
         pointReflection = 1.0;
-    
+
     //create the output image
     double outputPixel = 255.0*(alpha*density+beta*pointReflection+bias);
     if( outputPixel < 0.0 ) outputPixel = 0.0;
@@ -183,7 +183,7 @@ void vtkCT2USSimulation::FindVectors(const double normIndex[2], double rayStart[
   double usStart[3];
   usStart[0] = tan( this->CT2USInformation->fanAngle[0] * normIndex[0] );
   usStart[1] = tan( this->CT2USInformation->fanAngle[1] * normIndex[1] );
-  usStart[2] = sqrt( this->CT2USInformation->StartDepth * this->CT2USInformation->StartDepth / 
+  usStart[2] = sqrt( this->CT2USInformation->StartDepth * this->CT2USInformation->StartDepth /
               ( 1.0 + usStart[0]*usStart[0] + usStart[1]*usStart[1]) );
   usStart[0] = 0.5 * this->CT2USInformation->probeWidth[0]*normIndex[0] + usStart[0]*usStart[2];
   usStart[1] = 0.5 * this->CT2USInformation->probeWidth[1]*normIndex[1] + usStart[1]*usStart[2];
@@ -194,8 +194,8 @@ void vtkCT2USSimulation::FindVectors(const double normIndex[2], double rayStart[
   worldStart[1] = this->CT2USInformation->UltraSoundToWorld[ 4] * usStart[0] + this->CT2USInformation->UltraSoundToWorld[ 5] * usStart[1] + this->CT2USInformation->UltraSoundToWorld[ 6] * usStart[2] + this->CT2USInformation->UltraSoundToWorld[ 7];
   worldStart[2] = this->CT2USInformation->UltraSoundToWorld[ 8] * usStart[0] + this->CT2USInformation->UltraSoundToWorld[ 9] * usStart[1] + this->CT2USInformation->UltraSoundToWorld[10] * usStart[2] + this->CT2USInformation->UltraSoundToWorld[11];
   worldStart[3] = this->CT2USInformation->UltraSoundToWorld[12] * usStart[0] + this->CT2USInformation->UltraSoundToWorld[13] * usStart[1] + this->CT2USInformation->UltraSoundToWorld[14] * usStart[2] + this->CT2USInformation->UltraSoundToWorld[15];
-  worldStart[0] /= worldStart[3]; 
-  worldStart[1] /= worldStart[3]; 
+  worldStart[0] /= worldStart[3];
+  worldStart[1] /= worldStart[3];
   worldStart[2] /= worldStart[3];
 
   //transform the Start into volume co-ordinates
@@ -206,24 +206,24 @@ void vtkCT2USSimulation::FindVectors(const double normIndex[2], double rayStart[
   rayStart[0] /= worldStart[3];
   rayStart[1] /= worldStart[3];
   rayStart[2] /= worldStart[3];
-  
+
   //find the US coordinates of this particular beam's Start point
   double usEnd[3];
   usEnd[0] = tan( this->CT2USInformation->fanAngle[0] * normIndex[0] );
   usEnd[1] = tan( this->CT2USInformation->fanAngle[1] * normIndex[1] );
-  usEnd[2] = sqrt( (this->CT2USInformation->EndDepth * this->CT2USInformation->EndDepth) / 
+  usEnd[2] = sqrt( (this->CT2USInformation->EndDepth * this->CT2USInformation->EndDepth) /
             ( 1.0 + usEnd[0]*usEnd[0] + usEnd[1]*usEnd[1]) );
   usEnd[0] = 0.5 * this->CT2USInformation->probeWidth[0] * normIndex[0] + usEnd[0]*usEnd[2];
   usEnd[1] = 0.5 * this->CT2USInformation->probeWidth[1] * normIndex[1] + usEnd[1]*usEnd[2];
-  
+
   //find the End vector in world coordinates
   double worldEnd[4];
   worldEnd[0] = this->CT2USInformation->UltraSoundToWorld[ 0] * usEnd[0] + this->CT2USInformation->UltraSoundToWorld[ 1] * usEnd[1] + this->CT2USInformation->UltraSoundToWorld[ 2] * usEnd[2] + this->CT2USInformation->UltraSoundToWorld[ 3];
   worldEnd[1] = this->CT2USInformation->UltraSoundToWorld[ 4] * usEnd[0] + this->CT2USInformation->UltraSoundToWorld[ 5] * usEnd[1] + this->CT2USInformation->UltraSoundToWorld[ 6] * usEnd[2] + this->CT2USInformation->UltraSoundToWorld[ 7];
   worldEnd[2] = this->CT2USInformation->UltraSoundToWorld[ 8] * usEnd[0] + this->CT2USInformation->UltraSoundToWorld[ 9] * usEnd[1] + this->CT2USInformation->UltraSoundToWorld[10] * usEnd[2] + this->CT2USInformation->UltraSoundToWorld[11];
   worldEnd[3] = this->CT2USInformation->UltraSoundToWorld[12] * usEnd[0] + this->CT2USInformation->UltraSoundToWorld[13] * usEnd[1] + this->CT2USInformation->UltraSoundToWorld[14] * usEnd[2] + this->CT2USInformation->UltraSoundToWorld[15];
-  worldEnd[0] /= worldEnd[3]; 
-  worldEnd[1] /= worldEnd[3]; 
+  worldEnd[0] /= worldEnd[3];
+  worldEnd[1] /= worldEnd[3];
   worldEnd[2] /= worldEnd[3];
 
   //transform the End into volume co-ordinates
@@ -255,7 +255,7 @@ void vtkCT2USSimulation::SetOutputResolution(int x, int y, int z){
     this->CT2USInformation->Resolution[1] = y;
     this->CT2USInformation->Resolution[2] = z;
   }
-  
+
 }
 
 struct vtkCT2USSimulationThreadStruct
@@ -269,10 +269,10 @@ VTK_THREAD_RETURN_TYPE vtkCT2USSimulationThreadedExecute( void *arg )
 {
   vtkCT2USSimulationThreadStruct *str;
   int threadId, threadCount;
-  
+
   threadId = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->ThreadID;
   threadCount = static_cast<vtkMultiThreader::ThreadInfo *>(arg)->NumberOfThreads;
-  
+
   str = static_cast<vtkCT2USSimulationThreadStruct *>
   (static_cast<vtkMultiThreader::ThreadInfo *>(arg)->UserData);
 
@@ -376,7 +376,7 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
   this->VoxelsTransform->Translate( extentOrigin[0], extentOrigin[1], extentOrigin[2] );
   this->VoxelsTransform->Scale( spacing[0], spacing[1], spacing[2] );
   this->Interpolator->SetTransform(this->VoxelsTransform);
-  
+
   // Now we actually have the world to voxels matrix - copy it out
   this->WorldToVoxelsMatrix->DeepCopy( VoxelsTransform->GetMatrix() );
   this->WorldToVoxelsMatrix->Invert();
@@ -387,14 +387,14 @@ int vtkCT2USSimulation::RequestData(vtkInformation* request,
       this->CT2USInformation->WorldToVolume[i*4+j] = WorldToVoxelsMatrix->GetElement(i,j);
     }
   }
-  
+
   //set up the threader
   vtkCT2USSimulationThreadStruct str;
   str.Filter = this;
   str.inData = inData;
   str.outData = outData;
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  this->Threader->SetSingleMethod(vtkCT2USSimulationThreadedExecute, &str);  
+  this->Threader->SetSingleMethod(vtkCT2USSimulationThreadedExecute, &str);
 
   // always shut off debugging to avoid threading problems with GetMacros
   int debug = this->Debug;
@@ -482,7 +482,7 @@ vtkCT2USSimulation::vtkCT2USSimulation(){
 }
 
 vtkCT2USSimulation::~vtkCT2USSimulation(){
-  
+
   //clean up the temporary transforms
   VoxelsTransform->Delete();
   WorldToVoxelsMatrix->Delete();
