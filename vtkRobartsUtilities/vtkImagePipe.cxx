@@ -356,7 +356,13 @@ void vtkImagePipe::ClientSideUpdate(){
     vtkErrorMacro(<<"Image information packet does not conform to the image size error check.");
     return;
   }
+#if (VTK_MAJOR_VERSION <= 5)
+  this->buffer->SetNumberOfScalarComponents( initData.numComponents );
+  this->buffer->SetScalarType( initData.scalarType );
+  this->buffer->AllocateScalars();
+#else
   this->buffer->AllocateScalars(initData.scalarType, initData.numComponents);
+#endif
 
   //grab the data from the socket
   serverThere = this->clientSocket->Receive( this->buffer->GetScalarPointer(), this->ImageSize, 1 );

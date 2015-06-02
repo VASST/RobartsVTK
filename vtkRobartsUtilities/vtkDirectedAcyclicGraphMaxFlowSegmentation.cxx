@@ -760,11 +760,13 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(
       vtkDataSet *output = vtkDataSet::SafeDownCast(
       info->Get(vtkDataObject::DATA_OBJECT()));
  
+#if (VTK_MAJOR_VERSION <= 5)
       if (!output || !output->IsA(input->GetClassName())) {
         vtkImageData* newOutput = input->NewInstance();
         newOutput->SetPipelineInformation(info);
         newOutput->Delete();
       }
+#endif
       return 1;
     }
   }

@@ -79,8 +79,14 @@ public:
   // Description:
   // Set the two inputs to this filter. For some operations, the second input
   // is not used.
+#if (VTK_MAJOR_VERSION <= 5)
+  virtual void SetInput1(vtkDataObject *in) { this->SetInput(0,in); }
+  virtual void SetInput2(vtkDataObject *in) { this->SetInput(1,in); }
+#else
   virtual void SetInput1(vtkDataObject *in) { this->SetInputDataObject(0,in); }
   virtual void SetInput2(vtkDataObject *in) { this->SetInputDataObject(1,in); }
+#endif
+  
 
   // Description:
   // Take the negative log of the output to convert from a probability to an

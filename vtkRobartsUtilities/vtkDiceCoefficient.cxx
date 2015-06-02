@@ -104,10 +104,18 @@ void vtkDiceCoefficient::vtkDiceCoefficientExecute(vtkDiceCoefficient *self,
     vtkImageCast *in1Cast = vtkImageCast::New();
     vtkImageCast *in2Cast = vtkImageCast::New();
 
+#if (VTK_MAJOR_VERSION <= 5)
+    in1Cast->SetInput(in1Data);
+#else
     in1Cast->SetInputDataObject(in1Data);
+#endif
     in1Cast->SetOutputScalarTypeToUnsignedChar();
     in1Cast->Update();
+#if (VTK_MAJOR_VERSION <= 5)
+    in2Cast->SetInput(in2Data);
+#else
     in2Cast->SetInputDataObject(in2Data);
+#endif
     in2Cast->SetOutputScalarTypeToUnsignedChar();
     in2Cast->Update();
 

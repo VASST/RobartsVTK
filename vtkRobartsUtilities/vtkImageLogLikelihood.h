@@ -41,7 +41,11 @@ public:
   
   // Description:
   // Set the input image who you want to define a log likelihood data term for.
+#if (VTK_MAJOR_VERSION <= 5)
+  virtual void SetInputImage(vtkDataObject *in) { this->SetInput(0,in); }
+#else
   virtual void SetInputImage(vtkDataObject *in) { this->SetInputDataObject(0,in); }
+#endif
 
   // Description:
   // Set a collection of label maps for the seeding operation.
