@@ -22,8 +22,12 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkTestECGVideoSource, "$Revision: 1.00 $");
+#endif
+
 vtkStandardNewMacro(vtkTestECGVideoSource);
 
 //----------------------------------------------------------------------------
@@ -39,7 +43,7 @@ vtkTestECGVideoSource::vtkTestECGVideoSource()
 vtkTestECGVideoSource::~vtkTestECGVideoSource()
 {
   ReleaseSystemResources();
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkTestECGVideoSource::PrintSelf(ostream& os, vtkIndent indent)
@@ -78,7 +82,7 @@ static inline void vtkSleep(double duration)
 
 //----------------------------------------------------------------------------
 // Sleep until the specified absolute time has arrived.
-// You must pass a handle to the current thread.  
+// You must pass a handle to the current thread.
 // If '0' is returned, then the thread was aborted before or during the wait.
 static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 {
@@ -102,7 +106,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
       remaining = 0.1;
       }
 
-    // check to see if we are being told to quit 
+    // check to see if we are being told to quit
     data->ActiveFlagLock->Lock();
     int activeFlag = *(data->ActiveFlag);
     data->ActiveFlagLock->Unlock();
@@ -124,7 +128,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 static void *vtkTestECGVideoSourceRecordThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkTestECGVideoSource *self = (vtkTestECGVideoSource *)(data->UserData);
-  
+
   double startTime = vtkTimerLog::GetUniversalTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -141,7 +145,7 @@ static void *vtkTestECGVideoSourceRecordThread(vtkMultiThreader::ThreadInfo *dat
 
 //----------------------------------------------------------------------------
 // Set the source to grab frames continuously.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkTestECGVideoSource::Record()
 {
   if (this->Playing)
@@ -157,7 +161,7 @@ void vtkTestECGVideoSource::Record()
     this->FrameCount = 0;
   this->pauseFeed = 0;
     this->Modified();
-    this->PlayerThreadId = 
+    this->PlayerThreadId =
       this->PlayerThreader->SpawnThread((vtkThreadFunctionType)\
                                 &vtkTestECGVideoSourceRecordThread,this);
     }
@@ -210,7 +214,7 @@ void vtkTestECGVideoSource::InternalGrab()
                      this->FrameBufferBitsPerPixel + 7)/8;
   bytesPerRow = ((bytesPerRow + this->FrameBufferRowAlignment - 1) /
                  this->FrameBufferRowAlignment)*this->FrameBufferRowAlignment;
-  int totalSize = bytesPerRow * 
+  int totalSize = bytesPerRow *
                    (this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1) *
                    (this->FrameBufferExtent[5]-this->FrameBufferExtent[4]+1);
 
@@ -226,7 +230,7 @@ void vtkTestECGVideoSource::InternalGrab()
   int width = (this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1);
   int height = (this->FrameBufferExtent[5]-this->FrameBufferExtent[4]+1);
 
-  //int colour = 
+  //int colour =
 
   while (--i >= 0)
     {
@@ -235,7 +239,7 @@ void vtkTestECGVideoSource::InternalGrab()
     if (i % (width)  == this->phase) {
       *lptr++ = 1013904223;
     }
-    else 
+    else
       *lptr++ = 0;
     }
 /*
@@ -265,7 +269,7 @@ void vtkTestECGVideoSource::InternalGrab()
 
   this->FrameBufferMutex->Unlock();
 }
-/*  
+/*
 //----------------------------------------------------------------------------
 // for accurate timing of the transformation: this solves a differential
 // equation that works to smooth out the jitter in the times that
@@ -277,7 +281,7 @@ double vtkTestECGVideoSource::CreateTimeStampForFrame(unsigned long framecount)
   double frameperiod = ((timestamp - this->LastTimeStamp)/
                         (framecount - this->LastFrameCount));
   double deltaperiod = (frameperiod - this->EstimatedFramePeriod)*0.01;
-  
+
   this->EstimatedFramePeriod += deltaperiod;
   this->LastTimeStamp += ((framecount - this->LastFrameCount)*
                           this->NextFramePeriod);
@@ -303,7 +307,7 @@ double vtkTestECGVideoSource::CreateTimeStampForFrame(unsigned long framecount)
     {
     diffperiod = maxdiff;
     }
- 
+
   this->NextFramePeriod = this->EstimatedFramePeriod + diffperiod;
 
   return this->LastTimeStamp;
@@ -335,4 +339,4 @@ void vtkTestECGVideoSource::Stop()
     this->Recording = 0;
     this->Modified();
     }
-} 
+}

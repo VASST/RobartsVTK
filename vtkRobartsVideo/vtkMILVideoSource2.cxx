@@ -23,8 +23,11 @@
 #include <mil.h>
 #include <ctype.h>
 #include <string.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkMILVideoSource2, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkMILVideoSource2);
 
 //----------------------------------------------------------------------------
@@ -102,13 +105,13 @@ vtkMILVideoSource2::~vtkMILVideoSource2()
     }
 
   this->SetMILSystemType(0);
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
-  
+
   os << indent << "VideoChannel: " << this->VideoChannel << "\n";
 
   os << indent << "ContrastLevel: " << this->ContrastLevel << "\n";
@@ -169,7 +172,7 @@ void vtkMILVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
       break;
     }
 
-  os << indent << "MILSystemType: " << 
+  os << indent << "MILSystemType: " <<
     (this->MILSystemType ? this->MILSystemType : "Default") << "\n";
 
   os << indent << "MILSystemNumber: " << this->MILSystemNumber << "\n";
@@ -264,7 +267,7 @@ void *vtkMILVideoSource2::MILInterpreterForSystem(const char *system)
 
 //----------------------------------------------------------------------------
 static void vtkMILVideoSource2SetChannel(long digID, int channel)
-{ 
+{
   if (digID == 0)
     {
     return;
@@ -293,14 +296,14 @@ static void vtkMILVideoSource2SetChannel(long digID, int channel)
 
 //----------------------------------------------------------------------------
 static void vtkMILVideoSource2SetLevel(long digID, int ref, float level)
-{ 
+{
   if (digID == 0)
     {
     return;
     }
 
   long int_level = M_MIN_LEVEL + level*(M_MAX_LEVEL-M_MIN_LEVEL);
-  
+
   if (int_level < M_MIN_LEVEL)
     {
     int_level = M_MIN_LEVEL;
@@ -332,7 +335,7 @@ static void vtkMILVideoSource2SetSize(long digID, int size[3], int maxSize[2])
     {
     shrink_y = 1;
     }
-  
+
   // convert shrink_x, shrink_y to power of 2
   int i;
   for (i = 0; shrink_x; i++)
@@ -345,7 +348,7 @@ static void vtkMILVideoSource2SetSize(long digID, int size[3], int maxSize[2])
     shrink_y = shrink_y >> 1;
     }
   shrink_y = 1 << (i-1);
-  
+
   MdigControl(digID,M_GRAB_SCALE_X,1.0/shrink_x);
   MdigControl(digID,M_GRAB_SCALE_Y,1.0/shrink_y);
 }
@@ -353,10 +356,10 @@ static void vtkMILVideoSource2SetSize(long digID, int size[3], int maxSize[2])
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::Initialize()
 {
-  static char *system_types[] = { VTK_MIL_METEOR, VTK_MIL_METEOR_II, 
+  static char *system_types[] = { VTK_MIL_METEOR, VTK_MIL_METEOR_II,
                                   VTK_MIL_METEOR_II_DIG, VTK_MIL_METEOR_II_CL,
                                   VTK_MIL_METEOR_II_1394, VTK_MIL_CORONA_II,
-                                  VTK_MIL_CORONA, VTK_MIL_PULSAR, 
+                                  VTK_MIL_CORONA, VTK_MIL_PULSAR,
                                   VTK_MIL_GENESIS, VTK_MIL_GENESIS_PLUS,
                                   VTK_MIL_ORION, VTK_MIL_CRONOS,
                                   VTK_MIL_ODYSSEY, 0 };
@@ -380,7 +383,7 @@ void vtkMILVideoSource2::Initialize()
       vtkErrorMacro(<< "Initialize: couldn't open MIL application\n");
       return;
       }
-    this->MILAppInternallyAllocated = 1;    
+    this->MILAppInternallyAllocated = 1;
     }
 
   long version = MappInquire(M_VERSION,M_NULL);
@@ -459,7 +462,7 @@ void vtkMILVideoSource2::Initialize()
 
   // update frame buffer again to reflect any changes
   this->UpdateFrameBuffer();
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::ReleaseSystemResources()
@@ -530,14 +533,14 @@ long MFTYPE vtkMILVideoSource2Hook(long HookType, MIL_ID EventID, void MPTYPE* U
     if (rate > 0)
       {
       frame_stride = (int)(30/rate);
-      if (format == VTK_MIL_CCIR || 
+      if (format == VTK_MIL_CCIR ||
           format == VTK_MIL_PAL ||
           format == VTK_MIL_SECAM)
         {
         frame_stride = (int)(25/rate);
         }
       }
-    if ((rate > 0 && ++(self->FrameCounter) >= frame_stride) || 
+    if ((rate > 0 && ++(self->FrameCounter) >= frame_stride) ||
         self->ForceGrab)
       {
       self->InternalGrab();
@@ -596,7 +599,7 @@ void vtkMILVideoSource2::InternalGrab()
       MbufGetColor2d(this->MILBufID,M_RGB24+M_PACKED,M_ALL_BAND,
                      offsetX,offsetY,sizeX,sizeY,ptr);
       }
-    else if (depth == 4) 
+    else if (depth == 4)
       {
       MbufGetColor2d(this->MILBufID,M_RGB32+M_PACKED,M_ALL_BAND,
                      offsetX,offsetY,sizeX,sizeY,ptr);
@@ -615,7 +618,7 @@ void vtkMILVideoSource2::InternalGrab()
 
   this->Buffer->Unlock();
 }
-  
+
 //----------------------------------------------------------------------------
 // for accurate timing of the transformation: this solves a differential
 // equation that works to smooth out the jitter in the times that
@@ -627,7 +630,7 @@ double vtkMILVideoSource2::CreateTimeStampForFrame(unsigned long framecount)
   double frameperiod = ((timestamp - this->LastTimeStamp)/
                         (framecount - this->LastFrameCount));
   double deltaperiod = (frameperiod - this->EstimatedFramePeriod)*0.01;
-  
+
   this->EstimatedFramePeriod += deltaperiod;
   this->LastTimeStamp += ((framecount - this->LastFrameCount)*
                           this->NextFramePeriod);
@@ -653,7 +656,7 @@ double vtkMILVideoSource2::CreateTimeStampForFrame(unsigned long framecount)
     {
     diffperiod = maxdiff;
     }
- 
+
   this->NextFramePeriod = this->EstimatedFramePeriod + diffperiod;
 
   return this->LastTimeStamp;
@@ -731,7 +734,7 @@ void vtkMILVideoSource2::Record()
 
   this->Modified();
 }
-    
+
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::Stop()
 {
@@ -780,14 +783,14 @@ void vtkMILVideoSource2::SetFrameSize(int x, int y, int z)
   int frameSize[3];
   this->Buffer->GetFrameFormat()->GetFrameSize(frameSize);
 
-  if (x == frameSize[0] && 
-      y == frameSize[1] && 
+  if (x == frameSize[0] &&
+      y == frameSize[1] &&
       z == frameSize[2])
     {
     return;
     }
 
-  if (x < 1 || y < 1 || z != 1) 
+  if (x < 1 || y < 1 || z != 1)
     {
     vtkErrorMacro(<< "SetFrameSize: Illegal frame size");
     return;
@@ -795,7 +798,7 @@ void vtkMILVideoSource2::SetFrameSize(int x, int y, int z)
 
   this->Buffer->GetFrameFormat()->SetFrameSize(x,y,z);
 
-  if (this->Initialized) 
+  if (this->Initialized)
     {
     this->Buffer->Lock();
     this->UpdateFrameBuffer();
@@ -895,13 +898,13 @@ void vtkMILVideoSource2::SetVideoFormat(int format)
     }
 
   this->VideoFormat = format;
-  
+
   // don't do anything if the digitizer isn't initialized
   if (this->Initialized)
     {
     this->AllocateMILDigitizer();
     }
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::SetVideoInput(int input)
@@ -910,7 +913,7 @@ void vtkMILVideoSource2::SetVideoInput(int input)
     {
     return;
     }
-  
+
   this->VideoInput = input;
 
   // don't do anything if the digitizer isn't initialized
@@ -918,7 +921,7 @@ void vtkMILVideoSource2::SetVideoInput(int input)
     {
     this->AllocateMILDigitizer();
     }
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkMILVideoSource2::SetVideoChannel(int channel)
@@ -1166,13 +1169,13 @@ void vtkMILVideoSource2::AllocateMILBuffer()
     MbufFree(this->MILBufID);
     }
 
-  int format = this->Buffer->GetFrameFormat()->GetPixelFormat();  
+  int format = this->Buffer->GetFrameFormat()->GetPixelFormat();
 
   if (format != VTK_LUMINANCE && format != VTK_RGB && format != VTK_RGBA)
     {
     vtkWarningMacro(<< "Initialize: unsupported OutputFormat");
     this->vtkVideoSource2::SetOutputFormat(VTK_LUMINANCE);
-    } 
+    }
 
   int frameSize[6];
   this->Buffer->GetFrameFormat()->GetFrameSize(frameSize);
@@ -1214,6 +1217,3 @@ void vtkMILVideoSource2::AllocateMILBuffer()
       }
     }
 }
-
-
-

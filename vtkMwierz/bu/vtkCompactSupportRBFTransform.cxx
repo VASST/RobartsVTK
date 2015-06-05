@@ -6,12 +6,12 @@
   Date:      $Date: 2002/12/26 18:21:21 $
   Version:   $Revision: 1.32 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -20,18 +20,21 @@
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
 #include "vtkPoints.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkCompactSupportRBFTransform, "$Revision: 1.32 $");
+#endif
 vtkStandardNewMacro(vtkCompactSupportRBFTransform);
 
 //------------------------------------------------------------------------
 // some dull matrix things
 
-inline double** vtkNewMatrix(int rows, int cols) 
+inline double** vtkNewMatrix(int rows, int cols)
 {
   double *matrix = new double[rows*cols];
   double **m = new double *[rows];
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
     m[i] = &matrix[i*cols];
     }
@@ -39,18 +42,18 @@ inline double** vtkNewMatrix(int rows, int cols)
 }
 
 //------------------------------------------------------------------------
-inline void vtkDeleteMatrix(double **m) 
+inline void vtkDeleteMatrix(double **m)
 {
   delete [] *m;
   delete [] m;
 }
 
 //------------------------------------------------------------------------
-inline void vtkZeroMatrix(double **m, int rows, int cols) 
+inline void vtkZeroMatrix(double **m, int rows, int cols)
 {
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
-    for(int j = 0; j < cols; j++) 
+    for(int j = 0; j < cols; j++)
       {
       m[i][j] = 0.0;
       }
@@ -59,18 +62,18 @@ inline void vtkZeroMatrix(double **m, int rows, int cols)
 
 //------------------------------------------------------------------------
 inline void vtkMatrixMultiply(double **a, double **b, double **c,
-                              int arows, int acols, int brows, int bcols) 
+                              int arows, int acols, int brows, int bcols)
 {
-  if(acols != brows) 
+  if(acols != brows)
     {
     return;     // acols must equal br otherwise we can't proceed
     }
-        
+
   // c must have size arows*bcols (we assume this)
 
-  for(int i = 0; i < arows; i++) 
+  for(int i = 0; i < arows; i++)
     {
-    for(int j = 0; j < bcols; j++) 
+    for(int j = 0; j < bcols; j++)
       {
       c[i][j] = 0.0;
       for(int k = 0; k < acols; k++)
@@ -84,9 +87,9 @@ inline void vtkMatrixMultiply(double **a, double **b, double **c,
 //------------------------------------------------------------------------
 inline void vtkMatrixTranspose(double **a, double **b, int rows, int cols)
 {
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
-    for(int j = 0; j < cols; j++) 
+    for(int j = 0; j < cols; j++)
       {
       double tmp = a[i][j];
       b[i][j] = a[j][i];
@@ -103,8 +106,8 @@ vtkCompactSupportRBFTransform::vtkCompactSupportRBFTransform()
   this->Sigma = 1.0;
 
   // If the InverseFlag is set, then we use an iterative
-  // method to invert the transformation.  
-  // The InverseTolerance sets the precision to which we want to 
+  // method to invert the transformation.
+  // The InverseTolerance sets the precision to which we want to
   // calculate the inverse.
   this->InverseTolerance = 0.001;
   this->InverseIterations = 500;
@@ -179,7 +182,7 @@ unsigned long vtkCompactSupportRBFTransform::GetMTime()
 
   if (this->SourceLandmarks)
     {
-    mtime = this->SourceLandmarks->GetMTime(); 
+    mtime = this->SourceLandmarks->GetMTime();
     if (mtime > result)
       {
       result = mtime;
@@ -187,7 +190,7 @@ unsigned long vtkCompactSupportRBFTransform::GetMTime()
     }
   if (this->TargetLandmarks)
     {
-    mtime = this->TargetLandmarks->GetMTime(); 
+    mtime = this->TargetLandmarks->GetMTime();
     if (mtime > result)
       {
       result = mtime;
@@ -219,15 +222,15 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
 
   const vtkIdType N = this->SourceLandmarks->GetNumberOfPoints();
   const int D = 3; // dimensions
- 
+
   // Notation and inspiration from:
-  // Fred L. Bookstein (1997) "Shape and the Information in Medical Images: 
-  // A Decade of the Morphometric Synthesis" Computer Vision and Image 
+  // Fred L. Bookstein (1997) "Shape and the Information in Medical Images:
+  // A Decade of the Morphometric Synthesis" Computer Vision and Image
   // Understanding 66(2):97-118
   // and online work published by Tim Cootes (http://www.wiau.man.ac.uk/~bim)
-  
+
   // the output weights and input matrices
-  double **W = vtkNewMatrix(N,D); 
+  double **W = vtkNewMatrix(N,D);
   double **L = vtkNewMatrix(N,N);
   double **X = vtkNewMatrix(N,D);
 
@@ -236,7 +239,7 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
   double dx,dy,dz;
   double r;
   double (*phi)(double) = this->BasisFunction;
-    
+
   for(q = 0; q < N; q++)
     {
       this->SourceLandmarks->GetPoint(q,p);
@@ -251,7 +254,7 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
         L[q][c] = L[c][q] = phi(r/this->Sigma);
         }
       }
-    
+
   // build X - matrix of DISPLACEMENTS
   for (q = 0; q < N; q++)
     {
@@ -262,10 +265,10 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
       X[q][2] = p2[2] - p[2];
     }
 
-  // solve for W, where W = Inverse(L)*X; 
+  // solve for W, where W = Inverse(L)*X;
   // this is done via eigenvector decomposition so
   // that we can avoid singular values
-  // W = V*Inverse(w)*U*X  
+  // W = V*Inverse(w)*U*X
   double **w = vtkNewMatrix(N,N);
   double **V = vtkNewMatrix(N,N);
   double **U = L;  // reuse the space
@@ -282,7 +285,7 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
         {
     maxValue = tmp;
         }
-    } 
+    }
 
   for (i = 0; i < N; i++)
     {
@@ -297,12 +300,12 @@ void vtkCompactSupportRBFTransform::InternalUpdate()
   }
     }
   delete [] values;
-    
+
 
   vtkMatrixMultiply(U,X,W,N,N,N,D);
   vtkMatrixMultiply(w,W,X,N,N,N,D);
   vtkMatrixMultiply(V,X,W,N,N,N,D);
-    
+
   vtkDeleteMatrix(V);
   vtkDeleteMatrix(w);
   vtkDeleteMatrix(U);
@@ -339,7 +342,7 @@ inline void vtkCompactSupportRBFForwardTransformPoint(vtkCompactSupportRBFTransf
   double U,r;
   double invSigma = 1.0/self->GetSigma();
   double sigma = self->GetSigma();
-  double x = 0, y = 0, z = 0; 
+  double x = 0, y = 0, z = 0;
 
   vtkPoints *sourceLandmarks = self->GetSourceLandmarks();
 
@@ -359,18 +362,18 @@ inline void vtkCompactSupportRBFForwardTransformPoint(vtkCompactSupportRBFTransf
   x += point[0];
   y += point[1];
   z += point[2];
-  
+
   output[0] = x;
   output[1] = y;
   output[2] = z;
 
 }
 
-void vtkCompactSupportRBFTransform::ForwardTransformPoint(const double point[3], 
+void vtkCompactSupportRBFTransform::ForwardTransformPoint(const double point[3],
                 double output[3])
 {
-  vtkCompactSupportRBFForwardTransformPoint(this, this->MatrixW, 
-              this->NumberOfPoints, 
+  vtkCompactSupportRBFForwardTransformPoint(this, this->MatrixW,
+              this->NumberOfPoints,
               this->BasisFunction,
               point, output);
 }
@@ -399,7 +402,7 @@ inline void vtkCompactSupportRBFForwardTransformDerivative(
   double dx,dy,dz;
   double p[3];
   double r, U, f, Ux, Uy, Uz;
-  double x = 0, y = 0, z = 0; 
+  double x = 0, y = 0, z = 0;
   double invSigma = 1.0/self->GetSigma();
   double sigma = self->GetSigma();
 
@@ -452,14 +455,14 @@ inline void vtkCompactSupportRBFForwardTransformDerivative(
   derivative[1][1] += 1;
   derivative[2][2] += 1;
 
-}  
+}
 
 void vtkCompactSupportRBFTransform::ForwardTransformDerivative(
                                                   const double point[3],
                                                   double output[3],
                                                   double derivative[3][3])
 {
-  vtkCompactSupportRBFForwardTransformDerivative(this, this->MatrixW, 
+  vtkCompactSupportRBFForwardTransformDerivative(this, this->MatrixW,
              this->NumberOfPoints,
              this->BasisDerivative,
              point, output, derivative);
@@ -469,7 +472,7 @@ void vtkCompactSupportRBFTransform::ForwardTransformDerivative(
 void vtkCompactSupportRBFTransform::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
-  
+
   os << indent << "Sigma: " << this->Sigma << "\n";
   os << indent << "Basis: " << this->GetBasisAsString() << "\n";
   os << indent << "Source Landmarks: " << this->SourceLandmarks << "\n";
@@ -487,7 +490,7 @@ void vtkCompactSupportRBFTransform::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 vtkAbstractTransform *vtkCompactSupportRBFTransform::MakeTransform()
 {
-  return vtkCompactSupportRBFTransform::New(); 
+  return vtkCompactSupportRBFTransform::New();
 }
 
 //----------------------------------------------------------------------------
@@ -646,7 +649,7 @@ void vtkCompactSupportRBFTransform::SetBasis(int basis)
 
   this->Basis = basis;
   this->Modified();
-}  
+}
 
 //------------------------------------------------------------------------
 const char *vtkCompactSupportRBFTransform::GetBasisAsString()
@@ -664,9 +667,3 @@ const char *vtkCompactSupportRBFTransform::GetBasisAsString()
      }
   return "Unknown";
 }
-
-
-
-
-
-

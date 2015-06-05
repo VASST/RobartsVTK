@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:34 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -22,8 +22,11 @@
 #include "vtkObjectFactory.h"
 
 #include "math.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkGridTransformBSpline, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkGridTransformBSpline);
 
 vtkCxxSetObjectMacro(vtkGridTransformBSpline,DisplacementGrid,vtkImageData);
@@ -77,7 +80,7 @@ inline void vtkNearestHelper(float displacement[3], T *gridPtr, int increment)
   displacement[2] = gridPtr[2];
 }
 
-inline void vtkNearestNeighborInterpolation(float point[3], 
+inline void vtkNearestNeighborInterpolation(float point[3],
                                             float displacement[3],
                                             void *gridPtr, int gridType,
                                             int gridExt[6], int gridInc[3])
@@ -86,7 +89,7 @@ inline void vtkNearestNeighborInterpolation(float point[3],
   gridId[0] = vtkGridFloor(point[0]+0.5f)-gridExt[0];
   gridId[1] = vtkGridFloor(point[1]+0.5f)-gridExt[2];
   gridId[2] = vtkGridFloor(point[2]+0.5f)-gridExt[4];
-  
+
   int ext[3];
   ext[0] = gridExt[1]-gridExt[0];
   ext[1] = gridExt[3]-gridExt[2];
@@ -101,7 +104,7 @@ inline void vtkNearestNeighborInterpolation(float point[3],
       {
       if (gridId[i] < 0)
         {
-        gridId[i] = 0; 
+        gridId[i] = 0;
         }
       else if (gridId[i] > ext[i])
         {
@@ -111,8 +114,8 @@ inline void vtkNearestNeighborInterpolation(float point[3],
     }
 
   // do nearest-neighbor interpolation
-  int increment = gridId[0]*gridInc[0] + 
-                  gridId[1]*gridInc[1] + 
+  int increment = gridId[0]*gridInc[0] +
+                  gridId[1]*gridInc[1] +
                   gridId[2]*gridInc[2];
 
   switch (gridType)
@@ -121,7 +124,7 @@ inline void vtkNearestNeighborInterpolation(float point[3],
       vtkNearestHelper(displacement, (char *)gridPtr, increment);
       break;
     case VTK_UNSIGNED_CHAR:
-      vtkNearestHelper(displacement, (unsigned char *)gridPtr, increment); 
+      vtkNearestHelper(displacement, (unsigned char *)gridPtr, increment);
       break;
     case VTK_SHORT:
       vtkNearestHelper(displacement, (short *)gridPtr, increment);
@@ -137,7 +140,7 @@ inline void vtkNearestNeighborInterpolation(float point[3],
 
 template <class T>
 inline void vtkNearestHelper(float displacement[3], float derivatives[3][3],
-                             T *gridPtr, int gridId[3], int gridId0[3], 
+                             T *gridPtr, int gridId[3], int gridId0[3],
                              int gridId1[3], int gridInc[3])
 {
   int incX = gridId[0]*gridInc[0];
@@ -182,7 +185,7 @@ inline void vtkNearestHelper(float displacement[3], float derivatives[3][3],
 }
 
 void vtkNearestNeighborInterpolation(float point[3], float displacement[3],
-                                     float derivatives[3][3], void *gridPtr, 
+                                     float derivatives[3][3], void *gridPtr,
                                      int gridType, int gridExt[6], int gridInc[3])
 {
   if (derivatives == NULL)
@@ -203,19 +206,19 @@ void vtkNearestNeighborInterpolation(float point[3], float displacement[3],
   gridId[1] = gridId1[1] = gridId0[1] + 1;
   gridId[2] = gridId1[2] = gridId0[2] + 1;
 
-  if (f[0] < 0.5) 
+  if (f[0] < 0.5)
     {
     gridId[0] = gridId0[0];
     }
-  if (f[1] < 0.5) 
+  if (f[1] < 0.5)
     {
     gridId[1] = gridId0[1];
     }
-  if (f[2] < 0.5) 
+  if (f[2] < 0.5)
     {
     gridId[2] = gridId0[2];
     }
-  
+
   int ext[3];
   ext[0] = gridExt[1] - gridExt[0];
   ext[1] = gridExt[3] - gridExt[2];
@@ -226,7 +229,7 @@ void vtkNearestNeighborInterpolation(float point[3], float displacement[3],
        gridId0[1] | (ext[1] - gridId1[1]) |
        gridId0[2] | (ext[2] - gridId1[2])) < 0)
     {
-    for (int i = 0; i < 3; i++) 
+    for (int i = 0; i < 3; i++)
       {
       if (gridId0[i] < 0)
         {
@@ -247,23 +250,23 @@ void vtkNearestNeighborInterpolation(float point[3], float displacement[3],
   switch (gridType)
     {
     case VTK_CHAR:
-      vtkNearestHelper(displacement, derivatives, (char *)gridPtr, 
+      vtkNearestHelper(displacement, derivatives, (char *)gridPtr,
                        gridId, gridId0, gridId1, gridInc);
       break;
     case VTK_UNSIGNED_CHAR:
-      vtkNearestHelper(displacement, derivatives, (unsigned char *)gridPtr, 
+      vtkNearestHelper(displacement, derivatives, (unsigned char *)gridPtr,
                        gridId, gridId0, gridId1, gridInc);
       break;
     case VTK_SHORT:
-      vtkNearestHelper(displacement, derivatives, (short *)gridPtr, 
+      vtkNearestHelper(displacement, derivatives, (short *)gridPtr,
                        gridId, gridId0, gridId1, gridInc);
       break;
     case VTK_UNSIGNED_SHORT:
-      vtkNearestHelper(displacement, derivatives, (unsigned short *)gridPtr, 
+      vtkNearestHelper(displacement, derivatives, (unsigned short *)gridPtr,
                        gridId, gridId0, gridId1, gridInc);
       break;
     case VTK_FLOAT:
-      vtkNearestHelper(displacement, derivatives, (float *)gridPtr, 
+      vtkNearestHelper(displacement, derivatives, (float *)gridPtr,
                        gridId, gridId0, gridId1, gridInc);
       break;
     }
@@ -275,14 +278,14 @@ void vtkNearestNeighborInterpolation(float point[3], float displacement[3],
 
 template <class T>
 inline void vtkLinearHelper(float displacement[3], float derivatives[3][3],
-                            float fx, float fy, float fz, T *gridPtr, 
+                            float fx, float fy, float fz, T *gridPtr,
                             int i000, int i001, int i010, int i011,
                             int i100, int i101, int i110, int i111)
 {
   float rx = 1 - fx;
   float ry = 1 - fy;
   float rz = 1 - fz;
-  
+
   float ryrz = ry*rz;
   float ryfz = ry*fz;
   float fyrz = fy*rz;
@@ -316,12 +319,12 @@ inline void vtkLinearHelper(float displacement[3], float derivatives[3][3],
     float rxfz = rx*fz;
     float fxrz = fx*rz;
     float fxfz = fx*fz;
-    
+
     float rxry = rx*ry;
     float rxfy = rx*fy;
     float fxry = fx*ry;
     float fxfy = fx*fy;
-    
+
     float *derivative = *derivatives;
 
     int i = 3;
@@ -336,12 +339,12 @@ inline void vtkLinearHelper(float displacement[3], float derivatives[3][3],
                        ryfz*(gridPtr[i101] - gridPtr[i001]) +
                        fyrz*(gridPtr[i110] - gridPtr[i010]) +
                        fyfz*(gridPtr[i111] - gridPtr[i011]));
-      
+
       *derivative++ = (rxrz*(gridPtr[i010] - gridPtr[i000]) +
                        rxfz*(gridPtr[i011] - gridPtr[i001]) +
                        fxrz*(gridPtr[i110] - gridPtr[i100]) +
                        fxfz*(gridPtr[i111] - gridPtr[i101]));
-      
+
       *derivative++ = (rxry*(gridPtr[i001] - gridPtr[i000]) +
                        rxfy*(gridPtr[i011] - gridPtr[i010]) +
                        fxry*(gridPtr[i101] - gridPtr[i100]) +
@@ -354,7 +357,7 @@ inline void vtkLinearHelper(float displacement[3], float derivatives[3][3],
 }
 
 void vtkTrilinearInterpolation(float point[3], float displacement[3],
-                               float derivatives[3][3], void *gridPtr, int gridType, 
+                               float derivatives[3][3], void *gridPtr, int gridType,
                                int gridExt[6], int gridInc[3])
 {
   // change point into integer plus fraction
@@ -408,7 +411,7 @@ void vtkTrilinearInterpolation(float point[3], float displacement[3],
   int factX1 = gridId1[0]*gridInc[0];
   int factY1 = gridId1[1]*gridInc[1];
   int factZ1 = gridId1[2]*gridInc[2];
-    
+
   int i000 = factX0+factY0+factZ0;
   int i001 = factX0+factY0+factZ1;
   int i010 = factX0+factY1+factZ0;
@@ -417,31 +420,31 @@ void vtkTrilinearInterpolation(float point[3], float displacement[3],
   int i101 = factX1+factY0+factZ1;
   int i110 = factX1+factY1+factZ0;
   int i111 = factX1+factY1+factZ1;
-  
+
   switch (gridType)
     {
     case VTK_CHAR:
-      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2], 
+      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2],
                       (char *)gridPtr,
                       i000, i001, i010, i011, i100, i101, i110, i111);
       break;
     case VTK_UNSIGNED_CHAR:
-      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2], 
+      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2],
                       (unsigned char *)gridPtr,
                       i000, i001, i010, i011, i100, i101, i110, i111);
       break;
     case VTK_SHORT:
-      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2], 
-                      (short *)gridPtr, 
+      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2],
+                      (short *)gridPtr,
                       i000, i001, i010, i011, i100, i101, i110, i111);
       break;
     case VTK_UNSIGNED_SHORT:
-      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2], 
+      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2],
                       (unsigned short *)gridPtr,
                       i000, i001, i010, i011, i100, i101, i110, i111);
       break;
     case VTK_FLOAT:
-      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2], 
+      vtkLinearHelper(displacement, derivatives, f[0], f[1], f[2],
                       (float *)gridPtr,
                       i000, i001, i010, i011, i100, i101, i110, i111);
       break;
@@ -449,28 +452,28 @@ void vtkTrilinearInterpolation(float point[3], float displacement[3],
 }
 
 //----------------------------------------------------------------------------
-// Do tricubic interpolation of the input data 'gridPtr' of extent 'gridExt' 
-// at the 'point'.  The result is placed at 'outPtr'.  
+// Do tricubic interpolation of the input data 'gridPtr' of extent 'gridExt'
+// at the 'point'.  The result is placed at 'outPtr'.
 // The number of scalar components in the data is 'numscalars'
 
 // The tricubic interpolation ensures that both the intensity and
 // the first derivative of the intensity are smooth across the
-// image.  The first derivative is estimated using a 
+// image.  The first derivative is estimated using a
 // centered-difference calculation.
 
 
-// helper function: set up the lookup indices and the interpolation 
+// helper function: set up the lookup indices and the interpolation
 // coefficients
 
-void vtkSetTricubicInterpCoeffs(float F[4], int *l, int *m, float f, 
+void vtkSetTricubicInterpCoeffs(float F[4], int *l, int *m, float f,
                                 int interpMode)
-{   
+{
   float fp1,fm1,fm2;
 
   switch (interpMode)
     {
     case 7:     // cubic interpolation
-      *l = 0; *m = 4; 
+      *l = 0; *m = 4;
       fm1 = f-1;
       F[0] = -f*fm1*fm1/2;
       F[1] = ((3*f-2)*f-2)*fm1/2;
@@ -495,7 +498,7 @@ void vtkSetTricubicInterpCoeffs(float F[4], int *l, int *m, float f,
       F[3] = 0;
       break;
     case 3:     // quadratic interpolation
-      *l = 1; *m = 4; 
+      *l = 1; *m = 4;
       fm1 = f-1; fm2 = fm1-1;
       F[0] = 0;
       F[1] = fm1*fm2/2;
@@ -503,8 +506,8 @@ void vtkSetTricubicInterpCoeffs(float F[4], int *l, int *m, float f,
       F[3] = f*fm1/2;
       break;
     case 5:     // quadratic interpolation
-      *l = 0; *m = 3; 
-      fp1 = f+1; fm1 = f-1; 
+      *l = 0; *m = 3;
+      fp1 = f+1; fm1 = f-1;
       F[0] = f*fm1/2;
       F[1] = -fp1*fm1;
       F[2] = fp1*f/2;
@@ -514,15 +517,15 @@ void vtkSetTricubicInterpCoeffs(float F[4], int *l, int *m, float f,
 }
 
 // set coefficients to be used to find the derivative of the cubic
-void vtkSetTricubicDerivCoeffs(float F[4], float G[4], int *l, int *m, 
+void vtkSetTricubicDerivCoeffs(float F[4], float G[4], int *l, int *m,
                                float f, int interpMode)
-{   
+{
   float fp1,fm1,fm2;
 
   switch (interpMode)
     {
     case 7:     // cubic interpolation
-      *l = 0; *m = 4; 
+      *l = 0; *m = 4;
       fm1 = f-1;
       F[0] = -f*fm1*fm1/2;
       F[1] = ((3*f-2)*f-2)*fm1/2;
@@ -559,7 +562,7 @@ void vtkSetTricubicDerivCoeffs(float F[4], float G[4], int *l, int *m,
       G[3] =  0;
       break;
     case 3:     // quadratic interpolation
-      *l = 1; *m = 4; 
+      *l = 1; *m = 4;
       fm1 = f-1; fm2 = fm1-1;
       F[0] = 0;
       F[1] = fm1*fm2/2;
@@ -571,8 +574,8 @@ void vtkSetTricubicDerivCoeffs(float F[4], float G[4], int *l, int *m,
       G[3] = f-0.5;
       break;
     case 5:     // quadratic interpolation
-      *l = 0; *m = 3; 
-      fp1 = f+1; fm1 = f-1; 
+      *l = 0; *m = 3;
+      fp1 = f+1; fm1 = f-1;
       F[0] = f*fm1/2;
       F[1] = -fp1*fm1;
       F[2] = fp1*f/2;
@@ -602,8 +605,8 @@ inline void vtkCubicHelper(float displacement[3], float derivatives[3][3],
     {
     for (int i = 0; i < 3; i++)
       {
-      derivatives[i][0] = 0.0f; 
-      derivatives[i][1] = 0.0f; 
+      derivatives[i][0] = 0.0f;
+      derivatives[i][1] = 0.0f;
       derivatives[i][2] = 0.0f;
       }
     vtkSetTricubicDerivCoeffs(fX,gX,&ll,&lm,fx,interpModeX);
@@ -682,8 +685,8 @@ inline void vtkCubicHelper(float displacement[3], float derivatives[3][3],
     }
 }
 
-void vtkTricubicInterpolation(float point[3], float displacement[3], 
-                              float derivatives[3][3], void *gridPtr, 
+void vtkTricubicInterpolation(float point[3], float displacement[3],
+                              float derivatives[3][3], void *gridPtr,
                               int gridType, int gridExt[6], int gridInc[3])
 {
   int factX[4],factY[4],factZ[4];
@@ -741,7 +744,7 @@ void vtkTricubicInterpolation(float point[3], float displacement[3],
     }
 
   // do tricubic interpolation
-  
+
   for (int i = 0; i < 4; i++)
     {
     factX[i] = (gridId0[0]-1+i)*gridInc[0];
@@ -749,17 +752,17 @@ void vtkTricubicInterpolation(float point[3], float displacement[3],
     factZ[i] = (gridId0[2]-1+i)*gridInc[2];
     }
 
-  // depending on whether we are at the edge of the 
+  // depending on whether we are at the edge of the
   // input extent, choose the appropriate interpolation
   // method to use
 
-  int interpModeX = ((gridId0[0] > 0) << 2) + 
+  int interpModeX = ((gridId0[0] > 0) << 2) +
                     ((gridId1[0] < ext[0]) << 1) +
                     doInterp[0];
-  int interpModeY = ((gridId0[1] > 0) << 2) + 
+  int interpModeY = ((gridId0[1] > 0) << 2) +
                     ((gridId1[1] < ext[1]) << 1) +
                     doInterp[1];
-  int interpModeZ = ((gridId0[2] > 0) << 2) + 
+  int interpModeZ = ((gridId0[2] > 0) << 2) +
                     ((gridId1[2] < ext[2]) << 1) +
                     doInterp[2];
 
@@ -802,7 +805,7 @@ void vtkTricubicInterpolation(float point[3], float displacement[3],
 // B-Spline grid interpolation
 
 template <class Type>
-static inline void vtkBSplineHelper(float displacement[3], 
+static inline void vtkBSplineHelper(float displacement[3],
             float derivatives[3][3],
             int l,int m,int n,
             int S,int T,int U,
@@ -835,15 +838,15 @@ static inline void vtkBSplineHelper(float displacement[3],
     dz=((float) gridPtr[offset+2]);
 
     //    if (dx>2.0) cout << " " << dx << " ";
-    
+
     v = B_I * B_J * B_K;
     displacement[0] += dx * v;
     displacement[1] += dy * v;
     displacement[2] += dz * v;
 
-        } 
+        }
       }
-    } 
+    }
   }
       }
     }
@@ -855,7 +858,7 @@ static inline void vtkBSplineHelper(float displacement[3],
   derivatives[i][j]=0.0;
       }
     }
-    
+
     for (k = 0; k < 4; k++){
       K = k + n - 1;
       if ((K >= 0) && (K <= ext[2])){
@@ -896,9 +899,9 @@ static inline void vtkBSplineHelper(float displacement[3],
     derivatives[0][0] += dx * v;
     derivatives[1][0] += dy * v;
     derivatives[2][0] += dz * v;
-        } 
+        }
       }
-    } 
+    }
   }
       }
     }
@@ -917,8 +920,8 @@ static inline void vtkBSplineHelper(float displacement[3],
 // gridExt: min and max index of the control points (can be negative)
 // gridInc: grid increments
 
-static void vtkBSplineInterpolation(float point[3], float displacement[3], 
-            float derivatives[3][3], void *gridPtr, 
+static void vtkBSplineInterpolation(float point[3], float displacement[3],
+            float derivatives[3][3], void *gridPtr,
             int gridType, int gridExt[6], int gridInc[3])
 {
   double s, t, u;
@@ -946,34 +949,34 @@ static void vtkBSplineInterpolation(float point[3], float displacement[3],
 
   switch (gridType) {
   case VTK_CHAR:
-    vtkBSplineHelper(displacement, derivatives, 
+    vtkBSplineHelper(displacement, derivatives,
          l,m,n,S,T,U,
          (char *)gridPtr,gridInc,ext);
     break;
   case VTK_UNSIGNED_CHAR:
-    vtkBSplineHelper(displacement, derivatives, 
+    vtkBSplineHelper(displacement, derivatives,
          l,m,n,S,T,U,
          (unsigned char *)gridPtr,gridInc,ext);
     break;
   case VTK_SHORT:
-    vtkBSplineHelper(displacement, derivatives, 
+    vtkBSplineHelper(displacement, derivatives,
          l,m,n,S,T,U,
          (short *)gridPtr,gridInc,ext);
     break;
   case VTK_UNSIGNED_SHORT:
-    vtkBSplineHelper(displacement, derivatives, 
-         l,m,n,S,T,U, 
+    vtkBSplineHelper(displacement, derivatives,
+         l,m,n,S,T,U,
          (unsigned short *)gridPtr,gridInc,ext);
     break;
   case VTK_FLOAT:
-    vtkBSplineHelper(displacement, derivatives, 
+    vtkBSplineHelper(displacement, derivatives,
          l,m,n,S,T,U,
          (float *)gridPtr,gridInc,ext);
     break;
   }
 
-}      
-                
+}
+
 //----------------------------------------------------------------------------
 vtkGridTransformBSpline::vtkGridTransformBSpline()
 {
@@ -1011,7 +1014,7 @@ void vtkGridTransformBSpline::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 
-  os << indent << "InterpolationMode: " 
+  os << indent << "InterpolationMode: "
      << this->GetInterpolationModeAsString() << "\n";
   os << indent << "DisplacementScale: " << this->DisplacementScale << "\n";
   os << indent << "DisplacementShift: " << this->DisplacementShift << "\n";
@@ -1033,7 +1036,7 @@ unsigned long vtkGridTransformBSpline::GetMTime()
     this->DisplacementGrid->UpdateInformation();
 
     mtime = this->DisplacementGrid->GetPipelineMTime();
-    result = ( mtime > result ? mtime : result );    
+    result = ( mtime > result ? mtime : result );
 
     mtime = this->DisplacementGrid->GetMTime();
     result = ( mtime > result ? mtime : result );
@@ -1072,14 +1075,14 @@ void vtkGridTransformBSpline::SetInterpolationMode(int mode)
 }
 
 //----------------------------------------------------------------------------
-void vtkGridTransformBSpline::ForwardTransformPoint(const float inPoint[3], 
+void vtkGridTransformBSpline::ForwardTransformPoint(const float inPoint[3],
                 float outPoint[3])
 {
   if (this->DisplacementGrid == NULL)
     {
-    outPoint[0] = inPoint[0]; 
-    outPoint[1] = inPoint[1]; 
-    outPoint[2] = inPoint[2]; 
+    outPoint[0] = inPoint[0];
+    outPoint[1] = inPoint[1];
+    outPoint[2] = inPoint[2];
     return;
     }
 
@@ -1098,7 +1101,7 @@ void vtkGridTransformBSpline::ForwardTransformPoint(const float inPoint[3],
   float point[3];
   float displacement[3];
 
-  // Convert the inPoint to i,j,k indices into the deformation grid 
+  // Convert the inPoint to i,j,k indices into the deformation grid
   // plus fractions
   point[0] = (inPoint[0] - origin[0])/spacing[0];
   point[1] = (inPoint[1] - origin[1])/spacing[1];
@@ -1114,18 +1117,18 @@ void vtkGridTransformBSpline::ForwardTransformPoint(const float inPoint[3],
 
 //----------------------------------------------------------------------------
 // convert double to float
-void vtkGridTransformBSpline::ForwardTransformPoint(const double point[3], 
+void vtkGridTransformBSpline::ForwardTransformPoint(const double point[3],
                 double output[3])
 {
   float fpoint[3];
-  fpoint[0] = point[0]; 
-  fpoint[1] = point[1]; 
+  fpoint[0] = point[0];
+  fpoint[1] = point[1];
   fpoint[2] = point[2];
 
   this->ForwardTransformPoint(fpoint,fpoint);
- 
-  output[0] = fpoint[0]; 
-  output[1] = fpoint[1]; 
+
+  output[0] = fpoint[0];
+  output[1] = fpoint[1];
   output[2] = fpoint[2];
 }
 
@@ -1138,9 +1141,9 @@ void vtkGridTransformBSpline::ForwardTransformDerivative(const float inPoint[3],
 {
   if (this->DisplacementGrid == NULL)
     {
-    outPoint[0] = inPoint[0]; 
-    outPoint[1] = inPoint[1]; 
-    outPoint[2] = inPoint[2]; 
+    outPoint[0] = inPoint[0];
+    outPoint[1] = inPoint[1];
+    outPoint[2] = inPoint[2];
     vtkMath::Identity3x3(derivative);
     return;
     }
@@ -1179,7 +1182,7 @@ void vtkGridTransformBSpline::ForwardTransformDerivative(const float inPoint[3],
   outPoint[0] = inPoint[0] + (displacement[0]*scale + shift);
   outPoint[1] = inPoint[1] + (displacement[1]*scale + shift);
   outPoint[2] = inPoint[2] + (displacement[2]*scale + shift);
-}  
+}
 
 //----------------------------------------------------------------------------
 // convert double to float
@@ -1205,20 +1208,20 @@ void vtkGridTransformBSpline::ForwardTransformDerivative(const double point[3],
 }
 
 //----------------------------------------------------------------------------
-// We use Newton's method to iteratively invert the transformation.  
+// We use Newton's method to iteratively invert the transformation.
 // This is actally quite robust as long as the Jacobian matrix is never
 // singular.
 // Note that this is similar to vtkWarpTransform::InverseTransformPoint()
 // but has been optimized specifically for grid transforms.
-void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3], 
+void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
                float outPoint[3],
                float derivative[3][3])
 {
   if (this->DisplacementGrid == NULL)
     {
-    outPoint[0] = inPoint[0]; 
-    outPoint[1] = inPoint[1]; 
-    outPoint[2] = inPoint[2]; 
+    outPoint[0] = inPoint[0];
+    outPoint[1] = inPoint[1];
+    outPoint[2] = inPoint[2];
     return;
     }
 
@@ -1279,7 +1282,7 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
     this->InterpolationFunction(inverse, deltaP, derivative,
                                 gridPtr, gridType, extent, increments);
 
-    // convert displacement 
+    // convert displacement
     deltaP[0] = (inverse[0] - point[0])*spacing[0] + deltaP[0]*scale + shift;
     deltaP[1] = (inverse[1] - point[1])*spacing[1] + deltaP[1]*scale + shift;
     deltaP[2] = (inverse[2] - point[2])*spacing[2] + deltaP[2]*scale + shift;
@@ -1312,7 +1315,7 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
                       deltaI[2]*deltaI[2]);
 
       // break if less than tolerance in both coordinate systems
-      if (errorSquared < toleranceSquared && 
+      if (errorSquared < toleranceSquared &&
           functionValue < toleranceSquared)
         {
         break;
@@ -1336,18 +1339,18 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
       inverse[1] -= deltaI[1]*invSpacing[1];
       inverse[2] -= deltaI[2]*invSpacing[2];
 
-      // reset f to 1.0 
+      // reset f to 1.0
       f = 1.0;
 
       continue;
-      }      
+      }
 
-    // the error is increasing, so take a partial step 
+    // the error is increasing, so take a partial step
     // (see Numerical Recipes 9.7 for rationale, this code
     //  is a simplification of the algorithm provided there)
 
     // quadratic approximation to find best fractional distance
-    a = -functionDerivative/(2*(functionValue - 
+    a = -functionDerivative/(2*(functionValue -
                                 lastFunctionValue -
                                 functionDerivative));
 
@@ -1367,10 +1370,10 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
     // didn't converge: back up to last good result
     inverse[0] = lastInverse[0];
     inverse[1] = lastInverse[1];
-    inverse[2] = lastInverse[2];    
+    inverse[2] = lastInverse[2];
 
 //     vtkWarningMacro("InverseTransformPoint: no convergence (" <<
-//                     inPoint[0] << ", " << inPoint[1] << ", " << inPoint[2] << 
+//                     inPoint[0] << ", " << inPoint[1] << ", " << inPoint[2] <<
 //                     ") error = " << sqrt(errorSquared) << " after " <<
 //                     i << " iterations.");
     }
@@ -1383,21 +1386,21 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const float inPoint[3],
 
 //----------------------------------------------------------------------------
 // convert double to float and back again
-void vtkGridTransformBSpline::InverseTransformDerivative(const double point[3], 
+void vtkGridTransformBSpline::InverseTransformDerivative(const double point[3],
                double output[3],
                double derivative[3][3])
 {
   float fpoint[3];
   float fderivative[3][3];
-  fpoint[0] = point[0]; 
-  fpoint[1] = point[1]; 
+  fpoint[0] = point[0];
+  fpoint[1] = point[1];
   fpoint[2] = point[2];
 
   this->InverseTransformDerivative(fpoint,fpoint,fderivative);
- 
+
   for (int i = 0; i < 3; i++)
     {
-    output[i] = fpoint[i]; 
+    output[i] = fpoint[i];
     derivative[i][0] = fderivative[i][0];
     derivative[i][1] = fderivative[i][1];
     derivative[i][2] = fderivative[i][2];
@@ -1405,7 +1408,7 @@ void vtkGridTransformBSpline::InverseTransformDerivative(const double point[3],
 }
 
 //----------------------------------------------------------------------------
-void vtkGridTransformBSpline::InverseTransformPoint(const float point[3], 
+void vtkGridTransformBSpline::InverseTransformPoint(const float point[3],
                 float output[3])
 {
   // the derivative won't be used, but it is required for Newton's method
@@ -1415,19 +1418,19 @@ void vtkGridTransformBSpline::InverseTransformPoint(const float point[3],
 
 //----------------------------------------------------------------------------
 // convert double to float and back again
-void vtkGridTransformBSpline::InverseTransformPoint(const double point[3], 
+void vtkGridTransformBSpline::InverseTransformPoint(const double point[3],
                 double output[3])
 {
   float fpoint[3];
   float fderivative[3][3];
-  fpoint[0] = point[0]; 
-  fpoint[1] = point[1]; 
+  fpoint[0] = point[0];
+  fpoint[1] = point[1];
   fpoint[2] = point[2];
 
   this->InverseTransformDerivative(fpoint,fpoint,fderivative);
- 
-  output[0] = fpoint[0]; 
-  output[1] = fpoint[1]; 
+
+  output[0] = fpoint[0];
+  output[1] = fpoint[1];
   output[2] = fpoint[2];
 }
 
@@ -1478,7 +1481,7 @@ void vtkGridTransformBSpline::InternalUpdate()
     vtkErrorMacro(<< "TransformPoint: displacement grid is of unsupported numerical type");
     return;
     }
- 
+
   grid->SetUpdateExtent(grid->GetWholeExtent());
   grid->Update();
 }

@@ -18,8 +18,12 @@
 #include "vtkVideoFrame2.h"
 #include "vtkDoubleArray.h"
 #include "vtkCriticalSection.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkVideoECGBuffer2, "$Revision: 1.1 $");
+#endif
+
 vtkStandardNewMacro(vtkVideoECGBuffer2);
 
 //----------------------------------------------------------------------------
@@ -40,7 +44,7 @@ vtkVideoECGBuffer2::vtkVideoECGBuffer2()
 
 //----------------------------------------------------------------------------
 vtkVideoECGBuffer2::~vtkVideoECGBuffer2()
-{ 
+{
   this->SetBufferSize(0);
   this->NumberOfItems = 0;
 
@@ -76,7 +80,7 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
     return;
   }
 
-  if (bufsize == this->BufferSize && bufsize != 0) 
+  if (bufsize == this->BufferSize && bufsize != 0)
   { return; }
 
   int i;
@@ -92,12 +96,12 @@ void vtkVideoECGBuffer2::SetBufferSize(int bufsize)
     this->ECGPhaseArray->SetNumberOfValues(this->BufferSize);
       for (i = 0; i < bufsize; i++) {
       this->ECGPhaseArray->SetValue(i, -1.0);
-      } 
+      }
       this->Modified();
     }
   }
   // if we already have a frame array and are changing its buffer size
-  else 
+  else
   {
     if (bufsize > 0)
     {
@@ -220,4 +224,3 @@ void vtkVideoECGBuffer2::AddItem(vtkVideoFrame2* frame, double time, int phase)
 
   this->Modified();
 }
-

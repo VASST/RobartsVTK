@@ -6,18 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkImageNormalizedMutualInformation.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageNormalizedMutualInformation, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImageNormalizedMutualInformation);
 
 //----------------------------------------------------------------------------
@@ -36,7 +39,7 @@ vtkImageNormalizedMutualInformation::vtkImageNormalizedMutualInformation()
 
 //----------------------------------------------------------------------------
 vtkImageNormalizedMutualInformation::~vtkImageNormalizedMutualInformation()
-{      
+{
   this->Threader->Delete();
 }
 
@@ -55,7 +58,7 @@ void vtkImageNormalizedMutualInformation::SetInput2(vtkImageData *input)
 //----------------------------------------------------------------------------
 void vtkImageNormalizedMutualInformation::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkProcessObject::SetNthInput(2, stencil); 
+  this->vtkProcessObject::SetNthInput(2, stencil);
 }
 
 //----------------------------------------------------------------------------
@@ -65,7 +68,7 @@ vtkImageData *vtkImageNormalizedMutualInformation::GetInput1()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -76,25 +79,25 @@ vtkImageData *vtkImageNormalizedMutualInformation::GetInput2()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 //----------------------------------------------------------------------------
 vtkImageStencilData *vtkImageNormalizedMutualInformation::GetStencil()
 {
-  if (this->NumberOfInputs < 3) 
-    { 
+  if (this->NumberOfInputs < 3)
+    {
     return NULL;
     }
   else
     {
-    return (vtkImageStencilData *)(this->Inputs[2]); 
+    return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
 
 //----------------------------------------------------------------------------
-// Need to add histograms from different threads to create joint 
+// Need to add histograms from different threads to create joint
 // histogram image.
 vtkImageData *vtkImageNormalizedMutualInformation::GetOutput()
 {
@@ -108,8 +111,8 @@ vtkImageData *vtkImageNormalizedMutualInformation::GetOutput()
   vtkImageData *HistST = (vtkImageData *)(this->Outputs[0]);
 
   for (i = 0; i < this->BinNumber[0]; i++)
-    {  
-      for (j = 0; j < this->BinNumber[1]; j++) 
+    {
+      for (j = 0; j < this->BinNumber[1]; j++)
   {
     temp = 0;
     for (int id = 0; id < n; id++)
@@ -144,7 +147,7 @@ void vtkImageNormalizedMutualInformationExecute(vtkImageNormalizedMutualInformat
     {
       self->ThreadHistS[id][i] = 0;
       self->ThreadHistT[id][i] = 0;
-      for (j = 0; j < self->BinNumber[1]; j++) 
+      for (j = 0; j < self->BinNumber[1]; j++)
    {
      self->ThreadHistST[id][i][j] = 0;
    }
@@ -152,10 +155,10 @@ void vtkImageNormalizedMutualInformationExecute(vtkImageNormalizedMutualInformat
 
   // Find the region to loop over
   maxX = inExt[1] - inExt[0];
-  maxY = inExt[3] - inExt[2]; 
+  maxY = inExt[3] - inExt[2];
   maxZ = inExt[5] - inExt[4];
 
-  // Get increments to march through data 
+  // Get increments to march through data
   in1Data->GetIncrements(incX, incY, incZ);
 
   // Loop over data within stencil sub-extents
@@ -167,7 +170,7 @@ void vtkImageNormalizedMutualInformationExecute(vtkImageNormalizedMutualInformat
    iter = 0; if (self->GetReverseStencil()) iter = -1;
 
    pminX = 0; pmaxX = maxX;
-   while ((stencil !=0 && 
+   while ((stencil !=0 &&
      stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
     (stencil == 0 && iter++ == 0))
      {
@@ -227,15 +230,15 @@ void vtkImageNormalizedMutualInformation::ThreadedExecute1(vtkImageData **inData
 
   inData[0]->GetWholeExtent(ext0);
   inData[1]->GetWholeExtent(ext1);
-  
-  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) | 
+
+  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) |
       (ext0[3] - ext1[3]) | (ext0[4] - ext1[4]) | (ext0[5] - ext1[5]))
     {
     vtkErrorMacro(<<"Inputs 0 and 1 must have the same extents.");
     return;
     }
 
-  if ((inData[0]->GetNumberOfScalarComponents() > 1) | 
+  if ((inData[0]->GetNumberOfScalarComponents() > 1) |
       (inData[1]->GetNumberOfScalarComponents() > 1))
     {
       vtkErrorMacro("Inputs 0 and 1 must have 1 component each.");
@@ -255,8 +258,8 @@ void vtkImageNormalizedMutualInformation::ThreadedExecute1(vtkImageData **inData
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageNormalizedMutualInformationExecute,this,
-      inData[0], (VTK_TT *)(inPtr1), 
-      inData[1], (VTK_TT *)(inPtr2), 
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
       inExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -277,7 +280,7 @@ void vtkImageNormalizedMutualInformation::ThreadedExecute2(int extS[6], int extS
 
   // Loop over S image histogram.
   for (i = extS[0]; i <= extS[1]; i++)
-    {  
+    {
       temp1 = 0.0;
       for (n = 0; n < N; n++)
   {
@@ -288,7 +291,7 @@ void vtkImageNormalizedMutualInformation::ThreadedExecute2(int extS[6], int extS
 
   // Loop over T and ST histograms.
   for (j = extST[2]; j <= extST[3]; j++)
-    {  
+    {
       temp2 = 0.0;
       for (n = 0; n < N; n++)
   {
@@ -296,7 +299,7 @@ void vtkImageNormalizedMutualInformation::ThreadedExecute2(int extS[6], int extS
   }
       if (temp2 > 0.0) this->ThreadEntropyT[id] += temp2 * log(temp2);
 
-      for (i = extST[0]; i <= extST[1]; i++) 
+      for (i = extST[0]; i <= extST[1]; i++)
   {
      temp1 = 0.0;
      for (n = 0; n < N; n++)
@@ -334,7 +337,7 @@ double vtkImageNormalizedMutualInformation::GetResult()
   if ((entropyT  < 1E-10) && (entropyT  > -1E-10)) entropyT  = 0.0;
   if ((entropyST < 1E-10) && (entropyST > -1E-10)) entropyST = 0.0;
 
-  if ((entropyS < 0) || (entropyT < 0) || (entropyST < 0)) 
+  if ((entropyS < 0) || (entropyT < 0) || (entropyST < 0))
     {
       vtkErrorMacro(<< "GetResult: Entropy < 0");
     }
@@ -382,7 +385,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute1(
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over input images
@@ -392,7 +395,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute1(
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExt, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute1(str->Inputs, str->Output, splitExt, threadId);
@@ -400,7 +403,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute1(
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -420,7 +423,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute2(
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over S image histogram.
@@ -438,7 +441,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute2(
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExtST, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute2(splitExtS, splitExtST, threadId);
@@ -446,7 +449,7 @@ VTK_THREAD_RETURN_TYPE vtkImageNormalizedMutualInformationMultiThreadedExecute2(
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -467,13 +470,13 @@ void vtkImageNormalizedMutualInformation::ExecuteData(vtkDataObject *out)
   output->AllocateScalars();
 
   vtkImageMultiThreadStruct str;
-  
+
   str.Filter = this;
   str.Inputs = (vtkImageData **)this->GetInputs();
   str.Output = output;
-  
+
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  
+
   // setup threading and the invoke threadedExecute
   this->Threader->SetSingleMethod(vtkImageNormalizedMutualInformationMultiThreadedExecute1, &str);
   this->Threader->SingleMethodExecute();
@@ -483,7 +486,7 @@ void vtkImageNormalizedMutualInformation::ExecuteData(vtkDataObject *out)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageNormalizedMutualInformation::ExecuteInformation(vtkImageData **inData, 
+void vtkImageNormalizedMutualInformation::ExecuteInformation(vtkImageData **inData,
                    vtkImageData *outData)
 {
   // the two inputs are required to be of the same data type and extents.

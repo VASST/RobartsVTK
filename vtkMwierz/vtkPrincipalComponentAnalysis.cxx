@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -20,18 +20,21 @@
 #include "vtkMath.h"
 #include "vtkImageAccumulate.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkPrincipalComponentAnalysis, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkPrincipalComponentAnalysis);
 
 //------------------------------------------------------------------------
 // some dull matrix things
 
-inline double** vtkNewMatrix(int rows, int cols) 
+inline double** vtkNewMatrix(int rows, int cols)
 {
   double *matrix = new double[rows*cols];
   double **m = new double *[rows];
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
     m[i] = &matrix[i*cols];
     }
@@ -39,18 +42,18 @@ inline double** vtkNewMatrix(int rows, int cols)
 }
 
 //------------------------------------------------------------------------
-inline void vtkDeleteMatrix(double **m) 
+inline void vtkDeleteMatrix(double **m)
 {
   delete [] *m;
   delete [] m;
 }
 
 //------------------------------------------------------------------------
-inline void vtkZeroMatrix(double **m, int rows, int cols) 
+inline void vtkZeroMatrix(double **m, int rows, int cols)
 {
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
-      for(int j = 0; j < cols; j++) 
+      for(int j = 0; j < cols; j++)
   {
     m[i][j] = 0.0;
   }
@@ -59,18 +62,18 @@ inline void vtkZeroMatrix(double **m, int rows, int cols)
 
 //------------------------------------------------------------------------
 inline void vtkMatrixMultiply(double **a, double **b, double **c,
-                              int arows, int acols, int brows, int bcols) 
+                              int arows, int acols, int brows, int bcols)
 {
-  if(acols != brows) 
+  if(acols != brows)
     {
       return;     // acols must equal br otherwise we can't proceed
     }
-  
+
   // c must have size arows*bcols (we assume this)
 
-  for(int i = 0; i < arows; i++) 
+  for(int i = 0; i < arows; i++)
     {
-      for(int j = 0; j < bcols; j++) 
+      for(int j = 0; j < bcols; j++)
   {
     c[i][j] = 0.0;
     for(int k = 0; k < acols; k++)
@@ -84,9 +87,9 @@ inline void vtkMatrixMultiply(double **a, double **b, double **c,
 //------------------------------------------------------------------------
 inline void vtkMatrixTranspose(double **a, double **b, int rows, int cols)
 {
-  for(int i = 0; i < rows; i++) 
+  for(int i = 0; i < rows; i++)
     {
-      for(int j = 0; j < cols; j++) 
+      for(int j = 0; j < cols; j++)
   {
     b[j][i] = a[i][j];
   }
@@ -103,9 +106,9 @@ inline void vtkReduceMatrix(double **a, double **b, int arows, int acols,
       return;      // matrix b must be smaller or the same size as a
   }
 
-  for(int i = 0; i < brows; i++) 
+  for(int i = 0; i < brows; i++)
   {
-    for(int j = 0; j < bcols; j++) 
+    for(int j = 0; j < bcols; j++)
   {
     b[i][j] = a[i][j];
   }
@@ -133,14 +136,14 @@ void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
     {
       this->Images[this->M] = input;
       this->M++;
-  
+
       if (this->M == 1)
   {
 
     input->GetExtent(this->ext);
     input->GetSpacing(this->spa);
     input->GetOrigin(this->ori);
-    
+
     this->OutputImage = vtkImageData::New();
     this->OutputImage->SetWholeExtent(this->ext);
     this->OutputImage->SetExtent(this->ext);
@@ -149,7 +152,7 @@ void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
     this->OutputImage->SetNumberOfScalarComponents(1);
     this->OutputImage->SetScalarType(this->Images[0]->GetScalarType());
     this->OutputImage->AllocateScalars();
-    
+
   }
     }
 }
@@ -203,7 +206,7 @@ void vtkPrincipalComponentAnalysis::Fit()
   double **L   = vtkNewMatrix(M,M);
   double **psi = vtkNewMatrix(N,1);
   double *mu = new double[M];
-  double **v = vtkNewMatrix(M,M); 
+  double **v = vtkNewMatrix(M,M);
   double **u = vtkNewMatrix(N,M);
 
   // Fill in A and psi.
@@ -242,7 +245,7 @@ void vtkPrincipalComponentAnalysis::Fit()
   // Find the eigenvalues and vectors of L (mu and v).
   vtkMath::JacobiN(L,M,mu,v);
 
-  // Eigenvectors of A * AT (the PCA modes) are calculated using 
+  // Eigenvectors of A * AT (the PCA modes) are calculated using
   // single value decomposition: u = A * v * mu^(-1/2)
   double **muinvsqrt = vtkNewMatrix(M,M);
   double **vtimesmu = vtkNewMatrix(M,M);
@@ -326,7 +329,7 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetMeanIntensitiesImage()
     }
 
   return MII;
-  
+
 }
 
 //----------------------------------------------------------------------------
@@ -335,7 +338,7 @@ void vtkPrincipalComponentAnalysis::SetEigenVectorsImage(vtkImageData *EVI)
   int ext[6];
 
   EVI->GetExtent(ext);
- 
+
   int N = ext[1] + 1;
   int M = ext[3] + 1;
 
@@ -360,7 +363,7 @@ void vtkPrincipalComponentAnalysis::SetMeanIntensitiesImage(vtkImageData *MII)
   int ext[6];
 
   MII->GetExtent(ext);
- 
+
   int N = ext[1] + 1;
   this->N = N;
 
@@ -388,16 +391,16 @@ vtkDoubleArray *vtkPrincipalComponentAnalysis::GetWeightsForImage(vtkImageData *
       this->MaskPoints->GetPoint(i,locs);
       gammaMinusPsi[i][0] = image->GetScalarComponentAsFloat(int(locs[0]),int(locs[1]),int(locs[2]),0);
       gammaMinusPsi[i][0] = gammaMinusPsi[i][0] - this->MeanIntensities[i][0];
-    } 
+    }
 
   vtkMatrixTranspose(this->EigenVectors,ut,N,M);
   vtkMatrixMultiply(ut,gammaMinusPsi,w,M,N,N,1);
 
   vtkDoubleArray *wRet;
   wRet = vtkDoubleArray::New();
-  
-  for (int iGN = 0; iGN < M; iGN++) 
-    { 
+
+  for (int iGN = 0; iGN < M; iGN++)
+    {
       wRet->InsertNextValue(w[iGN][0]);
     }
 
@@ -417,7 +420,7 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetOutput(vtkDoubleArray *weights)
   int n = 0;
   double **w = vtkNewMatrix(M,1);
   double **gamma = vtkNewMatrix(N,1);
-  
+
   double locs[3];
 
   for (int i = 0; i < M; i++) { w[i][0] = weights->GetValue(i); }

@@ -6,18 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkImagePatternIntensity.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImagePatternIntensity, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImagePatternIntensity);
 
 //----------------------------------------------------------------------------
@@ -41,7 +44,7 @@ void vtkImagePatternIntensity::SetInput2(vtkImageData *input)
 //----------------------------------------------------------------------------
 void vtkImagePatternIntensity::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkProcessObject::SetNthInput(2, stencil); 
+  this->vtkProcessObject::SetNthInput(2, stencil);
 }
 
 //----------------------------------------------------------------------------
@@ -51,7 +54,7 @@ vtkImageData *vtkImagePatternIntensity::GetInput1()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -62,20 +65,20 @@ vtkImageData *vtkImagePatternIntensity::GetInput2()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 //----------------------------------------------------------------------------
 vtkImageStencilData *vtkImagePatternIntensity::GetStencil()
 {
-  if (this->NumberOfInputs < 3) 
-    { 
+  if (this->NumberOfInputs < 3)
+    {
     return NULL;
     }
   else
     {
-    return (vtkImageStencilData *)(this->Inputs[2]); 
+    return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
 
@@ -103,10 +106,10 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
 
   // Find the region to loop over
   maxX = outExt[1] - outExt[0];
-  maxY = outExt[3] - outExt[2]; 
+  maxY = outExt[3] - outExt[2];
   maxZ = outExt[5] - outExt[4];
 
-  // Get increments to march through data 
+  // Get increments to march through data
   diffData->GetIncrements(incX, incY, incZ);
 
   // Loop over data within stencil sub-extents
@@ -116,9 +119,9 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
     {
       // Flag that we want the complementary extents
       iter = 0; if (self->GetReverseStencil()) iter = -1;
-    
+
       pminX = 0; pmaxX = maxX;
-      while ((stencil !=0 && 
+      while ((stencil !=0 &&
         stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
        (stencil == 0 && iter++ == 0))
         {
@@ -144,12 +147,12 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
                (rZ >= totExt[4]) && (rZ <= totExt[5]) )
             {
               temp2Ptr = diffPtr + (incZ * rZ + incY * rY + rX);
-              self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr - *temp2Ptr) * (*temp1Ptr - *temp2Ptr)); 
+              self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr - *temp2Ptr) * (*temp1Ptr - *temp2Ptr));
             }
           else
             {
-             self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr * *temp1Ptr)); 
-            }              
+             self->ThreadPatternIntensity[id] += 100.0 / (100 + (*temp1Ptr * *temp1Ptr));
+            }
         }
           }
       }
@@ -190,7 +193,7 @@ void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
     {
       vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
       return;
-    } 
+    }
 
   // this filter expects that inputs that have the same number of components
   if ((inData[0]->GetNumberOfScalarComponents() != inData[1]->GetNumberOfScalarComponents()))
@@ -213,7 +216,7 @@ void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
   switch (diffMath->GetOutput()->GetScalarType())
     {
       vtkTemplateMacro5(vtkImagePatternIntensityExecute,this,
-      diffMath->GetOutput(), (VTK_TT *)(diffPtr), 
+      diffMath->GetOutput(), (VTK_TT *)(diffPtr),
       outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -231,7 +234,7 @@ double vtkImagePatternIntensity::GetResult()
     {
       result += this->ThreadPatternIntensity[id];
     }
-  
+
   if (result < 0) vtkErrorMacro(<< "GetResult: result < 0");
 
   return result;
@@ -247,4 +250,3 @@ void vtkImagePatternIntensity::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Stencil: " << this->GetStencil() << "\n";
   os << indent << "ReverseStencil: " << (this->ReverseStencil ? "On\n" : "Off\n");
 }
-

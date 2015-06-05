@@ -36,7 +36,11 @@ Copyright (c) 2005, Anis Ahmad.
 #include "vtkMultiThreader.h"
 #include "vtkMutexLock.h"
 
-//vtkCxxRevisionMacro(vtkEndoscope, "$Revision: 1.1 $");
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
+#if (VTK_MAJOR_VERSION <= 5)
+vtkCxxRevisionMacro(vtkEndoscope, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkEndoscope);
 
 vtkCxxSetObjectMacro(vtkEndoscope,TrackerTool,vtkTrackerTool);
@@ -106,7 +110,7 @@ vtkEndoscope::vtkEndoscope() :
   cvSetReal1D(distortion_coeffs, 1, 0.00173742);
   cvSetReal1D(distortion_coeffs, 2, -0.00492392);
   cvSetReal1D(distortion_coeffs, 3, -0.000947305);
-  
+
   // Field information
   bOddField = false;
 
@@ -122,7 +126,7 @@ vtkEndoscope::vtkEndoscope() :
   lastTrackerIdx = 0;
   PrevMat.clear();
   PrevPos.clear();
-  PrevOrient.clear();  
+  PrevOrient.clear();
   corners.clear();
 
   mMaxExpectedDistance = 100.f;
@@ -139,7 +143,7 @@ vtkEndoscope::~vtkEndoscope()
   Calibration->Delete();
   this->Threader->Delete();
   PrevPos.clear();
-  PrevOrient.clear();  
+  PrevOrient.clear();
   for(i = 0; i < corners.size(); i++)
     delete[] corners[i];
   corners.clear();
@@ -236,7 +240,7 @@ void vtkEndoscope::SetCheckerboard(float ox, float oy, float oz,
 
 //----------------------------------------------------------------------------
 // Sleep until the specified absolute time has arrived.
-// You must pass a handle to the current thread.  
+// You must pass a handle to the current thread.
 // If '0' is returned, then the thread was aborted before or during the wait.
 static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 {
@@ -260,7 +264,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
       remaining = 0.1;
       }
 */
-    // check to see if we are being told to quit 
+    // check to see if we are being told to quit
     data->ActiveFlagLock->Lock();
     int activeFlag = *(data->ActiveFlag);
     data->ActiveFlagLock->Unlock();
@@ -282,7 +286,7 @@ static int vtkThreadSleep(vtkMultiThreader::ThreadInfo *data, double time)
 static void *vtkEndoscopeRecordThread(vtkMultiThreader::ThreadInfo *data)
 {
   vtkEndoscope *self = (vtkEndoscope *)(data->UserData);
-  
+
   double startTime = vtkTimerLog::GetCurrentTime();
   double rate = self->GetFrameRate();
   int frame = 0;
@@ -300,7 +304,7 @@ static void *vtkEndoscopeRecordThread(vtkMultiThreader::ThreadInfo *data)
 
 //----------------------------------------------------------------------------
 // Set the source to grab frames continuously.
-// You should override this as appropriate for your device.  
+// You should override this as appropriate for your device.
 void vtkEndoscope::Record()
 {
   if(deinterlace)
@@ -317,7 +321,7 @@ void vtkEndoscope::Record()
       this->Recording = 1;
       this->FrameCount = 0;
       this->Modified();
-      this->ThreadId = 
+      this->ThreadId =
         this->Threader->SpawnThread((vtkThreadFunctionType)\
                                   &vtkEndoscopeRecordThread,this);
       }
@@ -327,7 +331,7 @@ void vtkEndoscope::Record()
     vtkMILVideoSource::Record();
   }
 }
- 
+
 //----------------------------------------------------------------------------
 // Stop continuous grabbing or playback.  You will have to override this
 // if your class overrides Play() and Record()
@@ -347,7 +351,7 @@ void vtkEndoscope::Stop()
   {
     vtkMILVideoSource::Stop();
   }
-} 
+}
 
 void vtkEndoscope::GrabBegin()
 {
@@ -370,7 +374,7 @@ void vtkEndoscope::GrabEnd()
   MdigGrabWait(this->MILDigID,M_GRAB_END);
   this->InternalGrab();
   bOddField = !bOddField;
-  
+
   this->FrameBufferMutex->Unlock();
 }
 
@@ -399,7 +403,7 @@ void vtkEndoscope::AcquireCalibrationImage()
     printf("Tool not visible\n"); fflush(stdout);
     return;
   }
- 
+
   TrackerTool->GetBuffer()->Lock();
   TrackerTool->GetBuffer()->GetFlagsAndMatrixFromTime(mat,this->FrameBufferTimeStamps[index]+TrackerLatency);
   TrackerTool->GetBuffer()->Unlock();
@@ -483,7 +487,7 @@ printf("                                  \r");
       cvCvtColor(frame, grayframe, CV_RGB2GRAY);
 
       // Refine the corner positions
-      cvFindCornerSubPix(grayframe, corners[curIdx-1], nDetectedCorners, cvSize(3,3), 
+      cvFindCornerSubPix(grayframe, corners[curIdx-1], nDetectedCorners, cvSize(3,3),
                          cvSize(-1,-1), cvTermCriteria(CV_TERMCRIT_ITER,128,0));
 
       // Delete the image
@@ -543,7 +547,7 @@ printf("%d images acquired\n", curIdx);
     {
 printf("could not find whole checkerboard \r");
       // We didn't use this view, remove it from the previous views
-      PrevPos.pop_back(); 
+      PrevPos.pop_back();
       PrevOrient.pop_back();
     delete[] corners.back();
     corners.pop_back();
@@ -601,12 +605,12 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
 
           // Assume the checkboard is on the XY plane with one
           // corner being the origin
-          cvSet1D(object_points, 
-                  baseIdx + v*nUCorners + u, 
+          cvSet1D(object_points,
+                  baseIdx + v*nUCorners + u,
                   cvScalar(u*cornerDim, v*cornerDim, 0.0)
                  );
         }
-  
+
       // Add this view to what we will feed the calibrate function
       int baseIdx = i * nUCorners*nVCorners;
       for(j = 0; j < nUCorners*nVCorners; j++)
@@ -614,10 +618,10 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
         cvSet1D(image_points, baseIdx+j, cvScalar(corners[i][j].x, corners[i][j].y));
       }
     }
-        
+
     // Calibrate the endoscope
     cvCalibrateCamera2(object_points, image_points, point_counts, cvSize(640,480),
-                       intrinsic_matrix, distortion_coeffs, rotation_vectors, 
+                       intrinsic_matrix, distortion_coeffs, rotation_vectors,
                        translation_vectors);
 
     // Now determine the endoscope<->sensor transform
@@ -632,7 +636,7 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
       }
 
       CvMat *rotmat = cvCreateMat(3,3,CV_32FC1);
-      cvSet1D(rvec, 0, cvGet1D(rotation_vectors, i)); 
+      cvSet1D(rvec, 0, cvGet1D(rotation_vectors, i));
 
       CvScalar val = cvGet1D(translation_vectors, i);
 
@@ -640,7 +644,7 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
 
       // Compute the transform from the sensors frame to the checkerboard's frame
       vtkMatrix4x4::Multiply4x4(ToCheckerboard,
-                                PrevMat[i], 
+                                PrevMat[i],
                                 sensor2checkerboard
                                );
 
@@ -692,8 +696,8 @@ void vtkEndoscope::DoCalibration(int bSetMatrix)
 
       // Throw away this acquisition if it's estimates are ridiculous (ie. any of
       // the translation components are greater than a meter)
-      if( (fabs(calib->GetElement(0,3)) > mMaxExpectedDistance) || 
-          (fabs(calib->GetElement(1,3)) > mMaxExpectedDistance) || 
+      if( (fabs(calib->GetElement(0,3)) > mMaxExpectedDistance) ||
+          (fabs(calib->GetElement(1,3)) > mMaxExpectedDistance) ||
           (fabs(calib->GetElement(2,3)) > mMaxExpectedDistance) )
       {
 printf("Nonsensical result... omitting.\n");
@@ -735,7 +739,7 @@ printf("Nonsensical result... omitting.\n");
     assert(allX.size() == allZ.size());
 
     // Average the accumulated values
-    accX /= allX.size(); 
+    accX /= allX.size();
     accY /= allY.size();
     accZ /= allZ.size();
 
@@ -751,18 +755,18 @@ printf("Nonsensical result... omitting.\n");
     diffX /= allX.size() - 1;
     diffY /= allX.size() - 1;
     diffZ /= allX.size() - 1;
-     
+
     // Reporting on the stats
     printf("%.2f %.2f %.2f\t+/-\t",
        accX, accY, accZ);
-    printf("%.2f %.2f %.2f         \n", 
+    printf("%.2f %.2f %.2f         \n",
          sqrt(diffX), sqrt(diffY), sqrt(diffZ) );
 
     // Find the worst outlier
     float deviation = 0.f;
     for(i = 1; i < nActualCalibrationViews; i++)
     {
-      float curDev = (allX[i] - accX)*(allX[i] - accX) + 
+      float curDev = (allX[i] - accX)*(allX[i] - accX) +
                (allY[i] - accY)*(allY[i] - accY) +
                (allZ[i] - accZ)*(allZ[i] - accZ);
 
@@ -789,7 +793,7 @@ printf("Nonsensical result... omitting.\n");
       calib->SetElement(2,i,ortho[2][i]);
     }
 #else
-      // Set the orientation elements according to the average 
+      // Set the orientation elements according to the average
     for (i = 0; i < 3; i++)
     {
       calib->SetElement(0,i,aveMat.m[0][i]);
@@ -840,7 +844,7 @@ void vtkEndoscope::InternalGrab()
 
   int index = this->FrameBufferIndex;
 
-  this->FrameBufferTimeStamps[index] = 
+  this->FrameBufferTimeStamps[index] =
     this->CreateTimeStampForFrame(this->LastFrameCount + 1);
   if (this->FrameCount++ == 0)
     {
@@ -1003,7 +1007,7 @@ void vtkEndoscope::GetRawImageAndTransform(int i, void ** ptr, vtkMatrix4x4 *mat
   this->FrameBufferMutex->Unlock();
 
   TrackerTool->GetBuffer()->Lock();
-  TrackerTool->GetBuffer()->GetFlagsAndMatrixFromTime(mat,this->FrameBufferTimeStamps[(this->FrameBufferIndex+i) % 
+  TrackerTool->GetBuffer()->GetFlagsAndMatrixFromTime(mat,this->FrameBufferTimeStamps[(this->FrameBufferIndex+i) %
                                                                                        this->FrameBufferSize]+TrackerLatency);
   TrackerTool->GetBuffer()->Unlock();
 }
@@ -1016,7 +1020,7 @@ void vtkEndoscope::SetIntrinsicInitialGuess(double intrinsic[3][3], double disto
 void vtkEndoscope::CreateUndistortMap(int w, int h, float *&pb)
 {
   // Create undistortmap
-  CvArr *mapx=cvCreateImage(cvSize(640,480),IPL_DEPTH_32F,1), 
+  CvArr *mapx=cvCreateImage(cvSize(640,480),IPL_DEPTH_32F,1),
         *mapy=cvCreateImage(cvSize(640,480),IPL_DEPTH_32F,1);
   cvInitUndistortMap(intrinsic_matrix, distortion_coeffs, mapx, mapy);
 
@@ -1038,7 +1042,7 @@ void vtkEndoscope::CreateUndistortMap(int w, int h, float *&pb)
 //----------------------------------------------------------------------------
 // The Execute method is fairly complex, so I would not recommend overriding
 // it unless you have to.  Override the UnpackRasterLine() method instead.
-// You should only have to override it if you are using something other 
+// You should only have to override it if you are using something other
 // than 8-bit vtkUnsignedCharArray for the frame buffer.
 void vtkEndoscope::ExecuteData(vtkDataObject *output)
 {
@@ -1052,9 +1056,9 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
     {
     saveOutputExtent[i] = outputExtent[i];
     }
-  // clip to extent to the Z size of one frame  
-  outputExtent[4] = this->FrameOutputExtent[4]; 
-  outputExtent[5] = this->FrameOutputExtent[5]; 
+  // clip to extent to the Z size of one frame
+  outputExtent[4] = this->FrameOutputExtent[4];
+  outputExtent[5] = this->FrameOutputExtent[5];
 
   int frameExtentX = this->FrameBufferExtent[1]-this->FrameBufferExtent[0]+1;
   int frameExtentY = this->FrameBufferExtent[3]-this->FrameBufferExtent[2]+1;
@@ -1108,8 +1112,8 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
     outPadY = 0;
     }
 
-  int outX = frameExtentX - inPadX; 
-  int outY = frameExtentY - inPadY; 
+  int outX = frameExtentX - inPadX;
+  int outY = frameExtentY - inPadY;
   int outZ; // do outZ later
 
   if (outX > extentX - outPadX)
@@ -1132,7 +1136,7 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
     }
 
   // ditto for number of scalar components
-  if (data->GetNumberOfScalarComponents() != 
+  if (data->GetNumberOfScalarComponents() !=
       this->LastNumberOfScalarComponents)
     {
     this->LastNumberOfScalarComponents = data->GetNumberOfScalarComponents();
@@ -1147,7 +1151,7 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
            (saveOutputExtent[3]-saveOutputExtent[2]+1)*
            (saveOutputExtent[5]-saveOutputExtent[4]+1)*outIncX);
     this->OutputNeedsInitialization = 0;
-    } 
+    }
 
   // we have to modify the outputExtent of the first frame,
   // because it might be complete (it will be restored after
@@ -1159,7 +1163,7 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
 
   // ANIS: This next line is my only change
   int index = this->FrameBufferIndex + this->FrameBufferSync;
-  this->FrameTimeStamp = 
+  this->FrameTimeStamp =
     this->FrameBufferTimeStamps[index % this->FrameBufferSize];
 
   int frame;
@@ -1168,8 +1172,8 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
     if (frame == finalFrame)
       {
       outputExtent[5] = finalOutputExtent5;
-      } 
-    
+      }
+
     vtkDataArray *frameBuffer = reinterpret_cast<vtkDataArray *>(this->FrameBuffer[(index + frame) % this->FrameBufferSize]);
 
     char *inPtr = reinterpret_cast<char*>(frameBuffer->GetVoidPointer(0));
@@ -1178,7 +1182,7 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
     extentZ = outputExtent[5]-outputExtent[4]+1;
     inPadZ = 0;
     outPadZ = -outputExtent[4];
-    
+
     if (outPadZ < 0)
       {
       inPadZ -= outPadZ;
@@ -1225,7 +1229,7 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
         outPtrTmp = outPtr;
         for (j = 0; j < outY; j++)
           {
-          if (outX > 0) 
+          if (outX > 0)
             {
             this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX);
             }
@@ -1242,5 +1246,3 @@ void vtkEndoscope::ExecuteData(vtkDataObject *output)
 
   this->FrameBufferMutex->Unlock();
 }
-
-

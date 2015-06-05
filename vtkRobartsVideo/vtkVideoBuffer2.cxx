@@ -18,8 +18,12 @@
 #include "vtkVideoFrame2.h"
 #include "vtkDoubleArray.h"
 #include "vtkCriticalSection.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkVideoBuffer2, "$Revision: 1.1 $");
+#endif
+
 vtkStandardNewMacro(vtkVideoBuffer2);
 
 //----------------------------------------------------------------------------
@@ -40,7 +44,7 @@ vtkVideoBuffer2::vtkVideoBuffer2()
 
 //----------------------------------------------------------------------------
 vtkVideoBuffer2::~vtkVideoBuffer2()
-{ 
+{
   this->SetBufferSize(0);
   this->NumberOfItems = 0;
 
@@ -125,12 +129,12 @@ void vtkVideoBuffer2::SetBufferSize(int bufsize)
         {
         this->FrameArray[i] = this->FrameFormat->MakeObject();
         this->TimeStampArray->SetValue(i, 0.0);
-        } 
+        }
       this->Modified();
       }
     }
   // if we already have a frame array and are changing its buffer size
-  else 
+  else
     {
     if (bufsize > 0)
       {
@@ -249,7 +253,7 @@ void vtkVideoBuffer2::SetFrameFormat(vtkVideoFrame2 *format)
     format->GetFrameExtent(frameExtent);
     this->FrameFormat->GetFrameSize(frameFormatSize);
     this->FrameFormat->GetFrameExtent(frameFormatExtent);
-    
+
     if (frameSize[0] == frameFormatSize[0] &&
       frameSize[1] == frameFormatSize[1] &&
       frameSize[2] == frameFormatSize[2] &&
@@ -359,9 +363,9 @@ void vtkVideoBuffer2::Seek(int n)
     {
     return;
     }
- 
+
   int i = (this->CurrentIndex - n) % this->BufferSize;
-  while (i < 0) 
+  while (i < 0)
     { // because '%' can give negative results on some platforms
     i += this->BufferSize;
     }
@@ -389,7 +393,7 @@ vtkVideoFrame2* vtkVideoBuffer2::GetFrame(int frame)
 
 //----------------------------------------------------------------------------
 double vtkVideoBuffer2::GetTimeStamp(int frame)
-{ 
+{
   if (this->BufferSize <= 0)
     {
     return 0.0;

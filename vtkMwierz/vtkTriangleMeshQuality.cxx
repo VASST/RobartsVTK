@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -24,27 +24,30 @@
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
 #include "vtkTetra.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkTriangleMeshQuality, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkTriangleMeshQuality);
 
 //----------------------------------------------------------------------------
 // Constructor
-vtkTriangleMeshQuality::vtkTriangleMeshQuality() 
+vtkTriangleMeshQuality::vtkTriangleMeshQuality()
 {
  this->GeometryOff();
  this->TopologyOff();
  this->FieldDataOff();
  this->PointDataOff();
  this->CellDataOn();
- 
+
  this->Quality = 0.0;
 }
 
 //----------------------------------------------------------------------------
 //destructor
-vtkTriangleMeshQuality::~vtkTriangleMeshQuality() 
-{ 
+vtkTriangleMeshQuality::~vtkTriangleMeshQuality()
+{
 }
 
 //----------------------------------------------------------------------------
@@ -60,14 +63,14 @@ void vtkTriangleMeshQuality::Execute()
   vtkFloatArray *scalars = vtkFloatArray::New();
   scalars->SetNumberOfComponents(1);
   scalars->SetNumberOfTuples(numCells);
-  
+
   for (int j = 0; j < numCells; j++)
     {
       input->GetCellPoints(j,id);
       input->GetPoint(id->GetId(0),p1);
       input->GetPoint(id->GetId(1),p2);
       input->GetPoint(id->GetId(2),p3);
- 
+
       a = sqrt( (p2[0] - p1[0]) * (p2[0] - p1[0]) +
     (p2[1] - p1[1]) * (p2[1] - p1[1]) +
     (p2[2] - p1[2]) * (p2[2] - p1[2]) );
@@ -78,16 +81,16 @@ void vtkTriangleMeshQuality::Execute()
     (p1[1] - p3[1]) * (p1[1] - p3[1]) +
     (p1[2] - p3[2]) * (p1[2] - p3[2]) );
 
-      R = a * b * c / sqrt ( (a+b+c)*(b+c-a)*(c+a-b)*(a+b-c) );  
+      R = a * b * c / sqrt ( (a+b+c)*(b+c-a)*(c+a-b)*(a+b-c) );
       r = 1.0 / 2.0 * sqrt ( (b+c-a)*(c+a-b)*(a+b-c) / (a+b+c) );
 
       ratio = R/r/2.0;
       this->Quality += ratio;
       scalars->SetTuple1(j,R/r/2.0);
     }
-  
+
   this->Quality = this->Quality/numCells;
-   
+
   celld->SetScalars(scalars);
   this->GetOutput()->SetFieldData(celld);
   celld->Delete();

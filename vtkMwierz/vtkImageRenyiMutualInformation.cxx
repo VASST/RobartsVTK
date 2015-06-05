@@ -6,18 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkImageRenyiMutualInformation.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageRenyiMutualInformation, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImageRenyiMutualInformation);
 
 //--------------------------------------------------------------------------
@@ -51,7 +54,7 @@ inline int vtkResliceRound(float x)
   return vtkResliceRound((double)x);
 }
 
-// convert a float into an integer plus a fraction  
+// convert a float into an integer plus a fraction
 inline int vtkResliceFloor(double x, double &f)
 {
   int ix = vtkResliceFloor(x);
@@ -79,7 +82,7 @@ vtkImageRenyiMutualInformation::vtkImageRenyiMutualInformation()
 
 //----------------------------------------------------------------------------
 vtkImageRenyiMutualInformation::~vtkImageRenyiMutualInformation()
-{      
+{
   this->Threader->Delete();
 }
 
@@ -98,7 +101,7 @@ void vtkImageRenyiMutualInformation::SetInput2(vtkImageData *input)
 //----------------------------------------------------------------------------
 void vtkImageRenyiMutualInformation::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkProcessObject::SetNthInput(2, stencil); 
+  this->vtkProcessObject::SetNthInput(2, stencil);
 }
 
 //----------------------------------------------------------------------------
@@ -108,7 +111,7 @@ vtkImageData *vtkImageRenyiMutualInformation::GetInput1()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -119,20 +122,20 @@ vtkImageData *vtkImageRenyiMutualInformation::GetInput2()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 //----------------------------------------------------------------------------
 vtkImageStencilData *vtkImageRenyiMutualInformation::GetStencil()
 {
-  if (this->NumberOfInputs < 3) 
-    { 
+  if (this->NumberOfInputs < 3)
+    {
     return NULL;
     }
   else
     {
-    return (vtkImageStencilData *)(this->Inputs[2]); 
+    return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
 
@@ -155,7 +158,7 @@ void vtkImageRenyiMutualInformation::SetMaxIntensities(int maxS, int maxT)
 }
 
 //----------------------------------------------------------------------------
-// Need to add histograms from different threads to create joint 
+// Need to add histograms from different threads to create joint
 // histogram image.
 vtkImageData *vtkImageRenyiMutualInformation::GetOutput()
 {
@@ -169,8 +172,8 @@ vtkImageData *vtkImageRenyiMutualInformation::GetOutput()
   vtkImageData *HistST = (vtkImageData *)(this->Outputs[0]);
 
   for (i = 0; i < this->BinNumber[0]; i++)
-    {  
-      for (j = 0; j < this->BinNumber[1]; j++) 
+    {
+      for (j = 0; j < this->BinNumber[1]; j++)
   {
     temp = 0;
     for (int id = 0; id < n; id++)
@@ -205,7 +208,7 @@ void vtkImageRenyiMutualInformationExecute(vtkImageRenyiMutualInformation *self,
     {
       self->ThreadHistS[id][i] = 0;
       self->ThreadHistT[id][i] = 0;
-      for (j = 0; j < self->BinNumber[1]; j++) 
+      for (j = 0; j < self->BinNumber[1]; j++)
    {
      self->ThreadHistST[id][i][j] = 0;
    }
@@ -213,10 +216,10 @@ void vtkImageRenyiMutualInformationExecute(vtkImageRenyiMutualInformation *self,
 
   // Find the region to loop over
   maxX = inExt[1] - inExt[0];
-  maxY = inExt[3] - inExt[2]; 
+  maxY = inExt[3] - inExt[2];
   maxZ = inExt[5] - inExt[4];
 
-  // Get increments to march through data 
+  // Get increments to march through data
   in1Data->GetIncrements(incX, incY, incZ);
 
   // Loop over data within stencil sub-extents
@@ -228,7 +231,7 @@ void vtkImageRenyiMutualInformationExecute(vtkImageRenyiMutualInformation *self,
    iter = 0; if (self->GetReverseStencil()) iter = -1;
 
    pminX = 0; pmaxX = maxX;
-   while ((stencil !=0 && 
+   while ((stencil !=0 &&
      stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
     (stencil == 0 && iter++ == 0))
      {
@@ -288,15 +291,15 @@ void vtkImageRenyiMutualInformation::ThreadedExecute1(vtkImageData **inData,
 
   inData[0]->GetWholeExtent(ext0);
   inData[1]->GetWholeExtent(ext1);
-  
-  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) | 
+
+  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) |
       (ext0[3] - ext1[3]) | (ext0[4] - ext1[4]) | (ext0[5] - ext1[5]))
     {
     vtkErrorMacro(<<"Inputs 0 and 1 must have the same extents.");
     return;
     }
 
-  if ((inData[0]->GetNumberOfScalarComponents() > 1) | 
+  if ((inData[0]->GetNumberOfScalarComponents() > 1) |
       (inData[1]->GetNumberOfScalarComponents() > 1))
     {
       vtkErrorMacro("Inputs 0 and 1 must have 1 component each.");
@@ -316,8 +319,8 @@ void vtkImageRenyiMutualInformation::ThreadedExecute1(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageRenyiMutualInformationExecute,this,
-      inData[0], (VTK_TT *)(inPtr1), 
-      inData[1], (VTK_TT *)(inPtr2), 
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
       inExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -338,7 +341,7 @@ void vtkImageRenyiMutualInformation::ThreadedExecute2(int extS[6], int extST[6],
 
   // Loop over S image histogram.
   for (i = extS[0]; i <= extS[1]; i++)
-    {  
+    {
       temp1 = 0.0;
       for (n = 0; n < N; n++)
   {
@@ -349,14 +352,14 @@ void vtkImageRenyiMutualInformation::ThreadedExecute2(int extS[6], int extST[6],
 
   // Loop over T and ST histograms.
   for (j = extST[2]; j <= extST[3]; j++)
-    {  
+    {
       temp2 = 0.0;
       for (n = 0; n < N; n++)
   {
     temp2 += (double)this->ThreadHistT[n][j];
   }
       this->ThreadEntropyT[id] += pow(temp2,this->qValue);
-      for (i = extST[0]; i <= extST[1]; i++) 
+      for (i = extST[0]; i <= extST[1]; i++)
   {
      temp1 = 0.0;
      for (n = 0; n < N; n++)
@@ -393,7 +396,7 @@ double vtkImageRenyiMutualInformation::GetResult()
   else
     {
       vtkErrorMacro( << "GetResult: qValue = 1 or HistS is all 0's.");
-    } 
+    }
 
   if ( (entropyT > 0) && (this->qValue != 1.0) )
     {
@@ -402,7 +405,7 @@ double vtkImageRenyiMutualInformation::GetResult()
   else
     {
       vtkErrorMacro( << "GetResult: qValue = 1 or HistT is all 0's.");
-    } 
+    }
 
   if ( (entropyST > 0) && (this->qValue != 1.0) )
     {
@@ -411,7 +414,7 @@ double vtkImageRenyiMutualInformation::GetResult()
   else
     {
       vtkErrorMacro( << "GetResult: qValue = 1 or HistST is all 0's.");
-    } 
+    }
 
   result = entropyS + entropyT - entropyST;
 
@@ -449,7 +452,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute1( void
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over input images
@@ -459,7 +462,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute1( void
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExt, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute1(str->Inputs, str->Output, splitExt, threadId);
@@ -467,7 +470,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute1( void
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -487,7 +490,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute2( void
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over S image histogram.
@@ -505,7 +508,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute2( void
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExtST, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute2(splitExtS, splitExtST, threadId);
@@ -513,7 +516,7 @@ VTK_THREAD_RETURN_TYPE vtkImageRenyiMutualInformationMultiThreadedExecute2( void
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -534,13 +537,13 @@ void vtkImageRenyiMutualInformation::ExecuteData(vtkDataObject *out)
   output->AllocateScalars();
 
   vtkImageMultiThreadStruct str;
-  
+
   str.Filter = this;
   str.Inputs = (vtkImageData **)this->GetInputs();
   str.Output = output;
-  
+
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  
+
   // setup threading and the invoke threadedExecute
   this->Threader->SetSingleMethod(vtkImageRenyiMutualInformationMultiThreadedExecute1, &str);
   this->Threader->SingleMethodExecute();
@@ -550,7 +553,7 @@ void vtkImageRenyiMutualInformation::ExecuteData(vtkDataObject *out)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageRenyiMutualInformation::ExecuteInformation(vtkImageData **inData, 
+void vtkImageRenyiMutualInformation::ExecuteInformation(vtkImageData **inData,
                    vtkImageData *outData)
 {
   // the two inputs are required to be of the same data type and extents.

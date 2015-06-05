@@ -6,12 +6,12 @@
   Date:      $Date: 2007/04/26 19:16:45 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -22,13 +22,16 @@
 #include "vtkObjectFactory.h"
 
 #include <math.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageGlobalNormalize, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImageGlobalNormalize);
 
 //----------------------------------------------------------------------------
 // This method tells the superclass that the first axis will collapse.
-void vtkImageGlobalNormalize::ExecuteInformation(vtkImageData *vtkNotUsed(inData), 
+void vtkImageGlobalNormalize::ExecuteInformation(vtkImageData *vtkNotUsed(inData),
                                            vtkImageData *outData)
 {
   outData->SetScalarType(VTK_FLOAT);
@@ -36,7 +39,7 @@ void vtkImageGlobalNormalize::ExecuteInformation(vtkImageData *vtkNotUsed(inData
 
 //----------------------------------------------------------------------------
 // This execute method handles boundaries.
-// it handles boundaries. Pixels are just replicated to get values 
+// it handles boundaries. Pixels are just replicated to get values
 // out of extent.
 template <class T>
 void vtkImageGlobalNormalizeExecute(vtkImageGlobalNormalize *self,
@@ -48,7 +51,7 @@ void vtkImageGlobalNormalizeExecute(vtkImageGlobalNormalize *self,
   vtkImageIterator<T> inIt1(inData, outExt);
   vtkImageIterator<T> inIt2(inData, outExt);
   vtkImageProgressIterator<float> outIt(outData, outExt, self, id);
-  
+
   // Find the maximum intensity
   while (!inIt1.IsAtEnd())
     {
@@ -83,13 +86,13 @@ void vtkImageGlobalNormalizeExecute(vtkImageGlobalNormalize *self,
 // This method contains a switch statement that calls the correct
 // templated function for the input data type.  The output data
 // must match input type.  This method does handle boundary conditions.
-void vtkImageGlobalNormalize::ThreadedExecute(vtkImageData *inData, 
+void vtkImageGlobalNormalize::ThreadedExecute(vtkImageData *inData,
                                         vtkImageData *outData,
                                         int outExt[6], int id)
 {
-  vtkDebugMacro(<< "Execute: inData = " << inData 
+  vtkDebugMacro(<< "Execute: inData = " << inData
   << ", outData = " << outData);
-  
+
   // this filter expects that input is the same type as output.
   if (outData->GetScalarType() != VTK_FLOAT)
     {
@@ -97,7 +100,7 @@ void vtkImageGlobalNormalize::ThreadedExecute(vtkImageData *inData,
     << ", must be float");
     return;
     }
-  
+
   switch (inData->GetScalarType())
     {
     vtkTemplateMacro6(vtkImageGlobalNormalizeExecute, this, inData,
@@ -107,15 +110,3 @@ void vtkImageGlobalNormalize::ThreadedExecute(vtkImageData *inData,
       return;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

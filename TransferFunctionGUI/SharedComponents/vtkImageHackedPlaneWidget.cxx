@@ -44,8 +44,11 @@
 #include "vtkImageExtractComponents.h"
 #include "vtkImageAppendComponents.h"
 #include "vtkImageMathematics.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageHackedPlaneWidget, "$Revision: 1.19 $");
+#endif
 vtkStandardNewMacro(vtkImageHackedPlaneWidget);
 
 vtkCxxSetObjectMacro(vtkImageHackedPlaneWidget, PlaneProperty, vtkProperty);
@@ -249,10 +252,10 @@ void vtkImageHackedPlaneWidget::SetTextureVisibility(int vis)
     {
     return;
     }
-  
+
   this->TextureVisibility = vis;
-  
-  if ( this->Enabled ) 
+
+  if ( this->Enabled )
     {
     if (this->TextureVisibility)
       {
@@ -263,7 +266,7 @@ void vtkImageHackedPlaneWidget::SetTextureVisibility(int vis)
       this->CurrentRenderer->RemoveViewProp(this->TexturePlaneActor);
       }
     }
-  
+
   this->Modified();
 }
 
@@ -286,7 +289,7 @@ void vtkImageHackedPlaneWidget::SetEnabled(int enabling)
       {
       return;
       }
-    
+
     if ( ! this->CurrentRenderer )
       {
       this->SetCurrentRenderer(this->Interactor->FindPokedRenderer(
@@ -317,7 +320,7 @@ void vtkImageHackedPlaneWidget::SetEnabled(int enabling)
       this->CurrentRenderer->AddViewProp(this->TexturePlaneActor);
       }
     this->TexturePlaneActor->SetProperty(this->TexturePlaneProperty);
-    
+
     // Add the cross-hair cursor
     this->CurrentRenderer->AddViewProp(this->CursorActor);
     this->CursorActor->SetProperty(this->CursorProperty);
@@ -359,7 +362,7 @@ void vtkImageHackedPlaneWidget::SetEnabled(int enabling)
     this->CurrentRenderer->RemoveViewProp(this->CursorActor);
 
     //turn off the margins
-    this->CurrentRenderer->RemoveViewProp(this->MarginActor);    
+    this->CurrentRenderer->RemoveViewProp(this->MarginActor);
 
     //turn off the image data annotation
     this->CurrentRenderer->RemoveViewProp(this->TextActor);
@@ -586,12 +589,12 @@ void vtkImageHackedPlaneWidget::PrintSelf(ostream& os, vtkIndent indent)
      << pt2[1] << ", "
      << pt2[2] << ")\n";
 
-  os << indent << "Current Cursor Position: (" 
+  os << indent << "Current Cursor Position: ("
      << this->CurrentCursorPosition[0] << ", "
      << this->CurrentCursorPosition[1] << ", "
      << this->CurrentCursorPosition[2] << ")\n";
 
-  os << indent << "Current Image Value: " 
+  os << indent << "Current Image Value: "
      << this->CurrentImageValue << "\n";
 
   os << indent << "Plane Orientation: " << this->PlaneOrientation << "\n";
@@ -611,11 +614,11 @@ void vtkImageHackedPlaneWidget::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "LeftButtonAction: " << this->LeftButtonAction << endl;
   os << indent << "MiddleButtonAction: " << this->MiddleButtonAction << endl;
   os << indent << "RightButtonAction: " << this->RightButtonAction << endl;
-  os << indent << "LeftButtonAutoModifier: " << 
+  os << indent << "LeftButtonAutoModifier: " <<
     this->LeftButtonAutoModifier << endl;
-  os << indent << "MiddleButtonAutoModifier: " << 
+  os << indent << "MiddleButtonAutoModifier: " <<
     this->MiddleButtonAutoModifier << endl;
-  os << indent << "RightButtonAutoModifier: " << 
+  os << indent << "RightButtonAutoModifier: " <<
     this->RightButtonAutoModifier << endl;
   os << indent << "UseContinuousCursor: "
      << (this->UseContinuousCursor ? "On\n" : "Off\n") ;
@@ -1039,11 +1042,11 @@ void vtkImageHackedPlaneWidget::OnMouseMove()
 
   // Compute the two points defining the motion vector
   //
-  this->ComputeWorldToDisplay(this->LastPickPosition[0], 
+  this->ComputeWorldToDisplay(this->LastPickPosition[0],
                               this->LastPickPosition[1],
                               this->LastPickPosition[2], focalPoint);
   z = focalPoint[2];
-  
+
   this->ComputeDisplayToWorld(
     double(this->Interactor->GetLastEventPosition()[0]),
     double(this->Interactor->GetLastEventPosition()[1]),
@@ -1170,7 +1173,7 @@ void vtkImageHackedPlaneWidget::WindowLevel(int X, int Y)
     {
     newLevel = 0.01 * ( newLevel < 0 ? -1 : 1 );
     }
-  
+
   if ( !this->UserControlledLookupTable )
     {
     if (( newWindow < 0 && this->CurrentWindow > 0 ) || \
@@ -1218,7 +1221,7 @@ void vtkImageHackedPlaneWidget::SetWindowLevel(double window, double level, int 
     this->CurrentLevel = level;
     return;
     }
-    
+
   if ( this->CurrentWindow == window && this->CurrentLevel == level )
     {
     return;
@@ -1268,7 +1271,7 @@ int vtkImageHackedPlaneWidget::GetCursorData(double xyzv[4])
   xyzv[1] = this->CurrentCursorPosition[1];
   xyzv[2] = this->CurrentCursorPosition[2];
   xyzv[3] = this->CurrentImageValue;
-  
+
   return 1;
 }
 
@@ -1280,7 +1283,7 @@ int vtkImageHackedPlaneWidget::GetCursorDataStatus()
     {
     return 0;
     }
-  
+
   return 1;
 }
 
@@ -1512,7 +1515,7 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
 
   this->OriginalWindow = range[1] - range[0];
   this->OriginalLevel = 0.5*(range[0] + range[1]);
-  
+
   if( fabs( this->OriginalWindow ) < 0.001 )
     {
     this->OriginalWindow = 0.001 * ( this->OriginalWindow < 0.0 ? -1 : 1 );
@@ -1533,7 +1536,7 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
     this->ColorMap->SetInput(this->ResliceR->GetOutput());
     this->Texture->SetInput(this->ColorMap->GetOutput());
   }else{
-  
+
   vtkImageExtractComponents* Extractor0 = vtkImageExtractComponents::New();
   Extractor0->SetInput(this->ImageData);
   Extractor0->SetComponents(0);
@@ -1548,7 +1551,7 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   this->ResliceG->SetInput(Extractor1->GetOutput());
   this->ResliceB->SetInput(Extractor2->GetOutput());
   int comps = this->ResliceR->GetOutput()->GetNumberOfScalarComponents();
-  
+
   vtkImageMathematics* Shift0 = vtkImageMathematics::New();
   Shift0->SetOperationToAddConstant();
   Shift0->SetConstantC(-minMax[0]);
@@ -1561,7 +1564,7 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   Shift2->SetOperationToAddConstant();
   Shift2->SetConstantC(-minMax[4]);
   Shift2->SetInput1(this->ResliceB->GetOutput());
-  
+
   vtkImageMathematics* Scale0 = vtkImageMathematics::New();
   Scale0->SetOperationToMultiplyByK();
   Scale0->SetConstantK(255.0/(minMax[1]-minMax[0]));
@@ -1574,7 +1577,7 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   Scale2->SetOperationToMultiplyByK();
   Scale2->SetConstantK(255.0/(minMax[5]-minMax[4]));
   Scale2->SetInput1(Shift2->GetOutput());
-  
+
   vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
   Appender->SetInput(0,Scale0->GetOutput());
   Appender->SetInput(1,Scale1->GetOutput());
@@ -1727,7 +1730,7 @@ void vtkImageHackedPlaneWidget::UpdatePlane()
   this->ResliceAxes->SetElement(0,3,neworiginXYZW[0]);
   this->ResliceAxes->SetElement(1,3,neworiginXYZW[1]);
   this->ResliceAxes->SetElement(2,3,neworiginXYZW[2]);
-  
+
   this->ResliceR->SetResliceAxes(this->ResliceAxes);
   this->ResliceG->SetResliceAxes(this->ResliceAxes);
   this->ResliceB->SetResliceAxes(this->ResliceAxes);
@@ -1819,7 +1822,7 @@ void vtkImageHackedPlaneWidget::SetResliceInterpolate(int i)
     {
     return;
     }
-  
+
   if ( i == VTK_NEAREST_RESLICE )
     {
     this->ResliceR->SetInterpolationModeToNearestNeighbor();
@@ -1980,13 +1983,13 @@ double vtkImageHackedPlaneWidget::GetSlicePosition()
     return planeOrigin[2];
     }
   else if ( this->PlaneOrientation == 1 )
-    { 
+    {
     return planeOrigin[1];
     }
   else if ( this->PlaneOrientation == 0 )
-    {  
+    {
     return planeOrigin[0];
-    } 
+    }
   else
     {
     vtkGenericWarningMacro("only works for ortho planes: set plane orientation first");
@@ -2006,7 +2009,7 @@ void vtkImageHackedPlaneWidget::SetSliceIndex(int index)
   if ( !this->ImageData )
     {
     return;
-    } 
+    }
   this->ImageData->UpdateInformation();
   double origin[3];
   this->ImageData->GetOrigin(origin);
@@ -2027,20 +2030,20 @@ void vtkImageHackedPlaneWidget::SetSliceIndex(int index)
     }
   else if ( this->PlaneOrientation == 1 )
     {
-    planeOrigin[1] = origin[1] + index*spacing[1]; 
+    planeOrigin[1] = origin[1] + index*spacing[1];
     pt1[1] = planeOrigin[1];
     pt2[1] = planeOrigin[1];
     }
   else if ( this->PlaneOrientation == 0 )
     {
-    planeOrigin[0] = origin[0] + index*spacing[0]; 
+    planeOrigin[0] = origin[0] + index*spacing[0];
     pt1[0] = planeOrigin[0];
     pt2[0] = planeOrigin[0];
     }
   else
     {
     vtkGenericWarningMacro("only works for ortho planes: set plane orientation first");
-    return; 
+    return;
     }
 
   this->PlaneSource->SetOrigin(planeOrigin);
@@ -2062,7 +2065,7 @@ int vtkImageHackedPlaneWidget::GetSliceIndex()
   if ( ! this->ImageData )
     {
     return 0;
-    } 
+    }
   this->ImageData->UpdateInformation();
   double origin[3];
   this->ImageData->GetOrigin(origin);
@@ -2424,19 +2427,19 @@ void vtkImageHackedPlaneWidget::GetPoint2(double xyz[3])
 }
 
 //----------------------------------------------------------------------------
-double* vtkImageHackedPlaneWidget::GetCenter() 
+double* vtkImageHackedPlaneWidget::GetCenter()
 {
   return this->PlaneSource->GetCenter();
 }
 
 //----------------------------------------------------------------------------
-void vtkImageHackedPlaneWidget::GetCenter(double xyz[3]) 
+void vtkImageHackedPlaneWidget::GetCenter(double xyz[3])
 {
   this->PlaneSource->GetCenter(xyz);
 }
 
 //----------------------------------------------------------------------------
-double* vtkImageHackedPlaneWidget::GetNormal() 
+double* vtkImageHackedPlaneWidget::GetNormal()
 {
   return this->PlaneSource->GetNormal();
 }
@@ -2522,8 +2525,8 @@ void vtkImageHackedPlaneWidget::AdjustState()
       break;
     }
 
-  if (this->Interactor->GetShiftKey() || 
-      (auto_modifier && 
+  if (this->Interactor->GetShiftKey() ||
+      (auto_modifier &&
        (*auto_modifier & vtkImageHackedPlaneWidget::VTK_SHIFT_MODIFIER)))
     {
     this->State = vtkImageHackedPlaneWidget::Scaling;
@@ -2610,7 +2613,7 @@ void vtkImageHackedPlaneWidget::AdjustState()
     }
 
   if (this->Interactor->GetControlKey() ||
-      (auto_modifier && 
+      (auto_modifier &&
        (*auto_modifier & vtkImageHackedPlaneWidget::VTK_CONTROL_MODIFIER)))
     {
     this->State = vtkImageHackedPlaneWidget::Moving;
@@ -2668,7 +2671,7 @@ void vtkImageHackedPlaneWidget::Spin(double *p1, double *p2)
   // Disable cursor snap
   //
   this->PlaneOrientation = 3;
-  
+
   // Get the motion vector, in world coords
   //
   double v[3];
@@ -2796,7 +2799,7 @@ void vtkImageHackedPlaneWidget::GeneratePlaneOutline()
   planeOutlineMapper->SetInput( this->PlaneOutlinePolyData );
   planeOutlineMapper->SetResolveCoincidentTopologyToPolygonOffset();
   this->PlaneOutlineActor->SetMapper(planeOutlineMapper);
-  this->PlaneOutlineActor->PickableOff();    
+  this->PlaneOutlineActor->PickableOff();
   planeOutlineMapper->Delete();
 }
 
@@ -3054,7 +3057,7 @@ void vtkImageHackedPlaneWidget::Translate(double *p1, double *p2)
     for (i=0; i<3; i++)
       {
       origin[i] = o[i]   + vdrv*this->RadiusVector[i];
-      point2[i] = pt2[i] + vdrv*this->RadiusVector[i] + 
+      point2[i] = pt2[i] + vdrv*this->RadiusVector[i] +
         vdra*this->RotateAxis[i];
       }
     this->PlaneSource->SetOrigin(origin);
@@ -3064,7 +3067,7 @@ void vtkImageHackedPlaneWidget::Translate(double *p1, double *p2)
     {
     for (i=0; i<3; i++)
       {
-      origin[i] = o[i]   + vdrv*this->RadiusVector[i] + 
+      origin[i] = o[i]   + vdrv*this->RadiusVector[i] +
         vdra*this->RotateAxis[i];
       point1[i] = pt1[i] + vdra*this->RotateAxis[i];
       point2[i] = pt2[i] + vdrv*this->RadiusVector[i];
@@ -3088,7 +3091,7 @@ void vtkImageHackedPlaneWidget::Translate(double *p1, double *p2)
     for (i=0; i<3; i++)
       {
       origin[i] = o[i]   + vdra*this->RotateAxis[i];
-      point1[i] = pt1[i] + vdrv*this->RadiusVector[i] + 
+      point1[i] = pt1[i] + vdrv*this->RadiusVector[i] +
         vdra*this->RotateAxis[i];
       }
     this->PlaneSource->SetPoint1(point1);
@@ -3097,7 +3100,7 @@ void vtkImageHackedPlaneWidget::Translate(double *p1, double *p2)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageHackedPlaneWidget::Scale(double *p1, double *p2, 
+void vtkImageHackedPlaneWidget::Scale(double *p1, double *p2,
                                 int vtkNotUsed(X), int Y)
 {
   // Get the motion vector
@@ -3114,7 +3117,7 @@ void vtkImageHackedPlaneWidget::Scale(double *p1, double *p2,
 
   // Compute the scale factor
   //
-  double sf = vtkMath::Norm(v) / 
+  double sf = vtkMath::Norm(v) /
     sqrt(vtkMath::Distance2BetweenPoints(pt1,pt2));
   if ( Y > this->Interactor->GetLastEventPosition()[1] )
     {
@@ -3140,5 +3143,3 @@ void vtkImageHackedPlaneWidget::Scale(double *p1, double *p2,
   this->PlaneSource->SetPoint1(point1);
   this->PlaneSource->SetPoint2(point2);
 }
-
-

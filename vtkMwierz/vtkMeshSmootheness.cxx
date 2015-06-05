@@ -29,8 +29,11 @@
 #include "vtkPolygon.h"
 #include "vtkTensor.h"
 #include "vtkTriangle.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkMeshSmootheness, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkMeshSmootheness);
 
 //------------------------------------------------------------------------------
@@ -78,7 +81,7 @@ void vtkMeshSmootheness::GetMeanCurvature()
 {
   memset((void *)this->MeanCurvature, 0, this->NumPts*sizeof(double));
   memset((void *)this->NumNeighb, 0, this->NumPts*sizeof(int));
-  
+
   vtkIdList* vertices, *vertices_n, *neighbours;
   vtkTriangle* facet;
   vtkTriangle* neighbour;
@@ -91,7 +94,7 @@ void vtkMeshSmootheness::GetMeanCurvature()
   // Get the array so we can write to it directly
   //     data
   int v, v_l, v_r, v_o, n, nv;// n short for neighbor
-  
+
   //     create-allocate
   double n_f[3]; // normal of facet (could be stored for later?)
   double n_n[3]; // normal of edge
@@ -103,10 +106,10 @@ void vtkMeshSmootheness::GetMeanCurvature()
   double vn1[3]; // vertices for computation of neighbour's n
   double vn2[3];
   double e[3];   // edge (oriented)
-  
+
   double cs, sn;    // cs: cos; sn sin
   double angle, length, Af, Hf;  // temporary store
-  
+
   this->mesh->BuildLinks();
   Hf = 0.0;
   nv = 3; // Works only for triangles
@@ -123,7 +126,7 @@ void vtkMeshSmootheness::GetMeanCurvature()
     v_o = vertices->GetId((v+2) % nv);
 
     this->mesh->GetCellEdgeNeighbors(f,v_l,v_r,neighbours);
-    
+
     // compute only if there is really ONE neighbour
     // AND meanCurvature has not been computed yet!
     // (ensured by n > f)
@@ -175,7 +178,7 @@ void vtkMeshSmootheness::GetMeanCurvature()
       }
         }
     }
-  
+
   // put curvature in vtkArray
   for (v = 0; v < this->NumPts; v++)
     {
@@ -185,9 +188,9 @@ void vtkMeshSmootheness::GetMeanCurvature()
   }
       this->Smootheness +=  Hf;
     }
-  
+
   this->Smootheness = this->Smootheness/this->NumPts;
-  
+
   // clean
   vertices  ->Delete();
   vertices_n->Delete();
@@ -313,4 +316,3 @@ void vtkMeshSmootheness::PrintSelf(ostream& os, vtkIndent indent)
   vtkPolyDataToPolyDataFilter::PrintSelf(os,indent);
   os << indent << "CurvatureType: " << this->CurvatureType << "\n";
 }
-

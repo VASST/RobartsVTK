@@ -42,8 +42,11 @@ Copyright (c) 2000,2002 David Gobbi.
 #include "vtkSignalBox.h"
 #include "vtkVideoBuffer2.h"
 #include "vtkVideoFrame2.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkFreehandUltrasound2, "$Revision: 1.20 $");
+#endif
 vtkStandardNewMacro(vtkFreehandUltrasound2);
 
 // for keeping track of threading information
@@ -90,7 +93,7 @@ vtkFreehandUltrasound2::vtkFreehandUltrasound2()
   // TODO put back?
   //this->OldScalarType = VTK_UNSIGNED_CHAR;
   //this->OldNComponents = 1;
-  
+
   //this->OldOutputSpacing[0] = 1.0;
   //this->OldOutputSpacing[1] = 1.0;
   //this->OldOutputSpacing[2] = 1.0;
@@ -105,7 +108,7 @@ vtkFreehandUltrasound2::vtkFreehandUltrasound2()
   //this->OldOutputExtent[3] = 0;
   //this->OldOutputExtent[4] = 0;
   //this->OldOutputExtent[5] = 0;
-  
+
   // this will force ClearOutput() to run, which will allocate the output
   // and the accumulation buffer(s)
   this->NeedsClear = 1;
@@ -133,8 +136,8 @@ vtkFreehandUltrasound2::vtkFreehandUltrasound2()
 
   // one thread for each CPU is used for the reconstruction
   this->Threader = vtkMultiThreader::New();
-  this->NumberOfThreads = 1; 
-  
+  this->NumberOfThreads = 1;
+
   // for running the reconstruction in the background
   this->VideoSource = NULL;
   this->TrackerTool = NULL;
@@ -467,7 +470,7 @@ void vtkFreehandUltrasound2::PrintSelf(ostream& os, vtkIndent indent)
 // source.  Otherwise, set the slice to the parameter.
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::SetSlice(vtkImageData *slice)
-{  
+{
   if(this->VideoSource)
     {
     this->Slice = this->VideoSource->GetOutput();
@@ -487,7 +490,7 @@ vtkImageData* vtkFreehandUltrasound2::GetSlice()
 {
   if(this->VideoSource)
     {
-    return this->VideoSource->GetOutput(); 
+    return this->VideoSource->GetOutput();
     }
   else
     {
@@ -674,7 +677,7 @@ void vtkFreehandUltrasound2::ClearSliceBuffers()
         this->SliceBuffer[phase]->GetScalarSize()*this->SliceBuffer[phase]->GetNumberOfScalarComponents()));
         }
       }
-    
+
     if (this->SliceAxesBuffer)
       {
       if (this->SliceAxesBuffer[phase])
@@ -720,7 +723,7 @@ void vtkFreehandUltrasound2::ClearSliceBuffers()
 // convert the ClipRectangle (which is in millimetre coordinates) into a
 // clip extent that can be applied to the input data - number of pixels (+ or -)
 // from the origin (the z component is copied from the inExt parameter)
-// 
+//
 // clipExt = {x0, x1, y0, y1, z0, z1} <-- the "output" of this function is to
 //                                        change this array
 // inOrigin = {x, y, z} <-- the origin in mm
@@ -739,7 +742,7 @@ void vtkFreehandUltrasound2::GetClipExtent(int clipExt[6],
   int y0 = (int)ceil((this->GetClipRectangle()[1]-inOrigin[1])/inSpacing[1]);
   int y1 = (int)floor((this->GetClipRectangle()[3]-inOrigin[1])/inSpacing[1]);
 
-  // Make sure that x0 <= x1 and y0 <= y1, otherwise swap 
+  // Make sure that x0 <= x1 and y0 <= y1, otherwise swap
   if (x0 > x1)
     {
     int tmp = x0; x0 = x1; x1 = tmp;
@@ -799,7 +802,7 @@ void vtkFreehandUltrasound2::GetClipExtent(int clipExt[6],
 void vtkFreehandUltrasound2::SetRotatingProbe(int probe)
   {
   this->RotatingProbe = probe;
-  
+
   if (probe)
     {
     // Setup the rotation objects
@@ -894,7 +897,7 @@ void vtkFreehandUltrasound2::SetCompounding(int comp)
     //this->AccumulationBuffer->AllocateScalars();
     //this->AccumulationBuffer->Update();
     }
-  */ 
+  */
 
   this->Compounding = comp;
 }
@@ -922,7 +925,7 @@ unsigned long int vtkFreehandUltrasound2::GetMTime()
     time = this->SliceTransform->GetMTime();
     mTime = ( time > mTime ? time : mTime );
     time = this->SliceTransform->GetMatrix()->GetMTime();
-    mTime = ( time > mTime ? time : mTime );    
+    mTime = ( time > mTime ? time : mTime );
     }
 
   return mTime;
@@ -951,7 +954,7 @@ int vtkFreehandUltrasound2::FillOutputPortInformation(
   int vtkNotUsed(port), vtkInformation* info)
 {
   info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkImageData");
- 
+
   return 1;
 }
 
@@ -1009,7 +1012,7 @@ int vtkFreehandUltrasound2::RequestInformation(
       vtkInformation *outInfo = outInfoVector->GetInformationObject(phase);
       // would have been created by a call to REQUEST_DATA_OBJECT, presumably handled
       // by vtkImageAlgorithm
-      vtkImageData *output = 
+      vtkImageData *output =
         dynamic_cast<vtkImageData *>(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
       // the whole extent, spacing, origin, PIPELINE scalar type (ex double; until REQUEST_DATA
@@ -1030,8 +1033,8 @@ int vtkFreehandUltrasound2::RequestInformation(
         if (this->GetSlice() == 0)
           {
           this->SetSlice(this->GetVideoSource()->GetOutput());
-          } 
-        } 
+          }
+        }
 
       // if we have a slice now...
       if (this->GetSlice())
@@ -1099,7 +1102,7 @@ int vtkFreehandUltrasound2::RequestInformation(
             {
             this->NeedsClear = 1;
             }
-            
+
           }
         }
       }
@@ -1115,7 +1118,7 @@ int vtkFreehandUltrasound2::RequestInformation(
 // Looks similar to RequestInformation, but operates on this->GetOutput
 // instead of on the output objects associated with information objects
 //----------------------------------------------------------------------------
-void vtkFreehandUltrasound2::InternalExecuteInformation() 
+void vtkFreehandUltrasound2::InternalExecuteInformation()
 {
   for (int phase = 0; phase < this->GetNumberOfOutputPorts(); phase++)
     {
@@ -1143,8 +1146,8 @@ void vtkFreehandUltrasound2::InternalExecuteInformation()
     if (this->GetSlice())
       {
       this->GetSlice()->UpdateInformation();
-      }    
-   
+      }
+
     // set up the output dimensions and info here
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),
            this->OutputExtent, 6);
@@ -1222,7 +1225,7 @@ int  vtkFreehandUltrasound2::RequestUpdateExtent(
   // Set the update extent of the input information object to equal the
   // whole extent of the input information object
   /*int inExt[6];
-  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0); 
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
   inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), inExt); // get the whole extent of inInfo
   inInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inExt, 6); // se the update extent of inInfo
   */
@@ -1245,7 +1248,7 @@ int vtkFreehandUltrasound2::RequestData(vtkInformation* request,
   for (int phase = 0; phase < this->GetNumberOfOutputPorts(); phase++)
     {
 
-    vtkDataObject *outObject = 
+    vtkDataObject *outObject =
       outInfo->GetInformationObject(phase)->Get(vtkDataObject::DATA_OBJECT());
 
     // if we are not currently running a reconstruction and we need to clear, then
@@ -1254,10 +1257,10 @@ int vtkFreehandUltrasound2::RequestData(vtkInformation* request,
       {
       this->InternalClearOutput();
       }
-    
+
     // This would have been done already in the call to ProcessRequest, so don't do it here
     outInfo->GetInformationObject(phase)->Set(vtkDemandDrivenPipeline::DATA_NOT_GENERATED(), 1);
-    
+
     // Set the flag for the data object associated with port 0 that data has been generated -
     // sets the data released flag to 0 and sets a new update time
     ((vtkImageData *)outObject)->DataHasBeenGenerated();
@@ -1280,7 +1283,7 @@ int vtkFreehandUltrasound2::ComputePipelineMTime(
 {
   if (this->GetSlice())
     {
-    *mtime = this->GetSlice()->GetPipelineMTime(); 
+    *mtime = this->GetSlice()->GetPipelineMTime();
     }
   return 1;
 }
@@ -1413,7 +1416,7 @@ static inline void vtkSleep(double duration)
 //----------------------------------------------------------------------------
 // vtkThreadSleep
 // Sleep until the specified absolute time has arrived.
-// You must pass a handle to the current thread.  
+// You must pass a handle to the current thread.
 // If '0' is returned, then the thread was aborted before or during the wait.
 //----------------------------------------------------------------------------
 static int vtkThreadSleep(struct ThreadInfoStruct *data, double time)
@@ -1438,12 +1441,12 @@ static int vtkThreadSleep(struct ThreadInfoStruct *data, double time)
       remaining = 0.1;
       }
 
-    // check to see if we are being told to quit 
+    // check to see if we are being told to quit
     if (*(data->ActiveFlag) == 0)
       {
       return 0;
       }
-    
+
     vtkSleep(remaining);
     }
 
@@ -1461,12 +1464,12 @@ static int vtkThreadSleep(struct ThreadInfoStruct *data, double time)
 // mode - used for unoptimized versions only
 //----------------------------------------------------------------------------
 template <class F, class T>
-static void vtkGetUltraInterpFunc(vtkFreehandUltrasound2 *self, 
-                                    int (**interpolate)(F *point, 
+static void vtkGetUltraInterpFunc(vtkFreehandUltrasound2 *self,
+                                    int (**interpolate)(F *point,
                                                         T *inPtr, T *outPtr,
                                                         unsigned short *accPtr,
-                                                        int numscalars, 
-                                                        int outExt[6], 
+                                                        int numscalars,
+                                                        int outExt[6],
                                                         int outInc[3]))
 {
   switch (self->GetInterpolationMode())
@@ -1498,16 +1501,16 @@ static void vtkGetUltraInterpFunc(vtkFreehandUltrasound2 *self,
 
 //----------------------------------------------------------------------------
 // vtkNearestNeighborInterpolation - NOT OPTIMIZED
-// Do nearest-neighbor interpolation of the input data 'inPtr' of extent 
-// 'inExt' at the 'point'.  The result is placed at 'outPtr'.  
+// Do nearest-neighbor interpolation of the input data 'inPtr' of extent
+// 'inExt' at the 'point'.  The result is placed at 'outPtr'.
 // If the lookup data is beyond the extent 'inExt', set 'outPtr' to
-// the background color 'background'.  
+// the background color 'background'.
 // The number of scalar components in the data is 'numscalars'
 //----------------------------------------------------------------------------
 template <class F, class T>
 static int vtkNearestNeighborInterpolation(F *point, T *inPtr, T *outPtr,
-                                           unsigned short *accPtr, 
-                                           int numscalars, 
+                                           unsigned short *accPtr,
+                                           int numscalars,
                                            int outExt[6], int outInc[3])
 {
   int i;
@@ -1517,7 +1520,7 @@ static int vtkNearestNeighborInterpolation(F *point, T *inPtr, T *outPtr,
   int outIdX = vtkUltraRound(point[0])-outExt[0];
   int outIdY = vtkUltraRound(point[1])-outExt[2];
   int outIdZ = vtkUltraRound(point[2])-outExt[4];
-  
+
   // fancy way of checking bounds
   if ((outIdX | (outExt[1]-outExt[0] - outIdX) |
        outIdY | (outExt[3]-outExt[2] - outIdY) |
@@ -1554,7 +1557,7 @@ static int vtkNearestNeighborInterpolation(F *point, T *inPtr, T *outPtr,
     return 1;
     }
   return 0;
-} 
+}
 
 //----------------------------------------------------------------------------
 // vtkFreehand2OptimizedNNHelper - OPTIMIZED, WITHOUT INTEGER MATHEMATICS
@@ -1567,7 +1570,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
                                                 double *xAxis,
                                                 T *&inPtr, T *outPtr,
                                                 int *outExt, int *outInc,
-                                                int numscalars, 
+                                                int numscalars,
                                                 unsigned short *accPtr)
 {
   // with compounding
@@ -1576,7 +1579,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
 
     for (int idX = r1; idX <= r2; idX++)
       {
-      outPoint[0] = outPoint1[0] + idX*xAxis[0]; 
+      outPoint[0] = outPoint1[0] + idX*xAxis[0];
       outPoint[1] = outPoint1[1] + idX*xAxis[1];
       outPoint[2] = outPoint1[2] + idX*xAxis[2];
 
@@ -1601,9 +1604,9 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       // in the number of scalar pointers between the output
       // and the accumulation buffer
       unsigned short *accPtr1 = accPtr + ((unsigned short)(inc/outInc[0]));
-      unsigned short newa = *accPtr1 + ((unsigned short)(255)); 
+      unsigned short newa = *accPtr1 + ((unsigned short)(255));
       int i = numscalars;
-      do 
+      do
         {
         i--;
         *outPtr1 = ((*inPtr++)*255 + (*outPtr1)*(*accPtr1))/newa;
@@ -1625,7 +1628,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
     {
     for (int idX = r1; idX <= r2; idX++)
       {
-      outPoint[0] = outPoint1[0] + idX*xAxis[0]; 
+      outPoint[0] = outPoint1[0] + idX*xAxis[0];
       outPoint[1] = outPoint1[1] + idX*xAxis[1];
       outPoint[2] = outPoint1[2] + idX*xAxis[2];
 
@@ -1656,7 +1659,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       while (i);
       *outPtr1 = 255;
       }
-    } 
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1671,7 +1674,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
                                                 fixed *outPoint1, fixed *xAxis,
                                                 T *&inPtr, T *outPtr,
                                                 int *outExt, int *outInc,
-                                                int numscalars, 
+                                                int numscalars,
                                                 unsigned short *accPtr)
 {
   outPoint[0] = outPoint1[0] + r1*xAxis[0] - outExt[0];
@@ -1707,7 +1710,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       //TODO dies here
       unsigned short newa = *accPtr1 + ((unsigned short)(255));
       int i = numscalars;
-      do 
+      do
         {
         i--;
         *outPtr1 = ((*inPtr++)*255 + (*outPtr1)*(*accPtr1))/newa;
@@ -1763,7 +1766,7 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
       outPoint[1] += xAxis[1];
       outPoint[2] += xAxis[2];
       }
-    } 
+    }
 }
 
 ////////////////////// TRILINEAR INTERPOLATION //////////////////////////
@@ -1776,14 +1779,14 @@ static inline void vtkFreehand2OptimizedNNHelper(int r1, int r2,
 //----------------------------------------------------------------------------
 // vtkTrilinearInterpolation
 // Do trilinear interpolation of the input data 'inPtr' of extent 'inExt'
-// at the 'point'.  The result is placed at 'outPtr'.  
+// at the 'point'.  The result is placed at 'outPtr'.
 // If the lookup data is beyond the extent 'inExt', set 'outPtr' to
-// the background color 'background'.  
+// the background color 'background'.
 // The number of scalar components in the data is 'numscalars'
 //----------------------------------------------------------------------------
 template <class F, class T>
 static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
-                                     unsigned short *accPtr, int numscalars, 
+                                     unsigned short *accPtr, int numscalars,
                                      int outExt[6], int outInc[3])
 {
   F fx, fy, fz;
@@ -1800,7 +1803,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
 
   // at this point in time we have the floor (outIdX0), the ceiling (outIdX1)
   // and the fractional component (fx) for x, y and z
-  
+
   // bounds check
   if ((outIdX0 | (outExt[1]-outExt[0] - outIdX1) |
        outIdY0 | (outExt[3]-outExt[2] - outIdY1) |
@@ -1834,7 +1837,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
     F rx = 1 - fx;
     F ry = 1 - fy;
     F rz = 1 - fz;
-      
+
     F ryrz = ry*rz;
     F ryfz = ry*fz;
     F fyrz = fy*rz;
@@ -1849,10 +1852,10 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
     fdx[5] = fx*ryfz;
     fdx[6] = fx*fyrz;
     fdx[7] = fx*fyfz;
-    
+
     F f, r, a;
     T *inPtrTmp, *outPtrTmp;
-    
+
     // do compounding
     if (accPtr)
       {
@@ -1860,7 +1863,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
 
       // loop over the eight voxels
       int j = 8;
-      do 
+      do
         {
         j--;
         if (fdx[j] == 0)
@@ -1896,7 +1899,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
       }
 
     // no compounding
-    else 
+    else
       {
       // loop over the eight voxels
       int j = 8;
@@ -1934,7 +1937,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
             *outPtrTmp++ = *inPtrTmp++;
             }
           while (i);
-          }          
+          }
         *outPtrTmp = 255;
         }
       while (j);
@@ -1943,7 +1946,7 @@ static int vtkTrilinearInterpolation(F *point, T *inPtr, T *outPtr,
   }
   // if bounds check fails
   return 0;
-}     
+}
 
 
 //****************************************************************************
@@ -1975,16 +1978,16 @@ static int vtkIsIdentityMatrix(vtkMatrix4x4 *matrix)
 //----------------------------------------------------------------------------
 // intersectionHelper
 // find approximate intersection of line with the plane x = x_min,
-// y = y_min, or z = z_min (lower limit of data extent) 
+// y = y_min, or z = z_min (lower limit of data extent)
 //----------------------------------------------------------------------------
 template<class F>
 static inline
 int intersectionHelper(F *point, F *axis, int *limit, int ai, int *inExt)
 {
-  F rd = limit[ai]*point[3]-point[ai]  + 0.5; 
-    
+  F rd = limit[ai]*point[3]-point[ai]  + 0.5;
+
   if (rd < inExt[0])
-    { 
+    {
     return inExt[0];
     }
   else if (rd > inExt[1])
@@ -2014,7 +2017,7 @@ static int intersectionLow(F *point, F *axis, int *sign,
     F p = point[ai]+r*axis[ai];
 
     if ((sign[ai] < 0 && r > inExt[0] ||
-         sign[ai] > 0 && r < inExt[1]) && 
+         sign[ai] > 0 && r < inExt[1]) &&
         vtkUltraRound(p) < limit[ai])
       {
       r += sign[ai];
@@ -2030,7 +2033,7 @@ static int intersectionLow(F *point, F *axis, int *sign,
     F p = point[ai]+(r-sign[ai])*axis[ai];
 
     if ((sign[ai] > 0 && r > inExt[0] ||
-         sign[ai] < 0 && r < inExt[1]) && 
+         sign[ai] < 0 && r < inExt[1]) &&
         vtkUltraRound(p) >= limit[ai])
       {
       r -= sign[ai];
@@ -2049,12 +2052,12 @@ static int intersectionLow(F *point, F *axis, int *sign,
 // same as above, but for x = x_max
 //----------------------------------------------------------------------------
 template <class F>
-static int intersectionHigh(F *point, F *axis, int *sign, 
+static int intersectionHigh(F *point, F *axis, int *sign,
                             int *limit, int ai, int *inExt)
 {
   // approximate value of r
   int r = intersectionHelper(point,axis,limit,ai,inExt);
-    
+
   // move back and forth to find the point just inside the extent
   for (;;)
     {
@@ -2077,7 +2080,7 @@ static int intersectionHigh(F *point, F *axis, int *sign,
     F p = point[ai]+(r+sign[ai])*axis[ai];
 
     if ((sign[ai] < 0 && r > inExt[0] ||
-         sign[ai] > 0 && r < inExt[1]) && 
+         sign[ai] > 0 && r < inExt[1]) &&
         vtkUltraRound(p) <= limit[ai])
       {
       r += sign[ai];
@@ -2095,17 +2098,17 @@ static int intersectionHigh(F *point, F *axis, int *sign,
 // isBounded
 //----------------------------------------------------------------------------
 template <class F>
-static int isBounded(F *point, F *xAxis, int *inMin, 
+static int isBounded(F *point, F *xAxis, int *inMin,
                      int *inMax, int ai, int r)
 {
-  int bi = ai+1; 
+  int bi = ai+1;
   int ci = ai+2;
-  if (bi > 2) 
-    { 
-    bi -= 3; // coordinate index must be 0, 1 or 2 
-    } 
+  if (bi > 2)
+    {
+    bi -= 3; // coordinate index must be 0, 1 or 2
+    }
   if (ci > 2)
-    { 
+    {
     ci -= 3;
     }
 
@@ -2114,7 +2117,7 @@ static int isBounded(F *point, F *xAxis, int *inMin,
 
   int bp = vtkUltraRound(fbp);
   int cp = vtkUltraRound(fcp);
-  
+
   return (bp >= inMin[bi] && bp <= inMax[bi] &&
           cp >= inMin[ci] && cp <= inMax[ci]);
 }
@@ -2132,28 +2135,28 @@ static void vtkUltraFindExtentHelper(int &r1, int &r2, int sign, int *inExt)
     r1 = r2;
     r2 = i;
     }
-  
+
   // bound r1,r2 within reasonable limits
-  if (r1 < inExt[0]) 
+  if (r1 < inExt[0])
     {
     r1 = inExt[0];
     }
-  if (r2 > inExt[1]) 
+  if (r2 > inExt[1])
     {
     r2 = inExt[1];
     }
-  if (r1 > r2) 
+  if (r1 > r2)
     {
     r1 = inExt[0];
     r2 = inExt[0]-1;
     }
-}  
+}
 
 //----------------------------------------------------------------------------
 // vtkUltraFindExtent
 //----------------------------------------------------------------------------
 template <class F>
-static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis, 
+static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
                                  int *inMin, int *inMax, int *inExt)
 {
   int i, ix, iy, iz;
@@ -2161,7 +2164,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
   int indx1[4],indx2[4];
   F p1,p2;
 
-  // find signs of components of x axis 
+  // find signs of components of x axis
   // (this is complicated due to the homogeneous coordinate)
   for (i = 0; i < 3; i++)
     {
@@ -2173,12 +2176,12 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
       {
       sign[i] = 1;
       }
-    else 
+    else
       {
       sign[i] = -1;
       }
-    } 
-  
+    }
+
   // order components of xAxis from largest to smallest
   ix = 0;
   for (i = 1; i < 3; i++)
@@ -2189,7 +2192,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
       ix = i;
       }
     }
-  
+
   iy = ((ix > 1) ? ix-2 : ix+1);
   iz = ((ix > 0) ? ix-1 : ix+2);
 
@@ -2203,7 +2206,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
 
   r1 = intersectionLow(point,xAxis,sign,inMin,ix,inExt);
   r2 = intersectionHigh(point,xAxis,sign,inMax,ix,inExt);
-  
+
   // find points of intersections
   // first, find w-value for perspective (will usually be 1)
   for (i = 0; i < 3; i++)
@@ -2245,7 +2248,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
         return;
         }
       }
-    
+
     // check z face
     if (indx2[iz] < inMin[iz])
       {
@@ -2268,7 +2271,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
         }
       }
     }
-  
+
   // passed through the opposite x face
   if (isBounded(point,xAxis,inMin,inMax,ix,r2))
     {
@@ -2292,7 +2295,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
         return;
         }
       }
-    
+
     // check other y face
     if (indx1[iz] < inMin[iz])
       {
@@ -2314,7 +2317,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
         }
       }
     }
-  
+
   // line might pass through bottom face
   if ((indx1[iy] >= inMin[iy] && indx2[iy] < inMin[iy]) ||
       (indx1[iy] < inMin[iy] && indx2[iy] >= inMin[iy]))
@@ -2325,7 +2328,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
       // line might pass through top face
       if ((indx1[iy] <= inMax[iy] && indx2[iy] > inMax[iy]) ||
           (indx1[iy] > inMax[iy] && indx2[iy] <= inMax[iy]))
-        { 
+        {
         r2 = intersectionHigh(point,xAxis,sign,inMax,iy,inExt);
         if (isBounded(point,xAxis,inMin,inMax,iy,r2))
           {
@@ -2333,11 +2336,11 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
           return;
           }
         }
-      
+
       // line might pass through in-to-screen face
       if (indx1[iz] < inMin[iz] && indx2[iy] < inMin[iy] ||
           indx2[iz] < inMin[iz] && indx1[iy] < inMin[iy])
-        { 
+        {
         r2 = intersectionLow(point,xAxis,sign,inMin,iz,inExt);
         if (isBounded(point,xAxis,inMin,inMax,iz,r2))
           {
@@ -2355,10 +2358,10 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
           vtkUltraFindExtentHelper(r1,r2,sign[iy],inExt);
           return;
           }
-        } 
+        }
       }
     }
-  
+
   // line might pass through top face
   if ((indx1[iy] <= inMax[iy] && indx2[iy] > inMax[iy]) ||
       (indx1[iy] > inMax[iy] && indx2[iy] <= inMax[iy]))
@@ -2378,7 +2381,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
           }
         }
       // line might pass through out-of-screen face
-      else if (indx1[iz] > inMax[iz] && indx2[iy] > inMax[iy] || 
+      else if (indx1[iz] > inMax[iz] && indx2[iy] > inMax[iy] ||
                indx2[iz] > inMax[iz] && indx1[iy] > inMax[iy])
         {
         r1 = intersectionHigh(point,xAxis,sign,inMax,iz,inExt);
@@ -2388,9 +2391,9 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
           return;
           }
         }
-      } 
+      }
     }
-  
+
   // line might pass through in-to-screen face
   if ((indx1[iz] >= inMin[iz] && indx2[iz] < inMin[iz]) ||
       (indx1[iz] < inMin[iz] && indx2[iz] >= inMin[iz]))
@@ -2410,7 +2413,7 @@ static void vtkUltraFindExtent(int& r1, int& r2, F *point, F *xAxis,
         }
       }
     }
-  
+
   r1 = inExt[0];
   r2 = inExt[0] - 1;
 }
@@ -2547,7 +2550,7 @@ static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehan
 
       if (!id)
         {
-        if (!(count%target)) 
+        if (!(count%target))
           {
           self->UpdateProgress(count/(50.0*target));  // progress between 0 and 1
           }
@@ -2638,7 +2641,7 @@ static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehan
 
       // interpolating linearly (code 1)
       if (self->GetInterpolationMode() == VTK_FREEHAND_LINEAR)
-        { 
+        {
 
         for (idX = r1; idX <= r2; idX++) // for all of the x pixels within the fan
           {
@@ -2656,7 +2659,7 @@ static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehan
             outPoint[2] = outPoint1[2] + idX*xAxis[2];
             }
 
-          int hit = vtkTrilinearInterpolation(outPoint, inPtr, outPtr, accPtr, 
+          int hit = vtkTrilinearInterpolation(outPoint, inPtr, outPtr, accPtr,
             numscalars, outExt, outInc); // hit is either 1 or 0
 
           inPtr += numscalars; // go to the next x pixel
@@ -2665,13 +2668,13 @@ static void vtkOptimizedInsertSlice(vtkFreehandUltrasound2 *self, // the freehan
         }
 
       // interpolating with nearest neighbor (code 0)
-      else 
+      else
         {
-        vtkFreehand2OptimizedNNHelper(r1, r2, outPoint, outPoint1, xAxis, 
+        vtkFreehand2OptimizedNNHelper(r1, r2, outPoint, outPoint1, xAxis,
           inPtr, outPtr, outExt, outInc,
           numscalars, accPtr);
         // we added all the pixels between r1 and r2, so increment our count of the number of pixels added
-        self->IncrementPixelCount(threadId, r2-r1+1); 
+        self->IncrementPixelCount(threadId, r2-r1+1);
         }
 
       // skip the portion of the slice to the right of the fan
@@ -2704,9 +2707,9 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
   int *outExt = this->OutputExtent;
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
- 
+
   // get the accumulation buffer and the scalar pointer for its extent, if we are compounding
-  void *accPtr = NULL; 
+  void *accPtr = NULL;
   vtkImageData *accData = this->AccumulationBuffers[phase];
 
   if (this->Compounding)
@@ -2720,11 +2723,11 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
 
   // print out for debugging
   vtkDebugMacro(<< "OptimizedInsertSlice: inData = " << inData << ", outData = " << outData);
-  
+
   // this filter expects that input is the same type as output.
   if (inData->GetScalarType() != outData->GetScalarType())
     {
-    vtkErrorMacro(<< "OptimizedInsertSlice: input ScalarType, " 
+    vtkErrorMacro(<< "OptimizedInsertSlice: input ScalarType, "
       << inData->GetScalarType()
       << ", must match out ScalarType "<<outData->GetScalarType());
     return;
@@ -2733,7 +2736,7 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
   // use fixed-point math for optimization level 2
   if (this->GetOptimization() == 2)
     {
-    // change transform matrix so that instead of taking 
+    // change transform matrix so that instead of taking
     // input coords -> output coords it takes output indices -> input indices
     vtkMatrix4x4* matrix;
     if (!this->DiscardOutlierHeartRates)
@@ -2756,21 +2759,21 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
     switch (inData->GetScalarType())
       {
       case VTK_SHORT:
-        vtkOptimizedInsertSlice(this, outData, (short *)(outPtr), 
-                                (unsigned short *)(accPtr), 
-                                inData, (short *)(inPtr), 
+        vtkOptimizedInsertSlice(this, outData, (short *)(outPtr),
+                                (unsigned short *)(accPtr),
+                                inData, (short *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       case VTK_UNSIGNED_SHORT:
         vtkOptimizedInsertSlice(this,outData,(unsigned short *)(outPtr),
-                                (unsigned short *)(accPtr), 
-                                inData, (unsigned short *)(inPtr), 
+                                (unsigned short *)(accPtr),
+                                inData, (unsigned short *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       case VTK_UNSIGNED_CHAR:
         vtkOptimizedInsertSlice(this, outData,(unsigned char *)(outPtr),
-                                (unsigned short *)(accPtr), 
-                                inData, (unsigned char *)(inPtr), 
+                                (unsigned short *)(accPtr),
+                                inData, (unsigned char *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       default:
@@ -2784,7 +2787,7 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
   // nearest neighbor (1)
   else
     {
-    // change transform matrix so that instead of taking 
+    // change transform matrix so that instead of taking
     // input coords -> output coords it takes output indices -> input indices
     vtkMatrix4x4 *matrix;
     if (!this->DiscardOutlierHeartRates)
@@ -2803,25 +2806,25 @@ void vtkFreehandUltrasound2::ThreadedSliceExecute(vtkImageData *inData, // input
       newmatrix[i][2] = matrix->GetElement(i,2);
       newmatrix[i][3] = matrix->GetElement(i,3);
       }
-  
+
     switch (inData->GetScalarType())
       {
       case VTK_SHORT:
-        vtkOptimizedInsertSlice(this, outData, (short *)(outPtr), 
-                                (unsigned short *)(accPtr), 
-                                inData, (short *)(inPtr), 
+        vtkOptimizedInsertSlice(this, outData, (short *)(outPtr),
+                                (unsigned short *)(accPtr),
+                                inData, (short *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       case VTK_UNSIGNED_SHORT:
         vtkOptimizedInsertSlice(this,outData,(unsigned short *)(outPtr),
-                                (unsigned short *)(accPtr), 
-                                inData, (unsigned short *)(inPtr), 
+                                (unsigned short *)(accPtr),
+                                inData, (unsigned short *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       case VTK_UNSIGNED_CHAR:
         vtkOptimizedInsertSlice(this, outData,(unsigned char *)(outPtr),
-                                (unsigned short *)(accPtr), 
-                                inData, (unsigned char *)(inPtr), 
+                                (unsigned short *)(accPtr),
+                                inData, (unsigned char *)(inPtr),
                                 inExt, newmatrix, threadId);
         break;
       default:
@@ -2852,9 +2855,9 @@ int vtkFreehandUltrasound2::SplitSliceExtent(int splitExt[6], // the extent of t
    vtkDebugMacro("SplitSliceExtent: ( " << startExt[0] << ", " << startExt[1]
     << ", "
                 << startExt[2] << ", " << startExt[3] << ", "
-                << startExt[4] << ", " << startExt[5] << "), " 
+                << startExt[4] << ", " << startExt[5] << "), "
                 << num << " of " << total);
-  
+
   // start with same extent - copy the extent from startExt to splitExt
   memcpy(splitExt, startExt, 6 * sizeof(int));
 
@@ -2868,7 +2871,7 @@ int vtkFreehandUltrasound2::SplitSliceExtent(int splitExt[6], // the extent of t
     --splitAxis;
     // we cannot split if the input extent is something like [50, 50, 100, 100, 0, 0]
     if (splitAxis < 0)
-      { 
+      {
       vtkDebugMacro("  Cannot Split");
       return 1;
       }
@@ -2929,7 +2932,7 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedExecute( void *arg )
   // first find out how many pieces the extent can be split into and calculate
   // the extent for this thread (the splitExt)
   total = str->Filter->SplitSliceExtent(splitExt, ext, threadId, threadCount);
-  
+
   // if we can use this thread, then call ThreadedSliceExecute
   if (threadId < total)
     {
@@ -2939,10 +2942,10 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedExecute( void *arg )
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
-  
+
   return VTK_THREAD_RETURN_VALUE;
 }
 
@@ -3077,19 +3080,19 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
   vtkFloatingPointType inSpacing[3], inOrigin[3];
   // the resulting point in the output volume (outPoint) from a point in the input slice
   // (inpoint)
-  double outPoint[4], inPoint[4]; 
+  double outPoint[4], inPoint[4];
 
   // pointer to the nearest neighbor or trilinear interpolation function
   int (*interpolate)(double *point, T *inPtr, T *outPtr,
          unsigned short *accPtr, int numscalars, int outExt[6], int outInc[3]);
-  
+
   // slice spacing and origin
   inData->GetSpacing(inSpacing);
   inData->GetOrigin(inOrigin);
   // number of pixels in the x and y directions b/w the fan origin and the slice origin
   double xf = (self->GetFanOrigin()[0]-inOrigin[0])/inSpacing[0];
-  double yf = (self->GetFanOrigin()[1]-inOrigin[1])/inSpacing[1]; 
-  // fan depth squared 
+  double yf = (self->GetFanOrigin()[1]-inOrigin[1])/inSpacing[1];
+  // fan depth squared
   double d2 = self->GetFanDepth()*self->GetFanDepth();
   // absolute value of slice spacing
   double xs = fabs((double)(inSpacing[0]));
@@ -3113,7 +3116,7 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
   outData->GetIncrements(outInc);
   inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
   numscalars = inData->GetNumberOfScalarComponents();
-  
+
   // Set interpolation method - nearest neighbor or trilinear
   vtkGetUltraInterpFunc(self,&interpolate);
 
@@ -3126,7 +3129,7 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
         {
 
         // if we are within the current clip extent
-        if (idX >= clipExt[0] && idX <= clipExt[1] && 
+        if (idX >= clipExt[0] && idX <= clipExt[1] &&
             idY >= clipExt[2] && idY <= clipExt[3])
           {
           // current x/y index minus num pixels in the x/y direction b/w the fan origin and the slice origin
@@ -3136,7 +3139,7 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
           // if we are within the fan
           if (((ml == 0 && mr == 0) || y > 0 &&
               ((x*x)*(xs*xs)+(y*y)*(ys*ys) < d2 && x/y >= ml && x/y <= mr)))
-            {  
+            {
             inPoint[0] = idX;
             inPoint[1] = idY;
             inPoint[2] = idZ;
@@ -3145,23 +3148,23 @@ static void vtkFreehandUltrasound2InsertSlice(vtkFreehandUltrasound2 *self,
             //recall matrix = the index matrix --> transform voxels in the slice to indices in the output
             //formula: outPoint = matrix * inPoint
             matrix->MultiplyPoint(inPoint,outPoint);
-            
+
             // deal with w (homogeneous transform) if the transform was a perspective transform
-            outPoint[0] /= outPoint[3]; 
-            outPoint[1] /= outPoint[3]; 
+            outPoint[0] /= outPoint[3];
+            outPoint[1] /= outPoint[3];
             outPoint[2] /= outPoint[3];
             outPoint[3] = 1;
-        
+
             // interpolation functions return 1 if the interpolation was successful, 0 otherwise
-            int hit = interpolate(outPoint, inPtr, outPtr, accPtr, numscalars, 
+            int hit = interpolate(outPoint, inPtr, outPtr, accPtr, numscalars,
                         outExt, outInc);
-      
+
             // increment the number of pixels inserted
             self->IncrementPixelCount(0, hit);
             }
           }
 
-        inPtr += numscalars; 
+        inPtr += numscalars;
         }
       inPtr += inIncY;
       }
@@ -3236,7 +3239,7 @@ void vtkFreehandUltrasound2::InsertSlice(int phase)
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   void *accPtr = NULL;
-  
+
   if (this->Compounding)
     {
     accPtr = accData->GetScalarPointerForExtent(outExt);
@@ -3245,13 +3248,13 @@ void vtkFreehandUltrasound2::InsertSlice(int phase)
     {
     accPtr = NULL;
     }
-  
+
   // this filter expects that input is the same type as output.
   if (inData->GetScalarType() != outData->GetScalarType())
     {
-    vtkErrorMacro(<< "InsertSlice: input ScalarType, " 
+    vtkErrorMacro(<< "InsertSlice: input ScalarType, "
                   << inData->GetScalarType()
-                  << ", must match out ScalarType " 
+                  << ", must match out ScalarType "
                   << outData->GetScalarType());
     return;
     }
@@ -3264,26 +3267,26 @@ void vtkFreehandUltrasound2::InsertSlice(int phase)
     this->LastIndexMatrix = vtkMatrix4x4::New();
     }
   this->LastIndexMatrix->DeepCopy(matrix);
-  
+
   // Call the vtkFreehandUltrasound2InsertSlice method to actually insert the slice
   switch (inData->GetScalarType())
     {
     case VTK_SHORT:
-      vtkFreehandUltrasound2InsertSlice(this, outData, (short *)(outPtr), 
-                             (unsigned short *)(accPtr), 
-                             inData, (short *)(inPtr), 
+      vtkFreehandUltrasound2InsertSlice(this, outData, (short *)(outPtr),
+                             (unsigned short *)(accPtr),
+                             inData, (short *)(inPtr),
                              inExt, matrix);
       break;
     case VTK_UNSIGNED_SHORT:
       vtkFreehandUltrasound2InsertSlice(this,outData,(unsigned short *)(outPtr),
-                             (unsigned short *)(accPtr), 
-                             inData, (unsigned short *)(inPtr), 
+                             (unsigned short *)(accPtr),
+                             inData, (unsigned short *)(inPtr),
                              inExt, matrix);
       break;
     case VTK_UNSIGNED_CHAR:
       vtkFreehandUltrasound2InsertSlice(this, outData,(unsigned char *)(outPtr),
-                             (unsigned short *)(accPtr), 
-                             inData, (unsigned char *)(inPtr), 
+                             (unsigned short *)(accPtr),
+                             inData, (unsigned char *)(inPtr),
                              inExt, matrix);
       break;
     default:
@@ -3315,7 +3318,7 @@ vtkCxxSetObjectMacro(vtkFreehandUltrasound2,SliceTransform,vtkLinearTransform);
 //----------------------------------------------------------------------------
 // GetIndexMatrix
 // The transform matrix supplied by the user converts output coordinates
-// to input coordinates.  
+// to input coordinates.
 // To speed up the pixel lookup, the following function provides a
 // matrix which converts output pixel indices to input pixel indices.
 //----------------------------------------------------------------------------
@@ -3334,7 +3337,7 @@ vtkMatrix4x4* vtkFreehandUltrasound2::GetIndexMatrix()
 //----------------------------------------------------------------------------
 // GetIndexMatrix
 // The transform matrix supplied by the user converts output coordinates
-// to input coordinates.  
+// to input coordinates.
 // To speed up the pixel lookup, the following function provides a
 // matrix which converts output pixel indices to input pixel indices.
 // For use with discarding slices based on the ECG signal
@@ -3355,8 +3358,8 @@ vtkMatrix4x4 *vtkFreehandUltrasound2::GetIndexMatrix(int phase)
   this->GetSlice()->GetSpacing(inSpacing);
   this->GetSlice()->GetOrigin(inOrigin);
   this->GetOutput(0)->GetSpacing(outSpacing);
-  this->GetOutput(0)->GetOrigin(outOrigin);  
-  
+  this->GetOutput(0)->GetOrigin(outOrigin);
+
   vtkTransform *transform = vtkTransform::New();
   vtkMatrix4x4 *inMatrix = vtkMatrix4x4::New();
   vtkMatrix4x4 *outMatrix = vtkMatrix4x4::New();
@@ -3409,13 +3412,13 @@ vtkMatrix4x4 *vtkFreehandUltrasound2::GetIndexMatrix(int phase)
       return NULL;
       }
     }
-  
+
   // check to see if we have an identity matrix
   int isIdentity = vtkIsIdentityMatrix(transform->GetMatrix());
 
   // the outMatrix takes OutputData indices to OutputData coordinates,
   // the inMatrix takes InputData coordinates to InputData indices
-  for (int i = 0; i < 3; i++) 
+  for (int i = 0; i < 3; i++)
     {
     if (inSpacing[i] != outSpacing[i] || inOrigin[i] != outOrigin[i])
       {
@@ -3438,7 +3441,7 @@ vtkMatrix4x4 *vtkFreehandUltrasound2::GetIndexMatrix(int phase)
 
   // save the transform's matrix in this->IndexMatrix
   transform->GetMatrix(this->IndexMatrix);
-  
+
   transform->Delete();
   inMatrix->Delete();
   outMatrix->Delete();
@@ -3519,14 +3522,14 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
   vtkTrackerBuffer *buffer = self->GetTrackerTool()->GetBuffer();
   // if reconstructing previous data, use backup buffer
   if (!self->RealTimeReconstruction)
-    { 
+    {
     buffer = self->TrackerBuffer;
     }
 
   vtkVideoSource2 *video = self->GetVideoSource();
-  
+
   vtkImageData *inData = self->GetSlice();
-  
+
   // wait for video to start (i.e. wait for timestamp to change)
   if (video && self->RealTimeReconstruction)
     {
@@ -3790,7 +3793,7 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
           // Also, we really should be doing a
           // VideoSource2::Update() to update the frame time stamps, check extent changes, etc
           // in the video source... if we were to do an update and then grab the frame we actually
-          // want, then that would involve two copies anyways and just copying the output into 
+          // want, then that would involve two copies anyways and just copying the output into
           // the buffer is much cleaner code
           self->SetSliceBuffer(phase, inData);
           self->SetSliceAxesBuffer(phase, self->GetSliceAxes());
@@ -3808,7 +3811,7 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
 
       // calculate frame rate using computer clock, not timestamps
       if (!self->RealTimeReconstruction)
-        { 
+        {
         tmptime = vtkTimerLog::GetUniversalTime();
         }
       double difftime = tmptime - prevtimes[i%10];
@@ -3820,7 +3823,7 @@ static void *vtkReconstructionThread(struct ThreadInfoStruct *data)
       i++;
       }
 
-    // check to see if we are being told to quit 
+    // check to see if we are being told to quit
     int activeFlag = *(data->ActiveFlag);
     if (activeFlag == 0)
       {
@@ -3858,7 +3861,7 @@ void vtkFreehandUltrasound2::StartRealTimeReconstruction()
   if (this->ReconstructionThreadId == -1)
     {
     this->RealTimeReconstruction = 1; // we are doing realtime reconstruction
-    
+
     // Setup the slice axes matrix
     vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
     this->SetSliceAxes(matrix);
@@ -3909,7 +3912,7 @@ void vtkFreehandUltrasound2::StartRealTimeReconstruction()
 // Stop the reconstruction started with StartRealTimeReconstruction
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::StopRealTimeReconstruction()
-{  
+{
   // if a reconstruction is currently running
   if (this->ReconstructionThreadId != -1)
     {
@@ -3974,7 +3977,7 @@ void vtkFreehandUltrasound2::StartReconstruction(int frames)
       {
       this->GetOutput(phase)->Update();
       }
-  
+
     this->ReconstructionThreadId = \
       this->Threader->SpawnThread((vtkThreadFunctionType)\
           &vtkReconstructionThread,
@@ -4031,7 +4034,7 @@ int vtkFreehandUltrasound2::GetFanRepresentation (vtkImageThreshold* threshold, 
     }
   else if ((list[0] == W) && (list[1] == B) && (list[2] == W) && (list[3] == W) && (list[4] == B) && (list[5] == B))
     {
-    result = 1;  
+    result = 1;
     }
   else if ((list[0] == B) && (list[1] == W) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == B))
     {
@@ -4042,7 +4045,7 @@ int vtkFreehandUltrasound2::GetFanRepresentation (vtkImageThreshold* threshold, 
     result = 3;
     }
   else if ((list[0] == W) && (list[1] == W) && (list[2] == W) && (list[3] == W) && (list[4] == W) && (list[5] == W))
-    {    
+    {
     result = 4;
     }
   else if ((list[0] == B) && (list[1] == B) && (list[2] == B) && (list[3] == B) && (list[4] == B) && (list[5] == W))
@@ -4197,7 +4200,7 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
   accIncZ = incZ/incX;
   // number of components not including the alpha channel
   numscalars = outData->GetNumberOfScalarComponents() - 1;
-   
+
   T *alphaPtr = outPtr + numscalars;
   T *outPtrZ, *outPtrY, *outPtrX;
   unsigned short *accPtrZ, *accPtrY, *accPtrX;
@@ -4237,7 +4240,7 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
       alphaPtr = outPtrY + (outExt[1]-outExt[0])*incX + numscalars;
       for (endX = outExt[1]; endX >= outExt[0]; endX--)
         {
-        // check the point on the row as well as the 4-connected voxels 
+        // check the point on the row as well as the 4-connected voxels
         if (*alphaPtr |
             *(alphaPtr-incY) | *(alphaPtr+incY) |
             *(alphaPtr-incZ) | *(alphaPtr+incZ))
@@ -4258,18 +4261,18 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
         }
       outPtrX = outPtrY + (startX - outExt[0])*incX;
       accPtrX = accPtrY + (startX - outExt[0])*accIncX;
-      
+
       for (idX = startX; idX <= endX; idX++)
         {
         // only do this for voxels that haven't been hit
         if (outPtrX[numscalars] == 0)
-          { 
+          {
           double sum[32];
-          for (c = 0; c < numscalars; c++) 
+          for (c = 0; c < numscalars; c++)
             {
             sum[c] = 0;
             }
-          double asum = 0; 
+          double asum = 0;
           int n = 0;
           int nmin = 14; // half of the connected voxels plus one
           T *blockPtr;
@@ -4301,7 +4304,7 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
                   }
                 }
               }
-            
+
             // if less than half the neighbors have data, use larger block
             if (n <= nmin && idX != startX && idX != endX &&
                 idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
@@ -4312,10 +4315,10 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
               // plus we will be counting it again as part of the 5x5x5
               // block)
               asum *= 3;
-              for (c = 0; c < numscalars; c++) 
+              for (c = 0; c < numscalars; c++)
                 {
                 sum[c]*= 3;
-                }        
+                }
               nmin = 63;
               n = 0;
               for (int k = -accIncZ*2; k <= accIncZ*2; k += accIncZ)
@@ -4329,13 +4332,13 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
                     accBlockPtr = accPtrX + inc;
                     // use accumulation buffer as weight
                     if (blockPtr[numscalars] == 255)
-                      { 
+                      {
                       n++;
                       for (c = 0; c < numscalars; c++)
                         {
                         sum[c] += blockPtr[c]*(*accBlockPtr);
                         }
-                      asum += *accBlockPtr; 
+                      asum += *accBlockPtr;
                       }
                     }
                   }
@@ -4345,7 +4348,7 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
           // END TURNED OFF FOR NOW
 
           // no accumulation buffer
-          else 
+          else
             {
             for (int k = -incZ; k <= incZ; k += incZ)
               {
@@ -4366,19 +4369,19 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
                 }
               }
             asum = n;
-      
+
             // if less than half the neighbors have data, use larger block,
             // and count inner 3x3 block again to weight it by 2
             if (n <= nmin && idX != startX && idX != endX &&
                 idX - outWholeExt[0] > 2 && outWholeExt[1] - idX > 2 &&
                 idY - outWholeExt[2] > 2 && outWholeExt[3] - idY > 2 &&
                 idZ - outWholeExt[4] > 2 && outWholeExt[5] - idZ > 2)
-              { 
+              {
               // weigh inner block by a factor of four (multiply three,
               // plus we will be counting it again as part of the 5x5x5
               // block)
               asum *= 3;
-              for (c = 0; c < numscalars; c++) 
+              for (c = 0; c < numscalars; c++)
                 {
                 sum[c]*= 3;
                 }
@@ -4451,13 +4454,13 @@ static void vtkFreehandUltrasound2FillHolesInOutput(vtkFreehandUltrasound2 *self
 // Calls vtkFreehandUltrasound2FillHolesInOutput, with templating for different
 // types
 //----------------------------------------------------------------------------
-void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,  
+void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,
                                               int outExt[6], int threadId, int phase)
 {
   vtkImageData *accData = this->AccumulationBuffers[phase];
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
   void *accPtr = NULL;
-  
+
   if (this->Compounding)
     {
     accPtr = accData->GetScalarPointerForExtent(outExt);
@@ -4467,7 +4470,7 @@ void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,
     {
     case VTK_SHORT:
       vtkFreehandUltrasound2FillHolesInOutput(
-                             this, outData, (short *)(outPtr), 
+                             this, outData, (short *)(outPtr),
                              (unsigned short *)(accPtr), outExt);
       break;
     case VTK_UNSIGNED_SHORT:
@@ -4478,7 +4481,7 @@ void vtkFreehandUltrasound2::ThreadedFillExecute(vtkImageData *outData,
     case VTK_UNSIGNED_CHAR:
       vtkFreehandUltrasound2FillHolesInOutput(
                              this, outData,(unsigned char *)(outPtr),
-                             (unsigned short *)(accPtr), outExt); 
+                             (unsigned short *)(accPtr), outExt);
       break;
     default:
       vtkErrorMacro(<< "FillHolesInOutput: Unknown input ScalarType");
@@ -4509,7 +4512,7 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedFillExecute( void *arg )
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitSliceExtent(splitExt, ext, threadId, threadCount);
-  
+
   if (threadId < total)
     {
     str->Filter->ThreadedFillExecute(str->Output, splitExt, threadId, str->Phase);
@@ -4517,10 +4520,10 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedFillExecute( void *arg )
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
-  
+
   return VTK_THREAD_RETURN_VALUE;
 }
 
@@ -4531,14 +4534,14 @@ VTK_THREAD_RETURN_TYPE vtkFreehand2ThreadedFillExecute( void *arg )
 void vtkFreehandUltrasound2::MultiThreadFill(vtkImageData *outData, int phase)
 {
   vtkFreehand2ThreadStruct str;
-  
+
   str.Filter = this;
   str.Input = 0;
   str.Output = outData;
   str.Phase = phase;
-  
+
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  
+
   // setup threading and the invoke threadedExecute
   this->Threader->SetSingleMethod(vtkFreehand2ThreadedFillExecute, &str);
   this->Threader->SingleMethodExecute();
@@ -4563,7 +4566,7 @@ void vtkFreehandUltrasound2::FillHolesInOutput()
     this->MultiThreadFill(outData, phase);
     }
 
-  this->Modified(); 
+  this->Modified();
 }
 
 
@@ -4823,7 +4826,7 @@ vtkMatrix4x4* vtkFreehandUltrasound2::GetSliceAxesBuffer(int phase)
     {
     return NULL;
     }
-  
+
   return this->SliceAxesBuffer[phase];
   }
 
@@ -4924,7 +4927,7 @@ void vtkFreehandUltrasound2::SetDiscardOutlierHeartRates(int discard)
 
   int num = this->NumberOfOutputVolumes;
   int i;
-  
+
   // create the buffers if we are discarding for the first time
   if (discard)
     {
@@ -5051,7 +5054,7 @@ int vtkFreehandUltrasound2::CalculateHeartRateParameters()
       {
       printf("trial %d is bad, trying again (mean %f, max %f, min %f)\n", numTrials, meanHR, maxHR, minHR);
       }
-        
+
     numTrials++;
     }
 
@@ -5062,7 +5065,7 @@ int vtkFreehandUltrasound2::CalculateHeartRateParameters()
     this->MaxAllowedHeartRate = maxAllowedHR;
     this->MinAllowedHeartRate = minAllowedHR;
     }
-  
+
   printf("mean heart rate = %f\n", meanHR);
   printf("min heart rate allowed = %f\n", minAllowedHR);
   printf("max heart rate allowed = %f\n", maxAllowedHR);
@@ -5117,7 +5120,7 @@ void vtkFreehandUltrasound2::SetSaveInsertedTimestamps(int insert)
       }
     this->InsertedTimestampsCounter = new int[num];
     }
-    
+
   this->SaveInsertedTimestamps = insert;
   }
 
@@ -5552,7 +5555,7 @@ void vtkFreehandUltrasound2::SaveRawData(const char *directory, int frames)
 //----------------------------------------------------------------------------
 void vtkFreehandUltrasound2::ReadRawData(const char *directory)
 {
-  
+
 if (this->ReconstructionThreadId != -1)
     {
     if (this->RealTimeReconstruction)
@@ -5595,7 +5598,7 @@ if (this->ReconstructionThreadId != -1)
   // will break out on EOF
   while (fgets(text, 128, file))
     {
-    
+
     // eat leading whitespace
     cp = vtkFreehandUltrasound2EatWhitespace(text);
 
@@ -5607,7 +5610,7 @@ if (this->ReconstructionThreadId != -1)
 
     // find the '=' sign
     vals = strchr(cp,'=');
-    
+
     // eat whitespace and equals
     vals = vtkFreehandUltrasound2EatWhitespaceWithEquals(vals);
 

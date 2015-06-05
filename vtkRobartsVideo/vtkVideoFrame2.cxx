@@ -14,20 +14,21 @@
 =========================================================================*/
 #include "vtkVideoFrame2.h"
 #include "vtkObjectFactory.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // -----------------------------------------------------
 // for reference, the BITMAPINFOHEADER for Windows is like so:
-// bih.biSize = sizeof(BITMAPINFOHEADER); 
+// bih.biSize = sizeof(BITMAPINFOHEADER);
 // bih.biWidth = this->FrameSize[0];
-// bih.biHeight = this->FrameSize[1]; 
-// bih.biPlanes = 1; 
+// bih.biHeight = this->FrameSize[1];
+// bih.biPlanes = 1;
 // bih.biCompression = this->FourCC;
 // bih.biBitcount = this->BitsPerPixel;
-// bih.biSizeImage = this->ByteCount; 
+// bih.biSizeImage = this->ByteCount;
 // bih.biXPelsPerMeter = 0;
-// bih.biYPelsPerMeter = 0; 
+// bih.biYPelsPerMeter = 0;
 // bih.biClrUsed = 256;
-// bih.biClrImportant = 256; 
+// bih.biClrImportant = 256;
 
 // -----------------------------------------------------
 // FOURCC info: (also see http://www.webartz.com/fourcc/)
@@ -47,7 +48,7 @@
 
 // RGB 16 bit is 1:5:5:5 X:R:G:B on little-ending when read in 16-bit chunks,
 // must be byte swapped on big-endian.  I assume that rows must be padded
-// to 32-bit boundaries.  The 5:6:5 format is not supported. 
+// to 32-bit boundaries.  The 5:6:5 format is not supported.
 
 // RGB 1, 2, 4, and 8 bit (palettized modes) are not supported.
 
@@ -61,7 +62,7 @@
 // RGBA 32 bit is 8:8:8:8 B:G:R:A when read byte-by-byte or when read
 // as 32 bit chunks on big-endian, and is A:R:G:B when read as 32-bit
 // chunks on little-endian.  Consider using 32-bit RGB instead, unless
-// you really need to preserve the alpha component.  
+// you really need to preserve the alpha component.
 
 // RGBA 16-bit is not supported.
 
@@ -91,8 +92,10 @@
 // No compressed modes are supported at this time.  The only one
 // that is likely to be supported in the future is MJPG (motion-JPEG)
 // because it is a format that is supported by many frame grabbers.
- 
+
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkVideoFrame2, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkVideoFrame2);
 
 //----------------------------------------------------------------------------
@@ -110,7 +113,7 @@ vtkVideoFrame2::vtkVideoFrame2()
   this->FrameExtent[5] = 0;
 
   this->PixelFormat = VTK_LUMINANCE;
-  this->BitsPerPixel = 8; 
+  this->BitsPerPixel = 8;
   this->RowAlignment = 1;
   this->TopDown = 0;
 
@@ -136,7 +139,7 @@ vtkVideoFrame2::~vtkVideoFrame2()
 void vtkVideoFrame2::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
-  
+
   this->Superclass::PrintSelf(os,indent);
 
   os << indent << "FrameSize: (" << this->FrameSize[0];
@@ -165,7 +168,7 @@ void vtkVideoFrame2::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "RowAlignment: " << this->RowAlignment << "\n";
 
   os << indent << "TopDown: " << (this->TopDown ? "On\n" : "Off\n");
-   
+
   os << indent << "BytesInFrame: " << this->BytesInFrame << "\n";
 
   os << indent << "SaveUserArray: " << (this->SaveUserArray ? "On\n" : "Off\n");
@@ -226,7 +229,7 @@ int vtkVideoFrame2::Allocate(vtkIdType size)
       {
       delete [] this->Array;
       }
-     
+
     // make the new array and check to make sure that it was
     // created properly
     if ((this->Array = new unsigned char[size]) == NULL)
@@ -286,7 +289,7 @@ vtkVideoFrame2 *vtkVideoFrame2::MakeObject()
 
 //----------------------------------------------------------------------------
 // This method lets the user specify the data to be held by the array.
-// The array argument is a pointer to the data.  Size is the size of 
+// The array argument is a pointer to the data.  Size is the size of
 // the array supplied by the user (in bytes).  Set save to 1 to keep the class
 // from deleting the array when it cleans up or reallocates memory.
 void vtkVideoFrame2::SetVoidArray(void* newArray, vtkIdType size, int save)
@@ -336,11 +339,11 @@ void *vtkVideoFrame2::GetVoidPointer(vtkIdType i)
   i = i - j*(this->FrameExtent[1] - this->FrameExtent[0] + 1);
 
   // convert i into actual byte index into image
-  i = j*bytesPerRow + i*bytesPerPixel; 
-  
+  i = j*bytesPerRow + i*bytesPerPixel;
+
   return (void *)(((char *)this->Array) + i);
 }
-  
+
 //----------------------------------------------------------------------------
 // Copies data from the frame's array to the array pointed to by arrayPtr.
 void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
@@ -439,14 +442,14 @@ void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
   else
   {// don't apply a vertical flip
     inPtr += inIncZ*inPadZ+inIncY*inPadY;
-    
+
     for (i = 0; i < outZ; i++)
       {
       inPtrTmp = inPtr;
       outPtrTmp = outPtr;
       for (j = 0; j < outY; j++)
         {
-        if (outX > 0) 
+        if (outX > 0)
           {
       this->UnpackRasterLine(outPtrTmp,inPtrTmp,inPadX,outX,outFormat);
       }
@@ -463,8 +466,8 @@ void vtkVideoFrame2::CopyData(void *arrayPtr, const int clipExtent[6],
 //----------------------------------------------------------------------------
 // codecs
 static inline void vtkYUVToRGB(unsigned char *yuv, unsigned char *rgb)
-{ 
-  /* // floating point 
+{
+  /* // floating point
   int Y = yuv[0] - 16;
   int U = yuv[1] - 128;
   int V = yuv[2] - 128;
@@ -502,10 +505,10 @@ static inline void vtkYUVToRGB(unsigned char *yuv, unsigned char *rgb)
 
 //----------------------------------------------------------------------------
 void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
-             unsigned char *inptr, 
+             unsigned char *inptr,
              int start, int count, int outputFormat)
 {
-  
+
   unsigned char alpha = (unsigned char)(this->Opacity * 255);
   int format = this->PixelFormat;
   int i;
@@ -518,7 +521,7 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
       inptr += start/8;
       i = start % 8;
       while (count >= 0)
-        { 
+        {
         rawBits = *inptr++;
         for (; i < 8 && --count >= 0; i++)
           {
@@ -534,7 +537,7 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
       inptr += start/2;
       i = start % 2;
       while (count >= 0)
-        { 
+        {
         rawNibbles = *inptr++;
         for (; i < 8 && --count >= 0; i += 4)
           {
@@ -601,7 +604,7 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
               {
               inptr++;
               *outptr++ = *inptr++;
-              }            
+              }
             }
           case VTK_RGB:
           case VTK_RGBA:
@@ -619,9 +622,9 @@ void vtkVideoFrame2::UnpackRasterLine(unsigned char *outptr,
               odd = !odd;
               vtkYUVToRGB(YUV,(unsigned char *)outptr);
               outptr += 3;
-              if (outputFormat == VTK_RGB) 
-                { 
-                continue; 
+              if (outputFormat == VTK_RGB)
+                {
+                continue;
                 }
               *outptr++ = alpha;
               }

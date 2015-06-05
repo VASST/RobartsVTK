@@ -6,18 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkImageTsallisMutualInformation.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageTsallisMutualInformation, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImageTsallisMutualInformation);
 
 //--------------------------------------------------------------------------
@@ -51,7 +54,7 @@ inline int vtkResliceRound(float x)
   return vtkResliceRound((double)x);
 }
 
-// convert a float into an integer plus a fraction  
+// convert a float into an integer plus a fraction
 inline int vtkResliceFloor(double x, double &f)
 {
   int ix = vtkResliceFloor(x);
@@ -79,7 +82,7 @@ vtkImageTsallisMutualInformation::vtkImageTsallisMutualInformation()
 
 //----------------------------------------------------------------------------
 vtkImageTsallisMutualInformation::~vtkImageTsallisMutualInformation()
-{      
+{
   this->Threader->Delete();
 }
 
@@ -98,7 +101,7 @@ void vtkImageTsallisMutualInformation::SetInput2(vtkImageData *input)
 //----------------------------------------------------------------------------
 void vtkImageTsallisMutualInformation::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkProcessObject::SetNthInput(2, stencil); 
+  this->vtkProcessObject::SetNthInput(2, stencil);
 }
 
 //----------------------------------------------------------------------------
@@ -108,7 +111,7 @@ vtkImageData *vtkImageTsallisMutualInformation::GetInput1()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -119,20 +122,20 @@ vtkImageData *vtkImageTsallisMutualInformation::GetInput2()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 //----------------------------------------------------------------------------
 vtkImageStencilData *vtkImageTsallisMutualInformation::GetStencil()
 {
-  if (this->NumberOfInputs < 3) 
-    { 
+  if (this->NumberOfInputs < 3)
+    {
     return NULL;
     }
   else
     {
-    return (vtkImageStencilData *)(this->Inputs[2]); 
+    return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
 
@@ -155,7 +158,7 @@ void vtkImageTsallisMutualInformation::SetMaxIntensities(int maxS, int maxT)
 }
 
 //----------------------------------------------------------------------------
-// Need to add histograms from different threads to create joint 
+// Need to add histograms from different threads to create joint
 // histogram image.
 vtkImageData *vtkImageTsallisMutualInformation::GetOutput()
 {
@@ -169,8 +172,8 @@ vtkImageData *vtkImageTsallisMutualInformation::GetOutput()
   vtkImageData *HistST = (vtkImageData *)(this->Outputs[0]);
 
   for (i = 0; i < this->BinNumber[0]; i++)
-    {  
-      for (j = 0; j < this->BinNumber[1]; j++) 
+    {
+      for (j = 0; j < this->BinNumber[1]; j++)
   {
     temp = 0;
     for (int id = 0; id < n; id++)
@@ -205,7 +208,7 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
     {
       self->ThreadHistS[id][i] = 0;
       self->ThreadHistT[id][i] = 0;
-      for (j = 0; j < self->BinNumber[1]; j++) 
+      for (j = 0; j < self->BinNumber[1]; j++)
    {
      self->ThreadHistST[id][i][j] = 0;
    }
@@ -213,10 +216,10 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
 
   // Find the region to loop over
   maxX = inExt[1] - inExt[0];
-  maxY = inExt[3] - inExt[2]; 
+  maxY = inExt[3] - inExt[2];
   maxZ = inExt[5] - inExt[4];
 
-  // Get increments to march through data 
+  // Get increments to march through data
   in1Data->GetIncrements(incX, incY, incZ);
 
   // Loop over data within stencil sub-extents
@@ -228,7 +231,7 @@ void vtkImageTsallisMutualInformationExecute(vtkImageTsallisMutualInformation *s
    iter = 0; if (self->GetReverseStencil()) iter = -1;
 
    pminX = 0; pmaxX = maxX;
-   while ((stencil !=0 && 
+   while ((stencil !=0 &&
      stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+inExt[4], iter)) ||
     (stencil == 0 && iter++ == 0))
      {
@@ -288,15 +291,15 @@ void vtkImageTsallisMutualInformation::ThreadedExecute1(vtkImageData **inData,
 
   inData[0]->GetWholeExtent(ext0);
   inData[1]->GetWholeExtent(ext1);
-  
-  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) | 
+
+  if ((ext0[0] - ext1[0]) | (ext0[1] - ext1[1]) | (ext0[2] - ext1[2]) |
       (ext0[3] - ext1[3]) | (ext0[4] - ext1[4]) | (ext0[5] - ext1[5]))
     {
     vtkErrorMacro(<<"Inputs 0 and 1 must have the same extents.");
     return;
     }
 
-  if ((inData[0]->GetNumberOfScalarComponents() > 1) | 
+  if ((inData[0]->GetNumberOfScalarComponents() > 1) |
       (inData[1]->GetNumberOfScalarComponents() > 1))
     {
       vtkErrorMacro("Inputs 0 and 1 must have 1 component each.");
@@ -316,8 +319,8 @@ void vtkImageTsallisMutualInformation::ThreadedExecute1(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageTsallisMutualInformationExecute,this,
-      inData[0], (VTK_TT *)(inPtr1), 
-      inData[1], (VTK_TT *)(inPtr2), 
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
       inExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -341,7 +344,7 @@ void vtkImageTsallisMutualInformation::ThreadedExecute2(int extS[6], int extST[6
 
   // Loop over S image histogram.
   for (i = extS[0]; i <= extS[1]; i++)
-    {  
+    {
       temp1 = 0.0;
       for (n = 0; n < N; n++)
   {
@@ -353,7 +356,7 @@ void vtkImageTsallisMutualInformation::ThreadedExecute2(int extS[6], int extST[6
 
   // Loop over T and ST histograms.
   for (j = extST[2]; j <= extST[3]; j++)
-    {  
+    {
       temp2 = 0.0;
       for (n = 0; n < N; n++)
   {
@@ -361,7 +364,7 @@ void vtkImageTsallisMutualInformation::ThreadedExecute2(int extS[6], int extST[6
   }
       this->ThreadEntropyT1[id] += pow(temp2,this->qValue);
       this->ThreadEntropyT2[id] += temp2;
-      for (i = extST[0]; i <= extST[1]; i++) 
+      for (i = extST[0]; i <= extST[1]; i++)
   {
      temp1 = 0.0;
      for (n = 0; n < N; n++)
@@ -399,17 +402,17 @@ double vtkImageTsallisMutualInformation::GetResult()
 
   if (this->qValue != 1.0)
     {
-      entropyS = ( 1.0 / (1.0 - this->qValue) * 
+      entropyS = ( 1.0 / (1.0 - this->qValue) *
        (entropyS1 / pow(count,this->qValue) - entropyS2 / count) );
-      entropyT = ( 1.0 / (1.0 - this->qValue) * 
+      entropyT = ( 1.0 / (1.0 - this->qValue) *
        (entropyT1 / pow(count,this->qValue) - entropyT2 / count) );
-      entropyST = ( 1.0 / (1.0 - this->qValue) * 
+      entropyST = ( 1.0 / (1.0 - this->qValue) *
        (entropyST1 / pow(count,this->qValue) - entropyST2 / count) );
     }
   else
     {
       vtkErrorMacro( << "GetResult: qValue = 1.");
-    } 
+    }
 
 //   if ( entropyST * ( 1 + (1-this->qValue) * entropyST ) == 0 )
 //     {
@@ -457,7 +460,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute1( vo
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over input images
@@ -467,7 +470,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute1( vo
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExt, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute1(str->Inputs, str->Output, splitExt, threadId);
@@ -475,7 +478,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute1( vo
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -495,7 +498,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute2( vo
 
   threadId = ((ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((ThreadInfoStruct *)(arg))->NumberOfThreads;
-  
+
   str = (vtkImageMultiThreadStruct *)(((ThreadInfoStruct *)(arg))->UserData);
 
   // Thread over S image histogram.
@@ -513,7 +516,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute2( vo
   // execute the actual method with appropriate extent
   // first find out how many pieces extent can be split into.
   total = str->Filter->SplitExtent(splitExtST, ext, threadId, threadCount);
-    
+
   if (threadId < total)
     {
     str->Filter->ThreadedExecute2(splitExtS, splitExtST, threadId);
@@ -521,7 +524,7 @@ VTK_THREAD_RETURN_TYPE vtkImageTsallisMutualInformationMultiThreadedExecute2( vo
   // else
   //   {
   //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a 
+  //   break up very well and it is just as efficient to leave a
   //   few threads idle.
   //   }
 
@@ -542,13 +545,13 @@ void vtkImageTsallisMutualInformation::ExecuteData(vtkDataObject *out)
   output->AllocateScalars();
 
   vtkImageMultiThreadStruct str;
-  
+
   str.Filter = this;
   str.Inputs = (vtkImageData **)this->GetInputs();
   str.Output = output;
-  
+
   this->Threader->SetNumberOfThreads(this->NumberOfThreads);
-  
+
   // setup threading and the invoke threadedExecute
   this->Threader->SetSingleMethod(vtkImageTsallisMutualInformationMultiThreadedExecute1, &str);
   this->Threader->SingleMethodExecute();
@@ -558,7 +561,7 @@ void vtkImageTsallisMutualInformation::ExecuteData(vtkDataObject *out)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageTsallisMutualInformation::ExecuteInformation(vtkImageData **inData, 
+void vtkImageTsallisMutualInformation::ExecuteInformation(vtkImageData **inData,
                    vtkImageData *outData)
 {
   // the two inputs are required to be of the same data type and extents.

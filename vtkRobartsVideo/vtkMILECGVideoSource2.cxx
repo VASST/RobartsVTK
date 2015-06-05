@@ -19,8 +19,11 @@
 #include "vtkDataArray.h"
 #include "vtkVideoECGBuffer2.h"
 #include "vtkVideoFrame2.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkMILECGVideoSource2, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkMILECGVideoSource2);
 
 //----------------------------------------------------------------------------
@@ -41,7 +44,7 @@ vtkMILECGVideoSource2::~vtkMILECGVideoSource2()
     }
 
   this->SetMILSystemType(0);
-}  
+}
 
 //----------------------------------------------------------------------------
 void vtkMILECGVideoSource2::PrintSelf(ostream& os, vtkIndent indent)
@@ -89,7 +92,7 @@ void vtkMILECGVideoSource2::InternalGrab()
       MbufGetColor2d(this->MILBufID,M_RGB24+M_PACKED,M_ALL_BAND,
                      offsetX,offsetY,sizeX,sizeY,ptr);
       }
-    else if (depth == 4) 
+    else if (depth == 4)
       {
       MbufGetColor2d(this->MILBufID,M_RGB32+M_PACKED,M_ALL_BAND,
                      offsetX,offsetY,sizeX,sizeY,ptr);

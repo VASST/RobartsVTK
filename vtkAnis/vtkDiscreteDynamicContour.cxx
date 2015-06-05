@@ -140,7 +140,10 @@ public:
   }
 };
 
+#if(VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkEnhancedCardinalSpline, "$Revision: 1.1 $");
+#endif
+
 vtkStandardNewMacro(vtkEnhancedCardinalSpline);
 
 vtkStandardNewMacro(vtkDiscreteDynamicContour);

@@ -6,18 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:34 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkImageNormalizedCrossCorrelation.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageNormalizedCrossCorrelation, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkImageNormalizedCrossCorrelation);
 
 //----------------------------------------------------------------------------
@@ -42,7 +45,7 @@ void vtkImageNormalizedCrossCorrelation::SetInput2(vtkImageData *input)
 //----------------------------------------------------------------------------
 void vtkImageNormalizedCrossCorrelation::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkProcessObject::SetNthInput(2, stencil); 
+  this->vtkProcessObject::SetNthInput(2, stencil);
 }
 
 //----------------------------------------------------------------------------
@@ -52,7 +55,7 @@ vtkImageData *vtkImageNormalizedCrossCorrelation::GetInput1()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -63,20 +66,20 @@ vtkImageData *vtkImageNormalizedCrossCorrelation::GetInput2()
     {
     return NULL;
     }
-  
+
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 //----------------------------------------------------------------------------
 vtkImageStencilData *vtkImageNormalizedCrossCorrelation::GetStencil()
 {
-  if (this->NumberOfInputs < 3) 
-    { 
+  if (this->NumberOfInputs < 3)
+    {
     return NULL;
     }
   else
     {
-    return (vtkImageStencilData *)(this->Inputs[2]); 
+    return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
 
@@ -102,10 +105,10 @@ void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelatio
 
   // Find the region to loop over
   maxX = (outExt[1] - outExt[0])*in1Data->GetNumberOfScalarComponents();
-  maxY = outExt[3] - outExt[2]; 
+  maxY = outExt[3] - outExt[2];
   maxZ = outExt[5] - outExt[4];
 
-  // Get increments to march through data 
+  // Get increments to march through data
   in1Data->GetIncrements(incX, incY, incZ);
 
   // Loop over data within stencil sub-extents
@@ -115,9 +118,9 @@ void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelatio
   {
     // Flag that we want the complementary extents
     iter = 0; if (self->GetReverseStencil()) iter = -1;
-    
+
     pminX = 0; pmaxX = maxX;
-    while ((stencil !=0 && 
+    while ((stencil !=0 &&
       stencil->GetNextExtent(pminX, pmaxX, 0, maxX, idY, idZ+outExt[4], iter)) ||
      (stencil == 0 && iter++ == 0))
       {
@@ -127,9 +130,9 @@ void vtkImageNormalizedCrossCorrelationExecute(vtkImageNormalizedCrossCorrelatio
         // Compute over the sub-extent
         for (idX = pminX; idX <= pmaxX; idX++)
     {
-      self->ThreadSumST[id] += (double)*temp1Ptr * (double)*temp2Ptr; 
-      self->ThreadSumS[id] += (double)*temp1Ptr * (double)*temp1Ptr; 
-      self->ThreadSumT[id] += (double)*temp2Ptr * (double)*temp2Ptr; 
+      self->ThreadSumST[id] += (double)*temp1Ptr * (double)*temp2Ptr;
+      self->ThreadSumS[id] += (double)*temp1Ptr * (double)*temp1Ptr;
+      self->ThreadSumT[id] += (double)*temp2Ptr * (double)*temp2Ptr;
       temp1Ptr++;
       temp2Ptr++;
     }
@@ -151,7 +154,7 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   void *inPtr2;
 
   vtkDebugMacro(<< "Execute: inData = " << inData);
-  
+
   if (inData[0] == NULL)
     {
     vtkErrorMacro(<< "Input " << 0 << " must be specified.");
@@ -168,11 +171,11 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
     {
       vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
       return;
-    } 
+    }
 
   inPtr1 = inData[0]->GetScalarPointerForExtent(outExt);
   inPtr2 = inData[1]->GetScalarPointerForExtent(outExt);
-  
+
   // this filter expects that inputs that have the same number of components
   if ((inData[0]->GetNumberOfScalarComponents() != inData[1]->GetNumberOfScalarComponents()))
     {
@@ -186,8 +189,8 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
       vtkTemplateMacro7(vtkImageNormalizedCrossCorrelationExecute,this,
-      inData[0], (VTK_TT *)(inPtr1), 
-      inData[1], (VTK_TT *)(inPtr2), 
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
       outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
@@ -210,7 +213,7 @@ double vtkImageNormalizedCrossCorrelation::GetResult()
       sumS += this->ThreadSumS[id];
       sumT += this->ThreadSumT[id];
     }
-  
+
   result = sumST / (sqrt(sumS) * sqrt(sumT));
 
   if (result < 0) vtkErrorMacro(<< "GetResult: result < 0");
@@ -228,4 +231,3 @@ void vtkImageNormalizedCrossCorrelation::PrintSelf(ostream& os, vtkIndent indent
   os << indent << "Stencil: " << this->GetStencil() << "\n";
   os << indent << "ReverseStencil: " << (this->ReverseStencil ? "On\n" : "Off\n");
 }
-

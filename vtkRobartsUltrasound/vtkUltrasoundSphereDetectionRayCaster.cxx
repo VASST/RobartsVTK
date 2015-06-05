@@ -27,7 +27,9 @@
 #include <math.h>
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if(VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkUltrasoundSphereDetectionRayCaster, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkUltrasoundSphereDetectionRayCaster);
 
 //----------------------------------------------------------------------------

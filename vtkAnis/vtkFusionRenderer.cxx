@@ -6,12 +6,12 @@
   Date:      $Date: 2008/07/17 15:33:39 $
   Version:   $Revision: 1.3 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -54,7 +54,11 @@
 
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkFusionRenderer, "$Revision: 1.3 $");
+#endif
 vtkStandardNewMacro(vtkFusionRenderer);
 #endif
 
@@ -245,8 +249,8 @@ void vtkFusionRenderer::LoadTextures(void)
   glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mFrame);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
   glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-   0, GL_RGB, 
-   WIDTH, HEIGHT, 0, EndoscopeFormat, 
+   0, GL_RGB,
+   WIDTH, HEIGHT, 0, EndoscopeFormat,
    GL_UNSIGNED_BYTE, ptr);
 
   glGenTextures(1, &mUSFrame);
@@ -254,8 +258,8 @@ void vtkFusionRenderer::LoadTextures(void)
   glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mUSFrame);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
   glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-     0, GL_RGB, 
-     WIDTH, HEIGHT, 0, USFormat, 
+     0, GL_RGB,
+     WIDTH, HEIGHT, 0, USFormat,
      GL_UNSIGNED_BYTE, US->GetOutput()->GetScalarPointer());
 
   Endoscope->CreateUndistortMap(WIDTH, HEIGHT, mUndistortImg);
@@ -274,7 +278,7 @@ void vtkFusionRenderer::LoadTextures(void)
   glActiveTexture(GL_TEXTURE2);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
   glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mMaskID);
-  glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB, WIDTH, HEIGHT, 0, 
+  glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB, WIDTH, HEIGHT, 0,
                 GL_RGB, GL_UNSIGNED_BYTE, MaskReader->GetOutput()->GetScalarPointer());
 }
 
@@ -288,7 +292,7 @@ void vtkFusionRenderer::DeviceRender(void)
   void *ptr;
 
   // Do not remove this MakeCurrent! Due to Start / End methods on
-  // some objects which get executed during a pipeline update, 
+  // some objects which get executed during a pipeline update,
   // other windows might get rendered since the last time
   // a MakeCurrent was called.
   this->RenderWindow->MakeCurrent();
@@ -324,7 +328,7 @@ void vtkFusionRenderer::DeviceRender(void)
   // Set the perspective transform
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(2.0 * atan(0.5 / this->Aspect[0]) * 180.0 / 3.141592, 
+  gluPerspective(2.0 * atan(0.5 / this->Aspect[0]) * 180.0 / 3.141592,
                  this->Aspect[0], 0.9, 2000.0);
 
   // Enable some features...
@@ -336,7 +340,7 @@ void vtkFusionRenderer::DeviceRender(void)
   glEnable( GL_TEXTURE_RECTANGLE_ARB );
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // set matrix mode for actors 
+  // set matrix mode for actors
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -348,7 +352,7 @@ void vtkFusionRenderer::DeviceRender(void)
     if(Endoscope)
     {
       Endoscope->Update();
-    
+
       undistortShader->Use();
       int SamplerIdx = glGetUniformLocation(undistortShader->GetProgram(), "baseTex");
       glUniform1i(SamplerIdx, 0);
@@ -363,7 +367,7 @@ void vtkFusionRenderer::DeviceRender(void)
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mFrame);
       glEnable(GL_TEXTURE_RECTANGLE_ARB);
-      glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, EndoscopeFormat, 
+      glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, EndoscopeFormat,
                       GL_UNSIGNED_BYTE, ptr);
 
       glActiveTexture(GL_TEXTURE1);
@@ -381,7 +385,7 @@ void vtkFusionRenderer::DeviceRender(void)
         glMultiTexCoord2f(GL_TEXTURE0, 0, HEIGHT);
         glVertex3f(-0.5, -0.5/this->Aspect[0], -1.0);
       glEnd();
-    
+
       // Our calibrated endoscope goes from tracking space into the space defined by OpenCV
       // We need to transform into OpenGL's camera space too
       vtkMatrix4x4::Multiply4x4(OpenCVtoOpenGL, endoscopeTransform, TrackingToOpenGL);
@@ -453,8 +457,8 @@ void vtkFusionRenderer::DeviceRender(void)
       double yScale = double(size[1]) / HEIGHT;
 
       // Adjust the viewport so that the images are centered correctly
-      glViewport( -mCenter[0] * xScale + orig[0], 
-                  -mCenter[1] * yScale + orig[1], 
+      glViewport( -mCenter[0] * xScale + orig[0],
+                  -mCenter[1] * yScale + orig[1],
                   size[0], size[1] );
     }
 
@@ -487,7 +491,7 @@ void vtkFusionRenderer::DeviceRender(void)
         glActiveTexture(GL_TEXTURE0);
         glEnable(GL_TEXTURE_RECTANGLE_ARB);
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mUSFrame);
-        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, USFormat, 
+        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, WIDTH, HEIGHT, USFormat,
                         GL_UNSIGNED_BYTE, US->GetOutput()->GetScalarPointer());
 
         glActiveTexture(GL_TEXTURE2);
@@ -498,7 +502,7 @@ void vtkFusionRenderer::DeviceRender(void)
 
         // image endpoints in pixel coordinates
         float USImgCoords[4][2] = {{0,0}, {WIDTH,0}, {WIDTH,HEIGHT}, {0,HEIGHT}};
-    
+
         // Draw the ultrasoudn plane
         glBegin(GL_QUADS);
         for(int i = 0; i < 4; i++)
@@ -571,7 +575,7 @@ void vtkFusionRenderer::DeviceRender(void)
       }
     }
 
-    // Turn off all the textures  
+    // Turn off all the textures
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_RECTANGLE_ARB);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);
@@ -615,7 +619,7 @@ void vtkFusionRenderer::DeviceRender(void)
     {
       float pos[4];
       DebugTool->GetTransform()->GetPosition(pos); pos[3] = 1.f;
-      /*printf("Camera Space Position: %f %f %f\n", 
+      /*printf("Camera Space Position: %f %f %f\n",
         TrackingToOpenGL->MultiplyFloatPoint(pos)[0],
         TrackingToOpenGL->MultiplyFloatPoint(pos)[1],
         TrackingToOpenGL->MultiplyFloatPoint(pos)[2]);*/

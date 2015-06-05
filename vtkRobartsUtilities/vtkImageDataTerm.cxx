@@ -21,8 +21,11 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 
 #include <math.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageDataTerm, "$Revision: 1.56 $");
+#endif
 vtkStandardNewMacro(vtkImageDataTerm);
 
 //----------------------------------------------------------------------------
@@ -60,7 +63,7 @@ int vtkImageDataTerm::RequestInformation (
       inInfo2->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext2);
       for (idx = 0; idx < 3; ++idx) {
         if (ext2[idx*2] > ext[idx*2]) ext[idx*2] = ext2[idx*2];
-        if (ext2[idx*2+1] < ext[idx*2+1]) ext[idx*2+1] = ext2[idx*2+1]; 
+        if (ext2[idx*2+1] < ext[idx*2+1]) ext[idx*2+1] = ext2[idx*2+1];
       }
     }
   }
@@ -128,7 +131,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
       in1Ptr += inIncZ;
     }
     break;
-    
+
   case VTK_LOGISTIC:
     for(idxZ = 0; idxZ <= maxZ; idxZ++){
       for (idxY = 0; idxY <= maxY; idxY++){
@@ -137,7 +140,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
           count++;
         }
         for (idxR = 0; idxR < rowLength; idxR++){
-          *outPtr = (T)( entropy ? 
+          *outPtr = (T)( entropy ?
             log(1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) :
             1.0 / (1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1))) ) );
           outPtr++;
@@ -159,7 +162,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
           count++;
         }
         for (idxR = 0; idxR < rowLength; idxR++){
-          *outPtr = (T)( entropy ? 
+          *outPtr = (T)( entropy ?
             0.5*(((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) :
             exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1)));
           outPtr++;
@@ -193,14 +196,14 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
     }
     break;
   }
-  
+
   //if we are not normalizing, we can leave now
   if( !self->GetNormalize() ) return;
 
   // Get normalization constants
   double normOffset = 0.0;
   double normMultiply = 1.0 / constantc1;
-  double Range[2]; in1Data->GetScalarRange(Range); 
+  double Range[2]; in1Data->GetScalarRange(Range);
   if( op == VTK_GAUSSIAN && entropy){
     double valAtMax = 0.5*((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1);
     double valAtMin = 0.5*((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1);
@@ -210,7 +213,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
     normOffset = -minValue;
     normMultiply = 1.0 / (maxValue-minValue);
   }else if( op == VTK_GAUSSIAN && !entropy){
-    double Range[2]; in1Data->GetScalarRange(Range); 
+    double Range[2]; in1Data->GetScalarRange(Range);
     double valAtMax = exp(-0.5 * ((Range[1] - constantc1)/constantk1) * ((Range[1] - constantc1)/constantk1));
     double valAtMin = exp(-0.5 * ((Range[0] - constantc1)/constantk1) * ((Range[0] - constantc1)/constantk1));
     double minValue = exp( -((valAtMax >= valAtMin) ? valAtMax : valAtMin) );
@@ -218,7 +221,7 @@ void vtkImageDataTermExecute1(vtkImageDataTerm *self,
     if( constantc1 > Range[0] && constantc1 < Range[1] ) maxValue = 1.0f;
     normOffset = -minValue;
     normMultiply = 1.0 / (maxValue-minValue);
-  }else if( op == VTK_LOGISTIC && entropy){    double Range[2]; in1Data->GetScalarRange(Range); 
+  }else if( op == VTK_LOGISTIC && entropy){    double Range[2]; in1Data->GetScalarRange(Range);
     double valAtMax = log(1.0 + exp(-(constantk1*(Range[1] - constantc1))) );
     double valAtMin = log(1.0 + exp(-(constantk1*(Range[0] - constantc1))) );
     double maxValue = (valAtMax >= valAtMin) ? valAtMax : valAtMin;
@@ -274,7 +277,7 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
   unsigned long count = 0;
   unsigned long target;
   int op = self->GetOperation();
-  
+
   // Get constants from the main class
   bool entropy = self->GetEntropyUsed();
   double constantk1 = self->GetConstantK1();
@@ -319,7 +322,7 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
       in2Ptr += in2IncZ;
     }
     break;
-    
+
   case VTK_LOGISTIC:
     for(idxZ = 0; idxZ <= maxZ; idxZ++){
       for (idxY = 0; idxY <= maxY; idxY++){
@@ -328,7 +331,7 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
           count++;
         }
         for (idxR = 0; idxR < rowLength; idxR++){
-          *outPtr = (T)( entropy ? 
+          *outPtr = (T)( entropy ?
             log((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
                 (1.0 + exp(-(constantk2*((double)*in2Ptr - constantc2)))) ) :
             1.0 / ((1.0 + exp(-(constantk1*((double)*in1Ptr - constantc1)))) *
@@ -355,7 +358,7 @@ void vtkImageDataTermExecute2(vtkImageDataTerm *self,
           count++;
         }
         for (idxR = 0; idxR < rowLength; idxR++){
-          *outPtr = (T)( entropy ? 
+          *outPtr = (T)( entropy ?
             0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) +
             0.5 * (((double)*in2Ptr - constantc2)/constantk2) * (((double)*in2Ptr - constantc2)/constantk2) :
             exp(-0.5 * (((double)*in1Ptr - constantc1)/constantk1) * (((double)*in1Ptr - constantc1)/constantk1) -
@@ -397,7 +400,7 @@ void vtkImageDataTerm::ThreadedRequestData(
   inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
   outPtr = outData[0]->GetScalarPointerForExtent(outExt);
 
-  
+
 
   if (inData[1] && inData[1][0])
     {
@@ -498,4 +501,3 @@ void vtkImageDataTerm::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "ConstantC2: " << this->ConstantC2 << "\n";
   os << indent << "ExpressAsEntropy: " << (this->Entropy ? "On" : "Off") << "\n";
 }
-

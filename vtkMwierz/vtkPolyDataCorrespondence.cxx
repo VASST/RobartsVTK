@@ -17,8 +17,11 @@
 =========================================================================*/
 
 #include "vtkPolyDataCorrespondence.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkPolyDataCorrespondence, "$Revision: 1.1 $");
+#endif
 vtkStandardNewMacro(vtkPolyDataCorrespondence);
 
 //------------------------------------------------------------------------------
@@ -49,11 +52,11 @@ vtkPolyDataCorrespondence::vtkPolyDataCorrespondence()
   this->RMSDistance = 0.0;
 
   Distances = vtkDoubleArray::New();
-  Distances->SetName("Distances"); 
+  Distances->SetName("Distances");
   Distances->SetNumberOfComponents(1);
 
   Pairings = vtkLongArray::New();
-  Pairings->SetName("Pairings"); 
+  Pairings->SetName("Pairings");
   Pairings->SetNumberOfComponents(1);
 }
 
@@ -110,7 +113,7 @@ void vtkPolyDataCorrespondence::GetAxialCorrespondenceStats()
 
     magn = x*x + y*y + z*z;
 
-    if (magn < minMagn) 
+    if (magn < minMagn)
       {
         minMagn = magn;
         minMagnX = fabs(x);
@@ -196,7 +199,7 @@ void vtkPolyDataCorrespondence::Update2D()
     }
         magn = sqrt(magn);
 
-        cost = (magn);      
+        cost = (magn);
         if (cost < minCost)
     {
       minCost = cost;
@@ -224,7 +227,7 @@ void vtkPolyDataCorrespondence::Update2D()
     minCost = 1E300;
 
     memcpy(pnt1, points1->GetPoint(i), sizeof(double)*3);
-    if (i+1 < n1) 
+    if (i+1 < n1)
       {
         memcpy(pnt1a, points1->GetPoint(i+1 ), sizeof(double)*3);
       }
@@ -233,7 +236,7 @@ void vtkPolyDataCorrespondence::Update2D()
         memcpy(pnt1a, points1->GetPoint( 0  ), sizeof(double)*3);
       }
     if (i-1 >  0)
-      { 
+      {
         memcpy(pnt1b, points1->GetPoint(i-1 ), sizeof(double)*3);
       }
     else
@@ -259,7 +262,7 @@ void vtkPolyDataCorrespondence::Update2D()
     {
       memcpy(pnt2a, points2->GetPoint( 0  ), sizeof(double)*3);
     }
-        if (j-1 >  0) 
+        if (j-1 >  0)
     {
       memcpy(pnt2b, points2->GetPoint(j-1 ), sizeof(double)*3);
     }
@@ -273,7 +276,7 @@ void vtkPolyDataCorrespondence::Update2D()
         vect2b[0] = pnt2[0] - pnt2b[0];
         vect2b[1] = pnt2[1] - pnt2b[1];
         vect2b[2] = pnt2[2] - pnt2b[2];
-        
+
         dotProd = ( vect1a[0]*vect2a[0] + vect1a[1]*vect2a[1] + vect1a[2]*vect2a[2] +
         vect1b[0]*vect2b[0] + vect1b[1]*vect2b[1] + vect1b[2]*vect2b[2] );
 
@@ -310,7 +313,7 @@ void vtkPolyDataCorrespondence::Update2D()
 
   ave = ave / n1;
   RMS = sqrt(RMS / n1);
-  
+
   this->MeanDistance = ave;
   this->RMSDistance = RMS;
 
@@ -372,7 +375,7 @@ void vtkPolyDataCorrespondence::Update3D()
          (pnt1[2] - pnt2[2]) * (pnt1[2] - pnt2[2]) );
 
         cost = (magn);
-        
+
         if (cost < minCost)
     {
       minCost = cost;
@@ -416,7 +419,7 @@ void vtkPolyDataCorrespondence::Update3D()
       normdot = norm1[0]*norm2[0] + norm1[1]*norm2[1] + norm1[2]*norm2[2];
 
       cost = ( magn + this->ConstantN * (1.0 - normdot) );
-        
+
       if (cost < minCost)
         {
           minCost = cost;
@@ -446,7 +449,7 @@ void vtkPolyDataCorrespondence::Update3D()
       vtkCurvatures *meanCurv1 = vtkCurvatures::New();
       vtkCurvatures *gausCurv2 = vtkCurvatures::New();
       vtkCurvatures *meanCurv2 = vtkCurvatures::New();
-  
+
       gausCurv1->SetCurvatureTypeToGaussian();
       gausCurv1->SetInput(this->poly1);
       gausCurv1->Update();
@@ -461,7 +464,7 @@ void vtkPolyDataCorrespondence::Update3D()
       meanCurv2->SetInput(this->poly2);
       meanCurv2->InvertMeanCurvatureOn();
       meanCurv2->Update();
-      
+
       for (i = 0; i < n1; i++)
   {
     minMagn = 20.0;
@@ -483,7 +486,7 @@ void vtkPolyDataCorrespondence::Update3D()
       normdot = norm1[0]*norm2[0] + norm1[1]*norm2[1] + norm1[2]*norm2[2];
       curv2[0]=gausCurv2->GetOutput()->GetPointData()->GetScalars()->GetTuple1(j);
       curv2[1]=meanCurv2->GetOutput()->GetPointData()->GetScalars()->GetTuple1(j);
-      
+
       temp1 = curv1[1]*curv1[1] - curv1[0];
       if (temp1 > 0.0)
         {
@@ -494,7 +497,7 @@ void vtkPolyDataCorrespondence::Update3D()
           if (curv1[1] <= 0.0) shape1 = 1.0;
           if (curv1[1] > 0.0) shape1 = -1.0;
         }
-      
+
       temp2 = curv2[1]*curv2[1] - curv2[0];
       if (temp2 > 0.0)
         {
@@ -505,19 +508,19 @@ void vtkPolyDataCorrespondence::Update3D()
           if (curv2[1] <= 0.0) shape2 = 1.0;
           if (curv2[1] > 0.0) shape2 = -1.0;
         }
-      
+
       curved1 = 0.0;
       temp1 = 2.0 * curv1[1] * curv1[1] - curv1[0];
       if (temp1 > 0) curved1 = sqrt(temp1);
       curved2 = 0.0;
       temp2 = 2.0 * curv2[1] * curv2[1] - curv2[0];
       if (temp2 > 0) curved2 = sqrt(temp2);
-      
-      cost = ( magn + 
+
+      cost = ( magn +
          this->ConstantN * (1.0 - normdot) +
          this->ConstantS * fabs(shape1 - shape2) +
          this->ConstantC * fabs(curved1 - curved2) );
-        
+
       if (cost < minCost)
         {
           minCost = cost;
@@ -534,13 +537,13 @@ void vtkPolyDataCorrespondence::Update3D()
     if (minMagn > max) max = minMagn;
     RMS = RMS + minMagn * minMagn;
     if (minMagn > 3) big = big + 1;
-  
+
   }
     }
 
   ave = ave / n1;
   RMS = sqrt(RMS / n1);
-  
+
   this->MeanDistance = ave;
   this->RMSDistance = RMS;
 
@@ -589,13 +592,13 @@ void vtkPolyDataCorrespondence::Update3DFast()
     magnSqrd = ( (pnt1[0] - pnt2[0]) * (pnt1[0] - pnt2[0]) +
            (pnt1[1] - pnt2[1]) * (pnt1[1] - pnt2[1]) +
            (pnt1[2] - pnt2[2]) * (pnt1[2] - pnt2[2]) );
-    
+
     if (magnSqrd < minMagnSqrd) minMagnSqrd = magnSqrd;
   }
 
       RMS = RMS + minMagnSqrd;
     }
- 
+
   this->RMSDistance = sqrt(RMS / n1);
 
 };
@@ -629,4 +632,3 @@ void vtkPolyDataCorrespondence::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkPolyDataToPolyDataFilter::PrintSelf(os,indent);
 }
-
