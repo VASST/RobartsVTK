@@ -29,7 +29,11 @@ class VTK_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageDataTerm *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageDataTerm,vtkThreadedImageAlgorithm);
+#else
+  vtkTypeMacro(vtkImageDataTerm,vtkThreadedImageAlgorithm);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -44,7 +44,7 @@
 //
 // .SECTION Thanks
 // Philip Batchelor philipp.batchelor@kcl.ac.uk for creating and contributing
-// the class and Andrew Maclean a.maclean@acfr.usyd.edu.au for cleanups and 
+// the class and Andrew Maclean a.maclean@acfr.usyd.edu.au for cleanups and
 // fixes
 //
 // .SECTION See Also
@@ -54,6 +54,7 @@
 #define __vtkMeshSmootheness_h
 
 #include "vtkPolyDataToPolyDataFilter.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define VTK_CURVATURE_GAUSS 0
 #define VTK_CURVATURE_MEAN  1
@@ -61,7 +62,11 @@
 class VTK_EXPORT vtkMeshSmootheness : public vtkPolyDataToPolyDataFilter
 {
 public:
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkMeshSmootheness,vtkPolyDataToPolyDataFilter);
+#else
+  vtkTypeMacro(vtkMeshSmootheness,vtkPolyDataToPolyDataFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -93,7 +98,7 @@ protected:
   vtkPolyData *mesh;
   int NumPts;
   int NumCls;
-  
+
   double *MeanCurvature;
   int *NumNeighb;
 
@@ -119,5 +124,3 @@ private:
 };
 
 #endif
-
-

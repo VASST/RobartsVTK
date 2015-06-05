@@ -12,6 +12,7 @@
 #include <vector>
 #include <cv.h>
 #include <cxcore.h>
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkTransform;
 class vtkMatrix4x4;
@@ -24,9 +25,12 @@ class VTK_EXPORT vtkEndoscope : public vtkMILVideoSource
 {
 public:
   static vtkEndoscope *New();
-//  vtkTypeRevisionMacro(vtkEndoscope,vtkMILVideoSource);
+#if (VTK_MAJOR_VERSION <= 5)
+  vtkTypeRevisionMacro(vtkEndoscope,vtkMILVideoSource);
+#else
   vtkTypeMacro(vtkEndoscope,vtkMILVideoSource);
-  
+#endif
+
   // Description:
   // Set the tracker tool to input transforms from.
   void SetTracker(vtkTracker *t)
@@ -43,7 +47,7 @@ public:
   }
 
   virtual void SetFrameBufferSync(int i) { this->FrameBufferSync = i; };
-  
+
   // Description:
   // Standard VCR functionality: Record incoming video.
   void Record();
@@ -166,7 +170,7 @@ protected:
   double distThresh;
   vtkTracker *Tracker;
   vtkTrackerTool *TrackerTool;
-  vtkMatrix4x4 *ToCheckerboard; // Transformation from tracker coords to checkboard 
+  vtkMatrix4x4 *ToCheckerboard; // Transformation from tracker coords to checkboard
   vtkMatrix4x4 *FromCheckerboard; // Transformation from checkerboard to tracker coords
   vtkMatrix4x4 *Calibration;    // Transformation from sensor to camera-space
   int FrameBufferSync;          // Number of frames to buffer in order to sync with tracking
@@ -180,7 +184,7 @@ protected:
   int nAcqs;
   std::vector<CvPoint2D32f*> corners;
   CvMat *object_points, *image_points, *point_counts;
-  CvMat *intrinsic_matrix, *distortion_coeffs, 
+  CvMat *intrinsic_matrix, *distortion_coeffs,
         *rotation_vectors, *translation_vectors;
   IplImage *distorted_image, *undistorted_image;
 
@@ -196,4 +200,3 @@ protected:
 };
 
 #endif
-

@@ -36,15 +36,15 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 =========================================================================*/
-  
+
 // .NAME vtkSonixVideoSource - VTK interface for video input from Ultrasonix machine
 // .SECTION Description
 // vtkSonixVideoSource is a class for providing video input interfaces between VTK and Ultrasonix machine.
 // The goal is to provide the ability to be able to do acquisition
 // in various imaging modes, buffer the image/volume series being acquired
-// and stream the frames to output. 
+// and stream the frames to output.
 // Note that the data coming out of the Sonix rp through ulterius is always RGB
-// This class talks to Ultrasonix's Ulterius SDK for executing the tasks 
+// This class talks to Ultrasonix's Ulterius SDK for executing the tasks
 // .SECTION Caveats
 // You must call the ReleaseSystemResources() method before the application
 // exits.  Otherwise the application might hang while trying to exit.
@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 //  sonixGrabber->SetSonixIP("130.15.7.212");
 //  sonixGrabber->SetImagingMode(0);
 //  sonixGrabber->SetAcquisitionDataType(0x00000004);
-//  sonixGrabber->Record();  
+//  sonixGrabber->Record();
 //  imageviewer->SetInput(sonixGrabber->GetOutput());
 //  See SonixVideoSourceTest.cxx for more details
 // .SECTION See Also
@@ -68,6 +68,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "ulterius_def.h"
 //#include "ImagingModes.h" // Ulterius imaging modes
 #include "vtkVideoSource.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 //BTX
 
@@ -88,8 +89,13 @@ class VTK_EXPORT vtkSonixVideoSource : public vtkVideoSource
 {
 public:
   //static vtkSonixVideoSource *New();
+#if(VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkSonixVideoSource,vtkVideoSource);
-  void PrintSelf(ostream& os, vtkIndent indent);   
+#else
+  vtkTypeMacro(vtkSonixVideoSource,vtkVideoSource);
+#endif
+
+  void PrintSelf(ostream& os, vtkIndent indent);
   // Description:
   // This is a singleton pattern New.  There will only be ONE
   // reference to a vtkOutputWindow object per process.  Clients that
@@ -114,7 +120,7 @@ public:
 
   // Description:
   // Record incoming video at the specified FrameRate.  The recording
-  // continues indefinitely until Stop() is called. 
+  // continues indefinitely until Stop() is called.
   virtual void Record();
 
   // Description:
@@ -142,7 +148,7 @@ public:
   // Description:
   // Give the IP address of the sonix machine
   void SetSonixIP(char *SonixIP);
-  
+
   /* List of parameters which can be set or read in B-mode, other mode parameters not currently implemented*/
 
   // Description:
@@ -152,13 +158,13 @@ public:
   vtkSetMacro(Frequency, int);
 
   // Description:
-  // Get/set the depth (mm) of B-mode ultrasound; valid range: ; in increments of 
+  // Get/set the depth (mm) of B-mode ultrasound; valid range: ; in increments of
   // Depth corresponds to paramID value of 206 for Uterius SDK
   vtkGetMacro(Depth, int);
   vtkSetMacro(Depth, int);
 
   // Description:
-  // Get/set the frame rate (fps) of B-mode ultrasound; valid range: ; in increments of 
+  // Get/set the frame rate (fps) of B-mode ultrasound; valid range: ; in increments of
   // FrameRate corresponds to paramID value of 584 for Uterius SDK
   vtkGetMacro(FrameRate, float);
   vtkSetMacro(FrameRate, float);
@@ -174,7 +180,7 @@ public:
   // The mask must be applied before any data can be acquired via realtime imaging or cine retreival
   vtkGetMacro(AcquisitionDataType, int);
   vtkSetMacro(AcquisitionDataType, int);
-  
+
 
   // Description:
   // Initialize the driver (this is called automatically when the
@@ -203,10 +209,10 @@ protected:
   int FrameRate;
   int AcquisitionDataType;
   int ImagingMode;
-  
+
   char *SonixHostIP;
 
-  void UnpackRasterLine(char *outptr, char *inptr, 
+  void UnpackRasterLine(char *outptr, char *inptr,
                         int start, int count);
 
   void DoFormatSetup();
@@ -214,10 +220,10 @@ protected:
   // Description:
   // For internal use only
   void LocalInternalGrab(void * data, int type, int sz, bool cine, int frmnum);
-  
+
 
 private:
- 
+
 
   static vtkSonixVideoSource* Instance;
   static bool vtkSonixVideoSourceNewFrameCallback(void * data, int type, int sz, bool cine, int frmnum);
@@ -226,8 +232,3 @@ private:
 };
 
 #endif
-
-
-
-
-

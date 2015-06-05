@@ -29,11 +29,16 @@
 #include "vtkLongArray.h"
 #include "vtkCurvatures.h"
 #include "vtkPolyDataNormals.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTK_EXPORT vtkPolyDataCorrespondence : public vtkPolyDataToPolyDataFilter
 {
 public:
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkPolyDataCorrespondence,vtkPolyDataToPolyDataFilter);
+#else
+  vtkTypeMacro(vtkPolyDataCorrespondence,vtkPolyDataToPolyDataFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -75,7 +80,7 @@ protected:
 
   vtkDoubleArray *Distances;
   vtkLongArray *Pairings;
-  
+
   double MeanDistance;
   double RMSDistance;
 
@@ -86,5 +91,3 @@ private:
 };
 
 #endif
-
-

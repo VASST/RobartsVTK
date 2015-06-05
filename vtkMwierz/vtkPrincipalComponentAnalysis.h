@@ -6,21 +6,21 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 // .NAME vtkPrincipalComponentAnalysis - performs common math operations
 // .SECTION Description
-// vtkPrincipalComponentAnalysis is provides methods to perform common math operations. These 
-// include providing constants such as Pi; conversion from degrees to 
-// radians; vector operations such as dot and cross products and vector 
-// norm; matrix determinant for 2x2 and 3x3 matrices; and random 
+// vtkPrincipalComponentAnalysis is provides methods to perform common math operations. These
+// include providing constants such as Pi; conversion from degrees to
+// radians; vector operations such as dot and cross products and vector
+// norm; matrix determinant for 2x2 and 3x3 matrices; and random
 // number generation.
 
 #ifndef __vtkPrincipalComponentAnalysis_h
@@ -30,6 +30,7 @@
 #include "vtkImageData.h"
 #include "vtkDoubleArray.h"
 #include "vtkPoints.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // This is the maximum number of images fitable.
 #define MAX_M 40
@@ -38,8 +39,12 @@ class VTK_EXPORT vtkPrincipalComponentAnalysis : public vtkObject
 {
 public:
   static vtkPrincipalComponentAnalysis *New();
+#if(VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkPrincipalComponentAnalysis,vtkObject);
-  
+#else
+  vtkTypeMacro(vtkPrincipalComponentAnalysis,vtkObject);
+#endif
+
   // Add an image to fit
   virtual void AddImage(vtkImageData *image);
 
@@ -86,7 +91,7 @@ protected:
   int ext[6];
   double spa[3];
   double ori[3];
-  
+
 private:
   vtkPrincipalComponentAnalysis(const vtkPrincipalComponentAnalysis&);  // Not implemented.
   void operator=(const vtkPrincipalComponentAnalysis&);  // Not implemented.

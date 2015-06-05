@@ -27,6 +27,7 @@
 #define __vtkVideoECGBuffer2_h
 
 #include "vtkObject.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkCriticalSection;
 class vtkVideoFrame2;
@@ -36,7 +37,12 @@ class VTK_EXPORT vtkVideoECGBuffer2 : public vtkVideoBuffer2
 {
 public:
   static vtkVideoECGBuffer2 *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkVideoECGBuffer2,vtkVideoBuffer2);
+#else
+  vtkTypeMacro(vtkVideoECGBuffer2,vtkVideoBuffer2);
+#endif
+
   void PrintSelf(ostream& os, vtkIndent indent);
 
   void SetBufferSize(int n);

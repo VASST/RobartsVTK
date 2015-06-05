@@ -27,6 +27,7 @@
 #define __vtkVideoBuffer2_h
 
 #include "vtkObject.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkCriticalSection;
 class vtkVideoFrame2;
@@ -36,7 +37,11 @@ class VTK_EXPORT vtkVideoBuffer2 : public vtkObject
 {
 public:
   static vtkVideoBuffer2 *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkVideoBuffer2,vtkObject);
+#else
+  vtkTypeMacro(vtkVideoBuffer2,vtkObject);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -54,7 +59,7 @@ public:
 
   // Description:
   // Set/Get the format of the video frames in the buffer (the get method
-  // returns a frame that contains no data, just the format 
+  // returns a frame that contains no data, just the format
   // description).  If the buffer is not empty, changing the frame format has the
   // side-effect of deleting the frames within the buffer.
   virtual void SetFrameFormat(vtkVideoFrame2 *);
@@ -63,7 +68,7 @@ public:
   // Description:
   // Lock/Unlock the buffer: this should be done before changing or accessing
   // the data in the buffer if the buffer is being used from multiple
-  // threads.  
+  // threads.
   virtual void Lock();
   virtual void Unlock();
 
@@ -79,7 +84,7 @@ public:
   // Description:
   // Rotate the buffer forwards or backwards by the specified number
   // of frames, relative to the current index (positive is forward, negative is backward).
-  virtual void Seek(int n); 
+  virtual void Seek(int n);
 
   // Description:
   // Get a frame from the buffer, relative to the current index (positive is forward,

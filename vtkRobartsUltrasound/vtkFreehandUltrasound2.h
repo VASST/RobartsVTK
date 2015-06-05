@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #define __vtkFreehandUltrasound2_h
 
 #include "vtkImageAlgorithm.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkLinearTransform;
 class vtkMatrix4x4;
@@ -75,12 +76,16 @@ class vtkSignalBox;
 class VTK_EXPORT vtkFreehandUltrasound2 : public vtkImageAlgorithm
 {
 public:
-  
+
   static vtkFreehandUltrasound2 *New();
+#if(VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkFreehandUltrasound2, vtkImageAlgorithm);
+#else
+  vtkTypeMacro(vtkFreehandUltrasound2, vtkImageAlgorithm);
+#endif
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description: 
+  // Description:
   // Set/Get the 2D image slice to insert into the reconstruction volume
   // the slice is the vtkImageData 'slice' (kind of like an input)
   // that is inserted into the reconstructed 3D volume (the output)
@@ -132,7 +137,7 @@ public:
   // reconstruction is complete.  The reconstruction
   // is performed in the background.
   void StartReconstruction(int n);
-  
+
   // Description:
   // Stop the reconstruction.  The number of frames remaining to
   // be reconstructed is returned.
@@ -143,7 +148,7 @@ public:
   // This will spawn a thread that does the reconstruction in the
   // background.
   void StartRealTimeReconstruction();
-  
+
   // Description:
   // Stop the real-time reconstruction.
   void StopRealTimeReconstruction();
@@ -155,7 +160,7 @@ public:
   // Description:
   // Fill holes in the output by using the weighted average of the
   // surrounding voxels.  If Compounding is off, then all hit voxels
-  // are weighted equally. 
+  // are weighted equally.
   void FillHolesInOutput();
 
   // Description:
@@ -195,7 +200,7 @@ public:
   void ClearOutput();
 
   // Description:
-  // Set the clip rectangle (x0,y0,x1,y1) to apply to the image. 
+  // Set the clip rectangle (x0,y0,x1,y1) to apply to the image.
   // Specify the rectange in millimeter coords, not pixel indices.
   vtkSetVector4Macro(ClipRectangle,double);
   vtkGetVector4Macro(ClipRectangle,double);
@@ -221,11 +226,11 @@ public:
   // Description:
   // Set the axes of the slice to insert into the reconstruction volume,
   // relative the (x,y,z) axes of the reconstruction volume itself.
-  // The axes are extracted from the 4x4 matrix:  The x-axis is the 
-  // first column, the y-axis is the second column, the z-axis is the 
+  // The axes are extracted from the 4x4 matrix:  The x-axis is the
+  // first column, the y-axis is the second column, the z-axis is the
   // third column, and the origin is the final column.  The bottom
   // row of the matrix should always be (0,0,0,1).
-  // If you don't set the axes, the axes will default to 
+  // If you don't set the axes, the axes will default to
   // (1,0,0), (0,1,0), (0,0,1) and their origin will be (0,0,0)
   virtual void SetSliceAxes(vtkMatrix4x4 *);
   vtkGetObjectMacro(SliceAxes,vtkMatrix4x4);
@@ -313,7 +318,7 @@ public:
   vtkGetMacro(Optimization,int);
 
   // Description:
-  // Set/Get the interpolation mode, default is nearest neighbor. 
+  // Set/Get the interpolation mode, default is nearest neighbor.
   vtkSetMacro(InterpolationMode,int);
   vtkGetMacro(InterpolationMode,int);
   void SetInterpolationModeToNearestNeighbor()
@@ -350,7 +355,7 @@ public:
   vtkBooleanMacro(FlipVerticalOnOutput, int);
 
   // Description:
-  // When determining the modified time of the source. 
+  // When determining the modified time of the source.
   unsigned long int GetMTime();
 
   //Description:
@@ -484,14 +489,14 @@ public:
   // Execute the reconstruction thread
   void ThreadedSliceExecute(vtkImageData *inData, vtkImageData *outData,
           int extent[6], int threadId, int phase);
-  
+
   // Description:
   // To split the extent over meany threads
   int SplitSliceExtent(int splitExt[6], int startExt[6], int num, int total);
 
   // Description:
   // For filling holes
-  void ThreadedFillExecute(vtkImageData *outData,  
+  void ThreadedFillExecute(vtkImageData *outData,
          int outExt[6], int threadId, int phase);
 
   // Attributes - not protected to be accessible from reconstruction thread
@@ -617,7 +622,7 @@ protected:
   // voxel indices in the slice to (i,j,k) voxel indices in the
   // output.
   vtkMatrix4x4 *GetIndexMatrix();
-  
+
   // Description:
   // Getting the IndexMatrix when discarding slices based on ECG signal
   vtkMatrix4x4 *GetIndexMatrix(int phase);
@@ -699,8 +704,3 @@ inline char *vtkFreehandUltrasound2::GetInterpolationModeAsString()
 }
 
 #endif
-
-
-
-
-

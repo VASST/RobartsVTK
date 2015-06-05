@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -23,7 +23,7 @@
 // <p> The minumum (and ideal) quality ratio is 1.0 for regular tetrahedra,
 // i.e. all sides of equal length.  Larger values indicate poorer mesh
 // quality.  The resulting quality values (and the tetrahedron volumes)
-// are set as the Scalars of the FieldData of the output.  
+// are set as the Scalars of the FieldData of the output.
 
 // .SECTION Thanks
 // This class was developed by Leila Baghdadi, Hanif Ladak, and
@@ -33,12 +33,17 @@
 #define __vtkTriangleMeshQuality_h
 
 #include "vtkDataSetToDataObjectFilter.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTK_EXPORT vtkTriangleMeshQuality : public vtkDataSetToDataObjectFilter
 {
 public:
-  static vtkTriangleMeshQuality *New();  
+  static vtkTriangleMeshQuality *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkTriangleMeshQuality,vtkDataSetToDataObjectFilter);
+#else
+  vtkTypeMacro(vtkTriangleMeshQuality,vtkDataSetToDataObjectFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Get the quality of the mesh
@@ -59,4 +64,3 @@ private:
 };
 
 #endif
-

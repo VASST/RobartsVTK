@@ -6,12 +6,12 @@
   Date:      $Date: 2002/05/13 21:44:42 $
   Version:   $Revision: 1.12 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -30,6 +30,7 @@
 #define __vtkGridTransformBSpline_h
 
 #include "vtkWarpTransform.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkImageData;
 
@@ -44,11 +45,15 @@ class VTK_EXPORT vtkGridTransformBSpline : public vtkWarpTransform
 {
 public:
   static vtkGridTransformBSpline *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkGridTransformBSpline,vtkWarpTransform);
+#else
+  vtkTypeMacro(vtkGridTransformBSpline,vtkWarpTransform);
+#endif
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
-  // Set/Get the grid transform (the grid transform must have three 
+  // Set/Get the grid transform (the grid transform must have three
   // components for displacement in x, y, and z respectively).
   // The vtkGridTransform class will never modify the data.
   virtual void SetDisplacementGrid(vtkImageData*);
@@ -169,7 +174,7 @@ inline const char *vtkGridTransformBSpline::GetInterpolationModeAsString()
     default:
       return "";
     }
-}  
+}
 //ETX
 
 
@@ -246,8 +251,3 @@ inline double vtkGridTransformBSpline::dB3(double t)
 
 
 #endif
-
-
-
-
-

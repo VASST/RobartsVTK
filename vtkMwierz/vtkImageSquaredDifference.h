@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -26,6 +26,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // This number must be greater than the number of CPU's
 #define THREAD_NUM 2
@@ -34,7 +35,11 @@ class VTK_EXPORT vtkImageSquaredDifference : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageSquaredDifference *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageSquaredDifference,vtkImageMultipleInputFilter);
+#else
+  vtkTypeMacro(vtkImageSquaredDifference,vtkImageMultipleInputFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -45,7 +50,7 @@ public:
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
   vtkImageStencilData *GetStencil();
-  
+
   // Description:
   // Reverse the stencil.
   vtkSetMacro(ReverseStencil, int);
@@ -75,16 +80,3 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-

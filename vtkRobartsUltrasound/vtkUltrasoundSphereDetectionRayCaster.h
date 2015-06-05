@@ -34,7 +34,11 @@ class VTK_EXPORT vtkUltrasoundSphereDetectionRayCaster : public vtkImageAlgorith
 {
 public:
   static vtkUltrasoundSphereDetectionRayCaster *New();
+#if(VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkUltrasoundSphereDetectionRayCaster,vtkImageAlgorithm);
+#else
+  vtkTypeMacro(vtkUltrasoundSphereDetectionRayCaster,vtkImageAlgorithm);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

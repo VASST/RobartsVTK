@@ -6,12 +6,12 @@
   Date:      $Date: 2002/01/22 15:30:39 $
   Version:   $Revision: 1.22 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -37,6 +37,7 @@
 #define __vtkCompactSupportRBFTransform_h
 
 #include "vtkWarpTransform.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define VTK_RBF_CUSTOM 0
 #define VTK_RBF_CS3D0C 1
@@ -48,11 +49,15 @@ class vtkWarpTransform;
 class VTK_EXPORT vtkCompactSupportRBFTransform : public vtkWarpTransform
 {
 public:
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkCompactSupportRBFTransform,vtkWarpTransform);
+#else
+  vtkTypeMacro(vtkCompactSupportRBFTransform,vtkWarpTransform);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
   static vtkCompactSupportRBFTransform *New();
 
-  // Description: 
+  // Description:
   // Specify the 'stiffness' of the spline. The default is 1.0.
   vtkGetMacro(Sigma,double);
   vtkSetMacro(Sigma,double);
@@ -74,11 +79,11 @@ public:
   void SetBasisFunction(double (*U)(double r)) {
     if (this->BasisFunction == U) { return; }
     this->SetBasis(VTK_RBF_CUSTOM);
-    this->BasisFunction = U; 
+    this->BasisFunction = U;
     this->Modified(); };
   void SetBasisDerivative(double (*dUdr)(double r, double &dU)) {
-    this->BasisDerivative = dUdr; 
-    this->Modified(); };    
+    this->BasisDerivative = dUdr;
+    this->Modified(); };
 //ETX
 
   // Description:
@@ -139,8 +144,3 @@ private:
 };
 
 #endif
-
-
-
-
-

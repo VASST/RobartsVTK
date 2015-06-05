@@ -6,12 +6,12 @@
   Date:      $Date: 2008/07/17 15:33:39 $
   Version:   $Revision: 1.3 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -33,6 +33,7 @@
 #include "vtkOpenGLRenderer.h"
 
 #include "GLSLShader.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkImageData;
 class vtkEndoscope;
@@ -46,14 +47,18 @@ class VTK_EXPORT vtkFusionRenderer : public vtkOpenGLRenderer
 {
 public:
   static vtkFusionRenderer *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkFusionRenderer,vtkRenderer);
+#else
+  vtkTypeMacro(vtkFusionRenderer,vtkRenderer);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Concrete open gl render method.
-  void DeviceRender(void); 
+  void DeviceRender(void);
   void Clear(void);
-  
+
   virtual void SetEndoscope(vtkEndoscope *);
   vtkGetObjectMacro(Endoscope,vtkEndoscope);
   virtual void SetUS(vtkVideoSource *);
@@ -93,7 +98,7 @@ protected:
   IplImage  *SourceImage;
   IplImage  *DestImage;
   IplImage  *DestImageGray;
-  
+
   float *mUndistortImg;
 
   bool bInitialized;

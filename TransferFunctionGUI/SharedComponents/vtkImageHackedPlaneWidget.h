@@ -103,6 +103,7 @@
 #define __vtkImageHackedPlaneWidget_h
 
 #include "vtkPolyDataSourceWidget.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkActor;
 class vtkAbstractPropPicker;
@@ -132,7 +133,12 @@ public:
   // Instantiate the object.
   static vtkImageHackedPlaneWidget *New();
 
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageHackedPlaneWidget,vtkPolyDataSourceWidget);
+#else
+  vtkTypeMacro(vtkImageHackedPlaneWidget,vtkPolyDataSourceWidget);
+#endif
+
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -249,7 +255,7 @@ public:
   virtual void SetTextureVisibility(int);
   vtkGetMacro(TextureVisibility,int);
   vtkBooleanMacro(TextureVisibility,int);
-  
+
   // Description:
   // Grab the polydata (including points) that defines the plane.  The
   // polydata consists of (res+1)*(res+1) points, and res*res quadrilateral
@@ -279,13 +285,13 @@ public:
   // Description:
   // Convenience method to get the vtkImageMapToColors filter used by this
   // widget.  The user can properly render other transparent actors in a
-  // scene by calling the filter's SetOutputFormatToRGB and 
+  // scene by calling the filter's SetOutputFormatToRGB and
   // PassAlphaToOutputOff.
   vtkGetObjectMacro(ColorMap, vtkImageMapToColors);
   virtual void SetColorMap(vtkImageMapToColors *);
 
   // Description:
-  // Set/Get the plane's outline properties. The properties of the plane's 
+  // Set/Get the plane's outline properties. The properties of the plane's
   // outline when selected and unselected can be manipulated.
   virtual void SetPlaneProperty(vtkProperty*);
   vtkGetObjectMacro(PlaneProperty,vtkProperty);
@@ -424,7 +430,7 @@ public:
   // Set the auto-modifiers associated to buttons.
   // This allows users to bind some buttons to actions that are usually
   // triggered by a key modifier. For example, if you do not need cursoring,
-  // you can bind the left button action to VTK_SLICE_MOTION_ACTION (see above) 
+  // you can bind the left button action to VTK_SLICE_MOTION_ACTION (see above)
   // and the left button auto modifier to VTK_CONTROL_MODIFIER: you end up with
   // the left button controling panning without pressing a key.
   //BTX
@@ -447,7 +453,7 @@ protected:
   ~vtkImageHackedPlaneWidget();
 
   int TextureVisibility;
-  
+
   int LeftButtonAction;
   int MiddleButtonAction;
   int RightButtonAction;

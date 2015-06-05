@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -29,6 +29,7 @@
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
 #include "vtkMultiThreader.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // Constants used for array declaration.
 #define THREAD_NUM 2
@@ -39,7 +40,11 @@ class VTK_EXPORT vtkImageShannonMutualInformation : public vtkImageTwoInputFilte
 {
 public:
   static vtkImageShannonMutualInformation *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageShannonMutualInformation,vtkImageTwoInputFilter);
+#else
+  vtkTypeMacro(vtkImageShannonMutualInformation,vtkImageTwoInputFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -70,7 +75,7 @@ public:
   // Description:
   // Numbers of bins to use, and number of intensities per bin.
   // I assume images have intensities >= 0.
-  // will create bins of width 
+  // will create bins of width
   virtual void SetBinNumber(int numS, int numT);
   int BinNumber[2];
   virtual void SetMaxIntensities(int maxS, int maxT);

@@ -12,127 +12,132 @@
 #include "vtkImageCast.h"
 #include "vtkImageFlip.h"
 #include "vtkPNGWriter.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkEnhancedCardinalSpline : public vtkCardinalSpline
 {
-public:  
-    static vtkEnhancedCardinalSpline *New();
-    vtkTypeRevisionMacro(vtkEnhancedCardinalSpline,vtkCardinalSpline);
+public:
+  static vtkEnhancedCardinalSpline *New();
+#if (VTK_MAJOR_VERSION <= 5)
+  vtkTypeRevisionMacro(vtkEnhancedCardinalSpline,vtkCardinalSpline);
+#else
+  vtkTypeMacro(vtkEnhancedCardinalSpline,vtkCardinalSpline);
+#endif
 
-    float EvaluateFirstDerivative(float t)
-    {
-      int i, index;
-      int size = this->PiecewiseFunction->GetSize ();
-      double *intervals;
-      double *coefficients;
+  float EvaluateFirstDerivative(float t)
+  {
+    int i, index;
+    int size = this->PiecewiseFunction->GetSize ();
+    double *intervals;
+    double *coefficients;
 
-      // make sure we have at least 2 points
-      if (size < 2)
+    // make sure we have at least 2 points
+    if (size < 2)
+      {
+      vtkErrorMacro("Cannot evaluate a spline with less than 2 points. # of points is: " << size);
+      return 0.0;
+      }
+
+    // check to see if we need to recompute the spline
+    if (this->ComputeTime < this->GetMTime ())
+      {
+      this->Compute ();
+      }
+
+    intervals = this->Intervals;
+    coefficients = this->Coefficients;
+
+    if ( this->Closed )
+      {
+      size = size + 1;
+      }
+
+    // clamp the function at both ends
+    if (t < intervals[0])
+      {
+      t = intervals[0];
+      }
+    if (t > intervals[size - 1])
+      {
+      t = intervals[size - 1];
+      }
+
+    // find pointer to cubic spline coefficient
+    index = 0;
+    for (i = 1; i < size; i++)
+      {
+      index = i - 1;
+      if (t < intervals[i])
         {
-        vtkErrorMacro("Cannot evaluate a spline with less than 2 points. # of points is: " << size);
-        return 0.0;
+        break;
         }
+      }
 
-      // check to see if we need to recompute the spline
-      if (this->ComputeTime < this->GetMTime ())
+    // calculate offset within interval
+    t = (t - intervals[index]);
+
+    // evaluate y'
+    return 3 * t * t * *(coefficients + index * 4 + 3)
+             + 2 * t * *(coefficients + index * 4 + 2)
+                     + *(coefficients + index * 4 + 1);
+  }
+
+  float EvaluateSecondDerivative(float t)
+  {
+    int i, index;
+    int size = this->PiecewiseFunction->GetSize ();
+    double *intervals;
+    double *coefficients;
+
+    // make sure we have at least 2 points
+    if (size < 2)
+      {
+      vtkErrorMacro("Cannot evaluate a spline with less than 2 points. # of points is: " << size);
+      return 0.0;
+      }
+
+    // check to see if we need to recompute the spline
+    if (this->ComputeTime < this->GetMTime ())
+      {
+      this->Compute ();
+      }
+
+    intervals = this->Intervals;
+    coefficients = this->Coefficients;
+
+    if ( this->Closed )
+      {
+      size = size + 1;
+      }
+
+    // clamp the function at both ends
+    if (t < intervals[0])
+      {
+      t = intervals[0];
+      }
+    if (t > intervals[size - 1])
+      {
+      t = intervals[size - 1];
+      }
+
+    // find pointer to cubic spline coefficient
+    index = 0;
+    for (i = 1; i < size; i++)
+      {
+      index = i - 1;
+      if (t < intervals[i])
         {
-        this->Compute ();
-        }   
-
-      intervals = this->Intervals;
-      coefficients = this->Coefficients;
-
-      if ( this->Closed )
-        {
-        size = size + 1;
+        break;
         }
+      }
 
-      // clamp the function at both ends
-      if (t < intervals[0])
-        {
-        t = intervals[0];
-        }
-      if (t > intervals[size - 1])
-        {
-        t = intervals[size - 1];
-        }
+    // calculate offset within interval
+    t = (t - intervals[index]);
 
-      // find pointer to cubic spline coefficient
-      index = 0;
-      for (i = 1; i < size; i++)
-        {
-        index = i - 1;
-        if (t < intervals[i])
-          {
-          break;
-          }
-        }
-
-      // calculate offset within interval
-      t = (t - intervals[index]);
-
-      // evaluate y'
-      return 3 * t * t * *(coefficients + index * 4 + 3)
-               + 2 * t * *(coefficients + index * 4 + 2)
-                       + *(coefficients + index * 4 + 1);
-    }
-
-    float EvaluateSecondDerivative(float t)
-    {
-      int i, index;
-      int size = this->PiecewiseFunction->GetSize ();
-      double *intervals;
-      double *coefficients;
-
-      // make sure we have at least 2 points
-      if (size < 2)
-        {
-        vtkErrorMacro("Cannot evaluate a spline with less than 2 points. # of points is: " << size);
-        return 0.0;
-        }
-
-      // check to see if we need to recompute the spline
-      if (this->ComputeTime < this->GetMTime ())
-        {
-        this->Compute ();
-        }   
-
-      intervals = this->Intervals;
-      coefficients = this->Coefficients;
-
-      if ( this->Closed )
-        {
-        size = size + 1;
-        }
-
-      // clamp the function at both ends
-      if (t < intervals[0])
-        {
-        t = intervals[0];
-        }
-      if (t > intervals[size - 1])
-        {
-        t = intervals[size - 1];
-        }
-
-      // find pointer to cubic spline coefficient
-      index = 0;
-      for (i = 1; i < size; i++)
-        {
-        index = i - 1;
-        if (t < intervals[i])
-          {
-          break;
-          }
-        }
-
-      // calculate offset within interval
-      t = (t - intervals[index]);
-
-      // evaluate y
-      return 6 * t * *(coefficients + index * 4 + 3)
-               + 2 * *(coefficients + index * 4 + 2);
-    }
+    // evaluate y
+    return 6 * t * *(coefficients + index * 4 + 3)
+             + 2 * *(coefficients + index * 4 + 2);
+  }
 };
 
 vtkCxxRevisionMacro(vtkEnhancedCardinalSpline, "$Revision: 1.1 $");
@@ -162,7 +167,7 @@ void vtkDiscreteDynamicContour::SetSigma(float sigma)
 {
     mSigma = sigma;
 }
-    
+
 void vtkDiscreteDynamicContour::SetInput(vtkImageData *input)
 {
     vtkImageData *gradImg, *magImg;
@@ -181,7 +186,7 @@ void vtkDiscreteDynamicContour::SetInput(vtkImageData *input)
     {
       cast->SetInput(input);
     }
-    
+
     vtkImageGaussianSmooth *smooth = vtkImageGaussianSmooth::New();
     smooth->SetDimensionality(2);
     smooth->SetStandardDeviation(mSigma, mSigma);

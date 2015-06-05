@@ -17,7 +17,7 @@ conditions are met:
 1) Redistribution of the source code, in verbatim or modified
    form, must retain the above copyright notice, this license,
    the following disclaimer, and any notices that refer to this
-   license and/or the following disclaimer.  
+   license and/or the following disclaimer.
 
 2) Redistribution in binary form must include the above copyright
    notice, a copy of this license and the following disclaimer
@@ -46,17 +46,22 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #include "vtkVideoSource.h"
 #include "vtkUnsignedCharArray.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTK_EXPORT vtkTestECGVideoSource : public vtkVideoSource
 {
 public:
   static vtkTestECGVideoSource *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkTestECGVideoSource,vtkVideoSource);
-  void PrintSelf(ostream& os, vtkIndent indent);   
+#else
+  vtkTypeMacro(vtkTestECGVideoSource,vtkVideoSource);
+#endif
+  void PrintSelf(ostream& os, vtkIndent indent);
   // Description:
   // Request a particular frame size (set the third value to 1).
   //void SetFrameSize(int x, int y, int z);
-  
+
   // Description:
   // Request a particular output format (default: VTK_RGB).
  // void SetOutputFormat(int format);

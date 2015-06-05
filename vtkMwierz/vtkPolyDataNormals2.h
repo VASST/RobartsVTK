@@ -14,7 +14,7 @@
 =========================================================================*/
 // .NAME vtkPolyDataNormals2 - compute normals for polygonal mesh
 // .SECTION Description
-// vtkPolyDataNormals2 is a filter that computes point normals for a polygonal 
+// vtkPolyDataNormals2 is a filter that computes point normals for a polygonal
 // mesh. The filter can reorder polygons to insure consistent orientation
 // across polygon neighbors. Sharp edges can be split and points duplicated
 // with separate normals to give crisp (rendered) surface definition. It is
@@ -22,20 +22,21 @@
 //
 // The algorithm works by determining normals for each polygon and then
 // averaging them at shared points. When sharp edges are present, the edges
-// are split and new points generated to prevent blurry edges (due to 
+// are split and new points generated to prevent blurry edges (due to
 // Gouraud shading).
 
 // .SECTION Caveats
 // Normals are computed only for polygons and triangle strips. Normals are
 // not computed for lines or vertices.
 //
-// Triangle strips are broken up into triangle polygons. You may want to 
+// Triangle strips are broken up into triangle polygons. You may want to
 // restrip the triangles.
 
 #ifndef __vtkPolyDataNormals2_h
 #define __vtkPolyDataNormals2_h
 
 #include "vtkPolyDataToPolyDataFilter.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkFloatArray;
 class vtkIdList;
@@ -44,11 +45,15 @@ class vtkPolyData;
 class VTK_EXPORT vtkPolyDataNormals2 : public vtkPolyDataToPolyDataFilter
 {
 public:
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkPolyDataNormals2,vtkPolyDataToPolyDataFilter);
+#else
+  vtkTypeMacro(vtkPolyDataNormals2,vtkPolyDataToPolyDataFilter);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
-  // Construct with feature angle=30, splitting and consistency turned on, 
+  // Construct with feature angle=30, splitting and consistency turned on,
   // flipNormals turned off, and non-manifold traversal turned on.
   // ComputePointNormals is on and ComputeCellNormals is off.
   static vtkPolyDataNormals2 *New();
@@ -78,9 +83,9 @@ public:
   // (i.e. no boundary edges) and no non-manifold edges. If these
   // constraints do not hold, all bets are off. This option adds some
   // computational complexity, and is useful if you don't want to have
-  // to inspect the rendered image to determine whether to turn on the 
-  // FlipNormals flag. However, this flag can work with the FlipNormals 
-  // flag, and if both are set, all the normals in the output will 
+  // to inspect the rendered image to determine whether to turn on the
+  // FlipNormals flag. However, this flag can work with the FlipNormals
+  // flag, and if both are set, all the normals in the output will
   // point "inward".
   vtkSetMacro(AutoOrientNormals, int);
   vtkGetMacro(AutoOrientNormals, int);
@@ -114,7 +119,7 @@ public:
   vtkSetMacro(NonManifoldTraversal,int);
   vtkGetMacro(NonManifoldTraversal,int);
   vtkBooleanMacro(NonManifoldTraversal,int);
-  
+
 protected:
   vtkPolyDataNormals2();
   ~vtkPolyDataNormals2() {};

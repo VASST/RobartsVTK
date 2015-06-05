@@ -28,6 +28,7 @@
 #define __vtkVideoFrame2_h
 
 #include "vtkObject.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // Standard values defined in vtkSystemIncludes.h, these constants
 // are equal to their OpenGL equivalents.  These are the formats
@@ -40,7 +41,7 @@
 // New values that can be used as the PixelFormat in a vtkVideoFrame2.
 // These are common formats supported by frame grabbers.
 // The constant values are based on OpenGL extensions.
-#define VTK_BGR           0x80E0   // equal to OpenGL BGR_EXT 
+#define VTK_BGR           0x80E0   // equal to OpenGL BGR_EXT
 #define VTK_BGRA          0x80E1   // equal to OpenGL BGRA_EXT
 #define VTK_UYVY          0xC012   // 422 style 16-bit YUV
 #define VTK_BI_UYVY       0x59565955 // from vtkWin32VideoSource
@@ -57,14 +58,19 @@ class VTK_EXPORT vtkVideoFrame2 : public vtkObject
 {
 public:
   static vtkVideoFrame2 *New();
+
+#if(VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkVideoFrame2,vtkObject);
+#else
+  vtkTypeMacro(vtkVideoFrame2,vtkObject);
+#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/Get the full-frame size.  This must be an allowed size for the
   // device, the device may either refuse a request for an illegal frame
   // size or automatically choose a new frame size.
-  // The default is usually 320x240x1, but can be device specific.  
+  // The default is usually 320x240x1, but can be device specific.
   // The 'depth' should always be 1 (unless you actually have a device that
   // can handle 3D acquisition).
   virtual void SetFrameSize(int x, int y, int z);
@@ -108,7 +114,7 @@ public:
   vtkSetMacro(TopDown, int);
   vtkGetMacro(TopDown, int);
   vtkBooleanMacro(TopDown, int);
-  
+
   // Description:
   // For RGBA output only (4 scalar components), set/get the opacity.  This
   // will not modify the existing contents of the framebuffer, only
@@ -167,7 +173,7 @@ public:
   // BitsPerPixel = 16, PixelFormat = BGR or BGRA: VTK_RGB, VTK_RGBA
   // BitsPerPixel = 24: VTK_LUMINANCE, VTK_RGB, VTK_RGBA
   // BitsPerPixel = 32: VTK_LUMINANCE, VTK_RGB, VTK_RGBA
-  // If the new array pointer points to the first index and the ArrayExtent is 
+  // If the new array pointer points to the first index and the ArrayExtent is
   // smaller than ClipRegion, the frame's array will be further cliped to the size
   // specified by ArrayExtent.
   virtual void CopyData(void *array, const int clipRegion[6], const int arrayExtent[6],
@@ -179,12 +185,12 @@ public:
 
 protected:
   vtkVideoFrame2();
-  ~vtkVideoFrame2();  
+  ~vtkVideoFrame2();
 
   // Description:
   // Used by CopyData().  If some component conversion is required, it is
   // done here.
-  virtual void UnpackRasterLine(unsigned char *outptr, unsigned char *inptr, 
+  virtual void UnpackRasterLine(unsigned char *outptr, unsigned char *inptr,
                         int start, int count, int outputFormat);
 
   // Description:

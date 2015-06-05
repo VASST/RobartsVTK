@@ -15,13 +15,13 @@
 // .NAME vtkMILECGVideoSource2 - Matrox Imaging Library frame grabbers
 // .SECTION Description
 // vtkMILECGVideoSource2 provides an interface to Matrox Meteor, MeteorII
-// and Corona video digitizers through the Matrox Imaging Library 
+// and Corona video digitizers through the Matrox Imaging Library
 // interface.  In order to use this class, you must link VTK with mil.lib,
 // MIL version 5.0 or higher is required.
 // vtkMILECGVideoSource2 is an updated version of vtkMILVideoSource and uses
 // vtkVideoSource2 instead of vtkVideoSource
 // .SECTION Caveats
-// With some capture cards, if this class is leaked and ReleaseSystemResources 
+// With some capture cards, if this class is leaked and ReleaseSystemResources
 // is not called, you may have to reboot before you can capture again.
 // vtkVideoSource used to keep a global list and delete the video sources
 // if your program leaked, due to exit crashes that was removed.
@@ -31,13 +31,19 @@
 #ifndef __vtkMILECGVideoSource2_h
 #define __vtkMILECGVideoSource2_h
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 #include "vtkMILVideoSource2.h"
 class VTK_EXPORT vtkMILECGVideoSource2 : public vtkMILVideoSource2
 {
 public:
   static vtkMILECGVideoSource2 *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkMILECGVideoSource2,vtkVideoSource2);
-  void PrintSelf(ostream& os, vtkIndent indent);   
+#else
+  vtkTypeMacro(vtkMILECGVideoSource2,vtkVideoSource2);
+#endif
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   void SetECGPhase(int newPhase);
   int GetECGPhase();

@@ -15,13 +15,13 @@
 // .NAME vtkMILVideoSource2 - Matrox Imaging Library frame grabbers
 // .SECTION Description
 // vtkMILVideoSource2 provides an interface to Matrox Meteor, MeteorII
-// and Corona video digitizers through the Matrox Imaging Library 
+// and Corona video digitizers through the Matrox Imaging Library
 // interface.  In order to use this class, you must link VTK with mil.lib,
 // MIL version 5.0 or higher is required.
 // vtkMILVideoSource2 is an updated version of vtkMILVideoSource and uses
 // vtkVideoSource2 instead of vtkVideoSource
 // .SECTION Caveats
-// With some capture cards, if this class is leaked and ReleaseSystemResources 
+// With some capture cards, if this class is leaked and ReleaseSystemResources
 // is not called, you may have to reboot before you can capture again.
 // vtkVideoSource used to keep a global list and delete the video sources
 // if your program leaked, due to exit crashes that was removed.
@@ -32,6 +32,7 @@
 #define __vtkMILVideoSource2_h
 
 #include "vtkVideoSource2.h"
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // digitizer hardware
 #define VTK_MIL_DEFAULT        0
@@ -49,7 +50,7 @@
 #define VTK_MIL_CRONOS         "M_SYSTEM_CRONOS"
 #define VTK_MIL_ODYSSEY        "M_SYSTEM_ODYSSEY"
 
-// video inputs: 
+// video inputs:
 #define VTK_MIL_MONO          0
 #define VTK_MIL_COMPOSITE     1
 #define VTK_MIL_YC            2
@@ -59,17 +60,21 @@
 // video formats:
 #define VTK_MIL_RS170         0
 #define VTK_MIL_NTSC          1
-#define VTK_MIL_CCIR          2 
-#define VTK_MIL_PAL           3 
+#define VTK_MIL_CCIR          2
+#define VTK_MIL_PAL           3
 #define VTK_MIL_SECAM         4
-#define VTK_MIL_NONSTANDARD   5       
+#define VTK_MIL_NONSTANDARD   5
 
 class VTK_EXPORT vtkMILVideoSource2 : public vtkVideoSource2
 {
 public:
   static vtkMILVideoSource2 *New();
+#if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkMILVideoSource2,vtkVideoSource2);
-  void PrintSelf(ostream& os, vtkIndent indent);   
+#else
+  vtkTypeMacro(vtkMILVideoSource2,vtkVideoSource2);
+#endif
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Standard VCR functionality: Record incoming video.
@@ -86,13 +91,13 @@ public:
   // Description:
   // Grab a single video frame.
   void Grab();
- 
+
   // Description:
   // Request a particular frame size (set the third value to 1).
   void SetFrameSize(int x, int y, int z);
-  virtual void SetFrameSize(int dim[3]) { 
+  virtual void SetFrameSize(int dim[3]) {
     this->SetFrameSize(dim[0], dim[1], dim[2]); };
-  
+
   // Description:
   // Request a particular output format (default: VTK_RGB).
   void SetOutputFormat(int format);
@@ -110,10 +115,10 @@ public:
   void SetVideoFormatToSECAM() { this->SetVideoFormat(VTK_MIL_SECAM); };
   void SetVideoFormatToRS170() { this->SetVideoFormat(VTK_MIL_RS170); };
   void SetVideoFormatToCCIR() { this->SetVideoFormat(VTK_MIL_CCIR); };
-  void SetVideoFormatToNonStandard() { 
+  void SetVideoFormatToNonStandard() {
     this->SetVideoFormat(VTK_MIL_NONSTANDARD); };
   vtkGetMacro(VideoFormat,int);
-  
+
   // Description:
   // Set/Get the video input
   virtual void SetVideoInput(int input);
@@ -125,11 +130,11 @@ public:
   vtkGetMacro(VideoInput,int);
 
   // Description:
-  // Set/Get the video levels for composite/SVideo: the valid ranges are: 
-  // Contrast [0.0,2.0] 
-  // Brighness [0.0,255.0] 
-  // Hue [-0.5,0.5] 
-  // Saturation [0.0,2.0] 
+  // Set/Get the video levels for composite/SVideo: the valid ranges are:
+  // Contrast [0.0,2.0]
+  // Brighness [0.0,255.0]
+  // Hue [-0.5,0.5]
+  // Saturation [0.0,2.0]
   virtual void SetContrastLevel(float contrast);
   vtkGetMacro(ContrastLevel,float);
   virtual void SetBrightnessLevel(float brightness);
@@ -141,7 +146,7 @@ public:
 
   // Description:
   // Set/Get the video levels for monochrome/RGB: valid values are
-  // between 0.0 and 255.0. 
+  // between 0.0 and 255.0.
   virtual void SetBlackLevel(float value);
   virtual float GetBlackLevel() {
     return this->BlackLevel; };
@@ -189,7 +194,7 @@ public:
   vtkGetMacro(MILErrorMessages,int);
 
   // Description:
-  // Allows fine-grained control 
+  // Allows fine-grained control
   vtkSetMacro(MILAppID,long);
   vtkGetMacro(MILAppID,long);
   vtkSetMacro(MILSysID,long);
