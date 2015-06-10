@@ -4,7 +4,12 @@ INCLUDE_DIRECTORIES(${vtkCudaCommon_SOURCE_DIR} ${vtkRobartsUtilities_SOURCE_DIR
 
 SET(KIT vtkCudaImageAnalytics)
 SET(UKIT vtkCudaImageAnalytics)
+# possible fix for vtk6+
+#IF(VTK_LIBRARIES)
+#  SET(KIT_LIBS vtkCudaCommon vtkRobartsUtilities cudart ${VTK_LIBRARIES} )
+#ELSE()
 SET(KIT_LIBS vtkCommon vtkFiltering vtkCudaCommon vtkRobartsUtilities cudart)
+#ENDIF()
 SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} cuda cudart cudartemu cufft cufftemu OpenCL cublas cublasemu)
 
 SET ( Kit_SRCS
@@ -14,7 +19,7 @@ SET ( Kit_SRCS
   vtkCudaVoxelClassifier.cxx
   CUDA_voxelclassifier.h
   CUDA_voxelclassifier.cu
-  
+
   #CT to US simulation
   vtkCudaCT2USSimulation.h
   vtkCudaCT2USSimulation.cxx
@@ -72,7 +77,7 @@ SET ( Kit_SRCS
   vtkCudaMaxFlowSegmentationTask.cxx
   CUDA_hierarchicalmaxflow.h
   CUDA_hierarchicalmaxflow.cu
-  
+
   #Accelerated hierarchical max-flow objective function decomposition
   vtkCudaHierarchicalMaxFlowDecomposition.h
   vtkCudaHierarchicalMaxFlowDecomposition.cxx

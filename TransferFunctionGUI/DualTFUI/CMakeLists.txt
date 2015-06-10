@@ -1,5 +1,9 @@
-
+# possible fix for vtk6+
+#IF(VTK_LIBRARIES)
+#  SET(KIT_LIBS SharedComponents vtkCudaVisualization vtkCudaImageAnalytics vtkCudaCommon ${VTK_LIBRARIES} )
+#ELSE()
 SET(KIT_LIBS SharedComponents vtkCudaVisualization vtkCudaImageAnalytics vtkCudaCommon vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon QVTK)
+#ENDIF()
 
 SET ( Kit_SRCS
   DUALTF_main.cpp
@@ -13,7 +17,7 @@ SET ( Kit_SRCS
   DUALTF_segmentationWidget.h
 )
 
-SET( mocHeaders  
+SET( mocHeaders
   DUALTF_transferFunctionWindowWidget.h
   DUALTF_transferFunctionDefinitionWidget.h
   DUALTF_segmentationWidget.h

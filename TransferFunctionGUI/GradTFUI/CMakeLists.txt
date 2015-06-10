@@ -2,7 +2,12 @@ PROJECT(GradTFUI)
 
 SET(KIT GradTFUI)
 SET(UKIT GradTFUI)
+# possible fix for vtk6+
+#IF(VTK_LIBRARIES)
+#  SET(KIT_LIBS  SharedComponents vtkCudaVisualization vtkCudaImageAnalytics vtkCudaCommon ${VTK_LIBRARIES} )
+#ELSE()
 SET(KIT_LIBS SharedComponents vtkCudaVisualization vtkCudaImageAnalytics vtkCudaCommon vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon QVTK)
+#ENDIF()
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS
@@ -17,7 +22,7 @@ SET ( Kit_SRCS
   segmentationWidget.h
 )
 
-SET( mocHeaders  
+SET( mocHeaders
   transferFunctionWindowWidget.h
   transferFunctionDefinitionWidget.h
   segmentationWidget.h
