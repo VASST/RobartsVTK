@@ -33,9 +33,9 @@ ENDIF(RobartsVTK_USE_ITK)
 
 # Look for a libxml2 (optional), only VTK 5 and higher
 IF(${VTK_MAJOR_VERSION} GREATER 4)
-  # LIBXML2_FOUND: We need this variable because CMake's FindLibXml2.cmake module does 
+  # LIBXML2_FOUND: We need this variable because CMake's FindLibXml2.cmake module does
   #                not set LibXml2_DIR like most FIND_PACKAGE modules.
-  SET(LIBXML2_FOUND 0) 
+  SET(LIBXML2_FOUND 0)
   OPTION(RobartsVTK_USE_LIBXML2 "Use libxml2 in RobartsVTK" ON)
   IF(RobartsVTK_USE_LIBXML2)
     FIND_PACKAGE(LibXml2 QUIET)
@@ -47,10 +47,10 @@ IF(${VTK_MAJOR_VERSION} GREATER 4)
   ENDIF(RobartsVTK_USE_LIBXML2)
 ENDIF(${VTK_MAJOR_VERSION} GREATER 4)
 
-# Look up some variables that weren't included in VTKConfig.cmake until VTK-4-4. 
-IF(${VTK_MAJOR_VERSION} EQUAL 4 AND ${VTK_MINOR_VERSION} LESS 4) 
+# Look up some variables that weren't included in VTKConfig.cmake until VTK-4-4.
+IF(${VTK_MAJOR_VERSION} EQUAL 4 AND ${VTK_MINOR_VERSION} LESS 4)
   INCLUDE(${RobartsVTK_SOURCE_DIR}/CMake/GetMissingVTKConfig42.cmake)
-ENDIF(${VTK_MAJOR_VERSION} EQUAL 4 AND ${VTK_MINOR_VERSION} LESS 4) 
+ENDIF(${VTK_MAJOR_VERSION} EQUAL 4 AND ${VTK_MINOR_VERSION} LESS 4)
 
 # Starting in VTK 5, we need to include some Utilities directories.
 IF (${VTK_MAJOR_VERSION} GREATER 4)
@@ -105,7 +105,7 @@ SET(RobartsVTK_INCLUDE_DIRS)
 # Include the Tcl and Python wrappers
 IF(VTK_WRAP_TCL AND ${VTK_MAJOR_VERSION} GREATER 4)
     INCLUDE(${VTK_CMAKE_DIR}/vtkWrapTcl.cmake)
-    INCLUDE_DIRECTORIES("${VTK_TCL_INCLUDE_DIR}" "${VTK_TK_INCLUDE_DIR}")  
+    INCLUDE_DIRECTORIES("${VTK_TCL_INCLUDE_DIR}" "${VTK_TK_INCLUDE_DIR}")
 ENDIF(VTK_WRAP_TCL AND ${VTK_MAJOR_VERSION} GREATER 4)
 
 IF(VTK_WRAP_PYTHON AND ${VTK_MAJOR_VERSION} GREATER 4)
@@ -162,7 +162,7 @@ IF (RobartsVTK_USE_MWIERZ)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkMwierz)
 ENDIF (RobartsVTK_USE_MWIERZ)
 
-# vtkAnix
+# vtkAnis
 OPTION (RobartsVTK_USE_ANIS "Build the vtkAnis module" OFF)
 IF (RobartsVTK_USE_ANIS)
   SUBDIRS(vtkAnis)
@@ -187,14 +187,14 @@ ENDIF (RobartsVTK_USE_QT)
 # vtkCuda
 OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
-  
+
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
 
   INCLUDE(FindCUDA)
   # Add Robart's CUDA libraries
   SUBDIRS(vtkCudaCommon)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon) 
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${RobartsVTK_SOURCE_DIR}/vtkCudaCommon)
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon)
 
 ENDIF (RobartsVTK_USE_CUDA)
@@ -229,7 +229,7 @@ IF (RobartsVTK_USE_ROBARTSULTRASOUND)
 ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
 
 # Add RobartsVTK.py.in file.  On Win32, this has to go into
-# all config 
+# all config
 IF(VTK_WRAP_PYTHON)
   IF(WIN32 AND CMAKE_CONFIGURATION_TYPES)
     FOREACH(config ${CMAKE_CONFIGURATION_TYPES})
@@ -268,4 +268,3 @@ ENDIF(RobartsVTK_BUILD_EXAMPLES)
 # the end of the whole configuration process, as a "last step".
 # This directory is typically the last SUBDIRS in the main CMakeLists.txt.
 SUBDIRS(CMake/LastConfigureStep)
-

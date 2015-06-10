@@ -2,7 +2,12 @@ PROJECT( DirectShowVideoCapture )
 
 SET(KIT DirectShowVideoCapture )
 SET(UKIT DirectShowVideoCapture )
+# possible fix for vtk6+
+#IF(VTK_LIBRARIES)
+#  SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRobartsVideo ${VTK_LIBRARIES} )
+#ELSE()
 SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkRobartsVideo )
+#ENDIF()
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS

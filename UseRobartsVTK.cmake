@@ -1,6 +1,6 @@
 #
-# This module is provided as RobartsVTK_USE_FILE by RobartsVTKConfig.cmake.  
-# It can be INCLUDEd in a project to load the needed compiler and linker
+# This module is provided as RobartsVTK_USE_FILE by RobartsVTKConfig.cmake.
+# It can be INCLUDED in a project to load the needed compiler and linker
 # settings to use RobartsVTK:
 #   FIND_PACKAGE(RobartsVTK REQUIRED)
 #   INCLUDE(${RobartsVTK_USE_FILE})
@@ -48,7 +48,7 @@ IF(NOT RobartsVTK_USE_FILE_INCLUDED)
     ELSE(NOT ITK_DIR)
       INCLUDE(${ITK_DIR}/ITKConfig.cmake)
     ENDIF(NOT ITK_DIR)
-    
+
     # Include the ITK use file
     INCLUDE(${ITK_USE_FILE})
 

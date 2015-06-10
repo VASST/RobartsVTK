@@ -1,4 +1,4 @@
-# Generate the RobartsVTKConfig.cmake file in the build tree. This doesnot 
+# Generate the RobartsVTKConfig.cmake file in the build tree. This does not 
 # configure one for installation. The file tells external projects how to use
 # RobartsVTK.
 
@@ -16,7 +16,7 @@ SET(DOLLAR "$")
 SET(RobartsVTK_SOURCE_DIR_CONFIG ${RobartsVTK_SOURCE_DIR})
 
 # The library dependencies file.
-SET(RobartsVTK_LIBRARY_DEPENDS_FILE 
+SET(RobartsVTK_LIBRARY_DEPENDS_FILE
   ${RobartsVTK_BINARY_DIR}/RobartsVTKLibraryDepends.cmake)
 
 #INCLUDE(${CMAKE_ROOT}/Modules/CMakeExportBuildSettings.cmake)
@@ -29,7 +29,7 @@ SET(RobartsVTK_USE_FILE_CONFIG
   ${RobartsVTK_BINARY_DIR}/UseRobartsVTK.cmake)
 
 # The build settings file.
-SET(RobartsVTK_BUILD_SETTINGS_FILE_CONFIG 
+SET(RobartsVTK_BUILD_SETTINGS_FILE_CONFIG
   ${RobartsVTK_BINARY_DIR}/RobartsVTKBuildSettings.cmake)
 
 # The library directories.
@@ -74,4 +74,3 @@ CONFIGURE_FILE(
 # Configure the UseRobartsVTK file
 CONFIGURE_FILE(${RobartsVTK_SOURCE_DIR}/UseRobartsVTK.cmake
                ${RobartsVTK_BINARY_DIR}/UseRobartsVTK.cmake COPYONLY)
-

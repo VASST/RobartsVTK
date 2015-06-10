@@ -2,7 +2,12 @@ PROJECT( MaxFlowUtils )
 
 SET(KIT MaxFlowUtils )
 SET(UKIT MaxFlowUtils )
+# possible fix for vtk6+
+#IF(VTK_LIBRARIES)
+#  SET(KIT_LIBS vtkCudaCommon vtkCudaImageAnalytics vtkRobartsUtilities ${VTK_LIBRARIES} )
+#ELSE()
 SET(KIT_LIBS vtkFiltering vtkImaging vtkIO vtkCommon vtkCudaCommon vtkCudaImageAnalytics vtkRobartsUtilities )
+#ENDIF()
 SET(KIT_EXTRA_LIBS)
 
 INCLUDE_DIRECTORIES ( ${RobartsVTK_INCLUDE_DIRS} )

@@ -54,7 +54,7 @@ MESSAGE(STATUS "Loaded TIFF ${VTK_TIFF_LIBRARIES}")
 # VTK_EXPAT_LIBRARIES
 IF (${VTK42_VTK_USE_SYSTEM_EXPAT})
   # Use system library
-  # This does not exists:
+  # This does not exist:
   #FIND_PACKAGE(EXPAT)
   #IF(EXPAT_FOUND)
   #  SET(VTK_EXPAT_LIBRARIES ${EXPAT_LIBRARIES})
