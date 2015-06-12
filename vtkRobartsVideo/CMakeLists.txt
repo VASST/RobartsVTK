@@ -20,13 +20,13 @@ SET ( Kit_SRCS
 IF (WIN32)
   OPTION (RobartsVTK_USE_DIRECTSHOW "Enable DirectShow Video Source Classes" OFF)
   OPTION (RobartsVTK_USE_EPIPHAN    "Enable Epiphan Video Source Classes" ON)
-  OPTION (RobartsVTK_USE_SONIX       "Enable UltraSonix Video Source" OFF)
+  OPTION (RobartsVTK_USE_SONIX      "Enable UltraSonix Video Source" OFF)
 ENDIF (WIN32)
 
 OPTION (RobartsVTK_USE_VIDEOSOURCE2 "Enable New Video Source Modules" OFF)
 
 IF (RobartsVTK_USE_DIRECTSHOW)
-  SET (Kit_SRCS ${Kit_SRCS} 
+  SET (Kit_SRCS ${Kit_SRCS}
        vtkDirectShowVideoSource.cxx )
 
   FIND_LIBRARY(STRMIIDS strmiids "C:/WinDDK/7600.16385.1/lib/win7/")
@@ -55,7 +55,7 @@ IF (RobartsVTK_USE_DIRECTSHOW)
   FIND_PATH(DIRECTX_PATH d3dx9.h
       "C:/Program Files/Microsoft DirectX SDK (June 2010)/Include"
   )
-    
+
   FIND_PATH(DIRECTSHOW_QEDIT_PATH qedit.h
       "C:/Program Files/Microsoft Platform SDK for Windows Server 2003 R2/Include")
 
@@ -65,9 +65,9 @@ IF (RobartsVTK_USE_DIRECTSHOW)
 ENDIF (RobartsVTK_USE_DIRECTSHOW)
 
 IF (RobartsVTK_USE_EPIPHAN)
-  SET (Kit_SRCS ${Kit_SRCS} 
+  SET (Kit_SRCS ${Kit_SRCS}
        vtkEpiphanVideoSource.cxx
-       #vtkEpiphanDualVideoSource.cxx 
+       #vtkEpiphanDualVideoSource.cxx
   )
 
   if (CMAKE_CL_64)
@@ -91,7 +91,7 @@ ENDIF (RobartsVTK_USE_EPIPHAN)
 
 
 IF ( RobartsVTK_USE_SONIX )
-  SET (Kit_SRCS ${Kit_SRCS} 
+  SET (Kit_SRCS ${Kit_SRCS}
        vtkSonixVideoSource.cxx )
 
   SET (ULTERIUS_ROOT "${RobartsVTK_SOURCE_DIR}/vtkRobartsVideo/ulterius-2.0/")
@@ -105,7 +105,7 @@ IF ( RobartsVTK_USE_SONIX )
 ENDIF (  RobartsVTK_USE_SONIX )
 
 IF (RobartsVTK_USE_VIDEOSOURCE2)
-  SET (Kit_SRCS ${Kit_SRCS} 
+  SET (Kit_SRCS ${Kit_SRCS}
        vtkVideoBuffer2.cxx
        vtkVideoFrame2.cxx
        vtkVideoSource2.cxx )
@@ -137,8 +137,8 @@ ENDIF (RobartsVTK_USE_VIDEOSOURCE2)
 
 OPTION (RobartsVTK_USE_OPENCV_VIDEOSOURCE "Enable the OpenCV Video Source Modules" OFF)
 IF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
-  
-  SET (Kit_SRCS ${Kit_SRCS} 
+
+  SET (Kit_SRCS ${Kit_SRCS}
   vtkOpenCVVideoSource.cxx )
 
   FIND_PACKAGE( OpenCV REQUIRED )
@@ -152,8 +152,8 @@ ENDIF (RobartsVTK_USE_OPENCV_VIDEOSOURCE)
 #manage the vuzix base AR classes
 OPTION (RobartsVTK_USE_VUZIX_UTILITIES "Enable the stereo utilities for Vuzix AR Applications" OFF)
 IF (RobartsVTK_USE_VUZIX_UTILITIES)
-  
-  SET (Kit_SRCS ${Kit_SRCS} 
+
+  SET (Kit_SRCS ${Kit_SRCS}
   vtkVuzixARCamera.h vtkVuzixARCamera.cxx
   vtkVuzixARScene.h  vtkVuzixARScene.cxx )
 
