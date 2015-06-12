@@ -819,7 +819,11 @@ void FluoroPredViz::ConnectUpPipeline(){
   ((vtkClippingBoxWidgetCallback*)ClippingCallback)->SetMapper(DVRMapper,DRRMapper);
   ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, ClippingCallback);
   ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
+#if (VTK_MAJOR_VERSION <= 5)
   ClippingPlanes->SetInput( Extractor->GetOutput() );
+#else
+  ClippingPlanes->SetInputConnection( Extractor->GetOutputPort() );
+#endif
 
   //start cleaning
   DVRMapper->Delete();

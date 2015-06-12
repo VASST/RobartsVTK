@@ -273,7 +273,11 @@ bool fileManagementWidget::addMetaImage(std::string filename){
   metareader->Update();
   readers.push_back(metareader);
   vtkImageData* data = metareader->GetOutput();
+#if (VTK_MAJOR_VERSION <= 5)
   data->Update();
+#else
+  //data->Modified();
+#endif
 
   //load image into CUDA
   this->addImageToMapper(data);
@@ -299,7 +303,11 @@ bool fileManagementWidget::addMincImage(std::string filename){
   mincreader->SetFileName(filename.c_str());
   readers.push_back(mincreader);
   vtkImageData* data = mincreader->GetOutput();
-  data->Update();
+  #if (VTK_MAJOR_VERSION <= 5)
+    data->Update();
+  #else
+    //data->Modified();
+  #endif
 
   //load image into CUDA
   this->addImageToMapper(data);
@@ -326,7 +334,11 @@ bool fileManagementWidget::addDICOMImage(std::string dirname){
   dicomreader->Update();
   readers.push_back(dicomreader);
   vtkImageData* data = dicomreader->GetOutput();
-  data->Update();
+  #if (VTK_MAJOR_VERSION <= 5)
+    data->Update();
+  #else
+    //data->Modified();
+  #endif
 
   //load image into CUDA
   this->addImageToMapper(data);

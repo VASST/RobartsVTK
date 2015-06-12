@@ -126,7 +126,8 @@ class vtkTransform;
 #define VTK_LINEAR_RESLICE  1
 #define VTK_CUBIC_RESLICE   2
 
-class VTK_WIDGETS_EXPORT vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidget
+//class VTK_WIDGETS_EXPORT vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidget
+class VTK_EXPORT vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidget
 {
 public:
   // Description:

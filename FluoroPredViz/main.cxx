@@ -17,6 +17,8 @@ int main(int argc, char** argv){
 #include "vtkImageCast.h"
 #include "vtkImageGaussianSmooth.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 int main1(int argc, char** argv){
 
   vtkDICOMImageReader* Reader = vtkDICOMImageReader::New();
@@ -24,14 +26,22 @@ int main1(int argc, char** argv){
   Reader->Update();
 
   vtkImageCast* Cast = vtkImageCast::New();
+#if (VTK_MAJOR_VERSION <= 5)
   Cast->SetInput(Reader->GetOutput());
+#else
+  Cast->SetInputConnection(Reader->GetOutputPort());
+#endif
   Cast->SetOutputScalarTypeToDouble();
   Cast->Update();
 
   vtkImageGaussianSmooth* Smooth = vtkImageGaussianSmooth::New();
   Smooth->SetStandardDeviation(1.5,1.5,1.5);
   Smooth->SetRadiusFactors(15,15,15);
+#if (VTK_MAJOR_VERSION <= 5)
   Smooth->SetInput(Cast->GetOutput());
+#else
+  Smooth->SetInputConnection(Cast->GetOutputPort());
+#endif
   Smooth->Update();
 
   //vtkImageFrangiFilter* Frangi = vtkImageFrangiFilter::New();
@@ -45,7 +55,12 @@ int main1(int argc, char** argv){
   Writer->SetFileName("E:\\jbaxter\\data\\CTA\\Recon2.mhd");
   Writer->SetRAWFileName("E:\\jbaxter\\data\\CTA\\Recon2.raw");
   Writer->SetCompression(false);
+#if (VTK_MAJOR_VERSION <= 5)
   Writer->SetInput(Cast->GetOutput());
+#else
+  Writer->SetInputConnection(Cast->GetOutputPort());
+#endif
+
   Writer->Write();
 
   Reader->Delete();

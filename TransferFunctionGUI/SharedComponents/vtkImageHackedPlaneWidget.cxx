@@ -1533,8 +1533,13 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
     int interpolate = this->ResliceInterpolate;
     this->ResliceInterpolate = -1; // Force change
     this->SetResliceInterpolate(interpolate);
+#if (VTK_MAJOR_VERSION <= 5)
     this->ColorMap->SetInput(this->ResliceR->GetOutput());
     this->Texture->SetInput(this->ColorMap->GetOutput());
+#else
+    this->ColorMap->SetInputConnection(this->ResliceR->GetOutputPort());
+    this->Texture->SetInputConnection(this->ColorMap->GetOutputPort());
+#endif
   }else{
 
   vtkImageExtractComponents* Extractor0 = vtkImageExtractComponents::New();
@@ -1547,9 +1552,16 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   Extractor2->SetInput(this->ImageData);
   Extractor2->SetComponents(2);
 
+#if (VTK_MAJOR_VERSION <= 5)
   this->ResliceR->SetInput(Extractor0->GetOutput());
   this->ResliceG->SetInput(Extractor1->GetOutput());
   this->ResliceB->SetInput(Extractor2->GetOutput());
+#else
+  this->ResliceR->SetInputConnection(Extractor0->GetOutputPort());
+  this->ResliceG->SetInputConnection(Extractor1->GetOutputPort());
+  this->ResliceB->SetInputConnection(Extractor2->GetOutputPort());
+#endif
+
   int comps = this->ResliceR->GetOutput()->GetNumberOfScalarComponents();
 
   vtkImageMathematics* Shift0 = vtkImageMathematics::New();
@@ -1579,17 +1591,31 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   Scale2->SetInput1(Shift2->GetOutput());
 
   vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
+#if (VTK_MAJOR_VERSION <= 5)
   Appender->SetInput(0,Scale0->GetOutput());
   Appender->SetInput(1,Scale1->GetOutput());
   Appender->SetInput(2,Scale2->GetOutput());
+#else
+  Appender->SetInputConnection(0,Scale0->GetOutputPort());
+  Appender->SetInputConnection(1,Scale1->GetOutputPort());
+  Appender->SetInputConnection(2,Scale2->GetOutputPort());
+#endif
   Appender->Update();
 
   vtkImageCast* Caster = vtkImageCast::New();
+#if (VTK_MAJOR_VERSION <= 5)
   Caster->SetInput(Appender->GetOutput());
+#else
+  Caster->SetInputConnection(Appender->GetOutputPort());
+#endif
   Caster->SetOutputScalarTypeToUnsignedChar();
   Caster->Update();
 
+#if (VTK_MAJOR_VERSION <= 5)
   this->Texture->SetInput(Caster->GetOutput());
+#else
+  this->Texture->SetInputConnection(Caster->GetOutputPort());
+#endif
   Extractor0->Delete();
   Extractor1->Delete();
   Extractor2->Delete();
@@ -2163,7 +2189,11 @@ void vtkImageHackedPlaneWidget::UpdateCursor(int X, int Y )
   // up to date already, this call doesn't cost very much.  If we don't make
   // this call and the data is not up to date, the GetScalar... call will
   // cause a segfault.
+#if (VTK_MAJOR_VERSION <= 5)
   this->ImageData->Update();
+#else
+  //this->ImageData->Modified();
+#endif
 
   vtkAssemblyPath *path;
   this->PlanePicker->Pick(X,Y,0.0,this->CurrentRenderer);

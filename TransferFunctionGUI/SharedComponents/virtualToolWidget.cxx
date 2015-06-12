@@ -468,7 +468,11 @@ void virtualToolWidget::selectImage(vtkImageData* image){
 
   //create extraction widget
   vtkImageExtractComponents* extractor = vtkImageExtractComponents::New();
+#if (VTK_MAJOR_VERSION <= 5)
   extractor->SetInput(image);
+#else
+  extractor->SetInputData(image);
+#endif
   if(image->GetNumberOfScalarComponents()==1){
     extractor->SetComponents(0);
   }else if(image->GetNumberOfScalarComponents()==2){
@@ -509,12 +513,20 @@ void virtualToolWidget::selectImage(vtkImageData* image){
   }
 
   //prepare the clipping planes for use
+#if (VTK_MAJOR_VERSION <= 5)
   clippingPlanes->SetInput( image );
+#else
+  clippingPlanes->SetInputData( image );
+#endif
   clippingPlanes->PlaceWidget();
   clippingPlanes->EnabledOn();
   
   //prepare the keyhole planes for use
+#if (VTK_MAJOR_VERSION <= 5)
   keyholePlanes->SetInput( image );
+#else
+  keyholePlanes->SetInputData( image );
+#endif
   keyholePlanes->PlaceWidget();
   keyholePlanes->EnabledOn();
 
@@ -533,7 +545,11 @@ bool virtualToolWidget::addVTKFile(std::string filename){
 
   //create a mapper
   vtkPolyDataMapper* vrMapper = vtkPolyDataMapper::New();
+#if (VTK_MAJOR_VERSION <= 5)
   vrMapper->SetInput(vrInput->GetOutput());
+#else
+  vrMapper->SetInputConnection(vrInput->GetOutputPort());
+#endif
   vrMapper->SetScalarVisibility( 0 );
   virtualToolMappers.push_back(vrMapper);
 

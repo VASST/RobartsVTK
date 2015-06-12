@@ -5,6 +5,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 #include "vtkMath.h"
+#include <vtkStreamingDemandDrivenPipeline.h>
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
 //------------------------------------------------------------------------------
 vtkImageMultiStatistics* vtkImageMultiStatistics::New()
@@ -635,9 +637,14 @@ void vtkImageMultiStatistics::Update() {
     vtkErrorMacro(<< "No input...can't execute!");
     return;
   }
-
+#if (VTK_MAJOR_VERSION <= 5)
   input->Update();
   input->GetWholeExtent(wholeInExt);
+#else
+  this->Update();
+  this->UpdateInformation();
+  this->GetOutputInformation(0)->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), wholeInExt);
+#endif
   inPtr = input->GetScalarPointerForExtent(wholeInExt);
 
   // get the number of input components
@@ -652,7 +659,12 @@ void vtkImageMultiStatistics::Update() {
   vtkImageData *mask = this->GetInput(1);
   if( mask ){
     int MaskExtent[6];
+#if (VTK_MAJOR_VERSION <= 5)
     mask->GetWholeExtent( MaskExtent );
+#else
+	this->UpdateInformation();
+	this->GetOutputInformation(1)->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), MaskExtent);
+#endif
     if( MaskExtent[0] != wholeInExt[0] || MaskExtent[1] != wholeInExt[1] || MaskExtent[2] != wholeInExt[2] ||
       MaskExtent[3] != wholeInExt[3] || MaskExtent[4] != wholeInExt[4] || MaskExtent[5] != wholeInExt[5] ){
       vtkErrorMacro(<< "Mask is not the same extent as the input.");
@@ -743,9 +755,12 @@ void vtkImageMultiStatistics::Update() {
     }
     this->InvokeEvent(vtkCommand::EndEvent, NULL);
   }
+
+#if (VTK_MAJOR_VERSION <= 5)
   if (input->ShouldIReleaseData()) {
     input->ReleaseData();
   }
+#endif
 
   //update PCA results
   double** temporaryCovariance = new double* [this->NumberOfComponents];
