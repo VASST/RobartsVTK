@@ -300,7 +300,11 @@ int main(int argc, char** argv){
     vtkMetaImageWriter* Writer = vtkMetaImageWriter::New();
     Writer->SetFileName(OutFileMHD.c_str());
     Writer->SetRAWFileName(OutFileRAW.c_str());
+#if (VTK_MAJOR_VERSION <= 5)
     Writer->SetInput((vtkDataObject*)Voter->GetOutput());
+#else
+    Writer->SetInputConnection(Voter->GetOutputPort());
+#endif
     Writer->Write();
     Writer->Delete();
     Voter->Delete();

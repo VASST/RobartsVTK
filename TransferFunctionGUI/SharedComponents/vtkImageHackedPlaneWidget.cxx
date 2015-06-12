@@ -1567,28 +1567,52 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
   vtkImageMathematics* Shift0 = vtkImageMathematics::New();
   Shift0->SetOperationToAddConstant();
   Shift0->SetConstantC(-minMax[0]);
+#if (VTK_MAJOR_VERSION <= 5)
   Shift0->SetInput1(this->ResliceR->GetOutput());
+#else
+  Shift0->SetInput1Data(this->ResliceR->GetOutput());
+#endif
   vtkImageMathematics* Shift1 = vtkImageMathematics::New();
   Shift1->SetOperationToAddConstant();
   Shift1->SetConstantC(-minMax[2]);
+#if (VTK_MAJOR_VERSION <= 5)
   Shift1->SetInput1(this->ResliceG->GetOutput());
+#else
+  Shift1->SetInput1Data(this->ResliceG->GetOutput());
+#endif
   vtkImageMathematics* Shift2 = vtkImageMathematics::New();
   Shift2->SetOperationToAddConstant();
   Shift2->SetConstantC(-minMax[4]);
+#if (VTK_MAJOR_VERSION <= 5)
   Shift2->SetInput1(this->ResliceB->GetOutput());
+#else
+  Shift2->SetInput1Data(this->ResliceB->GetOutput());
+#endif
 
   vtkImageMathematics* Scale0 = vtkImageMathematics::New();
   Scale0->SetOperationToMultiplyByK();
   Scale0->SetConstantK(255.0/(minMax[1]-minMax[0]));
+#if (VTK_MAJOR_VERSION <= 5)
   Scale0->SetInput1(Shift0->GetOutput());
+#else
+  Scale0->SetInput1Data(Shift0->GetOutput());
+#endif
   vtkImageMathematics* Scale1 = vtkImageMathematics::New();
   Scale1->SetOperationToMultiplyByK();
   Scale1->SetConstantK(255.0/(minMax[3]-minMax[2]));
+#if (VTK_MAJOR_VERSION <= 5)
   Scale1->SetInput1(Shift1->GetOutput());
+#else
+  Scale1->SetInput1Data(Shift1->GetOutput());
+#endif
   vtkImageMathematics* Scale2 = vtkImageMathematics::New();
   Scale2->SetOperationToMultiplyByK();
   Scale2->SetConstantK(255.0/(minMax[5]-minMax[4]));
+#if (VTK_MAJOR_VERSION <= 5)
   Scale2->SetInput1(Shift2->GetOutput());
+#else
+  Scale2->SetInput1Data(Shift2->GetOutput());
+#endif
 
   vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
 #if (VTK_MAJOR_VERSION <= 5)
