@@ -12,6 +12,8 @@
 #include "vtkColorTransferFunction.h"
 #include "vtkImageMapToColors.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 // ---------------------------------------------------------------------------------------
 //Callbacks for the box and plane widgets
 
@@ -182,9 +184,15 @@ void virtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, 
   zPlaneRenderer = vtkRenderer::New();
 
   //set up orthogonal planes pipeline
+#if (VTK_MAJOR_VERSION <= 5)
   xPlaneMapper->SetInput(xPlaneReslice->GetResliceOutput());
   yPlaneMapper->SetInput(yPlaneReslice->GetResliceOutput());
   zPlaneMapper->SetInput(zPlaneReslice->GetResliceOutput());
+#else
+  xPlaneMapper->SetInputConnection(xPlaneReslice->GetResliceOutputPort());
+  yPlaneMapper->SetInputConnection(yPlaneReslice->GetResliceOutputPort());
+  zPlaneMapper->SetInputConnection(zPlaneReslice->GetResliceOutputPort());
+#endif
   xPlaneActor->SetMapper(xPlaneMapper);
   yPlaneActor->SetMapper(yPlaneMapper);
   zPlaneActor->SetMapper(zPlaneMapper);

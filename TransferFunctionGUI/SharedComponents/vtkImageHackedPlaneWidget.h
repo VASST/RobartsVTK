@@ -227,6 +227,10 @@ public:
   vtkImageData* GetResliceOutput();
 
   // Description:
+  // Convenience method to get the vtkImageReslice output port.
+  vtkAlgorithmOutput* GetResliceOutputPort();
+
+  // Description:
   // Make sure that the plane remains within the volume.
   // Default is On.
   vtkSetMacro(RestrictPlaneToVolume,int);

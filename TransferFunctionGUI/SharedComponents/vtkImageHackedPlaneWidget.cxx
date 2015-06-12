@@ -1835,6 +1835,16 @@ vtkImageData* vtkImageHackedPlaneWidget::GetResliceOutput()
 }
 
 //----------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkImageHackedPlaneWidget::GetResliceOutputPort()
+{
+  if ( ! this->ResliceR )
+    {
+    return 0;
+    }
+  return this->ResliceR->GetOutputPort();
+}
+
+//----------------------------------------------------------------------------
 void vtkImageHackedPlaneWidget::SetResliceInterpolate(int i)
 {
   if ( this->ResliceInterpolate == i )
@@ -2845,8 +2855,12 @@ void vtkImageHackedPlaneWidget::GenerateTexturePlane()
   this->ColorMap->PassAlphaToOutputOn();
 
   vtkPolyDataMapper* texturePlaneMapper = vtkPolyDataMapper::New();
+#if (VTK_MAJOR_VERSION <= 5)
   texturePlaneMapper->SetInput(
     vtkPolyData::SafeDownCast(this->PlaneSource->GetOutput()));
+#else
+  texturePlaneMapper->SetInputConnection(this->PlaneSource->GetOutputPort());
+#endif
 
   this->Texture->SetQualityTo32Bit();
   this->Texture->MapColorScalarsThroughLookupTableOff();
