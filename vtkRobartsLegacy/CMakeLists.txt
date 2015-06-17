@@ -29,11 +29,11 @@ IF (VTK_USE_SHAPETAPE)
   INCLUDE_DIRECTORIES(${VTKSHAPEAPI_SOURCE_DIR}
                       ${VTKSHAPEAPI_BINARY_DIR})
 
-  #SUBDIRS(vtkShapeApi vtkRobartsLegacy)
+  #ADD_SUBDIRECTORY(vtkShapeApi vtkRobartsLegacy)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTracking)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtkTrackingPython)
   SUBDIR_DEPENDS(vtkRobartsLegacy ShapeApi)
-  SUBDIRS(ShapeApi)
+  ADD_SUBDIRECTORY(ShapeApi)
 
 
 ENDIF (VTK_USE_SHAPETAPE)

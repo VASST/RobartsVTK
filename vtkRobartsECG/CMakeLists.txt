@@ -75,7 +75,7 @@ OPTION (RobartsVTK_USE_LEGO "Provide support for triggering using LEGO" OFF)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} vtklego)
   SET (KIT_EXTRA_LIBS ${KIT_EXTRA_LIBS} ${USB_LIBRARIES})
 
-  SUBDIRS(LegoFiles)
+  ADD_SUBDIRECTORY(LegoFiles)
 
 ENDIF (RobartsVTK_USE_LEGO)
 
