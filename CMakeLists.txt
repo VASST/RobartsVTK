@@ -222,18 +222,6 @@ ENDIF (RobartsVTK_USE_ROBARTSULTRASOUND)
 OPTION (RobartsVTK_USE_PLUSLIB "Download and build the PLUS library" OFF)
 IF (RobartsVTK_USE_PLUSLIB)
   # Make sure we have all the components needed (temporary)
-  IF (NOT VTK_FOUND)
-    MESSAGE( FATAL_ERROR "PlusLib requires VTK. One of these components is missing. Please verify configuration")
-  ENDIF (NOT VTK_FOUND)
-
-   IF (NOT ITK_FOUND)
-    MESSAGE( FATAL_ERROR "PlusLib requires ITK. One of these components is missing. Please verify configuration")
-  ENDIF (NOT ITK_FOUND)
-
-  find_package(Subversion)
-  IF (NOT Subversion_FOUND)
-    MESSAGE( FATAL_ERROR "PlusLib requires Subversion. One of these components is missing. Please verify configuration")
-  ENDIF (NOT Subversion_FOUND)
 
   IF (NOT QT_FOUND)
     MESSAGE( FATAL_ERROR "PlusLib requires Qt. One of these components is missing. Please verify configuration")
@@ -260,6 +248,19 @@ IF (RobartsVTK_USE_PLUSLIB)
   IF(NOT GIT_FOUND)
     MESSAGE(FATAL_ERROR "error: Install Git and try to re-configure")
   ENDIF() 
+  
+  # ----- 
+  # SVN - Let's check if a valid version of SVN is available
+  # -----
+  # Need subversion for the automatic update of the repository
+  MARK_AS_ADVANCED(CLEAR Subversion_SVN_EXECUTABLE)
+  FIND_FILE(Subversion_SVN_EXECUTABLE svn${CMAKE_EXECUTABLE_SUFFIX} 
+    PATHS 
+      "c:/Program Files/TortoiseSVN/bin/"
+      "c:/Program Files/SlikSvn/bin/"
+    )
+  FIND_PACKAGE(Subversion REQUIRED)
+
   # ----- 
   # ASSEMBLA - Set username and password for assembla 
   # Anonymous user name for Plus assembla server: https://subversion.assembla.com/svn/plus/
@@ -390,7 +391,7 @@ IF (RobartsVTK_USE_PLUSLIB)
   SET (PLUS_EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin") #CHECK THIS!!!!!
   
   # ----- 
-  # Specify external project properties
+  # Specify common external project properties
   # ----- 
   INCLUDE(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
   INCLUDE(CTest)
