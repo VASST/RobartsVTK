@@ -1483,7 +1483,9 @@ void vtkGridTransformBSpline::InternalUpdate()
     }
 
   grid->SetUpdateExtent(grid->GetWholeExtent());
+#if (VTK_MAJOR_VERSION <= 5)
   grid->Update();
+#endif
 }
 
 //----------------------------------------------------------------------------

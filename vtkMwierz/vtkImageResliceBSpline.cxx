@@ -701,8 +701,11 @@ void vtkImageResliceBSpline::ExecuteInformation(vtkImageData *input,
       outOrigin[i] = this->OutputOrigin[i];
       }
     }
-
+#if (VTK_MAJOR_VERSION <= 5)
   output->SetWholeExtent(outWholeExt);
+#else
+  output->SetWholeExtent(outWholeExt);
+#endif
   output->SetSpacing(outSpacing);
   output->SetOrigin(outOrigin);
   output->SetScalarType(input->GetScalarType());

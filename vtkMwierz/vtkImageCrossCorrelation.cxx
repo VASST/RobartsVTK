@@ -146,9 +146,10 @@ void vtkImageCrossCorrelation::ExecuteInformation(vtkImageData **inDatas,
   int idx;
   int wholeInExt[6];
   double spacing[3];
-  
+#if (VTK_MAJOR_VERSION <= 5)
   inDatas[0]->Update();
   inDatas[1]->Update();
+#endif
   inDatas[0]->GetWholeExtent(wholeInExt);
   inDatas[0]->GetSpacing(spacing);
 

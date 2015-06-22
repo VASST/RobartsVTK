@@ -470,7 +470,11 @@ void CalculateDistanceMap(vtkImageData *lift, int SliceAxis, vtkImageData *&dist
   ext[4] = ext[4] + 1; ext[5] = ext[5] - 1;
 
   vtkImageReslice *reslice = vtkImageReslice::New();
+#if (VTK_MAJOR_VERSION <= 5)
   reslice->SetInput(temp);
+#else
+  reslice->SetInputData(temp);
+#endif
   reslice->SetOutputExtent(ext);
   reslice->SetOutputSpacing(spa);
   reslice->SetInterpolationModeToLinear();
@@ -538,7 +542,11 @@ void InterpolateDistanceMap(vtkImageData *distanceMaps[2], int SliceAxis, double
   interpolatedDistanceMap->GetSpacing(outSpa);
 
   vtkImageReslice *reslice = vtkImageReslice::New();
+#if (VTK_MAJOR_VERSION <= 5)
   reslice->SetInput(temp);
+#else
+  reslice->SetInputData(temp);
+#endif
   reslice->SetOutputExtent(outExt);
   reslice->SetOutputSpacing(outSpa);
   reslice->SetInterpolationModeToLinear();
@@ -570,7 +578,11 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
 #endif
 
   vtkImageThreshold *threshold1 = vtkImageThreshold::New();
+#if (VTK_MAJOR_VERSION <= 5)
   threshold1->SetInput(distanceMap);
+#else
+  threshold1->SetInputData(distanceMap);
+#endif
   threshold1->ThresholdByUpper(0.0);
   threshold1->SetOutValue(0);
   threshold1->SetInValue(1);
@@ -644,7 +656,11 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
 #endif
 
   vtkImageThreshold *threshold2 = vtkImageThreshold::New();
+#if (VTK_MAJOR_VERSION <= 5)
   threshold2->SetInput(distanceMap);
+#else
+  threshold2->SetInputData(distanceMap);
+#endif
   threshold2->ThresholdByUpper(0.0);
   threshold2->SetOutValue(0);
   threshold2->SetInValue(1);
@@ -707,13 +723,22 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
     }
 
   vtkImageMathematics *math1 = vtkImageMathematics::New();
+#if (VTK_MAJOR_VERSION <= 5)
   math1->SetInput1(slice1);
   math1->SetInput2(slice2);
+#else
+  math1->SetInput1Data(slice1);
+  math1->SetInput2Data(slice2);
+#endif
   math1->SetOperationToAdd();
   math1->Update();
 
   vtkImageMathematics *math2 = vtkImageMathematics::New();
+#if (VTK_MAJOR_VERSION <= 5)
   math2->SetInput1(math1->GetOutput());
+#else
+  math2->SetInput1Data(math1->GetOutput());
+#endif
   math2->SetConstantK(0.5);
   math2->SetOperationToMultiplyByK();
   math2->Update();
@@ -857,7 +882,11 @@ void vtkShapeBasedInterpolation::Update()
         slice = ExtractSlice(interpolatedDistanceMap, this->SliceAxis, this->OutputSpacing, slicExt,
            this->inMinVal, this->inMaxVal, this->NumberOfBins);
        }
+#if (VTK_MAJOR_VERSION <= 5)
     append->AddInput(slice);
+#else
+     append->AddInputData(slice);
+#endif
     append->Update();
     j++;
     pos = staPos + j * fabs(this->OutputSpacing[SliceAxis]);
@@ -879,8 +908,11 @@ void vtkShapeBasedInterpolation::Update()
       slice = ExtractSlice(interpolatedDistanceMap, this->SliceAxis, this->OutputSpacing, slicExt,
          this->inMinVal, this->inMaxVal, this->NumberOfBins);
     }
-
+#if (VTK_MAJOR_VERSION <= 5)
   append->AddInput(slice);
+#else
+  append->AddInputData(slice);
+#endif
   append->Update();
   append->GetOutput()->SetOrigin(this->inOri);
   this->outData = append->GetOutput();

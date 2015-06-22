@@ -211,7 +211,9 @@ void vtkCalcCentroid::ComputeCentroid()
   int inputExtent[6];
   this->Input->GetWholeExtent(inputExtent);
   this->Input->SetUpdateExtent(inputExtent);
+#if (VTK_MAJOR_VERSION <= 5)
   this->Input->Update();
+#endif
   
   void *inPtr = this->Input->GetScalarPointerForExtent(inputExtent);
   
@@ -283,7 +285,9 @@ void vtkCalcCentroid::ComputeCovarianceMatrix()
   int inputExtent[6];
   this->Input->GetWholeExtent(inputExtent);
   this->Input->SetUpdateExtent(inputExtent);
+#if (VTK_MAJOR_VERSION <= 5)
   this->Input->Update();
+#endif
   
   void *inPtr = this->Input->GetScalarPointerForExtent(inputExtent);
   

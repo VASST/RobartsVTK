@@ -145,7 +145,9 @@ void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
     input->GetOrigin(this->ori);
 
     this->OutputImage = vtkImageData::New();
+#if (VTK_MAJOR_VERSION <= 5)
     this->OutputImage->SetWholeExtent(this->ext);
+#endif
     this->OutputImage->SetExtent(this->ext);
     this->OutputImage->SetSpacing(this->spa);
     this->OutputImage->SetOrigin(this->ori);
@@ -296,7 +298,9 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetEigenVectorsImage()
 
   vtkImageData *EVI;
   EVI = vtkImageData::New();
+#if (VTK_MAJOR_VERSION <= 5)
   EVI->SetWholeExtent(0,N-1,0,M-1,0,0);
+#endif
   EVI->SetExtent(0,N-1,0,M-1,0,0);
 #if (VTK_MAJOR_VERSION <= 5)
   EVI->SetNumberOfScalarComponents(1);
@@ -325,7 +329,9 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetMeanIntensitiesImage()
 
   vtkImageData *MII;
   MII = vtkImageData::New();
+#if (VTK_MAJOR_VERSION <= 5)
   MII->SetWholeExtent(0,N-1,0,0,0,0);
+#endif
   MII->SetExtent(0,N-1,0,0,0,0);
 #if (VTK_MAJOR_VERSION <= 5)
   MII->SetNumberOfScalarComponents(1);

@@ -120,10 +120,12 @@ vtkImageData *vtkImageSMIPVIManipulator::GetInput2()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageSMIPVIManipulator::UpdateScaled()
 {
   this->inDataScl[0]->Update();
 }
+#endif
 
 //----------------------------------------------------------------------------
 void vtkImageSMIPVIManipulator::SetBinNumber(int numS, int numT)
