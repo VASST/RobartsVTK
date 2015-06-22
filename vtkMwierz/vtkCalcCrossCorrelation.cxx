@@ -70,19 +70,19 @@ vtkCalcCrossCorrelation::~vtkCalcCrossCorrelation()
 
 // Description:
 // Specifies the input datasets
-void vtkCalcCrossCorrelation::SetInput1(vtkImageData *input)
+void vtkCalcCrossCorrelation::SetInput1Data(vtkImageData *input)
 {
-  this->vtkAlgorithm::SetNthInput(0, input);
+  this->vtkImageAlgorithm::SetInputData(0, input);
 }
-void vtkCalcCrossCorrelation::SetInput2(vtkImageData *input)
+void vtkCalcCrossCorrelation::SetInput2Data(vtkImageData *input)
 {
-  this->vtkAlgorithm::SetNthInput(1, input);
+  this->vtkImageAlgorithm::SetInputData(1, input);
 }
 
 //----------------------------------------------------------------------------
 void vtkCalcCrossCorrelation::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkAlgorithm::SetNthInput(2, stencil); 
+  this->vtkImageAlgorithm::SetInputData(2, stencil); 
 }
 
 //----------------------------------------------------------------------------
@@ -313,7 +313,7 @@ void vtkCalcCrossCorrelation::Execute()
 
 void vtkCalcCrossCorrelation::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkAlgorithm::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
 
   os << indent << "Input 1: "<< this->GetInput1() << "\n";
   os << indent << "Input 2: "<< this->GetInput2() << "\n";

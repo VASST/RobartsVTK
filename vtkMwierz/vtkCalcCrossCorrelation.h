@@ -50,11 +50,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkCalcCrossCorrelation_h
 #define __vtkCalcCrossCorrelation_h
 
-#include "vtkAlgorithm.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkImageStencilData.h"
 
-class VTK_EXPORT vtkCalcCrossCorrelation : public vtkAlgorithm
+class VTK_EXPORT vtkCalcCrossCorrelation : public vtkImageAlgorithm
 {
 public:
   // Description:
@@ -81,8 +81,8 @@ public:
 
   void Update();
   
-  void SetInput1(vtkImageData *input1);
-  void SetInput2(vtkImageData *input2);
+  void SetInput1Data(vtkImageData *input1);
+  void SetInput2Data(vtkImageData *input2);
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
 
