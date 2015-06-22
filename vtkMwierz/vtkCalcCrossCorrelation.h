@@ -50,11 +50,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkCalcCrossCorrelation_h
 #define __vtkCalcCrossCorrelation_h
 
-#include "vtkProcessObject.h"
+#include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkImageStencilData.h"
 
-class VTK_EXPORT vtkCalcCrossCorrelation : public vtkProcessObject
+class VTK_EXPORT vtkCalcCrossCorrelation : public vtkAlgorithm
 {
 public:
   // Description:
@@ -72,7 +72,7 @@ public:
   vtkBooleanMacro(ReverseStencil, int);
   vtkGetMacro(ReverseStencil, int);
 
-  vtkTypeMacro(vtkCalcCrossCorrelation,vtkProcessObject);
+  vtkTypeMacro(vtkCalcCrossCorrelation,vtkAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -41,7 +41,7 @@ vtkCISGSubdivideGridTransform::~vtkCISGSubdivideGridTransform(){
 
 //----------------------------------------------------------------------------
 void vtkCISGSubdivideGridTransform::PrintSelf(ostream& os, vtkIndent indent) {
-  vtkImageSource::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
   os << indent << "Input: (" << this->Input << ")\n"; 
 }
 
@@ -169,7 +169,7 @@ void vtkCISGSubdivideGridTransform::Execute(vtkImageData *grid) {
 //----------------------------------------------------------------------------
 unsigned long vtkCISGSubdivideGridTransform::GetMTime()
 {
-  unsigned long mtime = this->vtkImageSource::GetMTime();
+  unsigned long mtime = this->vtkImageAlgorithm::GetMTime();
 
   if (this->Input)
     {

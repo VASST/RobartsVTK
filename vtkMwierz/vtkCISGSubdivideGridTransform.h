@@ -50,7 +50,7 @@ protected:
   void ExecuteInformation();
 
   void Execute(vtkImageData *data);
-  void Execute() { this->vtkImageSource::Execute(); };
+  void Execute() { this->vtkImageAlgorithm::Execute(); };
 
   unsigned long GetMTime();
 
