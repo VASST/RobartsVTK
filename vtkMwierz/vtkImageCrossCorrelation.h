@@ -49,13 +49,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __vtkImageCrossCorrelation_h
 
 
-#include "vtkImageTwoInputFilter.h"
+#include "vtkImageAlgorithm.h"
 
-class VTK_EXPORT vtkImageCrossCorrelation : public vtkImageTwoInputFilter
+class VTK_EXPORT vtkImageCrossCorrelation : public vtkImageAlgorithm
 {
 public:
   static vtkImageCrossCorrelation *New();
-  vtkTypeMacro(vtkImageCrossCorrelation,vtkImageTwoInputFilter);
+  vtkTypeMacro(vtkImageCrossCorrelation,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

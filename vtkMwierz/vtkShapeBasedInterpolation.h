@@ -52,14 +52,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkShapeBasedInterpolation_h
 #define __vtkShapeBasedInterpolation_h
 
-#include "vtkImageSource.h"
+#include "vtkImageAlgorithm.h"
 
 
-class VTK_EXPORT vtkShapeBasedInterpolation : public vtkImageSource 
+class VTK_EXPORT vtkShapeBasedInterpolation : public vtkImageAlgorithm 
 {
 public:
   static vtkShapeBasedInterpolation *New();
-  vtkTypeMacro(vtkShapeBasedInterpolation,vtkImageSource);
+  vtkTypeMacro(vtkShapeBasedInterpolation,vtkImageAlgorithm);
 
   vtkSetMacro(SliceAxis, int);
   vtkGetMacro(SliceAxis, int);

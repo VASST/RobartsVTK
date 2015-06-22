@@ -149,9 +149,13 @@ void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
     this->OutputImage->SetExtent(this->ext);
     this->OutputImage->SetSpacing(this->spa);
     this->OutputImage->SetOrigin(this->ori);
+#if (VTK_MAJOR_VERSION <= 5)
     this->OutputImage->SetNumberOfScalarComponents(1);
     this->OutputImage->SetScalarType(this->Images[0]->GetScalarType());
     this->OutputImage->AllocateScalars();
+#else
+    this->OutputImage->AllocateScalars(this->Images[0]->GetScalarType(), 1);
+#endif
 
   }
     }
@@ -294,9 +298,13 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetEigenVectorsImage()
   EVI = vtkImageData::New();
   EVI->SetWholeExtent(0,N-1,0,M-1,0,0);
   EVI->SetExtent(0,N-1,0,M-1,0,0);
+#if (VTK_MAJOR_VERSION <= 5)
   EVI->SetNumberOfScalarComponents(1);
   EVI->SetScalarTypeToFloat();
   EVI->AllocateScalars();
+#else
+  EVI->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   for (int i = 0; i < N; i++)
     {
@@ -319,9 +327,13 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetMeanIntensitiesImage()
   MII = vtkImageData::New();
   MII->SetWholeExtent(0,N-1,0,0,0,0);
   MII->SetExtent(0,N-1,0,0,0,0);
+#if (VTK_MAJOR_VERSION <= 5)
   MII->SetNumberOfScalarComponents(1);
   MII->SetScalarTypeToFloat();
   MII->AllocateScalars();
+#else
+  MII->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   for (int i = 0; i < N; i++)
     {

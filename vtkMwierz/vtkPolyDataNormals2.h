@@ -35,20 +35,20 @@
 #ifndef __vtkPolyDataNormals2_h
 #define __vtkPolyDataNormals2_h
 
-#include "vtkPolyDataToPolyDataFilter.h"
+#include "vtkPolyDataAlgorithm.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkFloatArray;
 class vtkIdList;
 class vtkPolyData;
 
-class VTK_EXPORT vtkPolyDataNormals2 : public vtkPolyDataToPolyDataFilter
+class VTK_EXPORT vtkPolyDataNormals2 : public  vtkPolyDataAlgorithm 
 {
 public:
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkPolyDataNormals2,vtkPolyDataToPolyDataFilter);
 #else
-  vtkTypeMacro(vtkPolyDataNormals2,vtkPolyDataToPolyDataFilter);
+  vtkTypeMacro(vtkPolyDataNormals2, vtkPolyDataAlgorithm );
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 

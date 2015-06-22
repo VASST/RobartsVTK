@@ -46,7 +46,7 @@ vtkDeformedVolume::vtkDeformedVolume()
   this->Transform->SetTransform(this->GridTransform);
 
   this->Volume = vtkMassProperties::New();
-  this->Volume->SetInput(this->Transform->GetOutput());
+  this->Volume->SetInputConnection(this->Transform->GetOutputPort());
 }
 
 //----------------------------------------------------------------------------

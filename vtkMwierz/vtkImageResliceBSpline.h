@@ -54,7 +54,7 @@
 #define __vtkImageResliceBSpline_h
 
 
-#include "vtkImageToImageFilter.h"
+#include "vtkImageAlgorithm.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // interpolation mode constants
@@ -70,14 +70,14 @@ class vtkAbstractTransform;
 class vtkMatrix4x4;
 class vtkImageStencilData;
 
-class VTK_EXPORT vtkImageResliceBSpline : public vtkImageToImageFilter
+class VTK_EXPORT vtkImageResliceBSpline : public vtkImageAlgorithm
 {
 public:
   static vtkImageResliceBSpline *New();
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageResliceBSpline, vtkImageToImageFilter);
 #else
-  vtkTypeMacro(vtkImageResliceBSpline, vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageResliceBSpline, vtkImageAlgorithm);
 #endif
 
   virtual void PrintSelf(ostream& os, vtkIndent indent);

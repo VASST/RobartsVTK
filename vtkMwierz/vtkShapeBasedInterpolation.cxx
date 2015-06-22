@@ -52,6 +52,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageThreshold.h"
 #include "vtkImageMathematics.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 //----------------------------------------------------------------------------
 inline double vtkMinimum(double vals[14])
 {
@@ -107,7 +109,11 @@ void vtkShapeBasedInterpolation::SetInput(vtkImageData *input)
 
   vtkImageAccumulate *accumulate;
   accumulate = vtkImageAccumulate::New();
+#if (VTK_MAJOR_VERSION <= 5)
   accumulate->SetInput(cast->GetOutput());
+#else
+  accumulate->SetInputConnection(cast->GetOutputPort());
+#endif
   accumulate->Update();
 
   cast->GetOutput()->GetExtent(this->inExt);
@@ -298,10 +304,15 @@ void CalculateDistanceMap(vtkImageData *lift, int SliceAxis, vtkImageData *&dist
 
   vtkImageData *temp = vtkImageData::New();
   temp->SetExtent(ext);
+#if (VTK_MAJOR_VERSION <= 5)
   temp->SetScalarTypeToFloat();
   temp->SetNumberOfScalarComponents(1);
   temp->SetSpacing(spa);
   temp->AllocateScalars();
+#else
+  temp->SetSpacing(spa);
+  temp->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   // Initialize distance map
   for (k = ext[4]; k <= ext[5]; k++)
@@ -487,10 +498,15 @@ void InterpolateDistanceMap(vtkImageData *distanceMaps[2], int SliceAxis, double
 
   vtkImageData *temp = vtkImageData::New();
   temp->SetExtent(ext);
+#if (VTK_MAJOR_VERSION <= 5)
   temp->SetScalarTypeToFloat();
   temp->SetNumberOfScalarComponents(1);
   temp->SetSpacing(spa);
   temp->AllocateScalars();
+#else
+  temp->SetSpacing(spa);
+  temp->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   if (pos == 0.0)
     {
@@ -545,9 +561,13 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
   vtkImageData *slice1 = vtkImageData::New();
   slice1->SetExtent(slicExt);
   slice1->SetSpacing(OutputSpacing);
+#if (VTK_MAJOR_VERSION <= 5)
   slice1->SetScalarTypeToShort();
   slice1->SetNumberOfScalarComponents(1);
   slice1->AllocateScalars();
+#else
+  slice1->AllocateScalars(VTK_SHORT, 1);
+#endif
 
   vtkImageThreshold *threshold1 = vtkImageThreshold::New();
   threshold1->SetInput(distanceMap);
@@ -615,9 +635,13 @@ vtkImageData *ExtractSlice(vtkImageData *distanceMap, int SliceAxis, double Outp
   vtkImageData *slice2 = vtkImageData::New();
   slice2->SetExtent(slicExt);
   slice2->SetSpacing(OutputSpacing);
+#if (VTK_MAJOR_VERSION <= 5)
   slice2->SetScalarTypeToShort();
   slice2->SetNumberOfScalarComponents(1);
   slice2->AllocateScalars();
+#else
+  slice2->AllocateScalars(VTK_SHORT, 1);
+#endif
 
   vtkImageThreshold *threshold2 = vtkImageThreshold::New();
   threshold2->SetInput(distanceMap);
@@ -711,10 +735,15 @@ vtkImageData *GetOriginalSlice(vtkImageData *input, int SliceAxis, int iSlice, d
 
   vtkImageData *slice = vtkImageData::New();
   slice->SetExtent(ext);
+#if (VTK_MAJOR_VERSION <= 5)
   slice->SetScalarTypeToShort();
   slice->SetNumberOfScalarComponents(1);
   slice->SetSpacing(OutputSpacing);
   slice->AllocateScalars();
+#else
+  slice->SetSpacing(OutputSpacing);
+  slice->AllocateScalars(VTK_SHORT, 1);
+#endif
 
   for (k = ext[4]; k <= ext[5]; k++)
     {
@@ -748,14 +777,20 @@ void vtkShapeBasedInterpolation::Update()
 
   vtkImageData *lift = vtkImageData::New();
   lift->SetExtent(liftExt);
+#if (VTK_MAJOR_VERSION <= 5)
   lift->SetScalarTypeToFloat();
   lift->SetNumberOfScalarComponents(1);
   lift->SetSpacing(liftSpa);
   lift->AllocateScalars();
+#else
+  lift->SetSpacing(liftSpa);
+  lift->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   vtkImageData *distanceMaps[2];
   distanceMaps[0] = vtkImageData::New();
   distanceMaps[0]->SetExtent(distExt);
+#if (VTK_MAJOR_VERSION <= 5)
   distanceMaps[0]->SetScalarTypeToFloat();
   distanceMaps[0]->SetNumberOfScalarComponents(1);
   distanceMaps[0]->SetSpacing(distSpa);
@@ -766,13 +801,26 @@ void vtkShapeBasedInterpolation::Update()
   distanceMaps[1]->SetNumberOfScalarComponents(1);
   distanceMaps[1]->SetSpacing(distSpa);
   distanceMaps[1]->AllocateScalars();
+#else
+  distanceMaps[0]->SetSpacing(distSpa);
+  distanceMaps[0]->AllocateScalars(VTK_FLOAT, 1);
+  distanceMaps[1] = vtkImageData::New();
+  distanceMaps[1]->SetExtent(distExt);
+  distanceMaps[1]->SetSpacing(distSpa);
+  distanceMaps[1]->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   vtkImageData *interpolatedDistanceMap = vtkImageData::New();
   interpolatedDistanceMap->SetExtent(inteExt);
+#if (VTK_MAJOR_VERSION <= 5)
   interpolatedDistanceMap->SetScalarTypeToFloat();
   interpolatedDistanceMap->SetNumberOfScalarComponents(1);
   interpolatedDistanceMap->SetSpacing(inteSpa);
   interpolatedDistanceMap->AllocateScalars();
+#else
+  interpolatedDistanceMap->SetSpacing(inteSpa);
+  interpolatedDistanceMap->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
   vtkImageData *slice;
 

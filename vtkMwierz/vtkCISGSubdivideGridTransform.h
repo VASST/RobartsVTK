@@ -25,15 +25,15 @@ This software is NOT free. Copyright: Thomas Hartkens
 #ifndef __vtkCISGSubdivideGridTransform_h
 #define __vtkCISGSubdivideGridTransform_h
 
-#include "vtkImageSource.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkGridTransformBSpline.h"
 
-class VTK_EXPORT vtkCISGSubdivideGridTransform : public vtkImageSource {
+class VTK_EXPORT vtkCISGSubdivideGridTransform : public vtkImageAlgorithm {
 
 public:
   static vtkCISGSubdivideGridTransform *New();
-  vtkTypeMacro(vtkCISGSubdivideGridTransform,vtkImageSource);
+  vtkTypeMacro(vtkCISGSubdivideGridTransform,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

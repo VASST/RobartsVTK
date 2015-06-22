@@ -53,19 +53,19 @@
 #ifndef __vtkMeshSmootheness_h
 #define __vtkMeshSmootheness_h
 
-#include "vtkPolyDataToPolyDataFilter.h"
+#include "vtkPolyDataAlgorithm.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define VTK_CURVATURE_GAUSS 0
 #define VTK_CURVATURE_MEAN  1
 
-class VTK_EXPORT vtkMeshSmootheness : public vtkPolyDataToPolyDataFilter
+class VTK_EXPORT vtkMeshSmootheness : public vtkPolyDataAlgorithm
 {
 public:
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkMeshSmootheness,vtkPolyDataToPolyDataFilter);
 #else
-  vtkTypeMacro(vtkMeshSmootheness,vtkPolyDataToPolyDataFilter);
+  vtkTypeMacro(vtkMeshSmootheness,vtkPolyDataAlgorithm);
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 

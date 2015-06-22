@@ -53,14 +53,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __vtkImage3DNoiseSource_h
 
 
-#include "vtkImageSource.h"
+#include "vtkImageAlgorithm.h"
 
 
-class VTK_EXPORT vtkImage3DNoiseSource : public vtkImageSource 
+class VTK_EXPORT vtkImage3DNoiseSource : public vtkImageAlgorithm 
 {
 public:
   static vtkImage3DNoiseSource *New();
-  vtkTypeMacro(vtkImage3DNoiseSource,vtkImageSource);
+  vtkTypeMacro(vtkImage3DNoiseSource,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -451,17 +451,33 @@ void vtkPolyDataCorrespondence::Update3D()
       vtkCurvatures *meanCurv2 = vtkCurvatures::New();
 
       gausCurv1->SetCurvatureTypeToGaussian();
+#if (VTK_MAJOR_VERSION <= 5)
       gausCurv1->SetInput(this->poly1);
+#else
+      gausCurv1->SetInputData(this->poly1);
+#endif
       gausCurv1->Update();
       meanCurv1->SetCurvatureTypeToMean();
+#if (VTK_MAJOR_VERSION <= 5)
       meanCurv1->SetInput(this->poly1);
+#else
+      meanCurv1->SetInputData(this->poly1);
+#endif
       meanCurv1->InvertMeanCurvatureOn();
       meanCurv1->Update();
       gausCurv2->SetCurvatureTypeToGaussian();
+#if (VTK_MAJOR_VERSION <= 5)
       gausCurv2->SetInput(this->poly2);
+#else
+      gausCurv2->SetInputData(this->poly1);
+#endif
       gausCurv2->Update();
       meanCurv2->SetCurvatureTypeToMean();
+#if (VTK_MAJOR_VERSION <= 5)
       meanCurv2->SetInput(this->poly2);
+#else
+      meanCurv2->SetInputData(this->poly1);
+#endif
       meanCurv2->InvertMeanCurvatureOn();
       meanCurv2->Update();
 
@@ -630,5 +646,5 @@ double vtkPolyDataCorrespondence::GetRMSDistance()
 //----------------------------------------------------------------------------
 void vtkPolyDataCorrespondence::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkPolyDataToPolyDataFilter::PrintSelf(os,indent);
+  vtkPolyDataAlgorithm::PrintSelf(os,indent);
 }

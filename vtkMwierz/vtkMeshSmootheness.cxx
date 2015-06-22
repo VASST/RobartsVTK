@@ -313,6 +313,6 @@ void vtkMeshSmootheness::Execute()
 /*-------------------------------------------------------*/
 void vtkMeshSmootheness::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkPolyDataToPolyDataFilter::PrintSelf(os,indent);
+  vtkPolyDataAlgorithm::PrintSelf(os,indent);
   os << indent << "CurvatureType: " << this->CurvatureType << "\n";
 }

@@ -19,7 +19,7 @@
 #ifndef __vtkPolyDataCorrespondence_h
 #define __vtkPolyDataCorrespondence_h
 
-#include "vtkPolyDataToPolyDataFilter.h"
+#include "vtkPolyDataAlgorithm.h"
 #include "vtkObjectFactory.h"
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
@@ -31,13 +31,13 @@
 #include "vtkPolyDataNormals.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-class VTK_EXPORT vtkPolyDataCorrespondence : public vtkPolyDataToPolyDataFilter
+class VTK_EXPORT vtkPolyDataCorrespondence : public vtkPolyDataAlgorithm
 {
 public:
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkPolyDataCorrespondence,vtkPolyDataToPolyDataFilter);
 #else
-  vtkTypeMacro(vtkPolyDataCorrespondence,vtkPolyDataToPolyDataFilter);
+  vtkTypeMacro(vtkPolyDataCorrespondence,vtkPolyDataAlgorithm);
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
