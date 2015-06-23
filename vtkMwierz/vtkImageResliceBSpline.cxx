@@ -327,6 +327,19 @@ void vtkImageResliceBSpline::ComputeInputUpdateExtents(vtkDataObject *output)
     }
 }
 
+//void vtkImageResliceBSpline::RequestUpdateExtent(vtkInformation *i,
+//                                            vtkInformationVector **ivv,
+//                                            vtkInformationVector *iv)
+//{
+//this->Superclass::RequestUpdateExtent(i, ivv, iv);
+
+//  vtkImageStencilData *stencil = this->GetStencil();
+//  if (stencil)
+//    {
+//    stencil->SetUpdateExtent(output->GetUpdateExtent());
+//    }
+//}
+
 //----------------------------------------------------------------------------
 void vtkImageResliceBSpline::ComputeInputUpdateExtent(int inExt[6],
                                                int outExt[6])
