@@ -20,6 +20,8 @@
 
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCuda1DTransferFunctionInformationHandler);
 
 vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformationHandler(){
@@ -195,7 +197,9 @@ void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol){
   }
 
   if(this->InputData){
+#if (VTK_MAJOR_VERSION <= 5)
     this->InputData->Update();
+#endif
     this->Modified();
   }
   if(this->colourFunction && this->opacityFunction){

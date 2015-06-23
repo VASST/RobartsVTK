@@ -225,7 +225,9 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
 
 void vtkCudaDualImageTransferFunctionInformationHandler::Update(){
   if(this->InputData){
+#if (VTK_MAJOR_VERSION <= 5)
     this->InputData->Update();
+#endif
     this->Modified();
   }
   if(this->function){

@@ -8,6 +8,8 @@
 
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCuda2DTransferFunctionInformationHandler);
 
 vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformationHandler(){
@@ -231,7 +233,9 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction(){
 
 void vtkCuda2DTransferFunctionInformationHandler::Update(){
   if(this->InputData){
+#if (VTK_MAJOR_VERSION <= 5)
     this->InputData->Update();
+#endif
     this->Modified();
   }
   if(this->function){

@@ -15,6 +15,8 @@
 #include "vtkVolume.h"
 #include "vtkImageData.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
 
 vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler(){
@@ -60,7 +62,11 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData, int 
 }
 
 void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
+#if (VTK_MAJOR_VERSION <= 5)
   this->InputData->Update();
+#else
+  this->Update();
+#endif
 
   int* dims = this->InputData->GetDimensions();
   double* spacing = this->InputData->GetSpacing();
@@ -90,7 +96,9 @@ void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
 
 void vtkCudaVolumeInformationHandler::Update(){
   if(this->InputData){
+#if (VTK_MAJOR_VERSION <= 5)
     this->InputData->Update();
+#endif
     this->Modified();
   }
 }

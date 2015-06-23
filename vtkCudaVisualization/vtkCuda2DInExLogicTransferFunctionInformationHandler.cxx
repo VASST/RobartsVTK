@@ -8,6 +8,8 @@
 
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler);
 
 vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransferFunctionInformationHandler(){
@@ -169,7 +171,9 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::Update(){
   if(this->InputData){
+#if (VTK_MAJOR_VERSION <= 5)
     this->InputData->Update();
+#endif
     this->Modified();
   }
   if(this->function && this->inExFunction){
