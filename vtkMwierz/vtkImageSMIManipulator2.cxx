@@ -16,6 +16,7 @@
 
 =========================================================================*/
 #include "vtkImageSMIManipulator2.h"
+#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //-----------------------`---------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
@@ -220,8 +221,13 @@ void vtkImageSMIManipulator2::SetExtent(int ext[6])
   // Calculate the entropy of image 2
   switch (this->inData[1]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro4(vtkImageSMIManipulator2EntropyT,this, 
       (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]), this->inc2);
+#else
+      vtkTemplateMacro(vtkImageSMIManipulator2EntropyT(this, 
+      (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]), this->inc2));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }
@@ -497,10 +503,18 @@ double vtkImageSMIManipulator2::GetResult()
   // Calculate and return SMI result.
   switch (this->inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro9(vtkImageSMIManipulator2Execute,this, 
       (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]),
       this->inc, this->inc2, this->inExt,
       this->loc000, this->loc111);
+#else
+      vtkTemplateMacro(vtkImageSMIManipulator2Execute(this, 
+      (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]), (VTK_TT *)(this->inPtr[2]),
+      this->inc, this->inc2, this->inExt,
+      this->loc000, this->loc111));
+#endif
+
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }

@@ -43,6 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vtkImageData.h" //Ravi
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 //------------------------------------------------------------------------------
 vtkImageCrossCorrelation* vtkImageCrossCorrelation::New()
 {
@@ -424,10 +426,17 @@ void vtkImageCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   
   switch (inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
     vtkTemplateMacro8(vtkImageCrossCorrelationExecute,
           this, (VTK_TT *)(inPtr1), (VTK_TT *)(inPtr2),inData,outData,
           (double *)(outPtr), outExt,
           id);
+#else
+    vtkTemplateMacro(vtkImageCrossCorrelationExecute(this,
+          (VTK_TT *)(inPtr1), (VTK_TT *)(inPtr2),inData,outData,
+          (double *)(outPtr), outExt,
+          id));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

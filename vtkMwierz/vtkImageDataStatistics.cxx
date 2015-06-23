@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkObjectFactory.h"
 #include "vtkCommand.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 
 //------------------------------------------------------------------------------
 vtkImageDataStatistics* vtkImageDataStatistics::New()
@@ -178,11 +180,19 @@ void vtkImageDataStatistics::Update()
       this->Progress = 0.0;
       switch (input->GetScalarType())
   {
+#if (VTK_MAJOR_VERSION < 5)
   vtkTemplateMacro6(vtkImageDataStatisticsExecute,
         this, (VTK_TT *) (inPtr), input,
         &(this->AverageMagnitude),
         &(this->StandardDeviation),
         &(this->Count));
+#else
+  vtkTemplateMacro(vtkImageDataStatisticsExecute(this,
+        (VTK_TT *) (inPtr), input,
+        &(this->AverageMagnitude),
+        &(this->StandardDeviation),
+        &(this->Count)));
+#endif
   default:
     vtkErrorMacro(<< "Update: Unknown ScalarType");
     return;

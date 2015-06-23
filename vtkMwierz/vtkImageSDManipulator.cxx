@@ -16,6 +16,7 @@
 
 =========================================================================*/
 #include "vtkImageSDManipulator.h"
+#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
@@ -279,10 +280,17 @@ double vtkImageSDManipulator::GetResult()
 
   switch (this->inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro8(vtkImageSDManipulatorExecute,this, 
              (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
       this->inc, this->inc2, this->inExt,
       this->loc000, this->loc111);
+#else
+      vtkTemplateMacro(vtkImageSDManipulatorExecute(this, 
+             (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
+      this->inc, this->inc2, this->inExt,
+      this->loc000, this->loc111));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }

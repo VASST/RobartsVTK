@@ -43,6 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkObjectFactory.h"
 #include "vtkCommand.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 //---------------------------------------------------------------------------
 vtkCalcCrossCorrelation* vtkCalcCrossCorrelation::New()
 {
@@ -301,10 +303,17 @@ void vtkCalcCrossCorrelation::Execute()
 
   switch (input1->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
     vtkTemplateMacro6(vtkCorrelationHelper,this,
           input1, (VTK_TT *)(in1Ptr),
           input2, (VTK_TT *)(in2Ptr),
           &this->CrossCorrelation);
+#else
+      vtkTemplateMacro(vtkCorrelationHelper(this,
+        input1, (VTK_TT *)(in1Ptr),
+        input2, (VTK_TT *)(in2Ptr),
+        &this->CrossCorrelation));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType (must be char, us char, int, us int");
       return;

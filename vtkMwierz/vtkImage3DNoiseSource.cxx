@@ -47,6 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vtkImageData.h" //Ravi
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 
 //------------------------------------------------------------------------------
 vtkImage3DNoiseSource* vtkImage3DNoiseSource::New()
@@ -198,7 +200,11 @@ void vtkImage3DNoiseSource::ExecuteData(vtkDataObject *output)
 
   switch (this->OutputScalarType)
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro3(vtkImage3DNoiseExecute, this, data, (VTK_TT *)(outPtr));
+#else
+      vtkTemplateMacro(vtkImage3DNoiseExecute(this, data, (VTK_TT *)(outPtr)));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown output ScalarType");
     }

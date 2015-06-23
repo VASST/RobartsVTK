@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageGridStatistics.h"
 #include "vtkObjectFactory.h"
 #include "vtkCommand.h"
+#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 
 //------------------------------------------------------------------------------
@@ -174,10 +175,17 @@ void vtkImageGridStatistics::Update()
       this->Progress = 0.0;
       switch (input->GetScalarType())
   {
+#if (VTK_MAJOR_VERSION < 5)
     vtkTemplateMacro5(vtkImageGridStatisticsExecute,
           this, (VTK_TT *) (inPtr), input,
           &(this->AverageMagnitude),
           &(this->StandardDeviation));
+#else
+    vtkTemplateMacro(vtkImageGridStatisticsExecute(this, 
+          (VTK_TT *) (inPtr), input,
+          &(this->AverageMagnitude),
+          &(this->StandardDeviation)));
+#endif
   default:
     vtkErrorMacro(<< "Update: Unknown ScalarType");
     return;
