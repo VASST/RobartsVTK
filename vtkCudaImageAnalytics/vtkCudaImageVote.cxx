@@ -261,7 +261,9 @@ int vtkCudaImageVote::RequestData(vtkInformation *request,
   //allocate output image (using short)
   outData->SetScalarType(this->OutputDataType);
   outData->SetExtent(Extent);
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetWholeExtent(Extent);
+#endif
   outData->AllocateScalars();
 
   //call typed method

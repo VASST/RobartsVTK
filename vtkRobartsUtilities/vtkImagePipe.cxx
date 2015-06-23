@@ -321,7 +321,9 @@ void vtkImagePipe::Update(){
   if( this->isServer ){
     //protect buffer updating with read/write lock
     this->rwBufferLock->WriterLock();
+#if (VTK_MAJOR_VERSION <= 5)
     this->buffer->Update();
+#endif
     this->rwBufferLock->WriterUnlock();
   }else{
     ClientSideUpdate();
