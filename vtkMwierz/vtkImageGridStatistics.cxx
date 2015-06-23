@@ -72,7 +72,7 @@ vtkImageGridStatistics::~vtkImageGridStatistics()
 
 void vtkImageGridStatistics::SetInput(vtkImageData *input)
 {
-  this->vtkAlgorithm::SetNthInput(0, input);
+  this->vtkImageAlgorithm::SetNthInput(0, input);
 }
 
 vtkImageData *vtkImageGridStatistics::GetInput()
@@ -209,7 +209,7 @@ void vtkImageGridStatistics::Update()
 
 void vtkImageGridStatistics::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkAlgorithm::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
 
   if (!this->GetInput())
     {

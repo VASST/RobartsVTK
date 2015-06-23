@@ -91,7 +91,7 @@ vtkImageECRManipulator::~vtkImageECRManipulator()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageECRManipulator::SetInput1(vtkImageData *input)
+void vtkImageECRManipulator::SetInput1Data(vtkImageData *input)
 {
   input->GetSpacing(this->inSpa);
   input->GetExtent(this->inExt);
@@ -100,7 +100,7 @@ void vtkImageECRManipulator::SetInput1(vtkImageData *input)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageECRManipulator::SetInput2(vtkImageData *input)
+void vtkImageECRManipulator::SetInput2Data(vtkImageData *input)
 {
   this->inData[1] = input;
 }

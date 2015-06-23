@@ -72,7 +72,7 @@ public:
   vtkBooleanMacro(ReverseStencil, int);
   vtkGetMacro(ReverseStencil, int);
 
-  vtkTypeMacro(vtkCalcCrossCorrelation,vtkAlgorithm);
+  vtkTypeMacro(vtkCalcCrossCorrelation,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

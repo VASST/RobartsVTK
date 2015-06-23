@@ -51,15 +51,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkImageProbeSum_h
 #define __vtkImageProbeSum_h
 
-#include "vtkAlgorithm.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkIdTypeArray.h"
 
-class VTK_EXPORT vtkImageProbeSum : public vtkAlgorithm
+class VTK_EXPORT vtkImageProbeSum : public vtkImageAlgorithm
 {
 public:
   static vtkImageProbeSum *New();
-  vtkTypeMacro(vtkImageProbeSum,vtkAlgorithm);
+  vtkTypeMacro(vtkImageProbeSum,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

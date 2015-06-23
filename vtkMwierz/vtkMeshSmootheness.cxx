@@ -67,7 +67,7 @@ vtkMeshSmootheness::~vtkMeshSmootheness()
 //----------------------------------------------------------------------------
 void vtkMeshSmootheness::SetInput(vtkPolyData *input)
 {
-  this->vtkAlgorithm::SetNthInput(0, input);
+  this->vtkPolyDataAlgorithm::SetNthInput(0, input);
   this->mesh = this->GetInput();
   this->NumPts = this->mesh->GetNumberOfPoints();
   this->NumCls = this->mesh->GetNumberOfCells();

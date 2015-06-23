@@ -190,7 +190,7 @@ void vtkImageResliceBSpline::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkImageResliceBSpline::SetStencil(vtkImageStencilData *stencil)
 {
-  this->vtkAlgorithm::SetNthInput(1, stencil);
+  this->vtkImageAlgorithm::SetNthInput(1, stencil);
 }
 
 //----------------------------------------------------------------------------

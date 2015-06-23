@@ -70,7 +70,7 @@ vtkImageProbeSum::~vtkImageProbeSum()
 //----------------------------------------------------------------------------
 void vtkImageProbeSum::SetInput(vtkDataSet *input)
 {
-  this->vtkAlgorithm::SetNthInput(0, input);
+  this->vtkImageAlgorithm::SetNthInput(0, input);
 }
 
 //----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ void vtkImageProbeSum::SetSource(vtkImageData *input)
     vtkErrorMacro("SetSource: source must be a vtkImageData");
     }
 
-  this->vtkAlgorithm::SetNthInput(1, input);
+  this->vtkImageAlgorithm::SetNthInput(1, input);
 }
 
 //----------------------------------------------------------------------------
@@ -290,7 +290,7 @@ double vtkImageProbeSum::GetSum()
 //----------------------------------------------------------------------------
 void vtkImageProbeSum::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkAlgorithm::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
   os << indent << "Input: " << this->GetInput() << "\n";
   os << indent << "Source: " << this->GetSource() << "\n";
 }

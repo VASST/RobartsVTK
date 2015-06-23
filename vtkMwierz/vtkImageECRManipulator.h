@@ -40,8 +40,8 @@ public:
 
   // Description:
   // Set/get the 2 input images.
-  virtual void SetInput1(vtkImageData *input);
-  virtual void SetInput2(vtkImageData *input);
+  virtual void SetInput1Data(vtkImageData *input);
+  virtual void SetInput2Data(vtkImageData *input);
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
 

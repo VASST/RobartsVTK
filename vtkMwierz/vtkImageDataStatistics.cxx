@@ -74,7 +74,7 @@ vtkImageDataStatistics::~vtkImageDataStatistics()
 
 void vtkImageDataStatistics::SetInput(vtkImageData *input)
 {
-  this->vtkAlgorithm::SetNthInput(0, input);
+  this->vtkImageAlgorithm::SetNthInput(0, input);
 }
 
 vtkImageData *vtkImageDataStatistics::GetInput()
@@ -216,7 +216,7 @@ void vtkImageDataStatistics::Update()
 
 void vtkImageDataStatistics::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkAlgorithm::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
 
   if (!this->GetInput())
     {

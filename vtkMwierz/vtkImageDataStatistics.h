@@ -48,15 +48,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkImageDataStatistics_h
 #define __vtkImageDataStatistics_h
 
-#include "vtkAlgorithm.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 
-class VTK_EXPORT vtkImageDataStatistics : public vtkAlgorithm
+class VTK_EXPORT vtkImageDataStatistics : public vtkImageAlgorithm
 {
 public:
   static vtkImageDataStatistics *New();
 
-  vtkTypeMacro(vtkImageDataStatistics,vtkAlgorithm);
+  vtkTypeMacro(vtkImageDataStatistics,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
