@@ -10,6 +10,8 @@
 #include "vtkDoubleArray.h"
 #include "vtkMath.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaKohonenGenerator);
 
 vtkCudaKohonenGenerator::vtkCudaKohonenGenerator(){
@@ -429,11 +431,16 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   }
 
   int outputExtent[6] = {0, this->info.KohonenMapSize[0]-1, 0, this->info.KohonenMapSize[1]-1, 0, 0};
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(2*inData->GetNumberOfScalarComponents()+1);
   outData->SetExtent(outputExtent);
   outData->SetWholeExtent(outputExtent);
   outData->AllocateScalars();
+#else
+  outData->SetExtent(outputExtent);
+  outData->AllocateScalars(VTK_FLOAT, 2*inData->GetNumberOfScalarComponents()+1);
+#endif
 
   //update information container
   int BatchSize = (this->UseAllVoxels) ? -1 : SumSamples * this->BatchPercent;

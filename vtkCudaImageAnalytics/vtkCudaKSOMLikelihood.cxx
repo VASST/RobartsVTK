@@ -5,6 +5,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaKSOMLikelihood);
 
 vtkCudaKSOMLikelihood::vtkCudaKSOMLikelihood(){
@@ -97,11 +99,16 @@ int vtkCudaKSOMLikelihood::RequestData(vtkInformation *request,
   //figure out the extent of the output
   this->info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
   this->info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
+#if (VTK_MAJOR_VERSION <= 5)
   outputGMMImage->SetScalarTypeToFloat();
   outputGMMImage->SetNumberOfScalarComponents( this->info.NumberOfLabels );
   outputGMMImage->SetExtent(inputGMMImage->GetExtent());
   outputGMMImage->SetWholeExtent(inputGMMImage->GetExtent());
   outputGMMImage->AllocateScalars();
+#else
+  outputGMMImage->SetExtent(inputGMMImage->GetExtent());
+  outputGMMImage->AllocateScalars(VTK_FLOAT, this->info.NumberOfLabels);
+#endif
   
   //get volume information for containers
   inputDataImage->GetDimensions( this->info.VolumeSize );

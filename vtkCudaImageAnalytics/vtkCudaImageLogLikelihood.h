@@ -33,6 +33,9 @@
 #include <float.h>
 #include <limits.h>
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
+
 class vtkCudaImageLogLikelihood : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:

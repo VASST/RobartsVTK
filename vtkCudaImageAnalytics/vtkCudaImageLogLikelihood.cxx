@@ -34,6 +34,8 @@
 #include <math.h>
 #include <float.h>
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 
 vtkStandardNewMacro(vtkCudaImageLogLikelihood);
 
@@ -219,11 +221,16 @@ int vtkCudaImageLogLikelihood::RequestData(
   
   //collect the output image data
   vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(1);
   outData->SetExtent(inputImage->GetExtent());
   outData->SetWholeExtent(inputImage->GetExtent());
   outData->AllocateScalars();
+#else
+  outData->SetExtent(inputImage->GetExtent());
+  outData->AllocateScalars(VTK_FLOAT, 1);
+#endif
   void *outPtr = outData->GetScalarPointer();
 
     // this filter expects the output datatype to be float.

@@ -35,6 +35,8 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 #include <math.h>
 #include <float.h>
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 
 vtkStandardNewMacro(vtkCudaImageAtlasLabelProbability);
 
@@ -145,11 +147,16 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
     }
   
   vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(1);
   outData->SetExtent(inData[0]->GetExtent());
   outData->SetWholeExtent(inData[0]->GetExtent());
   outData->AllocateScalars();
+#else
+  outData->SetExtent(inData[0]->GetExtent());
+  outData->AllocateScalars(VTK_FLOAT, 1);
+#endif
 
     // this filter expects the output datatype to be float.
     if (outData->GetScalarType() != VTK_FLOAT)

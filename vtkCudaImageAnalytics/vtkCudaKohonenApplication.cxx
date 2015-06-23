@@ -4,6 +4,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaKohonenApplication);
 
 vtkCudaKohonenApplication::vtkCudaKohonenApplication(){
@@ -103,13 +105,18 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
   vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   //figure out the extent of the output
-    int updateExtent[6];
+  int updateExtent[6];
   outData->ShallowCopy(inData);
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(2);
   outData->SetExtent(inData->GetExtent());
   outData->SetWholeExtent(inData->GetExtent());
   outData->AllocateScalars();
+#else
+  outData->SetExtent(inData->GetExtent());
+  outData->AllocateScalars(VTK_FLOAT, 2);
+#endif
   
   //update information container
   this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();

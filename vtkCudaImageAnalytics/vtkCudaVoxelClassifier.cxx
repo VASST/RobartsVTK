@@ -6,6 +6,8 @@
 
 #include "vector_types.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaVoxelClassifier);
 
 vtkCudaVoxelClassifier::vtkCudaVoxelClassifier(){
@@ -91,6 +93,7 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
   }
 
   //figure out the extent of the output
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToShort();
   outData->SetNumberOfScalarComponents(1);
   outData->SetExtent( inData->GetExtent() );
@@ -98,6 +101,12 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
   outData->SetOrigin( inData->GetOrigin() );
   outData->SetSpacing( inData->GetSpacing() );
   outData->AllocateScalars();
+#else
+  outData->SetExtent( inData->GetExtent() );
+  outData->SetOrigin( inData->GetOrigin() );
+  outData->SetSpacing( inData->GetSpacing() );
+  outData->AllocateScalars(VTK_SHORT, 1);
+#endif
   
   //update planes
   this->ComputeMatrices( inData );

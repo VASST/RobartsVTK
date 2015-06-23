@@ -2,6 +2,8 @@
 #include "vtkObjectFactory.h"
 #include "vtkSetGet.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaFuzzyConnectednessFilter);
 
 int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
@@ -31,6 +33,7 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   }
 
   //scale the output image appropriately
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(seedData->GetNumberOfScalarComponents());
   outData->SetExtent( seedData->GetExtent() );
@@ -38,6 +41,12 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   outData->SetSpacing( seedData->GetSpacing() );
   outData->SetOrigin( seedData->GetOrigin() );
   outData->AllocateScalars();
+#else
+  outData->SetExtent( seedData->GetExtent() );
+  outData->SetSpacing( seedData->GetSpacing() );
+  outData->SetOrigin( seedData->GetOrigin() );
+  outData->AllocateScalars(VTK_FLOAT, seedData->GetNumberOfScalarComponents());
+#endif
   
   //load the CUDA information struct
   this->Information->snorm = this->SNorm;

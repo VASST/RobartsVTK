@@ -38,6 +38,8 @@
 
 #include "CUDA_imagevote.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 #define SQR(X) X*X
 
 vtkStandardNewMacro(vtkCudaImageVote);

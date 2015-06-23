@@ -4,6 +4,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaKSOMProbability);
 
 vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
@@ -115,12 +117,18 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
     vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outData->ShallowCopy(inData);
     outData->SetExtent(inData->GetExtent());
+#if (VTK_MAJOR_VERSION <= 5)
     outData->SetWholeExtent(inData->GetExtent());
     outData->SetSpacing(inData->GetSpacing());
     outData->SetOrigin(inData->GetOrigin());
     outData->SetScalarTypeToFloat();
     outData->SetNumberOfScalarComponents(1);
     outData->AllocateScalars();
+#else
+    outData->SetSpacing(inData->GetSpacing());
+    outData->SetOrigin(inData->GetOrigin());
+    outData->AllocateScalars(VTK_FLOAT, 1);
+#endif
     outputBuffers[i] = (float*) outData->GetScalarPointer();
   }
 

@@ -4,6 +4,8 @@
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkStandardNewMacro(vtkCudaKohonenReprojector);
 
 vtkCudaKohonenReprojector::vtkCudaKohonenReprojector(){
@@ -73,11 +75,16 @@ int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
   kohonenData->GetDimensions( this->info.KohonenMapSize );
 
   //figure out the extent of the output
+#if (VTK_MAJOR_VERSION <= 5)
   outData->SetScalarTypeToFloat();
   outData->SetNumberOfScalarComponents(this->info.NumberOfDimensions);
   outData->SetExtent( inData->GetExtent() );
   outData->SetWholeExtent( inData->GetExtent() );
   outData->AllocateScalars();
+#else
+  outData->SetExtent( inData->GetExtent() );
+  outData->AllocateScalars(VTK_FLOAT, this->info.NumberOfDimensions);
+#endif
   
   //sanity check on the number of input dimensions
   if( inData->GetNumberOfScalarComponents() != 2 ){
