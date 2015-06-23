@@ -21,6 +21,8 @@
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {
   this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
@@ -217,12 +219,12 @@ vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
   if (this->KeyholePlanes)
     this->KeyholePlanes->UnRegister(this);
 }
-
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
 
   //set information at this level
   this->vtkVolumeMapper::SetInput(input);
-  this->VolumeInfoHandler->SetInputData(input, 0);
+  this->VolumeInfoHandler->SetInput(input, 0);
   this->inputImages.insert( std::pair<int,vtkImageData*>(0,input) );
 
   //pass down to subclass
@@ -236,6 +238,34 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
 
   //set information at this level
   this->vtkVolumeMapper::SetInput(input);
+  this->VolumeInfoHandler->SetInput(input, index);
+  this->inputImages.insert( std::pair<int,vtkImageData*>(index,input) );
+
+  //pass down to subclass
+  this->SetInputInternal(input, index);
+  if( this->currFrame == 0 ) this->ChangeFrame(0);
+}
+
+#else
+
+void vtkCudaVolumeMapper::SetInputData(vtkImageData * input){
+
+  //set information at this level
+  this->vtkVolumeMapper::SetInputData(input);
+  this->VolumeInfoHandler->SetInputData(input, 0);
+  this->inputImages.insert( std::pair<int,vtkImageData*>(0,input) );
+
+  //pass down to subclass
+  this->SetInputInternal( input, 0 );
+  if( this->currFrame == 0 ) this->ChangeFrame(0);
+}
+
+void vtkCudaVolumeMapper::SetInputData(vtkImageData * input, int index){
+  //check for consistency
+  if( index < 0 || !(index < this->numFrames) ) return;
+
+  //set information at this level
+  this->vtkVolumeMapper::SetInputData(input);
   this->VolumeInfoHandler->SetInputData(input, index);
   this->inputImages.insert( std::pair<int,vtkImageData*>(index,input) );
 
@@ -243,6 +273,8 @@ void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
   this->SetInputInternal(input, index);
   if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
+
+#endif
 
 vtkImageData * vtkCudaVolumeMapper::GetInput(){
   return GetInput(0);

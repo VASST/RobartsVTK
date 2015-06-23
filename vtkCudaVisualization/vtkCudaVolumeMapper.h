@@ -31,6 +31,8 @@
 #include "vtkVolume.h"
 #include <map>
 
+#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+
 // This is the maximum number of frames, may need to be set
 #define VTKCUDAVOLUMEMAPPER_UPPER_BOUND 30
 
@@ -48,7 +50,12 @@ public:
 
    *  @pre All dataset being rendered are the same size, anatomy, patient and modality
    */
+
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInput( vtkImageData * image);
+#else
+  virtual void SetInputData( vtkImageData * image);
+#endif
 
   /** @brief Sets the 3D image data for a particular frame in the 4D sequence
    *
@@ -57,7 +64,12 @@ public:
    *
    *  @pre All dataset being rendered are the same size, anatomy, patient and modality
    */
+#if (VTK_MAJOR_VERSION <= 5)
   void SetInput( vtkImageData * image, int frame);
+#else
+  void SetInputData( vtkImageData * image, int frame);
+#endif
+
   virtual void SetInputInternal( vtkImageData * image, int frame) = 0;
 
   /** @brief Sets the 3D image data for the first frame in the 4D sequence
