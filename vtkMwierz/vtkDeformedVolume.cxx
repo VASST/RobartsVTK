@@ -69,7 +69,11 @@ void vtkDeformedVolume::SetZeroGrid(vtkImageData *grid)
 void vtkDeformedVolume::SetDeformedSurface(vtkPolyData *surface)
 {
   this->Surface = surface;
+#if (VTK_MAJOR_VERSION <= 5)
   this->Transform->SetInput(surface);
+#else
+  this->Transform->SetInputData(surface);
+#endif
 }
 
 //----------------------------------------------------------------------------
