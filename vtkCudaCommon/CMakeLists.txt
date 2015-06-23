@@ -36,4 +36,5 @@ SET ( Kit_SRCS
   vtkCudaFunctionPolygonWriter.h
 )
 
+REMOVE_VTK_DEFINITIONS()
 CUDA_ADD_LIBRARY( vtkCudaCommon ${Kit_SRCS} )

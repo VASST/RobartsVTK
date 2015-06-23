@@ -67,5 +67,5 @@ SET ( Kit_SRCS
   CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.h
 
 )
-
+REMOVE_VTK_DEFINITIONS()
 CUDA_ADD_LIBRARY( vtkCudaVisualization ${Kit_SRCS} )

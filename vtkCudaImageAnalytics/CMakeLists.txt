@@ -103,5 +103,5 @@ SET ( Kit_SRCS
   CUDA_imagevote.cu
 
 )
-
+REMOVE_VTK_DEFINITIONS()
 CUDA_ADD_LIBRARY( vtkCudaImageAnalytics ${Kit_SRCS} )
