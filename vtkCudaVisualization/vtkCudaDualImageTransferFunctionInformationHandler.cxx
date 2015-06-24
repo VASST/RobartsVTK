@@ -7,6 +7,8 @@
 #include "vtkPointData.h"
 #include "vtkCuda2DTransferFunction.h"
 
+#include "vtkDataArray.h"
+
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h"
 
 vtkStandardNewMacro(vtkCudaDualImageTransferFunctionInformationHandler);
