@@ -45,7 +45,8 @@ public:
 #if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInputImage(vtkDataObject *in) { this->SetInput(0,in); }
 #else
-  virtual void SetInputImage(vtkDataObject *in) { this->SetInputDataObject(0,in); }
+  virtual void SetInputDataImage(vtkDataObject *in) { this->SetInputDataObject(0,in); }
+  virtual void SetInputConnection(vtkAlgorithmOutput *in) { this->vtkThreadedImageAlgorithm::SetInputConnection(0, in); }
 #endif
 
   // Description:

@@ -72,11 +72,25 @@ int vtkImageMultiStatistics::FillInputPortInformation(int i, vtkInformation* inf
   return this->Superclass::FillInputPortInformation(i,info);
 }
 
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageMultiStatistics::SetInput(int idx, vtkImageData *input)
 {
   // Ask the superclass to connect the input.
   this->SetNthInputConnection(0, idx, (input ? input->GetProducerPort() : 0));
 }
+#else
+void vtkImageMultiStatistics::SetInputData(int port, vtkImageData *input)
+{
+  // Ask the superclass to connect the input.
+  this->SetInputDataObject(port, input);
+}
+
+void vtkImageMultiStatistics::SetInputConnection(int port, vtkAlgorithmOutput *input)
+{
+  // Ask the superclass to connect the input.
+  this->vtkAlgorithm::SetInputConnection(port, input);
+}
+#endif
 
 vtkImageData *vtkImageMultiStatistics::GetInput(int idx)
 {

@@ -255,11 +255,11 @@ void vtkImageLogLikelihood::ThreadedRequestData(
         vtkImageData **outData,
         int outExt[6], int id)
 {
-    void *inPtr1;
-    void *outPtr;
+  void *inPtr1;
+  void *outPtr;
 
-    inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
-    outPtr = outData[0]->GetScalarPointerForExtent(outExt);
+  inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
+  outPtr = outData[0]->GetScalarPointerForExtent(outExt);
   outData[0]->SetScalarTypeToFloat();
   
   int numLabelMaps = 0;

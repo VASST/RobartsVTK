@@ -18,6 +18,8 @@
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
 class vtkImageMultiStatistics : public vtkAlgorithm
 {
 public:
@@ -72,9 +74,16 @@ public:
   int GetEntropyResolution();
 
   void Update();
-  
+ 
+#if (VTK_MAJOR_VERSION <= 5)
   void SetInput(int port, vtkImageData *input);
   void SetInput(vtkImageData *input) { SetInput(0,input); }
+#else
+  void SetInputData(int port, vtkImageData *input);
+  void SetInputData(vtkImageData *input) { SetInputData(0,input); }
+  void SetInputConnection(int port, vtkAlgorithmOutput *input);
+  void SetInputConnection(vtkAlgorithmOutput  *input) { SetInputConnection(0,input); }
+#endif
   vtkImageData *GetInput(int port);
   vtkImageData *GetInput(){ return GetInput(0); };
 

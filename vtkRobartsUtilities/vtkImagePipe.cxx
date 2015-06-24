@@ -104,7 +104,11 @@ void vtkImagePipe::ReleaseSystemResources()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImagePipe::SetInput( vtkImageData* in ){
+#else
+void vtkImagePipe::SetInputData( vtkImageData* in ){
+#endif
   if( !this->serverSet || !this->isServer ){
     vtkErrorMacro(<<"Must be in server mode.");
     return;
@@ -112,7 +116,6 @@ void vtkImagePipe::SetInput( vtkImageData* in ){
 
   this->buffer = in;
 }
-
 //----------------------------------------------------------------------------
 vtkImageData* vtkImagePipe::GetOutput( ){
   if( !this->serverSet || this->isServer ){
