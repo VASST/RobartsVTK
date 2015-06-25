@@ -13,6 +13,8 @@
 
 #include "vtkPiecewiseFunction.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
@@ -42,7 +44,11 @@ public:
   void SetKohonenMapSize(int SizeX, int SizeY);
   
   vtkDataObject* GetInput(int idx);
+#if (VTK_MAJOR_VERSION <= 5)
   void SetInput(int idx, vtkDataObject *input);
+#else
+  void SetInputConnection(int idx, vtkAlgorithmOutput *input);
+#endif
 
   bool GetUseMaskFlag();
   void SetUseMaskFlag(bool t);

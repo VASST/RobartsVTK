@@ -13,6 +13,7 @@
 #include "vtkSetGet.h"
 
 #include "float.h"
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
 class vtkCudaKSOMProbability : public vtkImageAlgorithm, public vtkCudaObject
 {
@@ -26,10 +27,15 @@ public:
 
   vtkSetMacro(Entropy,bool);
   vtkGetMacro(Entropy,bool);
-  
+#if (VTK_MAJOR_VERSION <= 5)  
   void SetImageInput(vtkImageData* in);
   void SetMapInput(vtkImageData* in);
   void SetProbabilityInput(vtkImageData* in, int index);
+#else
+  void SetImageInputConnection(vtkAlgorithmOutput* in);
+  void SetMapInputConnection(vtkAlgorithmOutput* in);
+  void SetProbabilityInputConnection(vtkAlgorithmOutput* in, int index);
+#endif
 
   // Description:
   // If the subclass does not define an Execute method, then the task

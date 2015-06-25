@@ -327,12 +327,19 @@ int vtkCudaKohonenGenerator::FillInputPortInformation(int i, vtkInformation* inf
   info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
   return this->Superclass::FillInputPortInformation(i,info);
 }
-
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkCudaKohonenGenerator::SetInput(int idx, vtkDataObject *input)
 {
   // Ask the superclass to connect the input.
   this->SetNthInputConnection(0, idx, (input ? input->GetProducerPort() : 0));
 }
+#else
+void vtkCudaKohonenGenerator::SetInputConnection(int idx, vtkAlgorithmOutput *input)
+{
+  // Ask the superclass to connect the input.
+  this->SetNthInputConnection(0, idx, (input ? input : 0));
+}
+#endif
 
 vtkDataObject *vtkCudaKohonenGenerator::GetInput(int idx)
 {

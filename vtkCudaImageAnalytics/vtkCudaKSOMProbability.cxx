@@ -22,7 +22,7 @@ vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
 
 vtkCudaKSOMProbability::~vtkCudaKSOMProbability(){
 }
-
+#if (VTK_MAJOR_VERSION <= 5)  
 void vtkCudaKSOMProbability::SetImageInput(vtkImageData* in){
   this->SetInput(0,in);
 }
@@ -35,7 +35,20 @@ void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index){
   this->SetNthInputConnection( 2, index,  in->GetProducerPort() );
   this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
 }
+#else
+void vtkCudaKSOMProbability::SetImageInputConnection(vtkAlgorithmOutput* in){
+  this->SetInputConnection(0,in);
+}
 
+void vtkCudaKSOMProbability::SetMapInputConnection(vtkAlgorithmOutput* in){
+  this->SetInputConnection(1,in);
+}
+
+void vtkCudaKSOMProbability::SetProbabilityInputConnection(vtkAlgorithmOutput* in, int index){
+  this->SetNthInputConnection( 2, index,  in );
+  this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
+}
+#endif
 int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info){
   if( i == 2 ){
     info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);

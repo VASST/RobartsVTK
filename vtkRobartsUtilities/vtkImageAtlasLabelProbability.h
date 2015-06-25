@@ -41,7 +41,11 @@ public:
   
   // Description:
   // Set a collection of label maps for the seeding operation.
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInputLabelMap(vtkDataObject *in, int number) { if(number >= 0) this->SetNthInputConnection(0,number,in->GetProducerPort()); }
+#else
+  virtual void SetInputLabelMapConnection(vtkAlgorithmOutput *in, int number) { if(number >= 0) this->SetNthInputConnection(0,number,in); }
+#endif
   
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] or [0,inf). This
