@@ -49,6 +49,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vtkVersion.h> // For VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkImageAlgorithm.h>
+#endif
 
 //------------------------------------------------------------------------------
 vtkImage3DNoiseSource* vtkImage3DNoiseSource::New()
@@ -214,7 +217,11 @@ void vtkImage3DNoiseSource::ExecuteData(vtkDataObject *output)
 
 void vtkImage3DNoiseSource::PrintSelf(ostream& os, vtkIndent indent)
 {
+#if (VTK_MAJOR_VERSION <= 5)
   vtkImageSource::PrintSelf(os,indent);
+#else
+  vtkImageAlgorithm::PrintSelf(os,indent);
+#endif
 
   os << indent << "Minimum: " << this->Minimum << "\n";
   os << indent << "Maximum: " << this->Maximum << "\n";
