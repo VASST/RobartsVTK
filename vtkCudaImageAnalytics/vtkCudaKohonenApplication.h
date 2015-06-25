@@ -11,6 +11,8 @@
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 class vtkCudaKohonenApplication : public vtkImageAlgorithm, public vtkCudaObject
 {
 public:
@@ -20,9 +22,15 @@ public:
 
   void SetScale( double s );
   double GetScale() {return this->Scale;}
-  
+#if (VTK_MAJOR_VERSION <= 5)  
   void SetDataInput(vtkImageData* d);
   void SetMapInput(vtkImageData* d);
+#else
+  void SetDataInputData(vtkImageData* d);
+  void SetMapInputData(vtkImageData* d);
+  void SetDataInputConnection(vtkAlgorithmOutput* d);
+  void SetMapInputConnection(vtkAlgorithmOutput* d);
+#endif
   vtkImageData* GetDataInput();
   vtkImageData* GetMapInput();
 

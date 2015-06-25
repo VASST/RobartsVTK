@@ -47,7 +47,7 @@ void vtkCudaKohonenApplication::SetScale(double s){
     this->Modified();
   }
 }
-
+#if (VTK_MAJOR_VERSION <= 5)  
 void vtkCudaKohonenApplication::SetDataInput(vtkImageData* d){
   this->SetInput(0,d);
 }
@@ -55,7 +55,22 @@ void vtkCudaKohonenApplication::SetDataInput(vtkImageData* d){
 void vtkCudaKohonenApplication::SetMapInput(vtkImageData* d){
   this->SetInput(1,d);
 }
+#else
+void vtkCudaKohonenApplication::SetDataInputData(vtkImageData* d){
+  this->SetInputData(0,d);
+}
 
+void vtkCudaKohonenApplication::SetMapInputData(vtkImageData* d){
+  this->SetInputData(1,d);
+}
+void vtkCudaKohonenApplication::SetDataInputConnection(vtkAlgorithmOutput* d){
+  this->vtkImageAlgorithm::SetInputConnection(0,d);
+}
+
+void vtkCudaKohonenApplication::SetMapInputConnection(vtkAlgorithmOutput* d){
+  this->vtkImageAlgorithm::SetInputConnection(1,d);
+}
+#endif
 vtkImageData* vtkCudaKohonenApplication::GetDataInput(){
   return (vtkImageData*) this->GetInput(0);
 }
