@@ -28,6 +28,10 @@
 #include <math.h>
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION >= 6)
+#include "vtkExecutive.h"
+#endif
+
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageResliceBSpline, "$Revision: 1.1 $");
 #endif
@@ -188,12 +192,20 @@ void vtkImageResliceBSpline::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageResliceBSpline::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkImageAlgorithm::SetNthInput(1, stencil);
 }
+#else
+void vtkImageResliceBSpline::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(1, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImageResliceBSpline::GetStencil()
 {
   if (this->NumberOfInputs < 2)
@@ -205,6 +217,20 @@ vtkImageStencilData *vtkImageResliceBSpline::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[1]);
     }
 }
+#else
+vtkImageStencilData *vtkImageResliceBSpline::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(1) < 2)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(1, 0));
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------
 void vtkImageResliceBSpline::SetResliceAxesDirectionCosines(double x0, double x1,

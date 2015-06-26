@@ -287,7 +287,11 @@ public:
   // Use a stencil to limit the calculations to a specific region of
   // the output.  Portions of the output that are 'outside' the stencil
   // will be cleared to the background color.
+#if (VTK_MAJOR_VERSION <= 5)
   void SetStencil(vtkImageStencilData *stencil);
+#else
+  void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageStencilData *GetStencil();
 
 //BTX
