@@ -68,10 +68,17 @@ vtkImageProbeSum::~vtkImageProbeSum()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageProbeSum::SetInput(vtkDataSet *input)
 {
   this->vtkImageAlgorithm::SetNthInput(0, input);
 }
+#else
+void vtkImageProbeSum::SetInputConnection(vtkAlgorithmOutput *input)
+{
+  this->vtkImageAlgorithm::SetNthInputConnection(0, 0, input);
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkDataSet *vtkImageProbeSum::GetInput()

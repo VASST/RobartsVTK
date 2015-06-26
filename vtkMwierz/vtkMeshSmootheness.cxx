@@ -65,6 +65,7 @@ vtkMeshSmootheness::~vtkMeshSmootheness()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkMeshSmootheness::SetInput(vtkPolyData *input)
 {
   this->vtkPolyDataAlgorithm::SetNthInput(0, input);
@@ -75,6 +76,18 @@ void vtkMeshSmootheness::SetInput(vtkPolyData *input)
   this->MeanCurvature = new double[this->NumPts];
   this->NumNeighb =  new int[this->NumPts];
 }
+#else
+void vtkMeshSmootheness::SetInputConnection(vtkAlgorithmOutput *input)
+{
+  this->vtkPolyDataAlgorithm::SetNthInputConnection(0, 0, input);
+  this->mesh = this->GetInput();
+  this->NumPts = this->mesh->GetNumberOfPoints();
+  this->NumCls = this->mesh->GetNumberOfCells();
+
+  this->MeanCurvature = new double[this->NumPts];
+  this->NumNeighb =  new int[this->NumPts];
+}
+#endif
 
 //-------------------------------------------------------//
 void vtkMeshSmootheness::GetMeanCurvature()

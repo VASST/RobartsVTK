@@ -52,7 +52,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageThreshold.h"
 #include "vtkImageMathematics.h"
 
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
 //----------------------------------------------------------------------------
 inline double vtkMinimum(double vals[14])
@@ -99,6 +98,7 @@ vtkShapeBasedInterpolation::~vtkShapeBasedInterpolation()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkShapeBasedInterpolation::SetInput(vtkImageData *input)
 {
   vtkImageCast *cast;
@@ -109,11 +109,7 @@ void vtkShapeBasedInterpolation::SetInput(vtkImageData *input)
 
   vtkImageAccumulate *accumulate;
   accumulate = vtkImageAccumulate::New();
-#if (VTK_MAJOR_VERSION <= 5)
   accumulate->SetInput(cast->GetOutput());
-#else
-  accumulate->SetInputConnection(cast->GetOutputPort());
-#endif
   accumulate->Update();
 
   cast->GetOutput()->GetExtent(this->inExt);
@@ -123,6 +119,28 @@ void vtkShapeBasedInterpolation::SetInput(vtkImageData *input)
   this->inMaxVal = accumulate->GetMax()[0];
   this->inData = cast->GetOutput();
 }
+#else
+void vtkShapeBasedInterpolation::SetInputConnection(vtkAlgorithmOutput *input)
+{
+  vtkImageCast *cast;
+  cast = vtkImageCast::New();
+  cast->SetInputConnection(input);
+  cast->SetOutputScalarTypeToFloat();
+  cast->Update();
+
+  vtkImageAccumulate *accumulate;
+  accumulate = vtkImageAccumulate::New();
+  accumulate->SetInputConnection(cast->GetOutputPort());
+  accumulate->Update();
+
+  cast->GetOutput()->GetExtent(this->inExt);
+  cast->GetOutput()->GetSpacing(this->inSpa);
+  cast->GetOutput()->GetOrigin(this->inOri);
+  this->inMinVal = accumulate->GetMin()[0];
+  this->inMaxVal = accumulate->GetMax()[0];
+  this->inData = cast->GetOutput();
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkImageData *vtkShapeBasedInterpolation::GetOutput()

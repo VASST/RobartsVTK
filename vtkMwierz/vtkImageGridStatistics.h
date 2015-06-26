@@ -51,6 +51,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 class VTK_EXPORT vtkImageGridStatistics : public vtkImageAlgorithm
 {
 public:
@@ -69,7 +71,11 @@ public:
 
   void Update();
 
+#if (VTK_MAJOR_VERSION <= 5)
   void SetInput(vtkImageData *input);
+#else
+  void SetInputConnection(vtkAlgorithmOutput *input);
+#endif
   vtkImageData *GetInput();
 
 

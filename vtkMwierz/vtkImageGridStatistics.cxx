@@ -68,12 +68,19 @@ vtkImageGridStatistics::vtkImageGridStatistics()
 
 vtkImageGridStatistics::~vtkImageGridStatistics()
 {
-}
 
+}
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageGridStatistics::SetInput(vtkImageData *input)
 {
   this->vtkImageAlgorithm::SetNthInput(0, input);
 }
+#else
+void vtkImageGridStatistics::SetInputConnection(vtkAlgorithmOutput *input)
+{
+  this->vtkImageAlgorithm::SetNthInputConnection(0, 0, input);
+}
+#endif
 
 vtkImageData *vtkImageGridStatistics::GetInput()
 {

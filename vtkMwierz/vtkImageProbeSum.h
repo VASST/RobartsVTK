@@ -55,6 +55,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageData.h"
 #include "vtkIdTypeArray.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 class VTK_EXPORT vtkImageProbeSum : public vtkImageAlgorithm
 {
 public:
@@ -70,7 +72,11 @@ public:
   // Description:
   // Specify the point locations used to probe input. Any geometry
   // can be used.
-  void SetInput(vtkDataSet *source);
+#if (VTK_MAJOR_VERSION <= 5)
+  void SetInput(vtkDataSet *input);
+#else
+  void SetInputConnection(vtkAlgorithmOutput *input);
+#endif
   vtkDataSet *GetInput();
 
   // Description:

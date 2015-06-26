@@ -86,7 +86,11 @@ public:
   void SetCurvatureTypeToMean()
   { this->SetCurvatureType(VTK_CURVATURE_MEAN); }
 
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInput(vtkPolyData *input);
+#else
+  virtual void SetInputConnection(vtkAlgorithmOutput *input);
+#endif
 
   vtkGetMacro(Smootheness,double);
   double Smootheness;
