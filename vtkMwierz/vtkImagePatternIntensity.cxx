@@ -245,8 +245,13 @@ void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
     }
 
   vtkImageMathematics *diffMath = vtkImageMathematics::New();
+#if (VTK_MAJOR_VERSION <= 5)
   diffMath->SetInput1(inData[0]);
   diffMath->SetInput2(inData[1]);
+#else
+  diffMath->SetInput1Data(inData[0]);
+  diffMath->SetInput2Data(inData[1]);
+#endif
   diffMath->SetOperationToSubtract();
   diffMath->Update();
 

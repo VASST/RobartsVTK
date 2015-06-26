@@ -121,7 +121,7 @@ protected:
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],int vtkNotUsed(whichInput));
   void ExecuteData(vtkDataObject *output);
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->vtkImageAlgorithm::ExecuteInformation();};
 
 private:
   vtkImageNormalizedMutualInformation(const vtkImageNormalizedMutualInformation&);  // Not implemented.

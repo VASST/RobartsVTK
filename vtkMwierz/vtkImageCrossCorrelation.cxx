@@ -446,7 +446,7 @@ void vtkImageCrossCorrelation::ThreadedExecute(vtkImageData **inData,
 
 void vtkImageCrossCorrelation::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageTwoInputFilter::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
 
   os << indent << "ShrinkFactors: (" << this->ShrinkFactors[0] << ", "
      << this->ShrinkFactors[1] << ", " << this->ShrinkFactors[2] << ")\n";

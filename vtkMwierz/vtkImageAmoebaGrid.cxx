@@ -432,7 +432,7 @@ static inline void vtkResliceRound(float val, float& rnd)
 //----------------------------------------------------------------------------
 void vtkImageAmoebaGrid::ComputeInputUpdateExtents(vtkDataObject *output)
 {
-  this->vtkImageMultipleInputFilter::ComputeInputUpdateExtents(output);
+  this->vtkImageAlgorithm::ComputeInputUpdateExtents(output);
 
   vtkImageStencilData *stencil = this->GetStencil();
   if (stencil)
@@ -1139,6 +1139,7 @@ static void CorrelationForExtentAndDisplacement(void *amoebaParmBlock)
 
   switch (pb->scalarType)
     {
+#if (VTK_MAJOR_VERSION < 5)
     vtkTemplateMacro9(CorrelationWorkFunction,
           (VTK_TT *)(pb->patPtr),
           pb->patIncs,
@@ -1149,6 +1150,18 @@ static void CorrelationForExtentAndDisplacement(void *amoebaParmBlock)
           modelDisp, 
           pb->sqrt_mod_sum_squared,
           correlation);
+#else
+      vtkTemplateMacro(CorrelationWorkFunction(
+          (VTK_TT *)(pb->patPtr),
+          pb->patIncs,
+          pb->patWholeInExt,
+          pb->patext,
+          pb->modelPoints,
+          pb->kernelDiameter,
+          modelDisp, 
+          pb->sqrt_mod_sum_squared,
+          correlation));
+#endif
     default:
       cout << "CorrelationForExtentAndDisplacement: Unknown ScalarType\n";
       return;
@@ -1534,7 +1547,7 @@ void vtkImageAmoebaGrid::ThreadedExecute(vtkImageData **inData,
 
 void vtkImageAmoebaGrid::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageMultipleInputFilter::PrintSelf(os,indent);
+  vtkImageAlgorithm::PrintSelf(os,indent);
 
   os << indent << "Stencil: " << this->GetStencil() << "\n";
   os << indent << "ReverseStencil: " << (this->ReverseStencil ?

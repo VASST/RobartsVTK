@@ -137,7 +137,7 @@ protected:
 
 
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->vtkImageAlgorithm::ExecuteInformation();};
   void ComputeInputUpdateExtents(vtkDataObject *output);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6], 
         int vtkNotUsed(whichInput));

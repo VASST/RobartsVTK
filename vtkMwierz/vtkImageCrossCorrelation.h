@@ -84,7 +84,7 @@ protected:
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6], 
         int vtkNotUsed(whichInput));
-  void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->vtkImageAlgorithm::ExecuteInformation();};
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
            int extent[6], int id);
 
