@@ -46,7 +46,8 @@ public:
 #if (VTK_MAJOR_VERSION <= 5)
   void SetCannyInput (vtkImageData *input) {this->SetInput(0,input);};
 #else
-  void SetCannyInput (vtkImageData *input) {this->SetInputData(0,input);};
+  void SetCannyInputData (vtkImageData *input) {this->SetInputData(0,input);};
+  void SetCannyInputConnection (vtkAlgorithmOutput *input) {this->SetInputConnection(0,input);};
 #endif
 
   // Description:
