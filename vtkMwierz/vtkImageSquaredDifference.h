@@ -22,7 +22,7 @@
 #ifndef __vtkImageSquaredDifference_h
 #define __vtkImageSquaredDifference_h
 
-#include "vtkImageMultipleInputFilter.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
@@ -31,22 +31,28 @@
 // This number must be greater than the number of CPU's
 #define THREAD_NUM 2
 
-class VTK_EXPORT vtkImageSquaredDifference : public vtkImageMultipleInputFilter
+class VTK_EXPORT vtkImageSquaredDifference : public vtkImageAlgorithm
 {
 public:
   static vtkImageSquaredDifference *New();
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageSquaredDifference,vtkImageMultipleInputFilter);
 #else
-  vtkTypeMacro(vtkImageSquaredDifference,vtkImageMultipleInputFilter);
+  vtkTypeMacro(vtkImageSquaredDifference,vtkImageAlgorithm);
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/get the 2 input images and stencil to specify which voxels to accumulate.
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInput1(vtkImageData *input);
   virtual void SetInput2(vtkImageData *input);
   void SetStencil(vtkImageStencilData *stencil);
+#else
+  virtual void SetInput1Data(vtkImageData *input);
+  virtual void SetInput2Data(vtkImageData *input);
+  void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
   vtkImageStencilData *GetStencil();

@@ -16,7 +16,10 @@
 
 =========================================================================*/
 #include "vtkImagePatternIntensity.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
 
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImagePatternIntensity, "$Revision: 1.1 $");
@@ -30,22 +33,43 @@ vtkImagePatternIntensity::vtkImagePatternIntensity()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImagePatternIntensity::SetInput1(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(0,input);
 }
+#else
+void vtkImagePatternIntensity::SetInput1Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(0,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImagePatternIntensity::SetInput2(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(1,input);
 }
+#else
+void vtkImagePatternIntensity::SetInput2Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(1,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImagePatternIntensity::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkProcessObject::SetNthInput(2, stencil);
 }
+#else
+void vtkImagePatternIntensity::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(2, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkImageData *vtkImagePatternIntensity::GetInput1()
@@ -70,6 +94,7 @@ vtkImageData *vtkImagePatternIntensity::GetInput2()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImagePatternIntensity::GetStencil()
 {
   if (this->NumberOfInputs < 3)
@@ -81,6 +106,20 @@ vtkImageStencilData *vtkImagePatternIntensity::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
+#else
+vtkImageStencilData *vtkImagePatternIntensity::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(2) < 3)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(2, 0));
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
@@ -215,9 +254,15 @@ void vtkImagePatternIntensity::ThreadedExecute(vtkImageData **inData,
 
   switch (diffMath->GetOutput()->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION <= 5)
       vtkTemplateMacro5(vtkImagePatternIntensityExecute,this,
       diffMath->GetOutput(), (VTK_TT *)(diffPtr),
       outExt, id);
+#else
+      vtkTemplateMacro(vtkImagePatternIntensityExecute(this,
+      diffMath->GetOutput(), (VTK_TT *)(diffPtr),
+      outExt, id));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

@@ -16,7 +16,10 @@
 
 =========================================================================*/
 #include "vtkImageTsallisMutualInformation.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
 
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageTsallisMutualInformation, "$Revision: 1.1 $");
@@ -87,22 +90,43 @@ vtkImageTsallisMutualInformation::~vtkImageTsallisMutualInformation()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageTsallisMutualInformation::SetInput1(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(0,input);
 }
+#else
+void vtkImageTsallisMutualInformation::SetInput1Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(0,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageTsallisMutualInformation::SetInput2(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(1,input);
 }
+#else
+void vtkImageTsallisMutualInformation::SetInput2Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(1,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageTsallisMutualInformation::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkProcessObject::SetNthInput(2, stencil);
 }
+#else
+void vtkImageTsallisMutualInformation::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(2, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkImageData *vtkImageTsallisMutualInformation::GetInput1()
@@ -127,6 +151,7 @@ vtkImageData *vtkImageTsallisMutualInformation::GetInput2()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImageTsallisMutualInformation::GetStencil()
 {
   if (this->NumberOfInputs < 3)
@@ -138,6 +163,20 @@ vtkImageStencilData *vtkImageTsallisMutualInformation::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
+#else
+vtkImageStencilData *vtkImageTsallisMutualInformation::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(2) < 3)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(2, 0));
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------
 void vtkImageTsallisMutualInformation::SetBinNumber(int numS, int numT)
@@ -318,10 +357,17 @@ void vtkImageTsallisMutualInformation::ThreadedExecute1(vtkImageData **inData,
 
   switch (inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION <= 5)
       vtkTemplateMacro7(vtkImageTsallisMutualInformationExecute,this,
       inData[0], (VTK_TT *)(inPtr1),
       inData[1], (VTK_TT *)(inPtr2),
       inExt, id);
+#else
+      vtkTemplateMacro(vtkImageTsallisMutualInformationExecute(this,
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
+      inExt, id));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

@@ -54,6 +54,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkImageData.h"
 #include "vtkImageStencilData.h"
 
+#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+
 class VTK_EXPORT vtkCalcCrossCorrelation : public vtkImageAlgorithm
 {
 public:
@@ -63,7 +65,11 @@ public:
 
   // Description:
   // Use a stencil to specify which voxels to accumulate.
+  #if (VTK_MAJOR_VERSION <= 5)
   void SetStencil(vtkImageStencilData *stencil);
+#else
+  void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageStencilData *GetStencil();
 
   // Description:

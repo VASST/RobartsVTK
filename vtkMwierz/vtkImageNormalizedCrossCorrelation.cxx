@@ -18,6 +18,10 @@
 #include "vtkImageNormalizedCrossCorrelation.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
+
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageNormalizedCrossCorrelation, "$Revision: 1.1 $");
 #endif
@@ -31,22 +35,43 @@ vtkImageNormalizedCrossCorrelation::vtkImageNormalizedCrossCorrelation()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageNormalizedCrossCorrelation::SetInput1(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(0,input);
 }
+#else
+void vtkImageNormalizedCrossCorrelation::SetInput1Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(0,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageNormalizedCrossCorrelation::SetInput2(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(1,input);
 }
+#else
+void vtkImageNormalizedCrossCorrelation::SetInput2Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(1,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageNormalizedCrossCorrelation::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkProcessObject::SetNthInput(2, stencil);
 }
+#else
+void vtkImageNormalizedCrossCorrelation::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(2, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkImageData *vtkImageNormalizedCrossCorrelation::GetInput1()
@@ -71,6 +96,7 @@ vtkImageData *vtkImageNormalizedCrossCorrelation::GetInput2()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImageNormalizedCrossCorrelation::GetStencil()
 {
   if (this->NumberOfInputs < 3)
@@ -82,6 +108,20 @@ vtkImageStencilData *vtkImageNormalizedCrossCorrelation::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
+#else
+vtkImageStencilData *vtkImageNormalizedCrossCorrelation::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(2) < 3)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(2, 0));
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
@@ -188,10 +228,17 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
 
   switch (inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro7(vtkImageNormalizedCrossCorrelationExecute,this,
       inData[0], (VTK_TT *)(inPtr1),
       inData[1], (VTK_TT *)(inPtr2),
       outExt, id);
+#else
+      vtkTemplateMacro(vtkImageNormalizedCrossCorrelationExecute(this,
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
+      outExt, id));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

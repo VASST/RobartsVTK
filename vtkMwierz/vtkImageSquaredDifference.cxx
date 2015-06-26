@@ -16,7 +16,10 @@
 
 =========================================================================*/
 #include "vtkImageSquaredDifference.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
 
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxRevisionMacro(vtkImageSquaredDifference, "$Revision: 1.1 $");
@@ -31,22 +34,43 @@ vtkImageSquaredDifference::vtkImageSquaredDifference()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageSquaredDifference::SetInput1(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(0,input);
 }
+#else
+void vtkImageSquaredDifference::SetInput1Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(0,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageSquaredDifference::SetInput2(vtkImageData *input)
 {
   this->vtkImageMultipleInputFilter::SetNthInput(1,input);
 }
+#else
+void vtkImageSquaredDifference::SetInput2Data(vtkImageData *input)
+{
+  this->vtkImageAlgorithm::SetInputData(1,input);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageSquaredDifference::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkProcessObject::SetNthInput(2, stencil);
 }
+#else
+void vtkImageSquaredDifference::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(2, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
 vtkImageData *vtkImageSquaredDifference::GetInput1()
@@ -71,6 +95,7 @@ vtkImageData *vtkImageSquaredDifference::GetInput2()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImageSquaredDifference::GetStencil()
 {
   if (this->NumberOfInputs < 3)
@@ -82,6 +107,20 @@ vtkImageStencilData *vtkImageSquaredDifference::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[2]);
     }
 }
+#else
+vtkImageStencilData *vtkImageSquaredDifference::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(2) < 3)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(2, 0));
+    }
+}
+#endif
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
@@ -187,10 +226,17 @@ void vtkImageSquaredDifference::ThreadedExecute(vtkImageData **inData,
 
   switch (inData[0]->GetScalarType())
     {
+#if (VTK_MAJOR_VERSION < 5)
       vtkTemplateMacro7(vtkImageSquaredDifferenceExecute,this,
       inData[0], (VTK_TT *)(inPtr1),
       inData[1], (VTK_TT *)(inPtr2),
       outExt, id);
+#else
+      vtkTemplateMacro(vtkImageSquaredDifferenceExecute(this,
+      inData[0], (VTK_TT *)(inPtr1),
+      inData[1], (VTK_TT *)(inPtr2),
+      outExt, id));
+#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

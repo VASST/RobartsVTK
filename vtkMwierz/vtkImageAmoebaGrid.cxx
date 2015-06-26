@@ -43,6 +43,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vtkImageData.h" //Ravi
 
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
+
 //----------------------------------------------------------------------------
 vtkImageAmoebaGrid* vtkImageAmoebaGrid::New()
 {
@@ -104,12 +108,20 @@ vtkImageAmoebaGrid::~vtkImageAmoebaGrid()
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkImageAmoebaGrid::SetStencil(vtkImageStencilData *stencil)
 {
   this->vtkProcessObject::SetNthInput(3, stencil);
 }
+#else
+void vtkImageAmoebaGrid::SetStencilData(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInputData(3, stencil);
+}
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkImageAmoebaGrid::GetStencil()
 {
   if (this->NumberOfInputs < 4)
@@ -121,6 +133,20 @@ vtkImageStencilData *vtkImageAmoebaGrid::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[3]);
     }    
 }
+#else
+vtkImageStencilData *vtkImageAmoebaGrid::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(3) < 4)
+    {
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(3, 0));
+    }    
+}
+#endif
   
 
 

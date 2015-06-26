@@ -51,18 +51,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __vtkImageAmoebaGrid_h
 
 
-#include "vtkImageMultipleInputFilter.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkFunctionMinimizer.h"
 #include "vtkImageStencilData.h"
 
+#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 
 
-class VTK_EXPORT vtkImageAmoebaGrid : public vtkImageMultipleInputFilter
+
+class VTK_EXPORT vtkImageAmoebaGrid : public vtkImageAlgorithm
 {
 public:
   static vtkImageAmoebaGrid *New();
-  vtkTypeMacro(vtkImageAmoebaGrid,vtkImageMultipleInputFilter);
+  vtkTypeMacro(vtkImageAmoebaGrid,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 
@@ -98,7 +100,11 @@ public:
   // Description:
   // Specify the stencil to use.  The stencil can be created
   // from a vtkImplicitFunction or a vtkPolyData.
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetStencil(vtkImageStencilData *stencil);
+#else
+  virtual void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageStencilData *GetStencil();
 
   // Description:

@@ -22,14 +22,14 @@
 #ifndef __vtkImagePatternIntensity_h
 #define __vtkImagePatternIntensity_h
 
-#include "vtkImageMultipleInputFilter.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
 #include "vtkImageMathematics.h"
 #include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-class VTK_EXPORT vtkImagePatternIntensity : public vtkImageMultipleInputFilter
+class VTK_EXPORT vtkImagePatternIntensity : public vtkImageAlgorithm
 {
 public:
   static vtkImagePatternIntensity *New();
@@ -37,15 +37,21 @@ public:
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImagePatternIntensity,vtkImageMultipleInputFilter);
 #else
-  vtkTypeMacro(vtkImagePatternIntensity,vtkImageMultipleInputFilter);
+  vtkTypeMacro(vtkImagePatternIntensity,vtkImageAlgorithm);
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/get the 2 input images and stencil to specify which voxels to accumulate.
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInput1(vtkImageData *input);
   virtual void SetInput2(vtkImageData *input);
   void SetStencil(vtkImageStencilData *stencil);
+#else
+  virtual void SetInput1Data(vtkImageData *input);
+  virtual void SetInput2Data(vtkImageData *input);
+  void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
   vtkImageStencilData *GetStencil();

@@ -45,6 +45,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vtkVersion.h> // For VTK_MAJOR_VERSION
 
+#if (VTK_MAJOR_VERSION >= 6)
+#include <vtkExecutive.h>
+#endif
+
 //---------------------------------------------------------------------------
 vtkCalcCrossCorrelation* vtkCalcCrossCorrelation::New()
 {
@@ -82,12 +86,20 @@ void vtkCalcCrossCorrelation::SetInput2Data(vtkImageData *input)
 }
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkCalcCrossCorrelation::SetStencil(vtkImageStencilData *stencil)
+{
+  this->vtkImageAlgorithm::SetInput(2, stencil); 
+}
+#else
+void vtkCalcCrossCorrelation::SetStencilData(vtkImageStencilData *stencil)
 {
   this->vtkImageAlgorithm::SetInputData(2, stencil); 
 }
+#endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageStencilData *vtkCalcCrossCorrelation::GetStencil()
 {
   if (this->NumberOfInputs < 3) 
@@ -99,6 +111,20 @@ vtkImageStencilData *vtkCalcCrossCorrelation::GetStencil()
     return (vtkImageStencilData *)(this->Inputs[2]); 
     }
 }
+#else
+vtkImageStencilData *vtkCalcCrossCorrelation::GetStencil()
+{
+  if (this->GetNumberOfInputConnections(2) < 3) 
+    { 
+    return NULL;
+    }
+  else
+    {
+    return vtkImageStencilData::SafeDownCast(
+      this->GetExecutive()->GetInputData(2, 0));
+    }
+}
+#endif
 
 
 //----------------------------------------------------------------------------

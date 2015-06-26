@@ -24,7 +24,7 @@
 #ifndef __vtkImageNormalizedMutualInformation_h
 #define __vtkImageNormalizedMutualInformation_h
 
-#include "vtkImageTwoInputFilter.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
@@ -36,22 +36,28 @@
 #define MAX_BINS_S  4096
 #define MAX_BINS_T  4096
 
-class VTK_EXPORT vtkImageNormalizedMutualInformation : public vtkImageTwoInputFilter
+class VTK_EXPORT vtkImageNormalizedMutualInformation : public vtkImageAlgorithm
 {
 public:
   static vtkImageNormalizedMutualInformation *New();
 #if (VTK_MAJOR_VERSION <= 5)
   vtkTypeRevisionMacro(vtkImageNormalizedMutualInformation,vtkImageTwoInputFilter);
 #else
-  vtkTypeMacro(vtkImageNormalizedMutualInformation,vtkImageTwoInputFilter);
+  vtkTypeMacro(vtkImageNormalizedMutualInformation,vtkImageAlgorithm);
 #endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/get the 2 input images and stencil to specify which voxels to accumulate.
+#if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInput1(vtkImageData *input);
   virtual void SetInput2(vtkImageData *input);
   void SetStencil(vtkImageStencilData *stencil);
+#else
+  virtual void SetInput1Data(vtkImageData *input);
+  virtual void SetInput2Data(vtkImageData *input);
+  void SetStencilData(vtkImageStencilData *stencil);
+#endif
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
   vtkImageStencilData *GetStencil();
