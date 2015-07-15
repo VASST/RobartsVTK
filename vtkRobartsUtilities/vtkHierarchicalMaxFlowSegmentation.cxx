@@ -500,7 +500,11 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
     vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outputBuffer->SetExtent(Extent);
     outputBuffer->Modified();
+#if (VTK_MAJOR_VERSION <= 5)
     outputBuffer->AllocateScalars();
+#else
+    outputBuffer->AllocateScalars(outputInfo);
+#endif
     leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
