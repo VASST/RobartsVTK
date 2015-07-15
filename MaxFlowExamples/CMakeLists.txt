@@ -2,12 +2,11 @@ PROJECT( MaxFlowExample )
 
 SET(KIT MaxFlowExample )
 SET(UKIT MaxFlowExample )
-# possible fix for vtk6+
-#IF(VTK_LIBRARIES)
-#  SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRobartsUtilities vtkCudaImageAnalytics vtkCudaCommon ${VTK_LIBRARIES} )
-#ELSE()
-SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkRobartsUtilities vtkCudaImageAnalytics vtkCudaCommon)
-#ENDIF()
+IF(VTK_LIBRARIES)
+  SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRobartsUtilities vtkCudaImageAnalytics vtkCudaCommon ${VTK_LIBRARIES} )
+ELSE()
+  SET(KIT_LIBS ${RobartsVTK_LIBS} vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkRobartsUtilities vtkCudaImageAnalytics vtkCudaCommon)
+ENDIF()
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS

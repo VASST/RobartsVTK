@@ -3,12 +3,11 @@ INCLUDE( ${QT_USE_FILE} )
 
 SET(KIT FluoroPredViz )
 SET(UKIT FluoroPredViz )
-# possible fix for vtk6+
-#IF(VTK_LIBRARIES)
-#  SET(KIT_LIBS vtkCudaCommon vtkCudaVisualization vtkRobartsUtilities ${VTK_LIBRARIES} )
-#ELSE()
-SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization vtkRobartsUtilities QVTK)
-#ENDIF()
+IF(VTK_LIBRARIES)
+  SET(KIT_LIBS vtkCudaCommon vtkCudaVisualization vtkRobartsUtilities ${VTK_LIBRARIES} )
+ELSE()
+  SET(KIT_LIBS vtkVolumeRendering vtkRendering vtkFiltering vtkImaging vtkWidgets vtkIO vtkCommon vtkCudaCommon vtkCudaVisualization vtkRobartsUtilities QVTK)
+ENDIF()
 SET(KIT_EXTRA_LIBS)
 
 SET ( Kit_SRCS
