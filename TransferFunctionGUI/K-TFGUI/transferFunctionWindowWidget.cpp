@@ -14,6 +14,7 @@
 #include <fstream>
 
 #include "vtkPointData.h"
+#include "vtkDataArray.h"
 
 transferFunctionWindowWidget::transferFunctionWindowWidget(QWidget *parent) :
   transferFunctionWindowWidgetInterface(parent)

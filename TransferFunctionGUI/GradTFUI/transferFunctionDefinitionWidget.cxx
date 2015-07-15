@@ -8,6 +8,8 @@
 #include <QGridLayout>
 #include <QColorDialog>
 
+#include "vtkDataArray.h"
+
 // ---------------------------------------------------------------------------------------
 // Construction and destruction code
 transferFunctionDefinitionWidget::transferFunctionDefinitionWidget( transferFunctionWindowWidget* p,vtkCuda2DTransferFunction* f ) :
