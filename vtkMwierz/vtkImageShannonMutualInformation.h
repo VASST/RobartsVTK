@@ -127,7 +127,11 @@ protected:
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],int vtkNotUsed(whichInput));
   void ExecuteData(vtkDataObject *output);
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
+#if (VTK_MAJOR_VERSION <= 5)
   void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+#else
+  void ExecuteInformation(){this->vtkImageAlgorithm::ExecuteInformation();};
+#endif
 
 private:
   vtkImageShannonMutualInformation(const vtkImageShannonMutualInformation&);
