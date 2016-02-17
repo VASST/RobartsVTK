@@ -1,0 +1,9 @@
+vtk_module(vtkCudaVisualization
+  GROUPS
+    Visualization
+    Cuda
+  DEPENDS
+    vtkCudaCommon
+  KIT
+    vtkRobartsCuda
+  )
