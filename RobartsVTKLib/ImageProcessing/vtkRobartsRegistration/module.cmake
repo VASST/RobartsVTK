@@ -1,0 +1,9 @@
+vtk_module(vtkRobartsRegistration
+  GROUPS
+    Imaging
+  DEPENDS
+    vtkImagingHybrid 
+    vtkImagingCore
+  KIT
+    vtkRobartsImageProcessing
+  )

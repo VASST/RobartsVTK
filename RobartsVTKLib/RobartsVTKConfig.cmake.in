@@ -1,0 +1,33 @@
+#-----------------------------------------------------------------------------
+#
+# RobartsVTKConfig.cmake - CMake configuration file for external projects.
+#
+# This file is configured by RobartsVTK and used by the UseRobartsVTK.cmake
+# module to load RobartsVTK's settings for an external project.
+
+# The libraries.
+SET(RobartsVTK_LIBRARIES "@RobartsVTK_LIBRARIES@")
+
+# The library directories.
+SET(RobartsVTK_LIBRARY_DIRS "@RobartsVTK_LIBRARY_DIRS@")
+
+# The include directories.
+SET(RobartsVTK_INCLUDE_DIRS "@RobartsVTK_INCLUDE_DIRS@")
+
+# The "use" file.
+SET(RobartsVTK_USE_FILE "@RobartsVTK_USE_FILE@")
+
+# The VTK options.
+SET(RobartsVTK_VTK_DIR "@Robarts_VTK_DIR@")
+
+# The ITK options
+SET(RobartsVTK_USE_ITK "@RobartsVTK_USE_ITK@")
+SET(RobartsVTK_ITK_DIR "@RobartsVTK_ITK_DIR@")
+
+# The libxml2 options
+SET(RobartsVTK_USE_LIBXML2 "@RobartsVTK_USE_LIBXML2@")
+
+SET (RobartsVTK_USE_HAPTICS "@RobartsVTK_USE_HAPTICS@")
+SET (RobartsVTK_USE_REGISTRATION   "@RobartsVTK_USE_REGISTRATION@")
+SET (RobartsVTK_USE_CUDA           "@RobartsVTK_USE_CUDA@")
+#SET (RobartsVTK_USE_ANIS          "@RobartsVTK_USE_ANIS@")

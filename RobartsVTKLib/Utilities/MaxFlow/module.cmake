@@ -1,0 +1,14 @@
+vtk_module(MaxFlow
+  GROUPS
+    Utilities
+  DEPENDS
+    vtkFiltersCore 
+    vtkImagingCore 
+    vtkIOCore 
+    vtkCommonCore 
+    vtkCudaCommon 
+    vtkCudaImageAnalytics 
+    vtkRobartsCommon
+  KIT
+    vtkRobartsUtilities
+  )
