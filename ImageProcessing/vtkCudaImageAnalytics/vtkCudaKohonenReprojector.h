@@ -1,17 +1,20 @@
 #ifndef __VTKCUDAKOHONENREPROJECTOR_H__
 #define __VTKCUDAKOHONENREPROJECTOR_H__
 
-#include "CUDA_kohonenreprojector.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "CudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
+#include "vtkCudaImageAnalyticsModule.h"
 
-class vtkCudaKohonenReprojector : public vtkImageAlgorithm, public CudaObject
+#include "CudaObject.h"
+#include "CUDA_kohonenreprojector.h"
+#include "vtkImageAlgorithm.h"
+
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
+
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKohonenReprojector : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenReprojector, vtkImageAlgorithm );

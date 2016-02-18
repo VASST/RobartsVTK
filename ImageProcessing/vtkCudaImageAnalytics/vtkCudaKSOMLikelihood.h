@@ -1,15 +1,18 @@
 #ifndef __VTKCUDAKSOMLIKELIHOOD_H__
 #define __VTKCUDAKSOMLIKELIHOOD_H__
 
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "CudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_KSOMlikelihood.h"
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h"
+
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
 
 //INPUT PORT DESCRIPTION
 //[0] Input Image - full X by Y by Z image with D float components interlaced (VTK default)
@@ -26,7 +29,7 @@
 //[1] PAGMM Set - M by N image with L float components interlaced (VTK default) representing the
 //                activation of each Gaussian component in the histogram estimate of each label
 
-class vtkCudaKSOMLikelihood : public vtkImageAlgorithm, public CudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKSOMLikelihood : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKSOMLikelihood, vtkImageAlgorithm );

@@ -18,36 +18,35 @@
  *      to the input image with the highest value at that location. ( argmax{} operation )
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
+#include "CUDA_imagevote.h"
 #include "vtkCudaImageVote.h"
-#include "vtkObjectFactory.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkPointData.h"
 #include "vtkDataArray.h"
-#include "vtkTreeDFSIterator.h"
 #include "vtkImageData.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkPointData.h"
 #include "vtkSmartPointer.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkTreeDFSIterator.h"
 #include "vtkTrivialProducer.h"
-
 #include <assert.h>
-#include <math.h>
 #include <float.h>
 #include <limits.h>
-
-#include "CUDA_imagevote.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include <math.h>
+#include <vtkVersion.h>
 
 #define SQR(X) X*X
 
 vtkStandardNewMacro(vtkCudaImageVote);
 
-vtkCudaImageVote::vtkCudaImageVote(){
-  
+vtkCudaImageVote::vtkCudaImageVote()
+{
   //configure the IO ports
   this->SetNumberOfInputPorts(1);
   this->SetNumberOfOutputPorts(1);
@@ -58,17 +57,18 @@ vtkCudaImageVote::vtkCudaImageVote(){
   this->FirstUnusedPort = 0;
 
   this->OutputDataType = VTK_SHORT;
-
 }
 
-vtkCudaImageVote::~vtkCudaImageVote(){
+vtkCudaImageVote::~vtkCudaImageVote()
+{
   this->InputPortMapping.clear();
   this->BackwardsInputPortMapping.clear();
 }
 
 //------------------------------------------------------------
 
-int vtkCudaImageVote::FillInputPortInformation(int i, vtkInformation* info){
+int vtkCudaImageVote::FillInputPortInformation(int i, vtkInformation* info)
+{
   info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
   info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
   info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
@@ -78,10 +78,12 @@ int vtkCudaImageVote::FillInputPortInformation(int i, vtkInformation* info){
 void vtkCudaImageVote::SetInput(int idx, vtkDataObject *input)
 {
   //we are adding/switching an input, so no need to resort list
-  if( input != NULL ){
-  
+  if( input != NULL )
+  {
+
     //if their is no pair in the mapping, create one
-    if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ){
+    if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() )
+    {
       int portNumber = this->FirstUnusedPort;
       this->FirstUnusedPort++;
       this->InputPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
@@ -95,20 +97,28 @@ void vtkCudaImageVote::SetInput(int idx, vtkDataObject *input)
     this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, tp->GetOutputPort() );
 #endif
 
-  }else{
+  }
+  else
+  {
     //if their is no pair in the mapping, just exit, nothing to do
-    if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() ) return;
+    if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() )
+    {
+      return;
+    }
 
     int portNumber = this->InputPortMapping.find(idx)->second;
     this->InputPortMapping.erase(this->InputPortMapping.find(idx));
     this->BackwardsInputPortMapping.erase(this->BackwardsInputPortMapping.find(portNumber));
 
     //if we are the last input, no need to reshuffle
-    if(portNumber == this->FirstUnusedPort - 1){
+    if(portNumber == this->FirstUnusedPort - 1)
+    {
       this->SetNthInputConnection(0, portNumber,  0);
-    
-    //if we are not, move the last input into this spot
-    }else{
+
+      //if we are not, move the last input into this spot
+    }
+    else
+    {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedPort - 1));
 #if (VTK_MAJOR_VERSION < 6)
       this->SetNthInputConnection(0, portNumber, swappedInput->GetProducerPort() );
@@ -137,56 +147,72 @@ void vtkCudaImageVote::SetInput(int idx, vtkDataObject *input)
 vtkDataObject *vtkCudaImageVote::GetInput(int idx)
 {
   if( this->InputPortMapping.find(idx) == this->InputPortMapping.end() )
+  {
     return 0;
+  }
   return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->InputPortMapping.find(idx)->second));
 }
 
 //----------------------------------------------------------------------------
 
-int vtkCudaImageVote::CheckInputConsistency( vtkInformationVector** inputVector, int* Extent, int* NumLabels, int* DataType, int* NumComponents){
-  
+int vtkCudaImageVote::CheckInputConsistency( vtkInformationVector** inputVector, int* Extent, int* NumLabels, int* DataType, int* NumComponents)
+{
+
   *DataType = -1;
   Extent[0] = -1;
   *NumComponents = -1;
   *NumLabels = (int) this->InputPortMapping.size();
 
   //make sure that every image is the correct size and same datatype
-  for(unsigned int inputPortNumber = 0; inputPortNumber < this->InputPortMapping.size(); inputPortNumber++){
-    
+  for(unsigned int inputPortNumber = 0; inputPortNumber < this->InputPortMapping.size(); inputPortNumber++)
+  {
+
     //verify extent
-    if( Extent[0] == -1 ){
+    if( Extent[0] == -1 )
+    {
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       CurrImage->GetExtent(Extent);
-    }else{
+    }
+    else
+    {
       int CurrExtent[6];
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       CurrImage->GetExtent(CurrExtent);
       if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
-        CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] ){
+          CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
+      {
         vtkErrorMacro(<<"Inconsistant object extent.");
         return -1;
       }
     }
 
     //verify data type
-    if( *DataType == -1 ){
+    if( *DataType == -1 )
+    {
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       *DataType = CurrImage->GetScalarType();
-    }else{
+    }
+    else
+    {
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-      if( *DataType != CurrImage->GetScalarType() ){
+      if( *DataType != CurrImage->GetScalarType() )
+      {
         vtkErrorMacro(<<"Inconsistant object data type.");
         return -1;
       }
     }
 
     //verify num components
-    if( *NumComponents == -1 ){
+    if( *NumComponents == -1 )
+    {
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       *NumComponents = CurrImage->GetNumberOfScalarComponents();
-    }else{
+    }
+    else
+    {
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-      if( *NumComponents != CurrImage->GetNumberOfScalarComponents() ){
+      if( *NumComponents != CurrImage->GetNumberOfScalarComponents() )
+      {
         vtkErrorMacro(<<"Inconsistant object data type.");
         return -1;
       }
@@ -202,9 +228,15 @@ int vtkCudaImageVote::RequestInformation(
   vtkInformationVector* outputVector)
 {
   //check input for consistency
-  int Extent[6]; int NumLabels; int DataType; int NumComponents;
+  int Extent[6];
+  int NumLabels;
+  int DataType;
+  int NumComponents;
   int result = CheckInputConsistency( inputVector, Extent, &NumLabels, &DataType, &NumComponents );
-  if( result || NumLabels == 0 ) return -1;        
+  if( result || NumLabels == 0 )
+  {
+    return -1;
+  }
 
   return 1;
 }
@@ -215,13 +247,21 @@ int vtkCudaImageVote::RequestUpdateExtent(
   vtkInformationVector* outputVector)
 {
   //check input for consistency
-  int Extent[6]; int NumLabels; int DataType; int NumComponents;
+  int Extent[6];
+  int NumLabels;
+  int DataType;
+  int NumComponents;
   int result = CheckInputConsistency( inputVector, Extent, &NumLabels, &DataType, &NumComponents );
-  if( result || NumLabels == 0 ) return -1;        
+  if( result || NumLabels == 0 )
+  {
+    return -1;
+  }
 
   //set up the extents
   for(unsigned int inputPortNumber = 0; inputPortNumber < this->InputPortMapping.size(); inputPortNumber++)
+  {
     (inputVector[0])->GetInformationObject(inputPortNumber)->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+  }
 
   return 1;
 }
@@ -229,30 +269,35 @@ int vtkCudaImageVote::RequestUpdateExtent(
 
 template<class T>
 void vtkCudaImageVoteExecute(vtkCudaImageVote *self,
-        vtkImageData **inData,
-        vtkImageData *outData,
-        T* unUsed){
+                             vtkImageData **inData,
+                             vtkImageData *outData,
+                             T* unUsed)
+{
 
   T** inPtr = new T* [self->GetNumberOfInputConnections(0)];
   for(int i = 0; i < self->GetNumberOfInputConnections(0); i++ )
+  {
     inPtr[i] = (T*) inData[i]->GetScalarPointer();
+  }
 
   void* outPtr = outData->GetScalarPointer();
 
-  switch (outData->GetScalarType()) {
+  switch (outData->GetScalarType())
+  {
     vtkTemplateMacro(vtkCudaImageVoteExecute(self, inData, inPtr, outData, static_cast<VTK_TT *>(outPtr) ));
-    default:
-      vtkGenericWarningMacro("Execute: Unknown output ScalarType");
-      return;
-    }
+  default:
+    vtkGenericWarningMacro("Execute: Unknown output ScalarType");
+    return;
+  }
 
   delete[] inPtr;
 }
 
 template <typename IT, typename OT>
 void vtkCudaImageVoteExecute(vtkCudaImageVote *self,
-        vtkImageData **inData, IT **inPtr,
-        vtkImageData *outData, OT *outPtr ){
+                             vtkImageData **inData, IT **inPtr,
+                             vtkImageData *outData, OT *outPtr )
+{
   int outExt[6];
   outData->GetExtent(outExt);
   int VolumeSize = (outExt[1]-outExt[0]+1)*(outExt[3]-outExt[2]+1)*(outExt[5]-outExt[4]+1);
@@ -261,28 +306,39 @@ void vtkCudaImageVoteExecute(vtkCudaImageVote *self,
   //compute the map
   OT* map = new OT[inputNumber];
   for( int iv = 0; iv < inputNumber; iv++ )
+  {
     map[iv] = self->GetMappedTerm<OT>(iv);
+  }
 
   //perform voting
   CUDA_CIV_COMPUTE( inPtr, inputNumber, outPtr, map, VolumeSize, self->GetStream() );
-  
+
   //deallocate the temporary storage with the map
   delete[] map;
 }
 
 int vtkCudaImageVote::RequestData(vtkInformation *request,
-                                     vtkInformationVector **inputVector,
-                                     vtkInformationVector *outputVector){
+                                  vtkInformationVector **inputVector,
+                                  vtkInformationVector *outputVector)
+{
 
   //check input for consistency
-  int Extent[6]; int NumLabels; int DataType; int NumComponents;
+  int Extent[6];
+  int NumLabels;
+  int DataType;
+  int NumComponents;
   int result = CheckInputConsistency( inputVector, Extent, &NumLabels, &DataType, &NumComponents);
-  if( result || NumLabels == 0 ) return -1;        
-  
+  if( result || NumLabels == 0 )
+  {
+    return -1;
+  }
+
   vtkImageData* outData = vtkImageData::SafeDownCast(outputVector->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
   vtkImageData** inData =  new vtkImageData* [NumLabels];
   for(int i = 0; i < NumLabels; i++)
+  {
     inData[i] = vtkImageData::SafeDownCast(inputVector[0]->GetInformationObject(i)->Get(vtkDataObject::DATA_OBJECT()));
+  }
 
   //allocate output image (using short)
   outData->SetExtent(Extent);
@@ -296,12 +352,13 @@ int vtkCudaImageVote::RequestData(vtkInformation *request,
 #endif
 
   //call typed method
-  switch (DataType) {
+  switch (DataType)
+  {
     vtkTemplateMacro(vtkCudaImageVoteExecute(this, inData, outData, static_cast<VTK_TT *>(0) ));
-    default:
-      vtkGenericWarningMacro("Execute: Unknown output ScalarType");
-      return -1;
-    }
+  default:
+    vtkGenericWarningMacro("Execute: Unknown output ScalarType");
+    return -1;
+  }
 
   delete[] inData;
   return 1;

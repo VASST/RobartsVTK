@@ -1,27 +1,27 @@
 #ifndef __VTKCUDAKOHONENGENERATOR_H__
 #define __VTKCUDAKOHONENGENERATOR_H__
 
-#include "CUDA_kohonengenerator.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "CudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
+#include "vtkCudaImageAnalyticsModule.h"
 
+#include "CUDA_kohonengenerator.h"
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkPiecewiseFunction.h"
 
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
 
-class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public CudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKohonenGenerator : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenGenerator, vtkImageAlgorithm );
 
   static vtkCudaKohonenGenerator *New();
-  
+
   vtkSetObjectMacro(MeansAlphaSchedule,vtkPiecewiseFunction);
   vtkGetObjectMacro(MeansAlphaSchedule,vtkPiecewiseFunction);
   vtkSetObjectMacro(MeansWidthSchedule,vtkPiecewiseFunction);
@@ -34,7 +34,7 @@ public:
   vtkGetObjectMacro(WeightsAlphaSchedule,vtkPiecewiseFunction);
   vtkSetObjectMacro(WeightsWidthSchedule,vtkPiecewiseFunction);
   vtkGetObjectMacro(WeightsWidthSchedule,vtkPiecewiseFunction);
-  
+
   void SetNumberOfIterations(int number);
   int GetNumberOfIterations();
 
@@ -42,7 +42,7 @@ public:
   double GetBatchSize();
 
   void SetKohonenMapSize(int SizeX, int SizeY);
-  
+
   vtkDataObject* GetInput(int idx);
 #if (VTK_MAJOR_VERSION < 6)
   void SetInput(int idx, vtkDataObject *input);
@@ -61,31 +61,34 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
   virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
   vtkCudaKohonenGenerator();
   virtual ~vtkCudaKohonenGenerator();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
 private:
 
-  Kohonen_Generator_Information& GetCudaInformation(){ return this->info; }
+  Kohonen_Generator_Information& GetCudaInformation()
+  {
+    return this->info;
+  }
 
-  vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&){}
-  vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&){}
-  
+  vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&) {}
+  vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&) {}
+
   vtkPiecewiseFunction* MeansAlphaSchedule;
   vtkPiecewiseFunction* MeansWidthSchedule;
   vtkPiecewiseFunction* VarsAlphaSchedule;

@@ -14,10 +14,10 @@
 /** @file vtkHierarchicalMaxFlowSegmentation2Task.h
  *
  *  @brief Header file with definitions of individual chunks of GPU based code which can be
- *      handled semi-synchronously. 
+ *      handled semi-synchronously.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  *  @note This is not a front-end class.
@@ -27,25 +27,22 @@
 #ifndef __VTKCUDAMAXFLOWSEGMENTATIONTASK_H__
 #define __VTKCUDAMAXFLOWSEGMENTATIONTASK_H__
 
-#include <assert.h>
-#include <math.h>
-#include <float.h>
-#include <limits.h>
+#include "vtkCudaImageAnalyticsModule.h"
 
-#include <set>
+#include "vtkType.h"
 #include <vector>
 
 class vtkCudaMaxFlowSegmentationScheduler;
-#include "vtkCudaMaxFlowSegmentationScheduler.h"
-
-#include "vtkCudaMaxFlowSegmentationWorker.h"
+class vtkCudaMaxFlowSegmentationWorker;
 
 #define SQR(X) X*X
 
-class vtkCudaMaxFlowSegmentationTask {
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask
+{
 public:
 
-  enum TaskType{
+  enum TaskType
+  {
     //iteration components - GHMF
     ClearWorkingBufferTask,      //0 - Working
     UpdateSpatialFlowsTask,      //0 - Sink,    1 - Inc,  2 - Div,  3 - Label,  4 - FlowX,  5 - FlowY,  6 - FlowZ,  7 - Smoothness
@@ -83,11 +80,11 @@ public:
   vtkCudaMaxFlowSegmentationTask( vtkIdType n1, vtkIdType n2, vtkCudaMaxFlowSegmentationScheduler* parent, int a, int ra, int numToDeath, TaskType t);
 
   ~vtkCudaMaxFlowSegmentationTask();
-  
+
 //------------------------------------------------------------------------------------------//
 
   void Signal();
-  bool CanDo(){ return this->Active >= 0; }
+  bool CanDo();
 
 //------------------------------------------------------------------------------------------//
 
@@ -110,14 +107,13 @@ public:
 
   //Perform the task at hand
   void Perform(vtkCudaMaxFlowSegmentationWorker* w);
-  
+
   void SetConstant1(float c);
   void SetConstant2(float c);
 
   void DecrementActivity();
 
 private:
-  
   friend class vtkCudaMaxFlowSegmentationWorker;
   friend class vtkCudaMaxFlowSegmentationScheduler;
 
@@ -127,7 +123,7 @@ private:
   int NumToDeath;
   bool isRoot;
   vtkCudaMaxFlowSegmentationScheduler* const Parent;
-  
+
   float constant1;
   float constant2;
 

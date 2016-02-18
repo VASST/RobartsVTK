@@ -26,16 +26,14 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "CudaObject.h"
-
 #include <map>
-#include <list>
 #include <set>
-#include <limits.h>
-#include <float.h>
 
-class vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public CudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkHierarchicalMaxFlowSegmentation );
@@ -68,7 +66,7 @@ protected:
   std::set<float*> ReadOnly;
   std::set<float*> NoCopyBack;
 
-  //Prioirty structure
+  //Priority structure
   class CircListNode;
   std::map< float*, CircListNode* > PrioritySet;
   std::map< float*, int > PrioritySetNumUses;

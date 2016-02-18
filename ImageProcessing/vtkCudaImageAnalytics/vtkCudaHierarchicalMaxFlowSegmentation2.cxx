@@ -17,25 +17,30 @@
  *      segmentation problems with greedy scheduling over multiple GPUs.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
+#include "CudaObject.h"
 #include "vtkCudaHierarchicalMaxFlowSegmentation2.h"
+#include "vtkCudaMaxFlowSegmentationScheduler.h"
 #include "vtkCudaMaxFlowSegmentationTask.h"
 #include "vtkCudaMaxFlowSegmentationWorker.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTreeDFSIterator.h"
-
 #include <assert.h>
+#include <float.h>
+#include <limits.h>
+#include <list>
 #include <math.h>
+#include <vector>
 
 vtkStandardNewMacro(vtkCudaHierarchicalMaxFlowSegmentation2);
 
-vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2(){
-
+vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2()
+{
   //set algorithm mathematical parameters to defaults
   this->MaxGPUUsage = 0.90;
   this->ReportRate = 100;
@@ -48,7 +53,8 @@ vtkCudaHierarchicalMaxFlowSegmentation2::vtkCudaHierarchicalMaxFlowSegmentation2
 
 }
 
-vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation2(){
+vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation2()
+{
   this->GPUsUsed.clear();
   this->MaxGPUUsageNonDefault.clear();
   delete this->Scheduler;
@@ -56,44 +62,66 @@ vtkCudaHierarchicalMaxFlowSegmentation2::~vtkCudaHierarchicalMaxFlowSegmentation
 
 //------------------------------------------------------------//
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::AddDevice(int GPU){
+void vtkCudaHierarchicalMaxFlowSegmentation2::AddDevice(int GPU)
+{
   if( GPU >= 0 && GPU < vtkCudaDeviceManager::Singleton()->GetNumberOfDevices() )
+  {
     this->GPUsUsed.insert(GPU);
+  }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::RemoveDevice(int GPU){
+void vtkCudaHierarchicalMaxFlowSegmentation2::RemoveDevice(int GPU)
+{
   if( this->GPUsUsed.find(GPU) != this->GPUsUsed.end() )
+  {
     this->GPUsUsed.erase(this->GPUsUsed.find(GPU));
+  }
 }
 
-bool vtkCudaHierarchicalMaxFlowSegmentation2::HasDevice(int GPU){
+bool vtkCudaHierarchicalMaxFlowSegmentation2::HasDevice(int GPU)
+{
   return (this->GPUsUsed.find(GPU) != this->GPUsUsed.end());
 }
-void vtkCudaHierarchicalMaxFlowSegmentation2::ClearDevices(){
+void vtkCudaHierarchicalMaxFlowSegmentation2::ClearDevices()
+{
   this->GPUsUsed.clear();
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::SetMaxGPUUsage(double usage, int device){
-  if( usage < 0.0 ) usage = 0.0;
-  else if( usage > 1.0 ) usage = 1.0;
+void vtkCudaHierarchicalMaxFlowSegmentation2::SetMaxGPUUsage(double usage, int device)
+{
+  if( usage < 0.0 )
+  {
+    usage = 0.0;
+  }
+  else if( usage > 1.0 )
+  {
+    usage = 1.0;
+  }
   if( device >= 0 && device < vtkCudaDeviceManager::Singleton()->GetNumberOfDevices() )
+  {
     this->MaxGPUUsageNonDefault[device] = usage;
+  }
 }
 
-double vtkCudaHierarchicalMaxFlowSegmentation2::GetMaxGPUUsage(int device){
+double vtkCudaHierarchicalMaxFlowSegmentation2::GetMaxGPUUsage(int device)
+{
   if( this->MaxGPUUsageNonDefault.find(device) != this->MaxGPUUsageNonDefault.end() )
+  {
     return this->MaxGPUUsageNonDefault[device];
+  }
   return this->MaxGPUUsage;
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::ClearMaxGPUUsage(){
+void vtkCudaHierarchicalMaxFlowSegmentation2::ClearMaxGPUUsage()
+{
   this->MaxGPUUsageNonDefault.clear();
 }
 
 //-----------------------------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------------------------//
 
-int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm(){
+int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
+{
 
   //if verbose, print progress
   Scheduler->Clear();
@@ -105,32 +133,47 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm(){
   Scheduler->VZ = this->VZ;
   Scheduler->CC = this->CC;
   Scheduler->StepSize = this->StepSize;
-  if( this->Debug ) vtkDebugMacro(<<"Building workers.");
-    for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++){
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Building workers.");
+  }
+  for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++)
+  {
     double usage = this->MaxGPUUsage;
     if( this->MaxGPUUsageNonDefault.find(*gpuIterator) != this->MaxGPUUsageNonDefault.end() )
+    {
       usage = this->MaxGPUUsageNonDefault[*gpuIterator];
-    if( this->Scheduler->CreateWorker(*gpuIterator,usage) ){
+    }
+    if( this->Scheduler->CreateWorker(*gpuIterator,usage) )
+    {
       vtkErrorMacro(<<"Could not allocate sufficient GPU buffers.");
       Scheduler->Clear();
-      while( CPUBuffersAcquired.size() > 0 ){
+      while( CPUBuffersAcquired.size() > 0 )
+      {
         float* tempBuffer = CPUBuffersAcquired.front();
         delete[] tempBuffer;
         CPUBuffersAcquired.pop_front();
       }
     }
 
-    }
+  }
 
   //if verbose, print progress
-  if( this->Debug ) vtkDebugMacro(<<"Find priority structures.");
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Find priority structures.");
+  }
 
   //create LIFO priority queue (priority stack) data structure
-    FigureOutBufferPriorities( this->Structure->GetRoot() );
-  
+  FigureOutBufferPriorities( this->Structure->GetRoot() );
+
   //add tasks in for the normal iterations (done first for dependancy reasons)
-  if( this->Debug ) vtkDebugMacro(<<"Creating tasks for normal iterations.");
-  if( this->NumberOfIterations > 0 ){
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Creating tasks for normal iterations.");
+  }
+  if( this->NumberOfIterations > 0 )
+  {
     CreateClearWorkingBufferTasks(this->Structure->GetRoot());
     CreateUpdateSpatialFlowsTasks(this->Structure->GetRoot());
     CreateApplySinkPotentialBranchTasks(this->Structure->GetRoot());
@@ -140,23 +183,36 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm(){
     CreateUpdateLabelsTask(this->Structure->GetRoot());
     AddIterationTaskDependencies(this->Structure->GetRoot());
   }
-  
+
   //add tasks in for the initialization (done second for dependancy reasons)
-  if( this->Debug ) vtkDebugMacro(<<"Creating tasks for initialization.");
-  if( this->NumberOfIterations > 0 ) CreateInitializeAllSpatialFlowsToZeroTasks(this->Structure->GetRoot());
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Creating tasks for initialization.");
+  }
+  if( this->NumberOfIterations > 0 )
+  {
+    CreateInitializeAllSpatialFlowsToZeroTasks(this->Structure->GetRoot());
+  }
   CreateInitializeLeafSinkFlowsToCapTasks(this->Structure->GetRoot());
   CreateCopyMinimalLeafSinkFlowsTasks(this->Structure->GetRoot());
   CreateFindInitialLabellingAndSumTasks(this->Structure->GetRoot());
   CreateClearSourceWorkingBufferTask();
   CreateDivideOutLabelsTasks(this->Structure->GetRoot());
-  if( this->NumberOfIterations > 0 ) CreatePropogateLabelsTasks(this->Structure->GetRoot());
+  if( this->NumberOfIterations > 0 )
+  {
+    CreatePropogateLabelsTasks(this->Structure->GetRoot());
+  }
 
-  if( this->Debug ) vtkDebugMacro(<<"Number of tasks to be run: " << Scheduler->NumTasksGoingToHappen);
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Number of tasks to be run: " << Scheduler->NumTasksGoingToHappen);
+  }
 
   return 1;
 }
 
-int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm(){
+int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm()
+{
 
 
   //connect sink flows
@@ -164,26 +220,34 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm(){
   Scheduler->NumLeaves = this->NumLeaves;
 
   //if verbose, print progress
-  if( this->Debug ) vtkDebugMacro(<<"Running tasks");
+  if( this->Debug )
+  {
+    vtkDebugMacro(<<"Running tasks");
+  }
   int NumTasksDone = 0;
-  while( Scheduler->CanRunAlgorithmIteration() ){
+  while( Scheduler->CanRunAlgorithmIteration() )
+  {
     Scheduler->RunAlgorithmIteration();
 
     //if there are conflicts
     //update progress
     NumTasksDone++;
-    if( this->Debug && ReportRate > 0 && NumTasksDone % ReportRate == 0 ){
+    if( this->Debug && ReportRate > 0 && NumTasksDone % ReportRate == 0 )
+    {
       Scheduler->SyncWorkers();
       vtkDebugMacro(<< "Finished " << NumTasksDone << " with " << Scheduler->NumMemCpies << " memory transfers.");
     }
-    
+
   }
   Scheduler->ReturnLeaves();
-  if( this->Debug ) vtkDebugMacro(<< "Finished all " << NumTasksDone << " tasks with a total of " << Scheduler->NumMemCpies << " memory transfers.");
+  if( this->Debug )
+  {
+    vtkDebugMacro(<< "Finished all " << NumTasksDone << " tasks with a total of " << Scheduler->NumMemCpies << " memory transfers.");
+  }
   assert( Scheduler->BlockedTasks.size() == 0 );
-  
+
   Scheduler->Clear();
-  
+
   Scheduler->Clear();
   this->ClearWorkingBufferTasks.clear();
   this->UpdateSpatialFlowsTasks.clear();
@@ -202,20 +266,26 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm(){
   return 1;
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdType currNode ){
-  
+void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdType currNode )
+{
+
   //Propogate down the tree
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int kid = 0; kid < NumKids; kid++)
+  {
     FigureOutBufferPriorities( this->Structure->GetChild(currNode,kid) );
+  }
 
   //if we are the root, figure out the buffers
-  if( this->Structure->GetRoot() == currNode ){
+  if( this->Structure->GetRoot() == currNode )
+  {
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(sourceFlowBuffer,NumKids+2));
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(sourceWorkingBuffer,NumKids+3));
 
-  //if we are a leaf, handle separately
-  }else if( NumKids == 0 ){
+    //if we are a leaf, handle separately
+  }
+  else if( NumKids == 0 )
+  {
     int Number = LeafMap[currNode];
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(leafDivBuffers[Number],3));
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(leafFlowXBuffers[Number],2));
@@ -225,10 +295,14 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdTy
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(leafDataTermBuffers[Number],1));
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(leafLabelBuffers[Number],3));
     if( leafSmoothnessTermBuffers[Number] )
+    {
       this->Scheduler->CPU2PriorityMap[leafSmoothnessTermBuffers[Number]]++;
+    }
 
-  //else, we are a branch
-  }else{
+    //else, we are a branch
+  }
+  else
+  {
     int Number = BranchMap[currNode];
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(branchDivBuffers[Number],3));
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(branchFlowXBuffers[Number],2));
@@ -238,7 +312,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdTy
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(branchLabelBuffers[Number],3));
     this->Scheduler->CPU2PriorityMap.insert(std::pair<float*,int>(branchWorkingBuffers[Number],NumKids+3));
     if( branchSmoothnessTermBuffers[Number] )
+    {
       this->Scheduler->CPU2PriorityMap[branchSmoothnessTermBuffers[Number]]++;
+    }
   }
 }
 
@@ -247,71 +323,100 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::FigureOutBufferPriorities( vtkIdTy
 //------------------------------------------------------------//
 //------------------------------------------------------------//
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearWorkingBufferTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearWorkingBufferTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateClearWorkingBufferTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids == 0 ) return;
-  
+  }
+  if( NumKids == 0 )
+  {
+    return;
+  }
+
   //create the new task
-    vtkCudaMaxFlowSegmentationTask* newTask = 0;
-    if(currNode == this->Structure->GetRoot())
-        newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-NumLeaves,1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ClearWorkingBufferTask);
-    else
-        newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ClearWorkingBufferTask);
-    this->ClearWorkingBufferTasks[currNode] = newTask;
-  
+  vtkCudaMaxFlowSegmentationTask* newTask = 0;
+  if(currNode == this->Structure->GetRoot())
+  {
+    newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-NumLeaves,1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ClearWorkingBufferTask);
+  }
+  else
+  {
+    newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ClearWorkingBufferTask);
+  }
+  this->ClearWorkingBufferTasks[currNode] = newTask;
+
   //modify the task accordingly
-    if(currNode == this->Structure->GetRoot()){
+  if(currNode == this->Structure->GetRoot())
+  {
     newTask->AddBuffer(sourceWorkingBuffer);
-  }else{
+  }
+  else
+  {
     Scheduler->NoCopyBack.insert(branchWorkingBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateSpatialFlowsTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateSpatialFlowsTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateUpdateSpatialFlowsTasks( this->Structure->GetChild(currNode,i) );
-  if( currNode == this->Structure->GetRoot() ) return;
-  
+  }
+  if( currNode == this->Structure->GetRoot() )
+  {
+    return;
+  }
+
   //create the new task
   //initial Active is -(6+NumKids) if branch since 4 clear buffers, 2 init flow happen in the initialization and NumKids number of label clears
   //initial Active is -7 if leaf since 4 clear buffers, 2 init flow happen in the initialization and NumKids number of label clears
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-(6+(NumKids?NumKids:1)),1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::UpdateSpatialFlowsTask);
   newTask->SetConstant1( this->SmoothnessScalars[currNode] );
   this->UpdateSpatialFlowsTasks[currNode] = newTask;
-  if(NumKids != 0){
+  if(NumKids != 0)
+  {
     newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchIncBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchFlowXBuffers[BranchMap[currNode]]);
-        newTask->AddBuffer(branchFlowYBuffers[BranchMap[currNode]]);
-        newTask->AddBuffer(branchFlowZBuffers[BranchMap[currNode]]);
-        newTask->AddBuffer(branchSmoothnessTermBuffers[BranchMap[currNode]]);
-  }else{
+    newTask->AddBuffer(branchFlowYBuffers[BranchMap[currNode]]);
+    newTask->AddBuffer(branchFlowZBuffers[BranchMap[currNode]]);
+    newTask->AddBuffer(branchSmoothnessTermBuffers[BranchMap[currNode]]);
+  }
+  else
+  {
     newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafFlowXBuffers[LeafMap[currNode]]);
-        newTask->AddBuffer(leafFlowYBuffers[LeafMap[currNode]]);
-        newTask->AddBuffer(leafFlowZBuffers[LeafMap[currNode]]);
-        newTask->AddBuffer(leafSmoothnessTermBuffers[LeafMap[currNode]]);
+    newTask->AddBuffer(leafFlowYBuffers[LeafMap[currNode]]);
+    newTask->AddBuffer(leafFlowZBuffers[LeafMap[currNode]]);
+    newTask->AddBuffer(leafSmoothnessTermBuffers[LeafMap[currNode]]);
   }
 
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialBranchTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialBranchTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateApplySinkPotentialBranchTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids == 0 ) return;
-  
+  }
+  if( NumKids == 0 )
+  {
+    return;
+  }
+
   //create the new task
-  if(currNode != this->Structure->GetRoot()){
+  if(currNode != this->Structure->GetRoot())
+  {
     vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-2,2,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ApplySinkPotentialBranchTask);
     this->ApplySinkPotentialBranchTasks[currNode] = newTask;
     newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
@@ -321,12 +426,18 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialBranchTask
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialLeafTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialLeafTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateApplySinkPotentialLeafTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids != 0 ) return;
-  
+  }
+  if( NumKids != 0 )
+  {
+    return;
+  }
+
   //create the new task
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-1,1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ApplySinkPotentialLeafTask);
   this->ApplySinkPotentialLeafTasks[currNode] = newTask;
@@ -337,70 +448,103 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySinkPotentialLeafTasks(
   newTask->AddBuffer(leafDataTermBuffers[LeafMap[currNode]]);
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutWorkingBufferTask(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutWorkingBufferTask(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateDivideOutWorkingBufferTask( this->Structure->GetChild(currNode,i) );
-  if( NumKids == 0 ) return;
-  
+  }
+  if( NumKids == 0 )
+  {
+    return;
+  }
+
   //create the new task
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-(NumKids+1),NumKids+1,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::DivideOutWorkingBufferTask);
   newTask->SetConstant1( NumKids + (currNode == Structure->GetRoot() ? 0 : 1) );
   this->DivideOutWorkingBufferTasks[currNode] = newTask;
-  if( currNode != this->Structure->GetRoot() ){
+  if( currNode != this->Structure->GetRoot() )
+  {
     newTask->AddBuffer(branchWorkingBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
-  }else{
+  }
+  else
+  {
     newTask->AddBuffer(sourceWorkingBuffer);
     newTask->AddBuffer(sourceFlowBuffer);
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySourcePotentialTask(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateApplySourcePotentialTask(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateApplySourcePotentialTask( this->Structure->GetChild(currNode,i) );
-  if( currNode == this->Structure->GetRoot() ) return;
+  }
+  if( currNode == this->Structure->GetRoot() )
+  {
+    return;
+  }
   vtkIdType parentNode = this->Structure->GetParent(currNode);
 
   //find appropriate working buffer
   float* workingBuffer = 0;
-  if( parentNode == this->Structure->GetRoot() ) workingBuffer = sourceWorkingBuffer;
-  else workingBuffer = branchWorkingBuffers[BranchMap[parentNode]];
+  if( parentNode == this->Structure->GetRoot() )
+  {
+    workingBuffer = sourceWorkingBuffer;
+  }
+  else
+  {
+    workingBuffer = branchWorkingBuffers[BranchMap[parentNode]];
+  }
 
   //create the new task
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-2,2,this->NumberOfIterations,vtkCudaMaxFlowSegmentationTask::ApplySourcePotentialTask);
   this->ApplySourcePotentialTasks[currNode] = newTask;
   newTask->AddBuffer(workingBuffer);
-  if(NumKids != 0){
+  if(NumKids != 0)
+  {
     newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
-  }else{
+  }
+  else
+  {
     newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafLabelBuffers[LeafMap[currNode]]);
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateLabelsTask(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateLabelsTask(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateUpdateLabelsTask( this->Structure->GetChild(currNode,i) );
-  if( currNode == this->Structure->GetRoot() ) return;
-  
+  }
+  if( currNode == this->Structure->GetRoot() )
+  {
+    return;
+  }
+
   //find appropriate number of repetitions
   int NumReps = NumKids ? this->NumberOfIterations-1: this->NumberOfIterations;
 
   //create the new task
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-2,2,NumReps,vtkCudaMaxFlowSegmentationTask::UpdateLabelsTask);
   this->UpdateLabelsTasks[currNode] = newTask;
-  if(NumKids != 0){
+  if(NumKids != 0)
+  {
     newTask->AddBuffer(branchSinkBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchIncBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchDivBuffers[BranchMap[currNode]]);
     newTask->AddBuffer(branchLabelBuffers[BranchMap[currNode]]);
-  }else{
+  }
+  else
+  {
     newTask->AddBuffer(leafSinkBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafIncBuffers[LeafMap[currNode]]);
     newTask->AddBuffer(leafDivBuffers[LeafMap[currNode]]);
@@ -408,49 +552,69 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateUpdateLabelsTask(vtkIdType c
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::AddIterationTaskDependencies(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::AddIterationTaskDependencies(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     AddIterationTaskDependencies( this->Structure->GetChild(currNode,i) );
+  }
 
-  if( NumKids == 0 ){
+  if( NumKids == 0 )
+  {
     vtkIdType parNode = this->Structure->GetParent(currNode);
     this->UpdateSpatialFlowsTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialLeafTasks[currNode]);
     this->ApplySinkPotentialLeafTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[currNode]);
     this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[parNode]);
     this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[currNode]);
     this->UpdateLabelsTasks[currNode]->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
-  }else if( currNode == this->Structure->GetRoot() ){
+  }
+  else if( currNode == this->Structure->GetRoot() )
+  {
     this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[currNode]);
     for(int i = 0; i < NumKids; i++)
+    {
       this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[this->Structure->GetChild(currNode,i)]);
+    }
     this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[currNode]);
     for(int i = 0; i < NumKids; i++)
+    {
       this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[this->Structure->GetChild(currNode,i)]);
-  }else{
+    }
+  }
+  else
+  {
     vtkIdType parNode = this->Structure->GetParent(currNode);
     this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialBranchTasks[currNode]);
     for(int i = 0; i < NumKids; i++)
+    {
       this->ClearWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[this->Structure->GetChild(currNode,i)]);
+    }
     this->UpdateSpatialFlowsTasks[currNode]->AddTaskToSignal(this->ApplySinkPotentialBranchTasks[currNode]);
     this->ApplySinkPotentialBranchTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[currNode]);
     this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->ApplySourcePotentialTasks[currNode]);
     this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->ClearWorkingBufferTasks[currNode]);
     for(int i = 0; i < NumKids; i++)
+    {
       this->DivideOutWorkingBufferTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[this->Structure->GetChild(currNode,i)]);
+    }
     this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->DivideOutWorkingBufferTasks[parNode]);
     this->ApplySourcePotentialTasks[currNode]->AddTaskToSignal(this->UpdateLabelsTasks[currNode]);
     this->UpdateLabelsTasks[currNode]->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeAllSpatialFlowsToZeroTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeAllSpatialFlowsToZeroTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateInitializeAllSpatialFlowsToZeroTasks( this->Structure->GetChild(currNode,i) );
-  
+  }
+
   //modify the task accordingly
-  if( NumKids == 0 ){
+  if( NumKids == 0 )
+  {
     vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
     vtkCudaMaxFlowSegmentationTask* newTask2 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
     vtkCudaMaxFlowSegmentationTask* newTask3 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
@@ -463,7 +627,9 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeAllSpatialFlowsToZ
     newTask2->AddBuffer(this->leafFlowXBuffers[LeafMap[currNode]]);
     newTask3->AddBuffer(this->leafFlowYBuffers[LeafMap[currNode]]);
     newTask4->AddBuffer(this->leafFlowZBuffers[LeafMap[currNode]]);
-  }else if(currNode != this->Structure->GetRoot()){
+  }
+  else if(currNode != this->Structure->GetRoot())
+  {
     vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
     vtkCudaMaxFlowSegmentationTask* newTask2 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
     vtkCudaMaxFlowSegmentationTask* newTask3 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
@@ -479,13 +645,20 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeAllSpatialFlowsToZ
   }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeLeafSinkFlowsToCapTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeLeafSinkFlowsToCapTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateInitializeLeafSinkFlowsToCapTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids > 0 ) return;
-  
-  if( LeafMap[currNode] != 0 ){
+  }
+  if( NumKids > 0 )
+  {
+    return;
+  }
+
+  if( LeafMap[currNode] != 0 )
+  {
     vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::InitializeLeafFlows);
     vtkCudaMaxFlowSegmentationTask* newTask2 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-2,1,1,vtkCudaMaxFlowSegmentationTask::MinimizeLeafFlows);
     InitializeLeafSinkFlowsTasks.insert(std::pair<int,vtkCudaMaxFlowSegmentationTask*>(LeafMap[currNode],newTask1));
@@ -496,47 +669,75 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateInitializeLeafSinkFlowsToCap
     newTask2->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
     newTask1->AddTaskToSignal(newTask2);
     if( InitializeLeafSinkFlowsTasks.find(0) != InitializeLeafSinkFlowsTasks.end() )
+    {
       InitializeLeafSinkFlowsTasks[0]->AddTaskToSignal(newTask2);
-  }else{
+    }
+  }
+  else
+  {
     vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::InitializeLeafFlows);
     InitializeLeafSinkFlowsTasks.insert(std::pair<int,vtkCudaMaxFlowSegmentationTask*>(0,newTask1));
     newTask1->AddBuffer(this->leafSinkBuffers[0]);
     newTask1->AddBuffer(this->leafDataTermBuffers[0]);
     for( std::map<int,vtkCudaMaxFlowSegmentationTask*>::iterator it = MinimizeLeafSinkFlowsTasks.begin();
-       it != this->MinimizeLeafSinkFlowsTasks.end(); it++)
+         it != this->MinimizeLeafSinkFlowsTasks.end(); it++)
+    {
       newTask1->AddTaskToSignal(it->second);
+    }
   }
 
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateCopyMinimalLeafSinkFlowsTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateCopyMinimalLeafSinkFlowsTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateCopyMinimalLeafSinkFlowsTasks( this->Structure->GetChild(currNode,i) );
+  }
 
   vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-((int)this->MinimizeLeafSinkFlowsTasks.size()),1,1,vtkCudaMaxFlowSegmentationTask::PropogateLeafFlows);
   PropogateLeafSinkFlowsTasks.insert(std::pair<vtkIdType,vtkCudaMaxFlowSegmentationTask*>(currNode,newTask1));
-  if( currNode != this->Structure->GetRoot() ) newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+  if( currNode != this->Structure->GetRoot() )
+  {
+    newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
+  }
   for(int i = 0; i < NumKids; i++)
+  {
     newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[this->Structure->GetChild(currNode,i)]);
+  }
   newTask1->AddBuffer(this->leafSinkBuffers[0]);
   for( std::map<int,vtkCudaMaxFlowSegmentationTask*>::iterator it = this->MinimizeLeafSinkFlowsTasks.begin(); it != this->MinimizeLeafSinkFlowsTasks.end(); it++)
+  {
     it->second->AddTaskToSignal(newTask1);
+  }
 
   if( this->Structure->GetRoot() == currNode )
+  {
     newTask1->AddBuffer(this->sourceFlowBuffer);
+  }
   else if( NumKids > 0 )
+  {
     newTask1->AddBuffer(this->branchSinkBuffers[BranchMap[currNode]]);
+  }
   else
+  {
     newTask1->AddBuffer(this->leafSinkBuffers[LeafMap[currNode]]);
+  }
 
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateFindInitialLabellingAndSumTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateFindInitialLabellingAndSumTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateFindInitialLabellingAndSumTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids > 0 ) return;
+  }
+  if( NumKids > 0 )
+  {
+    return;
+  }
 
   vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-1,1,1,vtkCudaMaxFlowSegmentationTask::InitializeLeafLabels);
   vtkCudaMaxFlowSegmentationTask* newTask2 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-2,1,1,vtkCudaMaxFlowSegmentationTask::AccumulateLabels);
@@ -550,55 +751,78 @@ void vtkCudaHierarchicalMaxFlowSegmentation2::CreateFindInitialLabellingAndSumTa
   newTask2->AddBuffer(this->leafLabelBuffers[LeafMap[currNode]]);
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearSourceWorkingBufferTask(){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateClearSourceWorkingBufferTask()
+{
   vtkCudaMaxFlowSegmentationTask* newTask = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
   newTask->AddBuffer(this->sourceWorkingBuffer);
   for( std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*>::iterator it = InitialLabellingSumTasks.begin(); it != InitialLabellingSumTasks.end(); it++)
+  {
     newTask->AddTaskToSignal(it->second);
+  }
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutLabelsTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreateDivideOutLabelsTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreateDivideOutLabelsTasks( this->Structure->GetChild(currNode,i) );
-  if( NumKids > 0 ) return;
-  
+  }
+  if( NumKids > 0 )
+  {
+    return;
+  }
+
   vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-(int)InitialLabellingSumTasks.size(),1,1,vtkCudaMaxFlowSegmentationTask::CorrectLabels);
   this->CorrectLabellingTasks[currNode] = newTask1;
   for(std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*>::iterator taskIt = InitialLabellingSumTasks.begin(); taskIt != InitialLabellingSumTasks.end(); taskIt++)
+  {
     taskIt->second->AddTaskToSignal(newTask1);
+  }
   newTask1->AddBuffer(this->sourceWorkingBuffer);
   newTask1->AddBuffer(this->leafLabelBuffers[LeafMap[currNode]]);
   newTask1->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
   newTask1->AddTaskToSignal(this->ClearWorkingBufferTasks[this->Structure->GetRoot()]);
 }
 
-void vtkCudaHierarchicalMaxFlowSegmentation2::CreatePropogateLabelsTasks(vtkIdType currNode){
+void vtkCudaHierarchicalMaxFlowSegmentation2::CreatePropogateLabelsTasks(vtkIdType currNode)
+{
   int NumKids = this->Structure->GetNumberOfChildren(currNode);
   for(int i = 0; i < NumKids; i++)
+  {
     CreatePropogateLabelsTasks( this->Structure->GetChild(currNode,i) );
-  if( currNode == this->Structure->GetRoot() || NumKids == 0 ) return;
-  
+  }
+  if( currNode == this->Structure->GetRoot() || NumKids == 0 )
+  {
+    return;
+  }
+
   //clear the current buffer
   vtkCudaMaxFlowSegmentationTask* newTask1 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,0,1,1,vtkCudaMaxFlowSegmentationTask::ClearBufferInitially);
   newTask1->AddBuffer(this->branchLabelBuffers[BranchMap[currNode]]);
 
   //accumulate from children
-  for(int i = 0; i < NumKids; i++){
+  for(int i = 0; i < NumKids; i++)
+  {
     vtkIdType child = this->Structure->GetChild(currNode,i);
     vtkCudaMaxFlowSegmentationTask* newTask2 = new vtkCudaMaxFlowSegmentationTask(0,0,Scheduler,-1,1,1,vtkCudaMaxFlowSegmentationTask::AccumulateLabels);
     this->PropogateLabellingTasks[child] = newTask2;
     newTask1->AddTaskToSignal(newTask2);
     newTask2->AddBuffer(this->branchLabelBuffers[BranchMap[currNode]]);
-    if( this->Structure->IsLeaf(child) ){
+    if( this->Structure->IsLeaf(child) )
+    {
       newTask2->DecrementActivity();
       newTask2->AddBuffer(this->leafLabelBuffers[LeafMap[child]]);
       this->CorrectLabellingTasks[child]->AddTaskToSignal(newTask2);
-    }else{
+    }
+    else
+    {
       newTask2->AddBuffer(this->branchLabelBuffers[BranchMap[child]]);
       int NumKids2 = this->Structure->GetNumberOfChildren(child);
       for(int i2 = 0; i2 < NumKids2; i2++)
+      {
         this->PropogateLabellingTasks[this->Structure->GetChild(child,i2)]->AddTaskToSignal(newTask2);
+      }
     }
     newTask2->AddTaskToSignal(this->UpdateSpatialFlowsTasks[currNode]);
   }

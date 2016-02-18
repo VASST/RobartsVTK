@@ -1,15 +1,17 @@
 #ifndef __vtkCudaCT2USSimulation_H__
 #define __vtkCudaCT2USSimulation_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_cttoussimulation.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-
 #include "CudaObject.h"
+#include "vtkAlgorithm.h"
 
-class vtkCudaCT2USSimulation : public vtkAlgorithm, public CudaObject
+class vtkImageCast;
+class vtkImageData;
+class vtkTransform;
+
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaCT2USSimulation : public vtkAlgorithm, public CudaObject
 {
 public:
 

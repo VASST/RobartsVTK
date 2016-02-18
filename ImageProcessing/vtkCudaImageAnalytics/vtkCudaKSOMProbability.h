@@ -1,21 +1,21 @@
 #ifndef __VTKCUDAKSOMPROBABILITY_H__
 #define __VTKCUDAKSOMPROBABILITY_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_KSOMProbability.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
+#include "vtkImageAlgorithm.h"
 #include "CudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
-#include "vtkSetGet.h"
-
 #include "float.h"
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
-class vtkCudaKSOMProbability : public vtkImageAlgorithm, public CudaObject
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
+
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKSOMProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKSOMProbability, vtkImageAlgorithm );

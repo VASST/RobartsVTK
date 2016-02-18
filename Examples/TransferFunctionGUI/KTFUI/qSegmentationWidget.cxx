@@ -2,6 +2,7 @@
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaVoxelClassifier.h"
 #include "vtkImageAppendComponents.h"
+#include "vtkImageData.h"
 #include "vtkImageGradientMagnitude.h"
 #include "vtkMetaImageWriter.h"
 #include "vtkSystemIncludes.h"
