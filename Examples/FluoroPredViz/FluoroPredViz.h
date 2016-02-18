@@ -33,7 +33,7 @@ public:
   FluoroPredViz( QWidget* parent = 0 );
   ~FluoroPredViz();
 
-  int GetSuccessInit();
+  bool GetSuccessInit();
 
 public slots:
   void UpdateViz();
@@ -84,9 +84,6 @@ private slots:
   void SetTFName();
 
 private:
-
-  int SuccessInit;
-
   //fluoro params
   class MimicViewCallback;
   friend class MimicViewCallback;
@@ -140,7 +137,7 @@ private:
 
   //file management
   QString RequestFilename();
-  int SetUpReader(QString);
+  bool SetUpReader(QString);
   vtkImageReader2* Reader;
   vtkImageExtractComponents* Extractor;
 
@@ -173,9 +170,8 @@ private:
   vtkCamera* XraySource;
   vtkCamera* DVRSource;
   vtkActor* ImageBoundsMarkerActor;
-
-  bool PauseFlag;
-
+  bool SuccessInit;
+  bool Paused;
 };
 
 #endif //FLUOROPREDVIZ_H
