@@ -14,7 +14,7 @@
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "vtkCamera.h"
-#include "vtkCuda2DTransferFunction.h""
+#include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaDualImageTransferFunctionInformationHandler.h"
 #include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkCudaVolumeInformationHandler.h"
