@@ -18,12 +18,12 @@
 #include "vtkImageData.h"
 
 #include "CUDA_containerRendererInformation.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 /** @brief vtkCudaRendererInformationHandler handles all renderer, shading, geometry and camera related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCudaRendererInformationHandler : public vtkObject, public vtkCudaObject {
+class vtkCudaRendererInformationHandler : public vtkObject, public CudaObject {
 public:
 
   vtkTypeMacro( vtkCudaRendererInformationHandler, vtkObject );

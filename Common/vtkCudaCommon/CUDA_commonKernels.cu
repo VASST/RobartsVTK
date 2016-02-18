@@ -33,9 +33,6 @@
 //------------------------COMMON CONFIG STATEMENTS---------------------------//
 //---------------------------------------------------------------------------//
 
-#define MAX_GRID_SIZE 65535
-#define NUMTHREADS 512
-
 dim3 GetGrid(int size){
   size = (size-1) / NUMTHREADS + 1;
   dim3 grid( size, 1, 1 );

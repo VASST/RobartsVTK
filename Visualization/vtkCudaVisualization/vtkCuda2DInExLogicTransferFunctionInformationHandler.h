@@ -13,12 +13,12 @@
 #include "vtkImageData.h"
 #include "CUDA_container2DInExTransferFunctionInformation.h"
 #include "vtkCuda2DTransferFunction.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 /** @brief vtkCuda2DInExLogicTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
+class vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject, public CudaObject {
 public:
   
   vtkTypeMacro( vtkCuda2DInExLogicTransferFunctionInformationHandler, vtkObject );

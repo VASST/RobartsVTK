@@ -31,9 +31,9 @@
 #include <vector>
 
 #include "vtkCudaMaxFlowSegmentationScheduler.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
-class vtkCudaMaxFlowSegmentationWorker : public vtkCudaObject {
+class vtkCudaMaxFlowSegmentationWorker : public CudaObject {
 public:
 
   vtkCudaMaxFlowSegmentationScheduler* const Parent;

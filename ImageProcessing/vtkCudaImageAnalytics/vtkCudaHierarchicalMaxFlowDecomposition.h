@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWDECOMPOSITION_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWDECOMPOSITION_H__
 
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
@@ -23,7 +23,7 @@
 
 //OUTPUT PORT DESCRIPTION
 
-class vtkCudaHierarchicalMaxFlowDecomposition : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaHierarchicalMaxFlowDecomposition : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowDecomposition, vtkImageAlgorithm );

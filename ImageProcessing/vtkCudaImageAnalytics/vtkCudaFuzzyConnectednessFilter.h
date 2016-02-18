@@ -6,11 +6,11 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "CUDA_fuzzyconnectednessfilter.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 struct vtkCudaFuzzyConnectednessFilterInformation;
 
-class vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public CudaObject
 {
 public:
 

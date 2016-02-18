@@ -255,7 +255,7 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
 #undef VTK_MAX_ROTATIONS
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKohonenGenerator::Reinitialize(int withData){
   //TODO

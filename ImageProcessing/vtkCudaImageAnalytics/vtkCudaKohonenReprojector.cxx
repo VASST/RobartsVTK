@@ -19,7 +19,7 @@ vtkCudaKohonenReprojector::~vtkCudaKohonenReprojector(){
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKohonenReprojector::Reinitialize(int withData){
   //TODO

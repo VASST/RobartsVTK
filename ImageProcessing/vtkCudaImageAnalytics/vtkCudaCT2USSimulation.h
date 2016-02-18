@@ -7,9 +7,9 @@
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
 
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
-class vtkCudaCT2USSimulation : public vtkAlgorithm, public vtkCudaObject
+class vtkCudaCT2USSimulation : public vtkAlgorithm, public CudaObject
 {
 public:
 

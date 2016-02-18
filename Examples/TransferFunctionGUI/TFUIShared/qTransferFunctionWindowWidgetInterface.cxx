@@ -8,12 +8,12 @@ qTransferFunctionWindowWidgetInterface::qTransferFunctionWindowWidgetInterface(Q
 
 }
 
-void qTransferFunctionWindowWidgetInterface::AddCapableObject( vtkCudaObject* newObject )
+void qTransferFunctionWindowWidgetInterface::AddCapableObject( CudaObject* newObject )
 {
   this->capableObjects.push_back( newObject );
 }
 
-void qTransferFunctionWindowWidgetInterface::RemoveCapableObject( vtkCudaObject* remObject )
+void qTransferFunctionWindowWidgetInterface::RemoveCapableObject( CudaObject* remObject )
 {
   this->capableObjects.erase( std::find(this->capableObjects.begin(), this->capableObjects.end(), remObject) );
 }
@@ -23,7 +23,7 @@ size_t qTransferFunctionWindowWidgetInterface::GetNumberOfCapableObjects()
   return this->capableObjects.size();
 }
 
-vtkCudaObject* qTransferFunctionWindowWidgetInterface::GetObject(unsigned int index)
+CudaObject* qTransferFunctionWindowWidgetInterface::GetObject(unsigned int index)
 {
   if( index >= 0 && index < this->capableObjects.size() )
   {

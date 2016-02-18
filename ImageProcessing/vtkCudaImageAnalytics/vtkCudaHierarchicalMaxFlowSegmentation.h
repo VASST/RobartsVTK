@@ -27,7 +27,7 @@
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 
 #include "vtkHierarchicalMaxFlowSegmentation.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include <map>
 #include <list>
@@ -35,7 +35,7 @@
 #include <limits.h>
 #include <float.h>
 
-class vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public vtkCudaObject
+class vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkHierarchicalMaxFlowSegmentation );

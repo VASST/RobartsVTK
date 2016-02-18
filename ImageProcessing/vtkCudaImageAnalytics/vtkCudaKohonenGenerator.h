@@ -6,7 +6,7 @@
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
@@ -15,7 +15,7 @@
 
 #include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
-class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaKohonenGenerator : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenGenerator, vtkImageAlgorithm );

@@ -34,7 +34,7 @@ vtkCudaVoxelClassifier::~vtkCudaVoxelClassifier(){
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaVoxelClassifier::Reinitialize(int withData){
   //TODO

@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkCudaObject.h
+  Module:    CudaObject.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 

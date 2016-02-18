@@ -1,13 +1,13 @@
 PROJECT(vtkCudaCommon)
 
-include(module.cmake)
+INCLUDE(module.cmake)
 
 # Add entries to project details
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
 IF( MSVC )
   SET(Module_HDRS 
-    vtkCudaObject.h 
+    CudaObject.h 
     vtkCudaDeviceManager.h 
     vtkCudaMemoryTexture.h 
     CUDA_commonKernels.h 
@@ -21,8 +21,8 @@ ELSE()
   SET(Module_HDRS)
 ENDIF()
 
-SET ( Module_SRCS
-  vtkCudaObject.cxx
+SET( Module_SRCS
+  CudaObject.cxx
   vtkCudaDeviceManager.cxx
   vtkCudaMemoryTexture.cxx
   vtkCuda2DTransferFunction.cxx
@@ -32,14 +32,15 @@ SET ( Module_SRCS
   vtkCudaFunctionPolygonWriter.cxx
 )
 
-set( Module_CUDA_SRCS
+SET( Module_CUDA_SRCS
   CUDA_commonKernels.cu
   )
 
 SET_SOURCE_FILES_PROPERTIES(
   CUDA_commonKernels.h
-  vtkCudaObject.h 
-  WRAP_EXCLUDE)
+  CudaObject.h 
+  WRAP_EXCLUDE
+  )
 
 # -----------------------------------------------------------------
 # Build the library
@@ -48,7 +49,7 @@ cuda_vtk_add_library( ${PROJECT_NAME} ${Module_CUDA_SRCS} ${Module_SRCS} ${Modul
 
 # -----------------------------------------------------------------
 # Build the python wrapping if enabled
-IF( VTK_WRAP_PYTHON )
+IF( VTK_WRAP_PYTHON AND RobartsVTK_CUDA_WRAP_PYTHON )
   vtk_module_load(${PROJECT_NAME})
   vtk_module_headers_load(${PROJECT_NAME})
   vtk_include_recurse(${PROJECT_NAME})

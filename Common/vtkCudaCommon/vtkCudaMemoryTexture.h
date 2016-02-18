@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkCudaObject.h
+  Module:    CudaObject.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 
@@ -11,7 +11,7 @@
 
 =========================================================================*/
 
-/** @file vtkCudaObject.h
+/** @file CudaObject.h
  *
  *  @brief Header file defining an abstract class which uses CUDA
  *
@@ -27,11 +27,11 @@
 #include "vtkCudaCommonModule.h"
 
 #include "vtkObject.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkImageData.h"
 #include "vector_types.h"
 
-class VTKCUDACOMMON_EXPORT vtkCudaMemoryTexture : public vtkObject, public vtkCudaObject
+class VTKCUDACOMMON_EXPORT vtkCudaMemoryTexture : public vtkObject, public CudaObject
 {
 public:
 

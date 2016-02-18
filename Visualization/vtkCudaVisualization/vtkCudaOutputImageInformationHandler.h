@@ -17,13 +17,13 @@
 #include "vtkRayCastImageDisplayHelper.h"
 #include "vtkImageData.h"
 #include "vtkCudaMemoryTexture.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkSetGet.h"
 
 /** @brief vtkCudaOutputImageInformationHandler handles all output image, buffering, texturing and OpenGL related information on behalf of the CUDA volume mapper to facilitate the rendering and display process
  *
  */
-class vtkCudaOutputImageInformationHandler : public vtkObject, public vtkCudaObject {
+class vtkCudaOutputImageInformationHandler : public vtkObject, public CudaObject {
 public:
 
   vtkTypeMacro( vtkCudaOutputImageInformationHandler, vtkObject );

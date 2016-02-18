@@ -6,14 +6,14 @@
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
 #include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
-class vtkCudaKohonenApplication : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaKohonenApplication : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenApplication, vtkImageAlgorithm );

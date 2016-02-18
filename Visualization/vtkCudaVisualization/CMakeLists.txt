@@ -1,14 +1,12 @@
 PROJECT(vtkCudaVisualization)
 
-INCLUDE_DIRECTORIES(${vtkCudaCommon_INCLUDE_DIRS})
+INCLUDE(module.cmake)
 
 # Add entries to project details
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
-SET(${PROJECT_NAME}_LIBS vtkCudaCommon)
-
 IF( MSVC )
-  SET(${PROJECT_NAME}_HDRS 
+  SET(Module_HDRS 
     vtkCudaVolumeMapper.h
     vtkCudaRendererInformationHandler.h
     vtkCudaVolumeInformationHandler.h
@@ -37,42 +35,57 @@ IF( MSVC )
     CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.h
     )
 ELSE()
-  SET(${PROJECT_NAME}_HDRS)
+  SET(Module_HDRS)
 ENDIF()
 
-SET ( ${PROJECT_NAME}_SRCS
-  #Volume rendering base classes
+SET( Module_SRCS
   vtkCudaVolumeMapper.cxx
   vtkCudaRendererInformationHandler.cxx
   vtkCudaVolumeInformationHandler.cxx
   vtkCudaOutputImageInformationHandler.cxx
-  CUDA_vtkCudaVolumeMapper_renderAlgo.cu
-
-  #1D Transfer function rendering subclass
   vtkCuda1DVolumeMapper.cxx
   vtkCuda1DTransferFunctionInformationHandler.cxx
-  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
-
-  #2D Transfer function rendering subclass
   vtkCuda2DVolumeMapper.cxx
   vtkCuda2DTransferFunctionInformationHandler.cxx
-  CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
-
-  #2D transfer function rendering with inclusion/exclusion logic with slicing planes
   vtkCuda2DInExLogicVolumeMapper.cxx
-  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
   vtkCuda2DInExLogicTransferFunctionInformationHandler.cxx
-
-  #Dual image rendering subclass
   vtkCudaDualImageVolumeMapper.cxx
   vtkCudaDualImageTransferFunctionInformationHandler.cxx
-  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
-
-  #Digitally reconstructed radiograph rendering subclass
   vtkCudaDRRImageVolumeMapper.cxx
-  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
 )
 
-REMOVE_VTK_DEFINITIONS()
-CUDA_ADD_LIBRARY( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} ${${PROJECT_NAME}_HDRS} )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+SET( Module_CUDA_SRCS
+  CUDA_vtkCudaVolumeMapper_renderAlgo.cu
+  )
+
+SET( Module_CUDA_HDRS
+  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
+  )
+
+SET_SOURCE_FILES_PROPERTIES(
+  CUDA_vtkCuda1DVolumeMapper_renderAlgo.h
+  CUDA_vtkCudaVolumeMapper_renderAlgo.cu
+  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
+  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
+  WRAP_EXCLUDE
+  )
+
+# -----------------------------------------------------------------
+# Build the library
+include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
+cuda_vtk_add_library( ${PROJECT_NAME} ${Module_CUDA_SRCS} ${Module_CUDA_HDRS} ${Module_SRCS} ${Module_HDRS} )
+
+# -----------------------------------------------------------------
+# Build the python wrapping if enabled
+IF( VTK_WRAP_PYTHON AND RobartsVTK_CUDA_WRAP_PYTHON )
+  vtk_module_load(${PROJECT_NAME})
+  vtk_module_headers_load(${PROJECT_NAME})
+  vtk_include_recurse(${PROJECT_NAME})
+  vtk_add_python_wrapping(${PROJECT_NAME})
+ENDIF()

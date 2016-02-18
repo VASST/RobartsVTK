@@ -6,7 +6,7 @@
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
@@ -26,7 +26,7 @@
 //[1] PAGMM Set - M by N image with L float components interlaced (VTK default) representing the
 //                activation of each Gaussian component in the histogram estimate of each label
 
-class vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaPAGMMEstimator, vtkImageAlgorithm );

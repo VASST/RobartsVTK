@@ -25,7 +25,7 @@ vtkCudaKSOMLikelihood::~vtkCudaKSOMLikelihood(){
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKSOMLikelihood::Reinitialize(int withData){
   //TODO

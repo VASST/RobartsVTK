@@ -28,14 +28,14 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 
 #include "vtkImageAlgorithm.h"
 #include "vtkDataObject.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include <float.h>
 #include <limits.h>
 
 #include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
-class vtkCudaImageAtlasLabelProbability : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaImageAtlasLabelProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
   static vtkCudaImageAtlasLabelProbability *New();

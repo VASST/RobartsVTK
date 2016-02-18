@@ -30,12 +30,12 @@
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkSetGet.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include <map>
 #include <limits.h>
 
-class vtkCudaImageVote : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaImageVote : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaImageVote, vtkImageAlgorithm );

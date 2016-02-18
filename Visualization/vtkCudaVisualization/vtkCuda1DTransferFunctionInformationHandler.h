@@ -15,13 +15,13 @@
 #include "CUDA_container1DTransferFunctionInformation.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkVolume.h"
 
 /** @brief vtkCuda1DTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public vtkCudaObject {
+class vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public CudaObject {
 public:
   
   vtkTypeMacro( vtkCuda1DTransferFunctionInformationHandler, vtkObject );

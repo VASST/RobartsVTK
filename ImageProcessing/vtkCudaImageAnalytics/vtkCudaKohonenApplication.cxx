@@ -24,7 +24,7 @@ vtkCudaKohonenApplication::~vtkCudaKohonenApplication()
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKohonenApplication::Reinitialize(int withData)
 {

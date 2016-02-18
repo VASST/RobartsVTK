@@ -30,7 +30,7 @@
 #include "vtkCudaMaxFlowSegmentationScheduler.h"
 #include "vtkCudaMaxFlowSegmentationTask.h"
 #include "vtkCudaMaxFlowSegmentationWorker.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include <map>
 #include <list>

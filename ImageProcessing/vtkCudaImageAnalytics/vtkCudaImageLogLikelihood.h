@@ -28,7 +28,7 @@
 
 #include "vtkImageAlgorithm.h"
 #include "vtkDataObject.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include <float.h>
 #include <limits.h>
@@ -36,7 +36,7 @@
 #include <vtkVersion.h> // For VTK_MAJOR_VERSION
 
 
-class vtkCudaImageLogLikelihood : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaImageLogLikelihood : public vtkImageAlgorithm, public CudaObject
 {
 public:
   static vtkCudaImageLogLikelihood *New();

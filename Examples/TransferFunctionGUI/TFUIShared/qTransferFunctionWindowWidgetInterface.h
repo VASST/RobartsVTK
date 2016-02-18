@@ -2,7 +2,7 @@
 #define TRANSFERFUNCTIONWINDOWWIDGETINTERFACE
 
 #include "qwidget.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include <vector>
 
 class qTransferFunctionWindowWidgetInterface : public QWidget
@@ -18,10 +18,10 @@ public:
   virtual void LoadedImageData() = 0;
   virtual void UpdateScreen() = 0;
 
-  void AddCapableObject( vtkCudaObject* newObject );
-  void RemoveCapableObject( vtkCudaObject* remObject );
+  void AddCapableObject( CudaObject* newObject );
+  void RemoveCapableObject( CudaObject* remObject );
   size_t GetNumberOfCapableObjects();
-  vtkCudaObject* GetObject(unsigned int index);
+  CudaObject* GetObject(unsigned int index);
 
   virtual int GetRComponent();
   virtual int GetGComponent();
@@ -35,7 +35,7 @@ public:
   virtual double GetBMin();
 
 private:
-  std::vector<vtkCudaObject*> capableObjects;
+  std::vector<CudaObject*> capableObjects;
 
 };
 

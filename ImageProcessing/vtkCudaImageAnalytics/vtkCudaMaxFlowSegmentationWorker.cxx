@@ -36,12 +36,12 @@
 #include <vector>
 
 #include "CUDA_hierarchicalmaxflow.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 //-----------------------------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------------------------//
 vtkCudaMaxFlowSegmentationWorker::vtkCudaMaxFlowSegmentationWorker(int g, double usage, vtkCudaMaxFlowSegmentationScheduler* p )
-  : Parent(p), GPU(g), vtkCudaObject(g) {
+  : Parent(p), GPU(g), CudaObject(g) {
 
   //Get GPU buffers
   int BuffersAcquired = 0;

@@ -25,7 +25,7 @@ vtkCudaPAGMMEstimator::~vtkCudaPAGMMEstimator(){
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaPAGMMEstimator::Reinitialize(int withData){
   //TODO

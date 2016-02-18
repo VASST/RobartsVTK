@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkCudaObject.h
+  Module:    CudaObject.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 
@@ -11,7 +11,7 @@
 
 =========================================================================*/
 
-/** @file vtkCudaObject.h
+/** @file CudaObject.h
  *
  *  @brief Header file defining an abstract class which uses CUDA
  *
@@ -21,8 +21,8 @@
  *  @note Interacts primarily with the vtkCudaDeviceManager
  */
 
-#ifndef __VTKCUDAOBJECT_H__
-#define __VTKCUDAOBJECT_H__
+#ifndef __CudaObject_H__
+#define __CudaObject_H__
 
 #include "vtkCudaCommonModule.h"
 
@@ -30,7 +30,7 @@
 #include "vector_types.h"
 #include "cuda.h"
 
-class VTKCUDACOMMON_EXPORT vtkCudaObject
+class VTKCUDACOMMON_EXPORT CudaObject
 {
 public:
   void SetDevice( int d, int withData = 0 );
@@ -40,11 +40,11 @@ public:
   void CallSyncThreads( );
   cudaStream_t* GetStream( );
 
-  void ReplicateObject( vtkCudaObject* object, int withData = 0  );
+  void ReplicateObject( CudaObject* object, int withData = 0  );
 
 protected:
-  vtkCudaObject(int d = 0);
-  ~vtkCudaObject();
+  CudaObject(int d = 0);
+  ~CudaObject();
 
   virtual void Reinitialize(int withData = 0) = 0;
   virtual void Deinitialize(int withData = 0) = 0;
@@ -59,4 +59,4 @@ private:
   int withDataStatus;
 
 };
-#endif /* __VTKCUDAOBJECT_H__ */
+#endif /* __CudaObject_H__ */

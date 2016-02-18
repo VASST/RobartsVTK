@@ -9,7 +9,7 @@
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
 
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #include "vtkCuda2DTransferFunction.h"
 
@@ -17,7 +17,7 @@
 #include "vtkPlaneCollection.h"
 #include "vtkMatrix4x4.h"
 
-class vtkCudaVoxelClassifier : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaVoxelClassifier : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaVoxelClassifier, vtkImageAlgorithm );

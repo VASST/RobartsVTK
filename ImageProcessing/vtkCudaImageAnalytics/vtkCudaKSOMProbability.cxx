@@ -62,7 +62,7 @@ int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKSOMProbability::Reinitialize(int withData){
   //TODO

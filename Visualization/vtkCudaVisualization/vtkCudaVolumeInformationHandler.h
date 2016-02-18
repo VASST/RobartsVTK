@@ -13,12 +13,12 @@
 #include "vtkVolume.h"
 #include "vtkImageData.h"
 #include "CUDA_containerVolumeInformation.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 /** @brief vtkCudaVolumeInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCudaVolumeInformationHandler : public vtkObject, public vtkCudaObject  {
+class vtkCudaVolumeInformationHandler : public vtkObject, public CudaObject  {
 public:
 
   vtkTypeMacro( vtkCudaVolumeInformationHandler, vtkObject );

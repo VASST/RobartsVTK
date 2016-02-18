@@ -28,7 +28,7 @@
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include "vtkCudaDeviceManager.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 
 #define SQR(X) X*X
 

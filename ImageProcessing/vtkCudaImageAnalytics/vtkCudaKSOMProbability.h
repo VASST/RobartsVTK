@@ -6,7 +6,7 @@
 #include "vtkImageData.h"
 #include "vtkImageCast.h"
 #include "vtkTransform.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkAlgorithmOutput.h"
@@ -15,7 +15,7 @@
 #include "float.h"
 #include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
-class vtkCudaKSOMProbability : public vtkImageAlgorithm, public vtkCudaObject
+class vtkCudaKSOMProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKSOMProbability, vtkImageAlgorithm );

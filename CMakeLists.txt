@@ -143,6 +143,8 @@ IF( VTK_FOUND AND VTK_WRAP_PYTHON )
         PATH "Directory where python modules will be built" FORCE)
     MARK_AS_ADVANCED(VTK_BUILD_PYTHON_MODULE_DIR)
   ENDIF()
+  
+  OPTION(RobartsVTK_CUDA_WRAP_PYTHON "Wrap CUDA projects in Python." OFF)
 ENDIF()
 
 #-----------------------------------------------------------------------------
