@@ -10,20 +10,24 @@
 #ifndef vtkCuda1DTransferFunctionInformationHandler_H_
 #define vtkCuda1DTransferFunctionInformationHandler_H_
 
-#include "vtkObject.h"
-#include "vtkImageData.h"
+#include "vtkCudaVisualizationModule.h"
+
 #include "CUDA_container1DTransferFunctionInformation.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkColorTransferFunction.h"
 #include "CudaObject.h"
-#include "vtkVolume.h"
+#include "vtkObject.h"
+
+class vtkColorTransferFunction;
+class vtkImageData;
+class vtkPiecewiseFunction;
+class vtkVolume;
 
 /** @brief vtkCuda1DTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public CudaObject {
+class VTKCUDAVISUALIZATION_EXPORT vtkCuda1DTransferFunctionInformationHandler : public vtkObject, public CudaObject
+{
 public:
-  
+
   vtkTypeMacro( vtkCuda1DTransferFunctionInformationHandler, vtkObject );
 
   /** @brief VTK compatible constructor method
@@ -37,23 +41,23 @@ public:
    *  @param index The frame number for this image in the 4D sequence
    *
    *  @pre All images added to the volume information handler have the same dimensions and similar intensity and gradient ranges (ie: they are images of the same anatomy from the same imaging modality)
-   *  @pre index is a non-negative integer less than or eaul to the current total number of frames
+   *  @pre index is a non-negative integer less than or equal to the current total number of frames
    *  @pre index is less than 100
    */
   void SetInputData(vtkImageData* inputData, int index);
-  
+
   /** @brief Gets the image data associated with a particular frame
    *
    *  @param index The frame number for this image in the 4D sequence
    *
    *  @pre index is a non-negative integer associated with a valid (a.k.a. populated or set) frame
    */
-  vtkImageData* GetInputData() const { return InputData; }
+  vtkImageData* GetInputData() const;
 
   /** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
    *
    */
-  const cuda1DTransferFunctionInformation& GetTransferFunctionInfo() const { return (this->TransInfo); }
+  const cuda1DTransferFunctionInformation& GetTransferFunctionInfo() const;
 
   /** @brief Set the transfer function used for determining colour in the volume rendering process
    *
@@ -78,16 +82,17 @@ public:
    *  @note This also resets the lastModifiedTime that the volume information handler has for the transfer function, forcing an updating in the lookup tables for the first render
    */
   void SetGradientOpacityTransferFunction(vtkPiecewiseFunction* func);
-  
-  void UseGradientOpacity( int u );
 
-  /** @brief Triggers an update for the volume information, checking all subsidary information for modifications
+  vtkGetMacro(UseGradientOpacity, bool);
+  vtkSetMacro(UseGradientOpacity, bool);
+
+  /** @brief Triggers an update for the volume information, checking all subsidiary information for modifications
    *
    */
   virtual void Update(vtkVolume* vol);
 
 protected:
-  
+
   /** @brief Constructor which sets the pointers to the image and volume to null, as well as setting all the constants to safe initial values, and initializes the image holder on the GPU
    *
    */
@@ -97,34 +102,32 @@ protected:
    *
    */
   ~vtkCuda1DTransferFunctionInformationHandler();
-  
+
   /** @brief Update attributes associated with the transfer function after comparing MTimes and determining if the lookup tables have changed since last update
    *
    */
   void UpdateTransferFunction();
-  
+
   void Deinitialize(int withData = 0);
   void Reinitialize(int withData = 0);
+
+protected:
+  vtkImageData*                       InputData;    /**< The 3D image data currently being rendered */
+  cuda1DTransferFunctionInformation   TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
+
+  vtkPiecewiseFunction*               OpacityFunction;
+  vtkPiecewiseFunction*               GradientOpacityFunction;
+  vtkColorTransferFunction*           ColourFunction;
+  bool                                UseGradientOpacity;
+
+  unsigned long                       LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  int                                 FunctionSize;  /**< The size of the transfer function which is square */
+  double                              HighGradient;  /**< The maximum gradient of the current image */
+  double                              LowGradient;  /**< The minimum gradient of the current image */
 
 private:
   vtkCuda1DTransferFunctionInformationHandler& operator=(const vtkCuda1DTransferFunctionInformationHandler&); /**< Not implemented */
   vtkCuda1DTransferFunctionInformationHandler(const vtkCuda1DTransferFunctionInformationHandler&); /**< Not implemented */
-
-private:
-  
-  vtkImageData*            InputData;    /**< The 3D image data currently being renderered */
-  cuda1DTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
-  
-  vtkPiecewiseFunction*        opacityFunction;
-  vtkPiecewiseFunction*        gradientopacityFunction;
-  vtkColorTransferFunction*      colourFunction;
-  bool                useGradientOpacity;
-  
-  unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
-  int            FunctionSize;  /**< The size of the transfer function which is square */
-  double          HighGradient;  /**< The maximum gradient of the current image */
-  double          LowGradient;  /**< The minimum gradient of the current image */
-
 };
 
 #endif

@@ -284,7 +284,6 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
   return;
 }
 
-
 void qHistogramHolderLabel::mouseReleaseEvent(QMouseEvent* e)
 {
   //if we do not have a histogram or object, this has no meaning

@@ -1,50 +1,45 @@
+#define _USE_MATH_DEFINES // for C++
+#include <cmath>
+
 #include "FluoroPredViz.h"
 #include "ResizableQVTKWidget.h"
-
 #include "qboxlayout.h"
-#include "qgridlayout.h"
-#include "qsplitter.h"
-#include "qlabel.h"
-#include "qframe.h"
-#include "qgroupbox.h"
 #include "qfiledialog.h"
+#include "qframe.h"
+#include "qgridlayout.h"
+#include "qgroupbox.h"
+#include "qlabel.h"
 #include "qlineedit.h"
 #include "qpushbutton.h"
-
-#include "vtkMetaImageReader.h"
-#include "vtkMINCImageReader.h"
-#include "vtkDICOMImageReader.h"
-#include "vtkTransform.h"
-#include "vtkImageExtractComponents.h"
-#include "vtkCuda2DTransferFunction.h"
-
-//rendering pieces
-#include "vtkRenderer.h"
-#include "vtkRendererCollection.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkCamera.h"
-#include "vtkTransform.h"
-
-//pipeline pieces
-#include "vtkImageData.h"
+#include "qsplitter.h"
 #include "vtkActor.h"
-#include "vtkPolyDataMapper.h"
 #include "vtkArrowSource.h"
-#include "vtkSphereSource.h"
+#include "vtkBoxWidget.h"
+#include "vtkCamera.h"
 #include "vtkConeSource.h"
 #include "vtkCubeSource.h"
-#include "vtkProperty.h"
-#include "vtkImagePlaneWidget.h"
-#include "vtkCudaVolumeMapper.h"
+#include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaDRRImageVolumeMapper.h"
 #include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkCudaFunctionObject.h"
 #include "vtkCudaFunctionPolygonReader.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkDICOMImageReader.h"
+#include "vtkImageData.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkImagePlaneWidget.h"
+#include "vtkMINCImageReader.h"
+#include "vtkMetaImageReader.h"
+#include "vtkPlanes.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkRenderer.h"
+#include "vtkRendererCollection.h"
+#include "vtkSphereSource.h"
+#include "vtkTransform.h"
 #include "vtkVolume.h"
-#include "vtkBoxWidget.h"
-
-#define pi 3.1415926
 
 FluoroPredViz::FluoroPredViz( QWidget* parent ) :
   QWidget(0), SuccessInit(0), PauseFlag(0)
@@ -318,28 +313,28 @@ void FluoroPredViz::MimicView()
   //find the angle for left-right
   bool truncated = false;
   double DesiredAngle = std::atan2(DesiredOrientation[1],-DesiredOrientation[0]);
-  DesiredAngle += 0.5*pi;
-  if(DesiredAngle > pi)
+  DesiredAngle += 0.5*M_PI;
+  if(DesiredAngle > M_PI)
   {
-    DesiredAngle -= 2*pi;
+    DesiredAngle -= 2*M_PI;
   }
-  if(DesiredAngle < -pi)
+  if(DesiredAngle < -M_PI)
   {
-    DesiredAngle += 2*pi;
+    DesiredAngle += 2*M_PI;
   }
-  DesiredAngle = 180 * DesiredAngle / pi;
+  DesiredAngle = 180 * DesiredAngle / M_PI;
 
   //find closest achievable cranial-caudal angle
-  double DesiredCrAngle = std::acos( DesiredOrientation[2] ) - 0.5 * pi ;
-  if(DesiredCrAngle > pi)
+  double DesiredCrAngle = std::acos( DesiredOrientation[2] ) - 0.5 * M_PI ;
+  if(DesiredCrAngle > M_PI)
   {
-    DesiredCrAngle -= 2*pi;
+    DesiredCrAngle -= 2*M_PI;
   }
-  if(DesiredCrAngle < -pi)
+  if(DesiredCrAngle < -M_PI)
   {
-    DesiredCrAngle += 2*pi;
+    DesiredCrAngle += 2*M_PI;
   }
-  DesiredCrAngle = 180 * DesiredCrAngle / pi;
+  DesiredCrAngle = 180 * DesiredCrAngle / M_PI;
   double MaxCranialAngle = 45.0;
   double MinCranialAngle = -65.0;
   truncated = (DesiredCrAngle > MaxCranialAngle) || (DesiredCrAngle < MinCranialAngle);
@@ -1220,7 +1215,7 @@ void FluoroPredViz::UpdateDegreeMarkers()
   //set location of markers based on angle and C-arm Detector Distance
   for(int i = 0; i < NumMarkers; i++)
   {
-    double DegreeLocation = 2.0 * pi * (double)i / (double) (NumMarkers-1);
+    double DegreeLocation = 2.0 * M_PI * (double)i / (double) (NumMarkers-1);
     double LX = DetectorDistanceVal*std::sin(DegreeLocation)/2;
     double LY = DetectorDistanceVal*std::cos(DegreeLocation)/2;
     DegreeMarkers[i]->SetCenter(LX,LY,0);
@@ -1256,7 +1251,7 @@ void FluoroPredViz::UpdateXrayMarker()
   XraySource->SetFocalPoint(0,0,0);
   XraySource->SetViewUp(0,0,-1);
   XraySource->SetClippingRange(DetectorDistanceVal/16,DetectorDistanceVal);
-  double angle = 360 * atan((WidthVal*DetectorDistanceVal/focus)/(2*DetectorDistanceVal)) / pi;
+  double angle = 360 * atan((WidthVal*DetectorDistanceVal/focus)/(2*DetectorDistanceVal)) / M_PI;
   XraySource->SetViewAngle(angle/aspect);
 }
 

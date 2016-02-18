@@ -7,48 +7,55 @@
  *
  */
 
+#include "CUDA_containerVolumeInformation.h"
 #include "vtkCudaVolumeInformationHandler.h"
-#include "vtkObjectFactory.h"
-#include "vtkMatrix4x4.h"
-
-//Volume and Property
-#include "vtkVolume.h"
 #include "vtkImageData.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include "vtkMatrix4x4.h"
+#include "vtkObjectFactory.h"
+#include "vtkVolume.h"
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
 
-vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler(){
+vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler()
+{
   this->lastModifiedTime = 0;
   this->Volume = NULL;
   this->InputData = NULL;
 }
 
-vtkCudaVolumeInformationHandler::~vtkCudaVolumeInformationHandler(){
+vtkCudaVolumeInformationHandler::~vtkCudaVolumeInformationHandler()
+{
   this->SetVolume(NULL);
   this->SetInputData(NULL, 0);
 }
 
-void vtkCudaVolumeInformationHandler::Deinitialize(int withData){
+void vtkCudaVolumeInformationHandler::Deinitialize(int withData)
+{
   //TODO
 }
 
-void vtkCudaVolumeInformationHandler::Reinitialize(int withData){
+void vtkCudaVolumeInformationHandler::Reinitialize(int withData)
+{
   //TODO
 }
 
-vtkVolume* vtkCudaVolumeInformationHandler::GetVolume(){
+vtkVolume* vtkCudaVolumeInformationHandler::GetVolume()
+{
   return this->Volume;
 }
 
-void vtkCudaVolumeInformationHandler::SetVolume(vtkVolume* volume){
+void vtkCudaVolumeInformationHandler::SetVolume(vtkVolume* volume)
+{
   this->Volume = volume;
   if (Volume != NULL)
+  {
     this->Update();
+  }
 }
 
-void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData, int index){
+void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData, int index)
+{
   if (inputData == NULL)
   {
     this->InputData = NULL;
@@ -61,7 +68,8 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData, int 
   }
 }
 
-void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
+void vtkCudaVolumeInformationHandler::UpdateImageData(int index)
+{
 #if (VTK_MAJOR_VERSION < 6)
   this->InputData->Update();
 #else
@@ -74,7 +82,7 @@ void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
   this->VolumeInfo.VolumeSize.x = dims[0];
   this->VolumeInfo.VolumeSize.y = dims[1];
   this->VolumeInfo.VolumeSize.z = dims[2];
-  
+
   this->VolumeInfo.SpacingReciprocal.x = 0.5f / spacing[0];
   this->VolumeInfo.SpacingReciprocal.y = 0.5f / spacing[1];
   this->VolumeInfo.SpacingReciprocal.z = 0.5f / spacing[2];
@@ -94,8 +102,10 @@ void vtkCudaVolumeInformationHandler::UpdateImageData(int index){
   this->VolumeInfo.Bounds[5] = (float) dims[2] - 1.0f;
 }
 
-void vtkCudaVolumeInformationHandler::Update(){
-  if(this->InputData){
+void vtkCudaVolumeInformationHandler::Update()
+{
+  if(this->InputData)
+  {
 #if (VTK_MAJOR_VERSION < 6)
     this->InputData->Update();
 #endif
@@ -103,7 +113,8 @@ void vtkCudaVolumeInformationHandler::Update(){
   }
 }
 
-void vtkCudaVolumeInformationHandler::ClearInput(){
+void vtkCudaVolumeInformationHandler::ClearInput()
+{
   this->Modified();
   this->Volume = NULL;
   this->InputData = NULL;

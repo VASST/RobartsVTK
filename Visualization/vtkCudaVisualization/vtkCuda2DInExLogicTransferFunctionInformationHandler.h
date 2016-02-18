@@ -9,20 +9,25 @@
 #ifndef vtkCuda2DInExLogicTransferFunctionInformationHandler_H_
 #define vtkCuda2DInExLogicTransferFunctionInformationHandler_H_
 
-#include "vtkObject.h"
-#include "vtkImageData.h"
-#include "CUDA_container2DInExTransferFunctionInformation.h"
-#include "vtkCuda2DTransferFunction.h"
+#include "vtkCudaVisualizationModule.h"
+
 #include "CudaObject.h"
+#include "vtkObject.h"
+
+class CUDA_container2DInExTransferFunctionInformation;
+class vtkCuda2DTransferFunction;
+class vtkImageData;
+
 
 /** @brief vtkCuda2DInExLogicTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject, public CudaObject {
+class VTKCUDAVISUALIZATION_EXPORT vtkCuda2DInExLogicTransferFunctionInformationHandler : public vtkObject, public CudaObject
+{
 public:
-  
+
   vtkTypeMacro( vtkCuda2DInExLogicTransferFunctionInformationHandler, vtkObject );
-  
+
   /** @brief VTK compatible constructor method
    *
    */
@@ -38,19 +43,25 @@ public:
    *  @pre index is less than 100
    */
   void SetInputData(vtkImageData* inputData, int index);
-  
+
   /** @brief Gets the image data associated with a particular frame
    *
    *  @param index The frame number for this image in the 4D sequence
    *
    *  @pre index is a non-negative integer associated with a valid (a.k.a. populated or set) frame
    */
-  vtkImageData* GetInputData() const { return InputData; }
+  vtkImageData* GetInputData() const
+  {
+    return InputData;
+  }
 
   /** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
    *
    */
-  const cuda2DInExTransferFunctionInformation& GetTransferFunctionInfo() const { return (this->TransInfo); }
+  const cuda2DInExTransferFunctionInformation& GetTransferFunctionInfo() const
+  {
+    return (this->TransInfo);
+  }
 
   /** @brief Set the transfer function used for determining colour and opacity in the volume rendering process
    *
@@ -64,7 +75,7 @@ public:
    *
    */
   vtkCuda2DTransferFunction* GetVisualizationTransferFunction();
-  
+
   /** @brief Set the transfer function used for determining inclusion and exclusion in the volume rendering process
    *
    *  @param func The 2 dimensional transfer function
@@ -82,12 +93,12 @@ public:
    *
    */
   virtual void Update();
-  
+
   void SetUseBlackKeyhole( bool t );
   vtkGetMacro( UseBlackKeyhole, bool );
 
 protected:
-  
+
   /** @brief Constructor which sets the pointers to the image and volume to null, as well as setting all the constants to safe initial values, and initializes the image holder on the GPU
    *
    */
@@ -97,12 +108,12 @@ protected:
    *
    */
   ~vtkCuda2DInExLogicTransferFunctionInformationHandler();
-  
+
   /** @brief Update attributes associated with the transfer function after comparing MTimes and determining if the lookup tables have changed since last update
    *
    */
   void UpdateTransferFunction();
-  
+
   void Deinitialize(int withData = 0);
   void Reinitialize(int withData = 0);
 
@@ -111,7 +122,7 @@ private:
   vtkCuda2DInExLogicTransferFunctionInformationHandler(const vtkCuda2DInExLogicTransferFunctionInformationHandler&); /**< Not implemented */
 
 private:
-  
+
   vtkImageData*              InputData;    /**< The 3D image data currently being renderered */
   cuda2DInExTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
 

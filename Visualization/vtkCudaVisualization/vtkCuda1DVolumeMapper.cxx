@@ -7,21 +7,24 @@
  *
  */
 
+#include "CUDA_container1DTransferFunctionInformation.h"
+#include "CUDA_containerOutputImageInformation.h"
+#include "CUDA_containerRendererInformation.h"
+#include "CUDA_containerVolumeInformation.h"
+#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
+#include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "vtkCamera.h"
 #include "vtkColorTransferFunction.h"
+#include "vtkCuda1DTransferFunctionInformationHandler.h"
 #include "vtkCuda1DVolumeMapper.h"
+#include "vtkCudaVolumeInformationHandler.h"
 #include "vtkImageData.h"
 #include "vtkMutexLock.h"
 #include "vtkObjectFactory.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkRenderer.h"
 #include "vtkVolume.h"
-#include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-
-// VTKCUDA
-#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
-#include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 
 vtkStandardNewMacro(vtkCuda1DVolumeMapper);
 
@@ -163,7 +166,7 @@ void vtkCuda1DVolumeMapper::InternalRender (  vtkRenderer* ren, vtkVolume* vol,
   this->transferFunctionInfoHandler->SetColourTransferFunction( vol->GetProperty()->GetRGBTransferFunction() );
   this->transferFunctionInfoHandler->SetOpacityTransferFunction( vol->GetProperty()->GetScalarOpacity() );
   this->transferFunctionInfoHandler->SetGradientOpacityTransferFunction( vol->GetProperty()->GetGradientOpacity() );
-  this->transferFunctionInfoHandler->UseGradientOpacity( !vol->GetProperty()->GetDisableGradientOpacity() );
+  this->transferFunctionInfoHandler->SetUseGradientOpacity( vol->GetProperty()->GetDisableGradientOpacity() == 0 );
   this->transferFunctionInfoHandler->Update(vol);
 
   //perform the render

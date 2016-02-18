@@ -10,28 +10,26 @@
 #ifndef __vtkCudaVolumeMapper_H
 #define __vtkCudaVolumeMapper_H
 
-#include "vtkVolumeMapper.h"
-#include "CudaObject.h"
-#include "vtkSetGet.h"
+#include "vtkCudaVisualizationModule.h"
 
-#include "vtkCudaRendererInformationHandler.h"
-#include "vtkCudaVolumeInformationHandler.h"
-#include "vtkCudaOutputImageInformationHandler.h"
+#include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_containerRendererInformation.h"
 #include "CUDA_containerVolumeInformation.h"
-#include "CUDA_containerOutputImageInformation.h"
-
-#include "vtkPlane.h"
-#include "vtkPlanes.h"
-#include "vtkPlaneCollection.h"
-#include "vtkTransform.h"
-#include "vtkMatrix4x4.h"
-
-#include "vtkRenderer.h"
-#include "vtkVolume.h"
+#include "CudaObject.h"
+#include "vtkVolumeMapper.h"
 #include <map>
+#include <vtkVersion.h>
 
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+class vtkCudaOutputImageInformationHandler;
+class vtkCudaRendererInformationHandler;
+class vtkCudaVolumeInformationHandler;
+class vtkMatrix4x4;
+class vtkPlane;
+class vtkPlaneCollection;
+class vtkPlanes;
+class vtkRenderer;
+class vtkTransform;
+class vtkVolume;
 
 // This is the maximum number of frames, may need to be set
 #define VTKCUDAVOLUMEMAPPER_UPPER_BOUND 30
@@ -39,7 +37,8 @@
 /** @brief vtkCudaVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
  */
-class vtkCudaVolumeMapper : public vtkVolumeMapper, public CudaObject {
+class VTKCUDAVISUALIZATION_EXPORT vtkCudaVolumeMapper : public vtkVolumeMapper, public CudaObject
+{
 public:
 
   vtkTypeMacro( vtkCudaVolumeMapper, vtkVolumeMapper );
@@ -99,17 +98,17 @@ public:
    *  @note This is an internal method used primarily by the raycasting hierarchy structure
    */
   virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
-                  const cudaRendererInformation& rendererInfo,
-                  const cudaVolumeInformation& volumeInfo,
-                  const cudaOutputImageInformation& outputInfo ) = 0;
+                                 const cudaRendererInformation& rendererInfo,
+                                 const cudaVolumeInformation& volumeInfo,
+                                 const cudaOutputImageInformation& outputInfo ) = 0;
 
   /** @brief Sets how the image is displayed which is passed to the output image information handler
    *
-   *  @param scaleFactor The factor by which the screen is undersampled in each direction (must be equal or greater than 1.0f, where 1.0f means full sampling)
+   *  @param scaleFactor The factor by which the screen is under sampled in each direction (must be equal or greater than 1.0f, where 1.0f means full sampling)
    */
   void SetRenderOutputScaleFactor(float scaleFactor);
 
-  /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
+  /** @brief Set the strength and sensitivity parameters of the non-photo realistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
    *  @param a The shading start value
@@ -117,7 +116,7 @@ public:
    */
   void SetCelShadingConstants(float darkness, float a, float b);
 
-  /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
+  /** @brief Set the strength and sensitivity parameters of the non-photo realistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
    *  @param a The shading start value
@@ -138,7 +137,7 @@ public:
    *
    *  @post frame is a non-negative integer less than the total number of frames
    */
-  int GetCurrentFrame(){ return this->currFrame; };
+  int GetCurrentFrame();;
 
   /** @brief Changes the next frame to be rendered to the next frame in the 4D sequence (modulo the number of frames, so if this is called on the last frame, the next frame is the first frame)
    *
@@ -156,7 +155,10 @@ public:
   /** @brief Fetches the total number of frames being rendered (the number of 3D frames in the 4D sequence)
    *
    */
-  int GetNumberOfFrames() {return this->numFrames;}
+  int GetNumberOfFrames()
+  {
+    return this->numFrames;
+  }
 
   /** @brief Gets a 2D image data consisting of the output of the most current render
    *
@@ -199,8 +201,8 @@ public:
    */
   void UseImageDataRenderering();
 
-  void SetImageFlipped(bool b){this->OutputInfoHandler->SetImageFlipped(b);};
-  bool GetImageFlipped(){return this->OutputInfoHandler->GetImageFlipped();};
+  void SetImageFlipped(bool b);
+  bool GetImageFlipped();
 
   void SetTint(double RGBA[4]);
   void GetTint(double RGBA[4]);

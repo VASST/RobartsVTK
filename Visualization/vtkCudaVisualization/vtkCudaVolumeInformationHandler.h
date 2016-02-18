@@ -9,20 +9,24 @@
 #ifndef VTKCUDAVOLUMEINFORMATIONHANDLER_H_
 #define VTKCUDAVOLUMEINFORMATIONHANDLER_H_
 
-#include "vtkObject.h"
-#include "vtkVolume.h"
-#include "vtkImageData.h"
-#include "CUDA_containerVolumeInformation.h"
+#include "vtkCudaVisualizationModule.h"
+
 #include "CudaObject.h"
+#include "vtkObject.h"
+
+class CUDA_containerVolumeInformation;
+class vtkImageData;
+class vtkVolume;
 
 /** @brief vtkCudaVolumeInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCudaVolumeInformationHandler : public vtkObject, public CudaObject  {
+class VTKCUDAVISUALIZATION_EXPORT vtkCudaVolumeInformationHandler : public vtkObject, public CudaObject
+{
 public:
 
   vtkTypeMacro( vtkCudaVolumeInformationHandler, vtkObject );
-  
+
   /** @brief VTK compatible constructor method
    *
    */
@@ -49,33 +53,39 @@ public:
    *  @pre index is less than 100
    */
   void SetInputData(vtkImageData* inputData, int index);
-  
+
   /** @brief Gets the image data associated with a particular frame
    *
    *  @param index The frame number for this image in the 4D sequence
    *
    *  @pre index is a non-negative integer associated with a valid (a.k.a. populated or set) frame
    */
-  vtkImageData* GetInputData() const { return InputData; }
+  vtkImageData* GetInputData() const
+  {
+    return InputData;
+  }
 
   /** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
    *
    */
-  const cudaVolumeInformation& GetVolumeInfo() const { return (this->VolumeInfo); }
+  const cudaVolumeInformation& GetVolumeInfo() const
+  {
+    return (this->VolumeInfo);
+  }
 
   /** @brief Clear all information about the volumes
    *
    *  @note This also resets the lastModifiedTime that the volume information handler has for the transfer function, forcing an updating in the lookup tables for the first render
    */
   void ClearInput();
-  
+
   /** @brief Triggers an update for the volume information, checking all subsidary information for modifications
    *
    */
   virtual void Update();
 
 protected:
-  
+
   /** @brief Constructor which sets the pointers to the image and volume to null, as well as setting all the constants to safe initial values, and initializes the image holder on the GPU
    *
    */
@@ -94,7 +104,7 @@ protected:
    *  @pre index is less than 100
    */
   void UpdateImageData(int index);
-  
+
   void Deinitialize(int withData = 0);
   void Reinitialize(int withData = 0);
 
@@ -103,7 +113,7 @@ private:
   vtkCudaVolumeInformationHandler(const vtkCudaVolumeInformationHandler&); /**< Not implemented */
 
 private:
-  
+
   vtkImageData*      InputData;    /**< The 3D image data currently being renderered */
   vtkVolume*        Volume;      /**< The volume defining how to render this image, such as position in space, etc... */
   cudaVolumeInformation  VolumeInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */

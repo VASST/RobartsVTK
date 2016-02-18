@@ -7,16 +7,24 @@
  *
  */
 
-#include "vtkCudaOutputImageInformationHandler.h"
-
-#include "vector_functions.h"
+// FIXED ORDER
 #include "vtkgl.h"
 #include "vtkOpenGLExtensionManager.h"
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
+// END FIXED ORDER
 
-// vtk base
+#include "CUDA_containerOutputImageInformation.h"
+#include "vector_functions.h"
+#include "vtkCudaMemoryTexture.h"
+#include "vtkCudaOutputImageInformationHandler.h"
+#include "vtkImageData.h"
 #include "vtkObjectFactory.h"
+#include "vtkRayCastImageDisplayHelper.h"
+#include "vtkRenderer.h"
+#include "vtkSetGet.h"
+#include "vtkVolume.h"
+
 
 vtkStandardNewMacro(vtkCudaOutputImageInformationHandler);
 
@@ -95,6 +103,11 @@ void vtkCudaOutputImageInformationHandler::SetRenderType(int t){
     this->OutputImageInfo.renderType = t;
     this->Update();
   }
+}
+
+const cudaOutputImageInformation& vtkCudaOutputImageInformationHandler::GetOutputImageInfo()
+{
+  return (this->OutputImageInfo);
 }
 
 vtkRenderer* vtkCudaOutputImageInformationHandler::GetRenderer(){
