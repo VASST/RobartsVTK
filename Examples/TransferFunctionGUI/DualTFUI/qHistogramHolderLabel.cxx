@@ -110,7 +110,6 @@ void qHistogramHolderLabel::keyReleaseEvent(QKeyEvent* e)
 
 void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
 {
-
   //if we do not have a histogram or object, this has no meaning
   if(!histogram || !object)
   {
@@ -224,9 +223,9 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     float minPointX = 0.0f;
     float minPointY = 0.0f;
     int placeIndex = -1;
-    int belowIndex = 0;
-    int aboveIndex = object->GetNumVertices() - 1;
-    for(int i = 0; i < object->GetNumVertices(); i++)
+    size_t belowIndex = 0;
+    size_t aboveIndex = object->GetNumVertices() - 1;
+    for(size_t i = 0; i < object->GetNumVertices(); i++)
     {
 
       //define the line and direct vectors in the intensity gradient scale
@@ -283,7 +282,6 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
 
   //or we might just have missed everything, oh well, let's just go home then
   return;
-
 }
 
 
@@ -305,12 +303,10 @@ void qHistogramHolderLabel::mouseReleaseEvent(QMouseEvent* e)
   scaling = false;
   vertexDragging = false;
   vertexInUse = 0;
-
 }
 
 void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
 {
-
   //if we do not have a histogram, this has no meaning
   if(!histogram || !object)
   {
@@ -320,7 +316,7 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
   //grab mouse position and translate to a gradient and intensity amount
   double intensity1 = (double) e->x() / size * (maxIntensity1-minIntensity1) + minIntensity1;
   double intensity2 = (double) e->y() / size * (maxIntensity2-minIntensity2) + minIntensity2;
-  unsigned int numVertices = object->GetNumVertices();
+  size_t numVertices = object->GetNumVertices();
 
   //if we are translating, then translate!
   if(translating)
@@ -421,7 +417,6 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
   unsigned int i = 0;
   while(true)
   {
-
     //get the next object to be painted
     vtkCudaFunctionPolygon* paintedObject = (vtkCudaFunctionPolygon*) func->GetFunctionObject(i);
     i++;
@@ -443,7 +438,7 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
     painter.setPen(colour);
 
     //collect the number of vertices, and if we have less than 3 (not a polyhedron) then return
-    unsigned int numVertices = paintedObject->GetNumVertices();
+    size_t numVertices = paintedObject->GetNumVertices();
     if(numVertices < 3 )
     {
       return;
@@ -468,7 +463,6 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
 
     //draw the resulting polygon
     painter.drawConvexPolygon(polygon);
-
   }
 
   //draw the zoom square

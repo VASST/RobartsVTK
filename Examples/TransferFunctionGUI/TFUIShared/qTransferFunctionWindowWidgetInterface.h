@@ -20,7 +20,7 @@ public:
 
   void AddCapableObject( vtkCudaObject* newObject );
   void RemoveCapableObject( vtkCudaObject* remObject );
-  int GetNumberOfCapableObjects();
+  size_t GetNumberOfCapableObjects();
   vtkCudaObject* GetObject(unsigned int index);
 
   virtual int GetRComponent();

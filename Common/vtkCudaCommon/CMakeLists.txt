@@ -1,12 +1,12 @@
 PROJECT(vtkCudaCommon)
 
-SET(${PROJECT_NAME}_LIBS vtkCommonCore)
+include(module.cmake)
 
 # Add entries to project details
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
 IF( MSVC )
-  SET(${PROJECT_NAME}_HDRS 
+  SET(Module_HDRS 
     vtkCudaObject.h 
     vtkCudaDeviceManager.h 
     vtkCudaMemoryTexture.h 
@@ -18,14 +18,13 @@ IF( MSVC )
     vtkCudaFunctionPolygonWriter.h 
     )
 ELSE()
-  SET(${PROJECT_NAME}_HDRS)
+  SET(Module_HDRS)
 ENDIF()
 
-SET ( ${PROJECT_NAME}_SRCS
+SET ( Module_SRCS
   vtkCudaObject.cxx
   vtkCudaDeviceManager.cxx
   vtkCudaMemoryTexture.cxx
-  CUDA_commonKernels.cu
   vtkCuda2DTransferFunction.cxx
   vtkCudaFunctionObject.cxx
   vtkCudaFunctionPolygon.cxx
@@ -33,9 +32,25 @@ SET ( ${PROJECT_NAME}_SRCS
   vtkCudaFunctionPolygonWriter.cxx
 )
 
-GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+set( Module_CUDA_SRCS
+  CUDA_commonKernels.cu
+  )
 
-REMOVE_VTK_DEFINITIONS()
-CUDA_ADD_LIBRARY( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} ${${PROJECT_NAME}_HDRS} )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+SET_SOURCE_FILES_PROPERTIES(
+  CUDA_commonKernels.h
+  vtkCudaObject.h 
+  WRAP_EXCLUDE)
+
+# -----------------------------------------------------------------
+# Build the library
+include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
+cuda_vtk_add_library( ${PROJECT_NAME} ${Module_CUDA_SRCS} ${Module_SRCS} ${Module_HDRS} )
+
+# -----------------------------------------------------------------
+# Build the python wrapping if enabled
+IF( VTK_WRAP_PYTHON )
+  vtk_module_load(${PROJECT_NAME})
+  vtk_module_headers_load(${PROJECT_NAME})
+  vtk_include_recurse(${PROJECT_NAME})
+  vtk_add_python_wrapping(${PROJECT_NAME})
+ENDIF()

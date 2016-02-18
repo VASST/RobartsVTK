@@ -11,23 +11,26 @@
 #ifndef VTKCUDAFUNCTIONOBJECT_H
 #define VTKCUDAFUNCTIONOBJECT_H
 
+#include "vtkCudaCommonModule.h"
+
 #include "vtkObject.h"
 
 /** @brief Function objects are contiguous regions with equal colour, opacity and identifier in a 2D transfer function. They are used to define discernable structures in the ray caster and voxel classifier.
  *
  */
-class vtkCudaFunctionObject : public vtkObject {
+class VTKCUDACOMMON_EXPORT vtkCudaFunctionObject : public vtkObject
+{
 public:
 
   vtkTypeMacro( vtkCudaFunctionObject, vtkObject );
-  
-  /** @brief Gets the classifer value associated with this particular function object
+
+  /** @brief Gets the classifier value associated with this particular function object
    *
    *  @return A positive short
    */
   short  GetIdentifier();
-  
-  /** @brief Sets the classifer value associated with this particular function object
+
+  /** @brief Sets the classifier value associated with this particular function object
    *
    *  @param id The desired classifier for this object
    *
@@ -36,7 +39,7 @@ public:
    *  @todo Error macro required for reporting invalid identifier values
    */
   void  SetIdentifier(short id);
-  
+
   /** @brief Gets the red colour value associated with this object
    *
    *  @return A floating point between 0.0f and 1.0f inclusive representing the red colour value of this object
@@ -108,10 +111,10 @@ public:
    *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
    */
   virtual void  PopulatePortionOfTransferTable(  int IntensitySize, int GradientSize,
-                      float IntensityLow, float IntensityHigh, float IntensityOffset,
-                      float GradientLow, float GradientHigh, float GradientOffset,
-                      float* rTable, float* gTable, float* bTable, float* aTable,
-                      int logUsed ) = 0;
+      float IntensityLow, float IntensityHigh, float IntensityOffset,
+      float GradientLow, float GradientHigh, float GradientOffset,
+      float* rTable, float* gTable, float* bTable, float* aTable,
+      int logUsed ) = 0;
 
   /** @brief Method that, given a table to house the transfer function, applies the shading attributes (ADS) to the parts of the table that are within the object
    *
@@ -132,11 +135,11 @@ public:
    *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
    */
   virtual void  PopulatePortionOfShadingTable(  int IntensitySize, int GradientSize,
-                      float IntensityLow, float IntensityHigh, float IntensityOffset,
-                      float GradientLow, float GradientHigh, float GradientOffset,
-                      float* aTable, float* dTable, float* sTable, float* pTable,
-                      int logUsed ) = 0;
-  
+      float IntensityLow, float IntensityHigh, float IntensityOffset,
+      float GradientLow, float GradientHigh, float GradientOffset,
+      float* aTable, float* dTable, float* sTable, float* pTable,
+      int logUsed ) = 0;
+
   /** @brief Method that, given a table to house the classification function, applies the identifer to the parts of the table that are within the object
    *
    *  @param IntensitySize The size of each classification function lookup table in the intensity dimension
@@ -153,9 +156,9 @@ public:
    *  @note This function must be reimplemented for each subclass of the function object to account for changes in geometry
    */
   virtual void  PopulatePortionOfClassifyTable(  int IntensitySize, int GradientSize,
-                      float IntensityLow, float IntensityHigh, float IntensityOffset,
-                      float GradientLow, float GradientHigh, float GradientOffset,
-                      short* table, int logUsed) = 0;
+      float IntensityLow, float IntensityHigh, float IntensityOffset,
+      float GradientLow, float GradientHigh, float GradientOffset,
+      short* table, int logUsed) = 0;
 
   /** @brief Calculates largest gradient (not logarithmically scaled) which this particular object includes.
    *
@@ -195,7 +198,7 @@ protected:
   float  colourGreen;  /**< The green component of the colour mapped to voxels with intensity and gradient falling within this object */
   float  colourBlue;    /**< The blue component of the colour mapped to voxels with intensity and gradient falling within this object */
   float  opacity;    /**< The opacity mapped to voxels with intensity and gradient falling within this object */
-  
+
   //ADS shading paradigm parameters
   float  Ambient;    /**< The amount of ambient light reflected */
   float  Diffuse;    /**< The amount of diffuse light reflected */

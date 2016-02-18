@@ -155,7 +155,7 @@ void vtkImageAbsoluteDifferenceExecute(vtkImageAbsoluteDifference *self,
                                        int outExt[6], int id)
 {
   int idX, idY, idZ;
-  int incX, incY, incZ;
+  vtkIdType incX, incY, incZ;
   int maxX, maxY, maxZ;
   int pminX, pmaxX, iter;
   T *temp1Ptr, *temp2Ptr;

@@ -18,7 +18,7 @@ void qTransferFunctionWindowWidgetInterface::RemoveCapableObject( vtkCudaObject*
   this->capableObjects.erase( std::find(this->capableObjects.begin(), this->capableObjects.end(), remObject) );
 }
 
-int qTransferFunctionWindowWidgetInterface::GetNumberOfCapableObjects()
+size_t qTransferFunctionWindowWidgetInterface::GetNumberOfCapableObjects()
 {
   return this->capableObjects.size();
 }

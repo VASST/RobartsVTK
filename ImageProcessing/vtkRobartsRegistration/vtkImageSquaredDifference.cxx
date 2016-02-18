@@ -157,7 +157,7 @@ void vtkImageSquaredDifferenceExecute(vtkImageSquaredDifference *self,
                                       int outExt[6], int id)
 {
   int idX, idY, idZ;
-  int incX, incY, incZ;
+  vtkIdType incX, incY, incZ;
   int maxX, maxY, maxZ;
   int pminX, pmaxX, iter;
   double diff;

@@ -155,7 +155,7 @@ void vtkImagePatternIntensityExecute(vtkImagePatternIntensity *self,
   int totExt[6];
   int idX, idY, idZ;
   int id2X, id2Y, id2Z;
-  int incX, incY, incZ;
+  vtkIdType incX, incY, incZ;
   int maxX, maxY, maxZ;
   int pminX, pmaxX, iter;
   int rX, rY, rZ;

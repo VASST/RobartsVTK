@@ -1,19 +1,12 @@
 #ifndef qHistogramHolderLabel_H
 #define qHistogramHolderLabel_H
 
-#include <QObject>
-#include <QWidget>
 #include <QLabel>
-#include <QImage>
-#include <QPaintEvent>
 
-//include files for the transfer function objects
 class qTransferFunctionDefinitionWidget;
-#include "qTransferFunctionDefinitionWidget.h"
-#include "vtkCudaFunctionPolygon.h"
-
-#include "qTransferFunctionWindowWidget.h"
 class qTransferFunctionWindowWidget;
+class vtkCuda2DTransferFunction;
+class vtkCudaFunctionPolygon;
 
 class qHistogramHolderLabel : public QLabel
 {
@@ -31,7 +24,7 @@ public:
   void mouseMoveEvent(QMouseEvent*);
   void mousePressEvent(QMouseEvent*);
   void mouseReleaseEvent(QMouseEvent*);
-  
+
   void keyPressEvent(QKeyEvent* e);
   void keyReleaseEvent(QKeyEvent* e);
 
@@ -40,10 +33,7 @@ public:
 
   void visualizeAllObjects(bool b);
 
-private slots:
-
 private:
-
   qTransferFunctionDefinitionWidget* manager;
   vtkCuda2DTransferFunction* func;
   vtkCudaFunctionPolygon* object;
@@ -78,8 +68,7 @@ private:
   bool scaling;
   bool vertexDragging;
   bool autoUpdate;
-  unsigned int vertexInUse;
-
+  size_t vertexInUse;
 };
 
 #endif

@@ -287,6 +287,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 #-----------------------------------------------------------------------------
 # vtkRobartsRegistration
+#-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OFF)
 IF (RobartsVTK_USE_REGISTRATION)
   OPTION(RobartsVTK_Include_Outdated_Registration "Include classes that still use VTK4 pipeline style." OFF)
@@ -296,6 +297,7 @@ ENDIF ()
 
 #-----------------------------------------------------------------------------
 # vtkRobartsCommon - contains common utilities
+#-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
 IF (RobartsVTK_USE_COMMON)
   ADD_SUBDIRECTORY (Common/vtkRobartsCommon)
@@ -303,24 +305,14 @@ IF (RobartsVTK_USE_COMMON)
 ENDIF()
 
 #-----------------------------------------------------------------------------
-# vtkCuda
+# CUDA Dependencies
+#-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
-  # Remove vtk definitions
-  # This is used for CUDA targets, because nvcc does not like VTK 6+ definitions style.
-  macro(REMOVE_VTK_DEFINITIONS)
-    get_directory_property(_dir_defs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
-    set(_vtk_definitions)
-    foreach(_item ${_dir_defs})
-        if(_item MATCHES "vtk*")
-            list(APPEND _vtk_definitions -D${_item})
-        endif()
-    endforeach()
-    remove_definitions(${_vtk_definitions})
-  endmacro(REMOVE_VTK_DEFINITIONS)
-
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
+  
+  INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RobartsCUDAVTKModule.cmake)
 
   # Add Robart's CUDA libraries
   ADD_SUBDIRECTORY(Common/vtkCudaCommon)
@@ -330,6 +322,7 @@ ENDIF ()
 
 #-----------------------------------------------------------------------------
 # Add the CUDA Visualization Libraries
+#-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_CUDA)
   OPTION (RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
   IF (RobartsVTK_USE_CUDA_VISUALIZATION)
@@ -340,6 +333,7 @@ ENDIF()
 
 #-----------------------------------------------------------------------------
 # Add the CUDA Analytics Libraries
+#-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
   OPTION (RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
   IF (RobartsVTK_USE_CUDA_ANALYTICS)
@@ -351,6 +345,7 @@ ENDIF()
 
 #-----------------------------------------------------------------------------
 # Add RobartsVTK.py.in file.  On Win32, this has to go into all config
+#-----------------------------------------------------------------------------
 IF(VTK_WRAP_PYTHON)
   IF(WIN32 AND CMAKE_CONFIGURATION_TYPES)
     FOREACH(config ${CMAKE_CONFIGURATION_TYPES})
@@ -367,6 +362,7 @@ ENDIF(VTK_WRAP_PYTHON)
 
 #-----------------------------------------------------------------------------
 # Build structure for examples, segregated by other options
+#-----------------------------------------------------------------------------
 OPTION(RobartsVTK_BUILD_EXAMPLES "Build RobartsVTK examples." OFF)
 IF(RobartsVTK_BUILD_EXAMPLES)
   IF(RobartsVTK_USE_CUDA)
@@ -384,6 +380,7 @@ ENDIF()
 
 #-----------------------------------------------------------------------------
 # Exports
+#-----------------------------------------------------------------------------
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfigure.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfigure.h

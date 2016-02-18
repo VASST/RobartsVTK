@@ -13,18 +13,19 @@
 #include <string>
 #include <list>
 
-/** @brief Class that writes function polygons to file in a set format
- *
+/**
+ *  @brief Class that writes function polygons to file in a set format
  *  @see vtkCudaFunctionPolygon vtkCudaFunctionPolygonReader
  *
  */
-class vtkCudaFunctionPolygonReader : public vtkObject {
+class vtkCudaFunctionPolygonReader : public vtkObject
+{
 public:
 
   vtkTypeMacro( vtkCudaFunctionPolygonReader, vtkObject );
 
-  /** @brief VTK compatible constructor method
-   *
+  /**
+   *  @brief VTK compatible constructor method
    */
   static vtkCudaFunctionPolygonReader* New();
 
@@ -32,8 +33,8 @@ public:
   void Read();
   void Clear();
   vtkCudaFunctionPolygon* GetOutput( unsigned int n );
-  int GetNumberOfOutputs( );
-  
+  size_t GetNumberOfOutputs( );
+
 protected:
   vtkCudaFunctionPolygonReader();
   ~vtkCudaFunctionPolygonReader();
@@ -43,7 +44,7 @@ protected:
   std::list<vtkCudaFunctionPolygon*> objects;
   std::string filename;
   bool fileNameSet;
-  
+
 
   std::ifstream* file;
 

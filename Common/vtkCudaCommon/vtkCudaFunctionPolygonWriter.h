@@ -18,7 +18,8 @@
  *  @see vtkCudaFunctionPolygon vtkCudaFunctionPolygonReader
  *
  */
-class vtkCudaFunctionPolygonWriter : public vtkObject {
+class VTKCUDACOMMON_EXPORT vtkCudaFunctionPolygonWriter : public vtkObject
+{
 public:
 
   /** @brief VTK compatible constructor method
@@ -31,7 +32,7 @@ public:
   void Clear();
   void AddInput( vtkCudaFunctionPolygon* object );
   void RemoveInput( vtkCudaFunctionPolygon* object );
-  
+
 protected:
   vtkCudaFunctionPolygonWriter();
   ~vtkCudaFunctionPolygonWriter();

@@ -1344,8 +1344,8 @@ void FluoroPredViz::SetTFName()
   TFName->setText(filename);
 
   //set TF in renderer
-  int n = TransferFunction->GetNumberOfFunctionObjects();
-  for(int i = 0; i < n; i++)
+  size_t n = TransferFunction->GetNumberOfFunctionObjects();
+  for(size_t i = 0; i < n; i++)
   {
     vtkCudaFunctionObject* object = TransferFunction->GetFunctionObject(n-i-1);
     TransferFunction->RemoveFunctionObject(object);

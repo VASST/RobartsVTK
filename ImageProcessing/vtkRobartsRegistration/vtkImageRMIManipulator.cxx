@@ -264,7 +264,7 @@ void vtkImageRMIManipulator::SetTranslation(double tran[3])
 template <class T>
 void vtkImageRMIManipulatorExecute(vtkImageRMIManipulator *self,
            T  *in1Ptr, T *in2Ptr,
-           int inc[3], int inc2[2], int inExt[6],
+           vtkIdType inc[3], int inc2[2], int inExt[6],
            int loc000[3], int loc111[3], double count)
 {
   double V000, V100, V010, V110, V001, V101, V011, V111, Vxyz;
@@ -273,7 +273,7 @@ void vtkImageRMIManipulatorExecute(vtkImageRMIManipulator *self,
   int i, j;
  
   // CASE 1: Check if translation takes us out of the input image, in 
-  // which case set the result to indicate complete disimilarity and stop.
+  // which case set the result to indicate complete dissimilarity and stop.
   if ( (self->Extent[0] + loc000[0] < inExt[0]) ||
        (self->Extent[2] + loc000[1] < inExt[2]) ||
        (self->Extent[4] + loc000[2] < inExt[4]) ||
@@ -285,7 +285,7 @@ void vtkImageRMIManipulatorExecute(vtkImageRMIManipulator *self,
       return;
     }
 
-  // CASE 2: Check if no interpolation is neccessary.
+  // CASE 2: Check if no interpolation is necessary.
   if ( (loc000[0] == 0) && (loc111[0] == 0) &&
        (loc000[1] == 0) && (loc111[1] == 0) &&
        (loc000[2] == 0) && (loc111[2] == 0) )
@@ -436,17 +436,10 @@ double vtkImageRMIManipulator::GetResult()
   // Calculate and return RMI result.
   switch (this->inData[0]->GetScalarType())
     {
-#if (VTK_MAJOR_VERSION < 5)
-      vtkTemplateMacro9(vtkImageRMIManipulatorExecute,this, 
-             (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
-      this->inc, this->inc2, this->inExt,
-      this->loc000, this->loc111, this->count);
-#else
       vtkTemplateMacro(vtkImageRMIManipulatorExecute(this, 
              (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
       this->inc, this->inc2, this->inExt,
       this->loc000, this->loc111, this->count));
-#endif
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
     }
