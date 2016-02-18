@@ -38,7 +38,7 @@ The following variables should be set when configuring RobartsVTK
         * PYTHON_LIBRARY:PATH = `<path/to/python-install>/libs/python27.lib`
 
 ## License
-Please see the [license](license.md) file.
+Please see the [license](LICENSE.md) file.
 
 ## Acknowledgments
 RobartsVTK would like to thank the creator and maintainers of [GitLab](https://about.gitlab.com/).

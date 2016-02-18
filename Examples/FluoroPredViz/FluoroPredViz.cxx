@@ -41,12 +41,21 @@
 #include "vtkTransform.h"
 #include "vtkVolume.h"
 
-FluoroPredViz::FluoroPredViz( QWidget* parent ) :
-  QWidget(0), SuccessInit(0), PauseFlag(0)
+FluoroPredViz::FluoroPredViz( QWidget* parent )
+  : QWidget(0)
+  , DegreeMarkers(NULL)
+  , NumMarkers(0)
+  , XrayMarker(NULL)
+  , XraySource(NULL)
+  , DVRSource(NULL)
+  , ImageBoundsMarkerActor(NULL)
+  , SuccessInit(false)
+  , Paused(false)
 {
   //get initial image
   Reader = 0;
   Extractor = 0;
+
   SuccessInit = SetUpReader(RequestFilename());
   if(SuccessInit != 0)
   {
@@ -116,7 +125,7 @@ FluoroPredViz::FluoroPredViz( QWidget* parent ) :
 
 }
 
-int FluoroPredViz::GetSuccessInit()
+bool FluoroPredViz::GetSuccessInit()
 {
   return SuccessInit;
 }
@@ -156,7 +165,6 @@ FluoroPredViz::~FluoroPredViz()
   }
   TransferFunction->Delete();
   ClippingCallback->Delete();
-
 }
 
 //-------------------------------------------------------------------------------//
@@ -353,10 +361,10 @@ void FluoroPredViz::MimicView()
   }
 
   //apply angles
-  this->PauseFlag = true;
+  this->Paused = true;
   this->Angle->setValue(180+DesiredAngle);
   this->CrAngle->setValue(65+DesiredCrAngle);
-  this->PauseFlag = false;
+  this->Paused = false;
   UpdateXrayMarker();
   UpdateViz();
 }
@@ -751,20 +759,18 @@ void FluoroPredViz::SetOrientationZ(double v)
 
 QString FluoroPredViz::RequestFilename()
 {
-
   //get file name
   QString filename = QFileDialog::getOpenFileName(this,"Open Image","", tr("DICOM (*.dcm);; Meta (*.mhd *.mha);; MINC (*.mnc *.minc)") );
   return filename;
-
 }
 
-int FluoroPredViz::SetUpReader(QString filename)
+bool FluoroPredViz::SetUpReader(QString filename)
 {
 
   //return if there is no filename
   if( filename.isNull() || filename.isEmpty() )
   {
-    return-1;
+    return false;
   }
 
   //create reader based on file name extension
@@ -777,7 +783,7 @@ int FluoroPredViz::SetUpReader(QString filename)
     this->Reader = vtkMetaImageReader::New();
     if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
     {
-      return -1;
+      return false;
     }
     this->Reader->SetFileName( filename.toStdString().c_str() );
 
@@ -791,7 +797,7 @@ int FluoroPredViz::SetUpReader(QString filename)
     this->Reader = vtkMINCImageReader::New();
     if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
     {
-      return -1;
+      return false;
     }
     this->Reader->SetFileName( filename.toStdString().c_str() );
 
@@ -831,7 +837,7 @@ int FluoroPredViz::SetUpReader(QString filename)
   }
   else
   {
-    return -1;
+    return false;
   }
 
   Reader->Update();
@@ -840,8 +846,7 @@ int FluoroPredViz::SetUpReader(QString filename)
   Extractor->SetComponents(0);
   Extractor->Update();
 
-  return 0;
-
+  return true;
 }
 
 int FluoroPredViz::RequestImage()
@@ -942,7 +947,7 @@ protected:
 
 void FluoroPredViz::UpdateViz()
 {
-  if(PauseFlag)
+  if(Paused)
   {
     return;
   }
@@ -1208,7 +1213,7 @@ void FluoroPredViz::ConnectUpPipeline()
 
 void FluoroPredViz::UpdateDegreeMarkers()
 {
-  if(PauseFlag)
+  if(Paused)
   {
     return;
   }
@@ -1226,7 +1231,7 @@ void FluoroPredViz::UpdateDegreeMarkers()
 
 void FluoroPredViz::UpdateXrayMarker()
 {
-  if(PauseFlag)
+  if(Paused)
   {
     return;
   }
@@ -1257,7 +1262,7 @@ void FluoroPredViz::UpdateXrayMarker()
 
 void FluoroPredViz::UpdateImageRegistration()
 {
-  if(PauseFlag)
+  if(Paused)
   {
     return;
   }

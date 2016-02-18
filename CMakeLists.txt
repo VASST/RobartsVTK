@@ -87,21 +87,56 @@ IF (RobartsVTK_USE_QT)
 
   FIND_PACKAGE(Qt4 QUIET)
   IF ( NOT QT4_FOUND )
-    IF(EXISTS ${QT_QMAKE_EXECUTABLE} )
-      GET_FILENAME_COMPONENT(QT_BINARY_DIR ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-      GET_FILENAME_COMPONENT(CMAKE_PREFIX_PATH ${QT_BINARY_DIR} DIRECTORY)
-    ENDIF()
-
     FIND_PACKAGE(Qt5 QUIET COMPONENTS Widgets NO_MODULE)
 
     IF ( NOT Qt5_FOUND )
       MESSAGE( FATAL_ERROR "This project requires Qt4 or Qt5 for building PlusApp. These components are missing. Please verify configuration by selecting QT_QMAKE_EXECUTABLE (Qt4) or Qt5_DIR (Qt5) or turn off RobartsVTK_USE_QT option.")
     ENDIF()
     SET(QT_VERSION_MAJOR ${Qt5Widgets_VERSION_MAJOR})
-    UNSET(QT_QMAKE_EXECUTABLE CACHE)
   ENDIF()
   
   SET(CMAKE_AUTOMOC ON)
+  IF( QT_QMAKE_EXECUTABLE STREQUAL "NOTFOUND" AND Qt5_DIR )
+    GET_FILENAME_COMPONENT(QT_CMAKE_DIR ${Qt5_DIR} DIRECTORY)
+    GET_FILENAME_COMPONENT(QT_LIB_DIR ${QT_CMAKE_DIR} DIRECTORY)
+    GET_FILENAME_COMPONENT(CMAKE_PREFIX_PATH ${QT_LIB_DIR} DIRECTORY)
+    SET(QT_BINARY_DIR ${CMAKE_PREFIX_PATH}/bin)
+    SET(QT_QMAKE_EXECUTABLE ${QT_BINARY_DIR}/qmake${CMAKE_EXECUTABLE_SUFFIX} CACHE FILEPATH "Location of Qt QMake executable." FORCE)
+  ELSEIF( NOT QT_QMAKE_EXECUTABLE STREQUAL "NOTFOUND" )
+    GET_FILENAME_COMPONENT(QT_BINARY_DIR ${QT_QMAKE_EXECUTABLE} DIRECTORY)
+  ENDIF()
+  
+  # --------------------------------------------------------------------------
+  # Copy Qt binaries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+
+  # Determine shared library extension without the dot (dll instead of .dll)
+  STRING(SUBSTRING ${CMAKE_SHARED_LIBRARY_SUFFIX} 1 -1 CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR)
+
+  # Get all Qt shared library names
+  IF( ${QT_VERSION_MAJOR} AND ${QT_VERSION_MAJOR} EQUAL 5 )
+    SET(RELEASE_REGEX_PATTERN .t5.*[^d][.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR})
+    SET(DEBUG_REGEX_PATTERN .t5.*d[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR})
+  ELSE()
+    SET(RELEASE_REGEX_PATTERN .*[^d]4[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR} )
+    SET(DEBUG_REGEX_PATTERN .*d4[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR} )
+  ENDIF()
+
+  # Copy shared libraries to bin directory to allow running Plus applications in the build tree
+  IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
+    FILE(COPY "${QT_BINARY_DIR}/"
+      DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release
+      FILES_MATCHING REGEX ${RELEASE_REGEX_PATTERN}
+      )
+    FILE(COPY "${QT_BINARY_DIR}/"
+      DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug
+      FILES_MATCHING REGEX ${DEBUG_REGEX_PATTERN}
+      )
+  ELSE()
+    FILE(COPY "${QT_BINARY_DIR}/"
+      DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}
+      FILES_MATCHING REGEX .*${CMAKE_SHARED_LIBRARY_SUFFIX}
+      )
+  ENDIF()
 ENDIF ()
 
 #-----------------------------------------------------------------------------
@@ -224,7 +259,7 @@ ENDIF()
 #-----------------------------------------------------------------------------
 # Output directories.
 #-----------------------------------------------------------------------------
-SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 SET(RobartsVTK_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 SET(RobartsVTK_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
