@@ -10,20 +10,23 @@
 #ifndef VTKCUDAOUTPUTIMAGEINFORMATIONHANDLER_H_
 #define VTKCUDAOUTPUTIMAGEINFORMATIONHANDLER_H_
 
-#include "CUDA_containerOutputImageInformation.h"
+#include "vtkCudaVisualizationModule.h"
+
 #include "vtkObject.h"
-#include "vtkRenderer.h"
-#include "vtkVolume.h"
-#include "vtkRayCastImageDisplayHelper.h"
-#include "vtkImageData.h"
-#include "vtkCudaMemoryTexture.h"
-#include "vtkCudaObject.h"
-#include "vtkSetGet.h"
+#include "CudaObject.h"
+
+class CUDA_containerOutputImageInformation;
+class vtkCudaMemoryTexture;
+class vtkImageData;
+class vtkRayCastImageDisplayHelper;
+class vtkRenderer;
+class vtkVolume;
 
 /** @brief vtkCudaOutputImageInformationHandler handles all output image, buffering, texturing and OpenGL related information on behalf of the CUDA volume mapper to facilitate the rendering and display process
  *
  */
-class vtkCudaOutputImageInformationHandler : public vtkObject, public vtkCudaObject {
+class VTKCUDAVISUALIZATION_EXPORT vtkCudaOutputImageInformationHandler : public vtkObject, public CudaObject
+{
 public:
 
   vtkTypeMacro( vtkCudaOutputImageInformationHandler, vtkObject );
@@ -52,9 +55,9 @@ public:
 
   /** @brief Sets how the image is displayed
    *
-   *  @param type An integer between 0 and 2 inclusive representing the way the imkage is displayed
+   *  @param type An integer between 0 and 2 inclusive representing the way the image is displayed
    *
-   *  @note 0 means using CUDA-OpenGL interoperability, which is fast, but not usuable on all computers or in some situations
+   *  @note 0 means using CUDA-OpenGL interoperability, which is fast, but not usable on all computers or in some situations
    *  @note 1 means using full VTK compatibility, which is slower, but more supported
    *  @note 2 means using vtkImageData, so the result is given to a vtkImageData object, rather than the render window
    *
@@ -64,7 +67,7 @@ public:
   /** @brief Gets the CUDA compatible container for the output image buffer location needed during rendering, and the additional information needed after rendering for displaying
    *
    */
-  const cudaOutputImageInformation& GetOutputImageInfo() { return (this->OutputImageInfo); }
+  const cudaOutputImageInformation& GetOutputImageInfo();
 
   /** @brief Prepares the buffers/textures/images before rendering
    *

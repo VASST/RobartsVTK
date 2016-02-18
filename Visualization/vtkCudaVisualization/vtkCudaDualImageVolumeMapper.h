@@ -10,18 +10,21 @@
 #ifndef __VTKCUDADualImageVOLUMEMAPPER_H
 #define __VTKCUDADualImageVOLUMEMAPPER_H
 
+#include "vtkCudaVisualizationModule.h"
+
 #include "vtkCudaVolumeMapper.h"
 
-#include "vtkCudaDualImageTransferFunctionInformationHandler.h"
-#include "CUDA_containerRendererInformation.h"
-#include "CUDA_containerVolumeInformation.h"
-#include "CUDA_containerOutputImageInformation.h"
-#include "CUDA_containerDualImageTransferFunctionInformation.h"
+class CUDA_containerDualImageTransferFunctionInformation;
+class CUDA_containerOutputImageInformation;
+class CUDA_containerRendererInformation;
+class CUDA_containerVolumeInformation;
+class vtkCuda2DTransferFunction;
+class vtkCudaDualImageTransferFunctionInformationHandler;
 
 /** @brief vtkCudaDualImageVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a DualImage ray casted projection of the scene which is then displayed to screen
  *
  */
-class vtkCudaDualImageVolumeMapper : public vtkCudaVolumeMapper
+class VTKCUDAVISUALIZATION_EXPORT vtkCudaDualImageVolumeMapper : public vtkCudaVolumeMapper
 {
 public:
 

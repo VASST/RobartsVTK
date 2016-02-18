@@ -26,21 +26,18 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "vtkHierarchicalMaxFlowSegmentation.h"
-#include "vtkCudaMaxFlowSegmentationScheduler.h"
-#include "vtkCudaMaxFlowSegmentationTask.h"
-#include "vtkCudaMaxFlowSegmentationWorker.h"
-#include "vtkCudaObject.h"
-
 #include <map>
-#include <list>
 #include <set>
-#include <vector>
 
-#include <limits.h>
-#include <float.h>
+class CudaObject;
+class vtkCudaMaxFlowSegmentationScheduler;
+class vtkCudaMaxFlowSegmentationTask;
+class vtkCudaMaxFlowSegmentationWorker;
 
-class vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkHierarchicalMaxFlowSegmentation );
@@ -54,7 +51,7 @@ public:
   bool HasDevice(int GPU);
 
   // Description:
-  // Clears the set of GPUs usable by the algorith,
+  // Clears the set of GPUs usable by the algorithm,
   void ClearDevices();
 
   // Description:

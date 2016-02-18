@@ -1,47 +1,40 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWDECOMPOSITION_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWDECOMPOSITION_H__
 
-#include "vtkCudaObject.h"
+#include "vtkCudaImageAnalyticsModule.h"
 
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
-#include "vtkDirectedGraph.h"
-#include "vtkTree.h"
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h"
 #include <map>
-#include <list>
-#include <set>
 
-#include <limits.h>
-#include <float.h>
+class vtkAlgorithmOutput;
+class vtkDirectedGraph;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
+class vtkTree;
 
-//INPUT PORT DESCRIPTION
-
-//OUTPUT PORT DESCRIPTION
-
-class vtkCudaHierarchicalMaxFlowDecomposition : public vtkImageAlgorithm, public vtkCudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaHierarchicalMaxFlowDecomposition : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowDecomposition, vtkImageAlgorithm );
 
   static vtkCudaHierarchicalMaxFlowDecomposition *New();
 
-  //Set the hierarchical model used in the segmentation, note that this has to be a 
+  //Set the hierarchical model used in the segmentation, note that this has to be a
   // tree.
   void SetHierarchy(vtkTree* graph);
   vtkTree* GetHierarchy();
-  
+
   vtkDataObject* GetDataInput(int idx);
   void SetDataInput(int idx, vtkDataObject *input);
   vtkDataObject* GetSmoothnessInput(int idx);
   void SetSmoothnessInput(int idx, vtkDataObject *input);
   vtkDataObject* GetLabelInput(int idx);
   void SetLabelInput(int idx, vtkDataObject *input);
-  
+
   double GetF0();
   double GetF(vtkIdType n);
 
@@ -50,18 +43,18 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
   virtual int RequestDataObject( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                 vtkInformationVector** inputVector,
+                                 vtkInformationVector* outputVector);
   virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
@@ -69,15 +62,15 @@ protected:
   virtual ~vtkCudaHierarchicalMaxFlowDecomposition();
 
 private:
-  vtkCudaHierarchicalMaxFlowDecomposition operator=(const vtkCudaHierarchicalMaxFlowDecomposition&){}
-  vtkCudaHierarchicalMaxFlowDecomposition(const vtkCudaHierarchicalMaxFlowDecomposition&){}
+  vtkCudaHierarchicalMaxFlowDecomposition operator=(const vtkCudaHierarchicalMaxFlowDecomposition&) {}
+  vtkCudaHierarchicalMaxFlowDecomposition(const vtkCudaHierarchicalMaxFlowDecomposition&) {}
 
   void Reinitialize(int withData);
   void Deinitialize(int withData);
-  
+
   int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges );
   void FigureOutSmoothness( vtkIdType CurrNode, vtkInformationVector **inputVector );
-  
+
   vtkTree* Hierarchy;
   std::map<vtkIdType,int> LeafMap;
   std::map<vtkIdType,int> BranchMap;
@@ -89,7 +82,7 @@ private:
 
   int VolumeSize;
   int VX, VY, VZ;
-  
+
   std::map<vtkIdType,int> InputDataPortMapping;
   std::map<int,vtkIdType> BackwardsInputDataPortMapping;
   int FirstUnusedDataPort;
@@ -105,7 +98,6 @@ private:
   float**  leafSmoothnessTermBuffers;
 
   float* devGradientBuffer;
-
 };
 
 #endif

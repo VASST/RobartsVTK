@@ -7,31 +7,28 @@
  *
  */
 
-#include "vtkCuda1DTransferFunctionInformationHandler.h"
-#include "vtkObjectFactory.h"
-#include "vtkMatrix4x4.h"
-
-//Volume and Property
-#include "vtkPiecewiseFunction.h"
+#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
 #include "vtkColorTransferFunction.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkCuda1DTransferFunctionInformationHandler.h"
 #include "vtkImageData.h"
+#include "vtkMatrix4x4.h"
+#include "vtkObjectFactory.h"
+#include "vtkPiecewiseFunction.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-
-#include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCuda1DTransferFunctionInformationHandler);
 
 vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformationHandler(){
-  this->colourFunction = NULL;
-  this->opacityFunction = NULL;
-  this->gradientopacityFunction = NULL;
-  this->useGradientOpacity = false;
+  this->ColourFunction = NULL;
+  this->OpacityFunction = NULL;
+  this->GradientOpacityFunction = NULL;
+  this->UseGradientOpacity = false;
 
   this->FunctionSize = 512;
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   
   this->TransInfo.alphaTransferArray1D = 0;
   this->TransInfo.galphaTransferArray1D = 0;
@@ -46,9 +43,9 @@ vtkCuda1DTransferFunctionInformationHandler::vtkCuda1DTransferFunctionInformatio
 vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformationHandler(){
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if( this->colourFunction ) this->colourFunction->UnRegister(this);
-  if( this->opacityFunction ) this->opacityFunction->UnRegister(this);
-  if( this->gradientopacityFunction ) this->gradientopacityFunction->UnRegister(this);
+  if( this->ColourFunction ) this->ColourFunction->UnRegister(this);
+  if( this->OpacityFunction ) this->OpacityFunction->UnRegister(this);
+  if( this->GradientOpacityFunction ) this->GradientOpacityFunction->UnRegister(this);
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData){
@@ -57,7 +54,7 @@ void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData){
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(int withData){
-  lastModifiedTime = 0;
+  LastModifiedTime = 0;
   UpdateTransferFunction();
 }
 
@@ -70,55 +67,67 @@ void vtkCuda1DTransferFunctionInformationHandler::SetInputData(vtkImageData* inp
   }
 }
 
+//----------------------------------------------------------------------------
+vtkImageData* vtkCuda1DTransferFunctionInformationHandler::GetInputData() const
+{
+  return InputData;
+}
+
+//----------------------------------------------------------------------------
+const cuda1DTransferFunctionInformation& vtkCuda1DTransferFunctionInformationHandler::GetTransferFunctionInfo() const
+{
+  return (this->TransInfo);
+}
+
 void vtkCuda1DTransferFunctionInformationHandler::SetColourTransferFunction(vtkColorTransferFunction* f){
-  if( f != this->colourFunction ){
-    if(this->colourFunction) this->colourFunction->UnRegister(this);
-    this->colourFunction = f;
-    if(this->colourFunction) this->colourFunction->Register(this);
-    this->lastModifiedTime = 0;
+  if( f != this->ColourFunction ){
+    if(this->ColourFunction) this->ColourFunction->UnRegister(this);
+    this->ColourFunction = f;
+    if(this->ColourFunction) this->ColourFunction->Register(this);
+    this->LastModifiedTime = 0;
     this->Modified();
   }
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtkPiecewiseFunction* f){
-  if( f != this->opacityFunction ){
-    if(this->opacityFunction) this->opacityFunction->UnRegister(this);
-    this->opacityFunction = f;
-    if(this->opacityFunction) this->opacityFunction->Register(this);
-    this->lastModifiedTime = 0;
+  if( f != this->OpacityFunction ){
+    if(this->OpacityFunction) this->OpacityFunction->UnRegister(this);
+    this->OpacityFunction = f;
+    if(this->OpacityFunction) this->OpacityFunction->Register(this);
+    this->LastModifiedTime = 0;
     this->Modified();
   }
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::SetGradientOpacityTransferFunction(vtkPiecewiseFunction* f){
-  if( f != this->gradientopacityFunction ){
-    if(this->gradientopacityFunction) this->gradientopacityFunction->UnRegister(this);
-    this->gradientopacityFunction = f;
-    if(this->gradientopacityFunction) this->gradientopacityFunction->Register(this);
-    this->lastModifiedTime = 0;
+  if( f != this->GradientOpacityFunction ){
+    if(this->GradientOpacityFunction) this->GradientOpacityFunction->UnRegister(this);
+    this->GradientOpacityFunction = f;
+    if(this->GradientOpacityFunction) this->GradientOpacityFunction->Register(this);
+    this->LastModifiedTime = 0;
     this->Modified();
   }
 }
 
 void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
   //if we don't need to update the transfer function, don't
-  if(!this->colourFunction || !this->opacityFunction ||
-    (this->colourFunction->GetMTime() <= lastModifiedTime &&
-    this->opacityFunction->GetMTime() <= lastModifiedTime) ) return;
-  lastModifiedTime = (this->colourFunction->GetMTime() > this->opacityFunction->GetMTime()) ?
-    this->colourFunction->GetMTime() : this->opacityFunction->GetMTime();
+  if(!this->ColourFunction || !this->OpacityFunction ||
+    (this->ColourFunction->GetMTime() <= LastModifiedTime &&
+    this->OpacityFunction->GetMTime() <= LastModifiedTime) ) return;
+  LastModifiedTime = (this->ColourFunction->GetMTime() > this->OpacityFunction->GetMTime()) ?
+    this->ColourFunction->GetMTime() : this->OpacityFunction->GetMTime();
 
   //get the ranges from the transfer function
   double minIntensity; 
   double maxIntensity;
-  this->opacityFunction->GetRange( minIntensity, maxIntensity );
+  this->OpacityFunction->GetRange( minIntensity, maxIntensity );
   minIntensity = (this->InputData->GetScalarRange()[0] > minIntensity ) ? this->InputData->GetScalarRange()[0] : minIntensity;
   maxIntensity = (this->InputData->GetScalarRange()[1] < maxIntensity ) ? this->InputData->GetScalarRange()[1] : maxIntensity;
   
   //get the gradient ranges from the transfer function
   double minGradient; 
   double maxGradient;
-  this->gradientopacityFunction->GetRange( minGradient, maxGradient );
+  this->GradientOpacityFunction->GetRange( minGradient, maxGradient );
 
   //figure out the multipliers for applying the transfer function in GPU
   this->TransInfo.intensityLow = minIntensity;
@@ -142,11 +151,11 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
   memset( (void*) LocalGAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
 
   //populate the table
-  this->opacityFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
+  this->OpacityFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
     LocalAlphaTransferFunction );
-  this->gradientopacityFunction->GetTable( minGradient, maxGradient, this->FunctionSize,
+  this->GradientOpacityFunction->GetTable( minGradient, maxGradient, this->FunctionSize,
     LocalGAlphaTransferFunction );
-  this->colourFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
+  this->ColourFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
     LocalColorWholeTransferFunction );
   for( int i = 0; i < this->FunctionSize; i++ ){
     LocalColorRedTransferFunction[i] = LocalColorWholeTransferFunction[3*i];
@@ -175,10 +184,6 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction(){
   delete LocalGAlphaTransferFunction;
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::UseGradientOpacity(int u){
-  this->useGradientOpacity = (u != 0);
-}
-
 void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol){
 
   //get shading params
@@ -202,7 +207,7 @@ void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol){
 #endif
     this->Modified();
   }
-  if(this->colourFunction && this->opacityFunction){
+  if(this->ColourFunction && this->OpacityFunction){
     this->UpdateTransferFunction();
     this->Modified();
   }

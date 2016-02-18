@@ -14,10 +14,10 @@
 /** @file vtkCudaMaxFlowSegmentation.h
  *
  *  @brief Header file with definitions of individual chunks of GPU based code which can be
- *      handled semi-synchronously. 
+ *      handled semi-synchronously.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  *  @note This is not a front-end class.
@@ -27,6 +27,8 @@
 #ifndef __VTKCUDAMAXFLOWSEGMENTATIONSCHEDULER_H__
 #define __VTKCUDAMAXFLOWSEGMENTATIONSCHEDULER_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_hierarchicalmaxflow.h"
 #include <map>
 #include <set>
@@ -34,11 +36,12 @@
 class vtkCudaMaxFlowSegmentationTask;
 class vtkCudaMaxFlowSegmentationWorker;
 
-class vtkCudaMaxFlowSegmentationScheduler {
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationScheduler
+{
 private:
   vtkCudaMaxFlowSegmentationScheduler();
   ~vtkCudaMaxFlowSegmentationScheduler();
-  
+
   friend class vtkCudaHierarchicalMaxFlowSegmentation2;
   friend class vtkCudaDirectedAcyclicGraphMaxFlowSegmentation;
   void Clear();
@@ -50,16 +53,16 @@ private:
   void SyncWorkers();
   void ReturnLeaves();
   std::set<vtkCudaMaxFlowSegmentationWorker*> Workers;
-  
+
   //Mappings for CPU-GPU buffer sharing
   void ReturnBufferGPU2CPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
   void MoveBufferCPU2GPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
   std::map<float*,vtkCudaMaxFlowSegmentationWorker*> LastBufferUse;
   std::map<float*,int> Overwritten;
-  
+
   std::set<float*> CPUInUse;
   std::map<float*,int> CPU2PriorityMap;
-  
+
   int TotalNumberOfBuffers;
   int NumLeaves;
 

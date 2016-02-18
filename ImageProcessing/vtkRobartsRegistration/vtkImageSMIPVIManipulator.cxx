@@ -317,7 +317,7 @@ void vtkImageSMIPVIManipulator::SetTranslation(double tran[3])
 template <class T>
 void vtkImageSMIPVIManipulatorExecute(vtkImageSMIPVIManipulator *self,
                                       T  *in1Ptr, T *in2Ptr,
-                                      int inc[3], int inc2[2], int inExt[6],
+                                      vtkIdType inc[3], int inc2[2], int inExt[6],
                                       int loc000[3], int loc111[3], double count)
 {
   short V000, V100, V010, V110, V001, V101, V011, V111;
@@ -514,17 +514,10 @@ double vtkImageSMIPVIManipulator::GetResult()
   // Calculate and return SMIPVI result.
   switch (this->inDataScl[0]->GetScalarType())
   {
-#if (VTK_MAJOR_VERSION < 5)
-    vtkTemplateMacro9(vtkImageSMIPVIManipulatorExecute,this,
-                      (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
-                      this->inc, this->inc2, this->inExt,
-                      this->loc000, this->loc111, this->count);
-#else
     vtkTemplateMacro(vtkImageSMIPVIManipulatorExecute(this,
                      (VTK_TT *)(this->inPtr[0]), (VTK_TT *)(this->inPtr[1]),
                      this->inc, this->inc2, this->inExt,
                      this->loc000, this->loc111, this->count));
-#endif
   default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
   }

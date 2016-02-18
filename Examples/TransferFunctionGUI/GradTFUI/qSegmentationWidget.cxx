@@ -1,20 +1,25 @@
 #include "qSegmentationWidget.h"
-
-#include "vtkCudaVoxelClassifier.h"
+#include "qTransferFunctionWindowWidget.h"
 #include "vtkCuda2DTransferFunction.h"
-#include "vtkImageGradientMagnitude.h"
+#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaVoxelClassifier.h"
 #include "vtkImageAppendComponents.h"
+#include "vtkImageData.h"
+#include "vtkImageGradientMagnitude.h"
 #include "vtkMetaImageWriter.h"
-
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
 #include "vtkSystemIncludes.h"
 #include "vtksys\SystemTools.hxx"
-
-#include <QVBoxLayout>
 #include <QFileDialog>
+#include <QMenu>
+#include <QPushButton>
+#include <QVBoxLayout>
+
 // ---------------------------------------------------------------------------------------
 // Construction and destruction code
-qSegmentationWidget::qSegmentationWidget( qTransferFunctionWindowWidget* p ) :
-  QWidget(p)
+qSegmentationWidget::qSegmentationWidget( qTransferFunctionWindowWidget* p ) 
+  : QWidget(p)
 {
   parent = p;
   window = 0;
@@ -25,35 +30,38 @@ qSegmentationWidget::qSegmentationWidget( qTransferFunctionWindowWidget* p ) :
   setupMenu();
 }
 
-qSegmentationWidget::~qSegmentationWidget( ) {
+qSegmentationWidget::~qSegmentationWidget( )
+{
 }
 
-void qSegmentationWidget::setupMenu(){
-  
+void qSegmentationWidget::setupMenu()
+{
   segmentationMenu = new QMenu("Segmentation",this);
   segmentNowOption = new QAction("Segment Now",this);
   segmentNowOption->setEnabled(true);
   segmentationMenu->addAction(segmentNowOption);
-  
-  connect(segmentNowOption,SIGNAL(triggered()),this,SLOT(segment()));
 
+  connect(segmentNowOption,SIGNAL(triggered()),this,SLOT(segment()));
 }
 
-QMenu* qSegmentationWidget::getMenuOptions(){
+QMenu* qSegmentationWidget::getMenuOptions()
+{
   return segmentationMenu;
 }
 
-void qSegmentationWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCuda2DVolumeMapper* c ){
+void qSegmentationWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCuda2DVolumeMapper* c )
+{
   window = w;
   renderer = r;
   mapper = c;
 }
+
 // ---------------------------------------------------------------------------------------
 // Code to interface with the slots and user
-
-void qSegmentationWidget::segment(){
+void qSegmentationWidget::segment()
+{
   mapper->GetInput();
-  
+
   vtkImageGradientMagnitude* gradient = vtkImageGradientMagnitude::New();
 #if ( VTK_MAJOR_VERSION < 6 )
   gradient->SetInput( mapper->GetInput( mapper->GetCurrentFrame() ) );
@@ -85,7 +93,8 @@ void qSegmentationWidget::segment(){
 
   QString filename = QFileDialog::getSaveFileName(this, tr("Open File"), QDir::currentPath(),"Meta Image Files (*.mhd)" );
 
-  if( filename.size() != 0 ){
+  if( filename.size() != 0 )
+  {
     std::string rawfilename = vtksys::SystemTools::GetFilenameWithoutExtension( filename.toStdString() );
     rawfilename.append( ".raw" );
     vtkMetaImageWriter* writer = vtkMetaImageWriter::New();

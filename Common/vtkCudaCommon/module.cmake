@@ -5,4 +5,5 @@ vtk_module(vtkCudaCommon
     vtkCommonCore
   KIT
     vtkRobartsCuda
+  EXCLUDE_FROM_WRAP_HIERARCHY
   )

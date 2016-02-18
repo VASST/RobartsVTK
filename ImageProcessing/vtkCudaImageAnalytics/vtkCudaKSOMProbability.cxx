@@ -1,14 +1,20 @@
+#include "vtkAlgorithmOutput.h"
 #include "vtkCudaKSOMProbability.h"
-#include "vtkObjectFactory.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkPointData.h"
 #include "vtkDataArray.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include "vtkImageCast.h"
+#include "vtkImageData.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkPointData.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkTransform.h"
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCudaKSOMProbability);
 
-vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
+vtkCudaKSOMProbability::vtkCudaKSOMProbability()
+{
   //configure the input ports
   this->SetNumberOfInputPorts(3);
   this->SetNumberOfInputConnections(0,1);
@@ -20,40 +26,51 @@ vtkCudaKSOMProbability::vtkCudaKSOMProbability(){
   this->Entropy = false;
 }
 
-vtkCudaKSOMProbability::~vtkCudaKSOMProbability(){
+vtkCudaKSOMProbability::~vtkCudaKSOMProbability()
+{
 }
-#if (VTK_MAJOR_VERSION < 6)  
-void vtkCudaKSOMProbability::SetImageInput(vtkImageData* in){
+#if (VTK_MAJOR_VERSION < 6)
+void vtkCudaKSOMProbability::SetImageInput(vtkImageData* in)
+{
   this->SetInput(0,in);
 }
 
-void vtkCudaKSOMProbability::SetMapInput(vtkImageData* in){
+void vtkCudaKSOMProbability::SetMapInput(vtkImageData* in)
+{
   this->SetInput(1,in);
 }
 
-void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index){
+void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index)
+{
   this->SetNthInputConnection( 2, index,  in->GetProducerPort() );
   this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
 }
 #else
-void vtkCudaKSOMProbability::SetImageInputConnection(vtkAlgorithmOutput* in){
+void vtkCudaKSOMProbability::SetImageInputConnection(vtkAlgorithmOutput* in)
+{
   this->SetInputConnection(0,in);
 }
 
-void vtkCudaKSOMProbability::SetMapInputConnection(vtkAlgorithmOutput* in){
+void vtkCudaKSOMProbability::SetMapInputConnection(vtkAlgorithmOutput* in)
+{
   this->SetInputConnection(1,in);
 }
 
-void vtkCudaKSOMProbability::SetProbabilityInputConnection(vtkAlgorithmOutput* in, int index){
+void vtkCudaKSOMProbability::SetProbabilityInputConnection(vtkAlgorithmOutput* in, int index)
+{
   this->SetNthInputConnection( 2, index,  in );
   this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
 }
 #endif
-int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info){
-  if( i == 2 ){
+int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info)
+{
+  if( i == 2 )
+  {
     info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
     info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
-  }else{
+  }
+  else
+  {
     info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 0);
     info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 0);
   }
@@ -62,13 +79,15 @@ int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
-void vtkCudaKSOMProbability::Reinitialize(int withData){
+void vtkCudaKSOMProbability::Reinitialize(int withData)
+{
   //TODO
 }
 
-void vtkCudaKSOMProbability::Deinitialize(int withData){
+void vtkCudaKSOMProbability::Deinitialize(int withData)
+{
 }
 
 //------------------------------------------------------------
@@ -79,7 +98,7 @@ int vtkCudaKSOMProbability::RequestInformation(
 {
   vtkInformation* outputInfo = outputVector->GetInformationObject(0);
   vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, 2);
+  vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, 2);
   return 1;
 }
 
@@ -96,28 +115,31 @@ int vtkCudaKSOMProbability::RequestUpdateExtent(
   inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
   inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
 
-    if( this->GetNumberOfInputConnections(2) ){
-        inputInfo = (inputVector[2])->GetInformationObject(0);
-        inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-        inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
-    }
+  if( this->GetNumberOfInputConnections(2) )
+  {
+    inputInfo = (inputVector[2])->GetInformationObject(0);
+    inputData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
+    inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputData->GetExtent(),6);
+  }
 
   return 1;
 }
 
-int vtkCudaKSOMProbability::RequestData(vtkInformation *request, 
-              vtkInformationVector **inputVector, 
-              vtkInformationVector *outputVector){
-                
+int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
+                                        vtkInformationVector **inputVector,
+                                        vtkInformationVector *outputVector)
+{
+
   vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
   vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
   vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
   vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    
-    //get the probability maps
+
+  //get the probability maps
   float** probabilityBuffers = new float* [this->GetNumberOfOutputPorts()];
   if( this->GetNumberOfInputConnections(2) > 0 )
-    for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
+    for(int i = 0; i < this->GetNumberOfOutputPorts(); i++)
+    {
       vtkInformation* probabilityInfo = (inputVector[2])->GetInformationObject(i);
       vtkImageData* probabilityData = vtkImageData::SafeDownCast(probabilityInfo->Get(vtkDataObject::DATA_OBJECT()));
       probabilityBuffers[i] = (float*) probabilityData->GetScalarPointer();
@@ -125,7 +147,8 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
 
   //figure out the extent of the output
   float** outputBuffers = new float* [this->GetNumberOfOutputPorts()];
-  for(int i = 0; i < this->GetNumberOfOutputPorts(); i++){
+  for(int i = 0; i < this->GetNumberOfOutputPorts(); i++)
+  {
     vtkInformation* outputInfo = outputVector->GetInformationObject(i);
     vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outData->ShallowCopy(inData);
@@ -150,16 +173,16 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
   this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
   inData->GetDimensions( this->info.VolumeSize );
   kohonenData->GetDimensions( this->info.KohonenMapSize );
-  
+
   //update scale
   this->info.Scale = 1.0 / (this->Scale*this->Scale);
 
   //pass it over to the GPU
   this->ReserveGPU();
   CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-                  probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(2) > 0, this->Entropy, this->info, this->GetStream() );
+                                 probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(2) > 0, this->Entropy, this->info, this->GetStream() );
 
-  
+
   delete outputBuffers;
   delete probabilityBuffers;
   return 1;

@@ -23,8 +23,7 @@
 #ifndef __VTKCUDADEVICEMANAGER_H__
 #define __VTKCUDADEVICEMANAGER_H__
 
-#include "RobartsVTKConfigure.h"
-#include "vtkCudaCommonExport.h"
+#include "vtkCudaCommonModule.h"
 
 #include "vtkObject.h"
 #include "vector_types.h"
@@ -32,24 +31,24 @@
 #include <map>
 
 class vtkMutexLock;
-class vtkCudaObject;
+class CudaObject;
 
-class vtkCudaCommonExport vtkCudaDeviceManager : public vtkObject
+class VTKCUDACOMMON_EXPORT vtkCudaDeviceManager : public vtkObject
 {
 public:
   vtkTypeMacro( vtkCudaDeviceManager, vtkObject );
   static vtkCudaDeviceManager* Singleton();
 
   int GetNumberOfDevices();
-  bool GetDevice(vtkCudaObject* caller, int device);
-  bool ReturnDevice(vtkCudaObject* caller, int device);
-  bool GetStream(vtkCudaObject* caller, cudaStream_t** stream, int device);
-  bool ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device);
+  bool GetDevice(CudaObject* caller, int device);
+  bool ReturnDevice(CudaObject* caller, int device);
+  bool GetStream(CudaObject* caller, cudaStream_t** stream, int device);
+  bool ReturnStream(CudaObject* caller, cudaStream_t* stream, int device);
 
   bool SynchronizeStream( cudaStream_t* stream );
   bool ReserveGPU( cudaStream_t* stream );
 
-  int QueryDeviceForObject( vtkCudaObject* object );
+  int QueryDeviceForObject( CudaObject* object );
   int QueryDeviceForStream( cudaStream_t* stream );
 
 protected:
@@ -59,11 +58,11 @@ protected:
   void DestroyEmptyStream( cudaStream_t* stream );
   bool SynchronizeStreamUnlocked( cudaStream_t* stream );
 
-  std::multimap<vtkCudaObject*,int> ObjectToDeviceMap;
-  std::multimap<int,vtkCudaObject*> DeviceToObjectMap;
+  std::multimap<CudaObject*,int> ObjectToDeviceMap;
+  std::multimap<int,CudaObject*> DeviceToObjectMap;
 
   std::map<cudaStream_t*,int> StreamToDeviceMap;
-  std::multimap<cudaStream_t*, vtkCudaObject*> StreamToObjectMap;
+  std::multimap<cudaStream_t*, CudaObject*> StreamToObjectMap;
 
   vtkMutexLock* regularLock;
 

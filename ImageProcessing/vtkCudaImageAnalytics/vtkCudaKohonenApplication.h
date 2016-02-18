@@ -1,19 +1,20 @@
 #ifndef __VTKCUDAKOHONENAPPLICATION_H__
 #define __VTKCUDAKOHONENAPPLICATION_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_kohonenapplication.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "vtkCudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h"
 
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
 
-class vtkCudaKohonenApplication : public vtkImageAlgorithm, public vtkCudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKohonenApplication : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenApplication, vtkImageAlgorithm );
@@ -21,8 +22,8 @@ public:
   static vtkCudaKohonenApplication *New();
 
   void SetScale( double s );
-  double GetScale() {return this->Scale;}
-#if (VTK_MAJOR_VERSION < 6)  
+  double GetScale();
+#if (VTK_MAJOR_VERSION < 6)
   void SetDataInput(vtkImageData* d);
   void SetMapInput(vtkImageData* d);
 #else
@@ -39,27 +40,27 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
   virtual int FillInputPortInformation(int i, vtkInformation* info);
 
 protected:
   vtkCudaKohonenApplication();
   virtual ~vtkCudaKohonenApplication();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
 private:
-  vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&){}
-  vtkCudaKohonenApplication(const vtkCudaKohonenApplication&){}
+  vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&) {}
+  vtkCudaKohonenApplication(const vtkCudaKohonenApplication&) {}
 
   double Scale;
 

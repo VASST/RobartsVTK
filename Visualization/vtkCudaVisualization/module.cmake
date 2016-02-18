@@ -6,4 +6,5 @@ vtk_module(vtkCudaVisualization
     vtkCudaCommon
   KIT
     vtkRobartsCuda
+  EXCLUDE_FROM_WRAP_HIERARCHY
   )

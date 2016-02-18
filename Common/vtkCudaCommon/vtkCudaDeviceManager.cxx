@@ -22,7 +22,7 @@
 
 #include "cuda_runtime_api.h"
 #include "vtkCudaDeviceManager.h"
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkMutexLock.h"
 #include "vtkObjectFactory.h"
 #include <set>
@@ -96,7 +96,7 @@ int vtkCudaDeviceManager::GetNumberOfDevices()
 
 }
 
-bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device)
+bool vtkCudaDeviceManager::GetDevice(CudaObject* caller, int device)
 {
 
   //check that the device supplied is a valid device
@@ -115,9 +115,9 @@ bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device)
 
   //figure out if that pair already exists
   bool needToAdd = true;
-  std::pair<std::multimap<vtkCudaObject*,int>::iterator,std::multimap<vtkCudaObject*,int>::iterator> ret =
+  std::pair<std::multimap<CudaObject*,int>::iterator,std::multimap<CudaObject*,int>::iterator> ret =
     this->ObjectToDeviceMap.equal_range(caller);
-  for( std::multimap<vtkCudaObject*,int>::iterator it = ret.first; it != ret.second; it++)
+  for( std::multimap<CudaObject*,int>::iterator it = ret.first; it != ret.second; it++)
   {
     if( it->second == device )
     {
@@ -129,8 +129,8 @@ bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device)
   //if it does not, add it
   if( needToAdd )
   {
-    this->ObjectToDeviceMap.insert( std::pair<vtkCudaObject*,int>(caller, device) );
-    this->DeviceToObjectMap.insert( std::pair<int, vtkCudaObject*>(device, caller) );
+    this->ObjectToDeviceMap.insert( std::pair<CudaObject*,int>(caller, device) );
+    this->DeviceToObjectMap.insert( std::pair<int, CudaObject*>(device, caller) );
   }
 
   //unlock critical section and return
@@ -138,17 +138,17 @@ bool vtkCudaDeviceManager::GetDevice(vtkCudaObject* caller, int device)
   return false;
 }
 
-bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device)
+bool vtkCudaDeviceManager::ReturnDevice(CudaObject* caller, int device)
 {
   this->regularLock->Lock();
 
   //find if there is a valid mapping]
   bool found = false;
-  std::multimap<vtkCudaObject*,int>::iterator otdmEraseIt = this->ObjectToDeviceMap.begin();
-  std::multimap<int,vtkCudaObject*>::iterator dtomEraseIt = this->DeviceToObjectMap.begin();
-  std::pair<std::multimap<vtkCudaObject*,int>::iterator,std::multimap<vtkCudaObject*,int>::iterator> ret =
+  std::multimap<CudaObject*,int>::iterator otdmEraseIt = this->ObjectToDeviceMap.begin();
+  std::multimap<int,CudaObject*>::iterator dtomEraseIt = this->DeviceToObjectMap.begin();
+  std::pair<std::multimap<CudaObject*,int>::iterator,std::multimap<CudaObject*,int>::iterator> ret =
     this->ObjectToDeviceMap.equal_range(caller);
-  for( std::multimap<vtkCudaObject*,int>::iterator it = ret.first; it != ret.second; it++)
+  for( std::multimap<CudaObject*,int>::iterator it = ret.first; it != ret.second; it++)
   {
     if( it->second == device )
     {
@@ -156,9 +156,9 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device)
       otdmEraseIt = it;
 
       //find associated backward mapping
-      std::pair<std::multimap<int,vtkCudaObject*>::iterator,std::multimap<int,vtkCudaObject*>::iterator> innerRet =
+      std::pair<std::multimap<int,CudaObject*>::iterator,std::multimap<int,CudaObject*>::iterator> innerRet =
         this->DeviceToObjectMap.equal_range(device);
-      for( std::multimap<int,vtkCudaObject*>::iterator it2 = innerRet.first; it2 != innerRet.second; it2++)
+      for( std::multimap<int,CudaObject*>::iterator it2 = innerRet.first; it2 != innerRet.second; it2++)
       {
         if( it2->second == caller )
         {
@@ -173,8 +173,8 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device)
 
   //bool found = false;
   //bool emptyDevice = true;
-  //std::multimap<vtkCudaObject*,int>::iterator it = this->ObjectToDeviceMap.begin();
-  //std::multimap<vtkCudaObject*,int>::iterator eraseIt = this->ObjectToDeviceMap.begin();
+  //std::multimap<CudaObject*,int>::iterator it = this->ObjectToDeviceMap.begin();
+  //std::multimap<CudaObject*,int>::iterator eraseIt = this->ObjectToDeviceMap.begin();
   //for( ; it != this->ObjectToDeviceMap.end(); it++ ){
   //  if( it->first == caller && it->second == device ){
   //    found = true;
@@ -198,7 +198,7 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device)
 
   //if found remove streams associated with this caller on this device
   std::set<cudaStream_t*> streamsToReturn;
-  std::multimap<cudaStream_t*,vtkCudaObject*>::iterator it2 = this->StreamToObjectMap.begin();
+  std::multimap<cudaStream_t*,CudaObject*>::iterator it2 = this->StreamToObjectMap.begin();
   for( ; it2 != this->StreamToObjectMap.end(); it2++ )
   {
     if( this->StreamToDeviceMap[it2->first] == device )
@@ -240,7 +240,7 @@ bool vtkCudaDeviceManager::ReturnDevice(vtkCudaObject* caller, int device)
   return false;
 }
 
-bool vtkCudaDeviceManager::GetStream(vtkCudaObject* caller, cudaStream_t** stream, int device)
+bool vtkCudaDeviceManager::GetStream(CudaObject* caller, cudaStream_t** stream, int device)
 {
 
   //check device identifier for consistency
@@ -262,7 +262,7 @@ bool vtkCudaDeviceManager::GetStream(vtkCudaObject* caller, cudaStream_t** strea
 
   //find if this call is redundant
   bool found = false;
-  std::multimap<cudaStream_t*,vtkCudaObject*>::iterator it = this->StreamToObjectMap.begin();
+  std::multimap<cudaStream_t*,CudaObject*>::iterator it = this->StreamToObjectMap.begin();
   for( ; it != this->StreamToObjectMap.end(); it++ )
     if( it->first == *stream && it->second == caller )
     {
@@ -283,7 +283,7 @@ bool vtkCudaDeviceManager::GetStream(vtkCudaObject* caller, cudaStream_t** strea
     *stream = temp;
   }
   this->StreamToDeviceMap.insert( std::pair<cudaStream_t*,int>(*stream,device) );
-  this->StreamToObjectMap.insert( std::pair<cudaStream_t*,vtkCudaObject*>(*stream,caller) );
+  this->StreamToObjectMap.insert( std::pair<cudaStream_t*,CudaObject*>(*stream,caller) );
 
   this->regularLock->Unlock();
 
@@ -291,13 +291,13 @@ bool vtkCudaDeviceManager::GetStream(vtkCudaObject* caller, cudaStream_t** strea
 
 }
 
-bool vtkCudaDeviceManager::ReturnStream(vtkCudaObject* caller, cudaStream_t* stream, int device)
+bool vtkCudaDeviceManager::ReturnStream(CudaObject* caller, cudaStream_t* stream, int device)
 {
   this->regularLock->Lock();
 
   //find if that is a valid three-tuple (stream, object, device)
   bool found = false;
-  std::multimap<cudaStream_t*,vtkCudaObject*>::iterator it = this->StreamToObjectMap.begin();
+  std::multimap<cudaStream_t*,CudaObject*>::iterator it = this->StreamToObjectMap.begin();
   for( ; it != this->StreamToObjectMap.end(); it++ )
   {
     if( it->first == stream && it->second == caller &&
@@ -376,7 +376,7 @@ bool vtkCudaDeviceManager::ReserveGPU( cudaStream_t* stream )
 
 }
 
-int vtkCudaDeviceManager::QueryDeviceForObject( vtkCudaObject* object )
+int vtkCudaDeviceManager::QueryDeviceForObject( CudaObject* object )
 {
   this->regularLock->Lock();
   int device = -1;

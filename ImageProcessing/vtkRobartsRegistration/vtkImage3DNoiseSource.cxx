@@ -154,7 +154,7 @@ void vtkImage3DNoiseExecute(vtkImage3DNoiseSource *self, vtkImageData *data, T *
 {
   int idxR, idxY, idxZ;
   int maxY, maxZ;
-  int outIncX, outIncY, outIncZ;
+  vtkIdType outIncX, outIncY, outIncZ;
   int rowLength;
   int *outExt;
   unsigned long count = 0;

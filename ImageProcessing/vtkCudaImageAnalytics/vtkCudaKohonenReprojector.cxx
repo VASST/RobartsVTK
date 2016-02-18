@@ -1,33 +1,41 @@
+#include "vtkAlgorithmOutput.h"
 #include "vtkCudaKohonenReprojector.h"
-#include "vtkObjectFactory.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkPointData.h"
 #include "vtkDataArray.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include "vtkImageCast.h"
+#include "vtkImageData.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkPointData.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkTransform.h"
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCudaKohonenReprojector);
 
-vtkCudaKohonenReprojector::vtkCudaKohonenReprojector(){
+vtkCudaKohonenReprojector::vtkCudaKohonenReprojector()
+{
   //configure the input ports
   this->SetNumberOfInputPorts(2);
   this->SetNumberOfInputConnections(0,1);
   this->SetNumberOfInputConnections(1,1);
 }
 
-vtkCudaKohonenReprojector::~vtkCudaKohonenReprojector(){
+vtkCudaKohonenReprojector::~vtkCudaKohonenReprojector()
+{
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
-void vtkCudaKohonenReprojector::Reinitialize(int withData){
+void vtkCudaKohonenReprojector::Reinitialize(int withData)
+{
   //TODO
 }
 
-void vtkCudaKohonenReprojector::Deinitialize(int withData){
+void vtkCudaKohonenReprojector::Deinitialize(int withData)
+{
 }
-
 
 //------------------------------------------------------------
 int vtkCudaKohonenReprojector::RequestInformation(
@@ -39,7 +47,7 @@ int vtkCudaKohonenReprojector::RequestInformation(
   vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
   vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
   vtkImageData* kohonenData = vtkImageData::SafeDownCast(kohonenInfo->Get(vtkDataObject::DATA_OBJECT()));
-    vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, kohonenData->GetNumberOfScalarComponents());
+  vtkDataObject::SetPointDataActiveScalarInfo(outputInfo, VTK_FLOAT, kohonenData->GetNumberOfScalarComponents());
   return 1;
 }
 
@@ -58,9 +66,10 @@ int vtkCudaKohonenReprojector::RequestUpdateExtent(
   return 1;
 }
 
-int vtkCudaKohonenReprojector::RequestData(vtkInformation *request, 
-              vtkInformationVector **inputVector, 
-              vtkInformationVector *outputVector){
+int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
+    vtkInformationVector **inputVector,
+    vtkInformationVector *outputVector)
+{
 
   vtkInformation* kohonenInfo = (inputVector[1])->GetInformationObject(0);
   vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(0);
@@ -85,9 +94,10 @@ int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
   outData->SetExtent( inData->GetExtent() );
   outData->AllocateScalars(VTK_FLOAT, this->info.NumberOfDimensions);
 #endif
-  
+
   //sanity check on the number of input dimensions
-  if( inData->GetNumberOfScalarComponents() != 2 ){
+  if( inData->GetNumberOfScalarComponents() != 2 )
+  {
     vtkErrorMacro("Input data needs to have two scalar dimensions.");
     return 0;
   }
@@ -95,7 +105,7 @@ int vtkCudaKohonenReprojector::RequestData(vtkInformation *request,
   //pass it over to the GPU
   this->ReserveGPU();
   CUDAalgo_reprojectKohonenMap( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-                (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
+                                (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
 
   return 1;
 }

@@ -7,10 +7,17 @@
  *
  */
 
+#include "CUDA_container2DTransferFunctionInformation.h"
+#include "CUDA_containerOutputImageInformation.h"
+#include "CUDA_containerRendererInformation.h"
+#include "CUDA_containerVolumeInformation.h"
 #include "CUDA_vtkCuda2DVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "vtkCamera.h"
+#include "vtkCuda2DTransferFunction.h"
+#include "vtkCuda2DTransferFunctionInformationHandler.h"
 #include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaVolumeInformationHandler.h"
 #include "vtkImageData.h"
 #include "vtkMutexLock.h"
 #include "vtkObjectFactory.h"

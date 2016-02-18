@@ -1,15 +1,18 @@
 #ifndef __VTKCUDAPAGMMESTIMATOR_H__
 #define __VTKCUDAPAGMMESTIMATOR_H__
 
+#include "vtkCudaImageAnalyticsModule.h"
+
 #include "CUDA_PAGMMestimator.h"
-#include "vtkAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkImageCast.h"
-#include "vtkTransform.h"
-#include "vtkCudaObject.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkAlgorithmOutput.h"
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h"
+
+class vtkAlgorithmOutput;
+class vtkImageCast;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
+class vtkTransform;
 
 //INPUT PORT DESCRIPTION
 //[0] Input Image - full X by Y by Z image with D float components interlaced (VTK default)
@@ -26,7 +29,7 @@
 //[1] PAGMM Set - M by N image with L float components interlaced (VTK default) representing the
 //                activation of each Gaussian component in the histogram estimate of each label
 
-class vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public vtkCudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaPAGMMEstimator, vtkImageAlgorithm );
@@ -43,27 +46,27 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
 
 protected:
   vtkCudaPAGMMEstimator();
   virtual ~vtkCudaPAGMMEstimator();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
 private:
-  vtkCudaPAGMMEstimator operator=(const vtkCudaPAGMMEstimator&){}
-  vtkCudaPAGMMEstimator(const vtkCudaPAGMMEstimator&){}
-  
+  vtkCudaPAGMMEstimator operator=(const vtkCudaPAGMMEstimator&) {}
+  vtkCudaPAGMMEstimator(const vtkCudaPAGMMEstimator&) {}
+
   double  Q;
   double  Scale;
 

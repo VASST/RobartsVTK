@@ -1,18 +1,16 @@
 #include "qVirtualToolWidget.h"
-
-#include <QFileDialog>
-#include <QColorDialog>
-#include <QInputDialog>
-
-#include "vtkTransform.h"
-#include "vtkProperty.h"
-#include "vtkCommand.h"
 #include "vtkActor2D.h"
-#include "vtkImageExtractComponents.h"
 #include "vtkColorTransferFunction.h"
+#include "vtkCommand.h"
+#include "vtkImageExtractComponents.h"
 #include "vtkImageMapToColors.h"
-
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+#include "vtkPlanes.h"
+#include "vtkProperty.h"
+#include "vtkTransform.h"
+#include <QColorDialog>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <vtkVersion.h>
 
 // ---------------------------------------------------------------------------------------
 //Callbacks for the box and plane widgets

@@ -223,8 +223,8 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     float minPointX = 0.0f;
     float minPointY = 0.0f;
     int placeIndex = -1;
-    int belowIndex = 0;
-    int aboveIndex = object->GetNumVertices() - 1;
+    size_t belowIndex = 0;
+    size_t aboveIndex = object->GetNumVertices() - 1;
     for(int i = 0; i < object->GetNumVertices(); i++)
     {
 
@@ -315,7 +315,7 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
   //grab mouse position and translate to a gradient and intensity amount
   double intensity1 = (double) e->x() / size1 * (maxIntensity1-minIntensity1) + minIntensity1;
   double intensity2 = (double) e->y() / size2 * (maxIntensity2-minIntensity2) + minIntensity2;
-  unsigned int numVertices = object->GetNumVertices();
+  size_t numVertices = object->GetNumVertices();
 
   //if we are translating, then translate!
   if(translating)
@@ -438,7 +438,7 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
     painter.setPen(colour);
 
     //collect the number of vertices, and if we have less than 3 (not a polyhedron) then return
-    unsigned int numVertices = paintedObject->GetNumVertices();
+    size_t numVertices = paintedObject->GetNumVertices();
     if(numVertices < 3 )
     {
       return;

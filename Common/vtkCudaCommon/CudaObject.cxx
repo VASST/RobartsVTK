@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkCudaObject.cxx
+  Module:    CudaObject.cxx
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 
@@ -11,7 +11,7 @@
 
 =========================================================================*/
 
-/** @file vtkCudaObject.cxx
+/** @file CudaObject.cxx
  *
  *  @brief An abstract class which uses CUDA
  *
@@ -21,12 +21,12 @@
  *  @note Interacts primarily with the vtkCudaDeviceManager
  */
 
-#include "vtkCudaObject.h"
+#include "CudaObject.h"
 #include "vtkObjectFactory.h"
 #include "cuda_runtime_api.h"
 
 //----------------------------------------------------------------------------
-void errorOut(vtkCudaObject* self, const char* message)
+void errorOut(CudaObject* self, const char* message)
 {
   if (vtkObject::GetGlobalWarningDisplay())
   {
@@ -34,7 +34,7 @@ void errorOut(vtkCudaObject* self, const char* message)
     vtkOStreamWrapper::UseEndl(endl);
     vtkOStrStreamWrapper vtkmsg;
     vtkmsg << "ERROR: In " __FILE__ ", line " << __LINE__
-           << "\n" << "vtkCudaObject" << " (" << self
+           << "\n" << "CudaObject" << " (" << self
            << "): " << message << "\n\n";
     vtkmsg.rdbuf()->freeze(0);
     vtkObject::BreakOnError();
@@ -42,7 +42,7 @@ void errorOut(vtkCudaObject* self, const char* message)
 }
 
 //----------------------------------------------------------------------------
-vtkCudaObject::vtkCudaObject(int d)
+CudaObject::CudaObject(int d)
 {
   //get the device managing utility
   this->DeviceManager = vtkCudaDeviceManager::Singleton();
@@ -74,7 +74,7 @@ vtkCudaObject::vtkCudaObject(int d)
 }
 
 //----------------------------------------------------------------------------
-vtkCudaObject::~vtkCudaObject()
+CudaObject::~CudaObject()
 {
   //synchronize remainder of stream and return control of the device
   this->CallSyncThreads();
@@ -82,7 +82,7 @@ vtkCudaObject::~vtkCudaObject()
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaObject::SetDevice( int d, int withData )
+void CudaObject::SetDevice( int d, int withData )
 {
   int numberOfDevices = this->DeviceManager->GetNumberOfDevices();
 
@@ -146,13 +146,13 @@ void vtkCudaObject::SetDevice( int d, int withData )
 }
 
 //----------------------------------------------------------------------------
-int vtkCudaObject::GetDevice()
+int CudaObject::GetDevice()
 {
   return this->DeviceNumber;
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaObject::ReserveGPU( )
+void CudaObject::ReserveGPU( )
 {
   if( this->DeviceNumber == -1 )
   {
@@ -167,7 +167,7 @@ void vtkCudaObject::ReserveGPU( )
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaObject::CallSyncThreads( )
+void CudaObject::CallSyncThreads( )
 {
   if( this->DeviceNumber == -1 )
   {
@@ -182,13 +182,13 @@ void vtkCudaObject::CallSyncThreads( )
 }
 
 //----------------------------------------------------------------------------
-cudaStream_t* vtkCudaObject::GetStream( )
+cudaStream_t* CudaObject::GetStream( )
 {
   return this->DeviceStream;
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaObject::ReplicateObject( vtkCudaObject* object, int withData )
+void CudaObject::ReplicateObject( CudaObject* object, int withData )
 {
   int oldDeviceNumber = this->DeviceNumber;
   this->SetDevice( object->DeviceNumber, withData );

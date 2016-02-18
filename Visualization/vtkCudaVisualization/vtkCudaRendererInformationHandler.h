@@ -10,20 +10,23 @@
 #ifndef VTKCUDARENDERERINFORMATIONHANDLER_H_
 #define VTKCUDARENDERERINFORMATIONHANDLER_H_
 
-#include "vtkObject.h"
-#include "vtkMatrix4x4.h"
-#include "vtkRenderer.h"
-#include "vtkPlaneCollection.h"
-#include "vtkCudaMemoryTexture.h"
-#include "vtkImageData.h"
+#include "vtkCudaVisualizationModule.h"
 
-#include "CUDA_containerRendererInformation.h"
-#include "vtkCudaObject.h"
+#include "vtkObject.h"
+#include "CudaObject.h"
+
+class CUDA_containerRendererInformation;
+class vtkCudaMemoryTexture;
+class vtkImageData;
+class vtkMatrix4x4;
+class vtkPlaneCollection;
+class vtkRenderer;
 
 /** @brief vtkCudaRendererInformationHandler handles all renderer, shading, geometry and camera related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class vtkCudaRendererInformationHandler : public vtkObject, public vtkCudaObject {
+class VTKCUDAVISUALIZATION_EXPORT vtkCudaRendererInformationHandler : public vtkObject, public CudaObject
+{
 public:
 
   vtkTypeMacro( vtkCudaRendererInformationHandler, vtkObject );
@@ -32,7 +35,7 @@ public:
    *
    */
   static vtkCudaRendererInformationHandler* New();
-  
+
   /** @brief Get the renderer that the handler is currently collecting information from
    *
    */
@@ -43,12 +46,15 @@ public:
    *  @param renderer A vtkRenderer associated with the mapper in use
    */
   void SetRenderer(vtkRenderer* renderer);
-  
+
   /** @brief Gets the CUDA compatible container for renderer/camera/shading/geometry related information needed during the rendering process
    *
    */
-  const cudaRendererInformation& GetRendererInfo() { return (this->RendererInfo); }
-  
+  const cudaRendererInformation& GetRendererInfo()
+  {
+    return (this->RendererInfo);
+  }
+
   /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
@@ -86,7 +92,7 @@ public:
    *  @pre m represents an affine transform, meaning that no perspective components are included in the matrix (bottom row)
    */
   void SetWorldToVoxelsMatrix(vtkMatrix4x4* m);
-  
+
   /** @brief Gets the Z buffer from the render window, and loads it into a CUDA 2D texture for use during rendering
    *
    */
@@ -107,7 +113,7 @@ public:
    *  @pre The 6 planes can be split into three groups, where each plane is parallel to those in the group, and orthogonal to all those not in the group
    */
   void SetKeyholePlanes(vtkPlaneCollection* planes);
-  
+
   /** @brief Figures out how to translate information from the set of planes to the arrays used in rendering
    *
    *  @param planes A set of 6 planes
@@ -122,12 +128,12 @@ public:
   virtual void Update();
 
 protected:
-  
+
   /** @brief Constructor which clears all render information, as well as loading the random offset array into CUDA (used to eliminate striping artifacts)
    *
    */
   vtkCudaRendererInformationHandler();
-  
+
   void Deinitialize(int withData = 0);
   void Reinitialize(int withData = 0);
 

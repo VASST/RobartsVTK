@@ -7,6 +7,7 @@
 #include "qTransferFunctionDefinitionWidget.h"
 #include "qTransferFunctionWindowWidget.h"
 #include "qVirtualToolWidget.h"
+#include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkDataArray.h"
 #include "vtkInteractorStyleTrackballActor.h"

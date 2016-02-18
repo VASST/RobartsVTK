@@ -1,8 +1,11 @@
+#include "CUDA_fuzzyconnectednessfilter.h"
 #include "vtkCudaFuzzyConnectednessFilter.h"
+#include "vtkImageData.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkSetGet.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCudaFuzzyConnectednessFilter);
 

@@ -1,14 +1,12 @@
 PROJECT(vtkCudaImageAnalytics)
 
-INCLUDE_DIRECTORIES(${vtkCudaCommon_INCLUDE_DIRS} ${vtkRobartsCommon_INCLUDE_DIRS})
+INCLUDE(module.cmake)
 
 # Add entries to project details
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
-SET(${PROJECT_NAME}_LIBS vtkCudaCommon vtkRobartsCommon vtkFiltersCore vtkCommonCore)
-
 IF( MSVC )
-  SET(${PROJECT_NAME}_HDRS 
+  SET(Module_HDRS 
     vtkCudaVoxelClassifier.h 
     CUDA_voxelclassifier.h 
     vtkCudaCT2USSimulation.h 
@@ -44,45 +42,62 @@ IF( MSVC )
     CUDA_imagevote.h
     )
 ELSE()
-  SET(${PROJECT_NAME}_HDRS)
+  SET(Module_HDRS)
 ENDIF()
 
-SET ( ${PROJECT_NAME}_SRCS
+SET ( Module_SRCS 
   vtkCudaVoxelClassifier.cxx
-  CUDA_voxelclassifier.cu
   vtkCudaCT2USSimulation.cxx
-  CUDA_cttoussimulation.cu
   vtkCudaFuzzyConnectednessFilter.cxx
-  CUDA_fuzzyconnectednessfilter.cu
   vtkCudaKohonenGenerator.cxx
-  CUDA_kohonengenerator.cu
   vtkCudaKohonenApplication.cxx
-  CUDA_kohonenapplication.cu
   vtkCudaKohonenReprojector.cxx
-  CUDA_kohonenreprojector.cu
   vtkCudaPAGMMEstimator.cxx
-  CUDA_PAGMMestimator.cu
   vtkCudaKSOMLikelihood.cxx
-  CUDA_KSOMlikelihood.cu
   vtkCudaKSOMProbability.cxx
-  CUDA_KSOMProbability.cu
   vtkCudaHierarchicalMaxFlowSegmentation.cxx
   vtkCudaHierarchicalMaxFlowSegmentation2.cxx
   vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.cxx
   vtkCudaMaxFlowSegmentationWorker.cxx
   vtkCudaMaxFlowSegmentationScheduler.cxx
   vtkCudaMaxFlowSegmentationTask.cxx
-  CUDA_hierarchicalmaxflow.cu
   vtkCudaHierarchicalMaxFlowDecomposition.cxx
-  CUDA_hierarchicalmaxflowdecomp.cu
   vtkCudaImageAtlasLabelProbability.cxx
-  CUDA_atlasprobability.cu
   vtkCudaImageLogLikelihood.cxx
-  CUDA_loglikelihoodterm.cu
   vtkCudaImageVote.cxx
-  CUDA_imagevote.cu
 )
 
-REMOVE_VTK_DEFINITIONS()
-CUDA_ADD_LIBRARY( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} ${${PROJECT_NAME}_HDRS})
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+SET( Module_CUDA_SRCS
+  CUDA_voxelclassifier.cu
+  CUDA_fuzzyconnectednessfilter.cu
+  CUDA_kohonengenerator.cu
+  CUDA_kohonenapplication.cu
+  CUDA_kohonenreprojector.cu
+  CUDA_PAGMMestimator.cu
+  CUDA_KSOMlikelihood.cu
+  CUDA_KSOMProbability.cu
+  CUDA_hierarchicalmaxflow.cu
+  CUDA_hierarchicalmaxflowdecomp.cu
+  CUDA_atlasprobability.cu
+  CUDA_loglikelihoodterm.cu
+  CUDA_imagevote.cu
+  )
+
+SET_SOURCE_FILES_PROPERTIES(
+  ${Module_CUDA_SRCS}
+  WRAP_EXCLUDE
+  )
+
+# -----------------------------------------------------------------
+# Build the library
+include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
+cuda_vtk_add_library( ${PROJECT_NAME} ${Module_CUDA_SRCS} ${Module_SRCS} ${Module_HDRS} )
+
+# -----------------------------------------------------------------
+# Build the python wrapping if enabled
+IF( VTK_WRAP_PYTHON AND RobartsVTK_CUDA_WRAP_PYTHON )
+  vtk_module_load(${PROJECT_NAME})
+  vtk_module_headers_load(${PROJECT_NAME})
+  vtk_include_recurse(${PROJECT_NAME})
+  vtk_add_python_wrapping(${PROJECT_NAME})
+ENDIF()

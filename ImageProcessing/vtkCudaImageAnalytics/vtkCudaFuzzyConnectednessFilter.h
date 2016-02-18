@@ -1,16 +1,18 @@
 #ifndef __vtkCudaFuzzyConnectednessFilter_H__
 #define __vtkCudaFuzzyConnectednessFilter_H__
 
-#include "vtkThreadedImageAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkInformationVector.h"
-#include "vtkInformation.h"
-#include "CUDA_fuzzyconnectednessfilter.h"
-#include "vtkCudaObject.h"
+#include "vtkCudaImageAnalyticsModule.h"
 
+#include "CudaObject.h"
+#include "vtkImageAlgorithm.h";
+
+class CUDA_fuzzyconnectednessfilter;
+class vtkImageData;
+class vtkInformation;
+class vtkInformationVector;
 struct vtkCudaFuzzyConnectednessFilterInformation;
 
-class vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public vtkCudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public CudaObject
 {
 public:
 

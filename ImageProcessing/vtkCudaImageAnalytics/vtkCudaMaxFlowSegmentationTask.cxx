@@ -14,21 +14,27 @@
 /** @file vtkHierarchicalMaxFlowSegmentation2Task.cxx
  *
  *  @brief Header file with definitions of individual chunks of GPU based code which can be
- *      handled semi-synchronously. 
+ *      handled semi-synchronously.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  *  @note This is not a front-end class.
  *
  */
 
-#include "vtkCudaMaxFlowSegmentationTask.h"
-
 #include "CUDA_hierarchicalmaxflow.h"
+#include "CudaObject.h"
 #include "vtkCudaDeviceManager.h"
-#include "vtkCudaObject.h"
+#include "vtkCudaMaxFlowSegmentationScheduler.h"
+#include "vtkCudaMaxFlowSegmentationTask.h"
+#include "vtkCudaMaxFlowSegmentationWorker.h"
+#include <assert.h>
+#include <float.h>
+#include <limits.h>
+#include <math.h>
+#include <set>
 
 #define SQR(X) X*X
 
@@ -36,51 +42,73 @@
 
 //Fill in all non-transient information
 vtkCudaMaxFlowSegmentationTask::vtkCudaMaxFlowSegmentationTask( vtkIdType n1, vtkIdType n2, vtkCudaMaxFlowSegmentationScheduler* parent, int a, int ra, int numToDeath, TaskType t )
-  : Parent(parent), Active(a), FinishDecreaseInActive(ra), Type(t), Node1(n1), Node2(n2) {
+  : Parent(parent), Active(a), FinishDecreaseInActive(ra), Type(t), Node1(n1), Node2(n2)
+{
   NumToDeath = numToDeath;
   NumTimesCalled = 0;
-    
-  if( NumToDeath <= 0 ){
+
+  if( NumToDeath <= 0 )
+  {
     Parent->FinishedTasks.insert(this);
     return;
   }
 
   Parent->NumTasksGoingToHappen += numToDeath;
-  if(Active >= 0) Parent->CurrentTasks.insert(this);
-  else  Parent->BlockedTasks.insert(this);
+  if(Active >= 0)
+  {
+    Parent->CurrentTasks.insert(this);
+  }
+  else
+  {
+    Parent->BlockedTasks.insert(this);
+  }
 
 }
 
-vtkCudaMaxFlowSegmentationTask::~vtkCudaMaxFlowSegmentationTask(){
+vtkCudaMaxFlowSegmentationTask::~vtkCudaMaxFlowSegmentationTask()
+{
   this->FinishedSignals.clear();
   this->RequiredCPUBuffers.clear();
 }
-  
-void vtkCudaMaxFlowSegmentationTask::SetConstant1(float f){
+
+void vtkCudaMaxFlowSegmentationTask::SetConstant1(float f)
+{
   constant1 = f;
 }
-  
-void vtkCudaMaxFlowSegmentationTask::SetConstant2(float f){
+
+void vtkCudaMaxFlowSegmentationTask::SetConstant2(float f)
+{
   constant2 = f;
 }
 //------------------------------------------------------------------------------------------//
 
-void vtkCudaMaxFlowSegmentationTask::Signal(){
+void vtkCudaMaxFlowSegmentationTask::Signal()
+{
   this->Active++;
-  if( this->Active == 0 ){
+  if( this->Active == 0 )
+  {
 
-    if( Parent->BlockedTasks.find(this) != Parent->BlockedTasks.end() ){
+    if( Parent->BlockedTasks.find(this) != Parent->BlockedTasks.end() )
+    {
       Parent->BlockedTasks.erase(this);
       Parent->CurrentTasks.insert(this);
     }
 
     if( Type == ClearWorkingBufferTask )
+    {
       Parent->NoCopyBack.insert( RequiredCPUBuffers[0] );
+    }
     //else if( Type == DivideOutWorkingBufferTask )
-      //Parent->NoCopyBack.insert( RequiredCPUBuffers[1] );
+    //Parent->NoCopyBack.insert( RequiredCPUBuffers[1] );
     //else if( Type == ApplySinkPotentialLeafTask )
-      //Parent->NoCopyBack.insert( RequiredCPUBuffers[0] );
+    //Parent->NoCopyBack.insert( RequiredCPUBuffers[0] );
   }
+}
+
+//----------------------------------------------------------------------------
+bool vtkCudaMaxFlowSegmentationTask::CanDo()
+{
+  return this->Active >= 0;
 }
 
 //------------------------------------------------------------------------------------------//
@@ -88,20 +116,27 @@ void vtkCudaMaxFlowSegmentationTask::Signal(){
 //manage signals for when this task is finished
 //ie: allow us to signal the next task in the loop as well as
 //    any parent or child node tasks as necessary
-void vtkCudaMaxFlowSegmentationTask::AddTaskToSignal(vtkCudaMaxFlowSegmentationTask* t){
+void vtkCudaMaxFlowSegmentationTask::AddTaskToSignal(vtkCudaMaxFlowSegmentationTask* t)
+{
   FinishedSignals.push_back(t);
 }
-void vtkCudaMaxFlowSegmentationTask::FinishedSignal(){
+void vtkCudaMaxFlowSegmentationTask::FinishedSignal()
+{
   std::vector<vtkCudaMaxFlowSegmentationTask*>::iterator it = FinishedSignals.begin();
   for(; it != FinishedSignals.end(); it++ )
-    if(*it) (*it)->Signal();
+    if(*it)
+    {
+      (*it)->Signal();
+    }
 }
-void vtkCudaMaxFlowSegmentationTask::DecrementActivity(){
+void vtkCudaMaxFlowSegmentationTask::DecrementActivity()
+{
   Active--;
 }
 //------------------------------------------------------------------------------------------//
 
-void vtkCudaMaxFlowSegmentationTask::AddBuffer(float* b){
+void vtkCudaMaxFlowSegmentationTask::AddBuffer(float* b)
+{
   RequiredCPUBuffers.push_back(b);
 }
 
@@ -109,32 +144,50 @@ void vtkCudaMaxFlowSegmentationTask::AddBuffer(float* b){
 
 //Find out if we have a conflict on this task (ie: not all buffers are available on CPU or single GPU)
 //returning an unconflicted device if false (null if conflict or any worker will suffice)
-int vtkCudaMaxFlowSegmentationTask::Conflicted(vtkCudaMaxFlowSegmentationWorker** w){
-    
+int vtkCudaMaxFlowSegmentationTask::Conflicted(vtkCudaMaxFlowSegmentationWorker** w)
+{
+
   //find the GPU with most of the buffers
   int retVal = 0;
   int maxBuffersGot = 0;
   vtkCudaMaxFlowSegmentationWorker* maxGPU = 0;
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
+  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++)
+  {
     int buffersGot = 0;
-    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ) buffersGot++;
+    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+    {
+      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() )
+      {
+        buffersGot++;
+      }
     }
-    if( buffersGot > maxBuffersGot ){
+    if( buffersGot > maxBuffersGot )
+    {
       maxBuffersGot = buffersGot;
       maxGPU = *wit;
     }
   }
 
   //return everything that is not on that GPU
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
-    if( *wit == maxGPU ) continue;
-    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ){
+  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++)
+  {
+    if( *wit == maxGPU )
+    {
+      continue;
+    }
+    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+    {
+      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() )
+      {
         if( Parent->ReadOnly.find(*it) != Parent->ReadOnly.end() ||
-          Parent->NoCopyBack.find(*it) != Parent->NoCopyBack.end() )
+            Parent->NoCopyBack.find(*it) != Parent->NoCopyBack.end() )
+        {
           retVal += 1;
-        else retVal += 3;
+        }
+        else
+        {
+          retVal += 3;
+        }
       }
     }
   }
@@ -142,52 +195,77 @@ int vtkCudaMaxFlowSegmentationTask::Conflicted(vtkCudaMaxFlowSegmentationWorker*
   *w = maxGPU;
   return retVal;
 }
-  
+
 //------------------------------------------------------------------------------------------//
 
 //find the GPU with most of the buffers and return all claimed buffers not on that GPU
-void vtkCudaMaxFlowSegmentationTask::UnConflict(vtkCudaMaxFlowSegmentationWorker* maxGPU){
+void vtkCudaMaxFlowSegmentationTask::UnConflict(vtkCudaMaxFlowSegmentationWorker* maxGPU)
+{
 
   //return everything that is not on that GPU
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++){
-    if( *wit == maxGPU ) continue;
+  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator wit = Parent->Workers.begin(); wit != Parent->Workers.end(); wit++)
+  {
+    if( *wit == maxGPU )
+    {
+      continue;
+    }
     bool flag = false;
-    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() ){
+    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+    {
+      if( (*wit)->CPU2GPUMap.find(*it) != (*wit)->CPU2GPUMap.end() )
+      {
         (*wit)->ReturnBuffer(*it);
         flag = true;
       }
     }
-    if( flag ) (*wit)->CallSyncThreads();
+    if( flag )
+    {
+      (*wit)->CallSyncThreads();
+    }
   }
   maxGPU->CallSyncThreads();
 
 }
-  
+
 //------------------------------------------------------------------------------------------//
 
 //Calculate the weight provided that there is no conflict
-int vtkCudaMaxFlowSegmentationTask::CalcWeight(vtkCudaMaxFlowSegmentationWorker* w){
+int vtkCudaMaxFlowSegmentationTask::CalcWeight(vtkCudaMaxFlowSegmentationWorker* w)
+{
   int retWeight = 0;
   int numUnused = (int) w->UnusedGPUBuffers.size();
-  for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++){
-    if( w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end() ){
-      if( numUnused ){numUnused--; retWeight++;
-      }else retWeight += 2;
+  for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+  {
+    if( w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end() )
+    {
+      if( numUnused )
+      {
+        numUnused--;
+        retWeight++;
+      }
+      else
+      {
+        retWeight += 2;
+      }
     }
   }
   return retWeight;
 }
-  
+
 //------------------------------------------------------------------------------------------//
 
 //Perform the task at hand
-void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w){
-  if( !CanDo() ) return;
+void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w)
+{
+  if( !CanDo() )
+  {
+    return;
+  }
   w->ReserveGPU();
 
   //load anything that will be overwritten onto the no copy back list
-  switch(Type){
+  switch(Type)
+  {
   case(ClearWorkingBufferTask):      //0 - Working
   case(ApplySinkPotentialLeafTask):    //0 - Sink,    1 - Inc,  2 - Div,  3 - Label,  4 - Data
   case(ClearBufferInitially):        //0 - Any
@@ -211,40 +289,51 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   //load required buffers onto the GPU
   w->CPUInUse.clear();
   for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
-    if(*it) w->CPUInUse.insert(*it);
+    if(*it)
+    {
+      w->CPUInUse.insert(*it);
+    }
   w->UpdateBuffersInUse();
-    
-    for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
-        if(w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end()){
-            std::cout << "Problem: " << *it << std::endl;
-        }
+
+  for(std::vector<float*>::iterator it = RequiredCPUBuffers.begin(); it != RequiredCPUBuffers.end(); it++)
+    if(w->CPU2GPUMap.find(*it) == w->CPU2GPUMap.end())
+    {
+      std::cout << "Problem: " << *it << std::endl;
+    }
 
 
-    assert(w->CPU2GPUMap.size() == w->GPU2CPUMap.size());
+  assert(w->CPU2GPUMap.size() == w->GPU2CPUMap.size());
 
   //run the kernels
   float smoothnessConstant = this->constant1;
-  switch(Type){
+  switch(Type)
+  {
   case(ClearWorkingBufferTask):      //0 - Working
     //std::cout << Node1 << "\t" << Node2 << "\t" << "ClearWorkingBufferTask" << std::endl;
-    if( !isRoot ) CUDA_zeroOutBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
-    else CUDA_SetBufferToValue(w->CPU2GPUMap[RequiredCPUBuffers[0]], 1.0f/Parent->CC, Parent->VolumeSize, w->GetStream());
+    if( !isRoot )
+    {
+      CUDA_zeroOutBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], Parent->VolumeSize, w->GetStream());
+    }
+    else
+    {
+      CUDA_SetBufferToValue(w->CPU2GPUMap[RequiredCPUBuffers[0]], 1.0f/Parent->CC, Parent->VolumeSize, w->GetStream());
+    }
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-      
+
   case(UpdateSpatialFlowsTask):      //0 - Sink,    1 - Inc,  2 - Div,  3 - Label,  4 - FlowX,  5 - FlowY,  6 - FlowZ,  7 - Smoothness
     //std::cout << Node1 << "\t" << Node2 << "\t" << "UpdateSpatialFlowsTask" << std::endl;
     CUDA_flowGradientStep(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->StepSize, Parent->CC,
-      Parent->VolumeSize, w->GetStream() );
+                          w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->StepSize, Parent->CC,
+                          Parent->VolumeSize, w->GetStream() );
     CUDA_applyStep(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[4]],
-      w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]], Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
+                   w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]], Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
     CUDA_computeFlowMag(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[4]],
-      w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]],
-      w->CPU2GPUMap[RequiredCPUBuffers[7]], smoothnessConstant, Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
+                        w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]],
+                        w->CPU2GPUMap[RequiredCPUBuffers[7]], smoothnessConstant, Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
     CUDA_projectOntoSet(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[4]],
-      w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]], Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
+                        w->CPU2GPUMap[RequiredCPUBuffers[5]], w->CPU2GPUMap[RequiredCPUBuffers[6]], Parent->VX, Parent->VY, Parent->VZ, Parent->VolumeSize, w->GetStream() );
     Parent->Overwritten[RequiredCPUBuffers[2]] = 1;
     Parent->Overwritten[RequiredCPUBuffers[4]] = 1;
     Parent->Overwritten[RequiredCPUBuffers[5]] = 1;
@@ -255,7 +344,7 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(ApplySinkPotentialLeafTask):    //0 - Sink,    1 - Inc,  2 - Div,  3 - Label,  4 - Data
     //std::cout << Node1 << "\t" << Node2 << "\t" << "ApplySinkPotentialLeafTask " << w->CPU2GPUMap[RequiredCPUBuffers[0]] << std::endl;
     CUDA_updateLeafSinkFlow(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]],Parent->CC, Parent->VolumeSize, w->GetStream());
+                            w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]],Parent->CC, Parent->VolumeSize, w->GetStream());
     CUDA_constrainLeafSinkFlow(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[4]], Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 2;
@@ -264,15 +353,15 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(ApplySinkPotentialBranchTask):    //0 - Working,  1 - Inc,  2 - Div,  3 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "ApplySinkPotentialBranchTask" << std::endl;
     CUDA_storeSinkFlowInBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+                               w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-      
+
   case(ApplySourcePotentialTask):      //0 - Working,  1 - Sink,  2 - Div,  3 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "ApplySourcePotentialTask" << std::endl;
     CUDA_storeSourceFlowInBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+                                 w->CPU2GPUMap[RequiredCPUBuffers[2]],w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 1;
     break;
@@ -280,15 +369,15 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(DivideOutWorkingBufferTask):    //0 - Working,  1 - Sink
     //std::cout << Node1 << "\t" << Node2 << "\t" << "DivideOutWorkingBufferTask" << std::endl;
     CUDA_divideAndStoreBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      constant1,  Parent->VolumeSize, w->GetStream());
+                              constant1,  Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-      
+
   case(UpdateLabelsTask):          //0 - Sink,    1 - Inc,  2 - Div,  3 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "UpdateLabelsTask" << std::endl;
     CUDA_updateLabel(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]], w->CPU2GPUMap[RequiredCPUBuffers[2]],
-      w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
+                     w->CPU2GPUMap[RequiredCPUBuffers[3]], Parent->CC, Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[3]] = 1;
     Parent->NumKernelRuns += 1;
     break;
@@ -320,15 +409,15 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
     Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-      
+
   case(InitializeLeafLabels):        //0 - Sink,    1 - Data,  2 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "InitializeLeafLabels" << std::endl;
     CUDA_LblBuffer(w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      Parent->VolumeSize, w->GetStream());
+                   Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[2]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-      
+
   case(AccumulateLabels):          //0 - Accum,  1 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "AccumulateLabels" << std::endl;
     CUDA_SumBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], Parent->VolumeSize, w->GetStream());
@@ -342,7 +431,7 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
     Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
     Parent->NumKernelRuns += 1;
     break;
-  
+
   case(AccumulateLabelsWeighted):      //0 - Accum,  1 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "AccumulateLabelsWeighted" << "\t" << constant1 << std::endl;
     CUDA_SumScaledBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], constant1, Parent->VolumeSize, w->GetStream());
@@ -360,7 +449,7 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(ResetSinkFlowBranch):        //0 - Sink,    1 - Inc,  2 - Div,  3 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "ResetSinkFlowBranch" << "\t" << constant1 << std::endl;
     CUDA_ResetSinkBuffer(w->CPU2GPUMap[RequiredCPUBuffers[0]], w->CPU2GPUMap[RequiredCPUBuffers[1]], w->CPU2GPUMap[RequiredCPUBuffers[2]],
-      w->CPU2GPUMap[RequiredCPUBuffers[3]], constant1, 1.0/Parent->CC, Parent->VolumeSize, w->GetStream());
+                         w->CPU2GPUMap[RequiredCPUBuffers[3]], constant1, 1.0/Parent->CC, Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 1;
     break;
@@ -368,8 +457,8 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(PushUpSourceFlows):        //0 - PSink,  1 - Sink,  2 - Inc,  3 - Div,  4 - Label
     //std::cout << Node1 << "\t" << Node2 << "\t" << "PushUpSourceFlows" << "\t" << constant1 << std::endl;
     CUDA_PushUpSourceFlows(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[3]],
-      w->CPU2GPUMap[RequiredCPUBuffers[4]], constant1, 1.0/Parent->CC,Parent->VolumeSize, w->GetStream());
+                           w->CPU2GPUMap[RequiredCPUBuffers[2]], w->CPU2GPUMap[RequiredCPUBuffers[3]],
+                           w->CPU2GPUMap[RequiredCPUBuffers[4]], constant1, 1.0/Parent->CC,Parent->VolumeSize, w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[0]] = 1;
     Parent->NumKernelRuns += 1;
     break;
@@ -391,7 +480,7 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   case(PropogateLeafFlowsInc):      //0 - FlowIn,  1 - FlowO,  2 - FlowO
     //std::cout << Node1 << "\t" << Node2 << "\t" << "PropogateLeafFlowsInc" << std::endl;
     CUDA_Copy2Buffers(w->CPU2GPUMap[RequiredCPUBuffers[0]],w->CPU2GPUMap[RequiredCPUBuffers[1]],
-      w->CPU2GPUMap[RequiredCPUBuffers[2]],Parent->VolumeSize,w->GetStream());
+                      w->CPU2GPUMap[RequiredCPUBuffers[2]],Parent->VolumeSize,w->GetStream());
     Parent->Overwritten[RequiredCPUBuffers[1]] = 1;
     Parent->Overwritten[RequiredCPUBuffers[2]] = 1;
     Parent->NumKernelRuns += 1;
@@ -403,10 +492,10 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
 
   //  if(w->CPU2GPUMap.size() != w->GPU2CPUMap.size()){
   //      std::cout << RequiredCPUBuffers.size() << std::endl;
-    //int c = 0;
+  //int c = 0;
   //      for(std::vector<float*>::iterator i = RequiredCPUBuffers.begin(); i != RequiredCPUBuffers.end(); i++){
   //          std::cout << c << " " << *i << std::endl;
-    //  c++;
+  //  c++;
   //      }
   //      std::cout << w->CPUInUse.size() << std::endl;
   //      for(std::set<float*>::iterator i = w->CPUInUse.begin(); i != w->CPUInUse.end();i++){
@@ -424,7 +513,8 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
   //  }
 
   //take them off the no-copy-back list now
-  switch(Type){
+  switch(Type)
+  {
   case(ClearWorkingBufferTask):      //0 - Working
   case(ApplySinkPotentialLeafTask):    //0 - Sink,    1 - Inc,  2 - Div,  3 - Label,  4 - Data
   case(ClearBufferInitially):        //0 - Any
@@ -451,11 +541,13 @@ void vtkCudaMaxFlowSegmentationTask::Perform(vtkCudaMaxFlowSegmentationWorker* w
 
   //if we are at the end of our lifetime, leave
   NumTimesCalled++;
-  if( Active < 0 && NumTimesCalled < NumToDeath ){
+  if( Active < 0 && NumTimesCalled < NumToDeath )
+  {
     Parent->CurrentTasks.erase(this);
     Parent->BlockedTasks.insert(this);
   }
-  if( NumTimesCalled >= NumToDeath ){
+  if( NumTimesCalled >= NumToDeath )
+  {
     Parent->CurrentTasks.erase( this );
     Parent->FinishedTasks.insert( this );
   }

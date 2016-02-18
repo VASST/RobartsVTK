@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:35 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -21,7 +21,7 @@
 // vtkImageSMIManipulator2 calculates the normalized mutual information of 2 images.
 // Both images can be cropped to the same extent; image 1 can be translated
 // with respect to image 2 using trilinear interpolation.  This filter assumes
-// that both inputs are of the same size, and that you want the SMI to be 0, 
+// that both inputs are of the same size, and that you want the SMI to be 0,
 // if image 1 is translated outside of image 2.
 
 #ifndef __vtkImageSMIManipulator2_h
@@ -58,7 +58,7 @@ public:
   // Description:
   // Numbers of bins to use, and number of intensities per bin.
   // I assume images have intensities >= 0.
-  // will create bins of width 
+  // will create bins of width
   virtual void SetBinNumber(int numS, int numT);
   int BinNumber[2];
   virtual void SetMaxIntensities(int maxS, int maxT);
@@ -87,7 +87,7 @@ public:
   // Entropy of the target image, can be calculated less often.
   double entropyT;
 
-  // Trilinear coeficients updated on SetTranslation.  Keep these
+  // Trilinear coefficients updated on SetTranslation.  Keep these
   // global and public to speed up execution (If they were in
   // protected would have to pass them using TemplateMacroXX where
   // XX is big)
@@ -107,7 +107,7 @@ protected:
   // Globals used to speed up repeated execution:
 
   // Increments to go through the data (calculate on SetExtent)
-  int inc[3];
+  vtkIdType inc[3];
   int inc2[2];
 
   // Information about inputs (calculate on SetInput1)

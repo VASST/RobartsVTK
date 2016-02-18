@@ -6,12 +6,12 @@
   Date:      $Date: 2007/05/04 14:34:34 $
   Version:   $Revision: 1.1 $
 
-  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
+  Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
@@ -60,7 +60,7 @@ public:
   double GetResult();
   double Result;
 
-  // Trilinear coeficients updated on SetTranslation.  Keep these
+  // Trilinear coefficients updated on SetTranslation.  Keep these
   // global and public to speed up execution (If they were in
   // protected would have to pass them using TemplateMacroXX where
   // XX is big)
@@ -80,7 +80,7 @@ protected:
   // Globals used to speed up repeated execution:
 
   // Increments to go through the data (calculate on SetExtent)
-  int inc[3];
+  vtkIdType inc[3];
   int inc2[2];
 
   // Information about inputs (calculate on SetInput1)

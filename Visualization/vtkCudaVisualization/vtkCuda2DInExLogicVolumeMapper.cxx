@@ -7,17 +7,22 @@
  *
  */
 
+#include "CUDA_container2DTransferFunctionInformation.h"
+#include "CUDA_containerOutputImageInformation.h"
+#include "CUDA_containerRendererInformation.h"
+#include "CUDA_containerVolumeInformation.h"
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
+#include "vtkCuda2DInExLogicTransferFunctionInformationHandler.h"
 #include "vtkCuda2DInExLogicVolumeMapper.h"
 #include "vtkCudaRendererInformationHandler.h"
+#include "vtkCudaVolumeInformationHandler.h"
 #include "vtkImageData.h"
 #include "vtkMutexLock.h"
 #include "vtkObjectFactory.h"
 #include "vtkPlanes.h"
 #include "vtkRenderer.h"
 #include "vtkVolume.h"
-
 
 vtkStandardNewMacro(vtkCuda2DInExLogicVolumeMapper);
 

@@ -1,10 +1,15 @@
+#include "vtkAlgorithmOutput.h"
 #include "vtkCudaKohonenApplication.h"
-#include "vtkObjectFactory.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkPointData.h"
 #include "vtkDataArray.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include "vtkImageCast.h"
+#include "vtkImageData.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkPointData.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkTransform.h"
+#include <vtkVersion.h>
 
 vtkStandardNewMacro(vtkCudaKohonenApplication);
 
@@ -24,7 +29,7 @@ vtkCudaKohonenApplication::~vtkCudaKohonenApplication()
 }
 
 //------------------------------------------------------------
-//Commands for vtkCudaObject compatibility
+//Commands for CudaObject compatibility
 
 void vtkCudaKohonenApplication::Reinitialize(int withData)
 {
@@ -53,6 +58,13 @@ void vtkCudaKohonenApplication::SetScale(double s)
     this->Modified();
   }
 }
+
+//----------------------------------------------------------------------------
+double vtkCudaKohonenApplication::GetScale()
+{
+  return this->Scale;
+}
+
 #if (VTK_MAJOR_VERSION < 6)
 void vtkCudaKohonenApplication::SetDataInput(vtkImageData* d)
 {

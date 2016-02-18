@@ -7,21 +7,25 @@
  *
  */
 
-#include "vtkCudaVolumeMapper.h"
-#include "vtkObjectFactory.h"
-
-#include "vtkVolume.h"
-#include "vtkImageData.h"
-
-#include "vtkCamera.h"
-#include "vtkRenderer.h"
-
+#include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_containerRendererInformation.h"
 #include "CUDA_containerVolumeInformation.h"
-#include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
+#include "vtkCamera.h"
+#include "vtkCudaOutputImageInformationHandler.h"
+#include "vtkCudaRendererInformationHandler.h"
+#include "vtkCudaVolumeInformationHandler.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkImageData.h"
+#include "vtkMatrix4x4.h"
+#include "vtkObjectFactory.h"
+#include "vtkPlane.h"
+#include "vtkPlaneCollection.h"
+#include "vtkPlanes.h"
+#include "vtkRenderer.h"
+#include "vtkTransform.h"
+#include "vtkVolume.h"
+#include <vtkVersion.h>
 
 vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {
@@ -314,6 +318,11 @@ void vtkCudaVolumeMapper::ChangeFrame(int frame){
   }
 }
 
+int vtkCudaVolumeMapper::GetCurrentFrame()
+{
+  return this->currFrame;
+}
+
 void vtkCudaVolumeMapper::AdvanceFrame(){
   this->ChangeFrame( (this->currFrame + 1) % this->numFrames );
 }
@@ -328,6 +337,16 @@ void vtkCudaVolumeMapper::UseFullVTKCompatibility(){
 
 void vtkCudaVolumeMapper::UseImageDataRenderering(){
   this->OutputInfoHandler->SetRenderType(2);
+}
+
+void vtkCudaVolumeMapper::SetImageFlipped(bool b)
+{
+  this->OutputInfoHandler->SetImageFlipped(b);
+}
+
+bool vtkCudaVolumeMapper::GetImageFlipped()
+{
+  return this->OutputInfoHandler->GetImageFlipped();
 }
 
 void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)

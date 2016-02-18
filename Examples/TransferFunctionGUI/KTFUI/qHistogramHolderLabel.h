@@ -72,7 +72,7 @@ private:
   bool scaling;
   bool vertexDragging;
   bool autoUpdate;
-  unsigned int vertexInUse;
+  size_t vertexInUse;
 };
 
 #endif
