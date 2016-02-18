@@ -1,1 +1,1 @@
-![RobartsVTK](Docs/readme/images/RobartsVTK.png)
+![RobartsVTK](Docs/readme/images/robartsvtk.png)
