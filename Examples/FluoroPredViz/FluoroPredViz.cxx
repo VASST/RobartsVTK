@@ -165,7 +165,6 @@ FluoroPredViz::~FluoroPredViz()
   }
   TransferFunction->Delete();
   ClippingCallback->Delete();
-
 }
 
 //-------------------------------------------------------------------------------//
