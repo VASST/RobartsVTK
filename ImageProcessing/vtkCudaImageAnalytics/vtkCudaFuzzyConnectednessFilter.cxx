@@ -1,4 +1,3 @@
-#include "CUDA_fuzzyconnectednessfilter.h"
 #include "vtkCudaFuzzyConnectednessFilter.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
@@ -13,7 +12,6 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector)
 {
-
   // get the info objects
   vtkImageData *seedData = vtkImageData::SafeDownCast(this->GetInput(0));
   vtkImageData *affData = vtkImageData::SafeDownCast(this->GetInput(1));

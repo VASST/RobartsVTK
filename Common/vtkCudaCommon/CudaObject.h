@@ -50,13 +50,10 @@ protected:
   virtual void Deinitialize(int withData = 0) = 0;
 
 private:
-
   int DeviceNumber;
   cudaStream_t* DeviceStream;
 
   vtkCudaDeviceManager* DeviceManager;
-
-  int withDataStatus;
 
 };
 #endif /* __CudaObject_H__ */

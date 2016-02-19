@@ -11,10 +11,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
+#include "CUDA_containerVolumeInformation.h"
 #include "CudaObject.h"
 #include "vtkObject.h"
 
-class CUDA_containerVolumeInformation;
 class vtkImageData;
 class vtkVolume;
 
@@ -60,18 +60,12 @@ public:
    *
    *  @pre index is a non-negative integer associated with a valid (a.k.a. populated or set) frame
    */
-  vtkImageData* GetInputData() const
-  {
-    return InputData;
-  }
+  vtkImageData* GetInputData() const;
 
   /** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
    *
    */
-  const cudaVolumeInformation& GetVolumeInfo() const
-  {
-    return (this->VolumeInfo);
-  }
+  const cudaVolumeInformation& GetVolumeInfo() const;
 
   /** @brief Clear all information about the volumes
    *
@@ -114,11 +108,11 @@ private:
 
 private:
 
-  vtkImageData*      InputData;    /**< The 3D image data currently being renderered */
-  vtkVolume*        Volume;      /**< The volume defining how to render this image, such as position in space, etc... */
-  cudaVolumeInformation  VolumeInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
+  vtkImageData*           InputData;    /**< The 3D image data currently being rendered */
+  vtkVolume*              Volume;      /**< The volume defining how to render this image, such as position in space, etc... */
+  cudaVolumeInformation   VolumeInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
 
-  unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  unsigned long           LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
 
 };
 

@@ -11,10 +11,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
-#include "vtkObject.h"
+#include "CUDA_container2DTransferFunctionInformation.h"
 #include "CudaObject.h"
+#include "vtkObject.h"
 
-class CUDA_container2DTransferFunctionInformation;
 class vtkCuda2DTransferFunction;
 class vtkImageData;
 
@@ -49,18 +49,12 @@ public:
    *
    *  @pre index is a non-negative integer associated with a valid (a.k.a. populated or set) frame
    */
-  vtkImageData* GetInputData() const
-  {
-    return InputData;
-  }
+  vtkImageData* GetInputData() const;
 
   /** @brief Gets the CUDA compatible container for volume/transfer function related information needed during the rendering process
    *
    */
-  const cuda2DTransferFunctionInformation& GetTransferFunctionInfo() const
-  {
-    return (this->TransInfo);
-  }
+  const cuda2DTransferFunctionInformation& GetTransferFunctionInfo() const;
 
   /** @brief Set the transfer function used for determining colour and opacity in the volume rendering process
    *
@@ -88,7 +82,7 @@ public:
    */
   vtkCuda2DTransferFunction* GetKeyholeTransferFunction();
 
-  /** @brief Triggers an update for the volume information, checking all subsidary information for modifications
+  /** @brief Triggers an update for the volume information, checking all subsidiary information for modifications
    *
    */
   virtual void Update();
@@ -119,16 +113,15 @@ private:
 
 private:
 
-  vtkImageData*            InputData;    /**< The 3D image data currently being renderered */
-  cuda2DTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
+  vtkImageData*                       InputData;    /**< The 3D image data currently being rendered */
+  cuda2DTransferFunctionInformation   TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
 
-  vtkCuda2DTransferFunction* function;    /**< The 2 dimensional transfer function used to colour the volume during rendering */
-  vtkCuda2DTransferFunction* keyholeFunction;  /**< The 2 dimensional transfer function used to colour the volume during rendering within the keyhole */
-  unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
-  int            FunctionSize;  /**< The size of the transfer function which is square */
-  double          HighGradient;  /**< The maximum gradient of the current image */
-  double          LowGradient;  /**< The minimum gradient of the current image */
-
+  vtkCuda2DTransferFunction*          Function;    /**< The 2 dimensional transfer function used to colour the volume during rendering */
+  vtkCuda2DTransferFunction*          KeyholeFunction;  /**< The 2 dimensional transfer function used to colour the volume during rendering within the keyhole */
+  unsigned long                       LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  int                                 FunctionSize;  /**< The size of the transfer function which is square */
+  double                              HighGradient;  /**< The maximum gradient of the current image */
+  double                              LowGradient;  /**< The minimum gradient of the current image */
 };
 
 #endif

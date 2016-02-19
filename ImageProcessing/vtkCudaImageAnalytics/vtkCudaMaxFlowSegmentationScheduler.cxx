@@ -2,16 +2,19 @@
 #include "vtkCudaMaxFlowSegmentationTask.h"
 #include "vtkCudaMaxFlowSegmentationWorker.h"
 
+//----------------------------------------------------------------------------
 vtkCudaMaxFlowSegmentationScheduler::vtkCudaMaxFlowSegmentationScheduler()
 {
   Clear();
 }
 
+//----------------------------------------------------------------------------
 vtkCudaMaxFlowSegmentationScheduler::~vtkCudaMaxFlowSegmentationScheduler()
 {
   Clear();
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::Clear()
 {
   //clear variables
@@ -45,6 +48,7 @@ void vtkCudaMaxFlowSegmentationScheduler::Clear()
 
 }
 
+//----------------------------------------------------------------------------
 int vtkCudaMaxFlowSegmentationScheduler::CreateWorker(int GPU, double usage)
 {
   vtkCudaMaxFlowSegmentationWorker* newWorker = new vtkCudaMaxFlowSegmentationWorker( GPU, usage, this );
@@ -56,6 +60,7 @@ int vtkCudaMaxFlowSegmentationScheduler::CreateWorker(int GPU, double usage)
   return 0;
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::ReturnLeaves()
 {
   SyncWorkers();
@@ -65,6 +70,7 @@ void vtkCudaMaxFlowSegmentationScheduler::ReturnLeaves()
   }
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::ReturnBufferGPU2CPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream)
 {
   if( !CPUBuffer )
@@ -90,6 +96,7 @@ void vtkCudaMaxFlowSegmentationScheduler::ReturnBufferGPU2CPU(vtkCudaMaxFlowSegm
   NumMemCpies++;
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::MoveBufferCPU2GPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream)
 {
   if( !CPUBuffer )
@@ -110,6 +117,7 @@ void vtkCudaMaxFlowSegmentationScheduler::MoveBufferCPU2GPU(vtkCudaMaxFlowSegmen
   NumMemCpies++;
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::SyncWorkers()
 {
   for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
@@ -118,11 +126,13 @@ void vtkCudaMaxFlowSegmentationScheduler::SyncWorkers()
   }
 }
 
+//----------------------------------------------------------------------------
 bool vtkCudaMaxFlowSegmentationScheduler::CanRunAlgorithmIteration()
 {
   return (this->CurrentTasks.size() > 0) ;
 }
 
+//----------------------------------------------------------------------------
 int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
 {
 

@@ -7,7 +7,6 @@
  *
  */
 
-#include "CUDA_containerVolumeInformation.h"
 #include "vtkCudaVolumeInformationHandler.h"
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
@@ -19,7 +18,7 @@ vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
 
 vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler()
 {
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->Volume = NULL;
   this->InputData = NULL;
 }
@@ -66,6 +65,16 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData, int 
     this->UpdateImageData(index);
     this->Modified();
   }
+}
+
+vtkImageData* vtkCudaVolumeInformationHandler::GetInputData() const
+{
+  return InputData;
+}
+
+const cudaVolumeInformation& vtkCudaVolumeInformationHandler::GetVolumeInfo() const
+{
+  return (this->VolumeInfo);
 }
 
 void vtkCudaVolumeInformationHandler::UpdateImageData(int index)

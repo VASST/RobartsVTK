@@ -15,6 +15,7 @@
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "vtkCuda2DInExLogicTransferFunctionInformationHandler.h"
 #include "vtkCuda2DInExLogicVolumeMapper.h"
+#include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaRendererInformationHandler.h"
 #include "vtkCudaVolumeInformationHandler.h"
 #include "vtkImageData.h"

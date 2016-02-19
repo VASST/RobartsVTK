@@ -3,10 +3,10 @@
 
 #include "vtkCudaImageAnalyticsModule.h"
 
+#include "CUDA_fuzzyconnectednessfilter.h"
 #include "CudaObject.h"
 #include "vtkImageAlgorithm.h"
 
-class CUDA_fuzzyconnectednessfilter;
 class vtkImageData;
 class vtkInformation;
 class vtkInformationVector;
@@ -19,7 +19,7 @@ public:
   vtkTypeMacro( vtkCudaFuzzyConnectednessFilter, vtkImageAlgorithm )
 
   static vtkCudaFuzzyConnectednessFilter *New();
-  
+
   // Description:
   // Get/Set the t-Norm and s-Norm type
   vtkSetClampMacro( TNorm, int, 0, 2 );
@@ -28,21 +28,21 @@ public:
   vtkGetMacro( SNorm, int );
 
 protected:
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
   int RequestData(vtkInformation* request,
-                          vtkInformationVector** inputVector,
-                          vtkInformationVector* outputVector);
+                  vtkInformationVector** inputVector,
+                  vtkInformationVector* outputVector);
 
   vtkCudaFuzzyConnectednessFilter();
   virtual ~vtkCudaFuzzyConnectednessFilter();
 
 private:
-  vtkCudaFuzzyConnectednessFilter operator=(const vtkCudaFuzzyConnectednessFilter&){}
-  vtkCudaFuzzyConnectednessFilter(const vtkCudaFuzzyConnectednessFilter&){}
-  
+  vtkCudaFuzzyConnectednessFilter operator=(const vtkCudaFuzzyConnectednessFilter&) {}
+  vtkCudaFuzzyConnectednessFilter(const vtkCudaFuzzyConnectednessFilter&) {}
+
   int TNorm;
   int SNorm;
 

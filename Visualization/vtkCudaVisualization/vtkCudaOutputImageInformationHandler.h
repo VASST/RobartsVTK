@@ -12,10 +12,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
-#include "vtkObject.h"
+#include "CUDA_containerOutputImageInformation.h"
 #include "CudaObject.h"
+#include "vtkObject.h"
 
-class CUDA_containerOutputImageInformation;
 class vtkCudaMemoryTexture;
 class vtkImageData;
 class vtkRayCastImageDisplayHelper;
@@ -49,7 +49,7 @@ public:
 
   /** @brief Sets how the image is displayed
    *
-   *  @param scaleFactor The factor by which the screen is undersampled in each direction (must be equal or greater than 1.0f, where 1.0f means full sampling)
+   *  @param scaleFactor The factor by which the screen is under-sampled in each direction (must be equal or greater than 1.0f, where 1.0f means full sampling)
    */
   void SetRenderOutputScaleFactor(float scaleFactor);
 
@@ -98,7 +98,7 @@ public:
 
 protected:
 
-  /** @brief Constructor which initializes all the displyy parameters to safe values, and create a display helper and a CUDA memory texture to help with the display process
+  /** @brief Constructor which initializes all the display parameters to safe values, and create a display helper and a CUDA memory texture to help with the display process
    *
    */
   vtkCudaOutputImageInformationHandler();
@@ -116,21 +116,21 @@ private:
   vtkCudaOutputImageInformationHandler(const vtkCudaOutputImageInformationHandler&); /**< not implemented */
 
 private:
-  cudaOutputImageInformation    OutputImageInfo;      /**< CUDA compatible container for the output image display information */
-  vtkRayCastImageDisplayHelper*  Displayer;          /**< A VTK class solely for helping ray casters render a 2D RGBA image to the appropriate section of the render window */
-  vtkRenderer*          Renderer;          /**< The vtkRenderer which information is currently being extracted from */
+  cudaOutputImageInformation      OutputImageInfo;      /**< CUDA compatible container for the output image display information */
+  vtkRayCastImageDisplayHelper*   Displayer;          /**< A VTK class solely for helping ray casters render a 2D RGBA image to the appropriate section of the render window */
+  vtkRenderer*                    Renderer;          /**< The vtkRenderer which information is currently being extracted from */
 
-  int                oldRenderType;        /**< The render type used previous to the current one, used to clean up information when switching display type */
-  uint2              oldResolution;        /**< The previous window size (used to determine whether or not to recreate buffers) */
+  int                             OldRenderType;        /**< The render type used previous to the current one, used to clean up information when switching display type */
+  uint2                           OldResolution;        /**< The previous window size (used to determine whether or not to recreate buffers) */
 
-  vtkCudaMemoryTexture*      MemoryTexture;        /**< The texture that will be textured to the screen if OpenGL-CUDA interoperability is used */
+  vtkCudaMemoryTexture*           MemoryTexture;        /**< The texture that will be textured to the screen if OpenGL-CUDA interoperability is used */
 
-  uchar4* hostOutputImage;                  /**< The image that will be textured to the screen stored on host memory */
-  uchar4* deviceOutputImage;                  /**< The image that will be textured to the screen stored on device memory */
+  uchar4*                         HostOutputImage;                  /**< The image that will be textured to the screen stored on host memory */
+  uchar4*                         DeviceOutputImage;                  /**< The image that will be textured to the screen stored on device memory */
 
-  float              RenderOutputScaleFactor;  /**< The approximate factor by which the screen is resized in order to speed up the rendering process*/
-  bool              ImageFlipped;        /**< Boolean to describe whether the output image is flipped */
-  uchar4            ImageTint;          /**< Tint applied to the output image */
+  float                           RenderOutputScaleFactor;  /**< The approximate factor by which the screen is resized in order to speed up the rendering process*/
+  bool                            ImageFlipped;        /**< Boolean to describe whether the output image is flipped */
+  uchar4                          ImageTint;          /**< Tint applied to the output image */
 
 };
 
