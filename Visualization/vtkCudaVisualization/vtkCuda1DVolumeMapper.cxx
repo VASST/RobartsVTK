@@ -75,7 +75,7 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index)
 
   if( input->GetNumberOfScalarComponents() != 1 )
   {
-    vtkErrorMacro(<<"Input must have 1 components.");
+    vtkErrorMacro("Input must have 1 components.");
     return;
   }
 
@@ -134,7 +134,7 @@ void vtkCuda1DVolumeMapper::SetInputInternal(vtkImageData * input, int index)
   }
   else
   {
-    vtkErrorMacro(<<"Input cannot be of that type.");
+    vtkErrorMacro("Input cannot be of that type.");
     return;
   }
 

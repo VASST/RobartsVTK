@@ -363,17 +363,17 @@ double vtkCudaHierarchicalMaxFlowDecomposition::GetF(vtkIdType n)
 {
   if( !this->Hierarchy )
   {
-    vtkErrorMacro(<<"Hierarchy must be provided.");
+    vtkErrorMacro("Hierarchy must be provided.");
     return 0.0;
   }
   if( n == this->Hierarchy->GetRoot() )
   {
-    vtkErrorMacro(<<"Smoothness term not found.");
+    vtkErrorMacro("Smoothness term not found.");
     return 0.0;
   }
   if( this->BranchMap.find(n) == this->BranchMap.end() && this->LeafMap.find(n) == this->LeafMap.end() )
   {
-    vtkErrorMacro(<<"Smoothness term not found.");
+    vtkErrorMacro("Smoothness term not found.");
     return 0.0;
   }
   this->Update();
@@ -388,7 +388,7 @@ double vtkCudaHierarchicalMaxFlowDecomposition::GetF0()
 {
   if( !this->Hierarchy )
   {
-    vtkErrorMacro(<<"Hierarchy must be provided.");
+    vtkErrorMacro("Hierarchy must be provided.");
     return 0.0;
   }
   this->Update();
@@ -403,7 +403,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
   //check to make sure that the hierarchy is specified
   if( !this->Hierarchy )
   {
-    vtkErrorMacro(<<"Hierarchy must be provided.");
+    vtkErrorMacro("Hierarchy must be provided.");
     return -1;
   }
 
@@ -427,12 +427,12 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 
       if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() )
       {
-        vtkErrorMacro(<<"Missing data prior for leaf node.");
+        vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
       if( this->InputLabelPortMapping.find(node) == this->InputLabelPortMapping.end() )
       {
-        vtkErrorMacro(<<"Missing label map for leaf node.");
+        vtkErrorMacro("Missing label map for leaf node.");
         return -1;
       }
 
@@ -440,7 +440,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 
       if( !(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
       {
-        vtkErrorMacro(<<"Missing data prior for leaf node.");
+        vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
 
@@ -448,7 +448,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
 
       if( !(inputVector[1])->GetInformationObject(inputPortNumber) && (inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
       {
-        vtkErrorMacro(<<"Missing label map for leaf node.");
+        vtkErrorMacro("Missing label map for leaf node.");
         return -1;
       }
 
@@ -467,12 +467,12 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
         if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
         {
-          vtkErrorMacro(<<"Data type must be FLOAT and only have one component.");
+          vtkErrorMacro("Data type must be FLOAT and only have one component.");
           return -1;
         }
         if( CurrImage->GetScalarRange()[0] < 0.0 )
         {
-          vtkErrorMacro(<<"Data prior must be non-negative.");
+          vtkErrorMacro("Data prior must be non-negative.");
           return -1;
         }
 
@@ -488,7 +488,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
           if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
               CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
           {
-            vtkErrorMacro(<<"Inconsistant object extent.");
+            vtkErrorMacro("Inconsistant object extent.");
             return -1;
           }
         }
@@ -508,12 +508,12 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
         if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
         {
-          vtkErrorMacro(<<"Label type must be FLOAT and only have one component.");
+          vtkErrorMacro("Label type must be FLOAT and only have one component.");
           return -1;
         }
         if( CurrImage->GetScalarRange()[0] < 0.0 )
         {
-          vtkErrorMacro(<<"Label map must be non-negative.");
+          vtkErrorMacro("Label map must be non-negative.");
           return -1;
         }
 
@@ -529,7 +529,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
           if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
               CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
           {
-            vtkErrorMacro(<<"Inconsistant object extent.");
+            vtkErrorMacro("Inconsistant object extent.");
             return -1;
           }
         }
@@ -547,12 +547,12 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[2])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
         if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
         {
-          vtkErrorMacro(<<"Smoothness type must be FLOAT and only have one component.");
+          vtkErrorMacro("Smoothness type must be FLOAT and only have one component.");
           return -1;
         }
         if( CurrImage->GetScalarRange()[0] < 0.0 )
         {
-          vtkErrorMacro(<<"Smoothness prior must be non-negative.");
+          vtkErrorMacro("Smoothness prior must be non-negative.");
           return -1;
         }
 
@@ -568,7 +568,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::CheckInputConsistancy( vtkInformati
           if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
               CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
           {
-            vtkErrorMacro(<<"Inconsistant object extent.");
+            vtkErrorMacro("Inconsistant object extent.");
             return -1;
           }
         }
@@ -651,7 +651,7 @@ int vtkCudaHierarchicalMaxFlowDecomposition::RequestData(vtkInformation *request
 
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Starting input data preparation." );
+    vtkDebugMacro( "Starting input data preparation." );
   }
 
   //set the number of output ports

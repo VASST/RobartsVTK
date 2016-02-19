@@ -481,7 +481,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm()
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Find priority structures.");
+    vtkDebugMacro("Find priority structures.");
   }
 
   //add all the working buffers from the branches to the garbage (no copy necessary) list
@@ -499,7 +499,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm()
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Starting GPU buffer acquisition");
+    vtkDebugMacro("Starting GPU buffer acquisition");
   }
 
   //Get GPU buffers
@@ -540,7 +540,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm()
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Initialize variables");
+    vtkDebugMacro("Initialize variables");
   }
   NumMemCpies = 0;
 
@@ -660,7 +660,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::InitializeAlgorithm()
 
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Finished initialization with a total of " << NumMemCpies << " memory transfers.");
+    vtkDebugMacro( "Finished initialization with a total of " << NumMemCpies << " memory transfers.");
   }
 
   return 1;
@@ -681,12 +681,12 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RunAlgorithm()
     this->CallSyncThreads();
     if( this->Debug )
     {
-      vtkDebugMacro(<< "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
+      vtkDebugMacro( "Finished iteration " << (iteration+1) << " with " << (NumMemCpies-oldNumMemCpies) << " memory transfers.");
     }
   }
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Finished all iterations with a total of " << NumMemCpies << " memory transfers.");
+    vtkDebugMacro( "Finished all iterations with a total of " << NumMemCpies << " memory transfers.");
   }
 
   //Copy back any uncopied leaf label buffers (others don't matter anymore)
@@ -699,7 +699,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation::RunAlgorithm()
   }
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Results copied back to CPU " );
+    vtkDebugMacro( "Results copied back to CPU " );
   }
 
   //Return all GPU buffers

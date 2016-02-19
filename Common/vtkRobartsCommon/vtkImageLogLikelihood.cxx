@@ -75,7 +75,7 @@ int vtkImageLogLikelihood::RequestInformation (
 
   if (!numLabelMaps)
   {
-    vtkErrorMacro(<< "At least one label map must be specified.");
+    vtkErrorMacro( "At least one label map must be specified.");
     return 1;
   }
 
@@ -306,12 +306,12 @@ void vtkImageLogLikelihood::ThreadedRequestData(
 
     if (inData[1][i]->GetScalarType() != LabelType) 
     {
-      vtkErrorMacro(<< "Label maps must be of same type." );
+      vtkErrorMacro( "Label maps must be of same type." );
       return;
     }
     if ( inData[1][i]->GetNumberOfScalarComponents() != 1 ) 
     {
-      vtkErrorMacro(<< "Label map can only have 1 component." );
+      vtkErrorMacro( "Label map can only have 1 component." );
       return;
     }
   }
@@ -319,7 +319,7 @@ void vtkImageLogLikelihood::ThreadedRequestData(
   // this filter expects that inputs that have the same number of components
   if (inData[0][0]->GetNumberOfScalarComponents() != 1 && inData[0][0]->GetNumberOfScalarComponents() != 2)
   {
-    vtkErrorMacro(<< "Execute: Image can only have one or two components.");
+    vtkErrorMacro( "Execute: Image can only have one or two components.");
     return;
   }
 
@@ -334,7 +334,7 @@ void vtkImageLogLikelihood::ThreadedRequestData(
       inputVector[1]->GetNumberOfInformationObjects(),
       LabelType,id));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
     return;
   }
 }

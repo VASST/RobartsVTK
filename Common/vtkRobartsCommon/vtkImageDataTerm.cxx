@@ -410,7 +410,7 @@ void vtkImageDataTerm::ThreadedRequestData(
     // this filter expects that input is the same type as output.
     if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())
       {
-      vtkErrorMacro(<< "Execute: input1 ScalarType, "
+      vtkErrorMacro( "Execute: input1 ScalarType, "
                     <<  inData[0][0]->GetScalarType()
                     << ", must match output ScalarType "
                     << outData[0]->GetScalarType());
@@ -419,7 +419,7 @@ void vtkImageDataTerm::ThreadedRequestData(
 
     if (inData[1][0]->GetScalarType() != outData[0]->GetScalarType())
       {
-      vtkErrorMacro(<< "Execute: input2 ScalarType, "
+      vtkErrorMacro( "Execute: input2 ScalarType, "
                     << inData[1][0]->GetScalarType()
                     << ", must match output ScalarType "
                   << outData[0]->GetScalarType());
@@ -430,7 +430,7 @@ void vtkImageDataTerm::ThreadedRequestData(
     if (inData[0][0]->GetNumberOfScalarComponents() !=
         inData[1][0]->GetNumberOfScalarComponents())
       {
-      vtkErrorMacro(<< "Execute: input1 NumberOfScalarComponents, "
+      vtkErrorMacro( "Execute: input1 NumberOfScalarComponents, "
                     << inData[0][0]->GetNumberOfScalarComponents()
                     << ", must match out input2 NumberOfScalarComponents "
                     << inData[1][0]->GetNumberOfScalarComponents());
@@ -448,7 +448,7 @@ void vtkImageDataTerm::ThreadedRequestData(
                                     static_cast<VTK_TT *>(outPtr), outExt,
                                     id));
       default:
-        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+        vtkErrorMacro( "Execute: Unknown ScalarType");
         return;
       }
     }
@@ -457,7 +457,7 @@ void vtkImageDataTerm::ThreadedRequestData(
     // this filter expects that input is the same type as output.
     if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())
       {
-      vtkErrorMacro(<< "Execute: input ScalarType, "
+      vtkErrorMacro( "Execute: input ScalarType, "
         << inData[0][0]->GetScalarType()
         << ", must match out ScalarType " << outData[0]->GetScalarType());
       return;
@@ -471,7 +471,7 @@ void vtkImageDataTerm::ThreadedRequestData(
                                     outData[0], static_cast<VTK_TT *>(outPtr),
                                     outExt, id));
       default:
-        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+        vtkErrorMacro( "Execute: Unknown ScalarType");
         return;
       }
     }

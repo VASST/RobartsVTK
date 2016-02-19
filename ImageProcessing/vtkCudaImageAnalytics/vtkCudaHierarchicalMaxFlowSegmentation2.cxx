@@ -135,7 +135,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
   Scheduler->StepSize = this->StepSize;
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Building workers.");
+    vtkDebugMacro("Building workers.");
   }
   for(std::set<int>::iterator gpuIterator = GPUsUsed.begin(); gpuIterator != GPUsUsed.end(); gpuIterator++)
   {
@@ -146,7 +146,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
     }
     if( this->Scheduler->CreateWorker(*gpuIterator,usage) )
     {
-      vtkErrorMacro(<<"Could not allocate sufficient GPU buffers.");
+      vtkErrorMacro("Could not allocate sufficient GPU buffers.");
       Scheduler->Clear();
       while( CPUBuffersAcquired.size() > 0 )
       {
@@ -161,7 +161,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Find priority structures.");
+    vtkDebugMacro("Find priority structures.");
   }
 
   //create LIFO priority queue (priority stack) data structure
@@ -170,7 +170,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
   //add tasks in for the normal iterations (done first for dependancy reasons)
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Creating tasks for normal iterations.");
+    vtkDebugMacro("Creating tasks for normal iterations.");
   }
   if( this->NumberOfIterations > 0 )
   {
@@ -187,7 +187,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
   //add tasks in for the initialization (done second for dependancy reasons)
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Creating tasks for initialization.");
+    vtkDebugMacro("Creating tasks for initialization.");
   }
   if( this->NumberOfIterations > 0 )
   {
@@ -205,7 +205,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::InitializeAlgorithm()
 
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Number of tasks to be run: " << Scheduler->NumTasksGoingToHappen);
+    vtkDebugMacro("Number of tasks to be run: " << Scheduler->NumTasksGoingToHappen);
   }
 
   return 1;
@@ -222,7 +222,7 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm()
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Running tasks");
+    vtkDebugMacro("Running tasks");
   }
   int NumTasksDone = 0;
   while( Scheduler->CanRunAlgorithmIteration() )
@@ -235,14 +235,14 @@ int vtkCudaHierarchicalMaxFlowSegmentation2::RunAlgorithm()
     if( this->Debug && ReportRate > 0 && NumTasksDone % ReportRate == 0 )
     {
       Scheduler->SyncWorkers();
-      vtkDebugMacro(<< "Finished " << NumTasksDone << " with " << Scheduler->NumMemCpies << " memory transfers.");
+      vtkDebugMacro( "Finished " << NumTasksDone << " with " << Scheduler->NumMemCpies << " memory transfers.");
     }
 
   }
   Scheduler->ReturnLeaves();
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Finished all " << NumTasksDone << " tasks with a total of " << Scheduler->NumMemCpies << " memory transfers.");
+    vtkDebugMacro( "Finished all " << NumTasksDone << " tasks with a total of " << Scheduler->NumMemCpies << " memory transfers.");
   }
   assert( Scheduler->BlockedTasks.size() == 0 );
 

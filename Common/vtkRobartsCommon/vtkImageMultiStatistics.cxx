@@ -128,7 +128,7 @@ double vtkImageMultiStatistics::GetAverageMagnitude(int component){
     this->Update(); 
     return this->AverageMagnitude[component];
   }else{
-    vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+    vtkErrorMacro("Cannot select component. Component not provided in input.");
     return 0.0;
   }
 }
@@ -138,7 +138,7 @@ double vtkImageMultiStatistics::GetMeanSquared(int component){
     this->Update(); 
     return this->MeanSquared[component];
   }else{
-    vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+    vtkErrorMacro("Cannot select component. Component not provided in input.");
     return 0.0;
   }
 }
@@ -148,7 +148,7 @@ double vtkImageMultiStatistics::GetStandardDeviation(int component) {
     this->Update();
     return sqrt(this->Covariance[component][component]);
   }else{
-    vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+    vtkErrorMacro("Cannot select component. Component not provided in input.");
     return 0.0;
   }
 }
@@ -162,7 +162,7 @@ double vtkImageMultiStatistics::GetCovariance(int component1, int component2)
   }
   else
   {
-    vtkErrorMacro(<<"Cannot select components. At least one component is not provided in input.");
+    vtkErrorMacro("Cannot select components. At least one component is not provided in input.");
     return 0.0;
   }
 }
@@ -176,7 +176,7 @@ double vtkImageMultiStatistics::GetPCAWeight(int significance, int component)
   }
   else
   {
-    vtkErrorMacro(<<"Cannot select components. At least one component is not provided in input.");
+    vtkErrorMacro("Cannot select components. At least one component is not provided in input.");
     return 0.0;
   }
 }
@@ -190,7 +190,7 @@ double vtkImageMultiStatistics::GetPCAVariance(int significance)
   }
   else
   {
-    vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+    vtkErrorMacro("Cannot select component. Component not provided in input.");
     return 0.0;
   }
 }
@@ -203,7 +203,7 @@ double vtkImageMultiStatistics::GetSingleEntropy(int component)
   }
   else
   {
-    vtkErrorMacro(<<"Cannot select component. Component not provided in input.");
+    vtkErrorMacro("Cannot select component. Component not provided in input.");
     return 0.0;
   }
 }
@@ -217,7 +217,7 @@ double vtkImageMultiStatistics::GetJointEntropy(int component1, int component2)
   }
   else
   {
-    vtkErrorMacro(<<"Cannot select components. At least one component is not provided in input.");
+    vtkErrorMacro("Cannot select components. At least one component is not provided in input.");
     return 0.0;
   }
 }
@@ -238,7 +238,7 @@ long int vtkImageMultiStatistics::GetCount()
 void vtkImageMultiStatistics::SetEntropyResolution(int bins)
 {
   if( bins < 1 ){
-    vtkErrorMacro(<<"Invalid resolution.");
+    vtkErrorMacro("Invalid resolution.");
     return;
   }
 
@@ -712,7 +712,7 @@ void vtkImageMultiStatistics::Update() {
 
   // make sure input is available
   if (!input) {
-    vtkErrorMacro(<< "No input...can't execute!");
+    vtkErrorMacro( "No input...can't execute!");
     return;
   }
 #if (VTK_MAJOR_VERSION < 6)
@@ -729,7 +729,7 @@ void vtkImageMultiStatistics::Update() {
   int oldNumberOfComponents = this->NumberOfComponents;
   this->NumberOfComponents = input->GetNumberOfScalarComponents();
   if (this->NumberOfComponents < 1){
-    vtkErrorMacro(<< "Input must have at least 1 scalar component");
+    vtkErrorMacro( "Input must have at least 1 scalar component");
     return;
   }
 
@@ -745,11 +745,11 @@ void vtkImageMultiStatistics::Update() {
 #endif
     if( MaskExtent[0] != wholeInExt[0] || MaskExtent[1] != wholeInExt[1] || MaskExtent[2] != wholeInExt[2] ||
       MaskExtent[3] != wholeInExt[3] || MaskExtent[4] != wholeInExt[4] || MaskExtent[5] != wholeInExt[5] ){
-        vtkErrorMacro(<< "Mask is not the same extent as the input.");
+        vtkErrorMacro( "Mask is not the same extent as the input.");
         mask = 0;
     }
     if( mask && mask->GetNumberOfScalarComponents() != 1 ){
-      vtkErrorMacro(<< "Mask can only have 1 scalar component.");
+      vtkErrorMacro( "Mask can only have 1 scalar component.");
       mask = 0;
     }
   }
@@ -811,7 +811,7 @@ void vtkImageMultiStatistics::Update() {
           this->JointEntropy,
           &(this->Count), &(this->TotalEntropy), this->NumberOfComponents));
       default:
-        vtkErrorMacro(<< "Update: Unknown ScalarType");
+        vtkErrorMacro( "Update: Unknown ScalarType");
         return;
     }
     else
@@ -823,7 +823,7 @@ void vtkImageMultiStatistics::Update() {
           this->JointEntropy,
           &(this->Count), &(this->TotalEntropy), this->NumberOfComponents));
       default:
-        vtkErrorMacro(<< "Update: Unknown ScalarType");
+        vtkErrorMacro( "Update: Unknown ScalarType");
         return;
     }
 

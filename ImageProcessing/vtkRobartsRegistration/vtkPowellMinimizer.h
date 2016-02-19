@@ -24,14 +24,11 @@ public:
   // Description:
   // Specify a variable to modify during the minimization.  Only the
   // variable you specify will be modified.  You must specify estimated
-  // min and max possible values for each variable.  
+  // min and max possible values for each variable.
   void SetScalarVariableBracket(const char *name, double min, double max);
-  void SetScalarVariableBracket(const char *name, const double range[2]) {
-    this->SetScalarVariableBracket(name,range[0],range[1]); };
+  void SetScalarVariableBracket(const char *name, const double range[2]);;
   double *GetScalarVariableBracket(const char *name);
-  void GetScalarVariableBracket(const char *name, double range[2]) {
-    double *r = this->GetScalarVariableBracket(name);
-    range[0] = r[0]; range[1] = r[1]; };
+  void GetScalarVariableBracket(const char *name, double range[2]);;
 
   // Description:
   // Get the value of a variable at the current stage of the minimization.
@@ -52,9 +49,9 @@ public:
 
   // Description:
   // Get the current value resulting from the minimization.
-  // 
-  vtkSetMacro(ScalarResult,double); 
-  double GetScalarResult() { return this->ScalarResult; };
+  //
+  vtkSetMacro(ScalarResult,double);
+  double GetScalarResult();;
 
   // Description:
   // Specify the fractional tolerance to aim for during the minimization.
@@ -62,13 +59,13 @@ public:
   vtkGetMacro(Tolerance,double);
 
   // Description:
-  // Specify the maximum number of iterations to try before 
+  // Specify the maximum number of iterations to try before
   // printing an error and aborting.
   vtkSetMacro(MaxIterations,int);
   vtkGetMacro(MaxIterations,int);
 
   // Description:
-  // Return the number of interations required for the last
+  // Return the number of interactions required for the last
   // minimization that was performed.
   vtkGetMacro(Iterations,int);
 
@@ -78,7 +75,7 @@ protected:
   vtkPowellMinimizer(const vtkPowellMinimizer&) {};
   void operator=(const vtkPowellMinimizer&) {};
 
-//BTX  
+//BTX
   void (*Function)(void *);
   void (*FunctionArgDelete)(void *);
   void *FunctionArg;

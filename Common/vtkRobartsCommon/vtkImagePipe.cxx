@@ -110,7 +110,7 @@ void vtkImagePipe::SetInput( vtkImageData* in ){
 void vtkImagePipe::SetInputData( vtkImageData* in ){
 #endif
   if( !this->serverSet || !this->isServer ){
-    vtkErrorMacro(<<"Must be in server mode.");
+    vtkErrorMacro("Must be in server mode.");
     return;
   }
 
@@ -119,11 +119,11 @@ void vtkImagePipe::SetInputData( vtkImageData* in ){
 //----------------------------------------------------------------------------
 vtkImageData* vtkImagePipe::GetOutput( ){
   if( !this->serverSet || this->isServer ){
-    vtkErrorMacro(<<"Must be in client mode.");
+    vtkErrorMacro("Must be in client mode.");
     return 0 ;
   }
   if( !this->Initialized ){
-    vtkErrorMacro(<<"Must be initialized first.");
+    vtkErrorMacro("Must be initialized first.");
     return 0 ;
   }
 
@@ -135,7 +135,7 @@ void vtkImagePipe::SetAsServer( bool isServer ){
 
   // if we are already initialized, you cannot set the server status
   if (this->Initialized){
-    vtkErrorMacro(<<"Must uninitialize before changing parameters.");
+    vtkErrorMacro("Must uninitialize before changing parameters.");
     return;
   }
 
@@ -159,23 +159,23 @@ void vtkImagePipe::SetSourceAddress( char* ipAddress, int portNumber ){
 
   // if we are already initialized, you cannot set the server status
   if (this->Initialized){
-    vtkErrorMacro(<<"Must uninitialize before changing parameters.");
+    vtkErrorMacro("Must uninitialize before changing parameters.");
     return;
   }
 
   if( portNumber < 0 ) {
-    vtkErrorMacro(<<"Invalid port number.");
+    vtkErrorMacro("Invalid port number.");
     return;
   }
 
   if( !this->serverSet ) {
-    vtkErrorMacro(<<"Must first specify whether client or server using SetAsServer().");
+    vtkErrorMacro("Must first specify whether client or server using SetAsServer().");
     return;
   }
 
   if( this->isServer ){
     if( this->serverSocket->CreateServer( portNumber ) ){
-      vtkErrorMacro(<<"Could not connect to port.");
+      vtkErrorMacro("Could not connect to port.");
       return;
     }else{
       this->portNumber = portNumber;
@@ -202,14 +202,14 @@ void vtkImagePipe::Initialize()
 
   //if we haven't set the client-server status,
   if ( !this->serverSet || this->portNumber == -1 ){
-    vtkErrorMacro(<<"Set the client/server settings before initialization.");
+    vtkErrorMacro("Set the client/server settings before initialization.");
     return;
   }
 
   //if we are the server, make sure we have input set
   if( this->isServer ){
     if( !this->buffer ){
-      vtkErrorMacro(<<"Need to set the input.");
+      vtkErrorMacro("Need to set the input.");
       return;
     }
     this->mainServerThread = this->threader->SpawnThread( (vtkThreadFunctionType) &FirstServerSideUpdate, (void*) this );
@@ -219,7 +219,7 @@ void vtkImagePipe::Initialize()
   if( !this->isServer ){
     int connectedStatus = this->clientSocket->ConnectToServer( this->IPAddress, this->portNumber );
     if( connectedStatus ){
-      vtkErrorMacro(<<"Could not connect to server side socket.");
+      vtkErrorMacro("Could not connect to server side socket.");
       return;
     }
   }
@@ -339,7 +339,7 @@ void vtkImagePipe::ClientSideUpdate(){
   int request = 1;
   int serverThere = this->clientSocket->Send( &request, sizeof(request) );
   if( !serverThere ){
-    vtkErrorMacro(<<"Server unavailable.");
+    vtkErrorMacro("Server unavailable.");
     return;
   }
 
@@ -347,7 +347,7 @@ void vtkImagePipe::ClientSideUpdate(){
   vtkImagePipeInitData initData;
   serverThere = clientSocket->Receive( (void*) &initData, sizeof(initData), 1 );
   if( !serverThere ){
-    vtkErrorMacro(<<"Server unavailable.");
+    vtkErrorMacro("Server unavailable.");
     return;
   }
   this->buffer->SetSpacing( initData.spacing );
@@ -359,7 +359,7 @@ void vtkImagePipe::ClientSideUpdate(){
             initData.numComponents * initData.scalarSize;
   this->ImageSize = initData.imageSize;
   if( this->ImageSize != calcImageSize ){
-    vtkErrorMacro(<<"Image information packet does not conform to the image size error check.");
+    vtkErrorMacro("Image information packet does not conform to the image size error check.");
     return;
   }
 #if (VTK_MAJOR_VERSION < 6)
@@ -373,7 +373,7 @@ void vtkImagePipe::ClientSideUpdate(){
   //grab the data from the socket
   serverThere = this->clientSocket->Receive( this->buffer->GetScalarPointer(), this->ImageSize, 1 );
   if( !serverThere ){
-    vtkErrorMacro(<<"Server unavailable.");
+    vtkErrorMacro("Server unavailable.");
     return;
   }
 

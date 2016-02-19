@@ -69,7 +69,7 @@ void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int in
 
   if( input->GetNumberOfScalarComponents() != 2 )
   {
-    vtkErrorMacro(<<"Input must have 2 components.");
+    vtkErrorMacro("Input must have 2 components.");
     return;
   }
 
@@ -128,7 +128,7 @@ void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int in
   }
   else
   {
-    vtkErrorMacro(<<"Input cannot be of that type.");
+    vtkErrorMacro("Input cannot be of that type.");
     return;
   }
 

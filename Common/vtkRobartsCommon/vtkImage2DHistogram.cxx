@@ -42,7 +42,7 @@ void vtkImage2DHistogram::ThreadedExecute(vtkImageData *inData, vtkImageData *ou
     vtkTemplateMacro(
       ThreadedExecuteCasted<VTK_TT>(inData, outData, threadId, numThreads));
     default:
-      if(threadId == 0) vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+      if(threadId == 0) vtkErrorMacro( "Execute: Unknown input ScalarType");
       return;
   }
 
@@ -143,7 +143,7 @@ int vtkImage2DHistogram::RequestData(vtkInformation* request,
 
   if( inData->GetNumberOfScalarComponents() != 2 )
   {
-    vtkErrorMacro(<<"Input must have 2 scalar components.");
+    vtkErrorMacro("Input must have 2 scalar components.");
     return -1;
   }
 

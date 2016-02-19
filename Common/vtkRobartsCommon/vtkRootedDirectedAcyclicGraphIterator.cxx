@@ -31,7 +31,7 @@ void vtkRootedDirectedAcyclicGraphIterator::PrintSelf(ostream& os, vtkIndent ind
 
 void vtkRootedDirectedAcyclicGraphIterator::SetDAG(vtkRootedDirectedAcyclicGraph* dag)
 {
-  vtkDebugMacro(<< this->GetClassName() << " (" << this
+  vtkDebugMacro( this->GetClassName() << " (" << this
                 << "): setting DAG to " << dag );
   if (this->DAG != dag)
     {

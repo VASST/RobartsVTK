@@ -271,19 +271,19 @@ double vtkImageNCCManipulator::GetResult()
 {
   if (this->inData[0] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 0 << " must be specified.");
+    vtkErrorMacro( "Input " << 0 << " must be specified.");
     return 0;
   }
 
   if (this->inData[1] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 1 << " must be specified.");
+    vtkErrorMacro( "Input " << 1 << " must be specified.");
     return 0;
   }
 
   if ((this->inData[0]->GetScalarType() != this->inData[1]->GetScalarType()))
   {
-    vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
+    vtkErrorMacro( "Execute: Inputs must be of the same ScalarType");
     return 0;
   }
 
@@ -296,7 +296,7 @@ double vtkImageNCCManipulator::GetResult()
                      this->inc, this->inc2, this->inExt,
                      this->loc000, this->loc111));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
   }
 
   return this->Result;

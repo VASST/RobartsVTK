@@ -222,7 +222,8 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     minDist = closenessRadius;
     float minPointX = 0.0f;
     float minPointY = 0.0f;
-    int placeIndex = -1;
+    bool placeIndexFound(false);
+    size_t placeIndex = 0;
     size_t belowIndex = 0;
     size_t aboveIndex = object->GetNumVertices() - 1;
     for(int i = 0; i < object->GetNumVertices(); i++)
@@ -271,7 +272,7 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     }
 
     //if we have a proper point
-    if(placeIndex != -1)
+    if(placeIndexFound)
     {
       object->AddVertex(minPointX,minPointY,placeIndex);
       vertexInUse = placeIndex;

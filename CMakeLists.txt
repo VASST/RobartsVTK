@@ -21,6 +21,11 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 SET (RobartsVTK_EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
 #-----------------------------------------------------------------------------
+# Add configure file to included directories
+#-----------------------------------------------------------------------------
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
+
+#-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
 FIND_PACKAGE(VTK 6.2.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)

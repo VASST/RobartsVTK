@@ -101,7 +101,7 @@ void vtkHierarchicalMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, dou
   }
   else
   {
-    vtkErrorMacro(<<"Cannot use a negative smoothness value.");
+    vtkErrorMacro("Cannot use a negative smoothness value.");
   }
 }
 
@@ -330,7 +330,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
   //check to make sure that the hierarchy is specified
   if( !this->Structure )
   {
-    vtkErrorMacro(<<"Hierarchy must be provided.");
+    vtkErrorMacro("Hierarchy must be provided.");
     return -1;
   }
 
@@ -369,13 +369,13 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
       NumLeaves++;
       if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() )
       {
-        vtkErrorMacro(<<"Missing data prior for leaf node.");
+        vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
       int inputPortNumber = this->InputDataPortMapping[node];
       if( !(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
       {
-        vtkErrorMacro(<<"Missing data prior for leaf node.");
+        vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
     }
@@ -392,12 +392,12 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
         if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
         {
-          vtkErrorMacro(<<"Data type must be FLOAT and only have one component.");
+          vtkErrorMacro("Data type must be FLOAT and only have one component.");
           return -1;
         }
         if( CurrImage->GetScalarRange()[0] < 0.0 )
         {
-          vtkErrorMacro(<<"Data prior must be non-negative.");
+          vtkErrorMacro("Data prior must be non-negative.");
           return -1;
         }
 
@@ -413,7 +413,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
           if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
               CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
           {
-            vtkErrorMacro(<<"Inconsistant object extent.");
+            vtkErrorMacro("Inconsistant object extent.");
             return -1;
           }
         }
@@ -432,12 +432,12 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
         if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
         {
-          vtkErrorMacro(<<"Smoothness type must be FLOAT and only have one component.");
+          vtkErrorMacro("Smoothness type must be FLOAT and only have one component.");
           return -1;
         }
         if( CurrImage->GetScalarRange()[0] < 0.0 )
         {
-          vtkErrorMacro(<<"Smoothness prior must be non-negative.");
+          vtkErrorMacro("Smoothness prior must be non-negative.");
           return -1;
         }
 
@@ -453,7 +453,7 @@ int vtkHierarchicalMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVec
           if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
               CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
           {
-            vtkErrorMacro(<<"Inconsistant object extent.");
+            vtkErrorMacro("Inconsistant object extent.");
             return -1;
           }
         }
@@ -531,7 +531,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
 
   if( this->Debug )
   {
-    vtkDebugMacro(<< "Starting input data preparation." );
+    vtkDebugMacro( "Starting input data preparation." );
   }
 
   //set the number of output ports
@@ -673,7 +673,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Starting CPU buffer acquisition");
+    vtkDebugMacro("Starting CPU buffer acquisition");
   }
 
   //source flow and working buffers
@@ -814,7 +814,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
       delete[] tempBuffer;
       CPUBuffersAcquired.pop_front();
     }
-    vtkErrorMacro(<<"Not enough CPU memory. Cannot run algorithm.");
+    vtkErrorMacro("Not enough CPU memory. Cannot run algorithm.");
     return -1;
   }
 
@@ -834,7 +834,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
   //if verbose, print progress
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Relate parent sink with child source buffer pointers.");
+    vtkDebugMacro("Relate parent sink with child source buffer pointers.");
   }
 
   //create pointers to parent outflow
@@ -875,12 +875,12 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
   //run algorithm proper
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Starting initialization");
+    vtkDebugMacro("Starting initialization");
   }
   this->InitializeAlgorithm();
   if( this->Debug )
   {
-    vtkDebugMacro(<<"Starting max-flow algorithm.");
+    vtkDebugMacro("Starting max-flow algorithm.");
   }
   this->RunAlgorithm();
 
@@ -1010,7 +1010,7 @@ int vtkHierarchicalMaxFlowSegmentation::RunAlgorithm()
     SolveMaxFlow( this->Structure->GetRoot() );
     if( this->Debug )
     {
-      vtkDebugMacro(<< "Finished iteration " << (iteration+1) << ".");
+      vtkDebugMacro( "Finished iteration " << (iteration+1) << ".");
     }
   }
   return 1;

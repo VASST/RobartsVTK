@@ -185,7 +185,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
   }
 
   if (numLabelMaps == 0) {
-    vtkErrorMacro(<< "At least one label map is required." );
+    vtkErrorMacro( "At least one label map is required." );
     return;
   }
 
@@ -193,7 +193,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
   // this filter expects the output datatype to be float.
   if (outData[0]->GetScalarType() != VTK_FLOAT)
   {
-    vtkErrorMacro(<< "Output data type must be float." );
+    vtkErrorMacro( "Output data type must be float." );
     return;
   }
 
@@ -207,12 +207,12 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
       LabelType = inData[0][i]->GetScalarType();
     if (inData[0][i]->GetScalarType() != LabelType) 
     {
-      vtkErrorMacro(<< "Label maps must be of same type." );
+      vtkErrorMacro( "Label maps must be of same type." );
       return;
     }
     if ( inData[0][i]->GetNumberOfScalarComponents() != 1 ) 
     {
-      vtkErrorMacro(<< "Label map can only have 1 component." );
+      vtkErrorMacro( "Label map can only have 1 component." );
       return;
     }
   }
@@ -220,7 +220,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
   // this filter expects that inputs that have the same number of components
   if (inData[0][0]->GetNumberOfScalarComponents() != 1 )
   {
-    vtkErrorMacro(<< "Execute: Image can only have one component.");
+    vtkErrorMacro( "Execute: Image can only have one component.");
     return;
   }
 
@@ -234,7 +234,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
       inputVector[0]->GetNumberOfInformationObjects(),
       id));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
     return;
   }
 

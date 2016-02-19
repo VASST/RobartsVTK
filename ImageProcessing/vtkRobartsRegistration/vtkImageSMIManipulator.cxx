@@ -211,7 +211,7 @@ void vtkImageSMIManipulator::SetExtent(int ext[6])
   this->count = (ext[1]-ext[0]+1) * (ext[3]-ext[2]+1) * (ext[5]-ext[4]+1);
   if (this->count == 0)
   {
-    vtkErrorMacro(<< "GetResult: No data to work with.");
+    vtkErrorMacro( "GetResult: No data to work with.");
   }
 
   memcpy(this->Extent, ext, sizeof(int)*6);
@@ -223,7 +223,7 @@ void vtkImageSMIManipulator::SetExtent(int ext[6])
     vtkTemplateMacro(vtkImageSMIManipulatorEntropyT(this,
                      (VTK_TT *)(inPtr), this->inc2, this->count));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
   }
 }
 
@@ -492,17 +492,17 @@ double vtkImageSMIManipulator::GetResult()
   // Check inputs.
   if (this->inData[0] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 0 << " must be specified.");
+    vtkErrorMacro( "Input " << 0 << " must be specified.");
     return 0;
   }
   if (this->inData[1] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 1 << " must be specified.");
+    vtkErrorMacro( "Input " << 1 << " must be specified.");
     return 0;
   }
   if ((this->inData[0]->GetScalarType() != this->inData[1]->GetScalarType()))
   {
-    vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
+    vtkErrorMacro( "Execute: Inputs must be of the same ScalarType");
     return 0;
   }
 
@@ -519,7 +519,7 @@ double vtkImageSMIManipulator::GetResult()
                      this->inc, this->inc2, this->inExt,
                      this->loc000, this->loc111, this->count));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
   }
   return this->Result;
 }

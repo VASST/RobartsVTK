@@ -104,17 +104,17 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
   //exit and throw error message if something is wrong with input configuration
   if( !inData )
   {
-    vtkErrorMacro(<<"This filter requires an input image.");
+    vtkErrorMacro("This filter requires an input image.");
     return -1;
   }
   if( inData->GetScalarType() != VTK_FLOAT )
   {
-    vtkErrorMacro(<<"The input must be of type float.");
+    vtkErrorMacro("The input must be of type float.");
     return -1;
   }
   if( !(this->PrimaryFunction) )
   {
-    vtkErrorMacro(<<"There must be a primary transfer function.");
+    vtkErrorMacro("There must be a primary transfer function.");
     return -1;
   }
 
@@ -256,7 +256,7 @@ void vtkCudaVoxelClassifier::RemoveKeyholePlane(vtkPlane *plane)
 {
   if (this->KeyholePlanes == NULL)
   {
-    vtkErrorMacro(<< "Cannot remove Keyhole plane: mapper has none");
+    vtkErrorMacro( "Cannot remove Keyhole plane: mapper has none");
   }
   this->KeyholePlanes->RemoveItem(plane);
   this->Modified();
@@ -310,7 +310,7 @@ void vtkCudaVoxelClassifier::RemoveClippingPlane(vtkPlane *plane)
 {
   if (this->ClippingPlanes == NULL)
   {
-    vtkErrorMacro(<< "Cannot remove Clipping plane: mapper has none");
+    vtkErrorMacro( "Cannot remove Clipping plane: mapper has none");
   }
   this->ClippingPlanes->RemoveItem(plane);
   this->Modified();

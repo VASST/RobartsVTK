@@ -76,7 +76,7 @@ int vtkCudaImageLogLikelihood::RequestInformation (
 
   if (!numLabelMaps)
   {
-    vtkErrorMacro(<< "At least one label map must be specified.");
+    vtkErrorMacro( "At least one label map must be specified.");
     return 1;
   }
 
@@ -229,7 +229,7 @@ int vtkCudaImageLogLikelihood::RequestData(
   }
   if (numLabelMaps == 0)
   {
-    vtkErrorMacro(<< "At least one label map is required." );
+    vtkErrorMacro( "At least one label map is required." );
     return -1;
   }
 
@@ -250,7 +250,7 @@ int vtkCudaImageLogLikelihood::RequestData(
   // this filter expects the output datatype to be float.
   if (outData->GetScalarType() != VTK_FLOAT)
   {
-    vtkErrorMacro(<< "Output data type must be float." );
+    vtkErrorMacro( "Output data type must be float." );
     return -1;
   }
 
@@ -268,12 +268,12 @@ int vtkCudaImageLogLikelihood::RequestData(
     }
     if (inData[1][i]->GetScalarType() != LabelType)
     {
-      vtkErrorMacro(<< "Label maps must be of same type." );
+      vtkErrorMacro( "Label maps must be of same type." );
       return -1;
     }
     if ( inData[1][i]->GetNumberOfScalarComponents() != 1 )
     {
-      vtkErrorMacro(<< "Label map can only have 1 component." );
+      vtkErrorMacro( "Label map can only have 1 component." );
       return -1;
     }
   }
@@ -281,7 +281,7 @@ int vtkCudaImageLogLikelihood::RequestData(
   // this filter expects that inputs that have the same number of components
   if (inData[0][0]->GetNumberOfScalarComponents() != 1 && inData[0][0]->GetNumberOfScalarComponents() != 2 )
   {
-    vtkErrorMacro(<< "Execute: Image can only have 1 or 2 components.");
+    vtkErrorMacro( "Execute: Image can only have 1 or 2 components.");
     return -1;
   }
 
@@ -296,7 +296,7 @@ int vtkCudaImageLogLikelihood::RequestData(
                                         inputVector[1]->GetNumberOfInformationObjects(),
                                         LabelType));
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
     return -1;
   }
 

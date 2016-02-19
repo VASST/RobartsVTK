@@ -4,7 +4,7 @@
 #include "vtkCudaImageAnalyticsModule.h"
 
 #include "CudaObject.h"
-#include "vtkImageAlgorithm.h";
+#include "vtkImageAlgorithm.h"
 
 class CUDA_fuzzyconnectednessfilter;
 class vtkImageData;

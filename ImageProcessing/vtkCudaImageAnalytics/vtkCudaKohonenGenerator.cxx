@@ -430,7 +430,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   int NumPictures = (inputVector[0])->GetNumberOfInformationObjects() / (this->UseMask ? 2 : 1);
   if( NumPictures < 1 )
   {
-    vtkErrorMacro(<<"No pictures to train on.");
+    vtkErrorMacro("No pictures to train on.");
     return -1;
   }
   vtkInformation* outputInfo = outputVector->GetInformationObject(0);
@@ -473,13 +473,13 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
     if( inData->GetNumberOfScalarComponents() != this->info.NumberOfDimensions )
     {
-      vtkErrorMacro(<<"Data objects need to have a consistant number of components");
+      vtkErrorMacro("Data objects need to have a consistant number of components");
       delete VolumeSize;
       return -1;
     }
     if( inData->GetScalarType() != VTK_FLOAT )
     {
-      vtkErrorMacro(<<"Data objects need to be of type float");
+      vtkErrorMacro("Data objects need to be of type float");
       delete VolumeSize;
       return -1;
     }
@@ -488,7 +488,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
         maskData->GetScalarType() != VTK_UNSIGNED_CHAR )
     {
       std::cout << maskData->GetScalarType() << std::endl;
-      vtkErrorMacro(<<"Mask objects need to be of type char");
+      vtkErrorMacro("Mask objects need to be of type char");
       delete VolumeSize;
       return -1;
     }
