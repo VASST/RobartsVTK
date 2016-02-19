@@ -331,7 +331,7 @@ IF(RobartsVTK_USE_PLUS)
       ENDIF()
     ENDFOREACH()
   
-    INCLUDE(${PlusLIB_USE_FILE})
+    INCLUDE(${PlusLib_USE_FILE})
   ENDIF()
 ENDIF()
 
