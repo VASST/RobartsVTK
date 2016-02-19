@@ -12,10 +12,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
-#include "vtkObject.h"
+#include "CUDA_containerRendererInformation.h"
 #include "CudaObject.h"
+#include "vtkObject.h"
 
-class CUDA_containerRendererInformation;
 class vtkCudaMemoryTexture;
 class vtkImageData;
 class vtkMatrix4x4;
@@ -50,12 +50,9 @@ public:
   /** @brief Gets the CUDA compatible container for renderer/camera/shading/geometry related information needed during the rendering process
    *
    */
-  const cudaRendererInformation& GetRendererInfo()
-  {
-    return (this->RendererInfo);
-  }
+  const cudaRendererInformation& GetRendererInfo();
 
-  /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
+  /** @brief Set the strength and sensitivity parameters of the non-photo realistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
    *  @param a The shading start value
@@ -63,7 +60,7 @@ public:
    */
   void SetCelShadingConstants(float darkness, float a, float b);
 
-  /** @brief Set the strength and sensitivity parameters of the nonphotorealistic shading model which is given to the renderer information handler
+  /** @brief Set the strength and sensitivity parameters of the non-photo realistic shading model which is given to the renderer information handler
    *
    *  @param darkness Floating point between 0.0f and 1.0f inclusive, where 0.0f means no shading, and 1.0f means maximal shading
    *  @param a The shading start value
@@ -142,14 +139,14 @@ private:
   vtkCudaRendererInformationHandler(const vtkCudaRendererInformationHandler&); /**< not implemented */
 
 private:
-  vtkRenderer*      Renderer;          /**< The vtkRenderer which information is currently being extracted from */
+  vtkRenderer*              Renderer;          /**< The vtkRenderer which information is currently being extracted from */
 
-  cudaRendererInformation  RendererInfo;        /**< CUDA compatible container for various renderer/shading/camera/geometry information */
+  cudaRendererInformation   RendererInfo;        /**< CUDA compatible container for various renderer/shading/camera/geometry information */
 
-  float          WorldToVoxelsMatrix[16];  /**< Array representing the world to voxels transformation as a matrix */
-  float          VoxelsToWorldMatrix[16];  /**< Array representing the voxels to world transformation as a matrix */
-  float*          ZBuffer;          /**< Address of the Z Buffer in CPU space */
-  unsigned int      clipModified;        /**< Determines whether the clipping plane set has been modified and needs reloading */
+  float                     WorldToVoxelsMatrix[16];  /**< Array representing the world to voxels transformation as a matrix */
+  float                     VoxelsToWorldMatrix[16];  /**< Array representing the voxels to world transformation as a matrix */
+  float*                    ZBuffer;          /**< Address of the Z Buffer in CPU space */
+  unsigned int              ClipModified;        /**< Determines whether the clipping plane set has been modified and needs reloading */
 };
 
 #endif

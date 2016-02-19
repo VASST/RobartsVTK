@@ -7,7 +7,6 @@
  *
  */
 
-#include "CUDA_containerRendererInformation.h"
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include "vector_functions.h"
 #include "vtkCamera.h"
@@ -36,7 +35,7 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 
   this->ZBuffer = 0;
 
-  this->clipModified = 0;
+  this->ClipModified = 0;
 }
 
 void vtkCudaRendererInformationHandler::Deinitialize(int withData)
@@ -59,6 +58,11 @@ void vtkCudaRendererInformationHandler::SetRenderer(vtkRenderer* renderer)
 {
   this->Renderer = renderer;
   this->Update();
+}
+
+const cudaRendererInformation& vtkCudaRendererInformationHandler::GetRendererInfo()
+{
+  return (this->RendererInfo);
 }
 
 void vtkCudaRendererInformationHandler::SetCelShadingConstants(float darkness, float a, float b)
@@ -125,7 +129,7 @@ void vtkCudaRendererInformationHandler::SetViewToVoxelsMatrix(vtkMatrix4x4* matr
 
 void vtkCudaRendererInformationHandler::SetWorldToVoxelsMatrix(vtkMatrix4x4* matrix)
 {
-  this->clipModified = 0;
+  this->ClipModified = 0;
   for(int i = 0; i < 4; i++)
   {
     for(int j = 0; j < 4; j++)
@@ -137,7 +141,7 @@ void vtkCudaRendererInformationHandler::SetWorldToVoxelsMatrix(vtkMatrix4x4* mat
 
 void vtkCudaRendererInformationHandler::SetVoxelsToWorldMatrix(vtkMatrix4x4* matrix)
 {
-  this->clipModified = 0;
+  this->ClipModified = 0;
   for(int i = 0; i < 4; i++)
   {
     for(int j = 0; j < 4; j++)
@@ -149,42 +153,36 @@ void vtkCudaRendererInformationHandler::SetVoxelsToWorldMatrix(vtkMatrix4x4* mat
 
 void vtkCudaRendererInformationHandler::SetClippingPlanes(vtkPlaneCollection* planes)
 {
-
   //see if we need to refigure the clipping planes
-  if(!planes || planes->GetMTime() < this->clipModified)
+  if(!planes || planes->GetMTime() < this->ClipModified)
   {
     return;
   }
   else
   {
-    this->clipModified = planes->GetMTime();
+    this->ClipModified = planes->GetMTime();
     this->FigurePlanes(planes, this->RendererInfo.ClippingPlanes,
                        &(this->RendererInfo.NumberOfClippingPlanes) );
   }
-
 }
 
 void vtkCudaRendererInformationHandler::SetKeyholePlanes(vtkPlaneCollection* planes)
 {
-
   //see if we need to refigure the keyhole planes
-  if(!planes || planes->GetMTime() < this->clipModified)
+  if(!planes || planes->GetMTime() < this->ClipModified)
   {
     return;
   }
   else
   {
-    this->clipModified = planes->GetMTime();
+    this->ClipModified = planes->GetMTime();
     this->FigurePlanes(planes, this->RendererInfo.KeyholePlanes,
                        &(this->RendererInfo.NumberOfKeyholePlanes) );
   }
-
 }
-
 
 void vtkCudaRendererInformationHandler::LoadZBuffer()
 {
-
   //image origin in pixels
   int x1 = this->Renderer->GetOrigin()[0];
   int y1 = this->Renderer->GetOrigin()[1];
@@ -200,12 +198,10 @@ void vtkCudaRendererInformationHandler::LoadZBuffer()
   this->Renderer->GetRenderWindow()->GetZbufferData(x1,y1,x2,y2,this->ZBuffer);
   this->ReserveGPU();
   CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y, this->GetStream() );
-
 }
 
 void vtkCudaRendererInformationHandler::FigurePlanes(vtkPlaneCollection* planes, float* planesArray, int* numberOfPlanes)
 {
-
   //figure out the number of planes
   *numberOfPlanes = 0;
   if(planes)
@@ -249,5 +245,4 @@ void vtkCudaRendererInformationHandler::FigurePlanes(vtkPlaneCollection* planes,
 
     planesArray[4*i+3] = -(planesArray[4*i]*volumeOrigin[0] + planesArray[4*i+1]*volumeOrigin[1] + planesArray[4*i+2]*volumeOrigin[2]);
   }
-
 }

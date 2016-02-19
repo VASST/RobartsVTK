@@ -1,9 +1,5 @@
-
-
-#include "vtkRootedDirectedAcyclicGraphIterator.h"
-
-//#include "vtkObjectFactory.h"
 #include "vtkRootedDirectedAcyclicGraph.h"
+#include "vtkRootedDirectedAcyclicGraphIterator.h"
 
 vtkRootedDirectedAcyclicGraphIterator::vtkRootedDirectedAcyclicGraphIterator()
 {
@@ -15,10 +11,10 @@ vtkRootedDirectedAcyclicGraphIterator::vtkRootedDirectedAcyclicGraphIterator()
 vtkRootedDirectedAcyclicGraphIterator::~vtkRootedDirectedAcyclicGraphIterator()
 {
   if (this->DAG)
-    {
+  {
     this->DAG->Delete();
     this->DAG = NULL;
-    }
+  }
 }
 
 void vtkRootedDirectedAcyclicGraphIterator::PrintSelf(ostream& os, vtkIndent indent)
@@ -31,40 +27,41 @@ void vtkRootedDirectedAcyclicGraphIterator::PrintSelf(ostream& os, vtkIndent ind
 
 void vtkRootedDirectedAcyclicGraphIterator::SetDAG(vtkRootedDirectedAcyclicGraph* dag)
 {
-  vtkDebugMacro( this->GetClassName() << " (" << this
-                << "): setting DAG to " << dag );
   if (this->DAG != dag)
-    {
+  {
     vtkRootedDirectedAcyclicGraph* temp = this->DAG;
     this->DAG = dag;
-    if (this->DAG != NULL) { this->DAG->Register(this); }
+    if (this->DAG != NULL)
+    {
+      this->DAG->Register(this);
+    }
     if (temp != NULL)
-      {
+    {
       temp->UnRegister(this);
-      }
+    }
     this->RootVertex = -1;
     this->Initialize();
     this->Modified();
-    }
+  }
 }
 
 void vtkRootedDirectedAcyclicGraphIterator::SetRootVertex(vtkIdType vertex)
 {
   if (this->RootVertex != vertex)
-    {
+  {
     this->RootVertex = vertex;
     this->Initialize();
     this->Modified();
-    }
+  }
 }
 
 vtkIdType vtkRootedDirectedAcyclicGraphIterator::Next()
 {
   vtkIdType last = this->NextId;
   if(last != -1)
-    {
+  {
     this->NextId = this->NextInternal();
-    }
+  }
   return last;
 }
 

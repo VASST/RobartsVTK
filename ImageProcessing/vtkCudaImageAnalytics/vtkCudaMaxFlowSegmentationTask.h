@@ -29,6 +29,7 @@
 
 #include "vtkCudaImageAnalyticsModule.h"
 
+#include "CudaObject.h"
 #include "vtkType.h"
 #include <vector>
 
@@ -37,10 +38,9 @@ class vtkCudaMaxFlowSegmentationWorker;
 
 #define SQR(X) X*X
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask : public CudaObject
 {
 public:
-
   enum TaskType
   {
     //iteration components - GHMF
@@ -71,23 +71,18 @@ public:
 
     AccumulateLabelsWeighted    //0 - Accum,  1 - Label
   };
-
   TaskType Type;
 
 //------------------------------------------------------------------------------------------//
-
   //Fill in all non-transient information
   vtkCudaMaxFlowSegmentationTask( vtkIdType n1, vtkIdType n2, vtkCudaMaxFlowSegmentationScheduler* parent, int a, int ra, int numToDeath, TaskType t);
-
   ~vtkCudaMaxFlowSegmentationTask();
 
 //------------------------------------------------------------------------------------------//
-
   void Signal();
   bool CanDo();
 
 //------------------------------------------------------------------------------------------//
-
   //manage signals for when this task is finished
   //ie: allow us to signal the next task in the loop as well as
   //    any parent or child node tasks as necessary
@@ -113,6 +108,9 @@ public:
 
   void DecrementActivity();
 
+  virtual void Reinitialize(int withData = 0);
+  virtual void Deinitialize(int withData = 0);
+
 private:
   friend class vtkCudaMaxFlowSegmentationWorker;
   friend class vtkCudaMaxFlowSegmentationScheduler;
@@ -132,8 +130,6 @@ private:
 
   vtkIdType Node1;
   vtkIdType Node2;
-
 };
-
 
 #endif //__VTKCUDAMAXFLOWSEGMENTATIONTASK_H__

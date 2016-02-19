@@ -11,10 +11,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
+#include "CUDA_container2DInExTransferFunctionInformation.h"
 #include "CudaObject.h"
 #include "vtkObject.h"
 
-class CUDA_container2DInExTransferFunctionInformation;
 class vtkCuda2DTransferFunction;
 class vtkImageData;
 
@@ -126,7 +126,7 @@ private:
   vtkImageData*              InputData;    /**< The 3D image data currently being renderered */
   cuda2DInExTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
 
-  vtkCuda2DTransferFunction* function;  /**< The 2 dimensional transfer function used to colour the volume during rendering */
+  vtkCuda2DTransferFunction* Function;  /**< The 2 dimensional transfer function used to colour the volume during rendering */
   vtkCuda2DTransferFunction* inExFunction;  /**< The 2 dimensional transfer function used for inclusion/exclusion logic */
   unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
   int            FunctionSize;  /**< The size of the transfer function which is square */

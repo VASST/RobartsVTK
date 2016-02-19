@@ -1,4 +1,3 @@
-#include "CUDA_containerDualImageTransferFunctionInformation.h"
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h"
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCuda2DTransferFunction.h"
@@ -13,7 +12,7 @@ vtkStandardNewMacro(vtkCudaDualImageTransferFunctionInformationHandler);
 
 vtkCudaDualImageTransferFunctionInformationHandler::vtkCudaDualImageTransferFunctionInformationHandler()
 {
-  this->function = NULL;
+  this->Function = NULL;
   this->keyholeFunction = NULL;
 
   this->FunctionSize = 512;
@@ -45,9 +44,9 @@ vtkCudaDualImageTransferFunctionInformationHandler::~vtkCudaDualImageTransferFun
 {
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if( this->function )
+  if( this->Function )
   {
-    this->function->UnRegister( this );
+    this->Function->UnRegister( this );
   }
   if( this->keyholeFunction )
   {
@@ -82,18 +81,18 @@ void vtkCudaDualImageTransferFunctionInformationHandler::SetInputData(vtkImageDa
 
 void vtkCudaDualImageTransferFunctionInformationHandler::SetTransferFunction(vtkCuda2DTransferFunction* f)
 {
-  if( this->function ==  f )
+  if( this->Function ==  f )
   {
     return;
   }
-  if( this->function )
+  if( this->Function )
   {
-    this->function->UnRegister( this );
+    this->Function->UnRegister( this );
   }
-  this->function = f;
-  if( this->function )
+  this->Function = f;
+  if( this->Function )
   {
-    this->function->Register( this );
+    this->Function->Register( this );
   }
   this->lastModifiedTime = 0;
   this->Modified();
@@ -101,7 +100,7 @@ void vtkCudaDualImageTransferFunctionInformationHandler::SetTransferFunction(vtk
 
 vtkCuda2DTransferFunction* vtkCudaDualImageTransferFunctionInformationHandler::GetTransferFunction()
 {
-  return this->function;
+  return this->Function;
 }
 
 void vtkCudaDualImageTransferFunctionInformationHandler::SetKeyholeTransferFunction(vtkCuda2DTransferFunction* f)
@@ -132,25 +131,25 @@ vtkCuda2DTransferFunction* vtkCudaDualImageTransferFunctionInformationHandler::G
 void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction()
 {
   //if we don't need to update the transfer function, don't
-  if(!this->function || !this->InputData )
+  if(!this->Function || !this->InputData )
   {
     return;
   }
-  if( this->keyholeFunction == 0 && this->function->GetMTime() <= lastModifiedTime)
+  if( this->keyholeFunction == 0 && this->Function->GetMTime() <= lastModifiedTime)
   {
     return;
   }
-  if( this->keyholeFunction != 0 && this->keyholeFunction->GetMTime() <= lastModifiedTime && this->function->GetMTime() <= lastModifiedTime)
+  if( this->keyholeFunction != 0 && this->keyholeFunction->GetMTime() <= lastModifiedTime && this->Function->GetMTime() <= lastModifiedTime)
   {
     return;
   }
   if( this->keyholeFunction )
   {
-    lastModifiedTime = (this->keyholeFunction->GetMTime() > this->function->GetMTime() ) ? this->keyholeFunction->GetMTime() : this->function->GetMTime();
+    lastModifiedTime = (this->keyholeFunction->GetMTime() > this->Function->GetMTime() ) ? this->keyholeFunction->GetMTime() : this->Function->GetMTime();
   }
   else
   {
-    lastModifiedTime = this->function->GetMTime();
+    lastModifiedTime = this->Function->GetMTime();
   }
 
   //tell if we can safely ignore the second function
@@ -170,8 +169,8 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
   double scalarRange[4];
   this->InputData->GetPointData()->GetScalars()->GetRange(scalarRange,0);
   this->InputData->GetPointData()->GetScalars()->GetRange(scalarRange+2,1);
-  double functionRange[] = {  this->function->getMinIntensity(), this->function->getMaxIntensity(),
-                              this->function->getMinGradient(), this->function->getMaxGradient()
+  double functionRange[] = {  this->Function->getMinIntensity(), this->Function->getMaxIntensity(),
+                              this->Function->getMinGradient(), this->Function->getMaxGradient()
                            };
   if( this->TransInfo.useSecondTransferFunction )
   {
@@ -225,9 +224,9 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
   }
 
   //populate the table
-  this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
+  this->Function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
                                    this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
-  this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
+  this->Function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
                                   this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
   if( this->TransInfo.useSecondTransferFunction )
   {
@@ -237,7 +236,7 @@ void vtkCudaDualImageTransferFunctionInformationHandler::UpdateTransferFunction(
                                            this->FunctionSize, this->FunctionSize, minIntensity1, maxIntensity1, 0, minIntensity2, maxIntensity2, 0, 0);
   }
 
-  //map the trasfer functions to textures for fast access
+  //map the transfer functions to textures for fast access
   this->TransInfo.functionSize = this->FunctionSize;
   this->ReserveGPU();
   CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
@@ -290,10 +289,9 @@ void vtkCudaDualImageTransferFunctionInformationHandler::Update()
 #endif
     this->Modified();
   }
-  if(this->function)
+  if(this->Function)
   {
     this->UpdateTransferFunction();
     this->Modified();
   }
 }
-

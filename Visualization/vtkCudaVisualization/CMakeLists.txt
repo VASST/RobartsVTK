@@ -1,42 +1,7 @@
 PROJECT(vtkCudaVisualization)
 
-INCLUDE(module.cmake)
-
 # Add entries to project details
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
-
-IF( MSVC )
-  SET(Module_HDRS 
-    vtkCudaVolumeMapper.h
-    vtkCudaRendererInformationHandler.h
-    vtkCudaVolumeInformationHandler.h
-    vtkCudaOutputImageInformationHandler.h
-    CUDA_containerRendererInformation.h
-    CUDA_containerVolumeInformation.h
-    CUDA_containerOutputImageInformation.h
-    CUDA_vtkCudaVolumeMapper_renderAlgo.h
-    vtkCuda1DVolumeMapper.h
-    vtkCuda1DTransferFunctionInformationHandler.h
-    CUDA_container1DTransferFunctionInformation.h
-    CUDA_vtkCuda1DVolumeMapper_renderAlgo.h
-    vtkCuda2DVolumeMapper.h
-    vtkCuda2DTransferFunctionInformationHandler.h
-    CUDA_container2DTransferFunctionInformation.h
-    CUDA_vtkCuda2DVolumeMapper_renderAlgo.h
-    vtkCuda2DInExLogicVolumeMapper.h
-    CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h
-    CUDA_container2DInExTransferFunctionInformation.h
-    vtkCuda2DInExLogicTransferFunctionInformationHandler.h
-    vtkCudaDualImageVolumeMapper.h
-    vtkCudaDualImageTransferFunctionInformationHandler.h
-    CUDA_containerDualImageTransferFunctionInformation.h
-    CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.h
-    vtkCudaDRRImageVolumeMapper.h
-    CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.h
-    )
-ELSE()
-  SET(Module_HDRS)
-ENDIF()
 
 SET( Module_SRCS
   vtkCudaVolumeMapper.cxx
@@ -56,9 +21,6 @@ SET( Module_SRCS
 
 SET( Module_CUDA_SRCS
   CUDA_vtkCudaVolumeMapper_renderAlgo.cu
-  )
-
-SET( Module_CUDA_HDRS
   CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
@@ -66,24 +28,36 @@ SET( Module_CUDA_HDRS
   CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
   )
 
+IF(BUILD_SHARED_LIBS)
+  SET(GPGPU_BUILD_TYPE SHARED)
+ENDIF()
+
+REMOVE_VTK_DEFINITIONS()
+
+#------------------------------------------------------------------
+# See VTK/Accelerators/Pistons
+vtk_module_impl()
+
+# -----------------------------------------------------------------
+# Generate the cuda sources
+INCLUDE_DIRECTORIES(${${vtk-module}_DEPENDS_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS})
+cuda_compile(Module_CUDA_C_SRCS ${Module_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
+
 SET_SOURCE_FILES_PROPERTIES(
-  CUDA_vtkCuda1DVolumeMapper_renderAlgo.h
-  CUDA_vtkCudaVolumeMapper_renderAlgo.cu
-  CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
-  CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.cuh
-  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh
-  CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
+  ${Module_CUDA_C_SRCS} 
   WRAP_EXCLUDE
   )
+LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
 
 # -----------------------------------------------------------------
 # Build the library
-include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
-cuda_vtk_add_library( ${PROJECT_NAME} ${Module_CUDA_SRCS} ${Module_CUDA_HDRS} ${Module_SRCS} ${Module_HDRS} )
+INCLUDE_DIRECTORIES(${${PROJECT_NAME}_INCLUDE_DIRS})
+vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
 
 # -----------------------------------------------------------------
 # Build the python wrapping if enabled
-IF( VTK_WRAP_PYTHON AND RobartsVTK_CUDA_WRAP_PYTHON )
+IF( VTK_WRAP_PYTHON )
   vtk_module_load(${PROJECT_NAME})
   vtk_module_headers_load(${PROJECT_NAME})
   vtk_include_recurse(${PROJECT_NAME})

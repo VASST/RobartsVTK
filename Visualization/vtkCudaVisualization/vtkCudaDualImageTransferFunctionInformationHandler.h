@@ -11,10 +11,10 @@
 
 #include "vtkCudaVisualizationModule.h"
 
-#include "vtkObject.h"
+#include "CUDA_containerDualImageTransferFunctionInformation.h"
 #include "CudaObject.h"
+#include "vtkObject.h"
 
-class CUDA_containerDualImageTransferFunctionInformation;
 class vtkCuda2DTransferFunction;
 class vtkImageData;
 
@@ -122,7 +122,7 @@ private:
   vtkImageData*            InputData;    /**< The 3D image data currently being renderered */
   cudaDualImageTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
 
-  vtkCuda2DTransferFunction* function;    /**< The 2 dimensional transfer function used to colour the volume during rendering outside the keyhole */
+  vtkCuda2DTransferFunction* Function;    /**< The 2 dimensional transfer function used to colour the volume during rendering outside the keyhole */
   vtkCuda2DTransferFunction* keyholeFunction;  /**< The 2 dimensional transfer function used to colour the volume during rendering inside the keyhole*/
   unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
   int            FunctionSize;  /**< The size of the transfer function which is square */

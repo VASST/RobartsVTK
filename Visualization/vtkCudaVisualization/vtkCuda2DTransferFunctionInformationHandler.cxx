@@ -11,13 +11,13 @@ vtkStandardNewMacro(vtkCuda2DTransferFunctionInformationHandler);
 
 vtkCuda2DTransferFunctionInformationHandler::vtkCuda2DTransferFunctionInformationHandler()
 {
-  this->function = NULL;
-  this->keyholeFunction = NULL;
+  this->Function = NULL;
+  this->KeyholeFunction = NULL;
 
   this->FunctionSize = 512;
   this->LowGradient = 0;
   this->HighGradient = 10;
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
 
   this->TransInfo.alphaTransferArray2D = 0;
   this->TransInfo.ambientTransferArray2D = 0;
@@ -45,13 +45,13 @@ vtkCuda2DTransferFunctionInformationHandler::~vtkCuda2DTransferFunctionInformati
 {
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if(this->function)
+  if(this->Function)
   {
-    this->function->UnRegister(this);
+    this->Function->UnRegister(this);
   }
-  if(this->keyholeFunction)
+  if(this->KeyholeFunction)
   {
-    this->keyholeFunction->UnRegister(this);
+    this->KeyholeFunction->UnRegister(this);
   }
 }
 
@@ -63,7 +63,7 @@ void vtkCuda2DTransferFunctionInformationHandler::Deinitialize(int withData)
 
 void vtkCuda2DTransferFunctionInformationHandler::Reinitialize(int withData)
 {
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->UpdateTransferFunction();
 }
 
@@ -80,83 +80,93 @@ void vtkCuda2DTransferFunctionInformationHandler::SetInputData(vtkImageData* inp
   }
 }
 
+vtkImageData* vtkCuda2DTransferFunctionInformationHandler::GetInputData() const
+{
+  return InputData;
+}
+
+const cuda2DTransferFunctionInformation& vtkCuda2DTransferFunctionInformationHandler::GetTransferFunctionInfo() const
+{
+  return (this->TransInfo);
+}
+
 void vtkCuda2DTransferFunctionInformationHandler::SetTransferFunction(vtkCuda2DTransferFunction* f)
 {
-  if( this->function ==  f )
+  if( this->Function ==  f )
   {
     return;
   }
-  if( this->function )
+  if( this->Function )
   {
-    this->function->UnRegister( this );
+    this->Function->UnRegister( this );
   }
-  this->function = f;
-  if( this->function )
+  this->Function = f;
+  if( this->Function )
   {
-    this->function->Register( this );
+    this->Function->Register( this );
   }
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->Modified();
 }
 
 vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetTransferFunction()
 {
-  return this->function;
+  return this->Function;
 }
 
 void vtkCuda2DTransferFunctionInformationHandler::SetKeyholeTransferFunction(vtkCuda2DTransferFunction* f)
 {
   this->TransInfo.useSecondTransferFunction = ( f != 0 );
-  if( this->keyholeFunction ==  f )
+  if( this->KeyholeFunction ==  f )
   {
     return;
   }
-  if( this->keyholeFunction )
+  if( this->KeyholeFunction )
   {
-    this->keyholeFunction->UnRegister( this );
+    this->KeyholeFunction->UnRegister( this );
   }
-  this->keyholeFunction = f;
-  if( this->keyholeFunction )
+  this->KeyholeFunction = f;
+  if( this->KeyholeFunction )
   {
-    this->keyholeFunction->Register( this );
+    this->KeyholeFunction->Register( this );
   }
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->Modified();
 }
 
 vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetKeyholeTransferFunction()
 {
-  return this->keyholeFunction;
+  return this->KeyholeFunction;
 }
 
 void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
 {
   //if we don't need to update the transfer function, don't
-  if(!this->function || !this->InputData )
+  if(!this->Function || !this->InputData )
   {
     return;
   }
-  if( this->keyholeFunction == 0 && this->function->GetMTime() <= lastModifiedTime)
+  if( this->KeyholeFunction == 0 && this->Function->GetMTime() <= LastModifiedTime)
   {
     return;
   }
-  if( this->keyholeFunction != 0 && this->keyholeFunction->GetMTime() <= lastModifiedTime && this->function->GetMTime() <= lastModifiedTime)
+  if( this->KeyholeFunction != 0 && this->KeyholeFunction->GetMTime() <= LastModifiedTime && this->Function->GetMTime() <= LastModifiedTime)
   {
     return;
   }
-  if( this->keyholeFunction )
+  if( this->KeyholeFunction )
   {
-    lastModifiedTime = (this->keyholeFunction->GetMTime() > this->function->GetMTime() ) ? this->keyholeFunction->GetMTime() : this->function->GetMTime();
+    LastModifiedTime = (this->KeyholeFunction->GetMTime() > this->Function->GetMTime() ) ? this->KeyholeFunction->GetMTime() : this->Function->GetMTime();
   }
   else
   {
-    lastModifiedTime = this->function->GetMTime();
+    LastModifiedTime = this->Function->GetMTime();
   }
 
   //tell if we can safely ignore the second function
-  if( this->keyholeFunction )
+  if( this->KeyholeFunction )
   {
-    if( this->keyholeFunction->GetNumberOfFunctionObjects() == 0 )
+    if( this->KeyholeFunction->GetNumberOfFunctionObjects() == 0 )
     {
       this->TransInfo.useSecondTransferFunction = false;
     }
@@ -166,15 +176,14 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
     }
   }
 
-
   //get the ranges from the transfer function
-  double functionRange[] = {  this->function->getMinIntensity(), this->function->getMaxIntensity(),
-                              this->function->getMinGradient(), this->function->getMaxGradient()
+  double functionRange[] = {  this->Function->getMinIntensity(), this->Function->getMaxIntensity(),
+                              this->Function->getMinGradient(), this->Function->getMaxGradient()
                            };
   if( this->TransInfo.useSecondTransferFunction )
   {
-    double kfunctionRange[] = {  this->keyholeFunction->getMinIntensity(), this->keyholeFunction->getMaxIntensity(),
-                                 this->keyholeFunction->getMinGradient(), this->keyholeFunction->getMaxGradient()
+    double kfunctionRange[] = {  this->KeyholeFunction->getMinIntensity(), this->KeyholeFunction->getMaxIntensity(),
+                                 this->KeyholeFunction->getMinGradient(), this->KeyholeFunction->getMaxGradient()
                               };
     functionRange[0] = (kfunctionRange[0] < functionRange[0] ) ? kfunctionRange[0] : functionRange[0];
     functionRange[1] = (kfunctionRange[1] > functionRange[1] ) ? kfunctionRange[1] : functionRange[1];
@@ -230,19 +239,19 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
   }
 
   //populate the table
-  this->function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
+  this->Function->GetTransferTable(LocalColorRedTransferFunction, LocalColorGreenTransferFunction, LocalColorBlueTransferFunction, LocalAlphaTransferFunction,
                                    this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
-  this->function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
+  this->Function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
                                   this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
   if( this->TransInfo.useSecondTransferFunction )
   {
-    this->keyholeFunction->GetTransferTable(KLocalColorRedTransferFunction, KLocalColorGreenTransferFunction, KLocalColorBlueTransferFunction, KLocalAlphaTransferFunction,
+    this->KeyholeFunction->GetTransferTable(KLocalColorRedTransferFunction, KLocalColorGreenTransferFunction, KLocalColorBlueTransferFunction, KLocalAlphaTransferFunction,
                                             this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
-    this->keyholeFunction->GetShadingTable(KLocalAmbientTransferFunction, KLocalDiffuseTransferFunction, KLocalSpecularTransferFunction, KLocalSpecularPowerTransferFunction,
+    this->KeyholeFunction->GetShadingTable(KLocalAmbientTransferFunction, KLocalDiffuseTransferFunction, KLocalSpecularTransferFunction, KLocalSpecularPowerTransferFunction,
                                            this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
   }
 
-  //map the trasfer functions to textures for fast access
+  //map the transfer functions to textures for fast access
   this->TransInfo.functionSize = this->FunctionSize;
   this->ReserveGPU();
   CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(this->TransInfo,
@@ -295,10 +304,9 @@ void vtkCuda2DTransferFunctionInformationHandler::Update()
 #endif
     this->Modified();
   }
-  if(this->function)
+  if(this->Function)
   {
     this->UpdateTransferFunction();
     this->Modified();
   }
 }
-
