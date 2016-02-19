@@ -1,7 +1,5 @@
 PROJECT(RobartsVTK)
 
-# todo python wrapping
-# todo module setup for cuda entries
 # todo module export doesn't have dllexport/import - build_shared_libs?
 
 # CMake version requirements
@@ -247,19 +245,6 @@ IF(RobartsVTK_USE_ITK)
 ENDIF()
 
 #-----------------------------------------------------------------------------
-# Look for a LibXml2 (optional)
-#-----------------------------------------------------------------------------
-OPTION(RobartsVTK_USE_LIBXML2 "Use LibXml2 in RobartsVTK" ON)
-IF(RobartsVTK_USE_LIBXML2)
-  FIND_PACKAGE(LibXml2 QUIET)
-  IF(LIBXML2_FOUND)
-    INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-    LINK_LIBRARIES(${LIBXML2_LIBRARIES})
-    ADD_DEFINITIONS(${LIBXML2_DEFINITIONS})
-  ENDIF()
-ENDIF()
-
-#-----------------------------------------------------------------------------
 # Choose static or shared libraries.
 #-----------------------------------------------------------------------------
 OPTION(BUILD_SHARED_LIBS "Build shared libraries." OFF)
@@ -310,36 +295,43 @@ SET(RobartsVTK_INCLUDE_DIRS CACHE INTERNAL "")
 #-----------------------------------------------------------------------------
 OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
 IF(RobartsVTK_USE_PLUS)
-  # PlusLib has been built already
+    # PlusLib has been built already
   FIND_PACKAGE(PlusLib REQUIRED NO_MODULE PATHS ${PlusLib_DIR} NO_DEFAULT_PATH)
   
-  IF(ITK_FOUND)
+  IF(PlusLib_FOUND)
     MESSAGE(STATUS "Using PlusLib available at: ${PlusLib_DIR}")
-    
-    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
-    IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
-      FOREACH(lib ${PlusLib_LIBRARIES})
-        GET_TARGET_PROPERTY(PlusLib_DEBUG_FILE ${lib} IMPORTED_LOCATION_DEBUG)
-        GET_TARGET_PROPERTY(PlusLib_RELEASE_FILE ${lib} IMPORTED_LOCATION_RELEASE)
 
-        IF( EXISTS ${PlusLib_DEBUG_FILE} )
-          FILE(COPY ${PlusLib_DEBUG_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release)
-        ENDIF()
-        IF( EXISTS ${PlusLib_RELEASE_FILE} )
-          FILE(COPY ${PlusLib_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug)
-        ENDIF()
-      ENDFOREACH()
-    ELSE()
-      FILE(COPY 
-        ${PlusLib_LIBRARY_DIRS}/
-        DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}
-        FILES_MATCHING REGEX .*${CMAKE_SHARED_LIBRARY_SUFFIX}
-        )
+  # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+  FOREACH(lib ${PlusLib_LIBRARIES})
+    IF(NOT TARGET ${lib})
+      continue()
     ENDIF()
-    SET (RobartsVTK_PlusLib_DIR "${PlusLib_DIR}" CACHE INTERNAL "Path to store PlusLib binaries")
 
-    INCLUDE(${PlusLib_USE_FILE})
-  ENDIF()
+    GET_TARGET_PROPERTY(PlusLib_DEBUG_FILE ${lib} IMPORTED_LOCATION_DEBUG)
+    GET_TARGET_PROPERTY(PlusLib_RELEASE_FILE ${lib} IMPORTED_LOCATION_RELEASE)
+
+    IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
+      IF( EXISTS ${PlusLib_RELEASE_FILE} )
+        FILE(COPY ${PlusLib_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release)
+      ENDIF()
+      IF( EXISTS ${PlusLib_DEBUG_FILE} )
+        FILE(COPY ${PlusLib_DEBUG_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug)
+      ENDIF()
+    ELSE()
+      IF( PlusLib_DEBUG_FILE EQUAL PlusLib_RELEASE_FILE AND EXISTS ${PlusLib_RELEASE_FILE})
+        FILE(COPY ${PlusLib_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+      ELSE()
+        IF( EXISTS ${PlusLib_RELEASE_FILE} )
+          FILE(COPY ${PlusLib_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+        ENDIF()
+        IF( EXISTS ${PlusLib_DEBUG_FILE} )
+          FILE(COPY ${PlusLib_DEBUG_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+        ENDIF()
+      ENDIF()
+    ENDIF()
+  ENDFOREACH()
+  
+  INCLUDE(${PlusLIB_USE_FILE})
 ENDIF()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
