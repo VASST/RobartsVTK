@@ -12,10 +12,7 @@ build:
 # Building with Visual Studio 11 2012 x64
 build-visual-studio-x64:
   script:
-    - mkdir build
-    - cd build
-    - cmake -G "Visual Studio 11 Win64" -D CMAKE_BUILD_TYPE=Release ..
-    - cmake --build .
+    - x64_vs2012_robartsVTKlib_release.bat
   tags:
     - windows
     - cmake
