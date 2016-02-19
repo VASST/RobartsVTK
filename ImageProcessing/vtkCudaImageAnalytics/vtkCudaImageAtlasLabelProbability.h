@@ -30,6 +30,7 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 
 #include "CudaObject.h"
 #include "vtkImageAlgorithm.h"
+#include <float.h>
 
 class vtkDataObject;
 

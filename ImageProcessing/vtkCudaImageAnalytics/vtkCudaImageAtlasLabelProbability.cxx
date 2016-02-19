@@ -31,7 +31,6 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <vtkVersion.h> // For VTK_MAJOR_VERSION
