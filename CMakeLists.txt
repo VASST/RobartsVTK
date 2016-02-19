@@ -18,6 +18,49 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 #-----------------------------------------------------------------------------
 SET (RobartsVTK_EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
+IF(NOT VTK_INSTALL_ARCHIVE_DIR)
+  SET(VTK_INSTALL_ARCHIVE_DIR lib)
+ENDIF()
+IF(NOT VTK_INSTALL_PACKAGE_DIR)
+  SET(VTK_INSTALL_PACKAGE_DIR "lib/cmake/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}")
+ENDIF()
+if(NOT VTK_INSTALL_INCLUDE_DIR)
+  set(VTK_INSTALL_INCLUDE_DIR include/RobartsVTK-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION})
+endif()
+if(NOT VTK_INSTALL_DATA_DIR)
+  set(VTK_INSTALL_DATA_DIR share/RobartsVTK-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION})
+endif()
+if(NOT VTK_INSTALL_DOC_DIR)
+  set(VTK_INSTALL_DOC_DIR share/doc/RobartsVTK-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION})
+endif()
+if(NOT VTK_INSTALL_EXPORT_NAME)
+  set(VTK_INSTALL_EXPORT_NAME RobartsVTKTargets)
+endif()
+if(NOT VTK_MODULES_DIR)
+  set(VTK_MODULES_DIR "${RobartsVTK_BINARY_DIR}/${VTK_INSTALL_PACKAGE_DIR}/Modules")
+endif()
+
+OPTION(RobartsVTK_WRAP_PYTHON "Wrap the Robarts classes in Python." OFF)
+IF( RobartsVTK_WRAP_PYTHON )
+  # Export location of python module dirs in install and build tree for every vtkpython module to use
+  # As long as those modules depend on vtkpython, they can retrieve and use these
+  IF(NOT VTK_INSTALL_PYTHON_MODULE_DIR)
+    SET(VTK_INSTALL_PYTHON_MODULE_DIR
+        "${CMAKE_INSTALL_PREFIX}/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages"
+        CACHE
+        PATH "Directory where python modules will be installed" FORCE)
+    MARK_AS_ADVANCED(VTK_INSTALL_PYTHON_MODULE_DIR)
+  ENDIF()
+
+  IF(NOT VTK_BUILD_PYTHON_MODULE_DIR)
+    SET(VTK_BUILD_PYTHON_MODULE_DIR
+        "${RobartsVTK_BINARY_DIR}/Wrapping/Python"
+        CACHE
+        PATH "Directory where python modules will be built" FORCE)
+    MARK_AS_ADVANCED(VTK_BUILD_PYTHON_MODULE_DIR)
+  ENDIF()
+ENDIF()
+
 #-----------------------------------------------------------------------------
 # Add configure file to included directories
 #-----------------------------------------------------------------------------
@@ -155,18 +198,11 @@ IF (RobartsVTK_USE_QT)
 ENDIF ()
 
 #-----------------------------------------------------------------------------
-# VTK configuration
-IF(NOT VTK_INSTALL_ARCHIVE_DIR)
-  SET(VTK_INSTALL_ARCHIVE_DIR lib)
-ENDIF()
-IF(NOT VTK_INSTALL_PACKAGE_DIR)
-  SET(VTK_INSTALL_PACKAGE_DIR "lib/cmake/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}")
-ENDIF()
-
+# VTK python configuration
 SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${VTK_CMAKE_DIR})
 INCLUDE(vtkExternalModuleMacros)
 
-IF( VTK_FOUND AND VTK_WRAP_PYTHON )
+IF( RobartsVTK_WRAP_PYTHON AND VTK_WRAP_PYTHON )
   # Get the include directories for the module and all its dependencies.
   macro(vtk_include_recurse module)
     _vtk_module_config_recurse("${module}_PYTHON" ${module})
@@ -175,24 +211,6 @@ IF( VTK_FOUND AND VTK_WRAP_PYTHON )
 
   INCLUDE(vtkModuleMacros)
   INCLUDE(vtkPythonWrapping)
-  
-  # Export location of python module dirs in install and build tree for every vtkpython module to use
-  # As long as those modules depend on vtkpython, they can retrieve and use these
-  IF(NOT VTK_INSTALL_PYTHON_MODULE_DIR)
-    SET(VTK_INSTALL_PYTHON_MODULE_DIR
-        "${CMAKE_INSTALL_PREFIX}/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages"
-        CACHE
-        PATH "Directory where python modules will be installed" FORCE)
-    MARK_AS_ADVANCED(VTK_INSTALL_PYTHON_MODULE_DIR)
-  ENDIF()
-
-  IF(NOT VTK_BUILD_PYTHON_MODULE_DIR)
-    SET(VTK_BUILD_PYTHON_MODULE_DIR
-        "${RobartsVTK_BINARY_DIR}/Wrapping/Python"
-        CACHE
-        PATH "Directory where python modules will be built" FORCE)
-    MARK_AS_ADVANCED(VTK_BUILD_PYTHON_MODULE_DIR)
-  ENDIF()
 ENDIF()
 
 #-----------------------------------------------------------------------------

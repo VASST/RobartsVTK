@@ -1297,18 +1297,17 @@ void vtkImageHackedPlaneWidget::ManageTextDisplay()
 
   if ( this->State == vtkImageHackedPlaneWidget::WindowLevelling )
   {
-    sprintf_s(this->TextBuff, 128, "Window, Level: ( %g, %g )", this->CurrentWindow, this->CurrentLevel );
+    sprintf(this->TextBuff, "Window, Level: ( %g, %g )", this->CurrentWindow, this->CurrentLevel );
   }
   else if ( this->State == vtkImageHackedPlaneWidget::Cursoring )
   {
     if( this->CurrentImageValue == VTK_DOUBLE_MAX )
     {
-      sprintf_s(this->TextBuff, 128, "Off Image");
+      sprintf(this->TextBuff, "Off Image");
     }
     else
     {
-      sprintf_s(this->TextBuff,
-                128,
+      sprintf(this->TextBuff,
                 "( %g, %g, %g ): %g",
                 this->CurrentCursorPosition[0],
                 this->CurrentCursorPosition[1],

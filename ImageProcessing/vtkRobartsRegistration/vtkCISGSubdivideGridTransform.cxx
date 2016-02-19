@@ -18,7 +18,7 @@ This software is NOT free. Copyright: Thomas Hartkens
 
 #if( VTK_MAJOR_VERSION >= 6 )
 #include "vtkExecutive.h"
-#include "vtkinformation.h"
+#include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #endif
 //----------------------------------------------------------------------------
