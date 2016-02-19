@@ -12,7 +12,7 @@ build:
 # Building with Visual Studio 11 2012 x64
 build-visual-studio-x64:
   script:
-    - x64_vs2012_robartsVTKlib_release.bat
+    - call x64_vs2012_robartsVTKlib_release.bat
   tags:
     - windows
     - cmake
