@@ -4,7 +4,10 @@ RobartsVTK is a software package for image processing and visualization.
 
 # Download RobartsVTK
 
-For now, RobartsVTK must be built. 
+Using a [git](https://en.wikipedia.org/wiki/Git_(software)) client, clone the repo link above.
+* Windows? Try [TortoiseGit](https://tortoisegit.org/download/)
+* Ubuntu? Try [SmartGit](http://www.syntevo.com/smartgit/) or [git-cola](http://git-cola.github.io/downloads.html)
+* Mac? Try [GitHub](https://desktop.github.com/)
 
 # Building RobartsVTK
 For convenient building, please see the RobartsVTK [super build](http://git.imaging.robarts.ca/repos/RobartsVTKBuild) project.
@@ -37,11 +40,11 @@ The following variables should be set when configuring RobartsVTK
         * PYTHON_INCLUDE_DIR:PATH = `<path/to/python-install>/include`
         * PYTHON_LIBRARY:PATH = `<path/to/python-install>/libs/python27.lib`
 
-## Continuous Integration
+# Continuous Integration
 Continuous integration is enabled for this project and has workers running on happy.imaging.robarts.ca (Ubuntu 15.04) and doc.imaging.robarts.ca (Win64, VS2012).
 
-## License
+# License
 Please see the [license](LICENSE.md) file.
 
-## Acknowledgments
+# Acknowledgments
 RobartsVTK would like to thank the creator and maintainers of [GitLab](https://about.gitlab.com/).
