@@ -186,7 +186,7 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
 
   if (numLabelMaps == 0)
   {
-    vtkErrorMacro(<< "At least one label map is required." );
+    vtkErrorMacro( "At least one label map is required." );
     return -1;
   }
 
@@ -205,7 +205,7 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
   // this filter expects the output datatype to be float.
   if (outData->GetScalarType() != VTK_FLOAT)
   {
-    vtkErrorMacro(<< "Output data type must be float." );
+    vtkErrorMacro( "Output data type must be float." );
     return -1;
   }
 
@@ -223,12 +223,12 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
     }
     if (inData[i]->GetScalarType() != LabelType)
     {
-      vtkErrorMacro(<< "Label maps must be of same type." );
+      vtkErrorMacro( "Label maps must be of same type." );
       return -1;
     }
     if ( inData[i]->GetNumberOfScalarComponents() != 1 )
     {
-      vtkErrorMacro(<< "Label map can only have 1 component." );
+      vtkErrorMacro( "Label map can only have 1 component." );
       return -1;
 
     }
@@ -257,7 +257,7 @@ int vtkCudaImageAtlasLabelProbability::RequestData(
       vtkTemplateMacro(
         CUDA_IncrementInformation((VTK_TT *) inData[i]->GetScalarPointer(), (VTK_TT) LabelID, agreementGPU, VolumeSize,this->GetStream()));
     default:
-      vtkErrorMacro(<< "Execute: Unknown ScalarType");
+      vtkErrorMacro( "Execute: Unknown ScalarType");
       return -1;
     }
   }

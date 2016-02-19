@@ -218,7 +218,7 @@ void vtkImage3DNoiseSource::ExecuteData(vtkDataObject *output)
     vtkTemplateMacro(vtkImage3DNoiseExecute(this, data, (VTK_TT *)(outPtr)));
 #endif
   default:
-    vtkErrorMacro(<< "Execute: Unknown output ScalarType");
+    vtkErrorMacro( "Execute: Unknown output ScalarType");
   }
 }
 

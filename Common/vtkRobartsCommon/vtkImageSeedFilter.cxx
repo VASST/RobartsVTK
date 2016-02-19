@@ -20,7 +20,7 @@ void vtkImageSeedFilter::AddPointInVoxelCoordinates(double point[3], int compone
 {
   if(component < 1 )
   {
-    vtkErrorMacro(<<"Invalid component number");
+    vtkErrorMacro("Invalid component number");
     return;
   }
 
@@ -34,7 +34,7 @@ void vtkImageSeedFilter::AddPointInVolumeCoordinates(double point[3], int compon
 {
   if(component < 1 )
   {
-    vtkErrorMacro(<<"Invalid component number");
+    vtkErrorMacro("Invalid component number");
     return;
   }
 

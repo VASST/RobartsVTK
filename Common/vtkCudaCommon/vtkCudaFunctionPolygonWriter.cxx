@@ -26,7 +26,7 @@ void vtkCudaFunctionPolygonWriter::Write()
 {
   if( !this->fileNameSet )
   {
-    vtkErrorMacro(<<"Must set file name before writing");
+    vtkErrorMacro("Must set file name before writing");
     return;
   }
 

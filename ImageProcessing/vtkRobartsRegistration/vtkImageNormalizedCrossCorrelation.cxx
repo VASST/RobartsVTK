@@ -221,23 +221,23 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   void *inPtr1;
   void *inPtr2;
 
-  vtkDebugMacro(<< "Execute: inData = " << inData);
+  vtkDebugMacro( "Execute: inData = " << inData);
 
   if (inData[0] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 0 << " must be specified.");
+    vtkErrorMacro( "Input " << 0 << " must be specified.");
     return;
   }
 
   if (inData[1] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 1 << " must be specified.");
+    vtkErrorMacro( "Input " << 1 << " must be specified.");
     return;
   }
 
   if ((inData[0]->GetScalarType() != inData[1]->GetScalarType()))
   {
-    vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
+    vtkErrorMacro( "Execute: Inputs must be of the same ScalarType");
     return;
   }
 
@@ -247,7 +247,7 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
   // this filter expects that inputs that have the same number of components
   if ((inData[0]->GetNumberOfScalarComponents() != inData[1]->GetNumberOfScalarComponents()))
   {
-    vtkErrorMacro(<< "Execute: input1 NumberOfScalarComponents, "
+    vtkErrorMacro( "Execute: input1 NumberOfScalarComponents, "
                   << inData[0]->GetNumberOfScalarComponents()
                   << ", must match input2 NumberOfScalarComponents "
                   << inData[1]->GetNumberOfScalarComponents());
@@ -268,7 +268,7 @@ void vtkImageNormalizedCrossCorrelation::ThreadedExecute(vtkImageData **inData,
                      outExt, id));
 #endif
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
     return;
   }
 }
@@ -293,7 +293,7 @@ double vtkImageNormalizedCrossCorrelation::GetResult()
 
   if (result < 0)
   {
-    vtkErrorMacro(<< "GetResult: result < 0");
+    vtkErrorMacro( "GetResult: result < 0");
   }
 
   return result;

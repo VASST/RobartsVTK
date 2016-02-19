@@ -277,13 +277,13 @@ void vtkImageHackedPlaneWidget::SetEnabled(int enabling)
 
   if ( ! this->Interactor )
   {
-    vtkErrorMacro(<<"The interactor must be set prior to enabling/disabling widget");
+    vtkErrorMacro("The interactor must be set prior to enabling/disabling widget");
     return;
   }
 
   if ( enabling ) //----------------------------------------------------------
   {
-    vtkDebugMacro(<<"Enabling plane widget");
+    vtkDebugMacro("Enabling plane widget");
 
     if ( this->Enabled ) //already enabled, just return
     {
@@ -340,7 +340,7 @@ void vtkImageHackedPlaneWidget::SetEnabled(int enabling)
 
   else //disabling----------------------------------------------------------
   {
-    vtkDebugMacro(<<"Disabling plane widget");
+    vtkDebugMacro("Disabling plane widget");
 
     if ( ! this->Enabled ) //already disabled, just return
     {
@@ -496,7 +496,7 @@ void vtkImageHackedPlaneWidget::SetInteraction(int interact)
   }
   else
   {
-    vtkGenericWarningMacro(<<"set interactor and Enabled before changing interaction...");
+    vtkGenericWarningMacro("set interactor and Enabled before changing interaction...");
   }
 }
 
@@ -1425,7 +1425,7 @@ void vtkImageHackedPlaneWidget::SetPlaneOrientation(int i)
   this->ImageData = vtkImageData::SafeDownCast(this->ResliceR->GetInput());
   if ( !this->ImageData )
   {
-    vtkErrorMacro(<<"SetInput() before setting plane orientation.");
+    vtkErrorMacro("SetInput() before setting plane orientation.");
     return;
   }
 
@@ -1849,7 +1849,7 @@ void vtkImageHackedPlaneWidget::UpdatePlane()
   // * if spacingX is 0, things will blow up.
   if (realExtentX > (VTK_INT_MAX >> 1))
   {
-    vtkErrorMacro(<<"Invalid X extent: " << realExtentX);
+    vtkErrorMacro("Invalid X extent: " << realExtentX);
     extentX = 0;
   }
   else
@@ -1867,7 +1867,7 @@ void vtkImageHackedPlaneWidget::UpdatePlane()
   int extentY;
   if (realExtentY > (VTK_INT_MAX >> 1))
   {
-    vtkErrorMacro(<<"Invalid Y extent: " << realExtentY);
+    vtkErrorMacro("Invalid Y extent: " << realExtentY);
     extentY = 0;
   }
   else

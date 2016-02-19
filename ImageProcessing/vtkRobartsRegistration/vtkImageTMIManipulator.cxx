@@ -190,7 +190,7 @@ void vtkImageTMIManipulator::SetExtent(int ext[6])
 
   if ( this->qValue == 1.0 )
   {
-    vtkErrorMacro(<< "qValue cannot be 1.0");
+    vtkErrorMacro( "qValue cannot be 1.0");
   }
 
   this->inc2[0] = this->inc[1] - this->inc[0] * (ext[1] - ext[0] + 1);
@@ -203,7 +203,7 @@ void vtkImageTMIManipulator::SetExtent(int ext[6])
   this->count = (ext[1]-ext[0]+1) * (ext[3]-ext[2]+1) * (ext[5]-ext[4]+1);
   if (this->count == 0)
   {
-    vtkErrorMacro(<< "GetResult: No data to work with.");
+    vtkErrorMacro( "GetResult: No data to work with.");
   }
 
   memcpy(this->Extent, ext, sizeof(int)*6);
@@ -220,7 +220,7 @@ void vtkImageTMIManipulator::SetExtent(int ext[6])
                      (VTK_TT *)(inPtr), this->inc2, this->count));
 #endif
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
   }
 
 }
@@ -400,19 +400,19 @@ double vtkImageTMIManipulator::GetResult()
   // Check inputs.
   if (this->inData[0] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 0 << " must be specified.");
+    vtkErrorMacro( "Input " << 0 << " must be specified.");
   }
   if (this->inData[1] == NULL)
   {
-    vtkErrorMacro(<< "Input " << 1 << " must be specified.");
+    vtkErrorMacro( "Input " << 1 << " must be specified.");
   }
   if ((this->inData[0]->GetScalarType() != this->inData[1]->GetScalarType()))
   {
-    vtkErrorMacro(<< "Execute: Inputs must be of the same ScalarType");
+    vtkErrorMacro( "Execute: Inputs must be of the same ScalarType");
   }
   if ( this->qValue == 1.0 )
   {
-    vtkErrorMacro(<< "qValue cannot be 1.0");
+    vtkErrorMacro( "qValue cannot be 1.0");
   }
 
   // Zero the histograms and result.
@@ -429,7 +429,7 @@ double vtkImageTMIManipulator::GetResult()
                      this->loc000, this->loc111, this->count)
                      );
   default:
-    vtkErrorMacro(<< "Execute: Unknown ScalarType");
+    vtkErrorMacro( "Execute: Unknown ScalarType");
   }
   return this->Result;
 

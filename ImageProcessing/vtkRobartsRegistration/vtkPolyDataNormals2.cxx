@@ -85,7 +85,7 @@ void vtkPolyDataNormals2::Execute()
   vtkPolyData* output = vtkPolyData::SafeDownCast(this->GetOutputDataObject(0));
 #endif
 
-  vtkDebugMacro(<<"Generating surface normals");
+  vtkDebugMacro("Generating surface normals");
 
   if ( input==NULL )
     {
@@ -96,7 +96,7 @@ void vtkPolyDataNormals2::Execute()
   numStrips=input->GetNumberOfStrips();
   if ( (numPts=input->GetNumberOfPoints()) < 1 )
     {
-    vtkErrorMacro(<<"No data to generate normals for!");
+    vtkErrorMacro("No data to generate normals for!");
     return;
     }
 
@@ -276,7 +276,7 @@ void vtkPolyDataNormals2::Execute()
       } // Still some points in the queue
     this->Wave->Delete();
     this->Wave2->Delete();
-    vtkDebugMacro(<<"Reversed ordering of " << this->NumFlips << " polygons");
+    vtkDebugMacro("Reversed ordering of " << this->NumFlips << " polygons");
     } // automatically orient normals
   else
     {
@@ -306,7 +306,7 @@ void vtkPolyDataNormals2::Execute()
 
       this->Wave->Delete();
       this->Wave2->Delete();
-      vtkDebugMacro(<<"Reversed ordering of " << this->NumFlips << " polygons");
+      vtkDebugMacro("Reversed ordering of " << this->NumFlips << " polygons");
       }//Consistent ordering
     } // don't automatically orient normals
 
@@ -361,7 +361,7 @@ void vtkPolyDataNormals2::Execute()
 
     numNewPts = this->Map->GetNumberOfIds();
 
-    vtkDebugMacro(<<"Created " << numNewPts-numPts << " new points");
+    vtkDebugMacro("Created " << numNewPts-numPts << " new points");
 
     //  Now need to map attributes of old points into new points.
     //

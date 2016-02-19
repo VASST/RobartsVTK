@@ -25,7 +25,7 @@ vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::GetOutput( unsigned int n 
 {
   if( n >= this->objects.size() || n < 0 )
   {
-    vtkErrorMacro(<<"Invalid index");
+    vtkErrorMacro("Invalid index");
     return 0;
   }
   for( std::list<vtkCudaFunctionPolygon*>::iterator it = this->objects.begin(); it != this->objects.end(); it++)
@@ -36,7 +36,7 @@ vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::GetOutput( unsigned int n 
     }
     n--;
   }
-  vtkErrorMacro(<<"Invalid index");
+  vtkErrorMacro("Invalid index");
   return 0;
 }
 
@@ -49,7 +49,7 @@ void vtkCudaFunctionPolygonReader::Read()
 {
   if( !this->fileNameSet )
   {
-    vtkErrorMacro(<<"Must set file name before reading");
+    vtkErrorMacro("Must set file name before reading");
     return;
   }
 

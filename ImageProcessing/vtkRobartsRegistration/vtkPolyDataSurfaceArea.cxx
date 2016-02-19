@@ -51,7 +51,7 @@ void vtkPolyDataSurfaceArea::SetInput(vtkPolyData *input)
 
   if (this->NumCells < 1 || this->inData->GetNumberOfPoints() < 1)
     {
-      vtkErrorMacro(<<"No data to measure...!");
+      vtkErrorMacro("No data to measure...!");
     }
 }
 

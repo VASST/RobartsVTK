@@ -663,7 +663,7 @@ void vtkCompactSupportRBFTransform::SetBasis(int basis)
       this->BasisDerivative = &vtkRBFDRCS3D4C;
       break;
     default:
-      vtkErrorMacro(<< "SetBasisFunction: Unrecognized basis function");
+      vtkErrorMacro( "SetBasisFunction: Unrecognized basis function");
       break;
     }
 

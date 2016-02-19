@@ -14,7 +14,7 @@ void vtkImageBasicAffinityFilter::ThreadedExecute(vtkImageData *inData, vtkImage
     vtkTemplateMacro(
       ThreadedExecuteCasted<VTK_TT>(inData, outData, threadId, numThreads));
     default:
-      if(threadId == 0) vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+      if(threadId == 0) vtkErrorMacro( "Execute: Unknown input ScalarType");
       return;
   }
 

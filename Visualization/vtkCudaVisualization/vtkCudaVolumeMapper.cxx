@@ -364,7 +364,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
   //pass the actual rendering process to the subclass
   if( erroredOut ){
-    vtkErrorMacro(<< "Error propogation in rendering - cause error flag previously set - MARKER 3");
+    vtkErrorMacro( "Error propogation in rendering - cause error flag previously set - MARKER 3");
   }else{
     try{
       this->InternalRender(renderer, volume,
@@ -373,7 +373,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
                  this->OutputInfoHandler->GetOutputImageInfo() );
     }catch(...){
       erroredOut = true;
-      vtkErrorMacro(<< "Internal rendering error - cause unknown - MARKER 2");
+      vtkErrorMacro( "Internal rendering error - cause unknown - MARKER 2");
     }
   }
 
@@ -497,7 +497,7 @@ void vtkCudaVolumeMapper::AddKeyholePlane(vtkPlane *plane){
 }
 
 void vtkCudaVolumeMapper::RemoveKeyholePlane(vtkPlane *plane){
-  if (this->KeyholePlanes == NULL) vtkErrorMacro(<< "Cannot remove Keyhole plane: mapper has none");
+  if (this->KeyholePlanes == NULL) vtkErrorMacro( "Cannot remove Keyhole plane: mapper has none");
   this->KeyholePlanes->RemoveItem(plane);
   this->Modified();
 }

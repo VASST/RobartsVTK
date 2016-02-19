@@ -28,7 +28,7 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
       affData->GetScalarType() != VTK_FLOAT ||
       affData->GetNumberOfScalarComponents() != 3 )
   {
-    vtkErrorMacro(<< "Execute: Input data is not in FLOAT form or the affinity does not have 3 components");
+    vtkErrorMacro( "Execute: Input data is not in FLOAT form or the affinity does not have 3 components");
     return -1;
   }
 
@@ -37,7 +37,7 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   int* dimSeed = seedData->GetDimensions();
   if( dimAff[0] != dimSeed[0] || dimAff[1] != dimSeed[1] || dimAff[2] != dimSeed[2] )
   {
-    vtkErrorMacro(<< "Execute: Seed image not the same size as the affinity image");
+    vtkErrorMacro( "Execute: Seed image not the same size as the affinity image");
     return -1;
   }
 

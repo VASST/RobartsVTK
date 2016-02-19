@@ -70,7 +70,7 @@ void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int 
 
   if( input->GetNumberOfScalarComponents() != 1 )
   {
-    vtkErrorMacro(<<"Input must have 1 components.");
+    vtkErrorMacro("Input must have 1 components.");
     return;
   }
 
@@ -129,7 +129,7 @@ void vtkCuda2DInExLogicVolumeMapper::SetInputInternal(vtkImageData * input, int 
   }
   else
   {
-    vtkErrorMacro(<<"Input cannot be of that type.");
+    vtkErrorMacro("Input cannot be of that type.");
     return;
   }
 

@@ -161,7 +161,7 @@ int vtkImageVote::CheckInputConsistancy( vtkInformationVector** inputVector, int
       CurrImage->GetExtent(CurrExtent);
       if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
         CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] ){
-        vtkErrorMacro(<<"Inconsistant object extent.");
+        vtkErrorMacro("Inconsistant object extent.");
         return -1;
       }
     }
@@ -173,7 +173,7 @@ int vtkImageVote::CheckInputConsistancy( vtkInformationVector** inputVector, int
     }else{
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       if( *DataType != CurrImage->GetScalarType() ){
-        vtkErrorMacro(<<"Inconsistant object data type.");
+        vtkErrorMacro("Inconsistant object data type.");
         return -1;
       }
     }
@@ -185,7 +185,7 @@ int vtkImageVote::CheckInputConsistancy( vtkInformationVector** inputVector, int
     }else{
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
       if( *NumComponents != CurrImage->GetNumberOfScalarComponents() ){
-        vtkErrorMacro(<<"Inconsistant object data type.");
+        vtkErrorMacro("Inconsistant object data type.");
         return -1;
       }
     }

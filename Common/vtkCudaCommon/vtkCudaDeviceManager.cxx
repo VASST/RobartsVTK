@@ -89,7 +89,7 @@ int vtkCudaDeviceManager::GetNumberOfDevices()
 
   if( result != 0 )
   {
-    vtkErrorMacro(<<"Catostrophic CUDA error - cannot count number of devices.");
+    vtkErrorMacro("Catostrophic CUDA error - cannot count number of devices.");
     return -1;
   }
   return numberOfDevices;
@@ -102,7 +102,7 @@ bool vtkCudaDeviceManager::GetDevice(CudaObject* caller, int device)
   //check that the device supplied is a valid device
   if( device < 0 || device >= this->GetNumberOfDevices() )
   {
-    vtkErrorMacro(<<"Invalid device identifier.");
+    vtkErrorMacro("Invalid device identifier.");
     return true;
   }
 
@@ -187,7 +187,7 @@ bool vtkCudaDeviceManager::ReturnDevice(CudaObject* caller, int device)
   //if said mapping is not found, then this was called in error and nothing changes
   if( !found )
   {
-    vtkErrorMacro(<<"Could not locate supplied caller-device pair.");
+    vtkErrorMacro("Could not locate supplied caller-device pair.");
     this->regularLock->Unlock();
     return true;
   }
@@ -246,7 +246,7 @@ bool vtkCudaDeviceManager::GetStream(CudaObject* caller, cudaStream_t** stream, 
   //check device identifier for consistency
   if( device < 0 || device >= this->GetNumberOfDevices() )
   {
-    vtkErrorMacro(<<"Invalid device identifier.");
+    vtkErrorMacro("Invalid device identifier.");
     return true;
   }
 
@@ -256,7 +256,7 @@ bool vtkCudaDeviceManager::GetStream(CudaObject* caller, cudaStream_t** stream, 
       this->StreamToDeviceMap[*stream] != device )
   {
     this->regularLock->Unlock();
-    vtkErrorMacro(<<"Stream already assigned to particular device.");
+    vtkErrorMacro("Stream already assigned to particular device.");
     return true;
   }
 
@@ -309,7 +309,7 @@ bool vtkCudaDeviceManager::ReturnStream(CudaObject* caller, cudaStream_t* stream
   }
   if( !found )
   {
-    vtkErrorMacro(<<"Could not locate supplied caller-device pair.");
+    vtkErrorMacro("Could not locate supplied caller-device pair.");
     this->regularLock->Unlock();
     return true;
   }
@@ -332,7 +332,7 @@ bool vtkCudaDeviceManager::SynchronizeStreamUnlocked( cudaStream_t* stream )
   //find mapped result and device
   if( this->StreamToDeviceMap.count(stream) != 1 )
   {
-    vtkErrorMacro(<<"Cannot synchronize unused stream.");
+    vtkErrorMacro("Cannot synchronize unused stream.");
     return true;
   }
   int device = this->StreamToDeviceMap[stream];
@@ -363,7 +363,7 @@ bool vtkCudaDeviceManager::ReserveGPU( cudaStream_t* stream )
   this->regularLock->Lock();
   if( this->StreamToDeviceMap.count(stream) != 1 )
   {
-    vtkErrorMacro(<<"Cannot synchronize unused stream.");
+    vtkErrorMacro("Cannot synchronize unused stream.");
     this->regularLock->Unlock();
     return true;
   }
@@ -386,7 +386,7 @@ int vtkCudaDeviceManager::QueryDeviceForObject( CudaObject* object )
   }
   else
   {
-    vtkErrorMacro(<<"No unique mapping exists.");
+    vtkErrorMacro("No unique mapping exists.");
   }
   this->regularLock->Unlock();
   return device;
@@ -402,7 +402,7 @@ int vtkCudaDeviceManager::QueryDeviceForStream( cudaStream_t* stream )
   }
   else
   {
-    vtkErrorMacro(<<"No mapping exists.");
+    vtkErrorMacro("No mapping exists.");
   }
   this->regularLock->Unlock();
   return device;
@@ -425,7 +425,7 @@ void vtkCudaDeviceManager::DestroyEmptyStream( cudaStream_t* stream )
   }
   if( !found )
   {
-    vtkErrorMacro(<<"Could not locate supplied caller-device pair.");
+    vtkErrorMacro("Could not locate supplied caller-device pair.");
     return;
   }
   this->StreamToDeviceMap.erase(it);

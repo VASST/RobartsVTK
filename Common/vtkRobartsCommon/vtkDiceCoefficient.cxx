@@ -48,7 +48,7 @@ int vtkDiceCoefficient::RequestInformation (
 
     if (!inInfo2)
     {
-        vtkErrorMacro(<< "Second input must be specified for this operation.");
+        vtkErrorMacro( "Second input must be specified for this operation.");
         return 1;
     }
 
@@ -195,7 +195,7 @@ void vtkDiceCoefficient::ThreadedRequestData(
     // this filter expects that input is the same type as output.
     if (inData[0][0]->GetScalarType() != outData[0]->GetScalarType())
     {
-        vtkErrorMacro(<< "Execute: input1 ScalarType, "
+        vtkErrorMacro( "Execute: input1 ScalarType, "
                       <<  inData[0][0]->GetScalarType()
                       << ", must match output ScalarType "
                       << outData[0]->GetScalarType());
@@ -204,7 +204,7 @@ void vtkDiceCoefficient::ThreadedRequestData(
 
     if (inData[1][0]->GetScalarType() != outData[0]->GetScalarType())
     {
-        vtkErrorMacro(<< "Execute: input2 ScalarType, "
+        vtkErrorMacro( "Execute: input2 ScalarType, "
                       << inData[1][0]->GetScalarType()
                       << ", must match output ScalarType "
                       << outData[0]->GetScalarType());
@@ -215,7 +215,7 @@ void vtkDiceCoefficient::ThreadedRequestData(
     if (inData[0][0]->GetNumberOfScalarComponents() !=
             inData[1][0]->GetNumberOfScalarComponents())
     {
-        vtkErrorMacro(<< "Execute: input1 NumberOfScalarComponents, "
+        vtkErrorMacro( "Execute: input1 NumberOfScalarComponents, "
                       << inData[0][0]->GetNumberOfScalarComponents()
                       << ", must match out input2 NumberOfScalarComponents "
                       << inData[1][0]->GetNumberOfScalarComponents());
@@ -233,7 +233,7 @@ void vtkDiceCoefficient::ThreadedRequestData(
                                              static_cast<VTK_TT *>(outPtr), outExt,
                                              id));
     default:
-        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+        vtkErrorMacro( "Execute: Unknown ScalarType");
 
 
         return;
