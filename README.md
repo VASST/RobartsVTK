@@ -37,6 +37,9 @@ The following variables should be set when configuring RobartsVTK
         * PYTHON_INCLUDE_DIR:PATH = `<path/to/python-install>/include`
         * PYTHON_LIBRARY:PATH = `<path/to/python-install>/libs/python27.lib`
 
+## Continuous Integration
+Continuous integration is enabled for this project and has workers running on happy.imaging.robarts.ca (Ubuntu 15.04) and doc.imaging.robarts.ca (Win64, VS2012).
+
 ## License
 Please see the [license](LICENSE.md) file.
 
