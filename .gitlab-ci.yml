@@ -1,5 +1,5 @@
 # Simple release build
-build:
+build-ubuntu:
   script:
     - mkdir build/
     - cd build
@@ -22,10 +22,7 @@ build-visual-studio-x64:
 # Building with Visual Studio 11 2012 x32
 build-visual-studio-x32:
   script:
-    - mkdir build
-    - cd build
-    - cmake -G "Visual Studio 11" -D CMAKE_BUILD_TYPE=Release ..
-    - cmake --build .
+    - call x32_vs2012_robartsVTKlib_release.bat
   tags:
     - windows
     - x32
