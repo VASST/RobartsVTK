@@ -109,7 +109,7 @@ int main(int argc, char** argv)
   vtkPiecewiseFunction* MeansWidthSchedule = vtkPiecewiseFunction::New();
   vtkPiecewiseFunction* VarsWidthSchedule = vtkPiecewiseFunction::New();
   vtkPiecewiseFunction* WeightsWidthSchedule = vtkPiecewiseFunction::New();
-  std::ifstream ScheduleStream = std::ifstream();
+  std::ifstream ScheduleStream ;
   ScheduleStream.open(ScheduleFilename);
   while(!ScheduleStream.eof())
   {
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
   if(LabelFileList.empty())
   {
     Generator->SetUseMaskFlag(false);
-    std::ifstream DataFileStream = std::ifstream();
+    std::ifstream DataFileStream ;
     DataFileStream.open(DataFileList);
     int i = 0;
     while(!DataFileStream.eof())
@@ -174,8 +174,8 @@ int main(int argc, char** argv)
   else
   {
     Generator->SetUseMaskFlag(true);
-    std::ifstream DataFileStream = std::ifstream();
-    std::ifstream LabelFileStream = std::ifstream();
+    std::ifstream DataFileStream ;
+    std::ifstream LabelFileStream ;
     DataFileStream.open(DataFileList);
     LabelFileStream.open(LabelFileList);
     int i = 0;
