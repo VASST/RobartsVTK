@@ -3089,7 +3089,7 @@ void vtkImageHackedPlaneWidget::GenerateCursor()
 //----------------------------------------------------------------------------
 void vtkImageHackedPlaneWidget::GenerateText()
 {
-  sprintf_s(this->TextBuff, 128, "NA");
+  sprintf(this->TextBuff, "NA");
   this->TextActor->SetInput(this->TextBuff);
   this->TextActor->SetTextScaleModeToNone();
 

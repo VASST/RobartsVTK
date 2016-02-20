@@ -29,7 +29,6 @@
 
 #include "vtkCudaImageAnalyticsModule.h"
 
-#include "CudaObject.h"
 #include "vtkType.h"
 #include <vector>
 
@@ -38,7 +37,7 @@ class vtkCudaMaxFlowSegmentationWorker;
 
 #define SQR(X) X*X
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask : public CudaObject
+class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask
 {
 public:
   enum TaskType
@@ -107,9 +106,6 @@ public:
   void SetConstant2(float c);
 
   void DecrementActivity();
-
-  virtual void Reinitialize(int withData = 0);
-  virtual void Deinitialize(int withData = 0);
 
 private:
   friend class vtkCudaMaxFlowSegmentationWorker;

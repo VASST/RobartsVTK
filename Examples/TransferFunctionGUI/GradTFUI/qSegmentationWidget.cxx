@@ -10,7 +10,7 @@
 #include "vtkRenderWindow.h"
 #include "vtkRenderer.h"
 #include "vtkSystemIncludes.h"
-#include "vtksys\SystemTools.hxx"
+#include "vtksys/SystemTools.hxx"
 #include <QFileDialog>
 #include <QMenu>
 #include <QPushButton>

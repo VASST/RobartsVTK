@@ -6,7 +6,7 @@
 #include "vtkImageGradientMagnitude.h"
 #include "vtkMetaImageWriter.h"
 #include "vtkSystemIncludes.h"
-#include "vtksys\SystemTools.hxx"
+#include "vtksys/SystemTools.hxx"
 #include <QFileDialog>
 #include <QVBoxLayout>
 

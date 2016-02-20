@@ -58,6 +58,9 @@ cuda_compile(Module_CUDA_C_SRCS ${Module_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
 
 SET_SOURCE_FILES_PROPERTIES(
   ${Module_CUDA_C_SRCS} 
+  vtkCudaMaxFlowSegmentationWorker.cxx  
+  vtkCudaMaxFlowSegmentationScheduler.cxx 
+  vtkCudaMaxFlowSegmentationTask.cxx 
   WRAP_EXCLUDE
   )
 LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
@@ -70,7 +73,7 @@ vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
 
 # -----------------------------------------------------------------
 # Build the python wrapping if enabled
-IF( VTK_WRAP_PYTHON )
+IF( RobartsVTK_WRAP_PYTHON AND VTK_WRAP_PYTHON )
   vtk_module_load(${PROJECT_NAME})
   vtk_module_headers_load(${PROJECT_NAME})
   vtk_include_recurse(${PROJECT_NAME})
