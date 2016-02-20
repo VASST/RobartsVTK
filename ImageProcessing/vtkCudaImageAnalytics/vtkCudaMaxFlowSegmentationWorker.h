@@ -46,8 +46,9 @@ public:
   int LowestBufferShift(unsigned int n);
   void ReturnLeafLabels();
   void ReturnBuffer(float* CPUBuffer);
-  void Reinitialize(int withData) {} // not used
-  void Deinitialize(int withData) {} // not used
+
+  virtual void Reinitialize(int withData = 0){};
+  virtual void Deinitialize(int withData = 0){};
 
 public:
   vtkCudaMaxFlowSegmentationScheduler* const Parent;

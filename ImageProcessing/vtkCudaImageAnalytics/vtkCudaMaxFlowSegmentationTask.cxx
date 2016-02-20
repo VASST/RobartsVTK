@@ -144,18 +144,6 @@ void vtkCudaMaxFlowSegmentationTask::DecrementActivity()
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaMaxFlowSegmentationTask::Reinitialize(int withData /*= 0*/)
-{
-
-}
-
-//----------------------------------------------------------------------------
-void vtkCudaMaxFlowSegmentationTask::Deinitialize(int withData /*= 0*/)
-{
-
-}
-
-//----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationTask::AddBuffer(float* b)
 {
   RequiredCPUBuffers.push_back(b);

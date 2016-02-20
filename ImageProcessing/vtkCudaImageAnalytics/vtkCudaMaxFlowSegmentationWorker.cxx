@@ -34,9 +34,10 @@
 
 //-----------------------------------------------------------------
 vtkCudaMaxFlowSegmentationWorker::vtkCudaMaxFlowSegmentationWorker(int g, double usage, vtkCudaMaxFlowSegmentationScheduler* p )
-  : Parent(p), GPU(g), CudaObject(g)
+  : Parent(p)
+  , GPU(g)
+  , CudaObject(g)
 {
-
   //Get GPU buffers
   int BuffersAcquired = 0;
   double PercentAcquired = 0.0;

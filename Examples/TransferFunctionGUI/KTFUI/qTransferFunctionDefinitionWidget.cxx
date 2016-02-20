@@ -20,6 +20,7 @@
 #include <QSlider>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <float.h>
 
 // ---------------------------------------------------------------------------------------
 // Construction and destruction code
