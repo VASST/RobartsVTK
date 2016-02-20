@@ -16,6 +16,7 @@ For convenient building, please see the RobartsVTK [super build](http://git.imag
 RobartsVTK has been built on the following configurations:
 * Windows 10 x64, Visual Studio 2012, 32bit build
 * Windows 10 x64, Visual Studio 2012, 64bit build
+* Ubuntu 15.10, Eclipse CDT (see [Ubuntu build tips](ubuntu.md))
 
 ## Dependencies
 Dependencies must be built or installed before RobartsVTK can be built. Please visit the respective links to download the appropriate packages.
@@ -23,10 +24,6 @@ Dependencies must be built or installed before RobartsVTK can be built. Please v
 * [VTK 6.2](http://www.vtk.org/download/) - built
    * If Python wrapping of RobartsVTK is desired, VTK must be built with WRAP_PYTHON enabled.
 * [QT 4/5](http://download.qt.io/archive/qt/) - built (optional)
-   * On Ubuntu 15.10 (possibly others), you can install Qt5 through the following
-   ```
-   > sudo apt-get install qt5-default qttools5-dev libqt5webkit5-dev
-   ```
 * [ITK 4.7.2](http://www.itk.org/ITK/resources/software.html) - built (optional)
 * [CUDA 7](https://developer.nvidia.com/cuda-downloads) - installed (optional)
 * [PLUS 2.3](http://plustoolkit.org) -built (optional)
