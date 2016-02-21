@@ -23,7 +23,7 @@ Dependencies must be built or installed before RobartsVTK can be built. Please v
 * [CMake 3.4](https://cmake.org/download/) - installed
 * [VTK 6.2](http://www.vtk.org/download/) - built
    * If Python wrapping of RobartsVTK is desired, VTK must be built with WRAP_PYTHON enabled.
-* [QT 4/5](http://download.qt.io/archive/qt/) - built (optional)
+* [QT 4/5](http://download.qt.io/archive/qt/) - built (optional, please follow Qt build instructions)
 * [ITK 4.7.2](http://www.itk.org/ITK/resources/software.html) - built (optional)
 * [CUDA 7](https://developer.nvidia.com/cuda-downloads) - installed (optional)
 * [PLUS 2.3](http://plustoolkit.org) -built (optional)
@@ -48,4 +48,4 @@ Continuous integration is enabled for this project and has workers running on ha
 Please see the [license](LICENSE.md) file.
 
 # Acknowledgments
-RobartsVTK would like to thank the creator and maintainers of [GitLab](https://about.gitlab.com/).
+The Robarts Research Institute VASST Lab would like to thank the creator and maintainers of [GitLab](https://about.gitlab.com/).
