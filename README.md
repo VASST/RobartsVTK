@@ -14,7 +14,7 @@ For convenient building, please see the RobartsVTK [super build](http://git.imag
 
 ## Known Configurations
 RobartsVTK has been built on the following configurations:
-* Windows 10 x64, Visual Studio 2012, 32/64bit builds
+* Windows 10 x64, Visual Studio 2012, 32/64bit builds (see [Windows build tips](windows.md))
 * Ubuntu 15.10, Unix Makefiles/Eclipse CDT (see [Ubuntu build tips](ubuntu.md))
 * Ubuntu 15.04, Unix Makefiles/Eclipse CDT
 
