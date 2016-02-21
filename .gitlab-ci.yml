@@ -1,10 +1,7 @@
 # Simple release build
 build-ubuntu:
   script:
-    - mkdir build/
-    - cd build
-    - cmake -D CMAKE_BUILD_TYPE=Release ..
-    - make
+    - x64_gcc_robartsVTKlib_release.sh
   tags:
     - cmake
     - gcc
