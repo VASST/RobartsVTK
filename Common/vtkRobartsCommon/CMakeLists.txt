@@ -72,10 +72,15 @@ vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 # -----------------------------------------------------------------
 # Build the python wrapping if enabled
 IF( RobartsVTK_WRAP_PYTHON AND VTK_WRAP_PYTHON )
-  vtk_module_load(${PROJECT_NAME})
+  #vtk_module_load(${PROJECT_NAME})
   vtk_module_headers_load(${PROJECT_NAME})
   vtk_include_recurse(${PROJECT_NAME})
   vtk_add_python_wrapping(${PROJECT_NAME})
+  vtk_module_python_package(${PROJECT_NAME})
+  
+  
+  #
+  #
 ENDIF()
 
 LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
