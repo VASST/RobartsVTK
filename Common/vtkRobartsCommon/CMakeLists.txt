@@ -58,6 +58,12 @@ IF( MSVC )
   )
 ENDIF()
 
+IF(WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio" AND NOT "${CMAKE_GENERATOR}" MATCHES "x64")
+  # No idea why, but turning on optimization in robarts common in 32 bit causes
+  # an internal compiler crash
+  STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+ENDIF()
+
 # -----------------------------------------------------------------
 # Build the library
 include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})

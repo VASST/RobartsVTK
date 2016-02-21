@@ -354,6 +354,15 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 #-----------------------------------------------------------------------------
+# vtkRobartsCommon - contains common utilities
+#-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
+IF (RobartsVTK_USE_COMMON)
+  ADD_SUBDIRECTORY (Common/vtkRobartsCommon)
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkRobartsCommon_INCLUDE_DIRS} CACHE INTERNAL "" )
+ENDIF()
+
+#-----------------------------------------------------------------------------
 # vtkRobartsRegistration
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OFF)
@@ -362,15 +371,6 @@ IF (RobartsVTK_USE_REGISTRATION)
   ADD_SUBDIRECTORY(ImageProcessing/vtkRobartsRegistration)
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkRobartsRegistration_INCLUDE_DIRS} CACHE INTERNAL "" )
 ENDIF ()
-
-#-----------------------------------------------------------------------------
-# vtkRobartsCommon - contains common utilities
-#-----------------------------------------------------------------------------
-OPTION (RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
-IF (RobartsVTK_USE_COMMON)
-  ADD_SUBDIRECTORY (Common/vtkRobartsCommon)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkRobartsCommon_INCLUDE_DIRS} CACHE INTERNAL "" )
-ENDIF()
 
 #-----------------------------------------------------------------------------
 # CUDA Dependencies
