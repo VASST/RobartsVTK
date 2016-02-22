@@ -2,32 +2,44 @@
 #
 # RobartsVTKConfig.cmake - CMake configuration file for external projects.
 #
-# This file is configured by RobartsVTK and used by the UseRobartsVTK.cmake
-# module to load RobartsVTK's settings for an external project.
+# This file is configured by RobartsVTK
+#
+#-----------------------------------------------------------------------------
+
+# Include RobartsVTK targets for easy linking
+INCLUDE(${RobartsVTK_TARGETS_FILE})
 
 # The libraries.
 SET(RobartsVTK_LIBRARIES "@RobartsVTK_LIBRARIES@")
 
-# The library directories.
-SET(RobartsVTK_LIBRARY_DIRS "@RobartsVTK_LIBRARY_DIRS@")
-
 # The include directories.
 SET(RobartsVTK_INCLUDE_DIRS "@RobartsVTK_INCLUDE_DIRS@")
 
-# The "use" file.
-SET(RobartsVTK_USE_FILE "@RobartsVTK_USE_FILE@")
+# RobartsVTK dependencies
+SET(RobartsVTK_VTK_DIR "@VTK_DIR@")
+IF(@RobartsVTK_USE_ITK@)
+  SET(RobartsVTK_ITK_DIR "@ITK_DIR@")
+ENDIF()
+IF(@RobartsVTK_USE_PLUS@)
+  SET(PlusLib_DIR "@PlusLib_DIR@")
+ENDIF()
+IF(@RobartsVTK_USE_CUDA@)
+  SET(CUDA_TOOLKIT_ROOT_DIR "@CUDA_TOOLKIT_ROOT_DIR@")
+ENDIF()
+IF(@RobartsVTK_USE_QT@)
+  SET(QT_QMAKE_EXECUTABLE "@QT_QMAKE_EXECUTABLE@")
+ENDIF()
 
-# The VTK options.
-SET(RobartsVTK_VTK_DIR "@Robarts_VTK_DIR@")
-
-# The ITK options
-SET(RobartsVTK_USE_ITK "@RobartsVTK_USE_ITK@")
-SET(RobartsVTK_ITK_DIR "@RobartsVTK_ITK_DIR@")
-
-# The libxml2 options
-SET(RobartsVTK_USE_LIBXML2 "@RobartsVTK_USE_LIBXML2@")
-
-SET (RobartsVTK_USE_HAPTICS "@RobartsVTK_USE_HAPTICS@")
-SET (RobartsVTK_USE_REGISTRATION   "@RobartsVTK_USE_REGISTRATION@")
-SET (RobartsVTK_USE_CUDA           "@RobartsVTK_USE_CUDA@")
-#SET (RobartsVTK_USE_ANIS          "@RobartsVTK_USE_ANIS@")
+# RobartsVTK options
+SET(RobartsVTK_USE_QT @RobartsVTK_USE_QT@)
+SET(RobartsVTK_USE_ITK @RobartsVTK_USE_ITK@)
+SET(RobartsVTK_USE_PLUS @RobartsVTK_USE_PLUS@)
+SET(RobartsVTK_USE_REGISTRATION @RobartsVTK_USE_REGISTRATION@)
+SET(RobartsVTK_Include_Outdated_Registration @RobartsVTK_Include_Outdated_Registration@)
+SET(RobartsVTK_USE_COMMON @RobartsVTK_USE_COMMON@)
+SET(RobartsVTK_USE_CUDA @RobartsVTK_USE_CUDA@)
+SET(RobartsVTK_USE_CUDA_VISUALIZATION @RobartsVTK_USE_CUDA_VISUALIZATION@)
+SET(RobartsVTK_USE_CUDA_ANALYTICS @RobartsVTK_USE_CUDA_ANALYTICS@)
+SET(RobartsVTK_BUILD_EXAMPLES @RobartsVTK_BUILD_EXAMPLES@)
+SET(RobartsVTK_WRAP_PYTHON @RobartsVTK_WRAP_PYTHON@)
+SET(RobartsVTK_USE_QT5_ONLY @RobartsVTK_USE_QT5_ONLY@)
