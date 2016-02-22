@@ -5,6 +5,8 @@ build-ubuntu:
   tags:
     - cmake
     - gcc
+  only:
+    - master
 
 # Building with Visual Studio 11 2012 x64
 build-visual-studio-x64:
@@ -15,6 +17,8 @@ build-visual-studio-x64:
     - cmake
     - x64
     - visual-studio-11
+  only:
+    - master
 
 # Building with Visual Studio 11 2012 x32
 build-visual-studio-x32:
@@ -25,3 +29,5 @@ build-visual-studio-x32:
     - x32
     - cmake
     - visual-studio-11
+  only:
+    - master
