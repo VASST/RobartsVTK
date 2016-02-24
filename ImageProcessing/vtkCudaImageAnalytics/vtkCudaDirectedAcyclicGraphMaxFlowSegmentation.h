@@ -18,7 +18,7 @@
  *      vtkDirectedAcyclicGraphMaxFlowSegmentation.h for most of the interface documentation.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note June 22nd 2014 - Documentation first compiled.
  *
  */
@@ -56,8 +56,12 @@ public:
 
   // Description:
   // Set the class to use a single GPU, the one provided.
-  void SetDevice(int GPU){ this->ClearDevices(); this->AddDevice(GPU); }
-  
+  void SetDevice(int GPU)
+  {
+    this->ClearDevices();
+    this->AddDevice(GPU);
+  }
+
   // Description:
   // Get and Set the maximum percent of GPU memory usable by the algorithm.
   // Recommended to keep below 98% on compute-only cards, and 90% on cards
@@ -65,14 +69,14 @@ public:
   // facto value for all cards. (Default is 90%.)
   vtkSetClampMacro(MaxGPUUsage,double,0.0,1.0);
   vtkGetMacro(MaxGPUUsage,double);
-  
+
   // Description:
   // Get, Set, and Clear exceptions, allowing for a particular card to have its
-  // memory consumption managed separately. 
+  // memory consumption managed separately.
   void SetMaxGPUUsage(double usage, int device);
   double GetMaxGPUUsage(int device);
   void ClearMaxGPUUsage();
-  
+
   // Description:
   // Get and Set how often the algorithm should report if in Debug mode. If set
   // to 0, the algorithm doesn't report task completions. Default is 100 tasks.
@@ -90,15 +94,15 @@ protected:
   double          MaxGPUUsage;
   std::map<int,double>  MaxGPUUsageNonDefault;
   int            ReportRate;
-  
+
   virtual int InitializeAlgorithm();
   virtual int RunAlgorithm();
-  
+
   void FigureOutBufferPriorities( vtkIdType currNode );
   void PropogateLabels( vtkIdType currNode );
   void SolveMaxFlow( vtkIdType currNode, int* timeStep );
   void UpdateLabel( vtkIdType node, int* timeStep );
-  
+
   std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> UpdateSpatialFlowsTasks;
   void CreateUpdateSpatialFlowsTasks();
   std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ResetSinkFlowTasks;
@@ -117,13 +121,13 @@ protected:
   std::map<vtkIdType,vtkCudaMaxFlowSegmentationTask*> ClearSourceBufferTasks;
   void CreateClearSourceBufferTasks();
   void AssociateFinishSignals();
-  
+
   void InitializeSpatialFlowsTasks();
   void InitializeSinkFlowsTasks();
 
 private:
-  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation operator=(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&){} //not implemented
-  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&){} //not implemented
+  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation operator=(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&);
+  vtkCudaDirectedAcyclicGraphMaxFlowSegmentation(const vtkCudaDirectedAcyclicGraphMaxFlowSegmentation&);
 };
 
 #endif

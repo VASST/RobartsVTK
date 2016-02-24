@@ -10,6 +10,7 @@
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkDataArray.h"
+#include "vtkImageData.h"
 #include "vtkInteractorStyleTrackballActor.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkMetaImageReader.h"

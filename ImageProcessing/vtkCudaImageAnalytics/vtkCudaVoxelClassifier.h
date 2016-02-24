@@ -124,9 +124,8 @@ protected:
   int    TextureSize;
 
 private:
-  vtkCudaVoxelClassifier operator=(const vtkCudaVoxelClassifier&) {}
-  vtkCudaVoxelClassifier(const vtkCudaVoxelClassifier&) {}
-
+  vtkCudaVoxelClassifier operator=(const vtkCudaVoxelClassifier&);
+  vtkCudaVoxelClassifier(const vtkCudaVoxelClassifier&);
 };
 
 #endif

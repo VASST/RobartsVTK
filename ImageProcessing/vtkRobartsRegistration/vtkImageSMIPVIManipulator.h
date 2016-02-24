@@ -45,7 +45,9 @@ public:
   // Set/get the 2 input images.
   virtual void SetInput1(vtkImageData *input);
   virtual void SetInput2(vtkImageData *input);
+#if (VTK_MAJOR_VERSION < 6)
   virtual void UpdateScaled();
+#endif
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
 

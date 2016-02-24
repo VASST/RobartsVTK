@@ -1,18 +1,30 @@
-#include "CUDA_hierarchicalmaxflowdecomp.h"
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "CUDA_commonKernels.h"
-#include "stdio.h"
+#include "CUDA_hierarchicalmaxflowdecomp.h"
 #include "cuda.h"
+#include "stdio.h"
+#include "vtkCudaCommon.h"
 
-//#define DEBUG_VTKCUDAHMFD
-
-__global__ void kern_GHMFD_GradientBuffer(float* buffer, float* gradBuffer, int3 dims, int size){
+__global__ void kern_GHMFD_GradientBuffer(float* buffer, float* gradBuffer, int3 dims, int size)
+{
   int idx = CUDASTDOFFSET;
   int3 idxN = { idx % dims.x, (idx / dims.x) % dims.y, idx / (dims.x*dims.y) };
-  
+
   float gradMagSquared = 0.0f;
   float cur = buffer[idx];
   float XHi = (idxN.x == dims.x-1)  ? cur: buffer[idx+1];
-  float XLo = (idxN.x == 0)      ? cur: buffer[idx-1];        
+  float XLo = (idxN.x == 0)      ? cur: buffer[idx-1];
   gradMagSquared += (XHi-XLo)*(XHi-XLo);
   float YHi = (idxN.y == dims.y-1)  ? cur: buffer[idx+dims.x];
   float YLo = (idxN.y == 0)      ? cur: buffer[idx-dims.x];
@@ -21,10 +33,14 @@ __global__ void kern_GHMFD_GradientBuffer(float* buffer, float* gradBuffer, int3
   float ZLo = (idxN.z == 0)      ? cur: buffer[idx-dims.x*dims.y];
   gradMagSquared += (ZHi-ZLo)*(ZHi-ZLo);
 
-  if(idx < size) gradBuffer[idx] = 0.5f * sqrt( gradMagSquared );
+  if(idx < size)
+  {
+    gradBuffer[idx] = 0.5f * sqrt( gradMagSquared );
+  }
 }
 
-double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStream_t* stream){
+double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStream_t* stream)
+{
   //allocate GPU buffers
   float* devDataTermBuffer = 0;
   float* devLabelBuffer = 0;
@@ -41,17 +57,21 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
 
   //reduce buffer by summation
   int i = 1;
-  while(i < size/2) i+=i;
-  for(; i >= NUMTHREADS; i = i/2){
+  while(i < size/2)
+  {
+    i+=i;
+  }
+  for(; i >= NUMTHREADS; i = i/2)
+  {
     dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
     SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(devDataTermBuffer, i, size );
 
-    #ifdef DEBUG_VTKCUDAHMFD
-      cudaThreadSynchronize();
-      printf( "Reduce: " );
-      printf( cudaGetErrorString( cudaGetLastError() ) );
-      printf( "\n" );
-    #endif
+#ifdef DEBUG_VTKCUDAHMFD
+    cudaThreadSynchronize();
+    printf( "Reduce: " );
+    printf( cudaGetErrorString( cudaGetLastError() ) );
+    printf( "\n" );
+#endif
 
   }
   SumData( min(NUMTHREADS,size), min(NUMTHREADS,size), 1, devDataTermBuffer, stream );
@@ -68,8 +88,8 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
   return (double) retVal;
 }
 
-
-double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream){
+double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream)
+{
   //allocate GPU buffers
   float* devSmoothnessBuffer = 0;
   float* devLabelBuffer = 0;
@@ -89,8 +109,12 @@ double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x,
 
   //reduce buffer by summation
   int i = 1;
-  while(i < size/2) i+=i;
-  for(; i >= NUMTHREADS; i = i/2){
+  while(i < size/2)
+  {
+    i+=i;
+  }
+  for(; i >= NUMTHREADS; i = i/2)
+  {
     dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
     SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(devSmoothnessBuffer, i, size );
   }
@@ -103,23 +127,25 @@ double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x,
 
   //add to parent buffer if present
   if( GPUParentLabel )
+  {
     SumBuffers<<<grid,threads,0,*stream>>>(GPUParentLabel, devLabelBuffer, size);
-    
+  }
+
   //deallocate GPU buffers
   cudaFree( devSmoothnessBuffer );
   cudaFree( devLabelBuffer );
 
   //return to main class
   return (double) retVal;
-
 }
 
-double CUDA_GHMFD_LeafNoSmoothnessForLabel(float* label, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream){
+double CUDA_GHMFD_LeafNoSmoothnessForLabel(float* label, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream)
+{
   //allocate GPU buffers
   float* devLabelBuffer = 0;
   cudaMalloc( &devLabelBuffer, sizeof(float)*size );
   cudaMemcpyAsync( devLabelBuffer,    label,    sizeof(float)*size, cudaMemcpyHostToDevice, *stream );
-  
+
   //find gradient
   dim3 threads(NUMTHREADS,1,1);
   dim3 grid = GetGrid(size);
@@ -128,8 +154,12 @@ double CUDA_GHMFD_LeafNoSmoothnessForLabel(float* label, int x, int y, int z, in
 
   //reduce buffer by summation
   int i = 1;
-  while(i < size/2) i+=i;
-  for(; i >= NUMTHREADS; i = i/2){
+  while(i < size/2)
+  {
+    i+=i;
+  }
+  for(; i >= NUMTHREADS; i = i/2)
+  {
     dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
     SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(devGradBuffer, i, size );
   }
@@ -139,21 +169,22 @@ double CUDA_GHMFD_LeafNoSmoothnessForLabel(float* label, int x, int y, int z, in
   float retVal = 0.0f;
   cudaMemcpyAsync( &retVal, devGradBuffer,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
   cudaStreamSynchronize(*stream);
-  
+
   //add to parent buffer if present
   if( GPUParentLabel )
+  {
     SumBuffers<<<grid,threads,0,*stream>>>(GPUParentLabel, devLabelBuffer, size);
+  }
 
   //deallocate GPU buffers
   cudaFree( devLabelBuffer );
 
   //return to main class
   return (double) retVal;
-
 }
 
-
-double CUDA_GHMFD_BranchSmoothnessForLabel(float* smoothness, float* devLabelBuffer, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream){
+double CUDA_GHMFD_BranchSmoothnessForLabel(float* smoothness, float* devLabelBuffer, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream)
+{
   //allocate GPU buffers
   float* devSmoothnessBuffer = 0;
   cudaMalloc( &devSmoothnessBuffer, sizeof(float)*size );
@@ -170,8 +201,12 @@ double CUDA_GHMFD_BranchSmoothnessForLabel(float* smoothness, float* devLabelBuf
 
   //reduce buffer by summation
   int i = 1;
-  while(i < size/2) i+=i;
-  for(; i >= NUMTHREADS; i = i/2){
+  while(i < size/2)
+  {
+    i+=i;
+  }
+  for(; i >= NUMTHREADS; i = i/2)
+  {
     dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
     SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(devSmoothnessBuffer, i, size );
   }
@@ -184,18 +219,19 @@ double CUDA_GHMFD_BranchSmoothnessForLabel(float* smoothness, float* devLabelBuf
 
   //add to parent buffer if present
   if( GPUParentLabel )
+  {
     SumBuffers<<<grid,threads,0,*stream>>>(GPUParentLabel, devLabelBuffer, size);
-    
+  }
+
   //deallocate GPU buffers
   cudaFree( devSmoothnessBuffer );
 
   //return to main class
   return (double) retVal;
-
 }
 
-double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream){
-  
+double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y, int z, int size, float* GPUParentLabel, float* devGradBuffer, cudaStream_t* stream)
+{
   //find gradient
   dim3 threads(NUMTHREADS,1,1);
   dim3 grid = GetGrid(size);
@@ -204,8 +240,12 @@ double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y
 
   //reduce buffer by summation
   int i = 1;
-  while(i < size/2) i+=i;
-  for(; i >= NUMTHREADS; i = i/2){
+  while(i < size/2)
+  {
+    i+=i;
+  }
+  for(; i >= NUMTHREADS; i = i/2)
+  {
     dim3 tempGrid( i>NUMTHREADS ? i/NUMTHREADS : 1, 1, 1);
     SumOverLargeBuffer<<<tempGrid, threads, 0, *stream>>>(devGradBuffer, i, size );
   }
@@ -215,17 +255,19 @@ double CUDA_GHMFD_BranchNoSmoothnessForLabel(float* devLabelBuffer, int x, int y
   float retVal = 0.0f;
   cudaMemcpyAsync( &retVal, devGradBuffer,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
   cudaStreamSynchronize(*stream);
-  
+
   //add to parent buffer if present
   if( GPUParentLabel )
+  {
     SumBuffers<<<grid,threads,0,*stream>>>(GPUParentLabel, devLabelBuffer, size);
+  }
 
   //return to main class
   return (double) retVal;
-
 }
 
-float* CUDA_GHMFD_GetBuffer(int size, cudaStream_t* stream){
+float* CUDA_GHMFD_GetBuffer(int size, cudaStream_t* stream)
+{
   dim3 threads(NUMTHREADS,1,1);
   dim3 grid = GetGrid(size);
   float* buffer = 0;
@@ -234,6 +276,7 @@ float* CUDA_GHMFD_GetBuffer(int size, cudaStream_t* stream){
   return buffer;
 }
 
-void CUDA_GHMFD_ReturnBuffer(float* buffer){
+void CUDA_GHMFD_ReturnBuffer(float* buffer)
+{
   cudaFree(buffer);
 }

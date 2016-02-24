@@ -17,7 +17,7 @@
  *      This includes simple utilities like created validly sized grids.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
@@ -25,18 +25,7 @@
 #ifndef __CUDA_COMMON_KERNELS_H__
 #define __CUDA_COMMON_KERNELS_H__
 
-#include "vtkCudaCommonModule.h"
-
-//---------------------------------------------------------------------------//
-//------------------------COMMON CONFIG STATEMENTS---------------------------//
-//---------------------------------------------------------------------------//
-
-#define MAX_GRID_SIZE 65535
-#define NUMTHREADS 512
-
-VTKCUDACOMMON_EXPORT dim3 GetGrid(int size);
-
-#define CUDASTDOFFSET threadIdx.x + blockDim.x * (blockIdx.x + gridDim.x * (blockIdx.y + gridDim.y * blockIdx.z))
+#include "vtkCudaCommonStaticModule.h"
 
 //---------------------------------------------------------------------------//
 //-------------------------COMMON UNARY OPERATORS----------------------------//

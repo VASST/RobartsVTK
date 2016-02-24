@@ -4,6 +4,12 @@ vtk_module(vtkRobartsRegistration
   DEPENDS
     vtkImagingHybrid 
     vtkImagingCore
+    vtkImagingStatistics
+    vtkFiltersGeneral
+    vtkFiltersCore
+    vtkImagingMath
+    vtkCommonDataModel
+    vtkFiltersGeneral
   KIT
     vtkRobartsImageProcessing
   )

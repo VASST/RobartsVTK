@@ -1,20 +1,19 @@
 #ifndef SHADINGWIDGET
 #define SHADINGWIDGET
 
-#include <QObject>
+#include "TFUICommonModule.h"
+
 #include <QWidget>
-#include <QMenu>
-#include <QSlider>
-#include <QLabel>
 
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include "vtkCudaVolumeMapper.h"
-
-#include "qTransferFunctionWindowWidgetInterface.h"
+class QLabel;
+class QMenu;
+class QSlider;
 class qTransferFunctionWindowWidgetInterface;
+class vtkCudaVolumeMapper;
+class vtkRenderWindow;
+class vtkRenderer;
 
-class qShadingWidget : public QWidget
+class TFUICOMMON_EXPORT qShadingWidget : public QWidget
 {
   Q_OBJECT
 public:
@@ -23,11 +22,11 @@ public:
   ~qShadingWidget();
   void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
 
-private slots:
+protected slots:
   //shading related slots
   void changeShading();
 
-private:
+protected:
   //push commands to model (shading parameters)
   void setCelShadingConstants(float d, float a, float b);
   void setDistanceShadingConstants(float d, float a, float b);
@@ -59,7 +58,6 @@ private:
   QSlider* DistBSlider;
   QLabel* DistBSliderLabel;
   QLabel* DistBSliderValue;
-
 };
 
 #endif

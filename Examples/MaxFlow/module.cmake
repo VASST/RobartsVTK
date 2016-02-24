@@ -1,0 +1,17 @@
+vtk_module(MaxFlowExample
+  GROUPS
+    Examples
+  DEPENDS
+    vtkRenderingCore 
+    vtkFiltersCore 
+    vtkImagingCore 
+    vtkIOImage 
+    vtkCommonCore 
+    vtkRobartsCommon 
+    vtkCudaImageAnalytics 
+    vtkCudaCommon
+    vtksys
+  KIT
+    vtkRobartsExamples
+  EXCLUDE_FROM_WRAPPING
+  )

@@ -18,7 +18,7 @@ public:
   vtkTypeMacro( vtkCudaCT2USSimulation, vtkAlgorithm )
 
   static vtkCudaCT2USSimulation *New();
-  
+
   void SetInput( vtkImageData * );
   void SetInput( vtkImageData *, int i);
   void SetTransform( vtkTransform * );
@@ -50,32 +50,31 @@ public:
 protected:
   vtkCudaCT2USSimulation();
   virtual ~vtkCudaCT2USSimulation();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
+  CT_To_US_Information Information;
+  vtkTransform* UsTransform;
+
+  vtkImageCast* Caster;
+
+  vtkImageData* UsOutput;
+  vtkImageData* DensOutput;
+  vtkImageData* TransOutput;
+  vtkImageData* ReflOutput;
+
+  vtkImageData* InputUltrasound;
+
+  float Alpha;
+  float Beta;
+  float Bias;
+
+  bool AutoGenerateLinearCombination;
+
 private:
-  vtkCudaCT2USSimulation operator=(const vtkCudaCT2USSimulation&){}
-  vtkCudaCT2USSimulation(const vtkCudaCT2USSimulation&){}
-  
-  CT_To_US_Information information;
-  vtkTransform* usTransform;
-
-  vtkImageCast* caster;
-
-  vtkImageData* usOutput;
-  vtkImageData* densOutput;
-  vtkImageData* transOutput;
-  vtkImageData* reflOutput;
-
-  vtkImageData* inputUltrasound;
-
-  float alpha;
-  float beta;
-  float bias;
-
-  bool autoGenerateLinearCombination;
-
+  vtkCudaCT2USSimulation operator=(const vtkCudaCT2USSimulation&);
+  vtkCudaCT2USSimulation(const vtkCudaCT2USSimulation&);
 };
 
 #endif

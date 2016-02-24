@@ -94,8 +94,8 @@ public:
 
   int FillInputPortInformation(int i, vtkInformation* info);
 
-  void SetUseMask(bool t);
-  bool GetUseMask();
+  vtkSetMacro(UseMask, bool);
+  vtkGetMacro(UseMask, bool);
 
 protected:
   vtkImageMultiStatistics();

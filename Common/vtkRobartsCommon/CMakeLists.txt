@@ -2,11 +2,7 @@ PROJECT(vtkRobartsCommon)
 
 include(module.cmake)
 
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_BINARY_DIR})
 SET(${PROJECT_NAME}_PYTHON_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS})
-
-# Add entries to project details
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
 SET ( Module_SRCS
   vtkReadWriteLock.cxx
@@ -66,7 +62,6 @@ ENDIF()
 
 # -----------------------------------------------------------------
 # Build the library
-include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 
 # -----------------------------------------------------------------

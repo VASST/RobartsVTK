@@ -2,25 +2,33 @@
 #include "vtkObjectFactory.h"
 #include <iostream>
 
+//----------------------------------------------------------------------------
+
 vtkStandardNewMacro(vtkCudaFunctionPolygonReader);
 
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
 vtkCudaFunctionPolygonReader::vtkCudaFunctionPolygonReader()
 {
   this->fileNameSet = false;
   this->objects.clear();
 }
 
+//----------------------------------------------------------------------------
 vtkCudaFunctionPolygonReader::~vtkCudaFunctionPolygonReader()
 {
   this->Clear();
 }
 
-void vtkCudaFunctionPolygonReader::SetFileName( std::string f )
+//----------------------------------------------------------------------------
+void vtkCudaFunctionPolygonReader::SetFileName( const std::string& f )
 {
   this->filename = f;
   this->fileNameSet = true;
 }
 
+//----------------------------------------------------------------------------
 vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::GetOutput( unsigned int n )
 {
   if( n >= this->objects.size() || n < 0 )
@@ -40,11 +48,13 @@ vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::GetOutput( unsigned int n 
   return 0;
 }
 
+//----------------------------------------------------------------------------
 size_t vtkCudaFunctionPolygonReader::GetNumberOfOutputs( )
 {
   return this->objects.size();
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaFunctionPolygonReader::Read()
 {
   if( !this->fileNameSet )
@@ -78,6 +88,7 @@ void vtkCudaFunctionPolygonReader::Read()
   delete file;
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaFunctionPolygonReader::Clear()
 {
   //unregister self from the objects
@@ -93,6 +104,7 @@ void vtkCudaFunctionPolygonReader::Clear()
   this->objects.clear();
 }
 
+//----------------------------------------------------------------------------
 vtkCudaFunctionPolygon* vtkCudaFunctionPolygonReader::readTFPolygon()
 {
   vtkCudaFunctionPolygon* e = vtkCudaFunctionPolygon::New();

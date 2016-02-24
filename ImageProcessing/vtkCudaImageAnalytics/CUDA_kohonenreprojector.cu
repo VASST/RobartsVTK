@@ -1,11 +1,12 @@
 #include "CUDA_kohonenreprojector.h"
-#include "CUDA_commonKernels.h"
+#include "vtkCudaCommon.h"
 #include <float.h>
 
 __constant__ Kohonen_Reprojection_Information info;
 texture<float, 3, cudaReadModeElementType> Kohonen_Map;
 
-__global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
+__global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer)
+{
 
   //shared memory
   __shared__ float2 InputIndices[NUMTHREADS];
@@ -24,7 +25,8 @@ __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
   int individualOutputIndex = threadIdx.x + NUMTHREADS * blockDim.x * (blockIdx.x + gridDim.x * (blockIdx.y + gridDim.y * blockIdx.z));
 
   //for each component
-  for( int i = 0; i < info.NumberOfDimensions; i++ ){
+  for( int i = 0; i < info.NumberOfDimensions; i++ )
+  {
 
     //fetch input index from shared memory
     int currInputIndex = (i*NUMTHREADS + threadIdx.x) / info.NumberOfDimensions;
@@ -36,7 +38,9 @@ __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
 
     //write to output
     if( individualOutputIndex < outBufferSize )
+    {
       OutputBuffer[individualOutputIndex] = reprojValue;
+    }
 
     //find new output index for next iteration, coallesced for output
     individualOutputIndex += NUMTHREADS;
@@ -45,8 +49,9 @@ __global__ void ApplyReprojection(float2* InputBuffer, float* OutputBuffer){
 }
 
 void CUDAalgo_reprojectKohonenMap( float* inputData, float* inputKohonen, float* outputData,
-                Kohonen_Reprojection_Information& information,
-                cudaStream_t* stream ){
+                                   Kohonen_Reprojection_Information& information,
+                                   cudaStream_t* stream )
+{
 
   //copy information to GPU
   cudaMemcpyToSymbolAsync(info, &information, sizeof(Kohonen_Reprojection_Information) );

@@ -137,5 +137,4 @@ int main(int argc, char** argv){
    viz->Delete();
    vizReader->Delete();
    imReader1->Delete();
-
 }

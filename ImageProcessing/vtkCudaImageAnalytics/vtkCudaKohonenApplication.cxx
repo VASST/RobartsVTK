@@ -159,18 +159,18 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
 #endif
 
   //update information container
-  this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
-  inData->GetDimensions( this->info.VolumeSize );
-  kohonenData->GetDimensions( this->info.KohonenMapSize );
+  this->Info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
+  inData->GetDimensions( this->Info.VolumeSize );
+  kohonenData->GetDimensions( this->Info.KohonenMapSize );
 
   //update scale
-  this->info.Scale = this->Scale;
+  this->Info.Scale = this->Scale;
 
   //pass it over to the GPU
   this->ReserveGPU();
   CUDAalgo_applyKohonenMap( (float*) inData->GetScalarPointer(),
                             (float*) kohonenData->GetScalarPointer(),
-                            (float*) outData->GetScalarPointer(), this->info, this->GetStream() );
+                            (float*) outData->GetScalarPointer(), this->Info, this->GetStream() );
 
   return 1;
 }

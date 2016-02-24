@@ -40,8 +40,8 @@ protected:
   virtual ~vtkCudaFuzzyConnectednessFilter();
 
 private:
-  vtkCudaFuzzyConnectednessFilter operator=(const vtkCudaFuzzyConnectednessFilter&) {}
-  vtkCudaFuzzyConnectednessFilter(const vtkCudaFuzzyConnectednessFilter&) {}
+  vtkCudaFuzzyConnectednessFilter operator=(const vtkCudaFuzzyConnectednessFilter&);
+  vtkCudaFuzzyConnectednessFilter(const vtkCudaFuzzyConnectednessFilter&);
 
   int TNorm;
   int SNorm;

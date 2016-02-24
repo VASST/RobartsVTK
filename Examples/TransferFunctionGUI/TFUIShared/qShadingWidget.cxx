@@ -1,12 +1,17 @@
 #include "qShadingWidget.h"
-
+#include "qTransferFunctionWindowWidgetInterface.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include <QLabel>
+#include <QMenu>
+#include <QSlider>
 #include <QVBoxLayout>
 
 // ---------------------------------------------------------------------------------------
-// Construction and destruction code
-
 #define SLIDERMAX 1000
 
+// ---------------------------------------------------------------------------------------
 qShadingWidget::qShadingWidget( qTransferFunctionWindowWidgetInterface* p ) :
   QWidget(p)
 {
@@ -14,7 +19,7 @@ qShadingWidget::qShadingWidget( qTransferFunctionWindowWidgetInterface* p ) :
   window = 0;
   renderer = 0;
   mapper = 0;
-  
+
   //create and arrange the sliders
   QVBoxLayout* shadeLayout = new QVBoxLayout();
   CelDarknessSliderLabel = new QLabel("Cel Shading Darkness:",this);
@@ -32,7 +37,7 @@ qShadingWidget::qShadingWidget( qTransferFunctionWindowWidgetInterface* p ) :
   CelBSlider = new QSlider(Qt::Orientation::Horizontal, this);
   CelBSlider->setRange(0,SLIDERMAX);
   CelBSlider->setValue(423);
-  
+
   DistDarknessSliderLabel = new QLabel("Distance Shading Darkness:",this);
   DistASliderLabel = new QLabel("Distance Shading Start Value:",this);
   DistBSliderLabel = new QLabel("Distance Shading Stop Value:",this);
@@ -48,7 +53,7 @@ qShadingWidget::qShadingWidget( qTransferFunctionWindowWidgetInterface* p ) :
   DistBSlider = new QSlider(Qt::Orientation::Horizontal, this);
   DistBSlider->setRange(0,SLIDERMAX);
   DistBSlider->setValue(600);
-  
+
   shadeLayout->addWidget(CelDarknessSliderLabel);
   shadeLayout->addWidget(CelDarknessSliderValue);
   shadeLayout->addWidget(CelDarknessSlider);
@@ -86,7 +91,9 @@ qShadingWidget::qShadingWidget( qTransferFunctionWindowWidgetInterface* p ) :
   DistBSlider->show();
 }
 
-qShadingWidget::~qShadingWidget( ) {
+// ---------------------------------------------------------------------------------------
+qShadingWidget::~qShadingWidget( )
+{
   delete CelDarknessSliderLabel;
   delete CelASliderLabel;
   delete CelBSliderLabel;
@@ -101,8 +108,9 @@ qShadingWidget::~qShadingWidget( ) {
   delete DistBSlider;
 }
 
-
-void qShadingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCudaVolumeMapper* c ){
+// ---------------------------------------------------------------------------------------
+void qShadingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCudaVolumeMapper* c )
+{
   window = w;
   renderer = r;
   mapper = c;
@@ -116,7 +124,7 @@ void qShadingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtk
   this->CelASliderValue->setText( QString::number(a) );
   this->CelBSliderValue->setText( QString::number(b) );
   setCelShadingConstants(darkness,a,b);
-  
+
   darkness = (double) DistDarknessSlider->value() / (double) DistDarknessSlider->maximum();
   a = 0.1 * (double) DistASlider->value() / (double) DistASlider->maximum();
   b = 0.1 * (double) DistBSlider->value() / (double) DistBSlider->maximum();
@@ -125,12 +133,10 @@ void qShadingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtk
   this->DistBSliderValue->setText( QString::number(b) );
   setDistanceShadingConstants(darkness,a,b);
 }
+
 // ---------------------------------------------------------------------------------------
-// Code to interface with the slots and user
-
-void qShadingWidget::changeShading(){
-  
-
+void qShadingWidget::changeShading()
+{
   //set reasonable default shading values
   float darkness = (double) CelDarknessSlider->value() / (double) CelDarknessSlider->maximum();
   float a = 0.1 * (double) CelASlider->value() / (double) CelASlider->maximum();
@@ -140,7 +146,7 @@ void qShadingWidget::changeShading(){
   this->CelASliderValue->setText( QString::number(a) );
   this->CelBSliderValue->setText( QString::number(b) );
   setCelShadingConstants(darkness,a,b);
-  
+
   darkness = (double) DistDarknessSlider->value() / (double) DistDarknessSlider->maximum();
   a = (double) DistASlider->value() / (double) DistASlider->maximum();
   b = (double) DistBSlider->value() / (double) DistBSlider->maximum();
@@ -154,12 +160,13 @@ void qShadingWidget::changeShading(){
 }
 
 // ---------------------------------------------------------------------------------------
-// Code to interface with the model
-
-void qShadingWidget::setCelShadingConstants(float d, float a, float b){
+void qShadingWidget::setCelShadingConstants(float d, float a, float b)
+{
   mapper->SetCelShadingConstants(d,a,b);
 }
 
-void qShadingWidget::setDistanceShadingConstants(float d, float a, float b){
+// ---------------------------------------------------------------------------------------
+void qShadingWidget::setDistanceShadingConstants(float d, float a, float b)
+{
   mapper->SetDistanceShadingConstants(d,a,b);
 }

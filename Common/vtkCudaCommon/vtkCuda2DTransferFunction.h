@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    CudaObject.h
+  Module:    vtkCuda2DTransferFunction.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 

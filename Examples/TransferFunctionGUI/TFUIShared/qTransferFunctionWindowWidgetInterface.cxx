@@ -1,8 +1,8 @@
+#include "CudaObject.h"
 #include "qTransferFunctionWindowWidgetInterface.h"
-
 #include <algorithm>
 
-qTransferFunctionWindowWidgetInterface::qTransferFunctionWindowWidgetInterface(QWidget *parent /*= 0*/) 
+qTransferFunctionWindowWidgetInterface::qTransferFunctionWindowWidgetInterface(QWidget *parent /*= 0*/)
   : QWidget(parent)
 {
 

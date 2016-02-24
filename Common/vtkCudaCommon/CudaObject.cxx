@@ -23,7 +23,9 @@
 
 #include "CudaObject.h"
 #include "vtkObjectFactory.h"
+#include "cuda.h"
 #include "cuda_runtime_api.h"
+#include "vector_types.h"
 
 //----------------------------------------------------------------------------
 void errorOut(CudaObject* self, const char* message)

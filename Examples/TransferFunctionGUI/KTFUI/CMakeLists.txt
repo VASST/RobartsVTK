@@ -1,29 +1,8 @@
-PROJECT(TFUI-Kohonen)
+PROJECT(TFUIKohonen)
 
-SET(${PROJECT_NAME}_LIBS 
-  TFUI-Common 
-  vtkCudaVisualization 
-  vtkCudaImageAnalytics 
-  vtkCudaCommon 
-  vtkRenderingVolume 
-  vtkRenderingCore 
-  vtkFiltersCore 
-  vtkImagingCore 
-  vtkIOImage 
-  vtkCommonCore 
-  vtkGUISupportQt
-  )
+vtk_module_impl()
 
-IF( MSVC )
-  SET(${PROJECT_NAME}_HDRS 
-    qTransferFunctionWindowWidget.h
-    qHistogramHolderLabel.h
-    qTransferFunctionDefinitionWidget.h
-    qSegmentationWidget.h
-  )
-ENDIF()
-
-SET ( ${PROJECT_NAME}_SRCS
+SET ( Module_SRCS 
   main.cpp
   qTransferFunctionWindowWidget.cxx
   qHistogramHolderLabel.cxx
@@ -34,11 +13,20 @@ SET ( ${PROJECT_NAME}_SRCS
 IF( QT4_FOUND )
   INCLUDE(${QT_USE_FILE})
 ELSE()
-  INCLUDE_DIRECTORIES(${Qt5Widgets_INCLUDE_DIRS})
-  LIST(APPEND ${PROJECT_NAME}_LIBS ${_Qt5Widgets_LIB_DEPENDENCIES})
+  LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${Qt5Widgets_INCLUDE_DIRS})
+  SET(${PROJECT_NAME}_APPEND_LIBS Qt5::Widgets ${_Qt5Widgets_LIB_DEPENDENCIES})
+  LIST(APPEND ${PROJECT_NAME}_LIBS ${PROJECT_NAME}_APPEND_LIBS)
 ENDIF()
 
-INCLUDE_DIRECTORIES(${TFUI-Common_SOURCE_DIR} ${vtkCudaCommon_INCLUDE_DIRS} ${vtkCudaVisualization_INCLUDE_DIRS} ${vtkCudaImageAnalytics_INCLUDE_DIRS})
+# -----------------------------------------------------------------
+# Build the executable
+vtk_add_executable(${PROJECT_NAME} ${Module_SRCS})
+foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${dep})
+endforeach()
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_APPEND_LIBS})
+vtk_target_install(${PROJECT_NAME})
 
-CUDA_ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} ${${PROJECT_NAME}_HDRS})
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+# -----------------------------------------------------------------
+LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
+SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)

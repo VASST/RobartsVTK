@@ -1,52 +1,72 @@
 #include "vtkCudaMemoryTexture.h"
+#include "vtkImageData.h"
 #include "vtkObjectFactory.h"
+#include <vtkVersion.h>
 
-// OpenGL
+// Fixed order
 #include "vtkgl.h"
 #include "vtkOpenGLExtensionManager.h"
-// CUDA
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
+// End fixed order
 
-#include "vtkImageData.h"
-
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+//----------------------------------------------------------------------------
 
 vtkStandardNewMacro(vtkCudaMemoryTexture);
 
-vtkCudaMemoryTexture::vtkCudaMemoryTexture(){
+//----------------------------------------------------------------------------
+
+bool vtkCudaMemoryTexture::GLBufferObjectsAvailiable = false;
+
+//----------------------------------------------------------------------------
+vtkCudaMemoryTexture::vtkCudaMemoryTexture()
+{
   this->Initialize();
 }
 
-vtkCudaMemoryTexture::~vtkCudaMemoryTexture(){
+//----------------------------------------------------------------------------
+vtkCudaMemoryTexture::~vtkCudaMemoryTexture()
+{
   this->Deinitialize();
 }
 
-void vtkCudaMemoryTexture::Deinitialize(int withData){
-  
+//----------------------------------------------------------------------------
+void vtkCudaMemoryTexture::Deinitialize(int withData)
+{
   this->ReserveGPU();
-  if(this->CudaOutputData) cudaFree( (void*) this->CudaOutputData );
+  if(this->CudaOutputData)
+  {
+    cudaFree( (void*) this->CudaOutputData );
+  }
   this->CudaOutputData = 0;
 
   if (this->TextureID == 0 || !glIsTexture(this->TextureID))
+  {
     glGenTextures(1, &this->TextureID);
+  }
 
   if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == true)
+  {
     if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
+    {
       vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
+    }
+  }
 }
 
-void vtkCudaMemoryTexture::Reinitialize(int withData){
+//----------------------------------------------------------------------------
+void vtkCudaMemoryTexture::Reinitialize(int withData)
+{
   this->Initialize();
-  if(!this->CudaOutputData){
+  if(!this->CudaOutputData)
+  {
     this->ReserveGPU();
     cudaMalloc( (void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height );
     this->RebuildBuffer();
   }
 }
 
-bool  vtkCudaMemoryTexture::GLBufferObjectsAvailiable = false;
-
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::Initialize()
 {
   this->TextureID = 0;
@@ -73,19 +93,39 @@ void vtkCudaMemoryTexture::Initialize()
   }
 }
 
+//----------------------------------------------------------------------------
+void vtkCudaMemoryTexture::SetWidth(unsigned int width)
+{
+  this->SetSize(width, this->GetHeight());
+}
+
+//----------------------------------------------------------------------------
+void vtkCudaMemoryTexture::SetHeight(unsigned int height)
+{
+  this->SetSize(this->GetWidth(), height);
+}
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
 {
   if (width == this->Width && this->Height == height)
+  {
     return;
+  }
   else
   {
-
     this->Width = width;
     this->Height = height;
-    
+
     this->ReserveGPU();
-    if(this->CudaOutputData) cudaFree( (void*) this->CudaOutputData );
-    if(this->LocalOutputData) delete this->LocalOutputData;
+    if(this->CudaOutputData)
+    {
+      cudaFree( (void*) this->CudaOutputData );
+    }
+    if(this->LocalOutputData)
+    {
+      delete this->LocalOutputData;
+    }
 
     // Allocate Memory
     cudaMalloc( (void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height );
@@ -94,13 +134,35 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
     this->RebuildBuffer();
   }
 }
+
+//----------------------------------------------------------------------------
+unsigned int vtkCudaMemoryTexture::GetWidth() const
+{
+  return this->Width;
+}
+
+//----------------------------------------------------------------------------
+unsigned int vtkCudaMemoryTexture::GetHeight() const
+{
+  return this->Height;
+}
+
+//----------------------------------------------------------------------------
+unsigned int vtkCudaMemoryTexture::GetTexture() const
+{
+  return this->TextureID;
+}
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::RebuildBuffer()
 {
   // TEXTURE CODE
   this->ReserveGPU();
   glEnable(GL_TEXTURE_2D);
   if (this->TextureID != 0 && glIsTexture(this->TextureID))
+  {
     glDeleteTextures(1, &this->TextureID);
+  }
   glGenTextures(1, &this->TextureID);
   glBindTexture(GL_TEXTURE_2D, this->TextureID);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -115,23 +177,37 @@ void vtkCudaMemoryTexture::RebuildBuffer()
     // OpenGL Buffer Code
     this->ReserveGPU();
     if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
+    {
       vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
+    }
     vtkgl::GenBuffersARB(1, &this->BufferObjectID);
     vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
     vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->Width * Height * sizeof(uchar4), (void*) this->LocalOutputData, vtkgl::STREAM_COPY);
     vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
   }
 }
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::SetRenderMode(int mode)
 {
-  if (mode == RenderToTexture && vtkCudaMemoryTexture::GLBufferObjectsAvailiable){
+  if (mode == RenderToTexture && vtkCudaMemoryTexture::GLBufferObjectsAvailiable)
+  {
     this->CurrentRenderMode = mode;
-  }else{
+  }
+  else
+  {
     this->CurrentRenderMode = RenderToMemory;
   }
   this->RebuildBuffer();
 }
 
+//----------------------------------------------------------------------------
+int vtkCudaMemoryTexture::GetCurrentRenderMode() const
+{
+  return this->CurrentRenderMode;
+}
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::BindTexture()
 {
   this->ReserveGPU();
@@ -140,6 +216,7 @@ void vtkCudaMemoryTexture::BindTexture()
   glBindTexture(GL_TEXTURE_2D, this->TextureID);
 }
 
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::BindBuffer()
 {
   if (this->CurrentRenderMode == RenderToTexture)
@@ -158,6 +235,13 @@ void vtkCudaMemoryTexture::BindBuffer()
   }
 }
 
+//----------------------------------------------------------------------------
+unsigned char* vtkCudaMemoryTexture::GetRenderDestination() const
+{
+  return this->RenderDestination;
+}
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::UnbindBuffer()
 {
   if (this->CurrentRenderMode == RenderToTexture)
@@ -178,12 +262,15 @@ void vtkCudaMemoryTexture::UnbindBuffer()
   }
   this->RenderDestination = NULL;
 }
+
+//----------------------------------------------------------------------------
 void vtkCudaMemoryTexture::UnbindTexture()
 {
   this->ReserveGPU();
   glPopAttrib();
 }
 
+//----------------------------------------------------------------------------
 bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
 {
   // setting up the data type and size.
@@ -194,9 +281,9 @@ bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
 #endif
 
   data->SetDimensions(this->Width, Height, 1);
-  data->SetExtent(0, this->Width - 1, 
-    0, this->Height - 1, 
-    0, 1 - 1);
+  data->SetExtent(0, this->Width - 1,
+                  0, this->Height - 1,
+                  0, 1 - 1);
 
 #if (VTK_MAJOR_VERSION < 6)
   data->SetNumberOfScalarComponents(4);
@@ -204,7 +291,7 @@ bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
 #else
   data->AllocateScalars(VTK_UNSIGNED_CHAR, 4);
 #endif
-  
+
   this->ReserveGPU();
   cudaMemcpyAsync( (void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));
   cudaStreamSynchronize( *(this->GetStream()) );

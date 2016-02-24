@@ -1,0 +1,9 @@
+vtk_module(vtkCudaCommonStatic
+  GROUPS
+    Cuda
+  DEPENDS
+    vtkCudaCommon
+  KIT
+    vtkRobartsCuda
+  EXCLUDE_FROM_WRAPPING
+  )

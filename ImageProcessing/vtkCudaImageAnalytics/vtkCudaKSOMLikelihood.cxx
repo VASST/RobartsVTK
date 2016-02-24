@@ -109,38 +109,38 @@ int vtkCudaKSOMLikelihood::RequestData(vtkInformation *request,
   vtkImageData* outputGMMImage = vtkImageData::SafeDownCast(outputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   //figure out the extent of the output
-  this->info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
-  this->info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
+  this->Info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
+  this->Info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
 #if (VTK_MAJOR_VERSION < 6)
   outputGMMImage->SetScalarTypeToFloat();
-  outputGMMImage->SetNumberOfScalarComponents( this->info.NumberOfLabels );
+  outputGMMImage->SetNumberOfScalarComponents( this->Info.NumberOfLabels );
   outputGMMImage->SetExtent(inputGMMImage->GetExtent());
   outputGMMImage->SetWholeExtent(inputGMMImage->GetExtent());
   outputGMMImage->AllocateScalars();
 #else
   outputGMMImage->SetExtent(inputGMMImage->GetExtent());
-  outputGMMImage->AllocateScalars(VTK_FLOAT, this->info.NumberOfLabels);
+  outputGMMImage->AllocateScalars(VTK_FLOAT, this->Info.NumberOfLabels);
 #endif
 
   //get volume information for containers
-  inputDataImage->GetDimensions( this->info.VolumeSize );
-  outputGMMImage->GetDimensions( this->info.GMMSize );
+  inputDataImage->GetDimensions( this->Info.VolumeSize );
+  outputGMMImage->GetDimensions( this->Info.GMMSize );
 
   //get range for weight normalization
-  double* Range = new double[2*(this->info.NumberOfDimensions)];
-  for(int i = 0; i < this->info.NumberOfDimensions; i++)
+  double* Range = new double[2*(this->Info.NumberOfDimensions)];
+  for(int i = 0; i < this->Info.NumberOfDimensions; i++)
   {
     inputDataImage->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
   }
 
   //calculate P according tot he Naive model
-  int N = this->info.GMMSize[0]*this->info.GMMSize[1];
+  int N = this->Info.GMMSize[0]*this->Info.GMMSize[1];
 
   //run algorithm on CUDA
   this->ReserveGPU();
   CUDAalgo_applyKSOMLLModel( (float*) inputDataImage->GetScalarPointer(), (float*) inputGMMImage->GetScalarPointer(),
                              (float*) outputGMMImage->GetScalarPointer(),
-                             (char*) seededDataImage->GetScalarPointer(), this->info, this->Scale, this->GetStream() );
+                             (char*) seededDataImage->GetScalarPointer(), this->Info, this->Scale, this->GetStream() );
 
   return 1;
 }

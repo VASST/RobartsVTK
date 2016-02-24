@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    CudaObject.h
+  Module:    vtkCudaMemoryTexture.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute
 
@@ -34,36 +34,35 @@
 class VTKCUDACOMMON_EXPORT vtkCudaMemoryTexture : public vtkObject, public CudaObject
 {
 public:
+  typedef enum
+  {
+    RenderToTexture,
+    RenderToMemory,
+  } RenderMode;
 
+public:
+  static vtkCudaMemoryTexture* New();
   vtkTypeMacro( vtkCudaMemoryTexture, vtkObject );
 
-  static vtkCudaMemoryTexture* New();
-
-  void SetWidth(unsigned int width) { this->SetSize(width, this->GetHeight()); }
-  void SetHeight(unsigned int height) { this->SetSize(this->GetWidth(), height); }
+  void SetWidth(unsigned int width);
+  void SetHeight(unsigned int height);
   void SetSize(unsigned int width, unsigned int height);
 
-  unsigned int GetWidth() const { return this->Width; }
-  unsigned int GetHeight() const { return this->Height; }
+  unsigned int GetWidth() const;
+  unsigned int GetHeight() const;
 
-  unsigned int GetTexture() const { return this->TextureID; }
+  unsigned int GetTexture() const;
 
   void BindTexture();
   void BindBuffer();
-  unsigned char* GetRenderDestination() const { return this->RenderDestination; }
+  unsigned char* GetRenderDestination() const;
   void UnbindBuffer();
   void UnbindTexture();
 
   bool CopyToVtkImageData(vtkImageData* data);
 
-  typedef enum 
-  {
-    RenderToTexture,
-    RenderToMemory,
-  } RenderMode;
   void SetRenderMode(int mode);
-  int GetCurrentRenderMode() const { return this->CurrentRenderMode; }
-
+  int GetCurrentRenderMode() const;
 
 protected:
   vtkCudaMemoryTexture();
@@ -71,11 +70,6 @@ protected:
   void Reinitialize(int withData = 0);
   void Deinitialize(int withData = 0);
 
-private:
-  void Initialize();
-  void RebuildBuffer();
-
-private:
   unsigned char*  RenderDestination;
 
   unsigned int  TextureID;
@@ -90,5 +84,9 @@ private:
   uchar4*      LocalOutputData;
 
   static bool  GLBufferObjectsAvailiable;
+
+private:
+  void Initialize();
+  void RebuildBuffer();
 };
 #endif /* __VTKCUDAMEMORYTEXTURE_H__ */

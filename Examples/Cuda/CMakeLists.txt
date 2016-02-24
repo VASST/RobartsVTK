@@ -1,22 +1,19 @@
 PROJECT( Cuda2DTFVolumeRendering )
 
-SET(${PROJECT_NAME}_LIBS 
-  vtkRenderingVolumeOpenGL 
-  vtkRenderingFreeTypeOpenGL 
-  vtkFiltersCore 
-  vtkImagingCore 
-  vtkInteractionWidgets 
-  vtkIOImage 
-  vtkCommonCore 
-  vtkCudaCommon 
-  vtkCudaVisualization 
-  )
+vtk_module_impl()
 
-SET ( ${PROJECT_NAME}_SRCS
+SET ( Module_SRCS 
   Cuda2DTFVolumeRendering.cxx
 )
 
-INCLUDE_DIRECTORIES ( ${vtkCudaVisualization_INCLUDE_DIRS} ${vtkCudaCommon_INCLUDE_DIRS})
+# -----------------------------------------------------------------
+# Build the executable
+vtk_add_executable(${PROJECT_NAME} ${Module_SRCS})
+foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${dep})
+endforeach()
+vtk_target_install(${PROJECT_NAME})
 
-CUDA_ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+# -----------------------------------------------------------------
+LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
+SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)

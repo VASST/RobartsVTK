@@ -78,17 +78,6 @@ protected:
 
   void Reinitialize(int withData);
   void Deinitialize(int withData);
-
-private:
-
-  Kohonen_Generator_Information& GetCudaInformation()
-  {
-    return this->info;
-  }
-
-  vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&) {}
-  vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&) {}
-
   vtkPiecewiseFunction* MeansAlphaSchedule;
   vtkPiecewiseFunction* MeansWidthSchedule;
   vtkPiecewiseFunction* VarsAlphaSchedule;
@@ -98,7 +87,7 @@ private:
 
   int outExt[6];
 
-  Kohonen_Generator_Information info;
+  Kohonen_Generator_Information Info;
 
   int    MaxEpochs;
   double  BatchPercent;
@@ -106,6 +95,11 @@ private:
 
   bool  UseMask;
 
+  Kohonen_Generator_Information& GetCudaInformation();
+
+private:
+  vtkCudaKohonenGenerator operator=(const vtkCudaKohonenGenerator&);
+  vtkCudaKohonenGenerator(const vtkCudaKohonenGenerator&);
 };
 
 #endif

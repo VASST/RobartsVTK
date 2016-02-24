@@ -2,11 +2,7 @@ PROJECT(vtkRobartsRegistration)
 
 include(module.cmake)
 
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_BINARY_DIR})
 SET(${PROJECT_NAME}_PYTHON_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS})
-
-# Add entries to project details
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
 
 SET ( Module_SRCS
   vtkShapeBasedInterpolation.cxx
@@ -36,46 +32,8 @@ SET ( Module_SRCS
   vtkGBEFixed.cxx
   vtkGBE.cxx
   vtkFunctionMinimizer.cxx
-  vtkDeformedVolume.cxx
   vtkCompactSupportRBFTransform.cxx
-  vtkCISGSubdivideGridTransform.cxx
 )
-
-if( MSVC )
-  SET( ${vtk-module}_HDRS ${${vtk-module}_HDRS}
-    vtkCISGSubdivideGridTransform.h
-    vtkCompactSupportRBFTransform.h
-    vtkDeformedVolume.h
-    vtkFunctionMinimizer.h
-    vtkGBE.h
-    vtkGBEFixed.h
-    vtkImage3DNoiseSource.h
-    vtkImageAbsoluteDifference.h
-    vtkImageADManipulator.h
-    vtkImageECRManipulator.h
-    vtkImageMIManipulator.h
-    vtkImageNCCManipulator.h
-    vtkImageNMIManipulator.h
-    vtkImageNormalizedCrossCorrelation.h
-    vtkImagePatternIntensity.h
-    vtkImageRMIManipulator.h
-    vtkImageSDManipulator.h
-    vtkImageSMIManipulator.h
-    vtkImageSMIManipulator2.h
-    vtkImageSMIPVIManipulator.h
-    vtkImageSquaredDifference.h
-    vtkImageTMIManipulator.h
-    vtkMeshSmootheness.h
-    vtkPolyDataCorrespondence.h
-    vtkPolyDataNormals2.h
-    vtkPolyDataSurfaceArea.h
-    vtkPowellMinimizer.h
-    vtkPrincipalComponentAnalysis.h
-    vtkShapeBasedInterpolation.h
-    vtkTPSRegistration.h
-    vtkTriangleMeshQuality.h
-  )
-endif()
 
 # The following classes need re-writing to move from VTK4 to VTK6 design
 if( ${RobartsVTK_Include_Outdated_Registration} )
@@ -92,34 +50,16 @@ if( ${RobartsVTK_Include_Outdated_Registration} )
     vtkImageCrossCorrelation.cxx
     vtkImageAmoebaGrid.cxx
     vtkGridTransformBSpline.cxx
+    vtkDeformedVolume.cxx # depends on vtkGridTransformBSpline.cxx
+    vtkCISGSubdivideGridTransform.cxx # depends on vtkGridTransformBSpline.cxx
     vtkCalcCrossCorrelation.cxx
     vtkCalcCentroid.cxx
     vtkImageMean3D.cxx
   )
-  if( MSVC )
-    SET( ${vtk-module}_HDRS ${${vtk-module}_HDRS} 
-      vtkImageTsallisMutualInformation.h
-      vtkImageSquaredDifference.h
-      vtkImageShannonMutualInformation.h
-      vtkImageResliceBSpline.h
-      vtkImageRenyiMutualInformation.h
-      vtkImageProbeSum.h
-      vtkImageNormalizedMutualInformation.h
-      vtkImageGridStatistics.h
-      vtkImageDataStatistics.h
-      vtkImageCrossCorrelation.h
-      vtkImageAmoebaGrid.h
-      vtkGridTransformBSpline.h
-      vtkCalcCrossCorrelation.h
-      vtkCalcCentroid.h
-      vtkImageMean3D.h
-    )
-  endif()
 endif()
 
 # -----------------------------------------------------------------
 # Build the library
-include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 
 # -----------------------------------------------------------------

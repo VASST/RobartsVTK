@@ -1,7 +1,20 @@
-#include "CUDA_cttoussimulation.h"
-#include "CUDA_commonKernels.h"
+/*=========================================================================
 
-//3D input data (read-only texture with corresponding opague device memory back)
+  Program:   Visualization Toolkit
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+#include "CUDA_commonKernels.h"
+#include "CUDA_cttoussimulation.h"
+#include "vtkCudaCommon.h"
+
+//3D input data (read-only texture with corresponding opaque device memory back)
 texture<float, 3, cudaReadModeElementType> ct_input_texture;
 cudaArray* ct_input_array = 0;
 texture<unsigned char, 3, cudaReadModeElementType> us_input_texture;
@@ -12,12 +25,12 @@ __constant__ CT_To_US_Information info;
 
 //device code to collect information on each of the sample points
 __device__ void CUDAkernel_CollectSamples(  int2 index,
-            float3& rayStart,
-            float3& rayInc,
-            float* outputDensity,
-            float* outputTransmission,
-            float* outputReflection){
-
+    float3& rayStart,
+    float3& rayInc,
+    float* outputDensity,
+    float* outputTransmission,
+    float* outputReflection)
+{
   //collect parameters from constant memory
   uint3 volumeSize = info.VolumeSize;
   float3 spacing = info.spacing;
@@ -35,8 +48,8 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
 
   float directionMag = sqrt( rayInc.x*rayInc.x + rayInc.y*rayInc.y + rayInc.z*rayInc.z );
   float worldDirectionMag = 2.0f * sqrt( rayInc.x*rayInc.x/(spacing.x*spacing.x) +
-                       rayInc.y*rayInc.y/(spacing.y*spacing.y) +
-                       rayInc.z*rayInc.z/(spacing.z*spacing.z) );
+                                         rayInc.y*rayInc.y/(spacing.y*spacing.y) +
+                                         rayInc.z*rayInc.z/(spacing.z*spacing.z) );
 
   //set up running accumulators
   float transmission = 1.0f;
@@ -45,7 +58,8 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
   float multiplier = info.a;
   float divisor = 1.0f / log(1.0f+multiplier);
 
-  for(unsigned int numStepsTaken = 0; numStepsTaken < numStepsToTake; numStepsTaken++){
+  for(unsigned int numStepsTaken = 0; numStepsTaken < numStepsToTake; numStepsTaken++)
+  {
 
     //create default values for the sample point
     float density = 0.0f;
@@ -56,9 +70,10 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
 
     __syncthreads();
     if(!(rayStart.x < 0.0f || rayStart.y < 0.0f || rayStart.z < 0.0f ||
-       rayStart.x > (float)(volumeSize.x - 1) ||
-       rayStart.y > (float)(volumeSize.y - 1) ||
-       rayStart.y > (float)(volumeSize.y - 1) )){
+         rayStart.x > (float)(volumeSize.x - 1) ||
+         rayStart.y > (float)(volumeSize.y - 1) ||
+         rayStart.y > (float)(volumeSize.y - 1) ))
+    {
 
       //get the attenuation and gradient of the attenuation in Hounsfield units
       attenuation = HounsFieldScale*tex3D(ct_input_texture, rayStart.x, rayStart.y, rayStart.z) + HounsFieldOffset;
@@ -77,12 +92,18 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
 
     //scale the point reflection
     pointReflection = saturate( log( 1 + multiplier * pointReflection ) * divisor );
-    
+
     //output the reflection and density
     __syncthreads();
-    if( isValid ) outputReflection[actIndex] = pointReflection;
+    if( isValid )
+    {
+      outputReflection[actIndex] = pointReflection;
+    }
     __syncthreads();
-    if( isValid ) outputDensity[actIndex] = density;
+    if( isValid )
+    {
+      outputDensity[actIndex] = density;
+    }
     __syncthreads();
 
     //update the running values
@@ -90,7 +111,10 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
 
     //output the transmission
     __syncthreads();
-    if( isValid ) outputTransmission[actIndex] = transmission;
+    if( isValid )
+    {
+      outputTransmission[actIndex] = transmission;
+    }
     __syncthreads();
 
     //update the sampling location
@@ -105,12 +129,13 @@ __device__ void CUDAkernel_CollectSamples(  int2 index,
 }
 
 __global__ void CUDAkernel_ColourParamOutput(float alpha, float beta, float bias,
-            float* outputDensity,
-            float* outputReflection,
-            uchar3* outputUltrasound ){
+    float* outputDensity,
+    float* outputReflection,
+    uchar3* outputUltrasound )
+{
   int actIndex = CUDASTDOFFSET;
   bool isValid = (actIndex < info.Resolution.x*info.Resolution.y*info.Resolution.z );
-  
+
   __syncthreads();
   float pointReflection = ( isValid ) ? outputReflection[actIndex] : 0.0f;
   __syncthreads();
@@ -124,22 +149,26 @@ __global__ void CUDAkernel_ColourParamOutput(float alpha, float beta, float bias
 
   //output the simulated ultrasound
   __syncthreads();
-  if( isValid ) outputUltrasound[actIndex] = outputImage;
+  if( isValid )
+  {
+    outputUltrasound[actIndex] = outputImage;
+  }
   __syncthreads();
 }
 
 //device code to determine from the parameters, the start, end and increment vectors in volume space
 __device__ void CUDAkernel_FindVectors(  float2 nIndex,
-                    float3& rayStart,
-                    float3& rayInc){
+    float3& rayStart,
+    float3& rayInc)
+{
 
-  
+
   //find the US coordinates of this particular beam's Start point
   float3 usStart;
   usStart.x = tan( info.fanAngle.x * nIndex.x );
   usStart.y = tan( info.fanAngle.y * nIndex.y );
-  usStart.z = __fsqrt_rz( info.StartDepth * info.StartDepth / 
-              ( 1.0f + usStart.x*usStart.x + usStart.y*usStart.y) );
+  usStart.z = __fsqrt_rz( info.StartDepth * info.StartDepth /
+                          ( 1.0f + usStart.x*usStart.x + usStart.y*usStart.y) );
   usStart.x = 0.5f * info.probeWidth.x * nIndex.x + usStart.x*usStart.z;
   usStart.y = 0.5f * info.probeWidth.y * nIndex.y + usStart.y*usStart.z;
   __syncthreads();
@@ -151,8 +180,8 @@ __device__ void CUDAkernel_FindVectors(  float2 nIndex,
   worldStart.z = info.UltraSoundToWorld[ 8] * usStart.x + info.UltraSoundToWorld[ 9] * usStart.y + info.UltraSoundToWorld[10] * usStart.z + info.UltraSoundToWorld[11];
   worldStart.w = info.UltraSoundToWorld[12] * usStart.x + info.UltraSoundToWorld[13] * usStart.y + info.UltraSoundToWorld[14] * usStart.z + info.UltraSoundToWorld[15];
   __syncthreads();
-  worldStart.x /= worldStart.w; 
-  worldStart.y /= worldStart.w; 
+  worldStart.x /= worldStart.w;
+  worldStart.y /= worldStart.w;
   worldStart.z /= worldStart.w;
 
   //transform the Start into volume co-ordinates
@@ -165,17 +194,17 @@ __device__ void CUDAkernel_FindVectors(  float2 nIndex,
   rayStart.x /= worldStart.w;
   rayStart.y /= worldStart.w;
   rayStart.z /= worldStart.w;
-  
+
 
   //find the US coordinates of this particular beam's Start point
   float3 usEnd;
   usEnd.x = tan( info.fanAngle.x * nIndex.x );
   usEnd.y = tan( info.fanAngle.y * nIndex.y );
-  usEnd.z = __fsqrt_rz( (info.EndDepth * info.EndDepth) / 
-            ( 1.0f + usEnd.x*usEnd.x + usEnd.y*usEnd.y) );
+  usEnd.z = __fsqrt_rz( (info.EndDepth * info.EndDepth) /
+                        ( 1.0f + usEnd.x*usEnd.x + usEnd.y*usEnd.y) );
   usEnd.x = 0.5f * info.probeWidth.x * nIndex.x + usEnd.x*usEnd.z;
   usEnd.y = 0.5f * info.probeWidth.y * nIndex.y + usEnd.y*usEnd.z;
-  
+
   //find the End vector in world coordinates
   float4 worldEnd;
   __syncthreads();
@@ -184,8 +213,8 @@ __device__ void CUDAkernel_FindVectors(  float2 nIndex,
   worldEnd.z = info.UltraSoundToWorld[ 8] * usEnd.x + info.UltraSoundToWorld[ 9] * usEnd.y + info.UltraSoundToWorld[10] * usEnd.z + info.UltraSoundToWorld[11];
   worldEnd.w = info.UltraSoundToWorld[12] * usEnd.x + info.UltraSoundToWorld[13] * usEnd.y + info.UltraSoundToWorld[14] * usEnd.z + info.UltraSoundToWorld[15];
   __syncthreads();
-  worldEnd.x /= worldEnd.w; 
-  worldEnd.y /= worldEnd.w; 
+  worldEnd.x /= worldEnd.w;
+  worldEnd.y /= worldEnd.w;
   worldEnd.z /= worldEnd.w;
 
   //transform the End into volume co-ordinates
@@ -209,8 +238,9 @@ __device__ void CUDAkernel_FindVectors(  float2 nIndex,
 }
 
 __global__ void CUDAkernel_CreateSimulatedUS(  float* outputDensity,
-                        float* outputTransmission,
-                        float* outputReflection){
+    float* outputTransmission,
+    float* outputReflection)
+{
 
   //find x index value in the simulated ultrasound image
   int2 index;
@@ -221,7 +251,7 @@ __global__ void CUDAkernel_CreateSimulatedUS(  float* outputDensity,
   float2 normIndex;
   normIndex.x = (float) (index.x+index.x) / (float) info.Resolution.x - 1.0f;
   normIndex.y = (float) (index.y+index.y) / (float) info.Resolution.y - 1.0f;
-  
+
   //starting and increment vectors
   float3 rayStart;
   float3 rayInc;
@@ -232,7 +262,8 @@ __global__ void CUDAkernel_CreateSimulatedUS(  float* outputDensity,
 
 }
 
-__global__ void CUDAkernel_sampleU( float* destination, int size ){
+__global__ void CUDAkernel_sampleU( float* destination, int size )
+{
   int fullIndex = CUDASTDOFFSET;
   int3 index;
   index.x = fullIndex % info.Resolution.x;
@@ -240,7 +271,8 @@ __global__ void CUDAkernel_sampleU( float* destination, int size ){
   index.y = index.z % info.Resolution.y;
   index.z = index.z / info.Resolution.y;
 
-  if( info.Resolution.y == 1 ){
+  if( info.Resolution.y == 1 )
+  {
     int temp = index.z;
     index.z = index.y;
     index.y = temp;
@@ -248,28 +280,43 @@ __global__ void CUDAkernel_sampleU( float* destination, int size ){
 
   unsigned char value = tex3D(us_input_texture, index.x, index.y, index.z);
 
-  if( fullIndex < size ) destination[fullIndex] = (float) value / 255.0f;
+  if( fullIndex < size )
+  {
+    destination[fullIndex] = (float) value / 255.0f;
+  }
 }
 
-__global__ void CUDAkernel_multiply( float* sourceA, float* sourceB, float* destination, int size ){
+__global__ void CUDAkernel_multiply( float* sourceA, float* sourceB, float* destination, int size )
+{
   int index = CUDASTDOFFSET;
   float a = sourceA[index];
   float b = sourceB[index];
-  if( index < size ) destination[index] = a * b;
+  if( index < size )
+  {
+    destination[index] = a * b;
+  }
 }
 
-__global__ void CUDAkernel_accumulate( float* buffer, int addSize, int size ){
+__global__ void CUDAkernel_accumulate( float* buffer, int addSize, int size )
+{
   int index = CUDASTDOFFSET;
   float a = buffer[index];
   float b = buffer[index+addSize];
-  if( index+addSize < size ) buffer[index] = a+b;
+  if( index+addSize < size )
+  {
+    buffer[index] = a+b;
+  }
 }
 
-void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, cudaStream_t* stream){
+void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, cudaStream_t* stream)
+{
 
   //free the array if there is another image residing
   cudaStreamSynchronize( *stream );
-  if(ct_input_array ) cudaFreeArray(ct_input_array );
+  if(ct_input_array )
+  {
+    cudaFreeArray(ct_input_array );
+  }
 
   //find the volume size
   cudaExtent volumeSize;
@@ -301,11 +348,15 @@ void CUDAsetup_loadCTImage( float* CTImage, CT_To_US_Information& information, c
 
 }
 
-void CUDAsetup_loadUSImage( unsigned char* USImage, int resolution[3], cudaStream_t* stream){
+void CUDAsetup_loadUSImage( unsigned char* USImage, int resolution[3], cudaStream_t* stream)
+{
 
   //free the array if there is another image residing
   cudaStreamSynchronize( *stream );
-  if(us_input_array ) cudaFreeArray(us_input_array );
+  if(us_input_array )
+  {
+    cudaFreeArray(us_input_array );
+  }
 
   //find the volume size
   cudaExtent volumeSize;
@@ -337,32 +388,44 @@ void CUDAsetup_loadUSImage( unsigned char* USImage, int resolution[3], cudaStrea
 
 }
 
-void CUDAsetup_unloadCTImage(cudaStream_t* stream){
+void CUDAsetup_unloadCTImage(cudaStream_t* stream)
+{
   cudaStreamSynchronize( *stream );
-  if(ct_input_array ) cudaFreeArray(ct_input_array );
+  if(ct_input_array )
+  {
+    cudaFreeArray(ct_input_array );
+  }
   ct_input_array = 0;
 }
 
-void CUDAsetup_unloadUSImage(cudaStream_t* stream){
+void CUDAsetup_unloadUSImage(cudaStream_t* stream)
+{
   cudaStreamSynchronize( *stream );
-  if(us_input_array ) cudaFreeArray(us_input_array );
+  if(us_input_array )
+  {
+    cudaFreeArray(us_input_array );
+  }
   us_input_array = 0;
 }
 
-inline int pow2roundup (int x) {
-    if (x < 0)
-        return 0;
-    x--;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    return x+1;
+inline int pow2roundup (int x)
+{
+  if (x < 0)
+  {
+    return 0;
+  }
+  x--;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  return x+1;
 }
 
 void CUDAalgo_simulateUltraSound(  float* outputDensity, float* outputTransmission, float* outputReflection, unsigned char* outputUltrasound,
-                  CT_To_US_Information& information, cudaStream_t* stream ){
+                                   CT_To_US_Information& information, cudaStream_t* stream )
+{
 
   //copy the information to the device
   cudaMemcpyToSymbolAsync(info, &information, sizeof(CT_To_US_Information), 0, cudaMemcpyHostToDevice, *stream);
@@ -381,7 +444,7 @@ void CUDAalgo_simulateUltraSound(  float* outputDensity, float* outputTransmissi
   dim3 threads( NUMTHREADS, 1, 1);
   dim3 grid = GetGrid(information.Resolution.x * information.Resolution.y);
   CUDAkernel_CreateSimulatedUS<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_trans, device_output_refl );
-  
+
   //copy the preliminary results
   cudaMemcpyAsync( (void*) outputDensity,      (void*) device_output_dens,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
   cudaMemcpyAsync( (void*) outputTransmission, (void*) device_output_trans, sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z, cudaMemcpyDeviceToHost, *stream );
@@ -392,21 +455,23 @@ void CUDAalgo_simulateUltraSound(  float* outputDensity, float* outputTransmissi
   grid = GetGrid(information.Resolution.x*information.Resolution.y*information.Resolution.z);
   int largestAddSize = pow2roundup( information.Resolution.x * information.Resolution.y * information.Resolution.z );
   int actualSize = information.Resolution.x*information.Resolution.y*information.Resolution.z;
-  if( information.optimalParam ){
-    
+  if( information.optimalParam )
+  {
+
     //add together all the information in the simulation and corresponding location in the ultrasound
     //to produce the M matrix and U vector
-    
+
     //find the values of u (interpolated from given texture)
     float* device_output_u;
     cudaMalloc( (void**) &device_output_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
     CUDAkernel_sampleU<<< grid, threads, 0, *stream >>>( device_output_u, actualSize );
-    
+
     //find the sum of the du terms
     float* device_output_dens_u;
     cudaMalloc( (void**) &device_output_dens_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
     CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_u, device_output_dens_u, actualSize);
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_u, largestAddSize, actualSize);
     }
     float sum_du = 0.0f;
@@ -417,68 +482,75 @@ void CUDAalgo_simulateUltraSound(  float* outputDensity, float* outputTransmissi
     float* device_output_refl_u;
     cudaMalloc( (void**) &device_output_refl_u,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
     CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_refl, device_output_u, device_output_refl_u, actualSize);
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl_u, largestAddSize, actualSize);
     }
     float sum_ru = 0.0f;
     cudaMemcpyAsync((void*) &sum_ru, (void*) device_output_refl_u,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
     cudaFree(device_output_refl_u);
-    
+
     //find the sum of the u terms
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_u, largestAddSize, actualSize);
     }
     float sum_u = 0.0f;
     cudaMemcpyAsync((void*) &sum_u, (void*) device_output_u,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
     cudaFree(device_output_u);
-    
+
     //find the sum of the d^2 terms
     float* device_output_dens_square;
     cudaMalloc( (void**) &device_output_dens_square,  sizeof(float)*actualSize );
     CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_dens, device_output_dens_square, actualSize);
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_square, largestAddSize, actualSize);
     }
     float sum_d2 = 0.0f;
     cudaMemcpyAsync((void*) &sum_d2, (void*) device_output_dens_square,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
     cudaFree(device_output_dens_square);
-    
+
     //find the sum of the dr terms
     float* device_output_dens_refl;
     cudaMalloc( (void**) &device_output_dens_refl,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
     CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_dens, device_output_refl, device_output_dens_refl, actualSize);
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens_refl, largestAddSize, actualSize);
     }
     float sum_dr = 0.0f;
     cudaMemcpyAsync((void*) &sum_dr, (void*) device_output_dens_refl,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
     cudaFree(device_output_dens_refl);
-    
+
     //find the sum of the r^2 terms
     float* device_output_refl_square;
     cudaMalloc( (void**) &device_output_refl_square,  sizeof(float)*information.Resolution.x*information.Resolution.y*information.Resolution.z );
     CUDAkernel_multiply<<< grid, threads, 0, *stream >>>( device_output_refl, device_output_refl, device_output_refl_square, actualSize);
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl_square, largestAddSize, actualSize);
     }
     float sum_r2 = 0.0f;
     cudaMemcpyAsync((void*) &sum_r2, (void*) device_output_refl_square,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
     cudaFree(device_output_refl_square);
-      
+
     //find the sum of the r terms
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_refl, largestAddSize, actualSize);
     }
     float sum_r = 0.0f;
     cudaMemcpyAsync((void*) &sum_r, (void*) device_output_refl,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
-    
+
     //find the sum of the d terms
-    for(int i = largestAddSize; i > 0; i /= 2){
+    for(int i = largestAddSize; i > 0; i /= 2)
+    {
       CUDAkernel_accumulate<<< grid, threads, 0, *stream >>>(device_output_dens, largestAddSize, actualSize);
     }
     float sum_d = 0.0f;
     cudaMemcpyAsync((void*) &sum_d, (void*) device_output_dens,  sizeof(float), cudaMemcpyDeviceToHost, *stream );
-    
+
     //find the adjoint matrix
     float m11 = (sum_r2*actualSize)-(sum_r * sum_r);
     float m12 = -1.0f * (sum_dr*actualSize)-(sum_d * sum_r);
@@ -505,15 +577,16 @@ void CUDAalgo_simulateUltraSound(  float* outputDensity, float* outputTransmissi
     information.alpha = calcAlpha;
     information.beta = calcBeta;
     information.bias = calcBias;
-    
+
   }
 
   //we already have parameters, so just use them
   CUDAkernel_ColourParamOutput<<< grid, threads, 0, *stream >>>( information.alpha, information.beta, information.bias, device_output_dens, device_output_refl, device_output_us );
-  
+
   //calculate cross correlation if warranted
   //TODO
-  if( information.optimalParam ){
+  if( information.optimalParam )
+  {
 
   }
 

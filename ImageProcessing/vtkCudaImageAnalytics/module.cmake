@@ -5,6 +5,7 @@ vtk_module(vtkCudaImageAnalytics
   DEPENDS
     vtkRobartsCommon
     vtkCudaCommon
+    vtkCudaCommonStatic
     vtkFiltersCore
     vtkCommonCore
   KIT

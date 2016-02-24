@@ -5,7 +5,7 @@
 
 //execution parameters and general information
 __constant__ cuda2DTransferFunctionInformation  CUDA_vtkCuda2DVolumeMapper_trfInfo;
-  
+
 //transfer function as read-only textures
 texture<float, 2, cudaReadModeElementType> alpha_texture_2D;
 texture<float, 2, cudaReadModeElementType> colorR_texture_2D;
@@ -28,19 +28,20 @@ texture<float, 2, cudaReadModeElementType> k_specularPower_texture_2D;
 texture<float, 3, cudaReadModeElementType> CUDA_vtkCuda2DVolumeMapper_input_texture;
 
 __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& rayStart,
-                  const float& numSteps,
-                  int& excludeStart,
-                  int& excludeEnd,
-                  const float3& rayInc,
-                  float4& outputVal,
-                  float& retDepth) {
+    const float& numSteps,
+    int& excludeStart,
+    int& excludeEnd,
+    const float3& rayInc,
+    float4& outputVal,
+    float& retDepth)
+{
 
   //set the default values for the output (note A is currently the remaining opacity, not the output opacity)
   outputVal.x = 0.0f; //R
   outputVal.y = 0.0f; //G
   outputVal.z = 0.0f; //B
   outputVal.w = 1.0f; //A
-    
+
   //fetch the required information about the size and range of the transfer function from memory to registers
   __syncthreads();
   const float functRangeLow = CUDA_vtkCuda2DVolumeMapper_trfInfo.intensityLow;
@@ -61,8 +62,8 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& 
   rayStart.z += retDepth*rayInc.z;
   retDepth = maxSteps;
   float rayLength = sqrtf(rayInc.x*rayInc.x*incSpace.x*incSpace.x +
-              rayInc.y*rayInc.y*incSpace.y*incSpace.y +
-              rayInc.z*rayInc.z*incSpace.z*incSpace.z);
+                          rayInc.y*rayInc.y*incSpace.y*incSpace.y +
+                          rayInc.z*rayInc.z*incSpace.z*incSpace.z);
 
   //allocate flags
   char2 step;
@@ -74,46 +75,48 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& 
   excludeEnd = maxSteps - excludeEnd;
 
   //loop as long as we are still *roughly* in the range of the clipped and cropped volume
-  while( maxSteps > 0 ){
+  while( maxSteps > 0 )
+  {
 
     //if we are in the exclusion area, leave
     bool inKeyhole = (excludeStart >= maxSteps && excludeEnd < maxSteps);
 
     // fetching the intensity index into the transfer function
     const float tempIndex = functRangeMulti * (tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture,
-          rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
-      
+                            rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
+
     //fetching the gradient index into the transfer function
     float3 gradient;
     gradient.x = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x+1.0f, rayStart.y, rayStart.z)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * space.x;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * space.x;
     gradient.y = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * space.y;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * space.y;
     gradient.z = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * space.z;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * space.z;
     float gradMag = gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z;
     const float gradMagIndex = gradRangeMulti * (__log2f(gradMag+gradRangeOffset) + gradRangeLow);
     gradMag = sqrtf( gradMag );
-    
+
     //fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
     float alpha = inKeyhole ? tex2D(k_alpha_texture_2D, tempIndex, gradMagIndex) :
                   tex2D(alpha_texture_2D, tempIndex, gradMagIndex) ;
 
     //adjust shading
-    float phongLambert = saturate( abs ( gradient.x*rayInc.x*incSpace.x + 
-                      gradient.y*rayInc.y*incSpace.y +
-                      gradient.z*rayInc.z*incSpace.z   ) / (gradMag * rayLength) );
+    float phongLambert = saturate( abs ( gradient.x*rayInc.x*incSpace.x +
+                                         gradient.y*rayInc.y*incSpace.y +
+                                         gradient.z*rayInc.z*incSpace.z   ) / (gradMag * rayLength) );
     float shadeD = ( inKeyhole ? tex2D(k_ambient_texture_2D, tempIndex, gradMagIndex) :
                      tex2D(ambient_texture_2D, tempIndex, gradMagIndex) ) +
-             ( inKeyhole ? tex2D(k_diffuse_texture_2D, tempIndex, gradMagIndex) :
+                   ( inKeyhole ? tex2D(k_diffuse_texture_2D, tempIndex, gradMagIndex) :
                      tex2D(diffuse_texture_2D, tempIndex, gradMagIndex) ) * phongLambert;
     float shadeS = ( inKeyhole ? tex2D(k_specular_texture_2D, tempIndex, gradMagIndex) :
-                     tex2D(specular_texture_2D, tempIndex, gradMagIndex) ) * 
-            pow( phongLambert, ( inKeyhole ? tex2D(k_specularPower_texture_2D, tempIndex, gradMagIndex) :
-                             tex2D(specularPower_texture_2D, tempIndex, gradMagIndex) ) );
+                     tex2D(specular_texture_2D, tempIndex, gradMagIndex) ) *
+                   pow( phongLambert, ( inKeyhole ? tex2D(k_specularPower_texture_2D, tempIndex, gradMagIndex) :
+                                        tex2D(specularPower_texture_2D, tempIndex, gradMagIndex) ) );
 
     //filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-    if(alpha > 0.0f){
+    if(alpha > 0.0f)
+    {
 
       //determine which kind of step to make
       step.x = step.y;
@@ -125,35 +128,43 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& 
       rayStart.z = rayStart.z + (step.x ? -rayInc.z : rayInc.z);
       maxSteps = maxSteps + (step.x ? 1 : -1);
 
-      if(!step.x){
+      if(!step.x)
+      {
 
         //accumulate the opacity for this sample point
         float multiplier = outputVal.w * alpha;
         outputVal.w *= (1.0f - alpha);
 
         //accumulate the colour information from this sample point
-        if( inKeyhole ){
+        if( inKeyhole )
+        {
           outputVal.x += multiplier * saturate( shadeD*tex2D(k_colorR_texture_2D, tempIndex, gradMagIndex) + shadeS );
           outputVal.y += multiplier * saturate( shadeD*tex2D(k_colorG_texture_2D, tempIndex, gradMagIndex) + shadeS );
           outputVal.z += multiplier * saturate( shadeD*tex2D(k_colorB_texture_2D, tempIndex, gradMagIndex) + shadeS );
-        }else{
+        }
+        else
+        {
           outputVal.x += multiplier * saturate( shadeD*tex2D(colorR_texture_2D, tempIndex, gradMagIndex) + shadeS );
           outputVal.y += multiplier * saturate( shadeD*tex2D(colorG_texture_2D, tempIndex, gradMagIndex) + shadeS );
           outputVal.z += multiplier * saturate( shadeD*tex2D(colorB_texture_2D, tempIndex, gradMagIndex) + shadeS );
         }
       }
-      
+
       //determine whether or not we've hit an opacity where further sampling becomes neglible
-      if(outputVal.w < 0.03125f){
+      if(outputVal.w < 0.03125f)
+      {
         outputVal.w = 0.0f;
         break;
       }
 
 
-    }else{
+    }
+    else
+    {
 
       //if we aren't backstepping, we can skip a sample
-      if(!step.x){
+      if(!step.x)
+      {
         rayStart.x += rayInc.x;
         rayStart.y += rayInc.y;
         rayStart.z += rayInc.z;
@@ -169,7 +180,7 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& 
       step.x = 0;
 
     }
-    
+
   }//while
 
   //find the length of the ray unused and update the ray termination distance
@@ -181,19 +192,20 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithDual(float3& 
 }
 
 __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float3& rayStart,
-                  const float& numSteps,
-                  int& excludeStart,
-                  int& excludeEnd,
-                  const float3& rayInc,
-                  float4& outputVal,
-                  float& retDepth) {
+    const float& numSteps,
+    int& excludeStart,
+    int& excludeEnd,
+    const float3& rayInc,
+    float4& outputVal,
+    float& retDepth)
+{
 
   //set the default values for the output (note A is currently the remaining opacity, not the output opacity)
   outputVal.x = 0.0f; //R
   outputVal.y = 0.0f; //G
   outputVal.z = 0.0f; //B
   outputVal.w = 1.0f; //A
-    
+
   //fetch the required information about the size and range of the transfer function from memory to registers
   __syncthreads();
   const float functRangeLow = CUDA_vtkCuda2DVolumeMapper_trfInfo.intensityLow;
@@ -214,8 +226,8 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
   rayStart.z += retDepth*rayInc.z;
   retDepth = maxSteps;
   float rayLength = sqrtf(rayInc.x*rayInc.x*incSpace.x*incSpace.x +
-              rayInc.y*rayInc.y*incSpace.y*incSpace.y +
-              rayInc.z*rayInc.z*incSpace.z*incSpace.z);
+                          rayInc.y*rayInc.y*incSpace.y*incSpace.y +
+                          rayInc.z*rayInc.z*incSpace.z*incSpace.z);
 
   //allocate flags
   char2 step;
@@ -227,10 +239,12 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
   excludeEnd = maxSteps - excludeEnd;
 
   //loop as long as we are still *roughly* in the range of the clipped and cropped volume
-  while( maxSteps > 0 ){
+  while( maxSteps > 0 )
+  {
 
     //if we are in the exclusion area, leave
-    if( excludeStart >= maxSteps && excludeEnd < maxSteps ){
+    if( excludeStart >= maxSteps && excludeEnd < maxSteps )
+    {
       rayStart.x += (maxSteps-excludeEnd) * rayInc.x;
       rayStart.y += (maxSteps-excludeEnd) * rayInc.y;
       rayStart.z += (maxSteps-excludeEnd) * rayInc.z;
@@ -242,34 +256,35 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
 
     // fetching the intensity index into the transfer function
     const float tempIndex = functRangeMulti * (tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture,
-          rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
-      
+                            rayStart.x, rayStart.y, rayStart.z) - functRangeLow);
+
     //fetching the gradient index into the transfer function
     float3 gradient;
     gradient.x = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x+1.0f, rayStart.y, rayStart.z)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * space.x;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x-1.0f, rayStart.y, rayStart.z) ) * space.x;
     gradient.y = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y+1.0f, rayStart.z)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * space.y;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y-1.0f, rayStart.z) ) * space.y;
     gradient.z = ( tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z+1.0f)
-           - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * space.z;
+                   - tex3D(CUDA_vtkCuda2DVolumeMapper_input_texture, rayStart.x, rayStart.y, rayStart.z-1.0f) ) * space.z;
     float gradMag = gradient.x*gradient.x+gradient.y*gradient.y+gradient.z*gradient.z;
     const float gradMagIndex = gradRangeMulti * (__log2f(gradMag+gradRangeOffset) + gradRangeLow);
     gradMag = sqrtf( gradMag );
-    
+
     //fetching the opacity value of the sampling point (apply transfer function in stages to minimize work)
     float alpha = tex2D(alpha_texture_2D, tempIndex, gradMagIndex);
 
     //adjust shading
-    float phongLambert = saturate( abs ( gradient.x*rayInc.x*incSpace.x + 
-                      gradient.y*rayInc.y*incSpace.y +
-                      gradient.z*rayInc.z*incSpace.z   ) / (gradMag * rayLength) );
+    float phongLambert = saturate( abs ( gradient.x*rayInc.x*incSpace.x +
+                                         gradient.y*rayInc.y*incSpace.y +
+                                         gradient.z*rayInc.z*incSpace.z   ) / (gradMag * rayLength) );
     float shadeD = tex2D(ambient_texture_2D, tempIndex, gradMagIndex)
-            + tex2D(diffuse_texture_2D, tempIndex, gradMagIndex) * phongLambert;
-    float shadeS = tex2D(specular_texture_2D, tempIndex, gradMagIndex) * 
-            pow( phongLambert, tex2D(specularPower_texture_2D, tempIndex, gradMagIndex) );
+                   + tex2D(diffuse_texture_2D, tempIndex, gradMagIndex) * phongLambert;
+    float shadeS = tex2D(specular_texture_2D, tempIndex, gradMagIndex) *
+                   pow( phongLambert, tex2D(specularPower_texture_2D, tempIndex, gradMagIndex) );
 
     //filter out objects with too low opacity (deemed unimportant, and this saves time and reduces cloudiness)
-    if(alpha > 0.0f){
+    if(alpha > 0.0f)
+    {
 
       //determine which kind of step to make
       step.x = step.y;
@@ -281,7 +296,8 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
       rayStart.z = rayStart.z + (step.x ? -rayInc.z : rayInc.z);
       maxSteps = maxSteps + (step.x ? 1 : -1);
 
-      if(!step.x){
+      if(!step.x)
+      {
 
         //accumulate the opacity for this sample point
         float multiplier = outputVal.w * alpha;
@@ -292,18 +308,22 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
         outputVal.y += multiplier * saturate( shadeD*tex2D(colorG_texture_2D, tempIndex, gradMagIndex) + shadeS );
         outputVal.z += multiplier * saturate( shadeD*tex2D(colorB_texture_2D, tempIndex, gradMagIndex) + shadeS );
       }
-      
+
       //determine whether or not we've hit an opacity where further sampling becomes neglible
-      if(outputVal.w < 0.03125f){
+      if(outputVal.w < 0.03125f)
+      {
         outputVal.w = 0.0f;
         break;
       }
 
 
-    }else{
+    }
+    else
+    {
 
       //if we aren't backstepping, we can skip a sample
-      if(!step.x){
+      if(!step.x)
+      {
         rayStart.x += rayInc.x;
         rayStart.y += rayInc.y;
         rayStart.z += rayInc.z;
@@ -319,7 +339,7 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
       step.x = 0;
 
     }
-    
+
   }//while
 
   //find the length of the ray unused and update the ray termination distance
@@ -330,8 +350,9 @@ __device__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_CastRays_WithoutDual(float
 
 }
 
-__global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual( ) {
-  
+__global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual( )
+{
+
   //index in the output image (2D)
   int2 index;
   index.x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -339,7 +360,7 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual( ) {
 
   //index in the output image (1D)
   int outindex = index.x + index.y * outInfo.resolution.x;
-  
+
   float3 rayStart; //ray starting point
   float3 rayInc; // ray sample increment
   float numSteps; //maximum number of samples along this ray
@@ -378,7 +399,7 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual( ) {
   temp.y = 255.0f * outputVal.y;
   temp.z = 255.0f * outputVal.z;
   temp.w = 255.0f * outputVal.w;
-  
+
   //place output in the image buffer
   __syncthreads();
   outInfo.deviceOutputImage[outindex] = temp;
@@ -389,8 +410,9 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual( ) {
 }
 
 
-__global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual( ) {
-  
+__global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual( )
+{
+
   //index in the output image (2D)
   int2 index;
   index.x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -398,7 +420,7 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual( ) {
 
   //index in the output image (1D)
   int outindex = index.x + index.y * outInfo.resolution.x;
-  
+
   float3 rayStart; //ray starting point
   float3 rayInc; // ray sample increment
   float numSteps; //maximum number of samples along this ray
@@ -437,7 +459,7 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual( ) {
   temp.y = 255.0f * outputVal.y;
   temp.z = 255.0f * outputVal.z;
   temp.w = 255.0f * outputVal.w;
-  
+
   //place output in the image buffer
   __syncthreads();
   outInfo.deviceOutputImage[outindex] = temp;
@@ -447,7 +469,8 @@ __global__ void CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual( ) {
   outInfo.depthBuffer[outindex + outInfo.resolution.x] = outputDepth;
 }
 
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, cudaStream_t* stream){
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, cudaStream_t* stream)
+{
 
   // set the texture to the correct image
   CUDA_vtkCuda2DVolumeMapper_input_texture.normalized = false;          // access with unnormalized texture coordinates
@@ -458,13 +481,13 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, c
 
   // bind array to 3D texture
   cudaBindTextureToArray(CUDA_vtkCuda2DVolumeMapper_input_texture, frame, channelDesc);
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Change Frame Status: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Change Frame Status: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
 
   return (cudaGetLastError() == 0);
 }
@@ -472,11 +495,11 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(const cudaArray* frame, c
 //pre: the resolution of the image has been processed such that it's x and y size are both multiples of 16 (enforced automatically) and y > 256 (enforced automatically)
 //post: the OutputImage pointer will hold the ray casted information
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInformation& outputInfo,
-               const cudaRendererInformation& rendererInfo,
-               const cudaVolumeInformation& volumeInfo,
-               const cuda2DTransferFunctionInformation& transInfo,
-               cudaArray* frame,
-               cudaStream_t* stream)
+    const cudaRendererInformation& rendererInfo,
+    const cudaVolumeInformation& volumeInfo,
+    const cuda2DTransferFunctionInformation& transInfo,
+    cudaArray* frame,
+    cudaStream_t* stream)
 {
 
   // setup execution parameters - staggered to improve parallelism
@@ -484,10 +507,10 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
   cudaMemcpyToSymbolAsync(renInfo, &rendererInfo, sizeof(cudaRendererInformation), 0, cudaMemcpyHostToDevice, *stream);
   cudaMemcpyToSymbolAsync(outInfo, &outputInfo, sizeof(cudaOutputImageInformation), 0, cudaMemcpyHostToDevice, *stream);
   cudaMemcpyToSymbolAsync(CUDA_vtkCuda2DVolumeMapper_trfInfo, &transInfo, sizeof(cuda2DTransferFunctionInformation), 0, cudaMemcpyHostToDevice, *stream);
-  
+
   //bind the input data texture to the provided frame
   CUDA_vtkCuda2DVolumeMapper_renderAlgo_changeFrame(frame,stream);
-  
+
   //bind transfer function textures
   bindSingle2DTexture(alpha_texture_2D,transInfo.alphaTransferArray2D);
   bindSingle2DTexture(colorR_texture_2D,transInfo.colorRTransferArray2D);
@@ -497,15 +520,16 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
   bindSingle2DTexture(diffuse_texture_2D,transInfo.diffuseTransferArray2D);
   bindSingle2DTexture(specular_texture_2D,transInfo.specularTransferArray2D);
   bindSingle2DTexture(specularPower_texture_2D,transInfo.specularPowerTransferArray2D);
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "DualImage Rendering Error Status 0.1: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
 
-  if( transInfo.useSecondTransferFunction ){
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "DualImage Rendering Error Status 0.1: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
+  if( transInfo.useSecondTransferFunction )
+  {
     bindSingle2DTexture(k_alpha_texture_2D,transInfo.K_alphaTransferArray2D);
     bindSingle2DTexture(k_colorR_texture_2D,transInfo.K_colorRTransferArray2D);
     bindSingle2DTexture(k_colorG_texture_2D,transInfo.K_colorGTransferArray2D);
@@ -514,13 +538,13 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
     bindSingle2DTexture(k_diffuse_texture_2D,transInfo.K_diffuseTransferArray2D);
     bindSingle2DTexture(k_specular_texture_2D,transInfo.K_specularTransferArray2D);
     bindSingle2DTexture(k_specularPower_texture_2D,transInfo.K_specularPowerTransferArray2D);
-    
-    #ifdef DEBUG_VTKCUDAVISUALIZATION
-      cudaThreadSynchronize();
-      printf( "DualImage Rendering Error Status 0.2: " );
-      printf( cudaGetErrorString( cudaGetLastError() ) );
-      printf( "\n" );
-    #endif
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+    cudaThreadSynchronize();
+    printf( "DualImage Rendering Error Status 0.2: " );
+    printf( cudaGetErrorString( cudaGetLastError() ) );
+    printf( "\n" );
+#endif
   }
 
   //create the necessary execution amount parameters from the block sizes and calculate the volume rendering integral
@@ -530,25 +554,29 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
   dim3 grid(blockX, blockY, 1);
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
   CUDAkernel_renderAlgo_formRays <<< grid, threads, 0, *stream >>>();
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "2D Rendering Error Status 1: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
-  
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "2D Rendering Error Status 1: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
   if( transInfo.useSecondTransferFunction )
+  {
     CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithDual <<< grid, threads, 0, *stream >>>();
+  }
   else
+  {
     CUDA_vtkCuda2DVolumeMapper_CUDAkernel_Composite_WithoutDual <<< grid, threads, 0, *stream >>>();
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "2D Rendering Error Status 2: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
+  }
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "2D Rendering Error Status 2: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
 
   //shade the image
   grid.x = outputInfo.resolution.x*outputInfo.resolution.y / 256;
@@ -558,25 +586,26 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
   CUDAkernel_shadeAlgo_normBuffer <<< grid, threads, 0, *stream >>>();
   CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "2D Rendering Error Status 3: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
-  
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "2D Rendering Error Status 3: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
   return (cudaGetLastError() == 0);
 }
 
 //pre: the transfer functions are all of type float and are all of size FunctionSize
 //post: the alpha, colorR, G and B 2D textures will map to each transfer function
 bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionInformation& transInfo,
-                  float* redTF, float* greenTF, float* blueTF, float* alphaTF,
-                  float* ambTF, float* diffTF, float* specTF, float* powTF,
-                  float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
-                  float* kambTF, float* kdiffTF, float* kspecTF, float* kpowTF,
-                  cudaStream_t* stream){
-                  
+    float* redTF, float* greenTF, float* blueTF, float* alphaTF,
+    float* ambTF, float* diffTF, float* specTF, float* powTF,
+    float* kredTF, float* kgreenTF, float* kblueTF, float* kalphaTF,
+    float* kambTF, float* kdiffTF, float* kspecTF, float* kpowTF,
+    cudaStream_t* stream)
+{
+
   //define the texture mapping for the first TF's components after copying information from host to device array
   load2DArray(transInfo.alphaTransferArray2D, alphaTF, transInfo.functionSize, *stream);
   load2DArray(transInfo.colorRTransferArray2D, redTF, transInfo.functionSize, *stream);
@@ -588,7 +617,8 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionIn
   load2DArray(transInfo.specularPowerTransferArray2D, powTF, transInfo.functionSize, *stream);
 
   //define the texture mapping for the second TF's components after copying information from host to device array
-  if( transInfo.useSecondTransferFunction ){
+  if( transInfo.useSecondTransferFunction )
+  {
     load2DArray(transInfo.K_alphaTransferArray2D, kalphaTF, transInfo.functionSize, *stream);
     load2DArray(transInfo.K_colorRTransferArray2D, kredTF, transInfo.functionSize, *stream);
     load2DArray(transInfo.K_colorGTransferArray2D, kgreenTF, transInfo.functionSize, *stream);
@@ -599,18 +629,19 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadTextures(cuda2DTransferFunctionIn
     load2DArray(transInfo.K_specularPowerTransferArray2D, kpowTF, transInfo.functionSize, *stream);
   }
 
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Bind transfer functions: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Bind transfer functions: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
 
   return (cudaGetLastError() == 0);
 }
 
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures( cuda2DTransferFunctionInformation& transInfo, cudaStream_t* stream ){
-  
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures( cuda2DTransferFunctionInformation& transInfo, cudaStream_t* stream )
+{
+
   //unload each array in the transfer function information container
   unloadArray(transInfo.alphaTransferArray2D);
   unloadArray(transInfo.colorRTransferArray2D);
@@ -636,17 +667,21 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures( cuda2DTransferFunctio
 //pre:  the data has been preprocessed by the volumeInformationHandler such that it is float data
 //    the index is between 0 and 100
 //post: the input_texture will map to the source data in voxel coordinate space
-bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream){
+bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, const cudaVolumeInformation& volumeInfo, cudaArray** frame, cudaStream_t* stream)
+{
 
   // if the array is already populated with information, free it to prevent leaking
-  if(*frame) cudaFreeArray(*frame);
-  
+  if(*frame)
+  {
+    cudaFreeArray(*frame);
+  }
+
   //define the size of the data, retrieved from the volume information
   cudaExtent volumeSize;
   volumeSize.width = volumeInfo.VolumeSize.x;
   volumeSize.height = volumeInfo.VolumeSize.y;
   volumeSize.depth = volumeInfo.VolumeSize.z;
-  
+
   // create 3D array to store the image data in
   cudaMalloc3DArray(frame, &channelDesc, volumeSize);
 
@@ -659,18 +694,21 @@ bool CUDA_vtkCuda2DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
   copyParams.kind     = cudaMemcpyDeviceToDevice;
   cudaMemcpy3DAsync(&copyParams, *stream);
 
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Load volume information: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
-  
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Load volume information: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
   return (cudaGetLastError() == 0);
 }
 
-void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cudaStream_t* stream){
+void CUDA_vtkCuda2DVolumeMapper_renderAlgo_clearImageArray(cudaArray** frame, cudaStream_t* stream)
+{
   if(*frame)
+  {
     cudaFreeArray(*frame);
+  }
   *frame = 0;
 }

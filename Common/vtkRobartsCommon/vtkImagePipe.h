@@ -44,10 +44,6 @@ public:
   static vtkImagePipe *New();
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  //Internal methods: do not call
-  void UpdateFrameBuffer();
-  void InternalGrab();
-
   // Description:
   // Input media to be communicated across the pipe
 #if (VTK_MAJOR_VERSION < 6)
@@ -79,11 +75,16 @@ protected:
   vtkImagePipe();
   ~vtkImagePipe();
 
+  void ClientSideUpdate();
+  static void* ServerSideUpdate(vtkMultiThreader::ThreadInfo *data);
+  static void* FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data);
+
   bool Initialized;
   bool isServer;
   bool serverSet;
   int portNumber;
   char* IPAddress;
+  int    ImageSize;
 
   vtkMultiThreader* threader;
   int mainServerThread;
@@ -91,22 +92,14 @@ protected:
   vtkServerSocket*  serverSocket;
   vtkClientSocket*  clientSocket;
 
+  //structures for the read/write lock
   vtkImageData* buffer;
   vtkMutexLock* newThreadLock;
   vtkReadWriteLock* rwBufferLock;
 
-  //structures for the read/write lock
-
-  int    ImageSize;
-
 private:
   vtkImagePipe(const vtkImagePipe&);  // Not implemented.
   void operator=(const vtkImagePipe&);  // Not implemented.
-
-  void ClientSideUpdate();
-  static void* ServerSideUpdate(vtkMultiThreader::ThreadInfo *data);
-  static void* FirstServerSideUpdate(vtkMultiThreader::ThreadInfo *data);
-
 };
 
 #endif

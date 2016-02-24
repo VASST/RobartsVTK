@@ -3,7 +3,9 @@ vtk_module(vtkCudaCommon
     Cuda
   DEPENDS
     vtkCommonCore
+    vtkRenderingOpenGL
+    vtkRenderingFreeTypeOpenGL
+    vtkInteractionStyle
   KIT
     vtkRobartsCuda
-  EXCLUDE_FROM_WRAP_HIERARCHY
   )

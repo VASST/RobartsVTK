@@ -1,5 +1,10 @@
 #include "qDeviceManagementWidget.h"
+#include "qTransferFunctionWindowWidgetInterface.h"
 #include "vtkCudaDeviceManager.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include <QSlider>
 
 qDeviceManagementWidget::qDeviceManagementWidget( qTransferFunctionWindowWidgetInterface* parent ) :
   QWidget(parent)
@@ -12,14 +17,17 @@ qDeviceManagementWidget::qDeviceManagementWidget( qTransferFunctionWindowWidgetI
   device->show();
 }
 
-qDeviceManagementWidget::~qDeviceManagementWidget(){
+qDeviceManagementWidget::~qDeviceManagementWidget()
+{
 
 }
 
-void qDeviceManagementWidget::setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster ){
+void qDeviceManagementWidget::setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster )
+{
   this->caster = caster;
 }
 
-void qDeviceManagementWidget::changeDevice(int d){
+void qDeviceManagementWidget::changeDevice(int d)
+{
   this->caster->SetDevice( d, 1 );
 }
