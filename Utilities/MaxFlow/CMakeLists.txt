@@ -10,6 +10,8 @@ SET ( Module_SRCS
 
 vtk_add_executable(GHMF_Segment ${Module_SRCS})
 foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_load(${dep})
+  include_directories(${${dep}_INCLUDE_DIRS})
   vtk_module_link_libraries(GHMF_Segment LINK_PUBLIC ${dep})
 endforeach()
 vtk_target_install(GHMF_Segment)
@@ -22,6 +24,8 @@ SET ( Module_SRCS
 
 vtk_add_executable(KSOM_train ${Module_SRCS})
 foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_load(${dep})
+  include_directories(${${dep}_INCLUDE_DIRS})
   vtk_module_link_libraries(KSOM_train LINK_PUBLIC ${dep})
 endforeach()
 vtk_target_install(KSOM_train)
@@ -34,6 +38,8 @@ SET ( Module_SRCS
 
 vtk_add_executable(KSOM_apply ${Module_SRCS})
 foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_load(${dep})
+  include_directories(${${dep}_INCLUDE_DIRS})
   vtk_module_link_libraries(KSOM_apply LINK_PUBLIC ${dep})
 endforeach()
 vtk_target_install(KSOM_apply)
