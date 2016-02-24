@@ -1,5 +1,5 @@
 #include "CUDA_kohonenapplication.h"
-#include "CUDA_commonKernels.h"
+#include "vtkCudaCommon.h"
 #include <float.h>
 #include <stdio.h>
 

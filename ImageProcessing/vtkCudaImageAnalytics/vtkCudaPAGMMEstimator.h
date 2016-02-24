@@ -63,14 +63,14 @@ protected:
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
-private:
-  vtkCudaPAGMMEstimator operator=(const vtkCudaPAGMMEstimator&) {}
-  vtkCudaPAGMMEstimator(const vtkCudaPAGMMEstimator&) {}
-
   double  Q;
   double  Scale;
 
-  PAGMM_Information info;
+  PAGMM_Information Info;
+
+private:
+  vtkCudaPAGMMEstimator operator=(const vtkCudaPAGMMEstimator&);
+  vtkCudaPAGMMEstimator(const vtkCudaPAGMMEstimator&);
 };
 
 #endif

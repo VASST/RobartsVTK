@@ -84,10 +84,6 @@ protected:
   vtkImageVote();
   virtual ~vtkImageVote();
 
-private:
-  vtkImageVote operator=(const vtkImageVote&) {}
-  vtkImageVote(const vtkImageVote&) {}
-
   int CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int* NumLabels, int* DataType, int* NumComponents);
 
   std::map<vtkIdType,int> InputPortMapping;
@@ -97,6 +93,12 @@ private:
   int OutputDataType;
 
   vtkBarrierLock* Lock;
+
+private:
+  vtkImageVote operator=(const vtkImageVote&);
+  vtkImageVote(const vtkImageVote&);
+
+
 };
 
 #endif

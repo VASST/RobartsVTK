@@ -27,8 +27,8 @@
 #include "vtkCudaCommonModule.h"
 
 #include "vtkCudaDeviceManager.h"
-#include "vector_types.h"
-#include "cuda.h"
+
+typedef struct CUstream_st cudaStream;
 
 class VTKCUDACOMMON_EXPORT CudaObject
 {
@@ -54,6 +54,5 @@ private:
   cudaStream_t* DeviceStream;
 
   vtkCudaDeviceManager* DeviceManager;
-
 };
 #endif /* __CudaObject_H__ */

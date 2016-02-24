@@ -1,3 +1,16 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkCudaFunctionPolygonReader.h
+
+  Copyright (c) John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 /** @file vtkCudaFunctionPolygonReader.h
  *
  *  @brief Header file defining a reader for polygonal TF objects
@@ -9,6 +22,8 @@
 #ifndef VTKCUDAFUNCTIONPOLYGONREADER_H
 #define VTKCUDAFUNCTIONPOLYGONREADER_H
 
+#include "vtkCudaCommonModule.h"
+
 #include "vtkCudaFunctionPolygon.h"
 #include <string>
 #include <list>
@@ -18,22 +33,17 @@
  *  @see vtkCudaFunctionPolygon vtkCudaFunctionPolygonReader
  *
  */
-class vtkCudaFunctionPolygonReader : public vtkObject
+class VTKCUDACOMMON_EXPORT vtkCudaFunctionPolygonReader : public vtkObject
 {
 public:
-
+  static vtkCudaFunctionPolygonReader* New();
   vtkTypeMacro( vtkCudaFunctionPolygonReader, vtkObject );
 
-  /**
-   *  @brief VTK compatible constructor method
-   */
-  static vtkCudaFunctionPolygonReader* New();
-
-  void SetFileName( std::string filename );
+  void SetFileName( const std::string& filename );
   void Read();
   void Clear();
   vtkCudaFunctionPolygon* GetOutput( unsigned int n );
-  size_t GetNumberOfOutputs( );
+  size_t GetNumberOfOutputs();
 
 protected:
   vtkCudaFunctionPolygonReader();
@@ -45,8 +55,6 @@ protected:
   std::string filename;
   bool fileNameSet;
 
-
   std::ifstream* file;
-
 };
 #endif

@@ -1,24 +1,27 @@
 #ifndef VIRTUALTOOLWIDGET
 #define VIRTUALTOOLWIDGET
 
-#include <QObject>
+#include "TFUICommonModule.h"
+
 #include <QWidget>
-#include <QMenu>
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include "vtkBoxWidget.h"
-#include "vtkImageHackedPlaneWidget.h"
-#include "vtkPolyDataReader.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
-#include "vtkCudaVolumeMapper.h"
-#include "vtkImageMapper.h"
-#include "vtkImageData.h"
 
-#include "qTransferFunctionWindowWidgetInterface.h"
+class QAction;
+class QMenu;
 class qTransferFunctionWindowWidgetInterface;
+class vtkActor2D;
+class vtkActor;
+class vtkBoxWidget;
+class vtkCudaVolumeMapper;
+class vtkImageData;
+class vtkImageHackedPlaneWidget;
+class vtkImageMapper;
+class vtkPolyDataMapper;
+class vtkPolyDataReader;
+class vtkProperty;
+class vtkRenderWindow;
+class vtkRenderer;
 
-class qVirtualToolWidget : public QWidget
+class TFUICOMMON_EXPORT qVirtualToolWidget : public QWidget
 {
   Q_OBJECT
 
@@ -34,29 +37,29 @@ public:
   vtkRenderWindow* GetYPlaneRenderWindow();
   vtkRenderWindow* GetZPlaneRenderWindow();
 
-private slots:
+protected slots:
   void addVTKFile();
   void toggleVirtualTool();
   void resetVirtualTool();
   void changeVirtualToolColour();
 
-private:
+protected:
   void setupMenu();
 
-  qTransferFunctionWindowWidgetInterface* parent;
+  qTransferFunctionWindowWidgetInterface* Parent;
 
-  vtkRenderWindow* window;
-  vtkRenderer* renderer;
-  vtkCudaVolumeMapper* mapper;
+  vtkRenderWindow* Window;
+  vtkRenderer* Renderer;
+  vtkCudaVolumeMapper* Mapper;
 
-  unsigned int numberOfVirtualTools;
+  unsigned int NumberOfVirtualTools;
 
   //standard widgets
-  vtkBoxWidget*  clippingPlanes;
-  vtkBoxWidget*  keyholePlanes;
-  vtkRenderWindow* windowXPlane;
-  vtkRenderWindow* windowYPlane;
-  vtkRenderWindow* windowZPlane;
+  vtkBoxWidget*  ClippingPlanes;
+  vtkBoxWidget*  KeyholePlanes;
+  vtkRenderWindow* WindowXPlane;
+  vtkRenderWindow* WindowYPlane;
+  vtkRenderWindow* WindowZPlane;
   vtkImageHackedPlaneWidget* xPlaneReslice;
   vtkImageHackedPlaneWidget* yPlaneReslice;
   vtkImageHackedPlaneWidget* zPlaneReslice;
@@ -83,20 +86,19 @@ private:
   void resetOrthoPlanes();
 
   //interface connections for virtual tools
-  QMenu* widgetMenu;
-  QMenu* availableWidgetsMenu;
-  std::vector<QMenu*> availableWidgetMenus;
-  std::vector<QAction*> availableWidgetsVisibility;
-  std::vector<QAction*> availableWidgetsReset;
-  std::vector<QAction*> availableWidgetsColour;
-  std::vector<unsigned int> availableWidgetStatus;
+  QMenu* WidgetMenu;
+  QMenu* AvailableWidgetsMenu;
+  std::vector<QMenu*> AvailableWidgetMenus;
+  std::vector<QAction*> AvailableWidgetsVisibility;
+  std::vector<QAction*> AvailableWidgetsReset;
+  std::vector<QAction*> AvailableWidgetsColour;
+  std::vector<unsigned int> AvailableWidgetStatus;
 
   //pipeline pieces for virtual tools
-  std::vector<vtkPolyDataReader*> virtualToolReaders;
-  std::vector<vtkPolyDataMapper*> virtualToolMappers;
-  std::vector<vtkProperty*> virtualToolProperties;
-  std::vector<vtkActor*> virtualToolActors;
-
+  std::vector<vtkPolyDataReader*> VirtualToolReaders;
+  std::vector<vtkPolyDataMapper*> VirtualToolMappers;
+  std::vector<vtkProperty*> VirtualToolProperties;
+  std::vector<vtkActor*> VirtualToolActors;
 };
 
 #endif

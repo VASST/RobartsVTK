@@ -18,6 +18,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
+// ---------------------------------------------------------------------------------------
 qFileManagementWidget::qFileManagementWidget( qTransferFunctionWindowWidgetInterface* p )
   : QWidget( p )
   , isStatic(true)
@@ -61,6 +62,7 @@ qFileManagementWidget::qFileManagementWidget( qTransferFunctionWindowWidgetInter
   setupMenu();
 }
 
+// ---------------------------------------------------------------------------------------
 qFileManagementWidget::~qFileManagementWidget( )
 {
   mapper->ClearInput();
@@ -99,16 +101,19 @@ qFileManagementWidget::~qFileManagementWidget( )
   }
 }
 
+// ---------------------------------------------------------------------------------------
 QMenu* qFileManagementWidget::getMenuOptions( )
 {
   return this->fileMenu;
 }
 
+// ---------------------------------------------------------------------------------------
 unsigned int qFileManagementWidget::getNumFrames()
 {
   return this->numFrames;
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::SetMap(vtkImageData* aImageData)
 {
   if( !this->Map )
@@ -120,11 +125,13 @@ void qFileManagementWidget::SetMap(vtkImageData* aImageData)
   this->ColourImages = new std::vector<vtkImageData*> [this->NumberOfComponents];
 }
 
+// ---------------------------------------------------------------------------------------
 vtkImageData* qFileManagementWidget::GetMap()
 {
   return this->Map;
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::setupMenu()
 {
   fileMenu = new QMenu("&File",this);
@@ -147,6 +154,7 @@ void qFileManagementWidget::setupMenu()
   fileMenu->addAction(exitProgramMenuOption);
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCudaVolumeMapper* c )
 {
   //copy over the pointers to the shared pipeline
@@ -160,10 +168,7 @@ void qFileManagementWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer*
   renderer->AddVolume(volume);
 }
 
-
 // ---------------------------------------------------------------------------------------
-// Construction and destruction code
-
 void qFileManagementWidget::addMHDFile()
 {
   //find the requisite filename
@@ -195,6 +200,7 @@ void qFileManagementWidget::addMHDFile()
   }
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::addMNCFile()
 {
   //find the requisite filename
@@ -227,6 +233,7 @@ void qFileManagementWidget::addMNCFile()
   }
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::addDICOMFile()
 {
   //find the requisite filename
@@ -255,6 +262,7 @@ void qFileManagementWidget::addDICOMFile()
   parent->LoadedImageData();
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::selectFrame()
 {
   //grab the current item selected
@@ -291,6 +299,7 @@ void qFileManagementWidget::toggleMode()
   }
 }
 
+// ---------------------------------------------------------------------------------------
 vtkImageData* qFileManagementWidget::getCurrentImage()
 {
   if( numFrames == 0 )
@@ -300,6 +309,7 @@ vtkImageData* qFileManagementWidget::getCurrentImage()
   return readers[currFrame]->GetOutput();
 }
 
+// ---------------------------------------------------------------------------------------
 void qFileManagementWidget::nextFrame()
 {
   mapper->AdvanceFrame();
@@ -309,8 +319,6 @@ void qFileManagementWidget::nextFrame()
 }
 
 // ---------------------------------------------------------------------------------------
-// Interaction with model
-
 bool qFileManagementWidget::addImageToMapper(vtkImageData* data)
 {
   numFrames++;
@@ -332,6 +340,7 @@ bool qFileManagementWidget::addImageToMapper(vtkImageData* data)
   return false;
 }
 
+// ---------------------------------------------------------------------------------------
 bool qFileManagementWidget::addMetaImage(std::string filename)
 {
 
@@ -365,6 +374,7 @@ bool qFileManagementWidget::addMetaImage(std::string filename)
   return false;
 }
 
+// ---------------------------------------------------------------------------------------
 bool qFileManagementWidget::addMincImage(std::string filename)
 {
   //if we have too many images, don't let us add another
@@ -398,6 +408,7 @@ bool qFileManagementWidget::addMincImage(std::string filename)
   return false;
 }
 
+// ---------------------------------------------------------------------------------------
 bool qFileManagementWidget::addDICOMImage(std::string dirname)
 {
   //if we have too many images, don't let us add another
@@ -432,11 +443,13 @@ bool qFileManagementWidget::addDICOMImage(std::string dirname)
   return false;
 }
 
+// ---------------------------------------------------------------------------------------
 bool qFileManagementWidget::removeImage(std::string filename)
 {
   return true;
 }
 
+// ---------------------------------------------------------------------------------------
 bool qFileManagementWidget::selectFrame(std::string filename)
 {
   //iterate through the list to get the file used

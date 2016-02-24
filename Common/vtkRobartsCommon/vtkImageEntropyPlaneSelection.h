@@ -77,10 +77,6 @@ protected:
   vtkImageEntropyPlaneSelection();
   virtual ~vtkImageEntropyPlaneSelection();
 
-private:
-  vtkImageEntropyPlaneSelection operator=(const vtkImageEntropyPlaneSelection&) {}
-  vtkImageEntropyPlaneSelection(const vtkImageEntropyPlaneSelection&) {}
-
   int Extent[6];
   double* EntropyInX;
   double* EntropyInY;
@@ -89,6 +85,10 @@ private:
   std::map<vtkIdType,int> InputDataPortMapping;
   std::map<int,vtkIdType> BackwardsInputDataPortMapping;
   int FirstUnusedDataPort;
+
+private:
+  vtkImageEntropyPlaneSelection operator=(const vtkImageEntropyPlaneSelection&);
+  vtkImageEntropyPlaneSelection(const vtkImageEntropyPlaneSelection&);
 };
 
 #endif //_VTKIMAGEENTROPYPLANESELECTION_H__

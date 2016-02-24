@@ -30,7 +30,6 @@ Dependencies must be built or installed before RobartsVTK can be built. Please v
 
 ## CMake Configuration
 The following variables should be set when configuring RobartsVTK
-* BUILD_SHARED_LIBS:BOOL = `OFF` (ON is experimental)
 * RobartsVTK_Include_Outdated_Registration:BOOL = `OFF`
 * ITK_DIR:PATH = `<path/to/your/itk-bin/dir>`
 * PlusLib_DIR:PATH = `<path/to/your/plus-bin/dir>`

@@ -1,0 +1,22 @@
+vtk_module(FluoroPredViz
+  GROUPS
+    Examples
+  DEPENDS
+    vtkCudaCommon 
+    vtkCudaVisualization 
+    vtkCudaImageAnalytics 
+    vtkRobartsCommon 
+    vtkRenderingVolumeOpenGL 
+    vtkRenderingFreeTypeOpenGL 
+    vtkRenderingCore 
+    vtkFiltersCore 
+    vtkImagingCore 
+    vtkInteractionWidgets 
+    vtkGUISupportQt 
+    vtkIOCore 
+    vtkCommonCore 
+    vtkIOMINC 
+  KIT
+    vtkRobartsExamples
+  EXCLUDE_FROM_WRAPPING
+  )

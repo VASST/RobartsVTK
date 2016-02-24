@@ -4,6 +4,9 @@ vtk_module(vtkCudaVisualization
     Cuda
   DEPENDS
     vtkCudaCommon
+    vtkCudaCommonStatic
+    vtkRenderingVolume
+    vtkRenderingVolumeOpenGL
   KIT
     vtkRobartsCuda
   EXCLUDE_FROM_WRAP_HIERARCHY

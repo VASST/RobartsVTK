@@ -32,18 +32,18 @@ endforeach()
 # *** Step 1 has to be done carefully to avoid missing out files ***
 
 if(PYTHON_EXECUTABLE)
-# Now create a list of Python files.
+  # Now create a list of Python files.
 
-# Wrapping/Python/vtk/*.py
+  # Wrapping/Python/robartsvtk/*.py
   unset(VTK_PYTHON_FILES)
   unset(VTK_PYTHON_IMPORT_ALL)
   foreach(module ${VTK_PYTHON_MODULES})
     set(VTK_PYTHON_IMPORT_ALL "${VTK_PYTHON_IMPORT_ALL}from ${module} import *\n")
-    configure_file(vtk/module.py.in vtk/${module}.py @ONLY)
+    configure_file(robartsvtk/module.py.in robartsvtk/${module}.py @ONLY)
   endforeach()
-  configure_file(vtk/__init__.py.in vtk/__init__.py @ONLY)
+  configure_file(robartsvtk/__init__.py.in robartsvtk/__init__.py @ONLY)
 
-# Now copy these files if necessary.
+  # Now copy these files if necessary.
   unset(VTK_PYTHON_SOURCE_FILES)
   unset(VTK_PYTHON_OUTPUT_FILES)
   foreach(file ${VTK_PYTHON_FILES})
@@ -82,7 +82,7 @@ if(PYTHON_EXECUTABLE)
     )
 
   # Install python modules
-  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/vtk"
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/robartsvtk"
     DESTINATION ${VTK_INSTALL_PYTHON_MODULE_DIR} COMPONENT RuntimeLibraries
     USE_SOURCE_PERMISSIONS)
 
@@ -91,7 +91,7 @@ if(PYTHON_EXECUTABLE)
     foreach(module ${VTK_PYTHON_MODULES})
       install(TARGETS ${module}Python
         RUNTIME DESTINATION ${VTK_INSTALL_RUNTIME_DIR} COMPONENT RuntimeLibraries
-        LIBRARY DESTINATION ${VTK_INSTALL_PYTHON_MODULE_DIR}/vtk COMPONENT RuntimeLibraries
+        LIBRARY DESTINATION ${VTK_INSTALL_PYTHON_MODULE_DIR}/robartsvtk COMPONENT RuntimeLibraries
         ARCHIVE DESTINATION ${VTK_INSTALL_ARCHIVE_DIR} COMPONENT Development
         )
     endforeach()

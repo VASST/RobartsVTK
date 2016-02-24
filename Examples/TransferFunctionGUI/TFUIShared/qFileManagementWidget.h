@@ -1,23 +1,25 @@
 #ifndef FILEMANAGEMENTWIDGET
 #define FILEMANAGEMENTWIDGET
 
+#include "TFUICommonModule.h"
+
 #include <QWidget>
 
+class QListWidget;
+class QListWidgetItem;
+class QMenu;
+class QPushButton;
+class QTimer;
+class vtkCudaVolumeMapper;
+class vtkImageData;
 class vtkImageReader2;
 class vtkRenderWindow;
 class vtkRenderer;
-class vtkCudaVolumeMapper;
 class vtkVolume;
-class vtkImageData;
-class QTimer;
-class QMenu;
-class QListWidget;
-class QListWidgetItem;
-class QPushButton;
 
 class qTransferFunctionWindowWidgetInterface;
 
-class qFileManagementWidget : public QWidget
+class TFUICOMMON_EXPORT qFileManagementWidget : public QWidget
 {
   Q_OBJECT
 
@@ -79,7 +81,6 @@ private:
   unsigned int maxframes;
   unsigned int numFrames;
   unsigned int currFrame;
-
 };
 
 #endif

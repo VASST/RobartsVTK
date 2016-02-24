@@ -1,0 +1,20 @@
+vtk_module(TFUIDual
+  GROUPS
+    Examples
+  DEPENDS
+    TFUICommon 
+    vtkCudaVisualization 
+    vtkCudaImageAnalytics 
+    vtkCudaCommon 
+    vtkRenderingVolume 
+    vtkRenderingCore 
+    vtkFiltersCore 
+    vtkImagingCore 
+    vtkIOImage 
+    vtkCommonCore 
+    vtkGUISupportQt
+    vtksys
+  KIT
+    vtkRobartsExamples
+  EXCLUDE_FROM_WRAPPING
+  )

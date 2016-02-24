@@ -1,0 +1,17 @@
+vtk_module(TFUICommon 
+  GROUPS
+    Examples
+  DEPENDS
+    vtkCudaCommon 
+    vtkCudaVisualization  
+    vtkRenderingVolumeOpenGL 
+    vtkRenderingFreeTypeOpenGL 
+    vtkInteractionWidgets 
+    vtksys 
+    vtkIOLegacy 
+    vtkIOMINC 
+    vtkImagingMath 
+  KIT
+    vtkRobartsExamples
+  EXCLUDE_FROM_WRAPPING
+  )

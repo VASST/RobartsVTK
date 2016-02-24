@@ -102,8 +102,10 @@
 #ifndef __vtkImageHackedPlaneWidget_h
 #define __vtkImageHackedPlaneWidget_h
 
+#include "TFUICommonModule.h"
+
 #include "vtkPolyDataSourceWidget.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
+#include <vtkVersion.h>
 
 class vtkActor;
 class vtkAbstractPropPicker;
@@ -126,7 +128,7 @@ class vtkTransform;
 #define VTK_LINEAR_RESLICE  1
 #define VTK_CUBIC_RESLICE   2
 
-class VTK_EXPORT vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidget
+class TFUICOMMON_EXPORT vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidget
 {
 public:
   // Description:

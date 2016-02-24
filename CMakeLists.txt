@@ -1,8 +1,5 @@
 PROJECT(RobartsVTK)
 
-# todo module export doesn't have dllexport/import - build_shared_libs?
-# todo cuda module dll export?
-
 # CMake version requirements
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 cmake_policy(SET CMP0003 NEW)
@@ -430,9 +427,14 @@ IF (RobartsVTK_USE_CUDA)
 
   # Add Robart's CUDA libraries
   ADD_SUBDIRECTORY(Common/vtkCudaCommon)
-  
+
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaCommon_INCLUDE_DIRS} CACHE INTERNAL "" )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon CACHE INTERNAL "")
+
+  ADD_SUBDIRECTORY(Common/vtkCudaCommonStatic)
+  
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaCommonStatic_INCLUDE_DIRS} CACHE INTERNAL "" )
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommonStatic CACHE INTERNAL "")
 ENDIF ()
 
 #-----------------------------------------------------------------------------

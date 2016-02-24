@@ -1,14 +1,17 @@
 #ifndef DEVICEMANAGEMENTWIDGET
 #define DEVICEMANAGEMENTWIDGET
 
-#include <QWidget>
-#include <QSlider>
-#include "qTransferFunctionWindowWidgetInterface.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include "vtkCudaVolumeMapper.h"
+#include "TFUICommonModule.h"
 
-class qDeviceManagementWidget : public QWidget
+#include <QWidget>
+
+class QSlider;
+class qTransferFunctionWindowWidgetInterface;
+class vtkCudaVolumeMapper;
+class vtkRenderWindow;
+class vtkRenderer;
+
+class TFUICOMMON_EXPORT qDeviceManagementWidget : public QWidget
 {
   Q_OBJECT
 
@@ -16,12 +19,12 @@ public:
   qDeviceManagementWidget( qTransferFunctionWindowWidgetInterface* parent );
   ~qDeviceManagementWidget();
   void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
-  
-private slots:
+
+protected slots:
   //shading related slots
   void changeDevice(int d);
 
-private:
+protected:
   qTransferFunctionWindowWidgetInterface* parent;
 
   vtkCudaVolumeMapper* caster;

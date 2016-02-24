@@ -1,11 +1,14 @@
 #ifndef TRANSFERFUNCTIONWINDOWWIDGETINTERFACE
 #define TRANSFERFUNCTIONWINDOWWIDGETINTERFACE
 
-#include "qwidget.h"
-#include "CudaObject.h"
+#include "TFUICommonModule.h"
+
+#include <QWidget>
 #include <vector>
 
-class qTransferFunctionWindowWidgetInterface : public QWidget
+class CudaObject;
+
+class TFUICOMMON_EXPORT qTransferFunctionWindowWidgetInterface : public QWidget
 {
 
 public:
@@ -36,7 +39,6 @@ public:
 
 private:
   std::vector<CudaObject*> capableObjects;
-
 };
 
 #endif

@@ -58,13 +58,13 @@ protected:
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
-private:
-  vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&) {}
-  vtkCudaKohonenApplication(const vtkCudaKohonenApplication&) {}
-
   double Scale;
 
-  Kohonen_Application_Information info;
+  Kohonen_Application_Information Info;
+
+private:
+  vtkCudaKohonenApplication operator=(const vtkCudaKohonenApplication&);
+  vtkCudaKohonenApplication(const vtkCudaKohonenApplication&);
 };
 
 #endif

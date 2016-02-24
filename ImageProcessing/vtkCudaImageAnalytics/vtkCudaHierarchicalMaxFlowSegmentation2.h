@@ -130,11 +130,10 @@ protected:
   void CreateClearSourceWorkingBufferTask();
   void CreateDivideOutLabelsTasks(vtkIdType currNode);
   void CreatePropogateLabelsTasks(vtkIdType currNode);
-  
 
 private:
-  vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
-  vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&){} //not implemented
+  vtkCudaHierarchicalMaxFlowSegmentation2 operator=(const vtkCudaHierarchicalMaxFlowSegmentation2&);
+  vtkCudaHierarchicalMaxFlowSegmentation2(const vtkCudaHierarchicalMaxFlowSegmentation2&);
 };
 
 #endif

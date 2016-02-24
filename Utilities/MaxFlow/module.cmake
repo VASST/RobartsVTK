@@ -5,6 +5,7 @@ vtk_module(MaxFlow
     vtkFiltersCore 
     vtkImagingCore 
     vtkIOCore 
+    vtkIOImage 
     vtkCommonCore 
     vtkCudaCommon 
     vtkCudaImageAnalytics 

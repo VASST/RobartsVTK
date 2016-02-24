@@ -1,14 +1,42 @@
 PROJECT( MaxFlow )
 
-SET(${PROJECT_NAME}_LIBS vtkFiltersCore vtkImagingCore vtkIOImage vtkCommonCore vtkCudaCommon vtkCudaImageAnalytics vtkRobartsCommon )
+vtk_module_impl()
 
-INCLUDE_DIRECTORIES ( ${VTK_INCLUDE_DIRS} ${vtkCudaCommon_INCLUDE_DIRS} ${vtkCudaImageAnalytics_INCLUDE_DIRS} ${vtkRobartsCommon_INCLUDE_DIRS})
+# -----------------------------------------------------------------
+# Build the GHMF_Segment executable
+SET ( Module_SRCS 
+  GHMF_Segment.cxx
+)
 
-CUDA_ADD_EXECUTABLE( GHMF_Segment GHMF_Segment.cxx )
-TARGET_LINK_LIBRARIES( GHMF_Segment ${${PROJECT_NAME}_LIBS} )
+vtk_add_executable(GHMF_Segment ${Module_SRCS})
+foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_link_libraries(GHMF_Segment LINK_PUBLIC ${dep})
+endforeach()
+vtk_target_install(GHMF_Segment)
 
-CUDA_ADD_EXECUTABLE( KSOM_train KSOM_train.cxx )
-TARGET_LINK_LIBRARIES( KSOM_train ${${PROJECT_NAME}_LIBS} )
+# -----------------------------------------------------------------
+# Build the KSOM_train executable
+SET ( Module_SRCS 
+  KSOM_train.cxx
+)
 
-CUDA_ADD_EXECUTABLE( KSOM_apply KSOM_apply.cxx )
-TARGET_LINK_LIBRARIES( KSOM_apply ${${PROJECT_NAME}_LIBS} )
+vtk_add_executable(KSOM_train ${Module_SRCS})
+foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_link_libraries(KSOM_train LINK_PUBLIC ${dep})
+endforeach()
+vtk_target_install(KSOM_train)
+
+# -----------------------------------------------------------------
+# Build the KSOM_apply executable
+SET ( Module_SRCS 
+  KSOM_apply.cxx
+)
+
+vtk_add_executable(KSOM_apply ${Module_SRCS})
+foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
+  vtk_module_link_libraries(KSOM_apply LINK_PUBLIC ${dep})
+endforeach()
+vtk_target_install(KSOM_apply)
+# -----------------------------------------------------------------
+LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
+SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)

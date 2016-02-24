@@ -18,7 +18,7 @@
  *      vtkHierarchicalMaxFlowSegmentation.h for most of the interface documentation.
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
@@ -80,8 +80,8 @@ protected:
   int    NumKernelRuns;
 
 private:
-  vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&){} //not implemented
-  vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&){} //not implemented
+  vtkCudaHierarchicalMaxFlowSegmentation operator=(const vtkCudaHierarchicalMaxFlowSegmentation&);
+  vtkCudaHierarchicalMaxFlowSegmentation(const vtkCudaHierarchicalMaxFlowSegmentation&);
 };
 
 #endif

@@ -9,15 +9,15 @@ vtkStandardNewMacro(vtkCudaCT2USSimulation);
 
 void vtkCudaCT2USSimulation::Reinitialize(int withData)
 {
-  if( withData && this->caster->GetInput() )
+  if( withData && this->Caster->GetInput() )
   {
-    this->SetInput((vtkImageData*) this->caster->GetInput());
+    this->SetInput((vtkImageData*) this->Caster->GetInput());
   }
 }
 
 void vtkCudaCT2USSimulation::Deinitialize(int withData)
 {
-  if(this->caster->GetInput())
+  if(this->Caster->GetInput())
   {
     this->ReserveGPU();
     CUDAsetup_unloadCTImage( this->GetStream() );
@@ -35,33 +35,33 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i)
   }
   else if ( i == 1 && inData != 0 && inData->GetScalarType() == VTK_UNSIGNED_CHAR )
   {
-    this->information.optimalParam = true;
-    if( this->inputUltrasound == inData )
+    this->Information.optimalParam = true;
+    if( this->InputUltrasound == inData )
     {
       return;
     }
-    if( this->inputUltrasound )
+    if( this->InputUltrasound )
     {
-      this->inputUltrasound->UnRegister(this);
+      this->InputUltrasound->UnRegister(this);
     }
-    this->inputUltrasound = inData;
-    this->inputUltrasound->Register(this);
+    this->InputUltrasound = inData;
+    this->InputUltrasound->Register(this);
 
     //load the input volume into the CUDA kernel
     this->ReserveGPU();
-    CUDAsetup_loadUSImage((unsigned char*) this->inputUltrasound->GetScalarPointer(),this->inputUltrasound->GetDimensions(),
+    CUDAsetup_loadUSImage((unsigned char*) this->InputUltrasound->GetScalarPointer(),this->InputUltrasound->GetDimensions(),
                           this->GetStream() );
 
     //if we pass a null image, treat as if we don't want to compute cross-correlation
   }
   else if ( i == 1 && inData == 0 )
   {
-    this->information.optimalParam = false;
-    if( this->inputUltrasound )
+    this->Information.optimalParam = false;
+    if( this->InputUltrasound )
     {
-      this->inputUltrasound->UnRegister(this);
+      this->InputUltrasound->UnRegister(this);
     }
-    this->inputUltrasound = 0;
+    this->InputUltrasound = 0;
   }
 }
 
@@ -69,11 +69,11 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
 {
   //load the input to a texture
 #if (VTK_MAJOR_VERSION < 6 )
-  this->caster->SetInput(i);
+  this->Caster->SetInput(i);
 #else
-  this->caster->SetInputDataObject(i);
+  this->Caster->SetInputDataObject(i);
 #endif
-  this->caster->Update();
+  this->Caster->Update();
 
   //get the volume size from the input
   double inputOrigin[3];
@@ -86,14 +86,14 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
   i->GetDimensions(dims);
 
   //set the volume dimensions
-  this->information.VolumeSize.x = dims[0];
-  this->information.VolumeSize.y = dims[1];
-  this->information.VolumeSize.z = dims[2];
+  this->Information.VolumeSize.x = dims[0];
+  this->Information.VolumeSize.y = dims[1];
+  this->Information.VolumeSize.z = dims[2];
 
   //get the spacing information from the input
-  this->information.spacing.x = 0.5 / spacing[0];
-  this->information.spacing.y = 0.5 / spacing[1];
-  this->information.spacing.z = 0.5 / spacing[2];
+  this->Information.spacing.x = 0.5 / spacing[0];
+  this->Information.spacing.y = 0.5 / spacing[1];
+  this->Information.spacing.z = 0.5 / spacing[2];
 
   // Compute the origin of the extent the volume origin is at voxel (0,0,0)
   // but we want to consider (0,0,0) in voxels to be at
@@ -120,7 +120,7 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
   {
     for(int j = 0; j < 4; j++)
     {
-      this->information.WorldToVolume[i*4+j] = WorldToVoxelsMatrix->GetElement(i,j);
+      this->Information.WorldToVolume[i*4+j] = WorldToVoxelsMatrix->GetElement(i,j);
     }
   }
   VoxelsTransform->Delete();
@@ -128,14 +128,14 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
 
   //load the input volume into the CUDA kernel
   this->ReserveGPU();
-  CUDAsetup_loadCTImage((float*) this->caster->GetOutput()->GetScalarPointer(),this->information,
+  CUDAsetup_loadCTImage((float*) this->Caster->GetOutput()->GetScalarPointer(),this->Information,
                         this->GetStream() );
 
 }
 
 void vtkCudaCT2USSimulation::SetTransform( vtkTransform * t )
 {
-  this->usTransform = t;
+  this->UsTransform = t;
   this->Modified();
 }
 
@@ -145,7 +145,7 @@ void vtkCudaCT2USSimulation::Update()
 {
 
   //if we are missing either input or transform, do not update
-  if( !this->caster->GetInput() || !this->usTransform )
+  if( !this->Caster->GetInput() || !this->UsTransform )
   {
     return;
   }
@@ -158,17 +158,17 @@ void vtkCudaCT2USSimulation::Update()
   {
     for(int j = 0; j < 4; j++)
     {
-      this->information.UltraSoundToWorld[i*4+j] = this->usTransform->GetMatrix()->GetElement(i,j);
+      this->Information.UltraSoundToWorld[i*4+j] = this->UsTransform->GetMatrix()->GetElement(i,j);
     }
   }
 
   //run the algorithm
   this->ReserveGPU();
-  CUDAalgo_simulateUltraSound((float*) this->densOutput->GetScalarPointer(),
-                              (float*) this->transOutput->GetScalarPointer(),
-                              (float*) this->reflOutput->GetScalarPointer(),
-                              (unsigned char*) this->usOutput->GetScalarPointer(),
-                              this->information, this->GetStream() );
+  CUDAalgo_simulateUltraSound((float*) this->DensOutput->GetScalarPointer(),
+                              (float*) this->TransOutput->GetScalarPointer(),
+                              (float*) this->ReflOutput->GetScalarPointer(),
+                              (unsigned char*) this->UsOutput->GetScalarPointer(),
+                              this->Information, this->GetStream() );
   this->CallSyncThreads();
 
   timer->StopTimer();
@@ -179,7 +179,7 @@ void vtkCudaCT2USSimulation::Update()
 
 vtkImageData* vtkCudaCT2USSimulation::GetOutput()
 {
-  return this->usOutput;
+  return this->UsOutput;
 }
 
 vtkImageData* vtkCudaCT2USSimulation::GetOutput(int i)
@@ -187,13 +187,13 @@ vtkImageData* vtkCudaCT2USSimulation::GetOutput(int i)
   switch(i)
   {
   case 0:
-    return this->usOutput;
+    return this->UsOutput;
   case 1:
-    return this->transOutput;
+    return this->TransOutput;
   case 2:
-    return this->reflOutput;
+    return this->ReflOutput;
   case 3:
-    return this->densOutput;
+    return this->DensOutput;
   default:
     return 0;
   }
@@ -205,244 +205,244 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   //if we are 2D, treat us as such (make sure z is still depth)
   if( z == 1)
   {
-    this->information.Resolution.x = x;
-    this->information.Resolution.y = z;
-    this->information.Resolution.z = y;
+    this->Information.Resolution.x = x;
+    this->Information.Resolution.y = z;
+    this->Information.Resolution.z = y;
   }
   else
   {
-    this->information.Resolution.x = x;
-    this->information.Resolution.y = y;
-    this->information.Resolution.z = z;
+    this->Information.Resolution.x = x;
+    this->Information.Resolution.y = y;
+    this->Information.Resolution.z = z;
   }
 
   //create new output image buffers
-  if( !this->densOutput)
+  if( !this->DensOutput)
   {
-    this->densOutput = vtkImageData::New();
+    this->DensOutput = vtkImageData::New();
   }
 #if (VTK_MAJOR_VERSION < 6)
-  this->densOutput->SetNumberOfScalarComponents(1);
-  this->densOutput->SetScalarTypeToFloat();
-  this->densOutput->SetExtent(0,x-1,
+  this->DensOutput->SetNumberOfScalarComponents(1);
+  this->DensOutput->SetScalarTypeToFloat();
+  this->DensOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
-  this->densOutput->SetWholeExtent(0,x-1,
+  this->DensOutput->SetWholeExtent(0,x-1,
                                    0,y-1,
                                    0,z-1);
-  this->densOutput->SetOrigin(0,0,0);
-  this->densOutput->SetSpacing(1.0,1.0,1.0);
-  this->densOutput->Update();
-  this->densOutput->AllocateScalars();
+  this->DensOutput->SetOrigin(0,0,0);
+  this->DensOutput->SetSpacing(1.0,1.0,1.0);
+  this->DensOutput->Update();
+  this->DensOutput->AllocateScalars();
 #else
-  this->densOutput->SetExtent(0,x-1,
+  this->DensOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
-  this->densOutput->SetOrigin(0,0,0);
-  this->densOutput->SetSpacing(1.0,1.0,1.0);
+  this->DensOutput->SetOrigin(0,0,0);
+  this->DensOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
-  this->densOutput->AllocateScalars(VTK_FLOAT, 1);
+  this->DensOutput->AllocateScalars(VTK_FLOAT, 1);
 #endif
 
-  if( !this->transOutput)
+  if( !this->TransOutput)
   {
-    this->transOutput = vtkImageData::New();
+    this->TransOutput = vtkImageData::New();
   }
 #if (VTK_MAJOR_VERSION < 6)
-  this->transOutput->SetNumberOfScalarComponents(1);
-  this->transOutput->SetScalarTypeToFloat();
-  this->transOutput->SetExtent(0,x-1,
+  this->TransOutput->SetNumberOfScalarComponents(1);
+  this->TransOutput->SetScalarTypeToFloat();
+  this->TransOutput->SetExtent(0,x-1,
                                0,y-1,
                                0,z-1);
-  this->transOutput->SetWholeExtent(0,x-1,
+  this->TransOutput->SetWholeExtent(0,x-1,
                                     0,y-1,
                                     0,z-1);
-  this->transOutput->SetOrigin(0,0,0);
-  this->transOutput->SetSpacing(1.0,1.0,1.0);
-  this->transOutput->Update();
-  this->transOutput->AllocateScalars();
+  this->TransOutput->SetOrigin(0,0,0);
+  this->TransOutput->SetSpacing(1.0,1.0,1.0);
+  this->TransOutput->Update();
+  this->TransOutput->AllocateScalars();
 #else
-  this->transOutput->SetExtent(0,x-1,
+  this->TransOutput->SetExtent(0,x-1,
                                0,y-1,
                                0,z-1);
-  this->transOutput->SetOrigin(0,0,0);
-  this->transOutput->SetSpacing(1.0,1.0,1.0);
+  this->TransOutput->SetOrigin(0,0,0);
+  this->TransOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
-  this->transOutput->AllocateScalars(VTK_FLOAT, 1);
+  this->TransOutput->AllocateScalars(VTK_FLOAT, 1);
 #endif
 
-  if( !this->reflOutput)
+  if( !this->ReflOutput)
   {
-    this->reflOutput = vtkImageData::New();
+    this->ReflOutput = vtkImageData::New();
   }
 #if (VTK_MAJOR_VERSION < 6)
-  this->reflOutput->SetNumberOfScalarComponents(1);
-  this->reflOutput->SetScalarTypeToFloat();
-  this->reflOutput->SetExtent(0,x-1,
+  this->ReflOutput->SetNumberOfScalarComponents(1);
+  this->ReflOutput->SetScalarTypeToFloat();
+  this->ReflOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
-  this->reflOutput->SetWholeExtent(0,x-1,
+  this->ReflOutput->SetWholeExtent(0,x-1,
                                    0,y-1,
                                    0,z-1);
-  this->reflOutput->SetOrigin(0,0,0);
-  this->reflOutput->SetSpacing(1.0,1.0,1.0);
-  this->reflOutput->Update();
-  this->reflOutput->AllocateScalars();
+  this->ReflOutput->SetOrigin(0,0,0);
+  this->ReflOutput->SetSpacing(1.0,1.0,1.0);
+  this->ReflOutput->Update();
+  this->ReflOutput->AllocateScalars();
 #else
-  this->reflOutput->SetExtent(0,x-1,
+  this->ReflOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
-  this->reflOutput->SetOrigin(0,0,0);
-  this->reflOutput->SetSpacing(1.0,1.0,1.0);
+  this->ReflOutput->SetOrigin(0,0,0);
+  this->ReflOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
-  this->reflOutput->AllocateScalars(VTK_FLOAT, 1);
+  this->ReflOutput->AllocateScalars(VTK_FLOAT, 1);
 #endif
 
   //create a new simulated image
-  if( !this->usOutput)
+  if( !this->UsOutput)
   {
-    this->usOutput = vtkImageData::New();
+    this->UsOutput = vtkImageData::New();
   }
 #if (VTK_MAJOR_VERSION < 6)
-  this->usOutput->SetNumberOfScalarComponents(3);
-  this->usOutput->SetScalarTypeToUnsignedChar();
-  this->usOutput->SetExtent(0,x-1,
+  this->UsOutput->SetNumberOfScalarComponents(3);
+  this->UsOutput->SetScalarTypeToUnsignedChar();
+  this->UsOutput->SetExtent(0,x-1,
                             0,y-1,
                             0,z-1);
-  this->usOutput->SetWholeExtent(0,x-1,
+  this->UsOutput->SetWholeExtent(0,x-1,
                                  0,y-1,
                                  0,z-1);
-  this->usOutput->SetOrigin(0,0,0);
-  this->usOutput->SetSpacing(1.0,1.0,1.0);
-  this->usOutput->Update();
-  this->usOutput->AllocateScalars();
+  this->UsOutput->SetOrigin(0,0,0);
+  this->UsOutput->SetSpacing(1.0,1.0,1.0);
+  this->UsOutput->Update();
+  this->UsOutput->AllocateScalars();
 #else
-  this->usOutput->SetExtent(0,x-1,
+  this->UsOutput->SetExtent(0,x-1,
                             0,y-1,
                             0,z-1);
-  this->usOutput->SetOrigin(0,0,0);
-  this->usOutput->SetSpacing(1.0,1.0,1.0);
+  this->UsOutput->SetOrigin(0,0,0);
+  this->UsOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
-  this->usOutput->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+  this->UsOutput->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
 #endif
 
 }
 
 void vtkCudaCT2USSimulation::SetLogarithmicScaleFactor(float factor)
 {
-  this->information.a = factor;
+  this->Information.a = factor;
 }
 
 void vtkCudaCT2USSimulation::SetTotalReflectionThreshold(float threshold)
 {
-  this->information.reflectionThreshold = threshold;
+  this->Information.reflectionThreshold = threshold;
 }
 
 void vtkCudaCT2USSimulation::SetLinearCombinationAlpha(float a)
 {
-  this->information.alpha = a;
+  this->Information.alpha = a;
 }
 
 void vtkCudaCT2USSimulation::SetLinearCombinationBeta(float b)
 {
-  this->information.beta = b;
+  this->Information.beta = b;
 }
 
 void vtkCudaCT2USSimulation::SetLinearCombinationBias(float bias)
 {
-  this->information.bias = bias;
+  this->Information.bias = bias;
 }
 
 void vtkCudaCT2USSimulation::SetProbeWidth(float xWidth, float yWidth)
 {
-  this->information.probeWidth.x = xWidth;
-  this->information.probeWidth.y = yWidth;
+  this->Information.probeWidth.x = xWidth;
+  this->Information.probeWidth.y = yWidth;
 }
 
 void vtkCudaCT2USSimulation::SetFanAngle(float xAngle, float yAngle)
 {
-  this->information.fanAngle.x = xAngle * 3.1415926 / 180.0;
-  this->information.fanAngle.y = yAngle * 3.1415926 / 180.0;
+  this->Information.fanAngle.x = xAngle * 3.1415926 / 180.0;
+  this->Information.fanAngle.y = yAngle * 3.1415926 / 180.0;
 }
 
 void vtkCudaCT2USSimulation::SetNearClippingDepth(float depth)
 {
-  this->information.StartDepth = depth;
+  this->Information.StartDepth = depth;
 }
 
 void vtkCudaCT2USSimulation::SetFarClippingDepth(float depth)
 {
-  this->information.EndDepth = depth;
+  this->Information.EndDepth = depth;
 }
 
 void vtkCudaCT2USSimulation::SetDensityScaleModel(float scale, float offset)
 {
-  this->information.hounsfieldScale = scale;
-  this->information.hounsfieldOffset = offset;
+  this->Information.hounsfieldScale = scale;
+  this->Information.hounsfieldOffset = offset;
 }
 
 float vtkCudaCT2USSimulation::GetCrossCorrelation()
 {
-  if( this->autoGenerateLinearCombination )
+  if( this->AutoGenerateLinearCombination )
   {
-    return this->information.crossCorrelation;
+    return this->Information.crossCorrelation;
   }
   return -1.0f;
 }
 
 vtkCudaCT2USSimulation::vtkCudaCT2USSimulation()
 {
-  this->usOutput = 0;
-  this->densOutput = 0;
-  this->transOutput = 0;
-  this->reflOutput = 0;
-  this->usTransform = 0;
-  this->information.a = 1.0f;
-  this->alpha = 0.5f;
-  this->beta = 0.5f;
-  this->bias = 0.0f;
-  this->information.StartDepth = 0.0f;
-  this->information.EndDepth = 0.0f;
-  this->information.VolumeSize.x = this->information.VolumeSize.y = this->information.VolumeSize.z = 0;
-  this->information.Resolution.x = this->information.Resolution.y = this->information.Resolution.z = 0;
-  this->information.probeWidth.x = 0.0f;
-  this->information.probeWidth.y = 0.0f;
-  this->information.fanAngle.x = 0.0f;
-  this->information.fanAngle.y = 0.0f;
-  this->information.reflectionThreshold = 1000000.0;
-  this->information.hounsfieldScale = 1.0;
-  this->information.hounsfieldOffset = -1024.0;
-  this->information.optimalParam = false;
+  this->UsOutput = 0;
+  this->DensOutput = 0;
+  this->TransOutput = 0;
+  this->ReflOutput = 0;
+  this->UsTransform = 0;
+  this->Information.a = 1.0f;
+  this->Alpha = 0.5f;
+  this->Beta = 0.5f;
+  this->Bias = 0.0f;
+  this->Information.StartDepth = 0.0f;
+  this->Information.EndDepth = 0.0f;
+  this->Information.VolumeSize.x = this->Information.VolumeSize.y = this->Information.VolumeSize.z = 0;
+  this->Information.Resolution.x = this->Information.Resolution.y = this->Information.Resolution.z = 0;
+  this->Information.probeWidth.x = 0.0f;
+  this->Information.probeWidth.y = 0.0f;
+  this->Information.fanAngle.x = 0.0f;
+  this->Information.fanAngle.y = 0.0f;
+  this->Information.reflectionThreshold = 1000000.0;
+  this->Information.hounsfieldScale = 1.0;
+  this->Information.hounsfieldOffset = -1024.0;
+  this->Information.optimalParam = false;
 
-  this->caster = vtkImageCast::New();
-  this->caster->SetOutputScalarTypeToFloat();
-  this->caster->ClampOverflowOn();
+  this->Caster = vtkImageCast::New();
+  this->Caster->SetOutputScalarTypeToFloat();
+  this->Caster->ClampOverflowOn();
 
-  this->autoGenerateLinearCombination = false;
+  this->AutoGenerateLinearCombination = false;
 }
 
 vtkCudaCT2USSimulation::~vtkCudaCT2USSimulation()
 {
-  if(this->usOutput)
+  if(this->UsOutput)
   {
-    this->usOutput->Delete();
-    this->transOutput->Delete();
-    this->reflOutput->Delete();
-    this->densOutput->Delete();
+    this->UsOutput->Delete();
+    this->TransOutput->Delete();
+    this->ReflOutput->Delete();
+    this->DensOutput->Delete();
   }
-  this->caster->Delete();
+  this->Caster->Delete();
 }
 
 float vtkCudaCT2USSimulation::GetLinearCombinationAlpha()
 {
-  return this->information.alpha;
+  return this->Information.alpha;
 }
 float vtkCudaCT2USSimulation::GetLinearCombinationBeta()
 {
-  return this->information.beta;
+  return this->Information.beta;
 }
 
 float vtkCudaCT2USSimulation::GetLinearCombinationBias()
 {
-  return this->information.bias;
+  return this->Information.bias;
 }

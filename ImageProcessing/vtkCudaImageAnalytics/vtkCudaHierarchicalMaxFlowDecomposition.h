@@ -61,10 +61,6 @@ protected:
   vtkCudaHierarchicalMaxFlowDecomposition();
   virtual ~vtkCudaHierarchicalMaxFlowDecomposition();
 
-private:
-  vtkCudaHierarchicalMaxFlowDecomposition operator=(const vtkCudaHierarchicalMaxFlowDecomposition&) {}
-  vtkCudaHierarchicalMaxFlowDecomposition(const vtkCudaHierarchicalMaxFlowDecomposition&) {}
-
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
@@ -94,10 +90,14 @@ private:
   int FirstUnusedLabelPort;
 
   //pointers to variable structures, easier to keep as part of the class definition
-  float**  branchSmoothnessTermBuffers;
-  float**  leafSmoothnessTermBuffers;
+  float**  BranchSmoothnessTermBuffers;
+  float**  LeafSmoothnessTermBuffers;
 
-  float* devGradientBuffer;
+  float* DevGradientBuffer;
+
+private:
+  vtkCudaHierarchicalMaxFlowDecomposition operator=(const vtkCudaHierarchicalMaxFlowDecomposition&);
+  vtkCudaHierarchicalMaxFlowDecomposition(const vtkCudaHierarchicalMaxFlowDecomposition&);
 };
 
 #endif

@@ -20,15 +20,15 @@ __constant__ float dRandomRayOffsets[BLOCK_DIM2D*BLOCK_DIM2D];
 cudaArray* ZBufferArray = 0;
 texture<float, 2, cudaReadModeElementType> zbuffer_texture;
 
-#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;                \
-                           textureToBind.filterMode = cudaFilterModePoint;        \
-                           textureToBind.addressMode[0] = cudaAddressModeClamp;      \
-                           textureToBind.addressMode[1] = cudaAddressModeClamp;      \
-                           cudaBindTextureToArray(textureToBind, value, channelDesc); 
+#define bindSingle2DTexture( textureToBind, value) textureToBind.normalized = true;       \
+                           textureToBind.filterMode = cudaFilterModePoint;                \
+                           textureToBind.addressMode[0] = cudaAddressModeClamp;           \
+                           textureToBind.addressMode[1] = cudaAddressModeClamp;           \
+                           cudaBindTextureToArray(textureToBind, value, channelDesc);
 
-#define load2DArray(array, values, s, tr) if(array) cudaFreeArray(array);                  \
-                      cudaMallocArray( &array, &channelDesc, s, s);            \
-                      cudaMemcpyToArrayAsync(array, 0, 0, values, sizeof(float)*s*s,  \
+#define load2DArray(array, values, s, tr) if(array) cudaFreeArray(array);                 \
+                      cudaMallocArray( &array, &channelDesc, s, s);                       \
+                      cudaMemcpyToArrayAsync(array, 0, 0, values, sizeof(float)*s*s,      \
                       cudaMemcpyHostToDevice, tr);
 
 #define unloadArray(a) if(a); cudaFreeArray(a); a = 0;
@@ -38,12 +38,13 @@ cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
 cudaChannelFormatDesc channelDesc2 = cudaCreateChannelDesc<float2>();
 
 __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
-                       float& numSteps, float& excludeStart, float& excludeEnd ){
-  
+    float& numSteps, float& excludeStart, float& excludeEnd )
+{
+
   __syncthreads();
   const int numPlanes = renInfo.NumberOfKeyholePlanes;
   __syncthreads();
-  
+
   //create a rayEnd holder
   float3 oldRayStart = rayStart;
   float3 rayDir;
@@ -60,15 +61,19 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
   excludeEnd = -1.0f;
 
   // loop through all provided clipping planes
-  if(!numPlanes) return;
+  if(!numPlanes)
+  {
+    return;
+  }
   int flag = 0;
-  for ( int i = 0; i < numPlanes; i++ ){
-    
+  for ( int i = 0; i < numPlanes; i++ )
+  {
+
     //refine the ray direction to account for any changes in starting or ending position
     rayDir.x = rayEnd.x - rayStart.x;
     rayDir.y = rayEnd.y - rayStart.y;
     rayDir.z = rayEnd.z - rayStart.z;
-    
+
     //collect all the information about the current clipping plane
     float4 keyholePlane;
     __syncthreads();
@@ -77,22 +82,23 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
     keyholePlane.z  = renInfo.KeyholePlanes[4*i+2];
     keyholePlane.w  = renInfo.KeyholePlanes[4*i+3];
     __syncthreads();
-    
+
     const float dp = keyholePlane.x*rayDir.x +
-             keyholePlane.y*rayDir.y +
-             keyholePlane.z*rayDir.z;
+                     keyholePlane.y*rayDir.y +
+                     keyholePlane.z*rayDir.z;
     const float t = -(keyholePlane.x*rayStart.x +
-            keyholePlane.y*rayStart.y + 
-            keyholePlane.z*rayStart.z + 
-            keyholePlane.w) / dp;
+                      keyholePlane.y*rayStart.y +
+                      keyholePlane.z*rayStart.z +
+                      keyholePlane.w) / dp;
 
     const float point0 = rayStart.x + t*rayDir.x;
     const float point1 = rayStart.y + t*rayDir.y;
     const float point2 = rayStart.z + t*rayDir.z;
 
     //if the ray intersects the plane, set the start or end point to the intersection point
-    if ( t > 0.0f && t < 1.0f ){
-      
+    if ( t > 0.0f && t < 1.0f )
+    {
+
       dp > 0.0f ? rayStart.x = point0 : rayEnd.x = point0;
       dp > 0.0f ? rayStart.y = point1 : rayEnd.y = point1;
       dp > 0.0f ? rayStart.z = point2 : rayEnd.z = point2;
@@ -102,44 +108,49 @@ __device__ void CUDAkernel_FindKeyholeValues(float3 rayStart, float3 rayInc,
     //flag this ray if it is outside the plane entirely
     flag |= (dp > 0.0f && t > 1.0f);
     flag |= (dp < 0.0f && t < 0.0f);
-        
+
   }//for
-  
+
   rayStart.x -= oldRayStart.x;
   rayStart.y -= oldRayStart.y;
   rayStart.z -= oldRayStart.z;
   rayEnd.x -= oldRayStart.x;
   rayEnd.y -= oldRayStart.y;
   rayEnd.z -= oldRayStart.z;
-  
+
   //if the ray is not inside the clipping planes, make the ray zero length
   float invRayLengthSquared = 1.0f / (rayInc.x*rayInc.x + rayInc.y*rayInc.y + rayInc.z*rayInc.z);
   excludeStart = flag ? -1.0f : (rayStart.x * rayInc.x +
-                   rayStart.y * rayInc.y +
-                   rayStart.z * rayInc.z ) * invRayLengthSquared;
+                                 rayStart.y * rayInc.y +
+                                 rayStart.z * rayInc.z ) * invRayLengthSquared;
   excludeEnd = flag ?  -1.0f : (rayEnd.x * rayInc.x +
-                  rayEnd.y * rayInc.y +
-                  rayEnd.z * rayInc.z ) * invRayLengthSquared;
+                                rayEnd.y * rayInc.y +
+                                rayEnd.z * rayInc.z ) * invRayLengthSquared;
 
 }
 
-__device__ void CUDAkernel_ClipRayAgainstClippingPlanes(float3& rayStart, float3& rayEnd, float3& rayDir) {
-  
+__device__ void CUDAkernel_ClipRayAgainstClippingPlanes(float3& rayStart, float3& rayEnd, float3& rayDir)
+{
+
   __syncthreads();
   const int numPlanes = renInfo.NumberOfClippingPlanes;
   __syncthreads();
 
   // loop through all 6 clipping planes
-  if(!numPlanes) return;
+  if(!numPlanes)
+  {
+    return;
+  }
   int flag = 0;
-  #pragma unroll 1
-  for ( int i = 0; i < numPlanes; i++ ){
-    
+#pragma unroll 1
+  for ( int i = 0; i < numPlanes; i++ )
+  {
+
     //refine the ray direction to account for any changes in starting or ending position
     rayDir.x = rayEnd.x - rayStart.x;
     rayDir.y = rayEnd.y - rayStart.y;
     rayDir.z = rayEnd.z - rayStart.z;
-    
+
     //collect all the information about the current clipping plane
     float4 clippingPlane;
     __syncthreads();
@@ -148,22 +159,23 @@ __device__ void CUDAkernel_ClipRayAgainstClippingPlanes(float3& rayStart, float3
     clippingPlane.z  = renInfo.ClippingPlanes[4*i+2];
     clippingPlane.w  = renInfo.ClippingPlanes[4*i+3];
     __syncthreads();
-    
+
     const float dp = clippingPlane.x*rayDir.x +
-             clippingPlane.y*rayDir.y +
-             clippingPlane.z*rayDir.z;
+                     clippingPlane.y*rayDir.y +
+                     clippingPlane.z*rayDir.z;
     const float t = -(clippingPlane.x*rayStart.x +
-            clippingPlane.y*rayStart.y + 
-            clippingPlane.z*rayStart.z + 
-            clippingPlane.w) / dp;
+                      clippingPlane.y*rayStart.y +
+                      clippingPlane.z*rayStart.z +
+                      clippingPlane.w) / dp;
 
     const float point0 = rayStart.x + t*rayDir.x;
     const float point1 = rayStart.y + t*rayDir.y;
     const float point2 = rayStart.z + t*rayDir.z;
 
     //if the ray intersects the plane, set the start or end point to the intersection point
-    if ( t > 0.0f && t < 1.0f ){
-      
+    if ( t > 0.0f && t < 1.0f )
+    {
+
       dp > 0.0f ? rayStart.x = point0 : rayEnd.x = point0;
       dp > 0.0f ? rayStart.y = point1 : rayEnd.y = point1;
       dp > 0.0f ? rayStart.z = point2 : rayEnd.z = point2;
@@ -173,11 +185,12 @@ __device__ void CUDAkernel_ClipRayAgainstClippingPlanes(float3& rayStart, float3
     //flag this ray if it is outside the plane entirely
     flag |= (dp > 0.0f && t > 1.0f);
     flag |= (dp < 0.0f && t < 0.0f);
-        
+
   }//for
 
   //if the ray is not inside the clipping planes, make the ray zero length
-  if(flag){
+  if(flag)
+  {
     rayStart.x = rayEnd.x;
     rayStart.y = rayEnd.y;
     rayStart.z = rayEnd.z;
@@ -185,13 +198,14 @@ __device__ void CUDAkernel_ClipRayAgainstClippingPlanes(float3& rayStart, float3
 
 }
 
-__device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd, float3& rayDir) {
-  
+__device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd, float3& rayDir)
+{
+
   //define the ray's length and direction to account for any changes in starting and ending position
   rayDir.x = rayEnd.x - rayStart.x;
   rayDir.y = rayEnd.y - rayStart.y;
   rayDir.z = rayEnd.z - rayStart.z;
-  
+
   //collect the information about the bounds of the volume in voxels from the volume information
   __syncthreads();
   const float bounds0 = volInfo.Bounds[0]+1.0f;
@@ -201,15 +215,18 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
   const float bounds4 = volInfo.Bounds[4]+1.0f;
   const float bounds5 = volInfo.Bounds[5]-1.0f;
   __syncthreads();
-    
+
   float diffS;
   float diffE;
-  
+
   //find the intersection of the ray and the volume (in the x direction)
-  if (rayDir.x > 0.0f){
-    diffS = rayStart.x < bounds0 ? bounds0 - rayStart.x : 0.0f; 
+  if (rayDir.x > 0.0f)
+  {
+    diffS = rayStart.x < bounds0 ? bounds0 - rayStart.x : 0.0f;
     diffE = rayEnd.x > bounds1 ? bounds1 - rayEnd.x : 0.0f;
-  }else{
+  }
+  else
+  {
     diffS = rayStart.x > bounds1 ? bounds1 - rayStart.x : 0.0f;
     diffE = rayEnd.x < bounds0 ? bounds0 - rayEnd.x : 0.0f;
   }
@@ -217,7 +234,8 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
   diffE /= rayDir.x;
 
   //crop the ray to fit the x direction if possible
-  if(isfinite(diffS)){
+  if(isfinite(diffS))
+  {
     rayStart.x += rayDir.x * diffS;
     rayStart.y += rayDir.y * diffS;
     rayStart.z += rayDir.z * diffS;
@@ -225,12 +243,15 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
     rayEnd.y += rayDir.y * diffE;
     rayEnd.z += rayDir.z * diffE;
   }
-  
+
   //find the intersection of the ray and the volume (in the y direction)
-  if(rayDir.y > 0.0f){
+  if(rayDir.y > 0.0f)
+  {
     diffS = rayStart.y < bounds2 ? bounds2 - rayStart.y : 0.0f;
     diffE = rayEnd.y > bounds3 ? bounds3 - rayEnd.y : 0.0f;
-  }else{
+  }
+  else
+  {
     diffS = rayStart.y > bounds3 ? bounds3 - rayStart.y : 0.0f;
     diffE = rayEnd.y < bounds2 ? bounds2 - rayEnd.y : 0.0f;
   }
@@ -238,7 +259,8 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
   diffE /= rayDir.y;
 
   //crop the ray to fit the y direction if possible
-  if(isfinite(diffS)){
+  if(isfinite(diffS))
+  {
     rayStart.x += rayDir.x * diffS;
     rayStart.y += rayDir.y * diffS;
     rayStart.z += rayDir.z * diffS;
@@ -246,12 +268,15 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
     rayEnd.y += rayDir.y * diffE;
     rayEnd.z += rayDir.z * diffE;
   }
-  
+
   //find the intersection of the ray and the volume (in the z direction)
-  if(rayDir.z > 0.0f){
+  if(rayDir.z > 0.0f)
+  {
     diffS = rayStart.z < bounds4 ? bounds4 - rayStart.z : 0.0f;
     diffE = rayEnd.z > bounds5 ? bounds5 - rayEnd.z : 0.0f;
-  }else{
+  }
+  else
+  {
     diffS = rayStart.z > bounds5 ? bounds5 - rayStart.z : 0.0f;
     diffE = rayEnd.z < bounds4 ? bounds4 - rayEnd.z : 0.0f;
   }
@@ -259,7 +284,8 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
   diffE /= rayDir.z;
 
   //crop the ray to fit the z direction if possible
-  if(isfinite(diffS)){
+  if(isfinite(diffS))
+  {
     rayStart.x += rayDir.x * diffS;
     rayStart.y += rayDir.y * diffS;
     rayStart.z += rayDir.z * diffS;
@@ -267,21 +293,22 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
     rayEnd.y += rayDir.y * diffE;
     rayEnd.z += rayDir.z * diffE;
   }
-  
+
   // If the voxel still isn't inside the volume, then this ray
   // doesn't really intersect the volume, thus, make it all zero
   if (rayEnd.x > bounds1 + 1.0f ||
-    rayEnd.y > bounds3 + 1.0f ||
-    rayEnd.z > bounds5 + 1.0f ||
-    rayEnd.x < bounds0 - 1.0f || 
-    rayEnd.y < bounds2 - 1.0f || 
-    rayEnd.z < bounds4 - 1.0f||
-    rayStart.x > bounds1 + 1.0f ||
-    rayStart.y > bounds3 + 1.0f ||
-    rayStart.z > bounds5 + 1.0f ||
-    rayStart.x < bounds0 - 1.0f || 
-    rayStart.y < bounds2 - 1.0f || 
-    rayStart.z < bounds4 - 1.0f ){
+      rayEnd.y > bounds3 + 1.0f ||
+      rayEnd.z > bounds5 + 1.0f ||
+      rayEnd.x < bounds0 - 1.0f ||
+      rayEnd.y < bounds2 - 1.0f ||
+      rayEnd.z < bounds4 - 1.0f||
+      rayStart.x > bounds1 + 1.0f ||
+      rayStart.y > bounds3 + 1.0f ||
+      rayStart.z > bounds5 + 1.0f ||
+      rayStart.x < bounds0 - 1.0f ||
+      rayStart.y < bounds2 - 1.0f ||
+      rayStart.z < bounds4 - 1.0f )
+  {
     rayStart = rayEnd;
   }
 
@@ -292,12 +319,13 @@ __device__ void CUDAkernel_ClipRayAgainstVolume(float3& rayStart, float3& rayEnd
 
 }
 
-__device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float3& rayDir, const int& outIndex) {
+__device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float3& rayDir, const int& outIndex)
+{
   //set the original estimates of the starting and ending co-ordinates in the co-ordinates of the view (not voxels)
   //note: viewRayZ = 0 for start and viewRayZ = 1 for end
   __syncthreads();
   float viewRayX =  outInfo.flipped ? ( ((float) index.x) / (float) outInfo.resolution.x ) :
-                  1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
+                    1.0f - ( ((float) index.x) / (float) outInfo.resolution.x );
   float viewRayY =  ( ((float) index.y) / (float) outInfo.resolution.y );
   __syncthreads();
   float endDepth = tex2D(zbuffer_texture, 1.0f-viewRayX, viewRayY );
@@ -323,12 +351,12 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
   rayFull.z = rayStart.z + renInfo.ViewToVoxelsMatrix[10];
   float fullNorm = startNorm + renInfo.ViewToVoxelsMatrix[14];
   __syncthreads();
-  
+
   //normalize (and ergo finish) the start ray's matrix multiplication
   rayStart.x /= startNorm;
   rayStart.y /= startNorm;
   rayStart.z /= startNorm;
-  
+
   //normalize (and ergo finish) the end ray's matrix multiplication
   rayEnd.x /= endNorm;
   rayEnd.y /= endNorm;
@@ -336,7 +364,7 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
   rayFull.x /= fullNorm;
   rayFull.y /= fullNorm;
   rayFull.z /= fullNorm;
-  
+
   //put the maximum depth in the buffer
   float3 oldStart = rayStart;
   rayDir.x = rayFull.x - rayStart.x;
@@ -351,18 +379,19 @@ __device__ void CUDAkernel_SetRayEnds(const int2& index, float3& rayStart, float
   //note that ClipRayAgainstVolume calculate the ray's correct length and direction and returns it in rayInc
   CUDAkernel_ClipRayAgainstClippingPlanes(rayStart, rayEnd, rayDir);
   CUDAkernel_ClipRayAgainstVolume(rayStart, rayEnd, rayDir);
-  
+
   //put the maximum depth in the buffer
   __syncthreads();
   float rayLength = __fsqrt_rz( rayDir.x*rayDir.x + rayDir.y*rayDir.y + rayDir.z*rayDir.z );
   float minDepth = __fsqrt_rz( (rayStart.x-oldStart.x)*(rayStart.x-oldStart.x) +
-           (rayStart.y-oldStart.y)*(rayStart.y-oldStart.y) +
-           (rayStart.z-oldStart.z)*(rayStart.z-oldStart.z) );
+                               (rayStart.y-oldStart.y)*(rayStart.y-oldStart.y) +
+                               (rayStart.z-oldStart.z)*(rayStart.z-oldStart.z) );
   outInfo.minDepthBuffer[outIndex] = (rayLength > 0.0f) ? minDepth : maxDepth;
   __syncthreads();
 }
 
-__global__ void CUDAkernel_renderAlgo_formRays( ) {
+__global__ void CUDAkernel_renderAlgo_formRays( )
+{
 
   //index in the output image (2D)
   int2 index;
@@ -371,7 +400,7 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
 
   //index in the output image (1D)
   int outindex = index.x + index.y * outInfo.resolution.x;
-  
+
   float3 rayStart; //ray starting point
   float3 rayInc; // ray sample increment
   float numSteps; //maximum number of samples along this ray
@@ -385,8 +414,8 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
   float minSpacing = volInfo.MinSpacing;
   __syncthreads();
   numSteps = __fsqrt_ru(rayInc.x*rayInc.x*spacing.x*spacing.x+
-              rayInc.y*rayInc.y*spacing.y*spacing.y+
-              rayInc.z*rayInc.z*spacing.z*spacing.z) / minSpacing;
+                        rayInc.y*rayInc.y*spacing.y*spacing.y+
+                        rayInc.z*rayInc.z*spacing.z*spacing.z) / minSpacing;
   rayInc.x /= numSteps;
   rayInc.y /= numSteps;
   rayInc.z /= numSteps;
@@ -419,7 +448,8 @@ __global__ void CUDAkernel_renderAlgo_formRays( ) {
   __syncthreads();
 }
 
-__global__ void CUDAkernel_shadeAlgo_normBuffer( ){
+__global__ void CUDAkernel_shadeAlgo_normBuffer( )
+{
   int outIndex = threadIdx.x + blockDim.x * blockIdx.x; // index of result image
   float curr = outInfo.depthBuffer[outIndex];
   float max = outInfo.maxDepthBuffer[outIndex];
@@ -432,7 +462,7 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
 {
   //index in the output image
   int outindex = threadIdx.x + blockDim.x * blockIdx.x; // index of result image
-  
+
   //get the depth information from the buffer and the colour information from the output image
   float2 depthDiffX;
   float2 depthDiffY;
@@ -448,25 +478,25 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
 
   //compute the gradient magnitude
   float gradMag = __fsqrt_rz( (depthDiffX.y - depthDiffX.x)*(depthDiffX.y - depthDiffX.x) +
-                (depthDiffY.y - depthDiffY.x)*(depthDiffY.y - depthDiffY.x) );
-  
+                              (depthDiffY.y - depthDiffY.x)*(depthDiffY.y - depthDiffY.x) );
+
   //grab cel shading parameters
   __syncthreads();
   float darkness = renInfo.celr;
   float a = renInfo.cela;
   float c = renInfo.celc;
   __syncthreads();
-  
+
   //multiply by the cel-shading factor
   gradMag = 1.0f - darkness * saturate( (gradMag - a) * c );
-  
+
   //grab distance shading parameters
   __syncthreads();
   darkness = renInfo.disr;
   a = renInfo.disa;
   c = renInfo.disc;
   __syncthreads();
-  
+
   //multiply by the depth factor
   gradMag *= 1.0f - darkness * saturate( (depthDiffX.x - a) * c );
 
@@ -483,10 +513,13 @@ __global__ void CUDAkernel_shadeAlgo_doCelShade( )
   outInfo.deviceOutputImage[outindex] = colour;
 }
 
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY, cudaStream_t* stream){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const int zBufferSizeX, const int zBufferSizeY, cudaStream_t* stream)
+{
 
   if(ZBufferArray)
+  {
     cudaFreeArray(ZBufferArray);
+  }
 
   //load the zBuffer from the host to the array
   cudaMallocArray(&ZBufferArray, &channelDesc, zBufferSizeX, zBufferSizeY);
@@ -498,74 +531,84 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
   zbuffer_texture.addressMode[0] = cudaAddressModeClamp;
   zbuffer_texture.addressMode[1] = cudaAddressModeClamp;
   cudaBindTextureToArray(zbuffer_texture, ZBufferArray, channelDesc);
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Load Z-Buffer: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
-    
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Load Z-Buffer: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
   return (cudaGetLastError() == 0);
 
 }
 
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream)
+{
   if(ZBufferArray)
+  {
     cudaFreeArray(ZBufferArray);
+  }
   ZBufferArray = 0;
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Unload Z-Buffer: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Unload Z-Buffer: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
 
   return (cudaGetLastError() == 0);
 }
 
 //load in a random 16x16 noise array to deartefact the image in real time
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets, cudaStream_t* stream){
-  
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* randomRayOffsets, cudaStream_t* stream)
+{
+
   cudaMemcpyToSymbolAsync(dRandomRayOffsets, randomRayOffsets, BLOCK_DIM2D*BLOCK_DIM2D*sizeof(float), 0, cudaMemcpyHostToDevice, *stream);
-  
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Load ray offsets: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
-  
+
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Load ray offsets: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
+
   return (cudaGetLastError() == 0);
 }
 
-bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* stream){
+bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* stream)
+{
 
-  #ifdef DEBUG_VTKCUDAVISUALIZATION
-    cudaThreadSynchronize();
-    printf( "Unload ray offsets: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
-  #endif
+#ifdef DEBUG_VTKCUDAVISUALIZATION
+  cudaThreadSynchronize();
+  printf( "Unload ray offsets: " );
+  printf( cudaGetErrorString( cudaGetLastError() ) );
+  printf( "\n" );
+#endif
 
   return (cudaGetLastError() == 0);
 }
 
 
 template<typename T, typename S>
-__global__ void CUDAkernel_convertUnit( T* hostBuffer, S* deviceBuffer, int bufferSize ){
+__global__ void CUDAkernel_convertUnit( T* hostBuffer, S* deviceBuffer, int bufferSize )
+{
 
   int index = threadIdx.x + blockDim.x * blockIdx.x;
   T value = hostBuffer[index];
-  if( index < bufferSize ) deviceBuffer[index] = (S) value;
+  if( index < bufferSize )
+  {
+    deviceBuffer[index] = (S) value;
+  }
 
 }
 
 #define CUDA_castBuffer_OptimalThreadSize 512
 
 template<typename T, typename S>
-void CUDA_castBuffer(T* hostBuffer, S** deviceBuffer, int bufferSize){
+void CUDA_castBuffer(T* hostBuffer, S** deviceBuffer, int bufferSize)
+{
 
   //allocate required device memory buffers
   T* deviceBufferOrgType;
@@ -590,7 +633,8 @@ void CUDA_castBuffer(T* hostBuffer, S** deviceBuffer, int bufferSize){
 }
 
 template<typename T>
-void CUDA_allocBuffer(T* hostBuffer, T** deviceBuffer, int bufferSize){
+void CUDA_allocBuffer(T* hostBuffer, T** deviceBuffer, int bufferSize)
+{
 
   //allocate required device memory buffers
   cudaMalloc( (void**) deviceBuffer, sizeof(T)*bufferSize );
@@ -611,9 +655,12 @@ template void CUDA_castBuffer<long,float>(long* hostBuffer, float** deviceBuffer
 template void CUDA_castBuffer<unsigned long,float>(unsigned long* hostBuffer, float** deviceBuffer, int bufferSize);
 template void CUDA_castBuffer<float,float>(float* hostBuffer, float** deviceBuffer, int bufferSize);
 
-void CUDA_deallocateMemory(void* ptr){
+void CUDA_deallocateMemory(void* ptr)
+{
   cudaFree(ptr);
 }
+
+// Because __constants__ can't be extern'd across compilation units, include these files into this compilation unit
 #include "CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh"
 #include "CUDA_vtkCudaDualImageVolumeMapper_renderAlgo.cuh"

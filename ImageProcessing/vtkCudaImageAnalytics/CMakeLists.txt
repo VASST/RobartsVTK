@@ -30,6 +30,7 @@ SET( Module_CUDA_SRCS
   CUDA_fuzzyconnectednessfilter.cu
   CUDA_kohonengenerator.cu
   CUDA_kohonenapplication.cu
+  CUDA_cttoussimulation.cu
   CUDA_kohonenreprojector.cu
   CUDA_PAGMMestimator.cu
   CUDA_KSOMlikelihood.cu
@@ -68,7 +69,7 @@ LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
 # -----------------------------------------------------------------
 # Build the library
 INCLUDE_DIRECTORIES(${${PROJECT_NAME}_INCLUDE_DIRS})
-vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
+vtk_module_library(${PROJECT_NAME} ${Module_SRCS} ${Module_CUDA_HDRS})
 vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
 
 # -----------------------------------------------------------------

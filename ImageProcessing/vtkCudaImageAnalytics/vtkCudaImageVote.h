@@ -18,7 +18,7 @@
  *      to the input image with the highest value at that location. ( argmax{} operation )
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
@@ -40,13 +40,13 @@ class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaImageVote : public vtkImageAlgorithm, 
 public:
   vtkTypeMacro( vtkCudaImageVote, vtkImageAlgorithm );
   static vtkCudaImageVote *New();
-  
+
   // Description:
   // Set the input to the filter associated with an integer
   // label to be given.
   vtkDataObject* GetInput(int idx);
   void SetInput(int idx, vtkDataObject *input);
-  
+
   // Description:
   // Set what scalar type the output is expected to be.
   vtkSetClampMacro(OutputDataType,int,1,20);
@@ -58,29 +58,29 @@ public:
   // will call this method. It is public so that the thread functions
   // can call this method.
   virtual int RequestData(vtkInformation *request,
-                                     vtkInformationVector **inputVector,
-                                     vtkInformationVector *outputVector);
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
   virtual int FillInputPortInformation(int i, vtkInformation* info);
 
   template<class T>
-  T GetMappedTerm(int i){ return (T)(BackwardsInputPortMapping.find(i) == BackwardsInputPortMapping.end() ? 0: BackwardsInputPortMapping[i]); }
+  T GetMappedTerm(int i)
+  {
+    return (T)(BackwardsInputPortMapping.find(i) == BackwardsInputPortMapping.end() ? 0: BackwardsInputPortMapping[i]);
+  }
 
 protected:
   vtkCudaImageVote();
   virtual ~vtkCudaImageVote();
 
-private:
-  vtkCudaImageVote operator=(const vtkCudaImageVote&){}
-  vtkCudaImageVote(const vtkCudaImageVote&){}
-  void Reinitialize(int withData){};
-  void Deinitialize(int withData){};
-  
+  void Reinitialize(int withData) {};
+  void Deinitialize(int withData) {};
+
   int CheckInputConsistency( vtkInformationVector** inputVector, int* Extent, int* NumLabels, int* DataType, int* NumComponents);
 
   std::map<vtkIdType,int> InputPortMapping;
@@ -88,6 +88,10 @@ private:
   int FirstUnusedPort;
 
   int OutputDataType;
+
+private:
+  vtkCudaImageVote operator=(const vtkCudaImageVote&);
+  vtkCudaImageVote(const vtkCudaImageVote&);
 };
 
 #endif

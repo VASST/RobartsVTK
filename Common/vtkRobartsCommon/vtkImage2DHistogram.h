@@ -67,8 +67,8 @@ protected:
   int NumberOfThreads;
 
 private:
-  vtkImage2DHistogram operator=(const vtkImage2DHistogram&) {} //not implemented
-  vtkImage2DHistogram(const vtkImage2DHistogram&) {} //not implemented
+  vtkImage2DHistogram operator=(const vtkImage2DHistogram&);
+  vtkImage2DHistogram(const vtkImage2DHistogram&);
 
 };
 

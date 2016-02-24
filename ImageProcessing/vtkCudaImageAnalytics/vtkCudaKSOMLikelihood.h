@@ -44,29 +44,29 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
 
 protected:
   vtkCudaKSOMLikelihood();
   virtual ~vtkCudaKSOMLikelihood();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
-private:
-  vtkCudaKSOMLikelihood operator=(const vtkCudaKSOMLikelihood&){}
-  vtkCudaKSOMLikelihood(const vtkCudaKSOMLikelihood&){}
-
-  KSOMLL_Information info;
+  KSOMLL_Information Info;
   double  Scale;
+
+private:
+  vtkCudaKSOMLikelihood operator=(const vtkCudaKSOMLikelihood&);
+  vtkCudaKSOMLikelihood(const vtkCudaKSOMLikelihood&);
 };
 
 #endif

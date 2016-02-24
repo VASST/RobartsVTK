@@ -1,38 +1,36 @@
 #ifndef STEREORENDERINGWIDGET
 #define STEREORENDERINGWIDGET
 
-#include <QObject>
+#include "TFUICommonModule.h"
+
 #include <QWidget>
-#include <QMenu>
-#include <QSlider>
-#include <QLabel>
 
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include "vtkCudaVolumeMapper.h"
-
-#include "qTransferFunctionWindowWidgetInterface.h"
+class QLabel;
+class QMenu;
+class QSlider;
 class qTransferFunctionWindowWidgetInterface;
+class vtkCudaVolumeMapper;
+class vtkRenderWindow;
+class vtkRenderer;
 
-class qStereoRenderingWidget : public QWidget
+class TFUICOMMON_EXPORT qStereoRenderingWidget : public QWidget
 {
   Q_OBJECT
-public:
 
+public:
   qStereoRenderingWidget( qTransferFunctionWindowWidgetInterface* parent );
   ~qStereoRenderingWidget();
   QMenu* getMenuOptions();
   void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaVolumeMapper* caster );
 
-private slots:
+protected slots:
 
   //stereo related slots
   void setStereoOn();
   void setStereoOff();
   void toggleEyes();
 
-private:
-
+protected:
   void setupMenu();
   void setStereoEnabled(bool);
   void toggleStereoEyes();
@@ -50,7 +48,6 @@ private:
   QAction* stereoEyeToggleMenuOption;
 
   unsigned int old;
-
 };
 
 #endif

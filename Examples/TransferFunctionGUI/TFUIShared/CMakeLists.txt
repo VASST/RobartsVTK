@@ -1,19 +1,8 @@
-PROJECT(TFUI-Common)
+PROJECT(TFUICommon)
 
-SET(${PROJECT_NAME}_LIBS 
-  vtkCudaCommon 
-  vtkCudaVisualization  
-  vtkRenderingVolumeOpenGL 
-  vtkRenderingFreeTypeOpenGL 
-  vtkInteractionWidgets 
-  vtksys 
-  vtkIOMINC 
-  vtkImagingMath 
-  )
+include(module.cmake)
 
-INCLUDE_DIRECTORIES(${vtkCudaCommon_INCLUDE_DIRS} ${vtkCudaVisualization_INCLUDE_DIRS})
-
-SET ( ${PROJECT_NAME}_SRCS
+SET ( Module_SRCS 
   qTransferFunctionWindowWidgetInterface.cxx
   qFileManagementWidget.cxx
   qStereoRenderingWidget.cxx
@@ -23,24 +12,19 @@ SET ( ${PROJECT_NAME}_SRCS
   vtkImageHackedPlaneWidget.cxx
 )
 
-IF( MSVC )
-  SET( ${PROJECT_NAME}_HDRS 
-    qTransferFunctionWindowWidgetInterface.h
-    qFileManagementWidget.h
-    qStereoRenderingWidget.h
-    qVirtualToolWidget.h
-    qShadingWidget.h
-    qDeviceManagementWidget.h
-    vtkImageHackedPlaneWidget.h
-  )
-ENDIF()
-
 IF( QT4_FOUND )
   INCLUDE(${QT_USE_FILE})
 ELSE()
-  INCLUDE_DIRECTORIES(${Qt5Widgets_INCLUDE_DIRS})
-  LIST(APPEND ${PROJECT_NAME}_LIBS ${_Qt5Widgets_LIB_DEPENDENCIES})
+  LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${Qt5Widgets_INCLUDE_DIRS})
+  SET(${PROJECT_NAME}_APPEND_LIBS Qt5::Widgets ${_Qt5Widgets_LIB_DEPENDENCIES})
+  LIST(APPEND ${PROJECT_NAME}_LIBS ${PROJECT_NAME}_APPEND_LIBS)
 ENDIF()
 
-CUDA_ADD_LIBRARY( ${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} ${${PROJECT_NAME}_HDRS})
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${${PROJECT_NAME}_LIBS} )
+# -----------------------------------------------------------------
+# Build the library
+vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_APPEND_LIBS})
+
+# -----------------------------------------------------------------
+LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
+SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)

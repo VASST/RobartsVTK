@@ -1,5 +1,5 @@
 #include "CUDA_voxelclassifier.h"
-#include "CUDA_commonKernels.h"
+#include "vtkCudaCommon.h"
 #include <float.h>
 #include <stdio.h>
 
@@ -9,12 +9,13 @@ texture<short, 2, cudaReadModeElementType> ClassifyKeyholeTexture;
 
 cudaChannelFormatDesc Voxel_Classifier_ChannelDesc = cudaCreateChannelDesc<short>();
 
-__device__ bool WithinPlanes(const float* ConstantPlanes, const int NumPlanes, const int3& index){
-  
+__device__ bool WithinPlanes(const float* ConstantPlanes, const int NumPlanes, const int3& index)
+{
   bool flag = false;
-  #pragma unroll 1
-  for ( int i = 0; i < NumPlanes; i++ ){
-    
+#pragma unroll 1
+  for ( int i = 0; i < NumPlanes; i++ )
+  {
+
     //collect all the information about the current clipping plane
     float4 clippingPlane;
     __syncthreads();
@@ -25,19 +26,20 @@ __device__ bool WithinPlanes(const float* ConstantPlanes, const int NumPlanes, c
     __syncthreads();
 
     const float t = -(clippingPlane.x*index.x +
-            clippingPlane.y*index.y + 
-            clippingPlane.z*index.z + 
-            clippingPlane.w);
+                      clippingPlane.y*index.y +
+                      clippingPlane.z*index.z +
+                      clippingPlane.w);
 
     //if the ray intersects the plane, set the start or end point to the intersection point
     flag |= (t > 0.0f);
-        
+
   }//for
 
   return !flag;
 }
 
-__global__ void ClassifyVolume( const float2* inputVolume, short* outputVolume ){
+__global__ void ClassifyVolume( const float2* inputVolume, short* outputVolume )
+{
   //get the index of the thread in the volume
   int inIndex = CUDASTDOFFSET;
   int3 index;
@@ -62,13 +64,16 @@ __global__ void ClassifyVolume( const float2* inputVolume, short* outputVolume )
   classification = (inClipping && inKeyhole) ? - tex2D(ClassifyKeyholeTexture, value.x, value.y) : classification;
 
   //output the final classification
-  if( inIndex < info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2] ) outputVolume[inIndex] = classification;
+  if( inIndex < info.VolumeSize[0]*info.VolumeSize[1]*info.VolumeSize[2] )
+  {
+    outputVolume[inIndex] = classification;
+  }
 }
 
 void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, short* inputKeyholeTexture, int textureSize,
-                short* outputData, Voxel_Classifier_Information& information,
-                cudaStream_t* stream ){
-
+                              short* outputData, Voxel_Classifier_Information& information,
+                              cudaStream_t* stream )
+{
   //copy information to GPU
   cudaMemcpyToSymbolAsync(info, &information, sizeof(Voxel_Classifier_Information) );
   int VolumeSize = information.VolumeSize[0]*information.VolumeSize[1]*information.VolumeSize[2];
@@ -76,30 +81,30 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   //translate input onto device
   float* dev_InputData = 0;
   cudaMalloc( (void**) &dev_InputData, 2*sizeof(float)*VolumeSize );
-  cudaMemcpyAsync(dev_InputData,inputData, 2*sizeof(float)*VolumeSize, 
-          cudaMemcpyHostToDevice, *stream);
+  cudaMemcpyAsync(dev_InputData,inputData, 2*sizeof(float)*VolumeSize,
+                  cudaMemcpyHostToDevice, *stream);
 
   //translate classification textures onto the device
   cudaArray* PrimaryTextureArray = 0;
   cudaMallocArray( &PrimaryTextureArray, &Voxel_Classifier_ChannelDesc, textureSize, textureSize);
   cudaMemcpyToArrayAsync(PrimaryTextureArray, 0, 0, inputPrimaryTexture,
-              sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
+                         sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
   cudaArray* KeyholeTextureArray = 0;
   cudaMallocArray( &KeyholeTextureArray, &Voxel_Classifier_ChannelDesc, textureSize, textureSize);
   cudaMemcpyToArrayAsync(KeyholeTextureArray, 0, 0, inputKeyholeTexture,
-              sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
+                         sizeof(short)*textureSize*textureSize, cudaMemcpyHostToDevice, *stream);
   cudaThreadSynchronize();
   ClassifyPrimaryTexture.normalized = false;
   ClassifyPrimaryTexture.filterMode = cudaFilterModePoint;
   ClassifyPrimaryTexture.addressMode[0] = cudaAddressModeClamp;
   ClassifyPrimaryTexture.addressMode[1] = cudaAddressModeClamp;
-  cudaBindTextureToArray(ClassifyPrimaryTexture, PrimaryTextureArray, Voxel_Classifier_ChannelDesc); 
+  cudaBindTextureToArray(ClassifyPrimaryTexture, PrimaryTextureArray, Voxel_Classifier_ChannelDesc);
   ClassifyKeyholeTexture.normalized = false;
   ClassifyKeyholeTexture.filterMode = cudaFilterModePoint;
   ClassifyKeyholeTexture.addressMode[0] = cudaAddressModeClamp;
   ClassifyKeyholeTexture.addressMode[1] = cudaAddressModeClamp;
-  cudaBindTextureToArray(ClassifyKeyholeTexture, KeyholeTextureArray, Voxel_Classifier_ChannelDesc); 
-  
+  cudaBindTextureToArray(ClassifyKeyholeTexture, KeyholeTextureArray, Voxel_Classifier_ChannelDesc);
+
   cudaThreadSynchronize();
   printf( "Load textures: " );
   printf( cudaGetErrorString( cudaGetLastError() ) );
@@ -108,12 +113,12 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   //allocate working memory for the output
   short* dev_OutputData = 0;
   cudaMalloc( (void**) &dev_OutputData, sizeof(short)*VolumeSize );
-  
+
   //classify the volume
   dim3 grid = GetGrid( VolumeSize );
   dim3 threads(NUMTHREADS,1,1);
   ClassifyVolume<<< grid, threads, 0, *stream >>>((float2*)dev_InputData, dev_OutputData);
-  
+
   cudaThreadSynchronize();
   printf( "Classify: " );
   printf( cudaGetErrorString( cudaGetLastError() ) );
@@ -121,7 +126,7 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
 
   //retrieve classified output
   cudaMemcpyAsync( outputData, dev_OutputData, sizeof(short)*VolumeSize,
-            cudaMemcpyDeviceToHost, *stream);
+                   cudaMemcpyDeviceToHost, *stream);
   cudaStreamSynchronize(*stream);
 
   cudaThreadSynchronize();
@@ -136,5 +141,4 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   cudaFreeArray( PrimaryTextureArray );
   cudaFreeArray( KeyholeTextureArray );
   cudaFree( dev_OutputData );
-
 }

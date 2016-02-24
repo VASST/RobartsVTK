@@ -56,8 +56,8 @@ protected:
   virtual ~vtkImageBasicAffinityFilter();
 
 private:
-  vtkImageBasicAffinityFilter operator=(const vtkImageBasicAffinityFilter&) {} //not implemented
-  vtkImageBasicAffinityFilter(const vtkImageBasicAffinityFilter&) {} //not implemented
+  vtkImageBasicAffinityFilter operator=(const vtkImageBasicAffinityFilter&);
+  vtkImageBasicAffinityFilter(const vtkImageBasicAffinityFilter&);
 
   vtkMultiThreader* Threader;
   int NumberOfThreads;

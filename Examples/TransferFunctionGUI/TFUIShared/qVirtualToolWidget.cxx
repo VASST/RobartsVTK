@@ -1,20 +1,31 @@
+#include "qTransferFunctionWindowWidgetInterface.h"
 #include "qVirtualToolWidget.h"
+#include "vtkActor.h"
 #include "vtkActor2D.h"
+#include "vtkBoxWidget.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkCommand.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkImageData.h"
 #include "vtkImageExtractComponents.h"
+#include "vtkImageHackedPlaneWidget.h"
 #include "vtkImageMapToColors.h"
+#include "vtkImageMapper.h"
 #include "vtkPlanes.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkPolyDataReader.h"
 #include "vtkProperty.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
 #include "vtkTransform.h"
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QMenu>
+#include <QAction>
 #include <vtkVersion.h>
 
 // ---------------------------------------------------------------------------------------
-//Callbacks for the box and plane widgets
-
 class vtkPlaneWidgetCallback : public vtkCommand
 {
 public:
@@ -38,7 +49,7 @@ private:
   vtkRenderWindow* window;
 };
 
-// Callback for moving the planes from the box widget to the mapper
+//---------------------------------------------------------------------------------
 class vtkClippingBoxWidgetCallback : public vtkCommand
 {
 public:
@@ -71,7 +82,7 @@ protected:
   vtkCudaVolumeMapper *Mapper;
 };
 
-// Callback for moving the planes from the box widget to the mapper
+//---------------------------------------------------------------------------------
 class vtkKeyholeBoxWidgetCallback : public vtkCommand
 {
 public:
@@ -105,50 +116,49 @@ protected:
 };
 
 // ---------------------------------------------------------------------------------------
-// Construction and destruction code
-
 qVirtualToolWidget::qVirtualToolWidget( qTransferFunctionWindowWidgetInterface* p ) :
   QWidget(p)
 {
-  parent = p;
-  window = 0;
-  renderer = 0;
-  clippingPlanes = 0;
-  keyholePlanes = 0;
+  Parent = p;
+  Window = 0;
+  Renderer = 0;
+  ClippingPlanes = 0;
+  KeyholePlanes = 0;
   xPlaneReslice = 0;
   yPlaneReslice = 0;
   zPlaneReslice = 0;
 
-  widgetMenu = new QMenu("&Virtual Tools",this);
-  availableWidgetsMenu = new QMenu("&Current Tools",this);
+  WidgetMenu = new QMenu("&Virtual Tools",this);
+  AvailableWidgetsMenu = new QMenu("&Current Tools",this);
   setupMenu();
 }
 
+//---------------------------------------------------------------------------------
 qVirtualToolWidget::~qVirtualToolWidget()
 {
 
   //remove any added actions
-  for(std::vector<QAction*>::iterator it = availableWidgetsVisibility.begin(); it != availableWidgetsVisibility.end(); it++)
+  for(std::vector<QAction*>::iterator it = AvailableWidgetsVisibility.begin(); it != AvailableWidgetsVisibility.end(); it++)
   {
     delete *it;
   }
-  for(std::vector<QAction*>::iterator it = availableWidgetsReset.begin(); it != availableWidgetsReset.end(); it++)
+  for(std::vector<QAction*>::iterator it = AvailableWidgetsReset.begin(); it != AvailableWidgetsReset.end(); it++)
   {
     delete *it;
   }
-  for(std::vector<QMenu*>::iterator it = availableWidgetMenus.begin(); it != availableWidgetMenus.end(); it++)
+  for(std::vector<QMenu*>::iterator it = AvailableWidgetMenus.begin(); it != AvailableWidgetMenus.end(); it++)
   {
     delete *it;
   }
-  availableWidgetMenus.clear();
-  availableWidgetsVisibility.clear();
-  availableWidgetsReset.clear();
-  availableWidgetStatus.clear();
+  AvailableWidgetMenus.clear();
+  AvailableWidgetsVisibility.clear();
+  AvailableWidgetsReset.clear();
+  AvailableWidgetStatus.clear();
 
   //delete plane pipeline elements
-  windowXPlane->Delete();
-  windowYPlane->Delete();
-  windowZPlane->Delete();
+  WindowXPlane->Delete();
+  WindowYPlane->Delete();
+  WindowZPlane->Delete();
   xPlaneReslice->Delete();
   yPlaneReslice->Delete();
   zPlaneReslice->Delete();
@@ -161,42 +171,42 @@ qVirtualToolWidget::~qVirtualToolWidget()
   xPlaneRenderer->Delete();
   yPlaneRenderer->Delete();
   zPlaneRenderer->Delete();
-  clippingPlanes->Delete();
-  keyholePlanes->Delete();
+  ClippingPlanes->Delete();
+  KeyholePlanes->Delete();
 
   //clear the nonstandard virtual tools
-  for(std::vector<vtkActor*>::iterator it = virtualToolActors.begin();
-      it != virtualToolActors.end(); it++)
+  for(std::vector<vtkActor*>::iterator it = VirtualToolActors.begin();
+      it != VirtualToolActors.end(); it++)
   {
     (*it)->Delete();
   }
-  virtualToolActors.clear();
-  for(std::vector<vtkPolyDataMapper*>::iterator it = virtualToolMappers.begin();
-      it != virtualToolMappers.end(); it++)
+  VirtualToolActors.clear();
+  for(std::vector<vtkPolyDataMapper*>::iterator it = VirtualToolMappers.begin();
+      it != VirtualToolMappers.end(); it++)
   {
     (*it)->Delete();
   }
-  virtualToolMappers.clear();
-  for(std::vector<vtkPolyDataReader*>::iterator it = virtualToolReaders.begin();
-      it != virtualToolReaders.end(); it++)
+  VirtualToolMappers.clear();
+  for(std::vector<vtkPolyDataReader*>::iterator it = VirtualToolReaders.begin();
+      it != VirtualToolReaders.end(); it++)
   {
     (*it)->Delete();
   }
-  virtualToolReaders.clear();
+  VirtualToolReaders.clear();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCudaVolumeMapper* c )
 {
-
   //load up the shared bits of the pipeline
-  this->window = w;
-  this->renderer = r;
-  this->mapper = c;
+  this->Window = w;
+  this->Renderer = r;
+  this->Mapper = c;
 
   //declare plane pipeline elements
-  windowXPlane = vtkRenderWindow::New();
-  windowYPlane = vtkRenderWindow::New();
-  windowZPlane = vtkRenderWindow::New();
+  WindowXPlane = vtkRenderWindow::New();
+  WindowYPlane = vtkRenderWindow::New();
+  WindowZPlane = vtkRenderWindow::New();
   xPlaneReslice = vtkImageHackedPlaneWidget::New();
   yPlaneReslice = vtkImageHackedPlaneWidget::New();
   zPlaneReslice = vtkImageHackedPlaneWidget::New();
@@ -226,12 +236,12 @@ void qVirtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r,
   xPlaneRenderer->AddActor(xPlaneActor);
   yPlaneRenderer->AddActor(yPlaneActor);
   zPlaneRenderer->AddActor(zPlaneActor);
-  windowXPlane->AddRenderer(xPlaneRenderer);
-  windowYPlane->AddRenderer(yPlaneRenderer);
-  windowZPlane->AddRenderer(zPlaneRenderer);
-  xPlaneReslice->SetInteractor( window->GetInteractor() );
-  yPlaneReslice->SetInteractor( window->GetInteractor() );
-  zPlaneReslice->SetInteractor( window->GetInteractor() );
+  WindowXPlane->AddRenderer(xPlaneRenderer);
+  WindowYPlane->AddRenderer(yPlaneRenderer);
+  WindowZPlane->AddRenderer(zPlaneRenderer);
+  xPlaneReslice->SetInteractor( Window->GetInteractor() );
+  yPlaneReslice->SetInteractor( Window->GetInteractor() );
+  zPlaneReslice->SetInteractor( Window->GetInteractor() );
   xPlaneReslice->SetPlaneOrientationToXAxes();
   yPlaneReslice->SetPlaneOrientationToYAxes();
   zPlaneReslice->SetPlaneOrientationToZAxes();
@@ -245,11 +255,11 @@ void qVirtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r,
   yPlaneReslice->Off();
   zPlaneReslice->Off();
   vtkPlaneWidgetCallback* xPlaneCommand = vtkPlaneWidgetCallback::New();
-  xPlaneCommand->SetWindow(windowXPlane);
+  xPlaneCommand->SetWindow(WindowXPlane);
   vtkPlaneWidgetCallback* yPlaneCommand = vtkPlaneWidgetCallback::New();
-  yPlaneCommand->SetWindow(windowYPlane);
+  yPlaneCommand->SetWindow(WindowYPlane);
   vtkPlaneWidgetCallback* zPlaneCommand = vtkPlaneWidgetCallback::New();
-  zPlaneCommand->SetWindow(windowZPlane);
+  zPlaneCommand->SetWindow(WindowZPlane);
   xPlaneReslice->AddObserver(vtkCommand::InteractionEvent, xPlaneCommand);
   yPlaneReslice->AddObserver(vtkCommand::InteractionEvent, yPlaneCommand);
   zPlaneReslice->AddObserver(vtkCommand::InteractionEvent, zPlaneCommand);
@@ -258,41 +268,40 @@ void qVirtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r,
   zPlaneCommand->Delete();
 
   //set up clipping planes
-  clippingPlanes = vtkBoxWidget::New();
-  clippingPlanes->SetInteractor(window->GetInteractor());
-  clippingPlanes->SetPlaceFactor(1.01);
-  clippingPlanes->SetDefaultRenderer(renderer);
-  clippingPlanes->InsideOutOn();
+  ClippingPlanes = vtkBoxWidget::New();
+  ClippingPlanes->SetInteractor(Window->GetInteractor());
+  ClippingPlanes->SetPlaceFactor(1.01);
+  ClippingPlanes->SetDefaultRenderer(Renderer);
+  ClippingPlanes->InsideOutOn();
   vtkClippingBoxWidgetCallback *clippingCallback = vtkClippingBoxWidgetCallback::New();
-  clippingCallback->SetMapper(mapper);
-  clippingPlanes->AddObserver(vtkCommand::InteractionEvent, clippingCallback);
+  clippingCallback->SetMapper(Mapper);
+  ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, clippingCallback);
   clippingCallback->Delete();
-  clippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
-  clippingPlanes->Off();
+  ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
+  ClippingPlanes->Off();
 
   //set up the keyhole planes
-  keyholePlanes = vtkBoxWidget::New();
-  keyholePlanes->SetInteractor(window->GetInteractor());
-  keyholePlanes->SetPlaceFactor(1.01);
-  keyholePlanes->SetDefaultRenderer(renderer);
-  keyholePlanes->InsideOutOn();
+  KeyholePlanes = vtkBoxWidget::New();
+  KeyholePlanes->SetInteractor(Window->GetInteractor());
+  KeyholePlanes->SetPlaceFactor(1.01);
+  KeyholePlanes->SetDefaultRenderer(Renderer);
+  KeyholePlanes->InsideOutOn();
   vtkKeyholeBoxWidgetCallback *keyholeCallback = vtkKeyholeBoxWidgetCallback::New();
-  keyholeCallback->SetMapper(mapper);
-  keyholePlanes->AddObserver(vtkCommand::InteractionEvent, keyholeCallback);
+  keyholeCallback->SetMapper(Mapper);
+  KeyholePlanes->AddObserver(vtkCommand::InteractionEvent, keyholeCallback);
   keyholeCallback->Delete();
-  keyholePlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
-  keyholePlanes->Off();
-
+  KeyholePlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
+  KeyholePlanes->Off();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::setupMenu()
 {
-
   QAction* newVTKFileMenuOption = new QAction("Add VTK Virtual Tool",this);
   connect(newVTKFileMenuOption, SIGNAL(triggered()), this, SLOT(addVTKFile()) );
 
   //add the first two main widgets (clipping box, keyhole box and ortho planes) and connect them
-  this->numberOfVirtualTools = 3;
+  this->NumberOfVirtualTools = 3;
 
   //clipping planes
   QMenu* clippingPlanesMenuOption = new QMenu("Clipping Planes",this);
@@ -302,11 +311,11 @@ void qVirtualToolWidget::setupMenu()
   connect(clippingPlanesResetMenuOption, SIGNAL(triggered()), this, SLOT(resetVirtualTool()) );
   clippingPlanesMenuOption->addAction(clippingPlanesToggleMenuOption);
   clippingPlanesMenuOption->addAction(clippingPlanesResetMenuOption);
-  availableWidgetStatus.push_back(0);
-  availableWidgetsMenu->addMenu(clippingPlanesMenuOption);
-  availableWidgetMenus.push_back(clippingPlanesMenuOption);
-  availableWidgetsVisibility.push_back(clippingPlanesToggleMenuOption);
-  availableWidgetsReset.push_back(clippingPlanesResetMenuOption);
+  AvailableWidgetStatus.push_back(0);
+  AvailableWidgetsMenu->addMenu(clippingPlanesMenuOption);
+  AvailableWidgetMenus.push_back(clippingPlanesMenuOption);
+  AvailableWidgetsVisibility.push_back(clippingPlanesToggleMenuOption);
+  AvailableWidgetsReset.push_back(clippingPlanesResetMenuOption);
 
   //keyhole planes
   QMenu* keyholePlanesMenuOption = new QMenu("Keyhole Planes",this);
@@ -316,11 +325,11 @@ void qVirtualToolWidget::setupMenu()
   connect(keyholePlanesResetMenuOption, SIGNAL(triggered()), this, SLOT(resetVirtualTool()) );
   keyholePlanesMenuOption->addAction(keyholePlanesToggleMenuOption);
   keyholePlanesMenuOption->addAction(keyholePlanesResetMenuOption);
-  availableWidgetStatus.push_back(0);
-  availableWidgetsMenu->addMenu(keyholePlanesMenuOption);
-  availableWidgetMenus.push_back(keyholePlanesMenuOption);
-  availableWidgetsVisibility.push_back(keyholePlanesToggleMenuOption);
-  availableWidgetsReset.push_back(keyholePlanesResetMenuOption);
+  AvailableWidgetStatus.push_back(0);
+  AvailableWidgetsMenu->addMenu(keyholePlanesMenuOption);
+  AvailableWidgetMenus.push_back(keyholePlanesMenuOption);
+  AvailableWidgetsVisibility.push_back(keyholePlanesToggleMenuOption);
+  AvailableWidgetsReset.push_back(keyholePlanesResetMenuOption);
 
   //orthoplanes
   QMenu* orthoPlanesMenuOption = new QMenu("Orthogonal Planes",this);
@@ -328,36 +337,33 @@ void qVirtualToolWidget::setupMenu()
   connect(orthoPlanesToggleMenuOption, SIGNAL(triggered()), this, SLOT(toggleVirtualTool()) );
   QAction* orthoPlanesResetMenuOption = new QAction("Reset Position",this);
   connect(orthoPlanesResetMenuOption, SIGNAL(triggered()), this, SLOT(resetVirtualTool()) );
-  availableWidgetMenus.push_back(orthoPlanesMenuOption);
-  availableWidgetsVisibility.push_back(orthoPlanesToggleMenuOption);
-  availableWidgetsReset.push_back(orthoPlanesResetMenuOption);
-  availableWidgetStatus.push_back(0);
+  AvailableWidgetMenus.push_back(orthoPlanesMenuOption);
+  AvailableWidgetsVisibility.push_back(orthoPlanesToggleMenuOption);
+  AvailableWidgetsReset.push_back(orthoPlanesResetMenuOption);
+  AvailableWidgetStatus.push_back(0);
   orthoPlanesMenuOption->addAction(orthoPlanesToggleMenuOption);
   orthoPlanesMenuOption->addAction(orthoPlanesResetMenuOption);
-  availableWidgetsMenu->addMenu(orthoPlanesMenuOption);
-  availableWidgetsMenu->addSeparator();
+  AvailableWidgetsMenu->addMenu(orthoPlanesMenuOption);
+  AvailableWidgetsMenu->addSeparator();
 
-  widgetMenu->addAction(newVTKFileMenuOption);
-  widgetMenu->addSeparator();
-  widgetMenu->addMenu(availableWidgetsMenu);
-
+  WidgetMenu->addAction(newVTKFileMenuOption);
+  WidgetMenu->addSeparator();
+  WidgetMenu->addMenu(AvailableWidgetsMenu);
 }
 
+//---------------------------------------------------------------------------------
 QMenu* qVirtualToolWidget::getMenuOptions()
 {
-  return widgetMenu;
+  return WidgetMenu;
 }
 
-// ---------------------------------------------------------------------------------------
-//Code that interacts with the slots and interface
-
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::changeVirtualToolColour()
 {
-
   //find the appropriate sender
   QAction* sender = dynamic_cast<QAction*>(QObject::sender());
   unsigned int tool = 0;
-  for(std::vector<QAction*>::iterator it = availableWidgetsColour.begin(); it != availableWidgetsColour.end(); it++)
+  for(std::vector<QAction*>::iterator it = AvailableWidgetsColour.begin(); it != AvailableWidgetsColour.end(); it++)
   {
     if( (*it) == sender )
     {
@@ -365,7 +371,7 @@ void qVirtualToolWidget::changeVirtualToolColour()
     }
     tool++;
   }
-  if(tool >= numberOfVirtualTools - 3)
+  if(tool >= NumberOfVirtualTools - 3)
   {
     return;
   }
@@ -373,9 +379,9 @@ void qVirtualToolWidget::changeVirtualToolColour()
   //request a colour
   QColor org;
   org.setHsl(0,255,255);
-  parent->releaseKeyboard();
+  Parent->releaseKeyboard();
   QColor colour = QColorDialog::getColor(org,this,"TF Colour",QColorDialog::ShowAlphaChannel);
-  parent->grabKeyboard();
+  Parent->grabKeyboard();
 
   //apply the value to the virtual tool
   if(!colour.isValid())
@@ -383,10 +389,9 @@ void qVirtualToolWidget::changeVirtualToolColour()
     return;
   }
   this->changeCustomVirtualToolColour( tool, colour.redF(), colour.greenF(), colour.blueF() );
-
 }
 
-
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::addVTKFile()
 {
   //find the requisite filename
@@ -410,15 +415,15 @@ void qVirtualToolWidget::addVTKFile()
 
   //query for a tool name (defaulting to "Tool #")
   QString toolname = QString::Null();
-  parent->releaseKeyboard();
+  Parent->releaseKeyboard();
   while(toolname.isNull())
   {
     toolname = QInputDialog::getText(this,"Add Virtual Tools","Enter tool name.",QLineEdit::Normal,"New Tool");
   }
-  parent->grabKeyboard();
+  Parent->grabKeyboard();
 
   //add the tool to the menu
-  numberOfVirtualTools++;
+  NumberOfVirtualTools++;
 
   QMenu* newToolMenu = new QMenu(toolname,this);
   QAction* newToolMenuVisibilityOption = new QAction("Toggle Visibility", this);
@@ -426,24 +431,23 @@ void qVirtualToolWidget::addVTKFile()
   QAction* newToolMenuChangeColourOption = new QAction("Change Colour", this);
   connect(newToolMenuChangeColourOption, SIGNAL(triggered()), this, SLOT(changeVirtualToolColour()) );
 
-  availableWidgetsColour.push_back( newToolMenuChangeColourOption );
-  availableWidgetsVisibility.push_back(newToolMenuVisibilityOption);
-  availableWidgetStatus.push_back(1);
+  AvailableWidgetsColour.push_back( newToolMenuChangeColourOption );
+  AvailableWidgetsVisibility.push_back(newToolMenuVisibilityOption);
+  AvailableWidgetStatus.push_back(1);
 
   newToolMenu->addAction( newToolMenuVisibilityOption );
   newToolMenu->addAction( newToolMenuChangeColourOption );
-  availableWidgetsMenu->addMenu(newToolMenu);
-
+  AvailableWidgetsMenu->addMenu(newToolMenu);
 }
 
-
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::toggleVirtualTool()
 {
 
   //find the appropriate sender
   QAction* sender = dynamic_cast<QAction*>(QObject::sender());
   unsigned int tool = 0;
-  for(std::vector<QAction*>::iterator it = availableWidgetsVisibility.begin(); it != availableWidgetsVisibility.end(); it++)
+  for(std::vector<QAction*>::iterator it = AvailableWidgetsVisibility.begin(); it != AvailableWidgetsVisibility.end(); it++)
   {
     if( (*it) == sender )
     {
@@ -451,14 +455,14 @@ void qVirtualToolWidget::toggleVirtualTool()
     }
     tool++;
   }
-  if(tool >= numberOfVirtualTools)
+  if(tool >= NumberOfVirtualTools)
   {
     return;
   }
 
   //toggle the tool status
-  unsigned int status = availableWidgetStatus[tool];
-  availableWidgetStatus[tool] = (status==0) ? 1 : 0;
+  unsigned int status = AvailableWidgetStatus[tool];
+  AvailableWidgetStatus[tool] = (status==0) ? 1 : 0;
 
   //if the tool == 0, this is the clipping planes
   //       tool == 1, this is the keyhole planes
@@ -481,14 +485,13 @@ void qVirtualToolWidget::toggleVirtualTool()
   }
 }
 
-
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::resetVirtualTool()
 {
-
   //find the appropriate sender
   QAction* sender = dynamic_cast<QAction*>(QObject::sender());
   unsigned int tool = 0;
-  for(std::vector<QAction*>::iterator it = availableWidgetsReset.begin(); it != availableWidgetsReset.end(); it++)
+  for(std::vector<QAction*>::iterator it = AvailableWidgetsReset.begin(); it != AvailableWidgetsReset.end(); it++)
   {
     if( (*it) == sender )
     {
@@ -496,7 +499,7 @@ void qVirtualToolWidget::resetVirtualTool()
     }
     tool++;
   }
-  if(tool >= numberOfVirtualTools)
+  if(tool >= NumberOfVirtualTools)
   {
     return;
   }
@@ -522,28 +525,27 @@ void qVirtualToolWidget::resetVirtualTool()
   }
 }
 
+//---------------------------------------------------------------------------------
 vtkRenderWindow* qVirtualToolWidget::GetXPlaneRenderWindow()
 {
-  return windowXPlane;
+  return WindowXPlane;
 }
 
+//---------------------------------------------------------------------------------
 vtkRenderWindow* qVirtualToolWidget::GetYPlaneRenderWindow()
 {
-  return windowYPlane;
+  return WindowYPlane;
 }
 
+//---------------------------------------------------------------------------------
 vtkRenderWindow* qVirtualToolWidget::GetZPlaneRenderWindow()
 {
-  return windowZPlane;
+  return WindowZPlane;
 }
 
-
 // ---------------------------------------------------------------------------------------
-//Code that interacts with the model
-
 void qVirtualToolWidget::selectImage(vtkImageData* image)
 {
-
   //create extraction widget
   vtkImageExtractComponents* extractor = vtkImageExtractComponents::New();
 #if (VTK_MAJOR_VERSION < 6)
@@ -561,9 +563,9 @@ void qVirtualToolWidget::selectImage(vtkImageData* image)
   }
   else
   {
-    extractor->SetComponents(parent->GetRComponent(),
-                             parent->GetGComponent(),
-                             parent->GetBComponent() );
+    extractor->SetComponents(Parent->GetRComponent(),
+                             Parent->GetGComponent(),
+                             Parent->GetBComponent() );
   }
   extractor->Modified();
   extractor->Update();
@@ -581,12 +583,12 @@ void qVirtualToolWidget::selectImage(vtkImageData* image)
   if(image->GetNumberOfScalarComponents() > 2)
   {
     double minMax[6];
-    minMax[0] = parent->GetRMin();
-    minMax[1] = parent->GetRMax();
-    minMax[2] = parent->GetGMin();
-    minMax[3] = parent->GetGMax();
-    minMax[4] = parent->GetBMin();
-    minMax[5] = parent->GetBMax();
+    minMax[0] = Parent->GetRMin();
+    minMax[1] = Parent->GetRMax();
+    minMax[2] = Parent->GetGMin();
+    minMax[3] = Parent->GetGMax();
+    minMax[4] = Parent->GetBMin();
+    minMax[5] = Parent->GetBMax();
     xPlaneReslice->SetInput( extractor->GetOutput(), minMax );
     yPlaneReslice->SetInput( extractor->GetOutput(), minMax );
     zPlaneReslice->SetInput( extractor->GetOutput(), minMax );
@@ -600,35 +602,34 @@ void qVirtualToolWidget::selectImage(vtkImageData* image)
 
   //prepare the clipping planes for use
 #if (VTK_MAJOR_VERSION < 6)
-  clippingPlanes->SetInput( image );
+  ClippingPlanes->SetInput( image );
 #else
-  clippingPlanes->SetInputData( image );
+  ClippingPlanes->SetInputData( image );
 #endif
-  clippingPlanes->PlaceWidget();
-  clippingPlanes->EnabledOn();
+  ClippingPlanes->PlaceWidget();
+  ClippingPlanes->EnabledOn();
 
   //prepare the keyhole planes for use
 #if (VTK_MAJOR_VERSION < 6)
-  keyholePlanes->SetInput( image );
+  KeyholePlanes->SetInput( image );
 #else
-  keyholePlanes->SetInputData( image );
+  KeyholePlanes->SetInputData( image );
 #endif
-  keyholePlanes->PlaceWidget();
-  keyholePlanes->EnabledOn();
+  KeyholePlanes->PlaceWidget();
+  KeyholePlanes->EnabledOn();
 
   //clean-up
   extractor->Delete();
 }
 
-
+//---------------------------------------------------------------------------------
 bool qVirtualToolWidget::addVTKFile(std::string filename)
 {
-
   //copy the polydata in
   vtkPolyDataReader* vrInput = vtkPolyDataReader::New();
   vrInput->SetFileName(filename.c_str());
   vrInput->Update();
-  virtualToolReaders.push_back(vrInput);
+  VirtualToolReaders.push_back(vrInput);
 
   //create a mapper
   vtkPolyDataMapper* vrMapper = vtkPolyDataMapper::New();
@@ -638,42 +639,40 @@ bool qVirtualToolWidget::addVTKFile(std::string filename)
   vrMapper->SetInputConnection(vrInput->GetOutputPort());
 #endif
   vrMapper->SetScalarVisibility( 0 );
-  virtualToolMappers.push_back(vrMapper);
+  VirtualToolMappers.push_back(vrMapper);
 
   //create a property
   vtkProperty* vrProp = vtkProperty::New();
   vrProp->SetColor(1,1,1);
   vrProp->SetOpacity(1);
   vrProp->Modified();
-  virtualToolProperties.push_back( vrProp );
+  VirtualToolProperties.push_back( vrProp );
 
   //create an actor
   vtkActor* vrActor = vtkActor::New();
   vrActor->SetMapper(vrMapper);
   vrActor->SetProperty( vrProp );
-  virtualToolActors.push_back(vrActor);
+  VirtualToolActors.push_back(vrActor);
 
   //add the actors to the renderers
-  renderer->AddActor(vrActor);
+  Renderer->AddActor(vrActor);
 
   return false;
-
 }
 
-
+//---------------------------------------------------------------------------------
 bool qVirtualToolWidget::setCustomVirtualToolVisibility(int tool, bool b)
 {
-
   //find the actor for the tool we are trying to modify
-  std::vector<vtkActor*>::iterator it = virtualToolActors.begin();
-  while(it != virtualToolActors.end() && tool > 0)
+  std::vector<vtkActor*>::iterator it = VirtualToolActors.begin();
+  while(it != VirtualToolActors.end() && tool > 0)
   {
     it++;
     tool--;
   }
 
   //if we can't find it, return an error
-  if(it == virtualToolActors.end())
+  if(it == VirtualToolActors.end())
   {
     return true;
   }
@@ -681,28 +680,28 @@ bool qVirtualToolWidget::setCustomVirtualToolVisibility(int tool, bool b)
   //else, toggle whether it's attached to the renderer
   if(b)
   {
-    renderer->AddActor(*it);
+    Renderer->AddActor(*it);
   }
   else
   {
-    renderer->RemoveActor(*it);
+    Renderer->RemoveActor(*it);
   }
 
   //update the render window
-  window->Render();
+  Window->Render();
 
   //return without error
   return false;
-
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::changeCustomVirtualToolColour( int tool, float r,
     float g, float b )
 {
   //find the actor for the tool we are trying to modify
-  std::vector<vtkActor*>::iterator it = virtualToolActors.begin();
-  std::vector<vtkProperty*>::iterator itProp = virtualToolProperties.begin();
-  while(it != virtualToolActors.end() && tool > 0)
+  std::vector<vtkActor*>::iterator it = VirtualToolActors.begin();
+  std::vector<vtkProperty*>::iterator itProp = VirtualToolProperties.begin();
+  while(it != VirtualToolActors.end() && tool > 0)
   {
     it++;
     itProp++;
@@ -710,7 +709,7 @@ void qVirtualToolWidget::changeCustomVirtualToolColour( int tool, float r,
   }
 
   //if we can't find it, return without doing anything
-  if(it == virtualToolActors.end())
+  if(it == VirtualToolActors.end())
   {
     return;
   }
@@ -720,25 +719,28 @@ void qVirtualToolWidget::changeCustomVirtualToolColour( int tool, float r,
   (*itProp)->Modified();
 
   //update the render window
-  window->Render();
+  Window->Render();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::resetClippingPlanes()
 {
   vtkTransform* resetTransform = vtkTransform::New();
   resetTransform->Identity();
-  clippingPlanes->SetTransform(resetTransform);
+  ClippingPlanes->SetTransform(resetTransform);
   resetTransform->Delete();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::resetKeyholePlanes()
 {
   vtkTransform* resetTransform = vtkTransform::New();
   resetTransform->Identity();
-  keyholePlanes->SetTransform(resetTransform);
+  KeyholePlanes->SetTransform(resetTransform);
   resetTransform->Delete();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::resetOrthoPlanes()
 {
   vtkTransform* resetTransform = vtkTransform::New();
@@ -749,41 +751,44 @@ void qVirtualToolWidget::resetOrthoPlanes()
   resetTransform->Delete();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::setClippingPlanesVisibility(bool b)
 {
   if(b)
   {
-    clippingPlanes->SetInteractor( window->GetInteractor() );
-    clippingPlanes->On();
+    ClippingPlanes->SetInteractor( Window->GetInteractor() );
+    ClippingPlanes->On();
   }
   else
   {
-    clippingPlanes->Off();
+    ClippingPlanes->Off();
   }
-  window->Render();
+  Window->Render();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::setKeyholePlanesVisibility(bool b)
 {
   if(b)
   {
-    keyholePlanes->SetInteractor( window->GetInteractor() );
-    keyholePlanes->On();
+    KeyholePlanes->SetInteractor( Window->GetInteractor() );
+    KeyholePlanes->On();
   }
   else
   {
-    keyholePlanes->Off();
+    KeyholePlanes->Off();
   }
-  window->Render();
+  Window->Render();
 }
 
+//---------------------------------------------------------------------------------
 void qVirtualToolWidget::setOrthoPlanesVisibility(bool b)
 {
   if(b)
   {
-    xPlaneReslice->SetInteractor( window->GetInteractor() );
-    yPlaneReslice->SetInteractor( window->GetInteractor() );
-    zPlaneReslice->SetInteractor( window->GetInteractor() );
+    xPlaneReslice->SetInteractor( Window->GetInteractor() );
+    yPlaneReslice->SetInteractor( Window->GetInteractor() );
+    zPlaneReslice->SetInteractor( Window->GetInteractor() );
     xPlaneReslice->On();
     yPlaneReslice->On();
     zPlaneReslice->On();
@@ -794,5 +799,5 @@ void qVirtualToolWidget::setOrthoPlanesVisibility(bool b)
     yPlaneReslice->Off();
     zPlaneReslice->Off();
   }
-  window->Render();
+  Window->Render();
 }

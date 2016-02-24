@@ -15,20 +15,13 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
+
 #include "vtkDeformedVolume.h"
+#include "vtkObjectFactory.h"
 
 //----------------------------------------------------------------------------
-vtkDeformedVolume* vtkDeformedVolume::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkDeformedVolume");
-  if(ret)
-  {
-    return (vtkDeformedVolume*)ret;
-  }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkDeformedVolume;
-}
+
+vtkStandardNewMacro(vtkDeformedVolume);
 
 //----------------------------------------------------------------------------
 vtkDeformedVolume::vtkDeformedVolume()

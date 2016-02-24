@@ -26,26 +26,26 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request, 
-               vtkInformationVector **inputVector, 
-               vtkInformationVector *outputVector);
+  virtual int RequestData(vtkInformation *request,
+                          vtkInformationVector **inputVector,
+                          vtkInformationVector *outputVector);
   virtual int RequestInformation( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                  vtkInformationVector** inputVector,
+                                  vtkInformationVector* outputVector);
   virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
+                                   vtkInformationVector** inputVector,
+                                   vtkInformationVector* outputVector);
 
 protected:
   vtkCudaKohonenReprojector();
   virtual ~vtkCudaKohonenReprojector();
-  
+
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
 private:
-  vtkCudaKohonenReprojector operator=(const vtkCudaKohonenReprojector&){}
-  vtkCudaKohonenReprojector(const vtkCudaKohonenReprojector&){}
+  vtkCudaKohonenReprojector operator=(const vtkCudaKohonenReprojector&);
+  vtkCudaKohonenReprojector(const vtkCudaKohonenReprojector&);
 
   Kohonen_Reprojection_Information info;
 };

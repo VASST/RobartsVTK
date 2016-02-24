@@ -60,15 +60,15 @@ protected:
   void Reinitialize(int withData);
   void Deinitialize(int withData);
 
-private:
-  vtkCudaKSOMProbability operator=(const vtkCudaKSOMProbability&){}
-  vtkCudaKSOMProbability(const vtkCudaKSOMProbability&){}
-
   double Scale;
 
   bool Entropy;
 
-  Kohonen_Probability_Information info;
+  Kohonen_Probability_Information Info;
+
+private:
+  vtkCudaKSOMProbability operator=(const vtkCudaKSOMProbability&);
+  vtkCudaKSOMProbability(const vtkCudaKSOMProbability&);
 };
 
 #endif

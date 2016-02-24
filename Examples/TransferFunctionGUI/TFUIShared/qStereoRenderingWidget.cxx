@@ -1,10 +1,14 @@
 #include "qStereoRenderingWidget.h"
-
+#include "qTransferFunctionWindowWidgetInterface.h"
 #include "vtkCamera.h"
+#include "vtkCudaVolumeMapper.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include <QAction>
+#include <QMenu>
 
 // ---------------------------------------------------------------------------------------
-// Construction and destruction code
-qStereoRenderingWidget::qStereoRenderingWidget( qTransferFunctionWindowWidgetInterface* p ) 
+qStereoRenderingWidget::qStereoRenderingWidget( qTransferFunctionWindowWidgetInterface* p )
   : QWidget(p)
 {
   parent = p;
@@ -16,6 +20,7 @@ qStereoRenderingWidget::qStereoRenderingWidget( qTransferFunctionWindowWidgetInt
   setupMenu();
 }
 
+// ---------------------------------------------------------------------------------------
 void qStereoRenderingWidget::setupMenu()
 {
   stereoMenu = new QMenu("Stereo",this);
@@ -35,11 +40,13 @@ void qStereoRenderingWidget::setupMenu()
 
 }
 
+// ---------------------------------------------------------------------------------------
 QMenu* qStereoRenderingWidget::getMenuOptions()
 {
   return stereoMenu;
 }
 
+// ---------------------------------------------------------------------------------------
 qStereoRenderingWidget::~qStereoRenderingWidget( )
 {
   delete stereoOffMenuOption;
@@ -48,7 +55,7 @@ qStereoRenderingWidget::~qStereoRenderingWidget( )
   delete stereoMenu;
 }
 
-
+// ---------------------------------------------------------------------------------------
 void qStereoRenderingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r, vtkCudaVolumeMapper* c )
 {
   window = w;
@@ -57,7 +64,6 @@ void qStereoRenderingWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer
 }
 
 // ---------------------------------------------------------------------------------------
-// Code to interface with the slots and user
 void qStereoRenderingWidget::setStereoOn()
 {
   this->setStereoEnabled(true);
@@ -66,6 +72,7 @@ void qStereoRenderingWidget::setStereoOn()
   this->stereoEyeToggleMenuOption->setEnabled(true);
 }
 
+// ---------------------------------------------------------------------------------------
 void qStereoRenderingWidget::setStereoOff()
 {
   this->setStereoEnabled(false);
@@ -74,14 +81,13 @@ void qStereoRenderingWidget::setStereoOff()
   this->stereoEyeToggleMenuOption->setEnabled(false);
 }
 
+// ---------------------------------------------------------------------------------------
 void qStereoRenderingWidget::toggleEyes()
 {
   this->toggleStereoEyes();
 }
 
 // ---------------------------------------------------------------------------------------
-// Code to interface with the model
-
 void qStereoRenderingWidget::setStereoEnabled(bool b)
 {
   //set the window to render in stereo
@@ -98,6 +104,7 @@ void qStereoRenderingWidget::setStereoEnabled(bool b)
   window->Render();
 }
 
+// ---------------------------------------------------------------------------------------
 void qStereoRenderingWidget::toggleStereoEyes()
 {
   //TODO This area is buggy in general - no clue why
@@ -106,6 +113,4 @@ void qStereoRenderingWidget::toggleStereoEyes()
   renderer->GetActiveCamera()->Modified();
   renderer->Modified();
   window->Render();
-
-
 }

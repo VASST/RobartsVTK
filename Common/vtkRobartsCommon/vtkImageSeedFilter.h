@@ -58,8 +58,8 @@ protected:
   int  NumberOfComponents;
 
 private:
-  vtkImageSeedFilter operator=(const vtkImageSeedFilter&) {}
-  vtkImageSeedFilter(const vtkImageSeedFilter&) {}
+  vtkImageSeedFilter operator=(const vtkImageSeedFilter&);
+  vtkImageSeedFilter(const vtkImageSeedFilter&);
 };
 
 #endif

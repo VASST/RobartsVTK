@@ -169,18 +169,18 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
   }
 
   //update information container
-  this->info.NumberOfLabels = this->GetNumberOfOutputPorts() ? this->GetNumberOfOutputPorts(): 1;
-  this->info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
-  inData->GetDimensions( this->info.VolumeSize );
-  kohonenData->GetDimensions( this->info.KohonenMapSize );
+  this->Info.NumberOfLabels = this->GetNumberOfOutputPorts() ? this->GetNumberOfOutputPorts(): 1;
+  this->Info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
+  inData->GetDimensions( this->Info.VolumeSize );
+  kohonenData->GetDimensions( this->Info.KohonenMapSize );
 
   //update scale
-  this->info.Scale = 1.0 / (this->Scale*this->Scale);
+  this->Info.Scale = 1.0 / (this->Scale*this->Scale);
 
   //pass it over to the GPU
   this->ReserveGPU();
   CUDAalgo_applyProbabilityMaps( (float*) inData->GetScalarPointer(), (float*) kohonenData->GetScalarPointer(),
-                                 probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(2) > 0, this->Entropy, this->info, this->GetStream() );
+                                 probabilityBuffers, outputBuffers, this->GetNumberOfInputConnections(2) > 0, this->Entropy, this->Info, this->GetStream() );
 
 
   delete outputBuffers;

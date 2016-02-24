@@ -17,30 +17,32 @@
  *      operation to merge probabilistic labellings
  *
  *  @author John Stuart Haberl Baxter (Dr. Peters' Lab (VASST) at Robarts Research Institute)
- *  
+ *
  *  @note August 27th 2013 - Documentation first compiled.
  *
  */
 
-#include "CUDA_imagevote.h"
 #include "CUDA_commonKernels.h"
+#include "CUDA_imagevote.h"
+#include "vtkCudaCommon.h"
 
 template<typename IT, typename OT>
-__global__ void CUDA_CIV_kernMinWithMap(IT* inputBuffer, IT* currentMax, OT* outputBuffer, OT newMapVal, int size){
+__global__ void CUDA_CIV_kernMinWithMap(IT* inputBuffer, IT* currentMax, OT* outputBuffer, OT newMapVal, int size)
+{
   int idx = CUDASTDOFFSET;
 
   IT inputValue = inputBuffer[idx];
   IT previValue = currentMax[idx];
   OT previMap   = outputBuffer[idx];
-  
+
   OT newMap = (inputValue >= previValue) ? newMapVal: previMap;
   IT newVal = (inputValue >= previValue) ? inputValue: previValue;
 
-  if( idx < size ){
+  if( idx < size )
+  {
     currentMax[idx] = newVal;
     outputBuffer[idx] = newMap;
   }
-
 }
 
 template void CUDA_CIV_COMPUTE<double,double>( double** inputBuffers, int inputNum, double* outputBuffer, double* map, int size, cudaStream_t* stream);
@@ -226,8 +228,9 @@ template void CUDA_CIV_COMPUTE<signed char,float>( signed char** inputBuffers, i
 template void CUDA_CIV_COMPUTE<float,float>( float** inputBuffers, int inputNum, float* outputBuffer, float* map, int size, cudaStream_t* stream);
 
 template<typename IT, typename OT>
-void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* map, int size, cudaStream_t* stream){
-  
+void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* map, int size, cudaStream_t* stream)
+{
+
   dim3 threads(NUMTHREADS,1,1);
   dim3 grid = GetGrid(size);
 
@@ -242,7 +245,8 @@ void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* ma
   //initialize max buffer
   cudaMemcpyAsync( gpuMaxBuffer, inputBuffers[0], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
 
-  for(int i = 0; i < inputNum; i++){
+  for(int i = 0; i < inputNum; i++)
+  {
 
     //copy current input in
     cudaMemcpyAsync( gpuInBuffer, inputBuffers[i], sizeof(IT)*size, cudaMemcpyHostToDevice, *stream);
@@ -251,10 +255,10 @@ void CUDA_CIV_COMPUTE( IT** inputBuffers, int inputNum, OT* outputBuffer, OT* ma
     CUDA_CIV_kernMinWithMap<IT,OT><<<grid,threads,0,*stream>>>(gpuInBuffer, gpuMaxBuffer, gpuOutBuffer, map[i], size);
 
   }
-  
+
   //copy output back
   cudaMemcpyAsync( outputBuffer, gpuOutBuffer, sizeof(OT)*size, cudaMemcpyDeviceToHost, *stream);
-  
+
   //sync everything
   cudaStreamSynchronize(*stream);
 
