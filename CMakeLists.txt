@@ -484,6 +484,18 @@ ENDIF()
 # Perform the actual python wrapping
 #-----------------------------------------------------------------------------
 IF(VTK_WRAP_PYTHON)
+  # Locate the python executable
+  IF( NOT PYTHON_EXECUTABLE )
+    FIND_FILE(PYTHON_EXECUTABLE python${CMAKE_EXECUTABLE_SUFFIX} 
+    PATH
+      ${PYTHON_INCLUDE_DIR}/../
+    )
+  ENDIF()
+  
+  IF( NOT PYTHON_EXECUTABLE )
+    MESSAGE(FATAL_ERROR "Python executable needed for python wrapping.")
+  ENDIF()
+
   # Use our clone of the VTK environment to do our python wrapping
   ADD_SUBDIRECTORY(Wrapping/Python)
 ENDIF(VTK_WRAP_PYTHON)
