@@ -1,8 +1,5 @@
 PROJECT(vtkCudaVisualization)
 
-# Add entries to project details
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_SOURCE_DIR} ${${PROJECT_NAME}_BINARY_DIR} CACHE INTERNAL "" FORCE)
-
 SET( Module_SRCS
   vtkCudaVolumeMapper.cxx
   vtkCudaRendererInformationHandler.cxx
@@ -36,11 +33,11 @@ REMOVE_VTK_DEFINITIONS()
 
 #------------------------------------------------------------------
 # See VTK/Accelerators/Pistons
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
 vtk_module_impl()
 
 # -----------------------------------------------------------------
 # Generate the cuda sources
-INCLUDE_DIRECTORIES(${${vtk-module}_DEPENDS_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS})
 cuda_compile(Module_CUDA_C_SRCS ${Module_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
 
 SET_SOURCE_FILES_PROPERTIES(
@@ -51,7 +48,6 @@ LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
 
 # -----------------------------------------------------------------
 # Build the library
-INCLUDE_DIRECTORIES(${${PROJECT_NAME}_INCLUDE_DIRS})
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
 
