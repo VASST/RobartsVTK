@@ -28,6 +28,7 @@
 #define __vtkImageSMIPVIManipulator_h
 
 #include "vtkRobartsRegistrationModule.h"
+#include "vtkVersionMacros.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"

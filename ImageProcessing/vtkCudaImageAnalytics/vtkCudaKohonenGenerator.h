@@ -2,6 +2,7 @@
 #define __VTKCUDAKOHONENGENERATOR_H__
 
 #include "vtkCudaImageAnalyticsModule.h"
+#include "vtkVersionMacros.h"
 
 #include "CUDA_kohonengenerator.h"
 #include "CudaObject.h"

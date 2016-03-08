@@ -14,7 +14,5 @@ vtk_module(TFUIDual
     vtkCommonCore 
     vtkGUISupportQt
     vtksys
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

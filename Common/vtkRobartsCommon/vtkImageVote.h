@@ -27,6 +27,7 @@
 #define __VTKIMAGEVOTE_H__
 
 #include "vtkRobartsCommonModule.h"
+#include "vtkVersionMacros.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkImageData.h"

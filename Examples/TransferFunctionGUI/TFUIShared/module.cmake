@@ -4,14 +4,11 @@ vtk_module(TFUICommon
   DEPENDS
     vtkCudaCommon 
     vtkCudaVisualization  
-    vtkRenderingVolumeOpenGL 
-    vtkRenderingFreeTypeOpenGL 
+    vtkRenderingVolumeOpenGL  
     vtkInteractionWidgets 
     vtksys 
     vtkIOLegacy 
     vtkIOMINC 
     vtkImagingMath 
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

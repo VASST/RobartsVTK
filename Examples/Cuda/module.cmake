@@ -2,8 +2,7 @@ vtk_module(Cuda2DTFVolumeRendering
   GROUPS
     Examples
   DEPENDS
-    vtkRenderingVolumeOpenGL 
-    vtkRenderingFreeTypeOpenGL 
+    vtkRenderingVolumeOpenGL  
     vtkFiltersCore 
     vtkImagingCore 
     vtkInteractionWidgets 
@@ -11,7 +10,5 @@ vtk_module(Cuda2DTFVolumeRendering
     vtkCommonCore 
     vtkCudaCommon 
     vtkCudaVisualization 
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

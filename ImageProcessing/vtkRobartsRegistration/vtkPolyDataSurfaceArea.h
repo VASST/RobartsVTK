@@ -37,6 +37,7 @@
 #define __vtkPolyDataSurfaceArea_h
 
 #include "vtkRobartsRegistrationModule.h"
+#include "vtkVersionMacros.h"
 
 #include "vtkObjectFactory.h"
 #include "vtkPolyData.h"

@@ -8,6 +8,4 @@ vtk_module(vtkCudaImageAnalytics
     vtkCudaCommonStatic
     vtkFiltersCore
     vtkCommonCore
-  KIT
-    vtkRobartsCuda
   )

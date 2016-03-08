@@ -6,8 +6,7 @@ vtk_module(FluoroPredViz
     vtkCudaVisualization 
     vtkCudaImageAnalytics 
     vtkRobartsCommon 
-    vtkRenderingVolumeOpenGL 
-    vtkRenderingFreeTypeOpenGL 
+    vtkRenderingVolumeOpenGL  
     vtkRenderingCore 
     vtkFiltersCore 
     vtkImagingCore 
@@ -16,7 +15,5 @@ vtk_module(FluoroPredViz
     vtkIOCore 
     vtkCommonCore 
     vtkIOMINC 
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

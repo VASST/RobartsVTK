@@ -10,6 +10,7 @@
 #define vtkCudaDualImageTransferFunctionInformationHandler_H_
 
 #include "vtkCudaVisualizationModule.h"
+#include "vtkVersionMacros.h"
 
 #include "CUDA_containerDualImageTransferFunctionInformation.h"
 #include "CudaObject.h"

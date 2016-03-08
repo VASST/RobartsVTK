@@ -29,6 +29,7 @@
 #include "vtkSmartPointer.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTrivialProducer.h"
+#include "vtkVersionMacros.h"
 
 vtkStandardNewMacro(vtkImageEntropyPlaneSelection);
 

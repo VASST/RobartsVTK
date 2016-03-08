@@ -13,6 +13,7 @@
 #include "vtkTree.h"
 #include "vtkTreeDFSIterator.h"
 #include "vtkTrivialProducer.h"
+#include "vtkVersionMacros.h"
 #include <assert.h>
 #include <float.h>
 #include <limits.h>

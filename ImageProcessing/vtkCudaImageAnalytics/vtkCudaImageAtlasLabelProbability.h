@@ -27,6 +27,7 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 #define __vtkCudaImageAtlasLabelProbability_h
 
 #include "vtkCudaImageAnalyticsModule.h"
+#include "vtkVersionMacros.h"
 
 #include "CudaObject.h"
 #include "vtkImageAlgorithm.h"

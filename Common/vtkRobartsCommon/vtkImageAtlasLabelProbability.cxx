@@ -255,3 +255,33 @@ void vtkImageAtlasLabelProbability::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
+
+//----------------------------------------------------------------------------
+void vtkImageAtlasLabelProbability::SetNormalizeDataTermOn()
+{
+  this->NormalizeDataTerm = 1;
+}
+
+//----------------------------------------------------------------------------
+void vtkImageAtlasLabelProbability::SetNormalizeDataTermOff()
+{
+  this->NormalizeDataTerm = 0;
+}
+
+//----------------------------------------------------------------------------
+int vtkImageAtlasLabelProbability::GetNormalizeDataTerm()
+{
+  return (this->NormalizeDataTerm);
+}
+
+//----------------------------------------------------------------------------
+void vtkImageAtlasLabelProbability::SetOutputToEntropy()
+{
+  this->SetEntropy(true);
+}
+
+//----------------------------------------------------------------------------
+void vtkImageAtlasLabelProbability::SetOutputToProbability()
+{
+  this->SetEntropy(false);
+}

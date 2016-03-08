@@ -10,6 +10,4 @@ vtk_module(vtkRobartsRegistration
     vtkImagingMath
     vtkCommonDataModel
     vtkFiltersGeneral
-  KIT
-    vtkRobartsImageProcessing
   )

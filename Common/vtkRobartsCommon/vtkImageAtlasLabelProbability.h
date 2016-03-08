@@ -27,6 +27,7 @@
 #define __vtkImageAtlasLabelProbability_H__
 
 #include "vtkRobartsCommonModule.h"
+#include "vtkVersionMacros.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkDataObject.h"
@@ -64,18 +65,9 @@ public:
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] or [0,inf). This
   // does not effect probability terms.
-  void SetNormalizeDataTermOn()
-  {
-    this->NormalizeDataTerm = 1;
-  }
-  void SetNormalizeDataTermOff()
-  {
-    this->NormalizeDataTerm = 0;
-  }
-  int GetNormalizeDataTerm()
-  {
-    return (this->NormalizeDataTerm);
-  }
+  void SetNormalizeDataTermOn();
+  void SetNormalizeDataTermOff();
+  int GetNormalizeDataTerm();
 
   // Description:
   // Determine which label is being used as the seed.
@@ -87,14 +79,8 @@ public:
   // image.
   vtkSetMacro(Entropy,bool);
   vtkGetMacro(Entropy,bool);
-  void SetOutputToEntropy()
-  {
-    this->SetEntropy(true);
-  }
-  void SetOutputToProbability()
-  {
-    this->SetEntropy(false);
-  }
+  void SetOutputToEntropy();
+  void SetOutputToProbability();
 
   // Description:
   // If no labels seed a particular voxel, theoretically, the entropy cost is infinity,

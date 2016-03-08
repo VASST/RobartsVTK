@@ -7,7 +7,5 @@ vtk_module(vtkCudaVisualization
     vtkCudaCommonStatic
     vtkRenderingVolume
     vtkRenderingVolumeOpenGL
-  KIT
-    vtkRobartsCuda
   EXCLUDE_FROM_WRAP_HIERARCHY
   )

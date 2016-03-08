@@ -2,6 +2,7 @@
 #define __VTKCUDAKSOMPROBABILITY_H__
 
 #include "vtkCudaImageAnalyticsModule.h"
+#include "vtkVersionMacros.h"
 
 #include "CUDA_KSOMProbability.h"
 #include "vtkImageAlgorithm.h"

@@ -3,7 +3,5 @@ vtk_module(vtkCudaCommonStatic
     Cuda
   DEPENDS
     vtkCudaCommon
-  KIT
-    vtkRobartsCuda
   EXCLUDE_FROM_WRAPPING
   )

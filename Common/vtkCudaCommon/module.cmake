@@ -4,8 +4,5 @@ vtk_module(vtkCudaCommon
   DEPENDS
     vtkCommonCore
     vtkRenderingOpenGL
-    vtkRenderingFreeTypeOpenGL
     vtkInteractionStyle
-  KIT
-    vtkRobartsCuda
   )

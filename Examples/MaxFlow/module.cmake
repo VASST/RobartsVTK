@@ -11,7 +11,5 @@ vtk_module(MaxFlowExample
     vtkCudaImageAnalytics 
     vtkCudaCommon
     vtksys
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

@@ -13,7 +13,5 @@ vtk_module(TFUIKohonen
     vtkIOImage 
     vtkCommonCore 
     vtkGUISupportQt
-  KIT
-    vtkRobartsExamples
   EXCLUDE_FROM_WRAPPING
   )

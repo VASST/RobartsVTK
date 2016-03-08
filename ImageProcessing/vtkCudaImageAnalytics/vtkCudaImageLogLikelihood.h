@@ -27,6 +27,7 @@
 #define __vtkCudaImageLogLikelihood_h
 
 #include "vtkCudaImageAnalyticsModule.h"
+#include "vtkVersionMacros.h"
 
 #include "CudaObject.h"
 #include "vtkImageAlgorithm.h"

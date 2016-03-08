@@ -5,6 +5,4 @@ vtk_module(vtkRobartsCommon
     vtkCommonCore 
     vtkFiltersParallel 
     vtkFiltersCore
-  KIT
-    vtkRobartsCommon
   )
