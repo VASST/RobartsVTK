@@ -77,8 +77,9 @@ foreach(module IN LISTS _vtk_python_modules_only)
   endif()
   vtk_add_python_wrapping_library(${module} module_srcs ${module})
   
-  # TODO : understand kit system so that these links aren't hard coded
-  target_link_libraries(${module}PythonD LINK_PUBLIC vtkCommonKitPythonD vtkRenderingKitPythonD )
+  if(VTK_ENABLE_KITS)
+    target_link_libraries(${module}PythonD LINK_PUBLIC vtkCommonKitPythonD vtkRenderingKitPythonD )
+  endif()
 
   # Restore regular list of dependency so that it can be used later.
   set(${module}_DEPENDS ${_saved_${module}_DEPENDS})
