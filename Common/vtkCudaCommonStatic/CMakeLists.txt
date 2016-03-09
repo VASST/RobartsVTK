@@ -34,6 +34,7 @@ LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
 SET(BUILD_SHARED_LIBS OFF)
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 SET(BUILD_SHARED_LIBS ON)
 
 # -----------------------------------------------------------------
