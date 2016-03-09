@@ -41,7 +41,37 @@ The following variables should be set when configuring RobartsVTK
         * PYTHON_LIBRARY:PATH = `<path/to/python-install>/libs/python27.lib`
 
 # Continuous Integration
-Continuous integration is enabled for this project and has workers running on happy.imaging.robarts.ca (Ubuntu 15.04) and doc.imaging.robarts.ca (Win64, VS2012).
+Continuous integration is enabled for this project and has workers running on happy.imaging.robarts.ca (Ubuntu 15.04). Migration to a permanent build system is on-going.
+
+## Set up a runner
+* Follow installation instructions for the [gitlab-ci-multi-runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner). 
+    * During the installation, make the following choices (unless you are an expert):
+        * coordinator URL: http://git.imaging.robarts.ca/ci
+        * gitlab-ci token: SEE Settings->Runners (in left menu)
+        * description: please provide a descriptive name of your configuration (institution, OS, architecture)
+        * tags:
+            * Windows x64: windows, cmake, x64, visual-studio-11
+            * Windows x32: windows, cmake, x32, visual-studio-11
+            * Ubuntu: cmake, gcc
+        * executor: shell
+    * Edit the config.toml file that was created in the same directory
+        * After the line
+        
+        `executor = "shell"`
+        
+        add
+        
+        `shell = "cmd"` for Windows or 
+        
+        `shell = "bash"` for Ubuntu
+    * Copy the appropriate script file to any location specified in your PATH environment variable
+        * Win32: [x32_vs2012_robartsVTKlib_release.bat](Docs/scripts/x32_vs2012_robartsVTKlib_release.bat)
+        * Win64: [x64_vs2012_robartsVTKlib_release.bat](Docs/scripts/x64_vs2012_robartsVTKlib_release.bat)
+        * Win32: [x64_gcc_robartsVTKlib_release.sh](Docs/scripts/x64_gcc_robartsVTKlib_release.sh)
+    * Install and start the runner (instructions provided by gitlab runner installation script)
+
+## Add a new type of runner
+To add a new build type, An entry must be made to [.gitlab-ci.yml](../../.gitlab-ci.yml). Please duplicate the existing structure of an entry but customize the build script and tag entries.
 
 # License
 Please see the [license](LICENSE.md) file.
