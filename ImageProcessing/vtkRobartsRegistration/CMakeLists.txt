@@ -2,8 +2,6 @@ PROJECT(vtkRobartsRegistration)
 
 include(module.cmake)
 
-SET(${PROJECT_NAME}_PYTHON_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS})
-
 SET ( Module_SRCS
   vtkShapeBasedInterpolation.cxx
   vtkTPSRegistration.cxx

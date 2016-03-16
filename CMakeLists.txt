@@ -410,7 +410,7 @@ SET(RobartsVTK_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "")
 OPTION (RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
 IF (RobartsVTK_USE_COMMON)
   ADD_SUBDIRECTORY (Common/vtkRobartsCommon)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkRobartsCommon_INCLUDE_DIRS} CACHE INTERNAL "" )
+
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsCommon CACHE INTERNAL "")
 ENDIF()
 
@@ -421,7 +421,7 @@ OPTION (RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OF
 IF (RobartsVTK_USE_REGISTRATION)
   OPTION(RobartsVTK_Include_Outdated_Registration "Include classes that still use VTK4 pipeline style." OFF)
   ADD_SUBDIRECTORY(ImageProcessing/vtkRobartsRegistration)
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkRobartsRegistration_INCLUDE_DIRS} CACHE INTERNAL "" )
+
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsRegistration CACHE INTERNAL "")
 ENDIF ()
 
@@ -436,12 +436,10 @@ IF (RobartsVTK_USE_CUDA)
   # Add Robart's CUDA libraries
   ADD_SUBDIRECTORY(Common/vtkCudaCommon)
 
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaCommon_INCLUDE_DIRS} CACHE INTERNAL "" )
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommon CACHE INTERNAL "")
 
   ADD_SUBDIRECTORY(Common/vtkCudaCommonStatic)
-  
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaCommonStatic_INCLUDE_DIRS} CACHE INTERNAL "" )
+
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaCommonStatic CACHE INTERNAL "")
 ENDIF ()
 
@@ -452,7 +450,7 @@ IF (RobartsVTK_USE_CUDA)
   OPTION (RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
   IF (RobartsVTK_USE_CUDA_VISUALIZATION)
     ADD_SUBDIRECTORY(Visualization/vtkCudaVisualization)
-    SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaVisualization_INCLUDE_DIRS} CACHE INTERNAL "" )
+
     SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaVisualization CACHE INTERNAL "")
   ENDIF()
 ENDIF()
@@ -465,7 +463,7 @@ IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
   IF (RobartsVTK_USE_CUDA_ANALYTICS)
     ADD_SUBDIRECTORY(ImageProcessing/vtkCudaImageAnalytics)
     ADD_SUBDIRECTORY(Utilities/MaxFlow)
-    SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${vtkCudaImageAnalytics_INCLUDE_DIRS} CACHE INTERNAL "" )
+
     SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaImageAnalytics CACHE INTERNAL "")
   ENDIF()
 ENDIF()
@@ -507,6 +505,14 @@ IF(VTK_WRAP_PYTHON)
   # Use our clone of the VTK environment to do our python wrapping
   ADD_SUBDIRECTORY(Wrapping/Python)
 ENDIF(VTK_WRAP_PYTHON)
+
+#-----------------------------------------------------------------------------
+# Populate export variables
+#-----------------------------------------------------------------------------
+foreach( module ${RobartsVTK_LIBRARIES} )
+  vtk_module_load(${module})
+  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${${module}_INCLUDE_DIRS} CACHE INTERNAL "")
+endforeach()
 
 #-----------------------------------------------------------------------------
 # Generate build configurations

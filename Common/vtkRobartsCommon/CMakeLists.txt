@@ -2,8 +2,6 @@ PROJECT(vtkRobartsCommon)
 
 include(module.cmake)
 
-SET(${PROJECT_NAME}_PYTHON_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS})
-
 SET ( Module_SRCS
   vtkReadWriteLock.cxx
   vtkBarrierLock.cxx
@@ -53,17 +51,19 @@ IF( MSVC )
     vtkImageFrangiFilter.h
   )
 ENDIF()
-
+ 
 IF(WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio" AND NOT "${CMAKE_GENERATOR}" MATCHES "x64")
   # No idea why, but turning on optimization in robarts common in 32 bit causes
   # an internal compiler crash
   STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 ENDIF()
 
+SET(${PROJECT_NAME}_INCLUDE_DIRS "")
+
 # -----------------------------------------------------------------
 # Build the library
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-
+  
 # -----------------------------------------------------------------
 LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
 SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
