@@ -63,7 +63,7 @@ Continuous integration is enabled for this project and has workers running on ha
         
         `shell = "cmd"` for Windows or 
         
-        `shell = "bash"` for Ubuntu
+        `shell = "bash"` for Ubuntu (typically /etc/gitlab-runner/config.toml)
     * Copy the appropriate script file to any location specified in your PATH environment variable
         * Win32: [x32_vs2012_robartsVTKlib_release.bat](Docs/scripts/x32_vs2012_robartsVTKlib_release.bat)
         * Win64: [x64_vs2012_robartsVTKlib_release.bat](Docs/scripts/x64_vs2012_robartsVTKlib_release.bat)
