@@ -72,7 +72,7 @@ INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK 6.2.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
+FIND_PACKAGE(VTK 6.3.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
@@ -187,16 +187,18 @@ ENDIF()
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
 IF (RobartsVTK_USE_QT)
-  FIND_FILE(QT_QMAKE_EXECUTABLE qmake${CMAKE_EXECUTABLE_SUFFIX} 
-    PATH
-      $ENV{QTDIR}
-      "C:/Qt/4.7.4/bin"
-      "../Qt/4.7.4/bin"
-      "../../Qt/4.7.4/bin"
-      "C:/Qt/4.8.7/bin"
-      "../Qt/4.8.7/bin"
-      "../../Qt/4.8.7/bin"
-    )
+  IF(NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+    FIND_FILE(QT_QMAKE_EXECUTABLE qmake${CMAKE_EXECUTABLE_SUFFIX} 
+      PATH
+        $ENV{QTDIR}
+        "C:/Qt/4.7.4/bin"
+        "../Qt/4.7.4/bin"
+        "../../Qt/4.7.4/bin"
+        "C:/Qt/4.8.7/bin"
+        "../Qt/4.8.7/bin"
+        "../../Qt/4.8.7/bin"
+      )
+  ENDIF()
 
   IF(NOT RobartsVTK_USE_QT5_ONLY)
     FIND_PACKAGE(Qt4 COMPONENTS QTCORE QTGUI QUIET)
