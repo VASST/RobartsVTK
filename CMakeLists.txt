@@ -471,20 +471,20 @@ IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
 ENDIF()
 
 #-----------------------------------------------------------------------------
-# Examples
+# Applications
 #-----------------------------------------------------------------------------
-OPTION(RobartsVTK_BUILD_EXAMPLES "Build RobartsVTK examples." OFF)
-IF(RobartsVTK_BUILD_EXAMPLES)
+OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
+IF(RobartsVTK_BUILD_APPS)
   IF(RobartsVTK_USE_CUDA)
-    ADD_SUBDIRECTORY(Examples/Cuda)
+    ADD_SUBDIRECTORY(Applications/Cuda)
     IF(RobartsVTK_USE_QT)
-      ADD_SUBDIRECTORY(Examples/FluoroPredViz)
-      ADD_SUBDIRECTORY(Examples/TransferFunctionGUI)
+      ADD_SUBDIRECTORY(Applications/FluoroPredViz)
+      ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
     ENDIF()
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)
-    ADD_SUBDIRECTORY(Examples/MaxFlow)
+    ADD_SUBDIRECTORY(Applications/MaxFlow)
   ENDIF()
 ENDIF()
 
