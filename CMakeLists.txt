@@ -480,6 +480,27 @@ IF(RobartsVTK_BUILD_APPS)
     IF(RobartsVTK_USE_QT)
       ADD_SUBDIRECTORY(Applications/FluoroPredViz)
       ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
+      
+      IF( RobartsVTK_USE_PLUS )
+        #-------------------------------------
+        # Find OpenCV
+        #-------------------------------------
+        FIND_PACKAGE(OpenCV 2.3.1 REQUIRED NO_MODULE)
+        # Copy dlls to bin folder
+
+        #-------------------------------------
+        # Find freeglut
+        #-------------------------------------
+        FIND_PACKAGE(GLUT REQUIRED)
+        # Copy dlls to bin folder
+
+        #-------------------------------------
+        # Find OpenMP
+        #-------------------------------------
+        FIND_PACKAGE(OpenMP REQUIRED)
+
+        ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+      ENDIF()
     ENDIF()
   ENDIF()
 
