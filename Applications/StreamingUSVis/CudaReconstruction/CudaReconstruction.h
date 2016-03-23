@@ -35,6 +35,8 @@
 
 #include <queue>
 
+#include "CudaReconstructionModule.h"
+
 // VTK Includes
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
@@ -53,11 +55,9 @@
 
 #define pos_matrix_a(x,y) (pos_matrix[(y)*4 + (x)])
 
-class CudaReconstruction
+class CUDARECONSTRUCTION_EXPORT CudaReconstruction
 {
-
 public:
-
   /* Constructor */
   CudaReconstruction();
 
@@ -110,7 +110,6 @@ public:
   void GetOutputVolume(vtkImageData *);
 
   /* Get volume origin */
-  double * GetOrigin();
   void GetOrigin(double *);
 
   /* Get Spacing */

@@ -212,7 +212,7 @@ void CudaReconstruction::PrintInfo()
   clGetPlatformIDs(256, platforms, &platforms_n);
 
   clGetPlatformIDs(256, platforms, &platforms_n);
-  for (int i = 0; i < platforms_n; i++)
+  for (cl_uint i = 0; i < platforms_n; i++)
   {
     std::cout << "Platform " << i+1 << " of " << platforms_n << std::endl;
 
@@ -226,7 +226,7 @@ void CudaReconstruction::PrintInfo()
     std::cout << "\t CL_PLATFORM_VENDOR: " << str << std::endl;
 
     clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 256, devices, &devices_n);
-    for(int j=0; j< devices_n; j++)
+    for(cl_uint j=0; j< devices_n; j++)
     {
 
       std::cout << "\t device " << j+1 << " of " << devices_n << std::endl;
@@ -450,16 +450,6 @@ void CudaReconstruction::GetOutputVolume(vtkImageData *v)
 {
   v->DeepCopy( reconstructedvolume );
   v->Modified();
-}
-
-//--------------------------------------------------------------
-double * CudaReconstruction::GetOrigin()
-{
-  double _origin[3] = {(double)this->volume_origin[0],
-                       (double)this->volume_origin[1],
-                       (double)this->volume_origin[2]
-                      };
-  return _origin;
 }
 
 //--------------------------------------------------------------
