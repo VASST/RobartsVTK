@@ -22,7 +22,6 @@
  *
  *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
  *
- * test
  */
 
 #include "vtkDataSetAttributes.h"
