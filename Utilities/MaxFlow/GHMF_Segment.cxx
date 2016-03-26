@@ -192,7 +192,7 @@ int main(int argc, char** argv)
       vtkMetaImageReader* Reader = vtkMetaImageReader::New();
       Reader->SetFileName( DataTerms->GetValue(Node).c_str() );
       Reader->Update();
-      Segmenter->SetDataInput(Node, (vtkDataObject*) Reader->GetOutput());
+      Segmenter->SetDataInputDataObject(Node, (vtkDataObject*) Reader->GetOutput());
       Reader->Delete();
     }
 
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
       vtkMetaImageReader* Reader = vtkMetaImageReader::New();
       Reader->SetFileName( SmoothTerms->GetValue(Node).c_str() );
       Reader->Update();
-      Segmenter->SetSmoothnessInput(Node, (vtkDataObject*) Reader->GetOutput());
+      Segmenter->SetSmoothnessInputDataObject(Node, (vtkDataObject*) Reader->GetOutput());
       Reader->Delete();
     }
 
@@ -236,7 +236,7 @@ int main(int argc, char** argv)
     Writer->SetFileName( OutFileMHD.c_str() );
     Writer->SetRAWFileName( OutFileRAW.c_str() );
 #if (VTK_MAJOR_VERSION < 6)
-    Writer->SetInput(Segmenter->GetOutput(Node));
+    Writer->SetInput(Segmenter->GetOutputDataObject(Node));
 #else
     Writer->SetInputConnection(Segmenter->GetOutputPort(Node));
 #endif
@@ -264,7 +264,7 @@ int main(int argc, char** argv)
       {
         continue;
       }
-      Voter->SetInput( Identifiers->GetValue(Node), Segmenter->GetOutput(Node) );
+      Voter->SetInput( Identifiers->GetValue(Node), Segmenter->GetOutputDataObject(Node) );
     }
     Iterator->Delete();
     Voter->Update();
