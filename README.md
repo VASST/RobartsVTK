@@ -10,7 +10,7 @@ Using a [git](https://en.wikipedia.org/wiki/Git_(software)) client, clone the re
 * Mac? Try [GitHub](https://desktop.github.com/)
 
 # Building RobartsVTK
-For convenient building, please see the RobartsVTK [super build](http://git.imaging.robarts.ca/repos/RobartsVTKBuild) project.
+For convenient building, please see the RobartsVTK [super build](http://git.imaging.robarts.ca/vasst/RobartsVTKBuild) project.
 
 ## Known Configurations
 RobartsVTK has been built on the following configurations:
