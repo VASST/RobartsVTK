@@ -21,12 +21,13 @@ RobartsVTK has been built on the following configurations:
 ## Dependencies
 Dependencies must be built or installed before RobartsVTK can be built. Please visit the respective links to download the appropriate packages.
 * [CMake 3.4](https://cmake.org/download/) - installed
-* [VTK 6.2](http://www.vtk.org/download/) - built
+* [VTK 6.3](http://www.vtk.org/download/) - built
    * If Python wrapping of RobartsVTK is desired, VTK must be built with WRAP_PYTHON enabled.
 * [QT 4/5](http://download.qt.io/archive/qt/) - built (optional, please follow Qt build instructions)
 * [ITK 4.7.2](http://www.itk.org/ITK/resources/software.html) - built (optional)
 * [CUDA 7](https://developer.nvidia.com/cuda-downloads) - installed (optional)
-* [PLUS 2.3](http://plustoolkit.org) -built (optional)
+* [PLUS 2.3](http://plustoolkit.org) - built (optional)
+* [Python 2.7 x64](https://www.python.org/downloads/release/python-2711/) - installed (optional)
 
 ## CMake Configuration
 The following variables should be set when configuring RobartsVTK
