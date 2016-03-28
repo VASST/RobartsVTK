@@ -109,10 +109,10 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
     vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation>::New();
   dagmf->SetStructure(DAG);
-  dagmf->SetDataInput(bkg,cast0->GetOutput());
-  dagmf->SetDataInput(l1,cast1->GetOutput());
-  dagmf->SetDataInput(l2,cast2->GetOutput());
-  dagmf->SetDataInput(l3,cast3->GetOutput());
+  dagmf->SetDataInputConnection(bkg,cast0->GetOutputPort());
+  dagmf->SetDataInputConnection(l1,cast1->GetOutputPort());
+  dagmf->SetDataInputConnection(l2,cast2->GetOutputPort());
+  dagmf->SetDataInputConnection(l3,cast3->GetOutputPort());
   dagmf->AddSmoothnessScalar(bkg,0.01);
   dagmf->AddSmoothnessScalar(l1, 0.01);
   dagmf->AddSmoothnessScalar(l2, 0.01);
