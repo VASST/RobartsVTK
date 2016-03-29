@@ -92,6 +92,12 @@ void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::ClearDevices()
   this->GPUsUsed.clear();
 }
 
+void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::SetDevice(int GPU)
+{
+  this->ClearDevices();
+  this->AddDevice(GPU);
+}
+
 void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::SetMaxGPUUsage(double usage, int device)
 {
   if( usage < 0.0 )

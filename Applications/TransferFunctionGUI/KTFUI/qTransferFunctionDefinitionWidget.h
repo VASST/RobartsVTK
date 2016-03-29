@@ -1,6 +1,19 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef TRANSFERFUNCTIONDEFINITIONWIDGET
 #define TRANSFERFUNCTIONDEFINITIONWIDGET
 
+#include "TFUIKohonenModule.h"
 #include <QWidget>
 #include <list>
 #include <vector>
@@ -18,7 +31,7 @@ class vtkImageData;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class qTransferFunctionDefinitionWidget : public QWidget
+class TFUIKOHONEN_EXPORT qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 
@@ -41,12 +54,12 @@ public:
   int GetGreen(){return this->greenChosen;}
   int GetBlue(){return this->blueChosen;}
 
-  double GetRMax(){return this->Max[this->GetRed()];}
-  double GetGMax(){return this->Max[this->GetGreen()];}
-  double GetBMax(){return this->Max[this->GetBlue()];}
-  double GetRMin(){return this->Min[this->GetRed()];}
-  double GetGMin(){return this->Min[this->GetGreen()];}
-  double GetBMin(){return this->Min[this->GetBlue()];}
+  double GetRMax();
+  double GetGMax();
+  double GetBMax();
+  double GetRMin();
+  double GetGMin();
+  double GetBMin();
   
   void SetMax(double val, int scalar);
   void SetMin(double val, int scalar);
@@ -64,7 +77,7 @@ public slots:
   void setGreen(int index);
   void setBlue(int index);
 
-private slots:
+protected slots:
   // histogram related slots
   void computeZoomHistogram();
   void selectZoomRegion();
@@ -80,13 +93,13 @@ private slots:
   void saveTransferFunction();
   void loadTransferFunction();
 
-private:
+protected:
   void addFunctionObject(vtkCudaFunctionPolygon* object);
   void removeFunctionObject(vtkCudaFunctionPolygon* object);
   char* getHistogram(vtkImageData* data, float retIntensityLow, float retIntensityHigh, float retGradientLow, float retGradientHigh, bool setSize);
-
   void setupMenu();
 
+protected:
   // parent window useful for pushing updates
   qTransferFunctionWindowWidget* parent;
   
@@ -142,7 +155,6 @@ private:
   
   int HISTOSIZE1;
   int HISTOSIZE2;
-
 };
 
 #endif

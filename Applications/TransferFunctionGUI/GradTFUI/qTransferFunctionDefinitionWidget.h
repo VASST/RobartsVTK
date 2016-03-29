@@ -1,23 +1,35 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef TRANSFERFUNCTIONDEFINITIONWIDGET
 #define TRANSFERFUNCTIONDEFINITIONWIDGET
 
-#include "vtkCuda2DTransferFunction.h"
-#include "vtkCuda2DVolumeMapper.h"
-#include "vtkCudaFunctionPolygon.h"
-#include "vtkImageData.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include <QMenu>
-#include <QObject>
-#include <QSlider>
+#include "TFUIGradientModule.h"
 #include <QWidget>
 #include <list>
 
-class qTransferFunctionWindowWidget;
 class QListWidget;
+class QMenu;
+class QSlider;
 class qHistogramHolderLabel;
+class qTransferFunctionWindowWidget;
+class vtkCuda2DTransferFunction;
+class vtkCuda2DVolumeMapper;
+class vtkCudaFunctionPolygon;
+class vtkImageData;
+class vtkRenderWindow;
+class vtkRenderer;
 
-class qTransferFunctionDefinitionWidget : public QWidget
+class TFUIGRADIENT_EXPORT qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 
@@ -41,8 +53,7 @@ public slots:
   void computeHistogram();
   void updateFunction();
 
-private slots:
-
+protected slots:
   //histogram related slots
   void computeZoomHistogram();
   void selectZoomRegion();
@@ -58,14 +69,13 @@ private slots:
   void saveTransferFunction();
   void loadTransferFunction();
 
-private:
-
+protected:
   void addFunctionObject(vtkCudaFunctionPolygon* object);
   void removeFunctionObject(vtkCudaFunctionPolygon* object);
   char* getHistogram(vtkImageData* data, float& retIntensityLow, float& retIntensityHigh, float& retGradientLow, float& retGradientHigh, bool setSize);
-
   void setupMenu();
 
+protected:
   //parent window useful for pushing updates
   qTransferFunctionWindowWidget* parent;
 
@@ -106,7 +116,6 @@ private:
 
   //transfer function menu variables
   QMenu* transferFunctionMenu;
-
 };
 
 #endif

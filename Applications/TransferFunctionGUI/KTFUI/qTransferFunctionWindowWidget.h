@@ -1,7 +1,19 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef TRANSFERFUNCTIONWINDOWWIDGET
 #define TRANSFERFUNCTIONWINDOWWIDGET
 
-//Include widget outward definition
+#include "TFUIKohonenModule.h"
 #include "qTransferFunctionWindowWidgetInterface.h"
 
 class QHBoxLayout;
@@ -24,7 +36,7 @@ class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkRenderer;
 
-class qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
+class TFUIKOHONEN_EXPORT qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
 {
   Q_OBJECT
 
