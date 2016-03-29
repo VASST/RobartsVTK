@@ -125,13 +125,13 @@ int main(int argc, char** argv)
   dagmf->Update();
 
   vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
-  test0->ShallowCopy((vtkImageData*) dagmf->GetOutput(bkg));
+  test0->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(bkg));
   vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();
-  test1->ShallowCopy((vtkImageData*) dagmf->GetOutput(l1));
+  test1->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l1));
   vtkSmartPointer<vtkImageData> test2 = vtkSmartPointer<vtkImageData>::New();
-  test2->ShallowCopy((vtkImageData*) dagmf->GetOutput(l2));
+  test2->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l2));
   vtkSmartPointer<vtkImageData> test3 = vtkSmartPointer<vtkImageData>::New();
-  test3->ShallowCopy((vtkImageData*) dagmf->GetOutput(l3));
+  test3->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l3));
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
 #if (VTK_MAJOR_VERSION < 6)
