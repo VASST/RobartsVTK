@@ -1197,7 +1197,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
       _win2Img->Update();
       _win2Img->Modified();
       char num[5];
-      snprintf(index, 5, "%d", num);
+      snprintf(num, 5, "%d", index);
       std::string filename = dir + prefix + num + ext;
       _imgWriter->SetFileName( filename.c_str() );
       _imgWriter->Update();
