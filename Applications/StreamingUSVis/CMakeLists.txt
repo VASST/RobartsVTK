@@ -11,10 +11,7 @@ FIND_PACKAGE(OpenCL REQUIRED)
 # Add CudaReconstruction
 #-------------------------------------
 ADD_SUBDIRECTORY(CudaReconstruction)
-get_cmake_property(_variableNames VARIABLES)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
+
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
