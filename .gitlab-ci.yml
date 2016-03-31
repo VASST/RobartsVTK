@@ -1,10 +1,11 @@
 # Simple release build
 build-ubuntu:
   script:
-    - x64_gcc_robartsVTKlib_release.sh
+    - x64_gcc_qt4_robartsVTKlib_release.sh
   tags:
     - cmake
     - gcc
+    - qt4
   only:
     - master
 
