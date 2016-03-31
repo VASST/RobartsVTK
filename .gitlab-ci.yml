@@ -1,5 +1,5 @@
 # Simple release build
-build-ubuntu:
+build-ubuntu-qt4:
   script:
     - x64_gcc_qt4_robartsVTKlib_release.sh
   tags:
