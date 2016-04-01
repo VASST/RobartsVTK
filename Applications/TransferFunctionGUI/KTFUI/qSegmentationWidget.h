@@ -1,36 +1,47 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef SEGMENTATIONWIDGET
 #define SEGMENTATIONWIDGET
 
-#include <QObject>
+#include "TFUIKohonenModule.h"
 #include <QWidget>
-#include <QMenu>
-#include <QPushButton>
 
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-#include "vtkCudaDualImageVolumeMapper.h"
-
-#include "qTransferFunctionWindowWidget.h"
+class QMenu;
+class QPushButton;
 class qTransferFunctionWindowWidget;
+class qTransferFunctionWindowWidget;
+class vtkCudaDualImageVolumeMapper;
+class vtkRenderWindow;
+class vtkRenderer;
 
-class qSegmentationWidget : public QWidget
+class TFUIKOHONEN_EXPORT qSegmentationWidget : public QWidget
 {
   Q_OBJECT
-public:
 
+public:
   qSegmentationWidget( qTransferFunctionWindowWidget* parent );
   ~qSegmentationWidget();
   void setStandardWidgets( vtkRenderWindow* window, vtkRenderer* renderer, vtkCudaDualImageVolumeMapper* caster );
   QMenu* getMenuOptions();
 
-private slots:
-  
+protected slots:
   //shading related slots
   void segment();
 
-private:
-  
+protected:
   void setupMenu();
+
+protected:
   QMenu* segmentationMenu;
   QAction* segmentNowOption;
 
@@ -39,8 +50,6 @@ private:
   vtkRenderWindow* window;
   vtkRenderer* renderer;
   vtkCudaDualImageVolumeMapper* mapper;
-
-
 };
 
 #endif

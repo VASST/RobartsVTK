@@ -51,16 +51,12 @@ public:
   bool HasDevice(int GPU);
 
   // Description:
-  // Clears the set of GPUs usable by the algorith,
+  // Clears the set of GPUs usable by the algorithm
   void ClearDevices();
 
   // Description:
   // Set the class to use a single GPU, the one provided.
-  void SetDevice(int GPU)
-  {
-    this->ClearDevices();
-    this->AddDevice(GPU);
-  }
+  void SetDevice(int GPU);
 
   // Description:
   // Get and Set the maximum percent of GPU memory usable by the algorithm.

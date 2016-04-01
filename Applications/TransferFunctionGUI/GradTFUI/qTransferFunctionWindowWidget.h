@@ -1,10 +1,33 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef TRANSFERFUNCTIONWINDOWWIDGET
 #define TRANSFERFUNCTIONWINDOWWIDGET
 
-//include outward definition
+#include "TFUIGradientModule.h"
 #include "qTransferFunctionWindowWidgetInterface.h"
 
-//Include sub-interfaces
+class QAction;
+class QCheckBox;
+class QGridLayout;
+class QHBoxLayout;
+class QMenu;
+class QMenuBar;
+class QObject;
+class QTabWidget;
+class QThread;
+class QVBoxLayout;
+class QVTKWidget;
+class QWidget;
 class qDeviceManagementWidget;
 class qFileManagementWidget;
 class qSegmentationWidget;
@@ -13,25 +36,13 @@ class qStereoRenderingWidget;
 class qTransferFunctionDefinitionWidget;
 class qVirtualToolWidget;
 class vtkCuda2DVolumeMapper;
+class vtkInteractorStyleTrackballActor;
+class vtkInteractorStyleTrackballCamera;
+class vtkRenderWindow;
+class vtkRenderWindowInteractor;
+class vtkRenderer;
 
-#include "QVTKWidget.h"
-#include "vtkInteractorStyleTrackballActor.h"
-#include "vtkInteractorStyleTrackballCamera.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include <QAction>
-#include <QCheckBox>
-#include <QGridLayout>
-#include <QHBoxLayout>
-#include <QMenu>
-#include <QMenuBar>
-#include <QObject>
-#include <QTabWidget>
-#include <QThread>
-#include <QVBoxLayout>
-#include <QWidget>
-
-class qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
+class TFUIGRADIENT_EXPORT qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
 {
   Q_OBJECT
 
@@ -46,13 +57,11 @@ public:
   void LoadedImageData();
   void UpdateScreen();
 
-private slots:
-
+protected slots:
   //tab changing slot
   void changeTab();
 
-private:
-
+protected:
   //shared and communally modified pipeline pieces
   vtkRenderWindow* window;
   vtkRenderer* renderer;
@@ -92,7 +101,6 @@ private:
   //layout managers
   QVBoxLayout* menuLayout;
   QHBoxLayout* mainLayout;
-
 };
 
 #endif

@@ -1,14 +1,34 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "qHistogramHolderLabel.h"
 #include "qTransferFunctionDefinitionWidget.h"
 #include "qTransferFunctionWindowWidget.h"
+#include "vtkCuda2DTransferFunction.h"
+#include "vtkCuda2DVolumeMapper.h"
+#include "vtkCudaFunctionPolygon.h"
 #include "vtkCudaFunctionPolygonReader.h"
 #include "vtkCudaFunctionPolygonWriter.h"
 #include "vtkDataArray.h"
+#include "vtkImageData.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QGridLayout>
-#include <QVBoxLayout>
 #include <QListWidget>
+#include <QMenu>
+#include <QSlider>
+#include <QVBoxLayout>
 
 // ---------------------------------------------------------------------------------------
 // Construction and destruction code

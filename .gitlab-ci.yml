@@ -1,21 +1,36 @@
 # Simple release build
-build-ubuntu:
+build-ubuntu-qt4:
   script:
-    - x64_gcc_robartsVTKlib_release.sh
+    - x64_gcc_qt4_robartsVTKlib_release.sh
   tags:
     - cmake
     - gcc
+    - qt4
   only:
     - master
 
-# Building with Visual Studio 11 2012 x64
-build-visual-studio-x64:
+# Building with Visual Studio 11 2012 x64 and Qt5
+build-visual-studio-x64-qt5:
   script:
-    - call x64_vs2012_robartsVTKlib_release.bat
+    - call x64_qt5_vs2012_robartsVTKlib_release.bat
   tags:
     - windows
     - cmake
     - x64
     - visual-studio-11
+    - qt5
+  only:
+    - master
+    
+# Building with Visual Studio 11 2012 x64 and Qt4
+build-visual-studio-x64-qt4:
+  script:
+    - call x64_qt4_vs2012_robartsVTKlib_release.bat
+  tags:
+    - windows
+    - cmake
+    - x64
+    - visual-studio-11
+    - qt4
   only:
     - master

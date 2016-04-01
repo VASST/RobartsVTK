@@ -491,7 +491,7 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         # Find freeglut
         #-------------------------------------
-        FIND_PACKAGE(GLUT REQUIRED)
+        FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
         # Copy dlls to bin folder
 
         #-------------------------------------

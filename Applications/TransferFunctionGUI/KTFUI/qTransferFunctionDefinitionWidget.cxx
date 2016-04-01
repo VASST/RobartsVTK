@@ -1,3 +1,15 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "qHistogramHolderLabel.h"
 #include "qTransferFunctionDefinitionWidget.h"
 #include "qTransferFunctionWindowWidget.h"
@@ -252,6 +264,42 @@ void qTransferFunctionDefinitionWidget::keyReleaseEvent(QKeyEvent* e)
 {
   histogramHolder->keyReleaseEvent(e);
   zoomHistogramHolder->keyReleaseEvent(e);
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetRMax()
+{
+  return this->Max[this->GetRed()];
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetGMax()
+{
+  return this->Max[this->GetGreen()];
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetBMax()
+{
+  return this->Max[this->GetBlue()];
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetRMin()
+{
+  return this->Min[this->GetRed()];
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetGMin()
+{
+  return this->Min[this->GetGreen()];
+}
+
+//----------------------------------------------------------------------------
+double qTransferFunctionDefinitionWidget::GetBMin()
+{
+  return this->Min[this->GetBlue()];
 }
 
 void qTransferFunctionDefinitionWidget::SetMax(double val, int scalar)

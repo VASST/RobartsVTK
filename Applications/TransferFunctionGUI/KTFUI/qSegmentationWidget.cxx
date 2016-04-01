@@ -1,13 +1,31 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "qSegmentationWidget.h"
+#include "qTransferFunctionWindowWidget.h"
 #include "vtkCuda2DTransferFunction.h"
+#include "vtkCudaDualImageVolumeMapper.h"
 #include "vtkCudaVoxelClassifier.h"
 #include "vtkImageAppendComponents.h"
 #include "vtkImageData.h"
 #include "vtkImageGradientMagnitude.h"
 #include "vtkMetaImageWriter.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
 #include "vtkSystemIncludes.h"
 #include "vtksys/SystemTools.hxx"
 #include <QFileDialog>
+#include <QMenu>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 // ---------------------------------------------------------------------------------------

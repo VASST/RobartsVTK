@@ -1,6 +1,19 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "qHistogramHolderLabel.h"
 #include "qTransferFunctionDefinitionWidget.h"
 #include "qTransferFunctionWindowWidget.h"
+#include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaFunctionPolygon.h"
 #include <QImage>
 #include <QPaintEvent>
@@ -413,7 +426,6 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
   unsigned int i = 0;
   while(true)
   {
-
     //get the next object to be painted
     vtkCudaFunctionPolygon* paintedObject = (vtkCudaFunctionPolygon*) func->GetFunctionObject(i);
     i++;
