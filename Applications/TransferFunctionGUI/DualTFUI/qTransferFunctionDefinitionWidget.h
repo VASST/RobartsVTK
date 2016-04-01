@@ -13,7 +13,6 @@
 #ifndef qTransferFunctionDefinitionWidget_H
 #define qTransferFunctionDefinitionWidget_H
 
-#include "TFUIDualModule.h"
 #include <QWidget>
 #include <list>
 
@@ -31,7 +30,7 @@ class vtkRenderer;
 
 #define HISTOSIZE 200
 
-class TFUIDUAL_EXPORT qTransferFunctionDefinitionWidget : public QWidget
+class qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 public:

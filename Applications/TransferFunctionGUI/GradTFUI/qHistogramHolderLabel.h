@@ -13,7 +13,6 @@
 #ifndef qHistogramHolderLabel_H
 #define qHistogramHolderLabel_H
 
-#include "TFUIGradientModule.h"
 #include <QLabel>
 
 class qTransferFunctionDefinitionWidget;
@@ -21,7 +20,7 @@ class qTransferFunctionWindowWidget;
 class vtkCuda2DTransferFunction;
 class vtkCudaFunctionPolygon;
 
-class TFUIGRADIENT_EXPORT qHistogramHolderLabel : public QLabel
+class qHistogramHolderLabel : public QLabel
 {
   Q_OBJECT
 

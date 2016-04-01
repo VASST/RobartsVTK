@@ -13,7 +13,6 @@
 #ifndef qSegmentationWidget_H
 #define qSegmentationWidget_H
 
-#include "TFUIDualModule.h"
 #include "qTransferFunctionWindowWidget.h"
 #include <QWidget>
 
@@ -24,7 +23,7 @@ class vtkCudaDualImageVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUIDUAL_EXPORT qSegmentationWidget : public QWidget
+class qSegmentationWidget : public QWidget
 {
   Q_OBJECT
 

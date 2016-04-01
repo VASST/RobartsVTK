@@ -13,9 +13,6 @@
 #ifndef qTransferFunctionWindowWidget_H
 #define qTransferFunctionWindowWidget_H
 
-#include "TFUIDualModule.h"
-
-//Include widget outward definition
 #include "qTransferFunctionWindowWidgetInterface.h"
 
 class QHBoxLayout;
@@ -38,7 +35,7 @@ class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkRenderer;
 
-class TFUIDUAL_EXPORT qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
+class qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
 {
   Q_OBJECT
 

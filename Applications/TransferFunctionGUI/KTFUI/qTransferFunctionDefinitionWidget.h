@@ -13,7 +13,6 @@
 #ifndef TRANSFERFUNCTIONDEFINITIONWIDGET
 #define TRANSFERFUNCTIONDEFINITIONWIDGET
 
-#include "TFUIKohonenModule.h"
 #include <QWidget>
 #include <list>
 #include <vector>
@@ -31,7 +30,7 @@ class vtkImageData;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUIKOHONEN_EXPORT qTransferFunctionDefinitionWidget : public QWidget
+class qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 
