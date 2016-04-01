@@ -22,6 +22,7 @@
  *
  *  @note This is the base class for GPU accelerated max-flow segmentors in vtkCudaImageAnalytics
  *
+ * test
  */
 
 #include "vtkDataSetAttributes.h"
@@ -161,7 +162,23 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::FillInputPortInformation(int i, 
   return this->Superclass::FillInputPortInformation(i,info);
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataObject *input)
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputDataObject(int idx, vtkDataObject *input)
+{
+	//if we have no input data object, clear the corresponding input connection
+	if( input == NULL )
+	{
+	  this->SetDataInputConnection(idx,NULL);
+	  return;
+	}
+
+	//else, create a trivial producer to mimic a connection
+	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+	trivProd->SetOutput(input);
+	this->SetDataInputConnection(idx,trivProd->GetOutputPort());
+	trivProd->Delete();
+}
+
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgorithmOutput *input)
 {
 
   //we are adding/switching an input, so no need to resort list
@@ -176,13 +193,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataOb
       this->InputDataPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
       this->BackwardsInputDataPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
     }
-#if (VTK_MAJOR_VERSION < 6)
-    this->SetNthInputConnection(0, this->InputDataPortMapping[idx], input->GetProducerPort() );
-#else
-    vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-    tp->SetInputDataObject(input);
-    this->SetNthInputConnection(0, this->InputDataPortMapping[idx], tp->GetOutputPort() );
-#endif
+    this->SetNthInputConnection(0, this->InputDataPortMapping[idx], input );
 
   }
   else
@@ -206,14 +217,8 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataOb
     }
     else
     {
-      vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(0, portNumber, swappedInput->GetProducerPort() );
-#else
-      vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-      tp->SetInputDataObject(swappedInput);
-      this->SetNthInputConnection(0, portNumber, tp->GetOutputPort() );
-#endif
+      vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedDataPort - 1);
+      this->SetNthInputConnection(0, portNumber, swappedInput );
       this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
 
       //correct the mappings
@@ -231,7 +236,23 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInput(int idx, vtkDataOb
   }
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtkDataObject *input)
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputDataObject(int idx, vtkDataObject *input)
+{
+	//if we have no input data object, clear the corresponding input connection
+	if( input == NULL )
+	{
+	  this->SetSmoothnessInputConnection(idx,NULL);
+	  return;
+	}
+
+	//else, create a trivial producer to mimic a connection
+	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+	trivProd->SetOutput(input);
+	this->SetSmoothnessInputConnection(idx,trivProd->GetOutputPort());
+	trivProd->Delete();
+}
+
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputConnection(int idx, vtkAlgorithmOutput *input)
 {
   //we are adding/switching an input, so no need to resort list
   if( input != NULL )
@@ -245,13 +266,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtk
       this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
       this->BackwardsInputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
     }
-#if (VTK_MAJOR_VERSION < 6)
-    this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], input->GetProducerPort() );
-#else
-    vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-    tp->SetInputDataObject(input);
-    this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], tp->GetOutputPort() );
-#endif
+    this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], input );
 
   }
   else
@@ -275,14 +290,8 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtk
     }
     else
     {
-      vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedSmoothnessPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(0, portNumber, swappedInput->GetProducerPort() );
-#else
-      vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-      tp->SetInputDataObject(swappedInput);
-      this->SetNthInputConnection(0, portNumber, tp->GetOutputPort() );
-#endif
+      vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedSmoothnessPort - 1);
+      this->SetNthInputConnection(0, portNumber, swappedInput );
       this->SetNthInputConnection(1, this->FirstUnusedSmoothnessPort - 1, 0 );
 
       //correct the mappings
@@ -300,25 +309,43 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInput(int idx, vtk
   }
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInput(int idx)
+vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputConnection(int idx)
 {
   if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
   {
     return 0;
   }
-  return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->InputDataPortMapping[idx]));
+  return this->GetInputConnection(0, this->InputDataPortMapping[idx]);
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInput(int idx)
+vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputDataObject(int idx)
+{
+  if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
+  {
+    return 0;
+  }
+  return this->GetExecutive()->GetInputData(0, this->InputDataPortMapping[idx]);
+}
+
+vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputConnection(int idx)
 {
   if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
   {
     return 0;
   }
-  return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(1, this->InputSmoothnessPortMapping[idx]));
+  return this->GetInputConnection(1, this->InputSmoothnessPortMapping[idx]);
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutput(int idx)
+vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputDataObject(int idx)
+{
+  if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+  {
+    return 0;
+  }
+  return this->GetExecutive()->GetInputData(1, this->InputSmoothnessPortMapping[idx]);
+}
+
+vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputDataObject(int idx)
 {
   //look up port in mapping
   std::map<vtkIdType,int>::iterator port = this->LeafMap.find(idx);
@@ -327,7 +354,19 @@ vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutput(int idx)
     return 0;
   }
 
-  return vtkImageData::SafeDownCast(this->GetExecutive()->GetOutputData(port->second));
+  return this->GetExecutive()->GetOutputData(port->second);
+}
+
+vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputPort(int idx)
+{
+  //look up port in mapping
+  std::map<vtkIdType,int>::iterator port = this->LeafMap.find(idx);
+  if( port == this->LeafMap.end() )
+  {
+    return 0;
+  }
+
+  return this->vtkAlgorithm::GetOutputPort(port->second);
 }
 
 //----------------------------------------------------------------------------

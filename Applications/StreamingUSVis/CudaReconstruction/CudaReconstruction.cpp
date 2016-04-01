@@ -489,7 +489,8 @@ char* CudaReconstruction::file2string(const char* filename, const char* preamble
   size_t source_length;
 
   // open the OpenCL source code file
-  if(fopen_s(&file_stream, filename, "rb") != 0)
+  file_stream = fopen(filename, "rb");
+  if(file_stream == 0)
   {
     return NULL;
   }

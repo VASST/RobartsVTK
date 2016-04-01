@@ -1,13 +1,26 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef qTransferFunctionDefinitionWidget_H
 #define qTransferFunctionDefinitionWidget_H
 
-#include <list>
+#include "TFUIDualModule.h"
 #include <QWidget>
+#include <list>
 
-class qHistogramHolderLabel;
 class QListWidget;
 class QMenu;
 class QSlider;
+class qHistogramHolderLabel;
 class qTransferFunctionWindowWidget;
 class vtkCuda2DTransferFunction;
 class vtkCudaDualImageVolumeMapper;
@@ -18,7 +31,7 @@ class vtkRenderer;
 
 #define HISTOSIZE 200
 
-class qTransferFunctionDefinitionWidget : public QWidget
+class TFUIDUAL_EXPORT qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 public:

@@ -210,7 +210,7 @@
   <customwidget>
    <class>QVTKWidget</class>
    <extends>QGraphicsView</extends>
-   <header>qvtkwidget.h</header>
+   <header>QVTKWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

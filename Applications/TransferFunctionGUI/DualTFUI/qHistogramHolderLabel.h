@@ -1,6 +1,19 @@
+/*=========================================================================
+
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #ifndef qHistogramHolderLabel_H
 #define qHistogramHolderLabel_H
 
+#include "TFUIDualModule.h"
 #include <QLabel>
 
 class qTransferFunctionDefinitionWidget;
@@ -8,7 +21,7 @@ class qTransferFunctionWindowWidget;
 class vtkCuda2DTransferFunction;
 class vtkCudaFunctionPolygon;
 
-class qHistogramHolderLabel : public QLabel
+class TFUIDUAL_EXPORT qHistogramHolderLabel : public QLabel
 {
   Q_OBJECT
 

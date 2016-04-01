@@ -1,23 +1,48 @@
-#include "qTransferFunctionWindowWidget.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkStringArray.h"
+/*=========================================================================
 
-#include "qTransferFunctionDefinitionWidget.h"
-#include "qSegmentationWidget.h"
+  Program:   Robarts Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+#include "QVTKWidget.h"
 #include "qDeviceManagementWidget.h"
-#include "qStereoRenderingWidget.h"
-#include "qShadingWidget.h"
 #include "qFileManagementWidget.h"
+#include "qSegmentationWidget.h"
+#include "qShadingWidget.h"
+#include "qStereoRenderingWidget.h"
+#include "qTransferFunctionDefinitionWidget.h"
+#include "qTransferFunctionWindowWidget.h"
 #include "qVirtualToolWidget.h"
-
+#include "vtkCuda2DTransferFunction.h"
+#include "vtkCuda2DVolumeMapper.h"
+#include "vtkInteractorStyleTrackballActor.h"
+#include "vtkInteractorStyleTrackballCamera.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkRenderer.h"
+#include "vtkStringArray.h"
+#include <QAction>
+#include <QCheckBox>
+#include <QColorDialog>
+#include <QFileDialog>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMenuBar>
 #include <QString>
 #include <QStringList>
-#include <QFileDialog>
-#include <QColorDialog>
-#include <QInputDialog>
 #include <QTabWidget>
-#include <QKeyEvent>
-
+#include <QThread>
+#include <QVBoxLayout>
+#include <QWidget>
 #include <fstream>
 
 qTransferFunctionWindowWidget::qTransferFunctionWindowWidget(QWidget *parent) :

@@ -2,14 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 
 PROJECT(StreamingUSVis)
 
-IF(UNIX)
-  SET(EXECUTABLE_STYLE "")
-ELSEIF(APPLE)
-  SET(EXECUTABLE_STYLE MACOSX_BUNDLE)
-ELSEIF(WIN32)
-  SET(EXECUTABLE_STYLE WIN32)
-ENDIF()
-
 #-------------------------------------
 # Find OpenCL
 #-------------------------------------
@@ -56,6 +48,9 @@ SET(StreamingUSVis_LIBRARIES
   vtkGUISupportQt
   vtkPlusCommon
   vtkDataCollection
+  ${OpenCV_LIBS}
+  vtkPlusCommon
+  vtkDataCollection
   CACHE INTERNAL ""
   )
 MARK_AS_ADVANCED(StreamingUSVis_LIBRARIES)
@@ -84,7 +79,7 @@ INCLUDE_DIRECTORIES(${StreamingUSVis_INCLUDE_DIRS})
 if( VTK_QT_VERSION VERSION_GREATER "4" )
   qt5_wrap_ui(UISrcs ${UI_FILES} )
 
-  ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_STYLE}
+  ADD_EXECUTABLE(${PROJECT_NAME}
     ${CXX_FILES} 
     ${CPP_FILES} 
     ${UISrcs} 
@@ -95,7 +90,7 @@ if( VTK_QT_VERSION VERSION_GREATER "4" )
 else()
   QT4_WRAP_UI(UISrcs ${UI_FILES})
 
-  ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_STYLE} 
+  ADD_EXECUTABLE(${PROJECT_NAME}
     ${CXX_FILES} 
     ${CPP_FILES} 
     ${UISrcs} 
