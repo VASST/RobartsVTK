@@ -109,10 +109,10 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
     vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation>::New();
   dagmf->SetStructure(DAG);
-  dagmf->SetInputData(bkg,cast0->GetOutput());
-  dagmf->SetInputData(l1,cast1->GetOutput());
-  dagmf->SetInputData(l2,cast2->GetOutput());
-  dagmf->SetInputData(l3,cast3->GetOutput());
+  dagmf->SetDataInputConnection(bkg,cast0->GetOutputPort());
+  dagmf->SetDataInputConnection(l1,cast1->GetOutputPort());
+  dagmf->SetDataInputConnection(l2,cast2->GetOutputPort());
+  dagmf->SetDataInputConnection(l3,cast3->GetOutputPort());
   dagmf->AddSmoothnessScalar(bkg,0.01);
   dagmf->AddSmoothnessScalar(l1, 0.01);
   dagmf->AddSmoothnessScalar(l2, 0.01);
@@ -125,13 +125,13 @@ int main(int argc, char** argv)
   dagmf->Update();
 
   vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
-  test0->ShallowCopy((vtkImageData*) dagmf->GetOutput(bkg));
+  test0->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(bkg));
   vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();
-  test1->ShallowCopy((vtkImageData*) dagmf->GetOutput(l1));
+  test1->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l1));
   vtkSmartPointer<vtkImageData> test2 = vtkSmartPointer<vtkImageData>::New();
-  test2->ShallowCopy((vtkImageData*) dagmf->GetOutput(l2));
+  test2->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l2));
   vtkSmartPointer<vtkImageData> test3 = vtkSmartPointer<vtkImageData>::New();
-  test3->ShallowCopy((vtkImageData*) dagmf->GetOutput(l3));
+  test3->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l3));
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
 #if (VTK_MAJOR_VERSION < 6)
