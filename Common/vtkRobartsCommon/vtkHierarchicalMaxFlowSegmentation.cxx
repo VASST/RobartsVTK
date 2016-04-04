@@ -155,18 +155,18 @@ int vtkHierarchicalMaxFlowSegmentation::FillInputPortInformation(int i, vtkInfor
 
 void vtkHierarchicalMaxFlowSegmentation::SetDataInputDataObject(int idx, vtkDataObject *input)
 {
-	//if we have no input data object, clear the corresponding input connection
-	if( input == NULL )
-	{
-	  this->SetDataInputConnection(idx,NULL);
-	  return;
-	}
+  //if we have no input data object, clear the corresponding input connection
+  if( input == NULL )
+  {
+    this->SetDataInputConnection(idx,NULL);
+    return;
+  }
 
-	//else, create a trivial producer to mimic a connection
-	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
-	trivProd->SetOutput(input);
-	this->SetDataInputConnection(idx,trivProd->GetOutputPort());
-	trivProd->Delete();
+  //else, create a trivial producer to mimic a connection
+  vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+  trivProd->SetOutput(input);
+  this->SetDataInputConnection(idx,trivProd->GetOutputPort());
+  trivProd->Delete();
 }
 
 void vtkHierarchicalMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgorithmOutput *input)
@@ -208,7 +208,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgo
     }
     else
     {
-	  vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedDataPort - 1);
+      vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedDataPort - 1);
       this->SetNthInputConnection(0, portNumber, swappedInput );
       this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
 
@@ -229,18 +229,18 @@ void vtkHierarchicalMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgo
 
 void vtkHierarchicalMaxFlowSegmentation::SetSmoothnessInputDataObject(int idx, vtkDataObject *input)
 {
-	//if we have no input data object, clear the corresponding input connection
-	if( input == NULL )
-	{
-	  this->SetSmoothnessInputConnection(idx,NULL);
-	  return;
-	}
+  //if we have no input data object, clear the corresponding input connection
+  if( input == NULL )
+  {
+    this->SetSmoothnessInputConnection(idx,NULL);
+    return;
+  }
 
-	//else, create a trivial producer to mimic a connection
-	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
-	trivProd->SetOutput(input);
-	this->SetSmoothnessInputConnection(idx,trivProd->GetOutputPort());
-	trivProd->Delete();
+  //else, create a trivial producer to mimic a connection
+  vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+  trivProd->SetOutput(input);
+  this->SetSmoothnessInputConnection(idx,trivProd->GetOutputPort());
+  trivProd->Delete();
 }
 
 void vtkHierarchicalMaxFlowSegmentation::SetSmoothnessInputConnection(int idx, vtkAlgorithmOutput *input)
@@ -281,7 +281,7 @@ void vtkHierarchicalMaxFlowSegmentation::SetSmoothnessInputConnection(int idx, v
     }
     else
     {
-	  vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedSmoothnessPort - 1);
+      vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedSmoothnessPort - 1);
       this->SetNthInputConnection(0, portNumber, swappedInput );
       this->SetNthInputConnection(1, this->FirstUnusedSmoothnessPort - 1, 0 );
 
