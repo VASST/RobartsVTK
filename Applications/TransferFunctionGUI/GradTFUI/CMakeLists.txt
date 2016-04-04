@@ -1,6 +1,7 @@
 PROJECT(TFUIGradient)
 
 include(module.cmake)
+vtk_module_impl()
 
 SET ( Module_SRCS 
   qTransferFunctionWindowWidget.cxx 
