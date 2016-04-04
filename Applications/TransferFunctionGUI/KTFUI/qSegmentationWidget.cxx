@@ -89,11 +89,11 @@ void qSegmentationWidget::segment()
 
   if( filename.size() != 0 )
   {
-    std::string rawfilename = vtksys::SystemTools::GetFilenameWithoutExtension( filename.toStdString() );
+    std::string rawfilename = vtksys::SystemTools::GetFilenameWithoutExtension( std::string(filename.toLatin1().data()) );
     rawfilename.append( ".raw" );
     vtkMetaImageWriter* writer = vtkMetaImageWriter::New();
     writer->SetCompression(false);
-    writer->SetFileName( filename.toStdString().c_str() );
+    writer->SetFileName( filename.toLatin1().data() );
     writer->SetRAWFileName( rawfilename.c_str() );
 #if ( VTK_MAJOR_VERSION < 6 )
     writer->SetInput( classifier->GetOutput() );

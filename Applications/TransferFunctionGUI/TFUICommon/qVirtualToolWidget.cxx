@@ -416,12 +416,12 @@ void qVirtualToolWidget::addVTKFile()
   }
 
   //add image to the model
-  bool result = this->addVTKFile(filename.toStdString());
+  bool result = this->addVTKFile(std::string(filename.toLatin1().data()));
 
   //if an error occured, print message and do not continue
   if(result)
   {
-    std::cerr << "Could not load tool " << filename.toStdString() << "." << std::endl;
+    std::cerr << "Could not load tool " << filename.toLatin1().data() << "." << std::endl;
     return;
   }
 

@@ -557,7 +557,7 @@ void qTransferFunctionDefinitionWidget::saveTransferFunction()
   }
 
   vtkCudaFunctionPolygonWriter* writer = vtkCudaFunctionPolygonWriter::New();
-  writer->SetFileName( filename.toStdString() );
+  writer->SetFileName( std::string(filename.toLatin1().data()) );
   for( std::list<vtkCudaFunctionPolygon*>::iterator it = this->functionObjects.begin(); it != this->functionObjects.end(); it++)
   {
     writer->AddInput( *it );
@@ -590,7 +590,7 @@ void qTransferFunctionDefinitionWidget::loadTransferFunction()
 
 
   vtkCudaFunctionPolygonReader* reader = vtkCudaFunctionPolygonReader::New();
-  reader->SetFileName( filename.toStdString() );
+  reader->SetFileName( std::string(filename.toLatin1().data()) );
   reader->Read();
   for( int n = 0; n < reader->GetNumberOfOutputs(); n++ )
   {
