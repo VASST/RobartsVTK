@@ -13,7 +13,6 @@
 #ifndef SEGMENTATIONWIDGET
 #define SEGMENTATIONWIDGET
 
-#include "TFUIGradientModule.h"
 #include <QWidget>
 
 class QMenu;
@@ -23,7 +22,7 @@ class vtkCuda2DVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUIGRADIENT_EXPORT qSegmentationWidget : public QWidget
+class qSegmentationWidget : public QWidget
 {
   Q_OBJECT
 

@@ -3,5 +3,4 @@ vtk_module(CudaReconstruction
     Examples
   DEPENDS
     vtkCudaCommon 
-
   )

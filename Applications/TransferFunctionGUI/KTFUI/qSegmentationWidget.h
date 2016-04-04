@@ -13,7 +13,6 @@
 #ifndef SEGMENTATIONWIDGET
 #define SEGMENTATIONWIDGET
 
-#include "TFUIKohonenModule.h"
 #include <QWidget>
 
 class QMenu;
@@ -24,7 +23,7 @@ class vtkCudaDualImageVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUIKOHONEN_EXPORT qSegmentationWidget : public QWidget
+class qSegmentationWidget : public QWidget
 {
   Q_OBJECT
 

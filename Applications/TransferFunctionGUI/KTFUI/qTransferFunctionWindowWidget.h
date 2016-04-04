@@ -13,7 +13,6 @@
 #ifndef TRANSFERFUNCTIONWINDOWWIDGET
 #define TRANSFERFUNCTIONWINDOWWIDGET
 
-#include "TFUIKohonenModule.h"
 #include "qTransferFunctionWindowWidgetInterface.h"
 
 class QHBoxLayout;
@@ -36,7 +35,7 @@ class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkRenderer;
 
-class TFUIKOHONEN_EXPORT qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
+class qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
 {
   Q_OBJECT
 

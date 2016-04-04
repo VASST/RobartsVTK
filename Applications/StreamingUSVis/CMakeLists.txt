@@ -20,12 +20,9 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${CUDA_INCLUDE_DIRS}
   ${GLUT_INCLUDE_DIR}
   ${OpenCL_INCLUDE_DIRS}
-  ${PLUSLIB_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
-  ${TFUIGradient_INCLUDE_DIRS}
-  ${TFUICommon_INCLUDE_DIRS}
   ${CudaReconstruction_INCLUDE_DIRS}
   CACHE INTERNAL ""
   )
@@ -43,10 +40,14 @@ SET(StreamingUSVis_LIBRARIES
   ${vtkCudaCommon_LIBRARIES}
   ${vtkCudaVisualization_LIBRARIES}
   ${vtkCudaImageAnalytics_LIBRARIES}
-  ${TFUIGradient_LIBRARIES}
-  ${TFUICommon_LIBRARIES}
   ${CudaReconstruction_LIBRARIES}
-  ${VTK_LIBRARIES}
+  ${OpenCV_LIBS}
+  vtksys
+  vtkInteractionWidgets
+  vtkInteractionImage
+  vtkGUISupportQt
+  vtkPlusCommon
+  vtkDataCollection
   ${OpenCV_LIBS}
   vtkPlusCommon
   vtkDataCollection

@@ -13,7 +13,6 @@
 #ifndef qHistogramHolderLabel_H
 #define qHistogramHolderLabel_H
 
-#include "TFUIKohonenModule.h"
 #include <QLabel>
 
 class qTransferFunctionDefinitionWidget;
@@ -24,7 +23,7 @@ class vtkCuda2DTransferFunction;
 class vtkCudaFunctionPolygon;
 class vtkCudaFunctionPolygon;
 
-class TFUIKOHONEN_EXPORT qHistogramHolderLabel : public QLabel
+class qHistogramHolderLabel : public QLabel
 {
   Q_OBJECT
 

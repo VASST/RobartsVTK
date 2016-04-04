@@ -13,7 +13,6 @@
 #ifndef TRANSFERFUNCTIONWINDOWWIDGET
 #define TRANSFERFUNCTIONWINDOWWIDGET
 
-#include "TFUIGradientModule.h"
 #include "qTransferFunctionWindowWidgetInterface.h"
 
 class QAction;
@@ -42,7 +41,7 @@ class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkRenderer;
 
-class TFUIGRADIENT_EXPORT qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
+class qTransferFunctionWindowWidget : public qTransferFunctionWindowWidgetInterface
 {
   Q_OBJECT
 

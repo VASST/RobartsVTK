@@ -13,7 +13,6 @@
 #ifndef TRANSFERFUNCTIONDEFINITIONWIDGET
 #define TRANSFERFUNCTIONDEFINITIONWIDGET
 
-#include "TFUIGradientModule.h"
 #include <QWidget>
 #include <list>
 
@@ -29,7 +28,7 @@ class vtkImageData;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUIGRADIENT_EXPORT qTransferFunctionDefinitionWidget : public QWidget
+class qTransferFunctionDefinitionWidget : public QWidget
 {
   Q_OBJECT
 
