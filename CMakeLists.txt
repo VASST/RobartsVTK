@@ -421,7 +421,6 @@ ENDIF()
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OFF)
 IF (RobartsVTK_USE_REGISTRATION)
-  OPTION(RobartsVTK_Include_Outdated_Registration "Include classes that still use VTK4 pipeline style." OFF)
   ADD_SUBDIRECTORY(ImageProcessing/vtkRobartsRegistration)
 
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsRegistration CACHE INTERNAL "")
