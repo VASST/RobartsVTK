@@ -28,6 +28,7 @@ SET ( Module_SRCS
   vtkImageAbsoluteDifference.cxx
   vtkImage3DNoiseSource.cxx
   vtkGBEFixed.cxx
+  vtkGridTransformBSpline.cxx
   vtkGBE.cxx
   vtkFunctionMinimizer.cxx
   vtkCompactSupportRBFTransform.cxx
@@ -47,7 +48,6 @@ if( ${RobartsVTK_Include_Outdated_Registration} )
     vtkImageDataStatistics.cxx
     vtkImageCrossCorrelation.cxx
     vtkImageAmoebaGrid.cxx
-    vtkGridTransformBSpline.cxx
     vtkDeformedVolume.cxx # depends on vtkGridTransformBSpline.cxx
     vtkCISGSubdivideGridTransform.cxx # depends on vtkGridTransformBSpline.cxx
     vtkCalcCrossCorrelation.cxx

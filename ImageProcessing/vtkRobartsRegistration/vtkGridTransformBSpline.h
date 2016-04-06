@@ -47,11 +47,7 @@ class VTKROBARTSREGISTRATION_EXPORT vtkGridTransformBSpline : public vtkWarpTran
 {
 public:
   static vtkGridTransformBSpline *New();
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkGridTransformBSpline,vtkWarpTransform);
-#else
-  vtkTypeMacro(vtkGridTransformBSpline,vtkWarpTransform);
-#endif
+  vtkTypeMacro(vtkGridTransformBSpline, vtkWarpTransform);
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -81,22 +77,10 @@ public:
   // Default: Linear.
   void SetInterpolationMode(int mode);
   vtkGetMacro(InterpolationMode,int);
-  void SetInterpolationModeToNearestNeighbor()
-  {
-    this->SetInterpolationMode(VTK_GRID_NEAREST);
-  };
-  void SetInterpolationModeToLinear()
-  {
-    this->SetInterpolationMode(VTK_GRID_LINEAR);
-  };
-  void SetInterpolationModeToCubic()
-  {
-    this->SetInterpolationMode(VTK_GRID_CUBIC);
-  };
-  void SetInterpolationModeToBSpline()
-  {
-    this->SetInterpolationMode(VTK_GRID_BSPLINE);
-  };
+  void SetInterpolationModeToNearestNeighbor();;
+  void SetInterpolationModeToLinear();;
+  void SetInterpolationModeToCubic();;
+  void SetInterpolationModeToBSpline();;
   const char *GetInterpolationModeAsString();
 
   // Description:
@@ -109,16 +93,12 @@ public:
 
 //BTX
   /// Memory for lookup table for B-spline basis function values
-  static    double LookupTable[LookupTableSize][4];
+  static double LookupTable[LookupTableSize][4];
 //ETX
 
 protected:
   vtkGridTransformBSpline();
   ~vtkGridTransformBSpline();
-
-  // Description:
-  // Update the displacement grid.
-  void InternalUpdate();
 
   // Description:
   // Copy this transform from another of the same type.
@@ -146,7 +126,7 @@ protected:
   void (*InterpolationFunction)(float point[3], float displacement[3],
                                 float derivatives[3][3],
                                 void *gridPtr, int grdType,
-                                int inExt[6], int inInc[3]);
+                                int inExt[6], vtkIdType inInc[3]);
 
   /// Returns the value of the i-th B-spline basis function
   static double B (int, double);
@@ -161,8 +141,8 @@ protected:
   static double dB1(double);
   static double dB2(double);
   static double dB3(double);
-
 //ETX
+
   int InterpolationMode;
   vtkImageData *DisplacementGrid;
   double DisplacementScale;
@@ -173,7 +153,6 @@ private:
 };
 
 //BTX
-
 //----------------------------------------------------------------------------
 inline const char *vtkGridTransformBSpline::GetInterpolationModeAsString()
 {
@@ -193,6 +172,7 @@ inline const char *vtkGridTransformBSpline::GetInterpolationModeAsString()
 }
 //ETX
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::B(int i, double t)
 {
   switch (i)
@@ -209,27 +189,31 @@ inline double vtkGridTransformBSpline::B(int i, double t)
   return 0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::B0(double t)
 {
   return (1-t)*(1-t)*(1-t)/6.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::B1(double t)
 {
   return (3*t*t*t - 6*t*t + 4)/6.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::B2(double t)
 {
   return (-3*t*t*t + 3*t*t + 3*t + 1)/6.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::B3(double t)
 {
   return (t*t*t)/6.0;
 }
 
-
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::dB(int i, double t)
 {
   switch (i)
@@ -246,21 +230,25 @@ inline double vtkGridTransformBSpline::dB(int i, double t)
   return 0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::dB0(double t)
 {
   return -(1-t)*(1-t)/2.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::dB1(double t)
 {
   return (9*t*t - 12*t)/6.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::dB2(double t)
 {
   return (-9*t*t + 6*t + 3)/6.0;
 }
 
+//----------------------------------------------------------------------------
 inline double vtkGridTransformBSpline::dB3(double t)
 {
   return (t*t)/2.0;
