@@ -12,7 +12,6 @@ SET ( Module_SRCS
   vtkPolyDataCorrespondence.cxx
   vtkMeshSmootheness.cxx
   vtkImageTMIManipulator.cxx
-  vtkImageSquaredDifference.cxx
   vtkImageSMIPVIManipulator.cxx
   vtkImageSMIManipulator.cxx
   vtkImageSMIManipulator2.cxx
