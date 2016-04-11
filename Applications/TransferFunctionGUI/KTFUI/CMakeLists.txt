@@ -29,6 +29,7 @@ foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
 endforeach()
 vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_LIBS})
 vtk_target_install(${PROJECT_NAME})
+vtk_module_export(${Module_SRCS})
 
 # -----------------------------------------------------------------
 LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
