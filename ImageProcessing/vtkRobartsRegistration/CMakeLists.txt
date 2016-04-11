@@ -12,7 +12,6 @@ SET ( Module_SRCS
   vtkPolyDataCorrespondence.cxx
   vtkMeshSmootheness.cxx
   vtkImageTMIManipulator.cxx
-  vtkImageSquaredDifference.cxx
   vtkImageSMIPVIManipulator.cxx
   vtkImageSMIManipulator.cxx
   vtkImageSMIManipulator2.cxx
@@ -32,29 +31,6 @@ SET ( Module_SRCS
   vtkFunctionMinimizer.cxx
   vtkCompactSupportRBFTransform.cxx
 )
-
-# The following classes need re-writing to move from VTK4 to VTK6 design
-if( ${RobartsVTK_Include_Outdated_Registration} )
-  SET ( Module_SRCS ${Module_SRCS} 
-    vtkImageTsallisMutualInformation.cxx
-    vtkImageSquaredDifference.cxx
-    vtkImageShannonMutualInformation.cxx
-    vtkImageResliceBSpline.cxx
-    vtkImageRenyiMutualInformation.cxx
-    vtkImageProbeSum.cxx
-    vtkImageNormalizedMutualInformation.cxx
-    vtkImageGridStatistics.cxx
-    vtkImageDataStatistics.cxx
-    vtkImageCrossCorrelation.cxx
-    vtkImageAmoebaGrid.cxx
-    vtkGridTransformBSpline.cxx
-    vtkDeformedVolume.cxx # depends on vtkGridTransformBSpline.cxx
-    vtkCISGSubdivideGridTransform.cxx # depends on vtkGridTransformBSpline.cxx
-    vtkCalcCrossCorrelation.cxx
-    vtkCalcCentroid.cxx
-    vtkImageMean3D.cxx
-  )
-endif()
 
 # -----------------------------------------------------------------
 # Build the library

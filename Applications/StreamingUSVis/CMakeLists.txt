@@ -19,6 +19,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${VTK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
   ${GLUT_INCLUDE_DIR}
+  ${TFUIDual_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}

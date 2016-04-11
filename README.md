@@ -32,7 +32,6 @@ Dependencies must be built or installed before RobartsVTK can be built. Please v
 ## CMake Configuration
 The following variables should be set when configuring RobartsVTK
 * RobartsVTK_BUILD_APPS:BOOL = `ON`
-* RobartsVTK_Include_Outdated_Registration:BOOL = `OFF`
 * ITK_DIR:PATH = `<path/to/your/itk-bin/dir>`
 * PlusLib_DIR:PATH = `<path/to/your/plus-bin/dir>`
 * QT4 - QT_QMAKE_EXECUTABLE:FILEPATH = `<path/to/your/qt-build>/bin/qmake.exe`

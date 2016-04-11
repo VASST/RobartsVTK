@@ -81,21 +81,26 @@ public:
   // correspond to leaf nodes due to the data term pushdown theorem. These must be
   // supplied for every leaf node for the algorithm to run.
   // The hierarchy must be supplied prior to invoking these methods.
-  vtkDataObject* GetDataInput(int idx);
-  void SetDataInput(int idx, vtkDataObject *input);
+  vtkDataObject* GetDataInputDataObject(int idx);
+  void SetDataInputDataObject(int idx, vtkDataObject *input);
+  vtkAlgorithmOutput* GetDataInputConnection(int idx);
+  void SetDataInputConnection(int idx, vtkAlgorithmOutput *input);
   
   // Description:
   // Get and Set the smoothness for the objects. The algorithm only uses those which
   // correspond to non-root nodes. If not supplied, they are assumed to be the unit
   // field (ie: S(x)=1 for all voxels x).
   // The hierarchy must be supplied prior to invoking these methods.
-  vtkDataObject* GetSmoothnessInput(int idx);
-  void SetSmoothnessInput(int idx, vtkDataObject *input);
+  vtkDataObject* GetSmoothnessInputDataObject(int idx);
+  void SetSmoothnessInputDataObject(int idx, vtkDataObject *input);
+  vtkAlgorithmOutput* GetSmoothnessInputConnection(int idx);
+  void SetSmoothnessInputConnection(int idx, vtkAlgorithmOutput *input);
   
   // Description:
   // Get the final probabilistic labelling, assuming idx refers to a leaf
   // node in the supplied hierarchy
-  vtkDataObject* GetOutput(int idx);
+  vtkDataObject* GetOutputDataObject(int idx);
+  vtkAlgorithmOutput* GetOutputPort(int idx);
   
   // Description:
   // If the subclass does not define an Execute method, then the task
