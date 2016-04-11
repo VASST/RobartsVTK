@@ -57,7 +57,7 @@ FluoroPredViz::FluoroPredViz( QWidget* parent )
   Extractor = 0;
 
   SuccessInit = SetUpReader(RequestFilename());
-  if(SuccessInit != 0)
+  if(!SuccessInit)
   {
     return;
   }
@@ -967,7 +967,7 @@ void FluoroPredViz::ConnectUpPipeline()
 #if (VTK_MAJOR_VERSION < 6)
   DRRMapper->SetInput(Extractor->GetOutput());
 #else
-  DRRMapper->SetInputConnection(Extractor->GetOutputPort());
+  DRRMapper->SetInputData(Extractor->GetOutput());
 #endif
   //MapperDRR->SetCTOffset(16.0);
   ImageVolumeDRR = vtkVolume::New();
@@ -983,9 +983,9 @@ void FluoroPredViz::ConnectUpPipeline()
   //buidl remaining DVR pipeline
   this->DVRMapper = vtkCudaDualImageVolumeMapper::New();
 #if (VTK_MAJOR_VERSION < 6)
-  DRRMapper->SetInput(Reader->GetOutput());
+  DVRMapper->SetInput(Reader->GetOutput());
 #else
-  DRRMapper->SetInputConnection(Reader->GetOutputPort());
+  DVRMapper->SetInputData(Reader->GetOutput());
 #endif
   //DVRMapper->SetInput(Extractor->GetOutput());
   DVRMapper->SetImageFlipped(false);
