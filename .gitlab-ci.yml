@@ -36,3 +36,4 @@ build-visual-studio-x64-qt4:
     - qt4
   only:
     - master
+    - build-test
