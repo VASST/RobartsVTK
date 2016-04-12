@@ -781,11 +781,11 @@ bool FluoroPredViz::SetUpReader(QString filename)
       this->Reader->Delete();
     }
     this->Reader = vtkMetaImageReader::New();
-	if( !this->Reader->CanReadFile( filename.toLatin1().data() ) )
+	if( !this->Reader->CanReadFile( filename.toLatin1() ) )
     {
       return false;
     }
-    this->Reader->SetFileName( filename.toLatin1().data() );
+    this->Reader->SetFileName( filename.toLatin1() );
 
   }
   else if( filename.endsWith(".mnc",Qt::CaseInsensitive) || filename.endsWith(".minc",Qt::CaseInsensitive) )
@@ -795,11 +795,11 @@ bool FluoroPredViz::SetUpReader(QString filename)
       this->Reader->Delete();
     }
     this->Reader = vtkMINCImageReader::New();
-    if( !this->Reader->CanReadFile( filename.toLatin1().data() ) )
+    if( !this->Reader->CanReadFile( filename.toLatin1() ) )
     {
       return false;
     }
-    this->Reader->SetFileName( filename.toLatin1().data() );
+    this->Reader->SetFileName( filename.toLatin1() );
 
   }
   else if( filename.endsWith(".dcm",Qt::CaseInsensitive) )
@@ -825,12 +825,12 @@ bool FluoroPredViz::SetUpReader(QString filename)
     vtkStringArray* filenameArray = vtkStringArray::New();
     for(int i = 0; i < txtFilesAndDirectories.length(); i++)
     {
-	  filenameArray->InsertNextValue( std::string(txtFilesAndDirectories[i].toLatin1().data()) );
-      //if( !Reader->CanReadFile(  txtFilesAndDirectories[i].toLatin1().data() ) )
+	  filenameArray->InsertNextValue( std::string(txtFilesAndDirectories[i].toLatin1()) );
+      //if( !Reader->CanReadFile(  txtFilesAndDirectories[i].toLatin1() ) )
       //  return -1;
     }
     Reader->SetFileNames( filenameArray );
-	dicomReader->SetDirectoryName(filename.toLatin1().data());
+	dicomReader->SetDirectoryName(filename.toLatin1());
 
     filenameArray->Delete();
 
@@ -1352,7 +1352,7 @@ void FluoroPredViz::SetTFName()
     object->Delete();
   }
   vtkCudaFunctionPolygonReader* tfReader = vtkCudaFunctionPolygonReader::New();
-  tfReader->SetFileName(std::string(filename.toLatin1().data()));
+  tfReader->SetFileName(std::string(filename.toLatin1()));
   tfReader->Read();
   for(int i = 0; i < tfReader->GetNumberOfOutputs(); i++)
   {
