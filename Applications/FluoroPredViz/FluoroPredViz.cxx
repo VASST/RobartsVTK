@@ -57,7 +57,7 @@ FluoroPredViz::FluoroPredViz( QWidget* parent )
   Extractor = 0;
 
   SuccessInit = SetUpReader(RequestFilename());
-  if(SuccessInit != 0)
+  if(!SuccessInit)
   {
     return;
   }
@@ -781,11 +781,11 @@ bool FluoroPredViz::SetUpReader(QString filename)
       this->Reader->Delete();
     }
     this->Reader = vtkMetaImageReader::New();
-    if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
+	if( !this->Reader->CanReadFile( filename.toLatin1() ) )
     {
       return false;
     }
-    this->Reader->SetFileName( filename.toStdString().c_str() );
+    this->Reader->SetFileName( filename.toLatin1() );
 
   }
   else if( filename.endsWith(".mnc",Qt::CaseInsensitive) || filename.endsWith(".minc",Qt::CaseInsensitive) )
@@ -795,11 +795,11 @@ bool FluoroPredViz::SetUpReader(QString filename)
       this->Reader->Delete();
     }
     this->Reader = vtkMINCImageReader::New();
-    if( !this->Reader->CanReadFile( filename.toStdString().c_str() ) )
+    if( !this->Reader->CanReadFile( filename.toLatin1() ) )
     {
       return false;
     }
-    this->Reader->SetFileName( filename.toStdString().c_str() );
+    this->Reader->SetFileName( filename.toLatin1() );
 
   }
   else if( filename.endsWith(".dcm",Qt::CaseInsensitive) )
@@ -825,12 +825,12 @@ bool FluoroPredViz::SetUpReader(QString filename)
     vtkStringArray* filenameArray = vtkStringArray::New();
     for(int i = 0; i < txtFilesAndDirectories.length(); i++)
     {
-      filenameArray->InsertNextValue( txtFilesAndDirectories[i].toStdString() );
-      //if( !Reader->CanReadFile(  txtFilesAndDirectories[i].toStdString().c_str() ) )
+	  filenameArray->InsertNextValue( std::string(txtFilesAndDirectories[i].toLatin1()) );
+      //if( !Reader->CanReadFile(  txtFilesAndDirectories[i].toLatin1() ) )
       //  return -1;
     }
     Reader->SetFileNames( filenameArray );
-    dicomReader->SetDirectoryName(filename.toStdString().c_str());
+	dicomReader->SetDirectoryName(filename.toLatin1());
 
     filenameArray->Delete();
 
@@ -967,7 +967,7 @@ void FluoroPredViz::ConnectUpPipeline()
 #if (VTK_MAJOR_VERSION < 6)
   DRRMapper->SetInput(Extractor->GetOutput());
 #else
-  DRRMapper->SetInputConnection(Extractor->GetOutputPort());
+  DRRMapper->SetInputData(Extractor->GetOutput());
 #endif
   //MapperDRR->SetCTOffset(16.0);
   ImageVolumeDRR = vtkVolume::New();
@@ -983,9 +983,9 @@ void FluoroPredViz::ConnectUpPipeline()
   //buidl remaining DVR pipeline
   this->DVRMapper = vtkCudaDualImageVolumeMapper::New();
 #if (VTK_MAJOR_VERSION < 6)
-  DRRMapper->SetInput(Reader->GetOutput());
+  DVRMapper->SetInput(Reader->GetOutput());
 #else
-  DRRMapper->SetInputConnection(Reader->GetOutputPort());
+  DVRMapper->SetInputData(Reader->GetOutput());
 #endif
   //DVRMapper->SetInput(Extractor->GetOutput());
   DVRMapper->SetImageFlipped(false);
@@ -1352,7 +1352,7 @@ void FluoroPredViz::SetTFName()
     object->Delete();
   }
   vtkCudaFunctionPolygonReader* tfReader = vtkCudaFunctionPolygonReader::New();
-  tfReader->SetFileName(filename.toStdString());
+  tfReader->SetFileName(std::string(filename.toLatin1()));
   tfReader->Read();
   for(int i = 0; i < tfReader->GetNumberOfOutputs(); i++)
   {

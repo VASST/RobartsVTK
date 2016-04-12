@@ -196,12 +196,12 @@ void qFileManagementWidget::addMHDFile()
   for(int i = 0; i < filenameList.size(); i++)
   {
     //add image to the model
-    bool result = addMetaImage(filenameList[i].toStdString());
+    bool result = addMetaImage(std::string(filenameList[i].toLatin1().data()));
 
     //if an error occured, print message and do not continue
     if(result)
     {
-      std::cerr << "Could not load image " << filenameList[i].toStdString() << "." << std::endl;
+      std::cerr << "Could not load image " << filenameList[i].toLatin1().data() << "." << std::endl;
       continue;
     }
     // add the image to the list of images
@@ -228,12 +228,12 @@ void qFileManagementWidget::addMNCFile()
   for(int i = 0; i < filenameList.size(); i++)
   {
     //add image to the model
-    bool result = addMincImage(filenameList[i].toStdString());
+    bool result = addMincImage(std::string(filenameList[i].toLatin1().data()));
 
     //if an error occured, print message and do not continue
     if(result)
     {
-      std::cerr << "Could not load image " << filenameList[i].toStdString() << "." << std::endl;
+	  std::cerr << "Could not load image " << filenameList[i].toLatin1().data() << "." << std::endl;
       return;
     }
 
@@ -258,12 +258,12 @@ void qFileManagementWidget::addDICOMFile()
   }
 
   //add image to the model
-  bool result = addDICOMImage(filename.toStdString());
+  bool result = addDICOMImage(std::string(filename.toLatin1().data()));
 
   //if an error occured, print message and do not continue
   if(result)
   {
-    std::cerr << "Could not load image " << filename.toStdString() << "." << std::endl;
+    std::cerr << "Could not load image " << filename.toLatin1().data() << "." << std::endl;
     return;
   }
 
@@ -290,7 +290,7 @@ void qFileManagementWidget::selectFrame()
   QString filename = curr->text();
 
   //tell the manager to display this image
-  selectFrame(filename.toStdString());
+  selectFrame(std::string(filename.toLatin1().data()));
   window->Render();
 }
 

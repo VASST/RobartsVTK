@@ -82,13 +82,13 @@ qTransferFunctionWindowWidget::qTransferFunctionWindowWidget(QWidget *parent) :
     std::exit(1);
   }
   vtkMetaImageReader* mapReader = vtkMetaImageReader::New();
-  if( !mapReader->CanReadFile(filename.toStdString().c_str()) )
+  if( !mapReader->CanReadFile(filename.toLatin1().data()) )
   {
     std::exit(1);
   }
 
   //load KSOM
-  mapReader->SetFileName( filename.toStdString().c_str() );
+  mapReader->SetFileName( filename.toLatin1().data() );
   mapReader->Update();
 
   //set up the file widget and menu
