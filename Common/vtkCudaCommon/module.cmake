@@ -3,7 +3,7 @@ vtk_module(vtkCudaCommon
     Cuda
   DEPENDS
     vtkCommonCore
-    vtkRenderingOpenGL
+    vtkRendering${VTK_RENDERING_BACKEND}
     vtkRenderingFreeType
     vtkInteractionStyle
   )

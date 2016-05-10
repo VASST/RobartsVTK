@@ -6,6 +6,6 @@ vtk_module(vtkCudaVisualization
     vtkCudaCommon
     vtkCudaCommonStatic
     vtkRenderingVolume
-    vtkRenderingVolumeOpenGL
+    vtkRenderingVolume${VTK_RENDERING_BACKEND}
   EXCLUDE_FROM_WRAP_HIERARCHY
   )
