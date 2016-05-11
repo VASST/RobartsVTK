@@ -490,7 +490,7 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         # Find freeglut
         #-------------------------------------
-        FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
+        #FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
         # Copy dlls to bin folder
 
         #-------------------------------------
@@ -535,6 +535,12 @@ foreach( module ${RobartsVTK_LIBRARIES} )
   vtk_module_load(${module})
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${${module}_INCLUDE_DIRS} CACHE INTERNAL "")
 endforeach()
+
+IF( "${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2" )
+  SET(VTK_GL_VERSION 2)
+ELSE()
+  SET(VTK_GL_VERSION 1)
+ENDIF()
 
 #-----------------------------------------------------------------------------
 # Generate build configurations

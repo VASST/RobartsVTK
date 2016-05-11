@@ -114,7 +114,7 @@
 #include <iostream>
 #include <chrono> // For timing
 
-# define D_TIMING
+//# define D_TIMING
 //# define ALIGNMENT_DEBUG
 
 class vtkUSEventCallback : public vtkCommand

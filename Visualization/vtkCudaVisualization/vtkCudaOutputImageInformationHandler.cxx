@@ -1,3 +1,14 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+
+  Copyright (c) John Stuart Haberl Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
 /** @file vtkCudaOutputImageInformationHandler.cxx
  *
  *  @brief An internal class for vtkCudaVolumeMapper which manages information regarding the image being outputted
@@ -7,9 +18,16 @@
  *
  */
 
+#include "RobartsVTKConfigure.h"
+
 // FIXED ORDER
+#if VTK_GL_VERSION == 2
+#include "vtkOpenGLError.h"
+#include "vtkOpenGL.h"
+#else
 #include "vtkgl.h"
 #include "vtkOpenGLExtensionManager.h"
+#endif
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
 // END FIXED ORDER

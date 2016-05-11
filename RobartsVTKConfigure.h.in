@@ -34,5 +34,7 @@
 #if (@VTK_MAJOR_VERSION@ >= 6)  
   #include "vtkVersionMacros.h"
 #endif
- 
+
+#define VTK_GL_VERSION ${VTK_GL_VERSION}
+
 #endif // __RobartsVTKConfigure_h

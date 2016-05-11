@@ -35,6 +35,7 @@
 #include "ui_mainwindow.h"
 #include <vtkMetaImageReader.h>
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -209,7 +210,7 @@ int MainWindow::init_PLUS_Bypass_Pipeline(){
 						   -0.0030,    0.0118,   -0.9873,   -7.8930,
 						   -0.0069,    0.0753,    0.1568,    1.0670};
 
-	acceleratedVolumeReconstructor->SetProgramSourcePath("..\\src\\acceleratedReconstruction\\kernels.cl");
+	acceleratedVolumeReconstructor->SetProgramSourcePath("kernels.cl");
 	acceleratedVolumeReconstructor->SetBScanSize( 820, 616);
 	acceleratedVolumeReconstructor->SetBScanSpacing(0.077, 0.073);
 
@@ -1026,6 +1027,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   }
 
   TrackedFrame *trackedFrame = trackedFrames->GetTrackedFrame( index );
+  std::cout << "Here.. " << std::endl;
 
   /*    // Update transform repository
   if ( repository->SetTransforms(*trackedFrame) != PLUS_SUCCESS ){

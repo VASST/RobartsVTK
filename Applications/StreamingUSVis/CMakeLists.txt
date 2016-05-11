@@ -11,14 +11,12 @@ FIND_PACKAGE(OpenCL REQUIRED)
 # Add CudaReconstruction
 #-------------------------------------
 ADD_SUBDIRECTORY(CudaReconstruction)
-
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
   ${OpenCV_INCLUDE_DIR} 
   ${VTK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
-  ${GLUT_INCLUDE_DIR}
   ${TFUIDual_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
@@ -36,7 +34,6 @@ ELSE()
 ENDIF()
 
 SET(StreamingUSVis_LIBRARIES 
-  ${GLUT_LIBRARIES}
   ${OpenCL_LIBRARIES}
   ${vtkCudaCommon_LIBRARIES}
   ${vtkCudaVisualization_LIBRARIES}
@@ -54,6 +51,7 @@ SET(StreamingUSVis_LIBRARIES
   vtkDataCollection
   CACHE INTERNAL ""
   )
+  
 MARK_AS_ADVANCED(StreamingUSVis_LIBRARIES)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -73,7 +71,6 @@ FILE(GLOB CXX_FILES *.cxx)
 FILE(GLOB CPP_FILES *.cpp)
 
 INCLUDE_DIRECTORIES(${StreamingUSVis_INCLUDE_DIRS})
-
 #-------------------------------------
 # Create executable
 #-------------------------------------
