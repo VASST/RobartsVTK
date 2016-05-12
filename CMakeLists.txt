@@ -484,7 +484,7 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         # Find OpenCV
         #-------------------------------------
-        FIND_PACKAGE(OpenCV 2.3.1 REQUIRED NO_MODULE)
+        FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
         # Copy dlls to bin folder
 
         #-------------------------------------

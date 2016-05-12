@@ -110,8 +110,10 @@ void vtkCudaMemoryTexture::Initialize()
     // check for the RenderMode
 #if VTK_GL_VERSION == 2
 		GLenum err = glewInit();
-		if(GLEW_OK != err)
+		if(GLEW_OK != err){
 			std::cerr << "GLEW Error. " << std::endl;
+			return;
+		}
 
 		if(GLEW_ARB_vertex_buffer_object)
 		{
