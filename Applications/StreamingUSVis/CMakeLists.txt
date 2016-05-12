@@ -12,6 +12,14 @@ FIND_PACKAGE(OpenCL REQUIRED)
 #-------------------------------------
 ADD_SUBDIRECTORY(CudaReconstruction)
 
+# Load module to access TFUIDual_INCLUDE_DIRS and TFUICommon_INCLUDE_DIRS
+vtk_module_load(TFUIDual)
+vtk_module_load(TFUICommon)
+vtk_module_load(vtkCudaCommon)
+vtk_module_load(vtkCudaVisualization)
+vtk_module_load(vtkCudaImageAnalytics)
+vtk_module_load(CudaReconstruction)
+
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -20,6 +28,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${CUDA_INCLUDE_DIRS}
   ${GLUT_INCLUDE_DIR}
   ${TFUIDual_INCLUDE_DIRS}
+  ${TFUICommon_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}
