@@ -14,9 +14,10 @@ ADD_SUBDIRECTORY(CudaReconstruction)
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${OpenCV_INCLUDE_DIR} 
+  ${OpenCV_INCLUDE_DIRS} 
   ${VTK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
+  ${PLUSLIB_INCLUDE_DIRS}
   ${TFUIDual_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
@@ -25,6 +26,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${CudaReconstruction_INCLUDE_DIRS}
   CACHE INTERNAL ""
   )
+LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
 MARK_AS_ADVANCED(StreamingUSVis_INCLUDE_DIRS)
 
 IF( VTK_QT_VERSION VERSION_LESS "5" )
@@ -39,19 +41,19 @@ SET(StreamingUSVis_LIBRARIES
   ${vtkCudaVisualization_LIBRARIES}
   ${vtkCudaImageAnalytics_LIBRARIES}
   ${CudaReconstruction_LIBRARIES}
-  ${OpenCV_LIBS}
   vtksys
   vtkInteractionWidgets
   vtkInteractionImage
   vtkGUISupportQt
+  vtkPlusVolumeReconstruction
   vtkPlusCommon
-  vtkDataCollection
-  ${OpenCV_LIBS}
-  vtkPlusCommon
-  vtkDataCollection
+  vtkPlusDataCollection
+  opencv_core
+  opencv_imgproc
+  opencv_videoio
   CACHE INTERNAL ""
   )
-  
+
 MARK_AS_ADVANCED(StreamingUSVis_LIBRARIES)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

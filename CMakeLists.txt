@@ -484,14 +484,8 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         # Find OpenCV
         #-------------------------------------
-        FIND_PACKAGE(OpenCV 2.3.1 REQUIRED NO_MODULE)
-        # Copy dlls to bin folder
-
-        #-------------------------------------
-        # Find freeglut
-        #-------------------------------------
-        #FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
-        # Copy dlls to bin folder
+        FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+        # TODO : Copy dlls to bin folder
 
         #-------------------------------------
         # Find OpenMP
