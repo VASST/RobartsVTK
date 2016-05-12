@@ -1,5 +1,12 @@
 PROJECT(vtkCudaCommon)
 
+# Enabling support of OpenGL/OpenGL2 rendering backend
+IF(TARGET vtkglew)
+  SET(VTKGLEW_LIBRARY vtkglew)
+ELSE()
+  SET(VTKGLEW_LIBRARY)
+ENDIF()
+
 include(module.cmake)
 
 SET( Module_SRCS

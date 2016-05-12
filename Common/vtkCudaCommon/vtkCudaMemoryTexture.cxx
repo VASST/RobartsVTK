@@ -1,11 +1,31 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+
+  Copyright (c) Adam Rankin, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+#include "RobartsVTKConfigure.h"
+
 #include "vtkCudaMemoryTexture.h"
 #include "vtkImageData.h"
 #include "vtkObjectFactory.h"
 #include <vtkVersion.h>
 
 // Fixed order
+#if VTK_GL_VERSION == 2
+#include "vtkOpenGLError.h"
+#include "vtkOpenGL.h"
+#else 
 #include "vtkgl.h"
 #include "vtkOpenGLExtensionManager.h"
+#endif
+
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
 // End fixed order
@@ -47,10 +67,17 @@ void vtkCudaMemoryTexture::Deinitialize(int withData)
 
   if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == true)
   {
+#if VTK_GL_VERSION == 2
+	if (this->BufferObjectID != 0 && glIsBufferARB(this->BufferObjectID))
+    {
+      glDeleteBuffersARB(1, &this->BufferObjectID);
+    }
+#else 
     if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
     {
       vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
     }
+#endif
   }
 }
 
@@ -81,6 +108,17 @@ void vtkCudaMemoryTexture::Initialize()
   if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == false)
   {
     // check for the RenderMode
+#if VTK_GL_VERSION == 2
+		GLenum err = glewInit();
+		if(GLEW_OK != err)
+			std::cerr << "GLEW Error. " << std::endl;
+
+		if(GLEW_ARB_vertex_buffer_object)
+		{
+			vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
+			this->CurrentRenderMode = RenderToTexture;
+		}
+#else
     vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
     extensions->SetRenderWindow(NULL);
     if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
@@ -90,6 +128,7 @@ void vtkCudaMemoryTexture::Initialize()
       this->CurrentRenderMode = RenderToTexture;
     }
     extensions->Delete();
+#endif
   }
 }
 
@@ -176,6 +215,17 @@ void vtkCudaMemoryTexture::RebuildBuffer()
   {
     // OpenGL Buffer Code
     this->ReserveGPU();
+
+#if VTK_GL_VERSION == 2
+    if (this->BufferObjectID != 0 && glIsBufferARB(this->BufferObjectID))
+    {
+      glDeleteBuffersARB(1, &this->BufferObjectID);
+    }
+    glGenBuffersARB(1, &this->BufferObjectID);
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
+    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->Width * Height * sizeof(uchar4), (void*) this->LocalOutputData, GL_STREAM_COPY);
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+#else
     if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
     {
       vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
@@ -184,6 +234,7 @@ void vtkCudaMemoryTexture::RebuildBuffer()
     vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
     vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->Width * Height * sizeof(uchar4), (void*) this->LocalOutputData, vtkgl::STREAM_COPY);
     vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
+#endif
   }
 }
 
@@ -225,7 +276,11 @@ void vtkCudaMemoryTexture::BindBuffer()
     cudaGLRegisterBufferObject(this->BufferObjectID) ;
     cudaStreamSynchronize(*(this->GetStream()));
 
+#if VTK_GL_VERSION == 2
+	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
+#else
     vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
+#endif
     cudaGLMapBufferObject((void**)&this->RenderDestination, this->BufferObjectID);
     cudaStreamSynchronize(*(this->GetStream()));
   }
@@ -252,7 +307,12 @@ void vtkCudaMemoryTexture::UnbindBuffer()
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
     cudaGLUnregisterBufferObject(this->BufferObjectID) ;
     cudaStreamSynchronize(*(this->GetStream()));
-    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
+
+#if VTK_GL_VERSION == 2
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+#else
+	vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
+#endif
   }
   else // (this->CurrentRenderMode == RenderToMemory)
   {

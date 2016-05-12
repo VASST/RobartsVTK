@@ -6,7 +6,7 @@ vtk_module(TFUIKohonen
     vtkCudaVisualization 
     vtkCudaImageAnalytics 
     vtkCudaCommon 
-    vtkRenderingVolume 
+    vtkRenderingVolume${VTK_RENDERING_BACKEND} 
     vtkRenderingCore 
     vtkFiltersCore 
     vtkImagingCore 

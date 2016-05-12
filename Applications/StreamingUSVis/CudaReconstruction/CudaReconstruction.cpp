@@ -40,7 +40,7 @@
 CudaReconstruction::CudaReconstruction()
 {
   size_t temp;
-  device_index = 0;
+  device_index = 1;
   program_src = file2string("./kernels.cl", "", &temp);
 
   // Default values for bscan size

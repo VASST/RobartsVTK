@@ -6,7 +6,7 @@ vtk_module(FluoroPredViz
     vtkCudaVisualization 
     vtkCudaImageAnalytics 
     vtkRobartsCommon 
-    vtkRenderingVolumeOpenGL  
+    vtkRenderingVolume${VTK_RENDERING_BACKEND} 
     vtkRenderingCore 
     vtkFiltersCore 
     vtkImagingCore 

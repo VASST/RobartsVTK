@@ -34,12 +34,14 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+// Qt includes
 #include <QMainWindow>
 #include <QLabel>
 #include <QSignalMapper>
 #include <QMenuBar>
 
 // VTK includes
+#include <QVTKWidget.h>
 #include <vtkBoxRepresentation.h>
 #include <vtkBoxWidget.h>
 #include <vtkCallbackCommand.h>
@@ -58,15 +60,12 @@
 #include <vtkMatrix4x4.h>
 #include <vtkMetaImageWriter.h>
 #include <vtkPNGWriter.h>
-#include <QVTKWidget.h>
 #include <vtkPiecewiseFunction.h>
 #include <vtkPlanes.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
-#include <vtkRfProcessor.h>
-#include <vtkSavedDataSource.h>
 #include <vtkSmartPointer.h>
 #include <vtkSmartVolumeMapper.h>
 #include <vtkTextActor.h>
@@ -78,23 +77,23 @@
 #include <vtkWindowToImageFilter.h>
 #include <vtkXMLUtilities.h>
 
-// for testing
+// Testing includes
 #include <vtkSphereSource.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 
 // PLUS includes
-#include <DataCollection/vtkPlusChannel.h>
-#include <DataCollection/vtkPlusDataSource.h>
-#include <DataCollection/vtkPlusDevice.h>
-#include <PlusCommon/TrackedFrame.h>
-#include <PlusCommon/vtkTrackedFrameList.h>
+#include <vtkPlusChannel.h>
+#include <vtkPlusDataSource.h>
+#include <vtkPlusDevice.h>
+#include <PlusTrackedFrame.h>
+#include <vtkPlusTrackedFrameList.h>
+#include <vtkPlusSavedDataSource.h>
 #include <PlusConfigure.h>
-#include <VolumeReconstruction/vtkVolumeReconstructor.h>
-#include <vtkDataCollector.h>
-#include <vtkSequenceIO.h>
-#include <vtkTrackedFrameList.h>
-#include <vtkTransformRepository.h>
+#include <vtkPlusVolumeReconstructor.h>
+#include <vtkPlusDataCollector.h>
+#include <vtkPlusSequenceIO.h>
+#include <vtkPlusTransformRepository.h>
 
 // RobartsVTK includes
 #include "qTransferFunctionDefinitionWidget.h"
@@ -109,12 +108,16 @@
 #include "cv.h"
 #include "highgui.h"
 
+#ifdef __OPENCV_OLD_CV_H__
+#include "opencv2/opencv.hpp"
+#endif
+
 #include "CudaReconstruction.h"
 
 #include <iostream>
 #include <chrono> // For timing
 
-# define D_TIMING
+//# define D_TIMING
 //# define ALIGNMENT_DEBUG
 
 class vtkUSEventCallback : public vtkCommand
@@ -127,9 +130,9 @@ public:
 
   virtual void Execute(vtkObject *caller, unsigned long, void*);
 
-  vtkTrackedFrameList *trackedFrames;
-  vtkTransformRepository *repository;
-  vtkVolumeReconstructor *reconstructor;
+  vtkPlusTrackedFrameList *PlusTrackedFrames;
+  vtkPlusTransformRepository *repository;
+  vtkPlusVolumeReconstructor *reconstructor;
   CudaReconstruction *accRecon;
   vtkImageData *usVolume;
   vtkSmartVolumeMapper *volMapper;
@@ -225,19 +228,19 @@ private:
   vtkMatrix4x4* matrix;
   /* Members associated with data streaming with PLUS Library */
   vtkSmartPointer< vtkXMLDataElement > configRootElement;
-  vtkSmartPointer< vtkDataCollector > dataCollector;
+  vtkSmartPointer< vtkPlusDataCollector > dataCollector;
   vtkPlusDevice* videoDevice;
   vtkPlusDevice* trackerDevice;
 
-  /* Tracked US data is read from a SequenceMeta file into a vtkTrackedFrameList */
-  vtkSmartPointer< vtkTrackedFrameList > trackedUSFrameList;
+  /* Tracked US data is read from a SequenceMeta file into a vtkPlusTrackedFrameList */
+  vtkSmartPointer< vtkPlusTrackedFrameList > trackedUSFrameList;
 
   /* Tracked US framelist used for online 3DUS reconstruction */
-  vtkSmartPointer< vtkTrackedFrameList > trackedFrameList4Recon;
+  vtkSmartPointer< vtkPlusTrackedFrameList > PlusTrackedFrameList4Recon;
 
-  vtkSmartPointer< vtkVolumeReconstructor >  volumeReconstructor;
+  vtkSmartPointer< vtkPlusVolumeReconstructor >  volumeReconstructor;
   CudaReconstruction * acceleratedVolumeReconstructor;
-  vtkSmartPointer< vtkTransformRepository > repository;
+  vtkSmartPointer< vtkPlusTransformRepository > repository;
   vtkSmartPointer< vtkRenderer > camImgRenderer;
   vtkSmartPointer< vtkRenderWindow > camImgRenWin;
   vtkSmartPointer< vtkRenderWindow > augmentedRenWin;
@@ -307,10 +310,10 @@ private:
   /* Setup US Volume Reconstruction Pipeline */
   int setup_VolumeReconstruction_Pipeline();
 
-  int get_extent_from_trackedList(vtkTrackedFrameList *, vtkTransformRepository *,
+  int get_extent_from_trackedList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
                                   double spacing, int *, double *);
 
-  void get_first_frame_position(TrackedFrame *,  vtkTransformRepository *, double *);
+  void get_first_frame_position(PlusTrackedFrame *,  vtkPlusTransformRepository *, double *);
 
 };
 
