@@ -441,6 +441,16 @@ IF (RobartsVTK_USE_CUDA)
 ENDIF()
 
 #-----------------------------------------------------------------------------
+# Add the Robarts Visualization Libraries
+#-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_ROBARTS_VISUALIZATION "Build the Robarts Visualization modules" OFF)
+IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
+	ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
+	
+	SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
+ENDIF()
+
+#-----------------------------------------------------------------------------
 # Add the CUDA Analytics Libraries
 #-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
@@ -469,7 +479,7 @@ IF(RobartsVTK_BUILD_APPS)
         # Find OpenCV
         #-------------------------------------
         FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
-<<<<<<< HEAD
+
         # Copy dlls to bin folder
 
         #-------------------------------------
@@ -477,9 +487,9 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         #FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
         # Copy dlls to bin folder
-=======
+
         # TODO : Copy dlls to bin folder
->>>>>>> a7cf100183871e66fd944e3809848b1c61546932
+
 
         #-------------------------------------
         # Find OpenMP
@@ -487,6 +497,8 @@ IF(RobartsVTK_BUILD_APPS)
         FIND_PACKAGE(OpenMP REQUIRED)
 
         ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+		
+		ADD_SUBDIRECTORY(Applications/KeyholeRendering)
       ENDIF()
     ENDIF()
   ENDIF()
