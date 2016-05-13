@@ -43,6 +43,7 @@
 #include "vtkTexture.h"
 #include "vtkPixelBufferObject.h"
 #include "vtkOpenGLHelper.h"
+#include "vtkTexture.h"
 
 class vtkOpenGLRenderWindow;
 class vtkShaderProgram2;
@@ -75,17 +76,9 @@ public:
   void ReleaseGraphicsResources(vtkWindow *w);
 
   // Description:
-  // Set texture
-  void SetBackgroundImage(vtkImageData * img)
-  {
-    this->foregroundImageData = img;
-  }
-
-  // Description:
-  // Set texture
-  void SetMaskImage( vtkImageData * img)
-  {
-    this->maskImageData = img;
+  // Use an image as the mask
+  void UseMaskImage( bool t ){
+	  this->mask_img_available = t;
   }
 
   // Description:
@@ -120,7 +113,7 @@ protected:
   vtkFrameBufferObject *FrameBufferObject;
   vtkTextureObject *Pass1; // render target for the volume
   vtkTextureObject *Pass2; // render target for the horizontal pass
-  vtkImageData *foregroundImageData, *maskImageData;
+  vtkTexture *foregroundTex, *maskTex;
   vtkPixelBufferObject *foreground_pbo, *mask_pbo;
   vtkTextureObject *foreground_to, *mask_to, *foreground_grad_to, *GX, *GY;
   vtkOpenGLHelper *KeyholeProgram, *gradientProgram1, *gradientProgram2; // keyhole shader
@@ -137,8 +130,11 @@ private:
   void GetForegroudGradient(vtkRenderer *);// perform sobel pass on foreground texture and save the results to foreground_grad_to
 
   int x0, y0, radius;
+  int components;
+  unsigned int dimensions[2];
   float gamma;
   bool allow_hard_edges;
+  bool mask_img_available;
 
 };
 

@@ -82,6 +82,7 @@ vtkKeyholePass::vtkKeyholePass()
   this->Supported = false;
   this->SupportProbed = false;
   this->allow_hard_edges = false;
+  this->mask_img_available = false;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -217,79 +218,84 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     }
 
     // Read image data into pixelBuffers. Do this for the background and the mask.
-    int img_size[3];
-    foregroundImageData->GetDimensions(img_size);
-    int numComps = foregroundImageData->GetNumberOfScalarComponents();
-    unsigned char *dataPtr = (unsigned char*)foregroundImageData->GetScalarPointer();
+	vtkActorCollection *actors = r->GetActors();
+	int numActors = actors->GetNumberOfItems();
+	actors->InitTraversal();
+	
+	vtkImageData *imgData;
+	unsigned char *dataPtr;
+	int img_size[3];
+	vtkIdType increments[2];
+	increments[0] = 0;
+	increments[1] = 0;
 
-    unsigned int dims[2] = { img_size[0], img_size[1]};
-    vtkIdType increments[2];
-    increments[0] = 0;
-    increments[1] = 0;
-    // Upload imagedata to pixel buffer object
-    this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-                                   dataPtr, dims,
-                                   numComps, increments);
+	for(int i=0; i<numActors; i++){
 
-    // Create texture.
-    if(this->foreground_to->GetWidth() != static_cast<unsigned int>(dims[0]) ||
-        this->foreground_to->GetHeight() != static_cast<unsigned int>(dims[1]))
-    {
-      this->foreground_to->Create2D(dims[0], dims[1], numComps,
-                                    this->foreground_pbo, false);
-    }
+		switch( i ){
+			case 0:
+				// Discard the first actor
+				actors->GetNextActor();
+				break;
 
-    // Read mask image data into pixelBuffer.
-    maskImageData->GetDimensions( img_size );
-    numComps = maskImageData->GetNumberOfScalarComponents();
-    dataPtr = (unsigned char*)maskImageData->GetScalarPointer();
+			case 1:
+				{
+					vtkActor * foregroundActor = actors->GetNextActor();
+					this->foregroundTex = foregroundActor->GetTexture();
+				}
 
-    dims[0] = img_size[0];
-    dims[1] = img_size[1];
-    this->mask_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-                             dataPtr, dims,
-                             numComps, increments );
+				imgData = this->foregroundTex->GetInput();
+				imgData->GetDimensions(img_size);
+				this->components = imgData->GetNumberOfScalarComponents();
+				dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-    if(this->mask_to->GetWidth() != static_cast<unsigned int>(dims[0]) ||
-        this->mask_to->GetHeight() != static_cast<unsigned int>(dims[1]))
-    {
-      this->mask_to->Create2D(dims[0], dims[1], numComps,
-                              this->mask_pbo, false);
-    }
+				this->dimensions[0] = img_size[0]; 
+				this->dimensions[1] = img_size[1];
+			
+				// Upload imagedata to pixel buffer object
+				this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
+											   dataPtr, this->dimensions,
+											   this->components, increments);
+				break;
 
-#ifdef VTK_KEYHOLE_PASS_DEBUG
-    // Save the output for debugging
-    vtkPixelBufferObject *pbo = this->mask_to->Download();
+			case 2:
+				{
+					vtkActor * maskActor = actors->GetNextActor();
+					this->maskTex = maskActor->GetTexture();
+				}
 
-    unsigned char * openglRawData = new unsigned char[numComps*dims[0]*dims[1]];
-    vtkIdType incs[2];
-    incs[0] = 0;
-    incs[1] = 0;
-    bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, dims, numComps, incs);
-    assert("check" && status );
-    pbo->Delete();
+				vtkImageData *imgData = this->maskTex->GetInput();
+				imgData->GetDimensions(img_size);
+				this->components = imgData->GetNumberOfScalarComponents();
+				dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-    vtkImageImport *importer = vtkImageImport::New();
-    importer->CopyImportVoidPointer(openglRawData, numComps*dims[0]*dims[1]*sizeof(unsigned char));
-    importer->SetDataScalarTypeToUnsignedChar();
-    importer->SetNumberOfScalarComponents(numComps);
-    importer->SetWholeExtent(0, dims[0]-1, 0, dims[1]-1, 0, 0);
-    importer->SetDataExtentToWholeExtent();
-    delete[] openglRawData;
+				this->dimensions[0] = img_size[0]; 
+				this->dimensions[1] = img_size[1];
 
-    vtkImageExtractComponents *rgbatoRgb = vtkImageExtractComponents::New();
-    rgbatoRgb->SetInputConnection( importer->GetOutputPort() );
-    rgbatoRgb->SetComponents(0, 1, 2);
+				// Upload imagedata to pixel buffer object
+				this->mask_pbo->Upload2D(VTK_UNSIGNED_CHAR,
+											   dataPtr, this->dimensions,
+											   this->components, increments);
+				break;
+		}
+	}
 
-    vtkPNGWriter *writer = vtkPNGWriter::New();
-    writer->SetFileName("Background_before_pass1.png");
-    writer->SetInputConnection( rgbatoRgb->GetOutputPort());
-    writer->Write();
 
-    importer->Delete();
-    writer->Delete();
-    rgbatoRgb->Delete();
-#endif
+	// Create foreground texture object .
+	if(this->foreground_to->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
+				this->foreground_to->GetHeight() != static_cast<unsigned int>(this->dimensions[1]))
+	{
+			  this->foreground_to->Create2D(this->dimensions[0], this->dimensions[1], this->components,
+											this->foreground_pbo, false);
+	}
+
+	// Create mask texture object.
+	if( this->mask_img_available ){
+		if( this->mask_to->GetHeight() != static_cast<unsigned int>(this->dimensions[0]) ||
+				this->mask_to->GetWidth() != static_cast<unsigned int>(this->dimensions[1]))
+
+				this->mask_to->Create2D(this->dimensions[0], this->dimensions[1], this->components,
+												this->mask_pbo, false);
+	}
 
     // 1. Create a new render state with FBO.
     int width;
@@ -310,7 +316,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
       this->FrameBufferObject = vtkFrameBufferObject::New();
       this->FrameBufferObject->SetContext( renwin );
     }
-
+		
     // Remove background texture
     r->SetTexturedBackground( false );
     // Now set a black background.
@@ -322,19 +328,14 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
     // Save the output of the first pass to a file for debugging
-    pbo = this->Pass1->Download();
+	vtkPixelBufferObject *pbo = this->foreground_to->Download();
 
-    openglRawData = new unsigned char[4*width*height];
-    dims[0] = width;
-    dims[1] = height;
-
-    incs[0] = 0;
-    incs[1] = 0;
-    status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, dims, 4, incs);
+    unsigned char * openglRawData = new unsigned char[4*width*height];
+    bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
     assert("check" && status );
     pbo->Delete();
 
-    importer = vtkImageImport::New();
+    vtkImageImport *importer = vtkImageImport::New();
     importer->CopyImportVoidPointer(openglRawData, 4*width*height*sizeof(unsigned char));
     importer->SetDataScalarTypeToUnsignedChar();
     importer->SetNumberOfScalarComponents(4);
@@ -342,11 +343,11 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     importer->SetDataExtentToWholeExtent();
     delete[] openglRawData;
 
-    rgbatoRgb = vtkImageExtractComponents::New();
+    vtkImageExtractComponents *rgbatoRgb = vtkImageExtractComponents::New();
     rgbatoRgb->SetInputConnection( importer->GetOutputPort() );
     rgbatoRgb->SetComponents(0, 1, 2);
 
-    writer = vtkPNGWriter::New();
+    vtkPNGWriter *writer = vtkPNGWriter::New();
     writer->SetFileName("KeyholePass1.png");
     writer->SetInputConnection( rgbatoRgb->GetOutputPort() );
     writer->Write();
@@ -424,11 +425,13 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     this->KeyholeProgram->Program->SetUniformi("_volume", texture0);
 
-    this->mask_to->Activate();
-    int texture1 = this->mask_to->GetTextureUnit();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    this->KeyholeProgram->Program->SetUniformi("_mask", texture1);
+	if( this->mask_img_available ){
+		this->mask_to->Activate();
+		int texture1 = this->mask_to->GetTextureUnit();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		this->KeyholeProgram->Program->SetUniformi("_mask", texture1);
+	}
 
     this->foreground_to->Activate();
     int texture2 = this->foreground_to->GetTextureUnit();
@@ -463,12 +466,8 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     pbo = this->Pass2->Download();
 
     openglRawData = new unsigned char[4*width*height];
-    dims[0] = width;
-    dims[1] = height;
 
-    incs[0] = 0;
-    incs[1] = 0;
-    status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, dims, 4, incs);
+	status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
     assert("check" && status );
     pbo->Delete();
 
