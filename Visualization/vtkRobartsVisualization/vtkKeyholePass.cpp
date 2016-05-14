@@ -218,9 +218,9 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     }
 
     // Read image data into pixelBuffers. Do this for the background and the mask.
-	vtkActorCollection *actors = r->GetActors();
-	int numActors = actors->GetNumberOfItems();
-	actors->InitTraversal();
+	vtkPropCollection *props = r->GetViewProps();
+	int numActors = props->GetNumberOfItems();
+	props->InitTraversal();
 	
 	vtkImageData *imgData;
 	unsigned char *dataPtr;
@@ -231,53 +231,53 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
 	for(int i=0; i<numActors; i++){
 
-		switch( i ){
-			case 0:
-				// Discard the first actor
-				actors->GetNextActor();
-				break;
+		if( i == 0 ){
+			// Discard the first actor
+			props->GetNextProp();
+		}
+		else if( i == 1){
 
-			case 1:
-				{
-					vtkActor * foregroundActor = actors->GetNextActor();
-					this->foregroundTex = foregroundActor->GetTexture();
-				}
+			vtkActor * foregroundActor = vtkActor::SafeDownCast(props->GetNextProp());// actors->GetNextActor();
+			this->foregroundTex = foregroundActor->GetTexture();
 
-				imgData = this->foregroundTex->GetInput();
-				imgData->GetDimensions(img_size);
-				this->components = imgData->GetNumberOfScalarComponents();
-				dataPtr = (unsigned char*)imgData->GetScalarPointer();
+				
+			imgData = this->foregroundTex->GetInput();
 
-				this->dimensions[0] = img_size[0]; 
-				this->dimensions[1] = img_size[1];
+			imgData->GetDimensions(img_size);
+			this->components = imgData->GetNumberOfScalarComponents();
+			dataPtr = (unsigned char*)imgData->GetScalarPointer();
+
+			this->dimensions[0] = img_size[0]; 
+			this->dimensions[1] = img_size[1];
 			
-				// Upload imagedata to pixel buffer object
-				this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-											   dataPtr, this->dimensions,
-											   this->components, increments);
-				break;
+			// Upload imagedata to pixel buffer object
+			this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
+										   dataPtr, this->dimensions,
+										   this->components, increments);
 
-			case 2:
-				{
-					vtkActor * maskActor = actors->GetNextActor();
-					this->maskTex = maskActor->GetTexture();
-				}
+		}
+		else if( i == 2){
 
-				vtkImageData *imgData = this->maskTex->GetInput();
-				imgData->GetDimensions(img_size);
-				this->components = imgData->GetNumberOfScalarComponents();
-				dataPtr = (unsigned char*)imgData->GetScalarPointer();
+			vtkActor * maskActor = vtkActor::SafeDownCast(props->GetNextProp());;// = actors->GetNextActor();
+			this->maskTex = maskActor->GetTexture();
 
-				this->dimensions[0] = img_size[0]; 
-				this->dimensions[1] = img_size[1];
 
-				// Upload imagedata to pixel buffer object
-				this->mask_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-											   dataPtr, this->dimensions,
-											   this->components, increments);
-				break;
+			vtkImageData *imgData = this->maskTex->GetInput();
+			imgData->GetDimensions(img_size);
+			this->components = imgData->GetNumberOfScalarComponents();
+			dataPtr = (unsigned char*)imgData->GetScalarPointer();
+
+			this->dimensions[0] = img_size[0]; 
+			this->dimensions[1] = img_size[1];
+
+			// Upload imagedata to pixel buffer object
+			this->mask_pbo->Upload2D(VTK_UNSIGNED_CHAR,
+										   dataPtr, this->dimensions,
+										   this->components, increments);
 		}
 	}
+
+	
 
 
 	// Create foreground texture object .

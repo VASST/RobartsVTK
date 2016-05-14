@@ -52,8 +52,11 @@
 #include <vtkCameraPass.h>
 #include <vtkRenderPassCollection.h>
 #include <vtkSequencePass.h>
-#include <vtkGaussianBlurPass.h>
 #include <vtkCommand.h>
+#include <vtkTexture.h>
+#include <vtkPolyDataMapper.h> 
+#include <vtkTextureMapToPlane.h> 
+#include <vtkPlaneSource.h> 
 
 // OpenCV includes
 #include <opencv2/opencv.hpp>
@@ -153,7 +156,7 @@ int main(){
 															vtkRenderWindowInteractor >::New();
 	iren->SetRenderWindow( renwin );
 
-	// Read the background picture and the mask and set it 
+	// Read the background picture and the mask and set it .
 	cv::Mat background = cv::imread("./Data/container.jpg"); 
 	cv::Mat mask = cv::imread("./Data/mask_2.png");
 
@@ -164,12 +167,6 @@ int main(){
 	uchar *maskData = new uchar[mask.total()*4];
 	cv::Mat mask_RGBA(mask.size(), CV_8UC4, maskData);
 	cv::cvtColor(mask, mask_RGBA, cv::COLOR_BGR2RGBA, 4);
-
-	cv::cvtColor( background, background, CV_RGBA2BGRA );
-	cv::cvtColor( mask, mask, CV_RGBA2BGRA );
-	// Flip the image to compensate for the difference in coordinate systems in VTK and OpenCV
-	cv::flip( background, background, 0);
-	cv::flip( mask, mask, 0 );
 
 	vtkImageImport *backgroundImport = vtkImageImport::New();
 	backgroundImport->SetDataOrigin( 0, 0, 0);
@@ -191,14 +188,29 @@ int main(){
 	maskImport->SetImportVoidPointer( mask_RGBA.data );
 	maskImport->Update();
 	
+	vtkPlaneSource *plane = vtkPlaneSource::New();
+	plane->SetCenter( 0.0, 0.0, 0.0);
+	plane->SetNormal(0.0, 0.0, 1.0);
+
+	// Apply Texture 
+	vtkTexture *forgroundTex = vtkTexture::New();
+	forgroundTex->SetInputConnection( backgroundImport->GetOutputPort() );
+
+	vtkTextureMapToPlane *texturePlane = vtkTextureMapToPlane::New();
+	texturePlane->SetInputConnection( plane->GetOutputPort() );
+	
+	vtkPolyDataMapper *planeMapper = vtkPolyDataMapper::New();
+	planeMapper->SetInputConnection( texturePlane->GetOutputPort() );
+
+	vtkActor *texturedPlane = vtkActor::New();
+	texturedPlane->SetMapper( planeMapper );
+	texturedPlane->SetTexture( forgroundTex );
+
+	glRen->AddViewProp( texturedPlane );
+
 	// Test code
 	vtkSmartPointer< vtkKeyholePass > keyholePass = vtkSmartPointer<				
 														vtkKeyholePass >::New();
-	// Set background image
-	keyholePass->SetBackgroundImage( backgroundImport->GetOutput() );
-	// Set mask image. 
-	// One can explicitly send a mask image with this function. 
-	keyholePass->SetMaskImage( maskImport->GetOutput() );
 
 	// Set keyhole parameters
 	keyholePass->SetKeyholeParameters(256, 256, 150, 5.0);

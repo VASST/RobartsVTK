@@ -70,17 +70,30 @@
 #include <vtkSmartVolumeMapper.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
-#include <vtkTexture.h>
 #include <vtkTransform.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkXMLUtilities.h>
+#include <vtkOpenGLRenderWindow.h> 
+#include <vtkOpenGLProperty.h>
+#include <vtkOpenGLRenderer.h>
+#include <vtkDefaultPass.h>
+#include <vtkRenderPass.h>
+#include <vtkLightsPass.h>
+#include <vtkCameraPass.h>
+#include <vtkRenderPassCollection.h>
+#include <vtkSequencePass.h>
+#include <vtkTexture.h>
+#include <vtkPolyDataMapper.h> 
+#include <vtkTextureMapToPlane.h> 
+#include <vtkPlaneSource.h> 
 
 // Testing includes
 #include <vtkSphereSource.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkImageExtractComponents.h>
 
 // PLUS includes
 #include <vtkPlusChannel.h>
@@ -103,6 +116,7 @@
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCuda2DVolumeMapper.h"
 #include "vtkCudaFunctionPolygonReader.h"
+#include "vtkKeyholePass.h"
 
 // OpenCV includes
 #include "cv.h"
@@ -161,6 +175,7 @@ public:
   QLabel *Info;
   vtkWindowToImageFilter *_win2Img;
   vtkPNGWriter *_imgWriter;
+  vtkKeyholePass *_keyholePass;
   std::string current_mapper;
   bool sc_capture_on;
   int index;
@@ -284,6 +299,18 @@ private:
   vtkSmartPointer< vtkActor > actor;
   vtkSmartPointer< vtkWindowToImageFilter > windowToImage;
   vtkSmartPointer< vtkPNGWriter > imageWriter;
+
+  /* Members for keyhole rendering */
+  vtkSmartPointer< vtkLightsPass > lightsPass;
+  vtkSmartPointer< vtkDefaultPass > defaultPass;
+  vtkSmartPointer< vtkCameraPass > cameraPass;
+  vtkSmartPointer< vtkKeyholePass > keyholePass;
+  vtkSmartPointer< vtkRenderPassCollection > passCollection;
+  vtkSmartPointer< vtkSequencePass > sequencePass;
+  vtkSmartPointer< vtkPlaneSource > foregroundPlane;
+  vtkSmartPointer< vtkTextureMapToPlane > foregroundTexturePlane;
+  vtkSmartPointer< vtkPolyDataMapper > foregroundMapper;
+  vtkSmartPointer< vtkActor > foregroundTexturedPlane;
 
   /* Initialize PLUS pipeline */
   int init_PLUS_Pipeline();

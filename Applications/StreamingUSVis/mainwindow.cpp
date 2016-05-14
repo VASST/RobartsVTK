@@ -35,6 +35,8 @@
 #include "ui_mainwindow.h"
 #include <vtkMetaImageReader.h>
 
+// Enable/Disable keyhole rendering
+//#define NO_KEYHOLE_RENDERING
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -268,7 +270,8 @@ int MainWindow::init_VTK_Pipeline()
   camImgImport->SetWholeExtent( 0, cam_video_prop.frame_width - 1, 0, cam_video_prop.frame_height -1, 1, 1);
   camImgImport->SetDataExtentToWholeExtent();
   camImgImport->SetDataScalarTypeToUnsignedChar();
-  camImgImport->SetNumberOfScalarComponents( 3 );
+  camImgImport->SetNumberOfScalarComponents( 4 );
+  camImgImport->Update();
 
   // Set camera image as the background texture
   camImgTexture = vtkSmartPointer< vtkTexture >::New();
@@ -350,9 +353,10 @@ int MainWindow::init_VTK_Pipeline()
   us_callback->_screen = this->ui->augmentedView;
   us_callback->current_mapper = "1D_MAPPER";
   us_callback->sc_capture_on = false;
+  us_callback->_keyholePass = keyholePass;
 
   this->ui->US_View->GetInteractor()->AddObserver( vtkCommand::TimerEvent, us_callback);
-  //augmentedRenWin->GetInteractor()->Initialize();
+  augmentedRenWin->GetInteractor()->Start();
 
   return 0;
 }
@@ -878,9 +882,52 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
   augmentedRenWin = vtkSmartPointer< vtkRenderWindow >::New();
   augmentedRenWin->AddRenderer( volRenderer );
 
+  // Add foreground texture as a textured plane
+  foregroundPlane = vtkSmartPointer< vtkPlaneSource >::New();
+  foregroundPlane->SetCenter(0.0, 0.0, -1.0); // Render this back of the camera. 
+  foregroundPlane->SetNormal(0.0, 0.0, 1.0);
+
+  foregroundTexturePlane = vtkSmartPointer< vtkTextureMapToPlane >::New();
+  foregroundTexturePlane->SetInputConnection( foregroundPlane->GetOutputPort() );
+
+  foregroundMapper = vtkSmartPointer< vtkPolyDataMapper >::New();
+  foregroundMapper->SetInputConnection( foregroundPlane->GetOutputPort() );
+
+  foregroundTexturedPlane = vtkSmartPointer< vtkActor >::New();
+  foregroundTexturedPlane->SetMapper( foregroundMapper );
+  foregroundTexturedPlane->SetTexture( camImgTexture );
+
+  // Now add this to the renders
+  volRenderer->AddViewProp( foregroundTexturedPlane );
+
+  // Add keyhole render pass to get the keyhole effect
+  lightsPass  = vtkSmartPointer< vtkLightsPass >::New();
+  defaultPass = vtkSmartPointer< vtkDefaultPass >::New();
+  cameraPass  = vtkSmartPointer< vtkCameraPass >::New();
+
+  keyholePass = vtkSmartPointer< vtkKeyholePass >::New();
+  keyholePass->SetHardKeyholeEdges( false );
+
+  passCollection = vtkSmartPointer< vtkRenderPassCollection >::New();
+  passCollection->AddItem( lightsPass );
+  passCollection->AddItem( defaultPass );
+
+  sequencePass = vtkSmartPointer< vtkSequencePass >::New();
+  sequencePass->SetPasses( passCollection );
+
+  cameraPass->SetDelegatePass( sequencePass );
+  keyholePass->SetDelegatePass( cameraPass );
+  
+  vtkOpenGLRenderer *glRen = vtkOpenGLRenderer::SafeDownCast( volRenderer );
+#ifdef NO_KEYHOLE_RENDERING
+  glRen->SetPass( cameraPass );
+#else 
+  glRen->SetPass( keyholePass );
+#endif
+ 
   this->ui->augmentedView->SetRenderWindow( augmentedRenWin );
-  augmentedRenWin->Render();
-  this->ui->augmentedView->repaint();
+ // augmentedRenWin->Render();
+ // this->ui->augmentedView->repaint();
 }
 
 /* Setup Volume Reconstruction Pipeline */
@@ -1243,18 +1290,28 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   if( c_frame < n_frames-2 )
   {
 
-    cv::cvtColor( cam_frame, cam_frame, CV_RGB2BGR );
     // Flip the image to compensate for the difference in coordinate systems in VTK and OpenCV
     cv::flip( cam_frame, cam_frame, 0);
-    _imgImport->SetImportVoidPointer( cam_frame.data );
 
-    _camImgTexture->Modified();
+	uchar *camImageData = new uchar[cam_frame.total()*4]; // There's a memory leak here. 
+	cv::Mat camImage_RGBA(cam_frame.size(), CV_8UC4, camImageData);
+	cv::cvtColor( cam_frame, camImage_RGBA, CV_BGR2RGBA, 4);
+		
+	_imgImport->SetImportVoidPointer( camImage_RGBA.data );
+	_imgImport->Update();
+
+
+	_camImgTexture->Update();
+
     _camRenWin->Render();
     this->Viewer->Render();
 
+	// Set keyhole params. 
+	_keyholePass->SetKeyholeParameters(256, 150, 150, 5.0);
+
     _augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange();
     //_augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCamera();
-    _augmentedRenWin->Render();
+	_augmentedRenWin->Render();
     _screen->repaint();
 
     if( sc_capture_on )
@@ -1274,7 +1331,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
       _imgWriter->Update();
       _imgWriter->Write();
     }
-
+	
 #ifdef D_TIMING
     // End time
     auto t_end = std::chrono::high_resolution_clock::now();

@@ -44,6 +44,7 @@
 #include "vtkPixelBufferObject.h"
 #include "vtkOpenGLHelper.h"
 #include "vtkTexture.h"
+#include "vtkActorCollection.h"
 
 class vtkOpenGLRenderWindow;
 class vtkShaderProgram2;
