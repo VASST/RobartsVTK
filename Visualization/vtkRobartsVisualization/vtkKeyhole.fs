@@ -12,6 +12,7 @@ uniform float x0,y0; // Center of the keyhole. Eventually this will be in 3D. Th
 uniform float radius; // Radius of the keyhole. This is normalized. 
 uniform float gamma; // gamma variable to control distance fall off
 uniform int use_mask_texture, use_hard_edges; 
+uniform int width, height;
 
 void main(void)
 {
@@ -31,7 +32,7 @@ void main(void)
 
   //--------------------------------------------------------------------------------------------
   // Compute the keyhole mask based on x0,y0, radius and gamma
-  float x    = tcoordVC.x-x0;
+  float x    = (tcoordVC.x-x0);
   float y    = tcoordVC.y-y0;
   float mask  = 1;
 
@@ -58,6 +59,6 @@ void main(void)
   }
 
   // Blend textures to get the final effect. 
-  color.rgb = (1-gray)*inside + surface + outside;
+  color.rgb = inside + surface + outside;
   color.a = 1.0;
 }

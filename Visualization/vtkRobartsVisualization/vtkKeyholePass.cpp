@@ -47,6 +47,7 @@
 #include "vtkOpenGLError.h"
 #include "vtkOpenGLTexture.h"
 #include "vtkOpenGLHelper.h"
+#include "vtkProperty.h"
 
 
 // To be able to dump intermediate passes into png images for debugging.
@@ -254,7 +255,6 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 			this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
 										   dataPtr, this->dimensions,
 										   this->components, increments);
-
 		}
 		else if( i == 2){
 
@@ -445,10 +445,12 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     this->KeyholeProgram->Program->SetUniformi("_foreground_grad", texture3);
 
-    this->KeyholeProgram->Program->SetUniformf("th", 0.09);
+    this->KeyholeProgram->Program->SetUniformf("th", 0.04);
     this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->x0*1.0)/width));
     this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->y0*1.0)/height));
     this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius*1.0)/width));
+	this->KeyholeProgram->Program->SetUniformi("width", width);
+	this->KeyholeProgram->Program->SetUniformi("height", height);
     this->KeyholeProgram->Program->SetUniformf("gamma",  this->gamma);
     this->KeyholeProgram->Program->SetUniformi("use_mask_texture", 0);
     this->KeyholeProgram->Program->SetUniformi("use_hard_edges", static_cast<int>(this->allow_hard_edges));
@@ -598,7 +600,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
 
   float fvalue = static_cast<float>(1.0/width);
   this->gradientProgram1->Program->SetUniformf("stepSize", fvalue);
-
+  
   this->FrameBufferObject->RenderQuad(0, width-1, 0, height-1,
                                       this->gradientProgram1->Program,
                                       this->gradientProgram1->VAO);

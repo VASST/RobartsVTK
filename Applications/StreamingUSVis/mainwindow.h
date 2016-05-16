@@ -134,6 +134,62 @@
 //# define D_TIMING
 //# define ALIGNMENT_DEBUG
 
+class vtkWindowEventCallback : public vtkCommand{
+
+public: 
+	static vtkWindowEventCallback *New(){
+		return new vtkWindowEventCallback;
+	}
+	vtkWindowEventCallback(){ this->size = 120;
+								this->gamma = 5.0;
+									x = y = 256;
+									this->pinned = true;}
+
+	virtual void Execute(vtkObject *caller, unsigned long eventid, void* callData){
+
+		vtkRenderWindowInteractor *iren = vtkRenderWindowInteractor::SafeDownCast(caller);
+
+		if( eventid == vtkCommand::MouseMoveEvent && !this->pinned){
+			x = iren->GetEventPosition()[0];
+			y = iren->GetEventPosition()[1];
+		}
+		if( eventid == vtkCommand::LeftButtonPressEvent )
+			this->pinned = ( this->pinned == true )? false: true; 
+		if( eventid == vtkCommand::MouseWheelForwardEvent )
+			this->size += 5;
+		if( eventid == vtkCommand::MouseWheelBackwardEvent )
+			this->size -= 5;
+		if( eventid == vtkCommand::RightButtonPressEvent )
+			this->gamma += 0.5;
+		if( eventid == vtkCommand::KeyPressEvent ){
+			// Reset everything
+			char *c = iren->GetKeySym();
+			if( *c == 'r' ){
+				this->size = 120;
+				x = 256;
+				y = 256;
+				this->gamma = 5.0;
+			}
+		}
+
+		// Set keyhole parameters. 
+		keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+
+		iren->GetRenderWindow()->Render();
+		
+	}
+
+	vtkKeyholePass *keyholePass;
+
+private:
+	int size;
+	double gamma;
+	int x, y;
+
+	bool pinned;
+};
+
+
 class vtkUSEventCallback : public vtkCommand
 {
 public:

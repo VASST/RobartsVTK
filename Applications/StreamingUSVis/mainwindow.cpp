@@ -355,8 +355,20 @@ int MainWindow::init_VTK_Pipeline()
   us_callback->sc_capture_on = false;
   us_callback->_keyholePass = keyholePass;
 
+  // Attach event call back
+  vtkSmartPointer< vtkWindowEventCallback > eventCallBack = vtkSmartPointer< vtkWindowEventCallback>::New();
+  eventCallBack->keyholePass = this->keyholePass;
+  
   this->ui->US_View->GetInteractor()->AddObserver( vtkCommand::TimerEvent, us_callback);
-  augmentedRenWin->GetInteractor()->Start();
+  vtkRenderWindowInteractor *iRen = augmentedRenWin->GetInteractor();
+  iRen->AddObserver(vtkCommand::KeyPressEvent , eventCallBack); 
+  iRen->AddObserver(vtkCommand::MouseWheelForwardEvent, eventCallBack);
+  iRen->AddObserver(vtkCommand::MouseWheelBackwardEvent, eventCallBack);
+  iRen->AddObserver(vtkCommand::MouseMoveEvent, eventCallBack);
+  iRen->AddObserver( vtkCommand::LeftButtonPressEvent, eventCallBack);
+  iRen->AddObserver( vtkCommand::RightButtonPressEvent, eventCallBack);
+
+  iRen->Start();
 
   return 0;
 }
@@ -908,6 +920,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
 
   keyholePass = vtkSmartPointer< vtkKeyholePass >::New();
   keyholePass->SetHardKeyholeEdges( false );
+  keyholePass->SetKeyholeParameters(320, 150, 150, 5.0);
 
   passCollection = vtkSmartPointer< vtkRenderPassCollection >::New();
   passCollection->AddItem( lightsPass );
@@ -1308,7 +1321,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
     this->Viewer->Render();
 
 	// Set keyhole params. 
-	_keyholePass->SetKeyholeParameters(320, 150, 150, 5.0);
+	//_keyholePass->SetKeyholeParameters(320, 150, 150, 5.0);
 
     _augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange();
     //_augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCamera();
