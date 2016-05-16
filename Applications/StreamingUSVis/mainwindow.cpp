@@ -845,7 +845,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
   get_first_frame_position(trackedUSFrameList->GetTrackedFrame(0), repository, _origin);
 
   volume->SetOrigin( _origin );
-  //volume->SetPosition( _origin[0], _origin[1], _origin[2] );
+  volume->SetPosition( _origin[0], _origin[1], _origin[2] );
   volume->SetScale( 0.5, 0.5, 0.5 );
   volume->SetMapper( this->cudaVolumeMapper); // Default mapper
   ui->tf1_button->setChecked( true );
@@ -884,7 +884,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
 
   // Add foreground texture as a textured plane
   foregroundPlane = vtkSmartPointer< vtkPlaneSource >::New();
-  foregroundPlane->SetCenter(0.0, 0.0, -1.0); // Render this back of the camera. 
+  foregroundPlane->SetCenter(0.0, 0.0, 1000.0); // Render this back of the camera. 
   foregroundPlane->SetNormal(0.0, 0.0, 1.0);
 
   foregroundTexturePlane = vtkSmartPointer< vtkTextureMapToPlane >::New();
@@ -896,6 +896,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
   foregroundTexturedPlane = vtkSmartPointer< vtkActor >::New();
   foregroundTexturedPlane->SetMapper( foregroundMapper );
   foregroundTexturedPlane->SetTexture( camImgTexture );
+  foregroundTexturedPlane->GetProperty()->SetOpacity( 0.0 ); // Make this invisible
 
   // Now add this to the renders
   volRenderer->AddViewProp( foregroundTexturedPlane );
@@ -1307,7 +1308,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
     this->Viewer->Render();
 
 	// Set keyhole params. 
-	_keyholePass->SetKeyholeParameters(256, 150, 150, 5.0);
+	_keyholePass->SetKeyholeParameters(320, 150, 150, 5.0);
 
     _augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange();
     //_augmentedRenWin->GetRenderers()->GetFirstRenderer()->ResetCamera();
