@@ -4,7 +4,7 @@ vtk_module(TFUICommon
   DEPENDS
     vtkCudaCommon 
     vtkCudaVisualization  
-    vtkRenderingVolumeOpenGL  
+    vtkRenderingVolume${VTK_RENDERING_BACKEND}  
     vtkInteractionWidgets 
     vtksys 
     vtkIOLegacy 

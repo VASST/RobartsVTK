@@ -167,7 +167,7 @@
    <widget class="QVTKWidget" name="augmentedView">
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>660</x>
       <y>510</y>
       <width>640</width>
       <height>480</height>

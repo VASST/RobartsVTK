@@ -11,22 +11,33 @@ FIND_PACKAGE(OpenCL REQUIRED)
 # Add CudaReconstruction
 #-------------------------------------
 ADD_SUBDIRECTORY(CudaReconstruction)
+# Load module to access TFUIDual_INCLUDE_DIRS and TFUICommon_INCLUDE_DIRS
+vtk_module_load(TFUIDual)
+vtk_module_load(TFUICommon)
+vtk_module_load(vtkCudaCommon)
+vtk_module_load(vtkCudaVisualization)
+vtk_module_load(vtkRobartsVisualization)
+vtk_module_load(vtkCudaImageAnalytics)
+vtk_module_load(CudaReconstruction)
 
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${OpenCV_INCLUDE_DIR} 
+  ${OpenCV_INCLUDE_DIRS} 
   ${VTK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
-  ${GLUT_INCLUDE_DIR}
+  ${PLUSLIB_INCLUDE_DIRS}
   ${TFUIDual_INCLUDE_DIRS}
+  ${TFUICommon_INCLUDE_DIRS}
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}
+  ${vtkRobartsVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
   ${CudaReconstruction_INCLUDE_DIRS}
   CACHE INTERNAL ""
   )
+LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
 MARK_AS_ADVANCED(StreamingUSVis_INCLUDE_DIRS)
 
 IF( VTK_QT_VERSION VERSION_LESS "5" )
@@ -36,24 +47,25 @@ ELSE()
 ENDIF()
 
 SET(StreamingUSVis_LIBRARIES 
-  ${GLUT_LIBRARIES}
   ${OpenCL_LIBRARIES}
   ${vtkCudaCommon_LIBRARIES}
   ${vtkCudaVisualization_LIBRARIES}
+  ${vtkRobartsVisualization_LIBRARIES}
   ${vtkCudaImageAnalytics_LIBRARIES}
   ${CudaReconstruction_LIBRARIES}
-  ${OpenCV_LIBS}
   vtksys
   vtkInteractionWidgets
   vtkInteractionImage
   vtkGUISupportQt
+  vtkPlusVolumeReconstruction
   vtkPlusCommon
-  vtkDataCollection
-  ${OpenCV_LIBS}
-  vtkPlusCommon
-  vtkDataCollection
+  vtkPlusDataCollection
+  opencv_core
+  opencv_imgproc
+  opencv_videoio
   CACHE INTERNAL ""
   )
+
 MARK_AS_ADVANCED(StreamingUSVis_LIBRARIES)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -73,7 +85,6 @@ FILE(GLOB CXX_FILES *.cxx)
 FILE(GLOB CPP_FILES *.cpp)
 
 INCLUDE_DIRECTORIES(${StreamingUSVis_INCLUDE_DIRS})
-
 #-------------------------------------
 # Create executable
 #-------------------------------------

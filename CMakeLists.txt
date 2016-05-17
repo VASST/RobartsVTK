@@ -35,35 +35,6 @@ MARK_AS_ADVANCED(CMAKE_RUNTIME_OUTPUT_DIRECTORY
   CMAKE_ARCHIVE_OUTPUT_DIRECTORY
   )
 
-# Set all these VTK variables to use the VTK modules system
-IF(NOT VTK_INSTALL_RUNTIME_DIR)
-  SET(VTK_INSTALL_RUNTIME_DIR bin)
-ENDIF()
-IF(NOT VTK_INSTALL_LIBRARY_DIR)
-  SET(VTK_INSTALL_LIBRARY_DIR lib)
-ENDIF()
-IF(NOT VTK_INSTALL_ARCHIVE_DIR)
-  SET(VTK_INSTALL_ARCHIVE_DIR lib)
-ENDIF()
-IF(NOT VTK_INSTALL_PACKAGE_DIR)
-  SET(VTK_INSTALL_PACKAGE_DIR "lib/cmake/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}")
-ENDIF()
-IF(NOT VTK_INSTALL_INCLUDE_DIR)
-  SET(VTK_INSTALL_INCLUDE_DIR include/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-ENDIF()
-IF(NOT VTK_INSTALL_DATA_DIR)
-  SET(VTK_INSTALL_DATA_DIR share/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-ENDIF()
-IF(NOT VTK_INSTALL_DOC_DIR)
-  SET(VTK_INSTALL_DOC_DIR share/doc/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-ENDIF()
-IF(NOT VTK_INSTALL_EXPORT_NAME)
-  SET(VTK_INSTALL_EXPORT_NAME RobartsVTKTargets)
-ENDIF()
-IF(NOT VTK_MODULES_DIR)
-  SET(VTK_MODULES_DIR "${RobartsVTK_BINARY_DIR}/${VTK_INSTALL_PACKAGE_DIR}/Modules")
-ENDIF()
-
 #-----------------------------------------------------------------------------
 # Add configure file to included directories
 #-----------------------------------------------------------------------------
@@ -112,8 +83,8 @@ ENDFOREACH()
 
 #-----------------------------------------------------------------------------
 # Include the important stuff for using VTK
-INCLUDE (${VTK_USE_FILE})
 #-----------------------------------------------------------------------------
+INCLUDE (${VTK_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
@@ -401,6 +372,19 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
 #-----------------------------------------------------------------------------
+# Correct installation folder for RobartsVTK modules not to end up in VTK
+#-----------------------------------------------------------------------------
+SET(VTK_INSTALL_RUNTIME_DIR bin)
+SET(VTK_INSTALL_LIBRARY_DIR lib)
+SET(VTK_INSTALL_ARCHIVE_DIR lib)
+SET(VTK_INSTALL_PACKAGE_DIR "lib/cmake/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}")
+SET(VTK_INSTALL_INCLUDE_DIR include/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
+SET(VTK_INSTALL_DATA_DIR share/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
+SET(VTK_INSTALL_DOC_DIR share/doc/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
+SET(VTK_INSTALL_EXPORT_NAME RobartsVTKTargets)
+SET(VTK_MODULES_DIR "${RobartsVTK_BINARY_DIR}/${VTK_INSTALL_PACKAGE_DIR}/Modules")
+
+#-----------------------------------------------------------------------------
 # Start listing the RobartsVTK modules
 #-----------------------------------------------------------------------------
 SET(RobartsVTK_LIBRARIES CACHE INTERNAL "")
@@ -457,6 +441,16 @@ IF (RobartsVTK_USE_CUDA)
 ENDIF()
 
 #-----------------------------------------------------------------------------
+# Add the Robarts Visualization Libraries
+#-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_ROBARTS_VISUALIZATION "Build the Robarts Visualization modules" OFF)
+IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
+	ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
+	
+	SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
+ENDIF()
+
+#-----------------------------------------------------------------------------
 # Add the CUDA Analytics Libraries
 #-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
@@ -484,14 +478,18 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         # Find OpenCV
         #-------------------------------------
-        FIND_PACKAGE(OpenCV 2.3.1 REQUIRED NO_MODULE)
+        FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+
         # Copy dlls to bin folder
 
         #-------------------------------------
         # Find freeglut
         #-------------------------------------
-        FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
+        #FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
         # Copy dlls to bin folder
+
+        # TODO : Copy dlls to bin folder
+
 
         #-------------------------------------
         # Find OpenMP
@@ -499,6 +497,8 @@ IF(RobartsVTK_BUILD_APPS)
         FIND_PACKAGE(OpenMP REQUIRED)
 
         ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+		
+		ADD_SUBDIRECTORY(Applications/KeyholeRendering)
       ENDIF()
     ENDIF()
   ENDIF()
@@ -535,6 +535,12 @@ foreach( module ${RobartsVTK_LIBRARIES} )
   vtk_module_load(${module})
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${${module}_INCLUDE_DIRS} CACHE INTERNAL "")
 endforeach()
+
+IF( "${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2" )
+  SET(VTK_GL_VERSION 2)
+ELSE()
+  SET(VTK_GL_VERSION 1)
+ENDIF()
 
 #-----------------------------------------------------------------------------
 # Generate build configurations
