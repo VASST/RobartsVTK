@@ -360,7 +360,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     ///------------------------------------------
 
     // Same FBO, but new colour attachment (new TO).
-    // Pass2 is our final composited scene
+    // Pass2 is our final composed scene
     if(this->Pass2==NULL)
     {
       this->Pass2 = vtkTextureObject::New();
@@ -378,7 +378,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     this->FrameBufferObject->SetColorBuffer(0, this->Pass2);
     this->FrameBufferObject->Start(width, height, false);
 
-    // Now use the shader to do composting
+    // Now use the shader to do composition. 
     if( this->KeyholeProgram == NULL)
     {
       this->KeyholeProgram = new vtkOpenGLHelper;
