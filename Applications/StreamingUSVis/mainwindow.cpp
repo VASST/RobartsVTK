@@ -1206,9 +1206,9 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   }
   else if ( !std::strcmp( current_mapper.c_str(), "2D_MAPPER") )
   {
+	usVolume->Modified();
     cudaMapper2->SetInputData( usVolume );
     cudaMapper2->Modified();
-    //cudaMapper2->Update();
   }
   else if( !std::strcmp( current_mapper.c_str(), "INEX_MAPPER") )
   {

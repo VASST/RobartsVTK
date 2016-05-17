@@ -23,32 +23,31 @@ void main(void)
 
   // Convert the edge map to gray-scale.
   float gray = 0.299*foreground_grad.r + 0.58*foreground_grad.g + 0.114*foreground_grad.b;
-  float n;
-  // Threshold the gray image
-  if( gray > th )
-        n = 1.0;
-  else
-     n = 0.0;
 
   //--------------------------------------------------------------------------------------------
   // Compute the keyhole mask based on x0,y0, radius and gamma
   float x    = tcoordVC.x-x0;
   float y    = tcoordVC.y-y0;
-  float mask  = 1;
+  float mask = 1;
+  float n    = 1;
 
   if( pow(sqrt(aspect_ratio*x*x + y*y/aspect_ratio)/radius, gamma) < 1.0)
   {
+    n = 0;
     if( use_hard_edges == 1 )
         mask = 0;
     else
-        mask = pow(sqrt(aspect_ratio*x*x + y*y/aspect_ratio)/radius, gamma);
+    {  
+        float base_opacity = 0.08; // base opacity value
+        mask = base_opacity + pow(sqrt(aspect_ratio*x*x + y*y/aspect_ratio)/radius, gamma);
+    }
   }  
   //--------------------------------------------------------------------------------------------
 
   if( use_mask_texture == 0)
   {
       // keyhole effect
-      inside = (1-mask)*volume.rgb;
+      inside  = (1-mask)*volume.rgb;
       outside = mask*foreground.rgb;
       surface = (1-mask)*foreground_grad.rgb;
   }
