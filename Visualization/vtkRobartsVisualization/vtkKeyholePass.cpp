@@ -448,8 +448,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->x0*1.0)/width));
     this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->y0*1.0)/height));
     this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius*1.0)/width));
-    this->KeyholeProgram->Program->SetUniformi("width", width);
-    this->KeyholeProgram->Program->SetUniformi("height", height);
+	this->KeyholeProgram->Program->SetUniformf("aspect_ratio", static_cast<float>(width*1.0/height));
     this->KeyholeProgram->Program->SetUniformf("gamma",  this->gamma);
     this->KeyholeProgram->Program->SetUniformi("use_mask_texture", 0);
     this->KeyholeProgram->Program->SetUniformi("use_hard_edges", static_cast<int>(this->allow_hard_edges));
