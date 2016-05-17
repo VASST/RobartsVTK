@@ -35,6 +35,8 @@ MARK_AS_ADVANCED(CMAKE_RUNTIME_OUTPUT_DIRECTORY
   CMAKE_ARCHIVE_OUTPUT_DIRECTORY
   )
 
+SET(RobartsVTK_DATA_DIR ${CMAKE_SOURCE_DIR}/Data CACHE PATH "Location of the data directory.")
+
 #-----------------------------------------------------------------------------
 # Add configure file to included directories
 #-----------------------------------------------------------------------------
@@ -445,9 +447,9 @@ ENDIF()
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_ROBARTS_VISUALIZATION "Build the Robarts Visualization modules" OFF)
 IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
-	ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
-	
-	SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
+  ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
+  
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
 ENDIF()
 
 #-----------------------------------------------------------------------------
@@ -480,25 +482,15 @@ IF(RobartsVTK_BUILD_APPS)
         #-------------------------------------
         FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
 
-        # Copy dlls to bin folder
-
-        #-------------------------------------
-        # Find freeglut
-        #-------------------------------------
-        #FIND_PACKAGE(FreeGLUT REQUIRED NO_MODULE)
-        # Copy dlls to bin folder
-
-        # TODO : Copy dlls to bin folder
-
-
         #-------------------------------------
         # Find OpenMP
         #-------------------------------------
         FIND_PACKAGE(OpenMP REQUIRED)
 
-        ADD_SUBDIRECTORY(Applications/StreamingUSVis)
-		
-		ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+        IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
+          ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+          ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+        ENDIF()
       ENDIF()
     ENDIF()
   ENDIF()
@@ -563,4 +555,3 @@ export(TARGETS ${RobartsVTK_LIBRARIES}
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake)
-

@@ -31,73 +31,73 @@
   POSSIBILITY OF SUCH DAMAGES.
   =========================================================================*/
 
+#include "RobartsVTKConfigure.h"
+
+#include "vtkFrameBufferObject.h"
 #include "vtkKeyholePass.h"
 #include "vtkObjectFactory.h"
-#include <cassert>
+#include "vtkOpenGLError.h"
+#include "vtkOpenGLHelper.h"
+#include "vtkOpenGLRenderWindow.h"
+#include "vtkOpenGLRenderWindow.h"
+#include "vtkOpenGLShaderCache.h"
+#include "vtkOpenGLTexture.h"
+#include "vtkOpenGLVertexArrayObject.h"
+#include "vtkProperty.h"
 #include "vtkRenderState.h"
 #include "vtkRenderer.h"
-#include "vtkFrameBufferObject.h"
-#include "vtkTextureObject.h"
 #include "vtkShaderProgram.h"
-#include "vtkOpenGLShaderCache.h"
-#include "vtkOpenGLRenderWindow.h"
-#include "vtkOpenGLVertexArrayObject.h"
-#include "vtkOpenGLRenderWindow.h"
+#include "vtkTextureObject.h"
 #include "vtkTextureUnitManager.h"
-#include "vtkOpenGLError.h"
-#include "vtkOpenGLTexture.h"
-#include "vtkOpenGLHelper.h"
-#include "vtkProperty.h"
-
+#include <cassert>
 
 // To be able to dump intermediate passes into png images for debugging.
 //#define VTK_KEYHOLE_PASS_DEBUG
 
-#include "vtkPNGWriter.h"
-#include "vtkImageImport.h"
-#include "vtkPixelBufferObject.h"
-#include "vtkPixelBufferObject.h"
-#include "vtkImageExtractComponents.h"
 #include "vtkCamera.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkImageImport.h"
 #include "vtkMath.h"
+#include "vtkPNGWriter.h"
+#include "vtkPixelBufferObject.h"
+#include "vtkPixelBufferObject.h"
 
 vtkStandardNewMacro(vtkKeyholePass);
 
 //----------------------------------------------------------------------------------------------------
 vtkKeyholePass::vtkKeyholePass()
+  : FrameBufferObject(NULL),
+    Pass1(NULL),
+    Pass2(NULL),
+    ForegroundPixelBufferObject(NULL),
+    MaskPixelBufferObject(NULL),
+    ForegroundTextureObject(NULL),
+    MaskTextureObject(NULL),
+    GX(NULL),
+    GY(NULL),
+    ForegroundGradientTextureObject(NULL),
+    KeyholeProgram(NULL),
+    GradientProgram1(NULL),
+    KeyholeShader(NULL),
+    Supported(false),
+    SupportProbed(false),
+    allow_hard_edges(false),
+    mask_img_available(false)
 {
-
-  this->FrameBufferObject = 0;
-  this->Pass1 = 0;
-  this->Pass2 = 0;
-  this->foreground_pbo = 0;
-  this->mask_pbo = 0;
-  this->foreground_to = 0;
-  this->mask_to = 0;
-  this->GX = 0;
-  this->GY = 0;
-  this->foreground_grad_to = 0;
-  this->KeyholeProgram = 0;
-  this->gradientProgram1 = 0;
-  this->gradientProgram2 = 0;
-  this->Supported = false;
-  this->SupportProbed = false;
-  this->allow_hard_edges = false;
-  this->mask_img_available = false;
 }
 
 //----------------------------------------------------------------------------------------------------
 vtkKeyholePass::~vtkKeyholePass()
 {
-  if(this->FrameBufferObject!=0)
+  if(this->FrameBufferObject!=NULL)
   {
     vtkErrorMacro(<<"FrameBufferObject should have been deleted in ReleaseGraphicsResources().");
   }
-  if(this->Pass1!=0)
+  if(this->Pass1!=NULL)
   {
     vtkErrorMacro(<<"Pass1 should have been deleted in ReleaseGraphicsResources().");
   }
-  if(this->Pass2!=0)
+  if(this->Pass2!=NULL)
   {
     vtkErrorMacro(<<"Pass2 should have been deleted in ReleaseGraphicsResources().");
   }
@@ -115,7 +115,7 @@ void vtkKeyholePass::PrintSelf(ostream &os, vtkIndent indent)
 // \pre s_exist s!=0
 void vtkKeyholePass::Render(const vtkRenderState *s)
 {
-  assert("pre: s_exists" && s!=0);
+  assert("pre: s_exists" && s != NULL);
 
   vtkOpenGLClearErrorMacro();
 
@@ -123,9 +123,8 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
   vtkRenderer *r = s->GetRenderer();
   vtkOpenGLRenderWindow *renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
-  if(this->DelegatePass!=0)
+  if(this->DelegatePass != NULL)
   {
-
     if(!this->SupportProbed)
     {
       this->SupportProbed = true;
@@ -146,45 +145,44 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
           vtkErrorMacro("Texture objects are not supported by the context. Cannot render keyhole. ");
         }
       }
-
       if(supported)
       {
 
         // FBO extension is supported. Is the specific FBO format supported?
-        if(this->FrameBufferObject==0)
+        if(this->FrameBufferObject==NULL)
         {
           this->FrameBufferObject = vtkFrameBufferObject::New();
           this->FrameBufferObject->SetContext(renwin);
         }
-        if(this->Pass1==0)
+        if(this->Pass1==NULL)
         {
           this->Pass1 = vtkTextureObject::New();
           this->Pass1->SetContext( renwin );
         }
-        if( this->foreground_to == 0 )
+        if( this->ForegroundTextureObject == NULL )
         {
-          this->foreground_to = vtkTextureObject::New();
-          this->foreground_to->SetContext( renwin );
+          this->ForegroundTextureObject = vtkTextureObject::New();
+          this->ForegroundTextureObject->SetContext( renwin );
         }
-        if( this->mask_to == 0 )
+        if( this->MaskTextureObject == NULL )
         {
-          this->mask_to = vtkTextureObject::New();
-          this->mask_to->SetContext( renwin );
+          this->MaskTextureObject = vtkTextureObject::New();
+          this->MaskTextureObject->SetContext( renwin );
         }
-        if( this->foreground_pbo == 0)
+        if( this->ForegroundPixelBufferObject == NULL)
         {
-          this->foreground_pbo = vtkPixelBufferObject::New();
-          this->foreground_pbo->SetContext( renwin );
+          this->ForegroundPixelBufferObject = vtkPixelBufferObject::New();
+          this->ForegroundPixelBufferObject->SetContext( renwin );
         }
-        if( this->mask_pbo == 0)
+        if( this->MaskPixelBufferObject == NULL)
         {
-          this->mask_pbo = vtkPixelBufferObject::New();
-          this->mask_pbo->SetContext( renwin );
+          this->MaskPixelBufferObject = vtkPixelBufferObject::New();
+          this->MaskPixelBufferObject->SetContext( renwin );
         }
-        if( this->foreground_grad_to == 0)
+        if( this->ForegroundGradientTextureObject == NULL)
         {
-          this->foreground_grad_to = vtkTextureObject::New();
-          this->foreground_grad_to->SetContext( renwin );
+          this->ForegroundGradientTextureObject = vtkTextureObject::New();
+          this->ForegroundGradientTextureObject->SetContext( renwin );
         }
 
         this->Pass1->Create2D(64, 64, 4, VTK_UNSIGNED_CHAR, false);
@@ -219,83 +217,82 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     }
 
     // Read image data into pixelBuffers. Do this for the background and the mask.
-	vtkPropCollection *props = r->GetViewProps();
-	int numActors = props->GetNumberOfItems();
-	props->InitTraversal();
-	
-	vtkImageData *imgData;
-	unsigned char *dataPtr;
-	int img_size[3];
-	vtkIdType increments[2];
-	increments[0] = 0;
-	increments[1] = 0;
+    vtkPropCollection *props = r->GetViewProps();
+    int numActors = props->GetNumberOfItems();
+    props->InitTraversal();
 
-	for(int i=0; i<numActors; i++){
+    vtkImageData *imgData;
+    unsigned char *dataPtr;
+    int img_size[3];
+    vtkIdType increments[2];
+    increments[0] = 0;
+    increments[1] = 0;
 
-		if( i == 0 ){
-			// Discard the first actor
-			props->GetNextProp();
-		}
-		else if( i == 1){
-
-			vtkActor * foregroundActor = vtkActor::SafeDownCast(props->GetNextProp());// actors->GetNextActor();
-			this->foregroundTex = foregroundActor->GetTexture();
-
-				
-			imgData = this->foregroundTex->GetInput();
-
-			imgData->GetDimensions(img_size);
-			this->components = imgData->GetNumberOfScalarComponents();
-			dataPtr = (unsigned char*)imgData->GetScalarPointer();
-
-			this->dimensions[0] = img_size[0]; 
-			this->dimensions[1] = img_size[1];
-			
-			// Upload imagedata to pixel buffer object
-			this->foreground_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-										   dataPtr, this->dimensions,
-										   this->components, increments);
-		}
-		else if( i == 2){
-
-			vtkActor * maskActor = vtkActor::SafeDownCast(props->GetNextProp());;// = actors->GetNextActor();
-			this->maskTex = maskActor->GetTexture();
+    for(int i=0; i<numActors; i++)
+    {
+      if( i == 0 )
+      {
+        // Discard the first actor
+        props->GetNextProp();
+      }
+      else if( i == 1)
+      {
+        vtkActor * foregroundActor = vtkActor::SafeDownCast(props->GetNextProp());// actors->GetNextActor();
+        this->ForegroundTexture = foregroundActor->GetTexture();
 
 
-			vtkImageData *imgData = this->maskTex->GetInput();
-			imgData->GetDimensions(img_size);
-			this->components = imgData->GetNumberOfScalarComponents();
-			dataPtr = (unsigned char*)imgData->GetScalarPointer();
+        imgData = this->ForegroundTexture->GetInput();
 
-			this->dimensions[0] = img_size[0]; 
-			this->dimensions[1] = img_size[1];
+        imgData->GetDimensions(img_size);
+        this->components = imgData->GetNumberOfScalarComponents();
+        dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-			// Upload imagedata to pixel buffer object
-			this->mask_pbo->Upload2D(VTK_UNSIGNED_CHAR,
-										   dataPtr, this->dimensions,
-										   this->components, increments);
-		}
-	}
+        this->dimensions[0] = img_size[0];
+        this->dimensions[1] = img_size[1];
 
-	
+        // Upload imagedata to pixel buffer object
+        this->ForegroundPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+            dataPtr, this->dimensions,
+            this->components, increments);
+      }
+      else if( i == 2)
+      {
+        vtkActor * maskActor = vtkActor::SafeDownCast(props->GetNextProp());;// = actors->GetNextActor();
+        this->MaskTexture = maskActor->GetTexture();
 
 
-	// Create foreground texture object .
-	if(this->foreground_to->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
-				this->foreground_to->GetHeight() != static_cast<unsigned int>(this->dimensions[1]))
-	{
-			  this->foreground_to->Create2D(this->dimensions[0], this->dimensions[1], this->components,
-											this->foreground_pbo, false);
-	}
+        vtkImageData *imgData = this->MaskTexture->GetInput();
+        imgData->GetDimensions(img_size);
+        this->components = imgData->GetNumberOfScalarComponents();
+        dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-	// Create mask texture object.
-	if( this->mask_img_available ){
-		if( this->mask_to->GetHeight() != static_cast<unsigned int>(this->dimensions[0]) ||
-				this->mask_to->GetWidth() != static_cast<unsigned int>(this->dimensions[1]))
+        this->dimensions[0] = img_size[0];
+        this->dimensions[1] = img_size[1];
 
-				this->mask_to->Create2D(this->dimensions[0], this->dimensions[1], this->components,
-												this->mask_pbo, false);
-	}
+        // Upload imagedata to pixel buffer object
+        this->MaskPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+                                              dataPtr, this->dimensions,
+                                              this->components, increments);
+      }
+    }
+
+    // Create foreground texture object .
+    if(this->ForegroundTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
+        this->ForegroundTextureObject->GetHeight() != static_cast<unsigned int>(this->dimensions[1]))
+    {
+      this->ForegroundTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
+                                              this->ForegroundPixelBufferObject, false);
+    }
+
+    // Create mask texture object.
+    if( this->mask_img_available )
+    {
+      if( this->MaskTextureObject->GetHeight() != static_cast<unsigned int>(this->dimensions[0]) ||
+          this->MaskTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[1]))
+
+        this->MaskTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
+                                          this->MaskPixelBufferObject, false);
+    }
 
     // 1. Create a new render state with FBO.
     int width;
@@ -305,18 +302,18 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     width = size[0];
     height  = size[1];
 
-    if( this->Pass1 == 0 )
+    if( this->Pass1 == NULL )
     {
       this->Pass1 = vtkTextureObject::New();
       this->Pass1->SetContext( renwin );
     }
 
-    if( this->FrameBufferObject==0)
+    if( this->FrameBufferObject==NULL)
     {
       this->FrameBufferObject = vtkFrameBufferObject::New();
       this->FrameBufferObject->SetContext( renwin );
     }
-		
+
     // Remove background texture
     r->SetTexturedBackground( false );
     // Now set a black background.
@@ -328,7 +325,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
     // Save the output of the first pass to a file for debugging
-	vtkPixelBufferObject *pbo = this->foreground_to->Download();
+    vtkPixelBufferObject *pbo = this->ForegroundTextureObject->Download();
 
     unsigned char * openglRawData = new unsigned char[4*width*height];
     bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
@@ -364,7 +361,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
     // Same FBO, but new colour attachment (new TO).
     // Pass2 is our final composited scene
-    if(this->Pass2==0)
+    if(this->Pass2==NULL)
     {
       this->Pass2 = vtkTextureObject::New();
       this->Pass2->SetContext( this->FrameBufferObject->GetContext() );
@@ -382,18 +379,19 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     this->FrameBufferObject->Start(width, height, false);
 
     // Now use the shader to do composting
-    if( this->KeyholeProgram == 0)
+    if( this->KeyholeProgram == NULL)
     {
       this->KeyholeProgram = new vtkOpenGLHelper;
       // build the shader source code
-      LoadShaders("./vtkKeyhole.fs", "./vtkKeyhole.vs");
+      std::string data_dir = std::string(RobartsVTK_DATA_DIR);
+      LoadShaders(data_dir + "/Shaders/vtkKeyhole.fs", data_dir + "/Shaders/vtkKeyhole.vs");
 
       std::string GSSource;
       // compile and bind it if needed
       vtkShaderProgram *newShader =
         renwin->GetShaderCache()->ReadyShaderProgram(
-          this->ver_shader_src.c_str(),
-          this->frag_shader_src.c_str(),
+          this->VertexShaderSource.c_str(),
+          this->FragmentShaderSource.c_str(),
           GSSource.c_str());
 
       // if the shader changed reinitialize the VAO
@@ -425,22 +423,23 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     this->KeyholeProgram->Program->SetUniformi("_volume", texture0);
 
-	if( this->mask_img_available ){
-		this->mask_to->Activate();
-		int texture1 = this->mask_to->GetTextureUnit();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		this->KeyholeProgram->Program->SetUniformi("_mask", texture1);
-	}
+    if( this->mask_img_available )
+    {
+      this->MaskTextureObject->Activate();
+      int texture1 = this->MaskTextureObject->GetTextureUnit();
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      this->KeyholeProgram->Program->SetUniformi("_mask", texture1);
+    }
 
-    this->foreground_to->Activate();
-    int texture2 = this->foreground_to->GetTextureUnit();
+    this->ForegroundTextureObject->Activate();
+    int texture2 = this->ForegroundTextureObject->GetTextureUnit();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     this->KeyholeProgram->Program->SetUniformi("_foreground", texture2);
 
-    this->foreground_grad_to->Activate();
-    int texture3 = this->foreground_grad_to->GetTextureUnit();
+    this->ForegroundGradientTextureObject->Activate();
+    int texture3 = this->ForegroundGradientTextureObject->GetTextureUnit();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     this->KeyholeProgram->Program->SetUniformi("_foreground_grad", texture3);
@@ -449,8 +448,8 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
     this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->x0*1.0)/width));
     this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->y0*1.0)/height));
     this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius*1.0)/width));
-	this->KeyholeProgram->Program->SetUniformi("width", width);
-	this->KeyholeProgram->Program->SetUniformi("height", height);
+    this->KeyholeProgram->Program->SetUniformi("width", width);
+    this->KeyholeProgram->Program->SetUniformi("height", height);
     this->KeyholeProgram->Program->SetUniformf("gamma",  this->gamma);
     this->KeyholeProgram->Program->SetUniformi("use_mask_texture", 0);
     this->KeyholeProgram->Program->SetUniformi("use_hard_edges", static_cast<int>(this->allow_hard_edges));
@@ -469,7 +468,7 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 
     openglRawData = new unsigned char[4*width*height];
 
-	status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
+    status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
     assert("check" && status );
     pbo->Delete();
 
@@ -517,7 +516,6 @@ void vtkKeyholePass::Render(const vtkRenderState *s)
 // Compute gradient texture of the foreground and save it to a texture object
 void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
 {
-
   vtkOpenGLRenderWindow *renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
   int *size = renwin->GetSize();
   int width = size[0];
@@ -528,7 +526,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
   int h = height+2*extraPixels;*/
 
   // Create new TOs and set FBO color attachments
-  if( this->GX == 0)
+  if( this->GX == NULL)
   {
     this->GX = vtkTextureObject::New();
     this->GX->SetContext( renwin );
@@ -539,7 +537,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
     this->GX->Create2D( width, height, 4, VTK_UNSIGNED_CHAR, false);
   }
 
-  if( this->GY == 0)
+  if( this->GY == NULL)
   {
     this->GY = vtkTextureObject::New();
     this->GY->SetContext( renwin );
@@ -558,53 +556,54 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
   this->FrameBufferObject->Start(width, height, false);
 
   // Set the shader program for the first pass of GX and GY
-  if( this->gradientProgram1 == 0)
+  if( this->GradientProgram1 == NULL)
   {
-    this->gradientProgram1 = new vtkOpenGLHelper;
+    this->GradientProgram1 = new vtkOpenGLHelper;
     // build the shader source code
-    LoadShaders("./gradientMagPass1.fs", "./vtkKeyhole.vs");
+    std::string data_dir = std::string(RobartsVTK_DATA_DIR);
+    LoadShaders( data_dir + "/Shaders/gradientMagPass1.fs", data_dir + "/Shaders/vtkKeyhole.vs");
 
     std::string GSSource;
     // compile and bind it if needed
     vtkShaderProgram *newShader =
       renwin->GetShaderCache()->ReadyShaderProgram(
-        this->ver_shader_src.c_str(),
-        this->frag_shader_src.c_str(),
+        this->VertexShaderSource.c_str(),
+        this->FragmentShaderSource.c_str(),
         GSSource.c_str());
 
     // if the shader changed reinitialize the VAO
-    if (newShader != this->gradientProgram1->Program)
+    if (newShader != this->GradientProgram1->Program)
     {
-      this->gradientProgram1->Program = newShader;
-      this->gradientProgram1->VAO->ShaderProgramChanged(); // reset the VAO as the shader has changed
+      this->GradientProgram1->Program = newShader;
+      this->GradientProgram1->VAO->ShaderProgramChanged(); // reset the VAO as the shader has changed
     }
 
-    this->gradientProgram1->ShaderSourceTime.Modified();
+    this->GradientProgram1->ShaderSourceTime.Modified();
   }
   else
   {
-    renwin->GetShaderCache()->ReadyShaderProgram(this->gradientProgram1->Program);
+    renwin->GetShaderCache()->ReadyShaderProgram(this->GradientProgram1->Program);
   }
 
-  if( this->gradientProgram1->Program->GetCompiled() != true)
+  if( this->GradientProgram1->Program->GetCompiled() != true)
   {
     vtkErrorMacro("Couldn't build the shader (Gradient 1) shader program. At this point it can be an error in the shader or a driver bug.");
     return;
   }
 
-  this->foreground_to->Activate();
-  int sourceID = this->foreground_to->GetTextureUnit();
+  this->ForegroundTextureObject->Activate();
+  int sourceID = this->ForegroundTextureObject->GetTextureUnit();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  this->gradientProgram1->Program->SetUniformi("source", sourceID);
+  this->GradientProgram1->Program->SetUniformi("source", sourceID);
 
   float fvalue = static_cast<float>(1.0/width);
-  this->gradientProgram1->Program->SetUniformf("stepSize", fvalue);
-  
+  this->GradientProgram1->Program->SetUniformf("stepSize", fvalue);
+
   this->FrameBufferObject->RenderQuad(0, width-1, 0, height-1,
-                                      this->gradientProgram1->Program,
-                                      this->gradientProgram1->VAO);
-  this->foreground_to->Deactivate();
+                                      this->GradientProgram1->Program,
+                                      this->GradientProgram1->VAO);
+  this->ForegroundTextureObject->Deactivate();
 #ifdef VTK_KEYHOLE_PASS_DEBUG
   // Save the output for debugging
   vtkPixelBufferObject *pbo = GX->Download();
@@ -641,57 +640,58 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
   rgbatoRgb->Delete();
 #endif
 
-  if(this->foreground_grad_to == 0)
+  if(this->ForegroundGradientTextureObject == NULL)
   {
-    this->foreground_grad_to = vtkTextureObject::New();
-    this->foreground_grad_to->SetContext( renwin );
+    this->ForegroundGradientTextureObject = vtkTextureObject::New();
+    this->ForegroundGradientTextureObject->SetContext( renwin );
   }
 
-  if( this->foreground_grad_to->GetWidth() != static_cast<unsigned int>(width) ||
-      this->foreground_grad_to->GetHeight() != static_cast<unsigned int>(height))
+  if( this->ForegroundGradientTextureObject->GetWidth() != static_cast<unsigned int>(width) ||
+      this->ForegroundGradientTextureObject->GetHeight() != static_cast<unsigned int>(height))
   {
-    this->foreground_grad_to->Create2D(static_cast<unsigned int>(width),
-                                       static_cast<unsigned int>(height), 4,
-                                       VTK_UNSIGNED_CHAR, false);
+    this->ForegroundGradientTextureObject->Create2D(static_cast<unsigned int>(width),
+        static_cast<unsigned int>(height), 4,
+        VTK_UNSIGNED_CHAR, false);
   }
 
   this->FrameBufferObject->UnBind();
   // Now bind foreground_grad_to to the FBO
   this->FrameBufferObject->SetNumberOfRenderTargets( 1 );
-  this->FrameBufferObject->SetColorBuffer(0, foreground_grad_to);
+  this->FrameBufferObject->SetColorBuffer(0, ForegroundGradientTextureObject);
   this->FrameBufferObject->SetActiveBuffer( 0 );
   this->FrameBufferObject->Start(width, height, false);
 
   // Set the shader program for the first pass of GX and GY
-  if( this->gradientProgram2 == 0)
+  if( this->KeyholeShader == NULL)
   {
-    this->gradientProgram2 = new vtkOpenGLHelper;
+    this->KeyholeShader = new vtkOpenGLHelper;
     // build the shader source code
-    LoadShaders("./gradientMagPass2.fs", "./vtkKeyhole.vs");
+    std::string data_dir = std::string(RobartsVTK_DATA_DIR);
+    LoadShaders(data_dir + "/Shaders/gradientMagPass2.fs", data_dir + "/Shaders/vtkKeyhole.vs");
 
     std::string GSSource;
     // compile and bind it if needed
     vtkShaderProgram *newShader2 =
       renwin->GetShaderCache()->ReadyShaderProgram(
-        this->ver_shader_src.c_str(),
-        this->frag_shader_src.c_str(),
+        this->VertexShaderSource.c_str(),
+        this->FragmentShaderSource.c_str(),
         GSSource.c_str());
 
     // if the shader changed reinitialize the VAO
-    if (newShader2 != this->gradientProgram2->Program)
+    if (newShader2 != this->KeyholeShader->Program)
     {
-      this->gradientProgram2->Program = newShader2;
-      this->gradientProgram2->VAO->ShaderProgramChanged(); // reset the VAO as the shader has changed
+      this->KeyholeShader->Program = newShader2;
+      this->KeyholeShader->VAO->ShaderProgramChanged(); // reset the VAO as the shader has changed
     }
 
-    this->gradientProgram2->ShaderSourceTime.Modified();
+    this->KeyholeShader->ShaderSourceTime.Modified();
   }
   else
   {
-    renwin->GetShaderCache()->ReadyShaderProgram(this->gradientProgram2->Program);
+    renwin->GetShaderCache()->ReadyShaderProgram(this->KeyholeShader->Program);
   }
 
-  if( this->gradientProgram2->Program->GetCompiled() != true)
+  if( this->KeyholeShader->Program->GetCompiled() != true)
   {
     vtkErrorMacro("Couldn't build the shader (Gradient 2) shader program. At this point it can be an error in the shader or a driver bug.");
     return;
@@ -708,21 +708,21 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  this->gradientProgram2->Program->SetUniformi("gx1", id0);
-  this->gradientProgram2->Program->SetUniformi("gy1", id1);
+  this->KeyholeShader->Program->SetUniformi("gx1", id0);
+  this->KeyholeShader->Program->SetUniformi("gy1", id1);
 
   fvalue = static_cast<float>(1.0/height);
-  this->gradientProgram2->Program->SetUniformf("stepSize", fvalue);
+  this->KeyholeShader->Program->SetUniformf("stepSize", fvalue);
 
   this->FrameBufferObject->RenderQuad(0, width-1, 0, height-1,
-                                      this->gradientProgram2->Program,
-                                      this->gradientProgram2->VAO);
+                                      this->KeyholeShader->Program,
+                                      this->KeyholeShader->VAO);
   this->GX->Deactivate();
   this->GY->Deactivate();
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
   // Save the output for debugging
-  pbo = this->foreground_grad_to->Download();
+  pbo = this->ForegroundGradientTextureObject->Download();
 
   openglRawData = new unsigned char[4*dims[0]*dims[1]];
   status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, dims, 4, incs);
@@ -761,73 +761,73 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer *r)
 void vtkKeyholePass::ReleaseGraphicsResources(vtkWindow *w)
 {
 
-  assert("pre: w_exists" && w!=0);
+  assert("pre: w_exists" && w!=NULL);
 
   vtkImageProcessingPass::ReleaseGraphicsResources( w );
 
-  if(this->KeyholeProgram != 0)
+  if(this->KeyholeProgram != NULL)
   {
     this->KeyholeProgram->Program->ReleaseGraphicsResources( w );
   }
 
-  if(this->FrameBufferObject != 0 )
+  if(this->FrameBufferObject != NULL )
   {
     this->FrameBufferObject->Delete();
     this->FrameBufferObject = 0;
   }
 
-  if(this->Pass1 != 0)
+  if(this->Pass1 != NULL)
   {
     this->Pass1->Delete();
     this->Pass1  = 0;
   }
 
-  if(this->Pass2 != 0)
+  if(this->Pass2 != NULL)
   {
     this->Pass2->Delete();
     this->Pass2 = 0;
   }
 
-  if( this->foreground_pbo != 0)
+  if( this->ForegroundPixelBufferObject != NULL)
   {
-    this->foreground_pbo->Delete();
-    this->foreground_pbo = 0;
+    this->ForegroundPixelBufferObject->Delete();
+    this->ForegroundPixelBufferObject = 0;
   }
 
-  if( this->foreground_to != 0)
+  if( this->ForegroundTextureObject != NULL)
   {
-    this->foreground_to->Delete();
-    this->foreground_to = 0;
+    this->ForegroundTextureObject->Delete();
+    this->ForegroundTextureObject = 0;
   }
 
-  if( this->GX != 0 )
+  if( this->GX != NULL )
   {
     this->GX->Delete();
     this->GX = 0;
   }
 
-  if( this->GY != 0 )
+  if( this->GY != NULL )
   {
     this->GY->Delete();
     this->GY = 0;
   }
 
-  if( this->foreground_grad_to != 0)
+  if( this->ForegroundGradientTextureObject != NULL)
   {
-    this->foreground_grad_to->Delete();
-    this->foreground_grad_to = 0;
+    this->ForegroundGradientTextureObject->Delete();
+    this->ForegroundGradientTextureObject = 0;
   }
 
-  if( this->mask_pbo != 0)
+  if( this->MaskPixelBufferObject != NULL)
   {
-    this->mask_pbo->Delete();
-    this->mask_pbo = 0;
+    this->MaskPixelBufferObject->Delete();
+    this->MaskPixelBufferObject = 0;
   }
 
-  if( this->mask_to != 0)
+  if( this->MaskTextureObject != NULL)
   {
-    this->mask_to->Delete();
-    this->mask_to = 0;
+    this->MaskTextureObject->Delete();
+    this->MaskTextureObject = 0;
   }
 }
 
@@ -851,7 +851,7 @@ void vtkKeyholePass::LoadShaders(std::string fs_path, std::string vs_path)
 
     fShaderFile.close();
 
-    this->frag_shader_src = fShaderStream.str();
+    this->FragmentShaderSource = fShaderStream.str();
 
   }
   catch(std::ifstream::failure e)
@@ -869,7 +869,7 @@ void vtkKeyholePass::LoadShaders(std::string fs_path, std::string vs_path)
 
     vShaderFile.close();
 
-    this->ver_shader_src = vShaderStream.str();
+    this->VertexShaderSource = vShaderStream.str();
 
   }
   catch(std::ifstream::failure e)

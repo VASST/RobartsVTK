@@ -3,11 +3,7 @@ PROJECT(vtkRobartsVisualization)
 include(module.cmake)
 
 SET ( Module_SRCS
-  gradientMagPass1.fs 
-  gradientMagPass2.fs
-  vtkKeyhole.fs
-  
-  vtkKeyholePass.h vtkKeyholePass.cpp
+  vtkKeyholePass.cpp
 )
 
 # -----------------------------------------------------------------

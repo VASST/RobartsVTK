@@ -36,15 +36,14 @@
 
 #include "vtkRobartsVisualizationModule.h"
 
-#include "vtkRenderingOpenGL2Module.h" // For export macro
-#include "vtkImageProcessingPass.h"
-#include "vtkImageData.h"
-#include "vtkRenderer.h"
-#include "vtkTexture.h"
-#include "vtkPixelBufferObject.h"
-#include "vtkOpenGLHelper.h"
-#include "vtkTexture.h"
 #include "vtkActorCollection.h"
+#include "vtkImageData.h"
+#include "vtkImageProcessingPass.h"
+#include "vtkOpenGLHelper.h"
+#include "vtkPixelBufferObject.h"
+#include "vtkRenderer.h"
+//#include "vtkRenderingOpenGL2Module.h" // For export macro
+#include "vtkTexture.h"
 
 class vtkOpenGLRenderWindow;
 class vtkShaderProgram2;
@@ -56,10 +55,12 @@ class VTKROBARTSVISUALIZATION_EXPORT vtkKeyholePass : public vtkImageProcessingP
 {
 public:
 
-  enum class vtkKeyholePass_Texture_Index {BACKGROUND,
-      BACKGROUND_EDGEMAP,
-      MASK
-                                          };
+  enum vtkKeyholePass_Texture_Index
+  {
+    BACKGROUND,
+    BACKGROUND_EDGEMAP,
+    MASK
+  };
 
   static vtkKeyholePass *New();
   vtkTypeMacro(vtkKeyholePass, vtkImageProcessingPass);
@@ -78,8 +79,9 @@ public:
 
   // Description:
   // Use an image as the mask
-  void UseMaskImage( bool t ){
-	  this->mask_img_available = t;
+  void UseMaskImage( bool t )
+  {
+    this->mask_img_available = t;
   }
 
   // Description:
@@ -101,6 +103,42 @@ public:
   }
 
 protected:
+
+
+  // Description:
+  // Graphics resources.
+  vtkFrameBufferObject* FrameBufferObject;
+  vtkTextureObject* Pass1; // render target for the volume
+  vtkTextureObject* Pass2; // render target for the horizontal pass
+  vtkTexture* ForegroundTexture;
+  vtkTexture* MaskTexture;
+  vtkPixelBufferObject* ForegroundPixelBufferObject;
+  vtkPixelBufferObject* MaskPixelBufferObject;
+  vtkTextureObject* ForegroundTextureObject;
+  vtkTextureObject* MaskTextureObject;
+  vtkTextureObject* ForegroundGradientTextureObject;
+  vtkTextureObject* GX;
+  vtkTextureObject* GY;
+  vtkOpenGLHelper* KeyholeProgram;
+  vtkOpenGLHelper* GradientProgram1;
+  vtkOpenGLHelper* KeyholeShader; // keyhole shader
+
+  std::string FragmentShaderSource;
+  std::string VertexShaderSource;
+
+  int x0;
+  int y0;
+  int radius;
+  int components;
+  unsigned int dimensions[2];
+  float gamma;
+  bool allow_hard_edges;
+  bool mask_img_available;
+
+  bool Supported;
+  bool SupportProbed;
+
+private:
   // Description:
   // Default constructor. DelegatePass is set to NULL.
   vtkKeyholePass();
@@ -109,34 +147,10 @@ protected:
   // Destructor.
   virtual ~vtkKeyholePass();
 
-  // Description:
-  // Graphics resources.
-  vtkFrameBufferObject *FrameBufferObject;
-  vtkTextureObject *Pass1; // render target for the volume
-  vtkTextureObject *Pass2; // render target for the horizontal pass
-  vtkTexture *foregroundTex, *maskTex;
-  vtkPixelBufferObject *foreground_pbo, *mask_pbo;
-  vtkTextureObject *foreground_to, *mask_to, *foreground_grad_to, *GX, *GY;
-  vtkOpenGLHelper *KeyholeProgram, *gradientProgram1, *gradientProgram2; // keyhole shader
-
-  std::string frag_shader_src, ver_shader_src;
-
-  bool Supported;
-  bool SupportProbed;
-
-private:
   vtkKeyholePass(const vtkKeyholePass&);  // Not implemented.
   void operator=(const vtkKeyholePass&);  // Not implemented.
   void LoadShaders(std::string, std::string); // Load Shader programs from file.
   void GetForegroudGradient(vtkRenderer *);// perform sobel pass on foreground texture and save the results to foreground_grad_to
-
-  int x0, y0, radius;
-  int components;
-  unsigned int dimensions[2];
-  float gamma;
-  bool allow_hard_edges;
-  bool mask_img_available;
-
 };
 
 #endif // vtkKeyholePass_h
