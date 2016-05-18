@@ -216,7 +216,6 @@ int main(){
 	keyholePass->SetKeyholeParameters(256, 256, 150, 5.0);
 	keyholePass->SetHardKeyholeEdges( false );
 
-
 	vtkLightsPass *lights = vtkLightsPass::New();
 	vtkDefaultPass *defaultPass = vtkDefaultPass::New();
 	vtkCameraPass *cameraP = vtkCameraPass::New();

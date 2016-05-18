@@ -896,7 +896,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
 
   // Add foreground texture as a textured plane
   foregroundPlane = vtkSmartPointer< vtkPlaneSource >::New();
-  foregroundPlane->SetCenter(0.0, 0.0, 1000.0); // Render this back of the camera. 
+  foregroundPlane->SetCenter(0.0, 0.0, 1000.0); 
   foregroundPlane->SetNormal(0.0, 0.0, 1.0);
 
   foregroundTexturePlane = vtkSmartPointer< vtkTextureMapToPlane >::New();
@@ -1157,7 +1157,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   }
 
   PlusTrackedFrame *PlusTrackedFrame = PlusTrackedFrames->GetTrackedFrame( index );
-  std::cout << "Here.. " << std::endl;
 
   /*    // Update transform repository
   if ( repository->SetTransforms(*PlusTrackedFrame) != PLUS_SUCCESS ){

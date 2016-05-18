@@ -1,4 +1,5 @@
 // Fragment shader used by vtkKeyholePass render pass.
+// (c) Uditha Jayarathne <ujayarat@robarts.ca>
 #version 440 core
 
 in vec2 tcoordVC;
@@ -14,6 +15,8 @@ uniform float gamma; // gamma variable to control distance fall off
 uniform int use_mask_texture, use_hard_edges; 
 uniform float aspect_ratio;
 
+float calc_mask(vec2, float, float, float, float, float, int);
+
 void main(void)
 {
   vec4 volume = texture2D(_volume, tcoordVC);
@@ -23,29 +26,12 @@ void main(void)
 
   // Convert the edge map to gray-scale.
   float gray = 0.299*foreground_grad.r + 0.58*foreground_grad.g + 0.114*foreground_grad.b;
-
-  //--------------------------------------------------------------------------------------------
-  // Compute the keyhole mask based on x0,y0, radius and gamma
-  float x    = tcoordVC.x-x0;
-  float y    = tcoordVC.y-y0;
-  float mask = 1;
-  float n    = 1;
-
-  if( pow(sqrt(aspect_ratio*x*x + y*y/aspect_ratio)/radius, gamma) < 1.0)
-  {
-    n = 0;
-    if( use_hard_edges == 1 )
-        mask = 0;
-    else
-    {  
-        float base_opacity = 0.08; // base opacity value
-        mask = base_opacity + pow(sqrt(aspect_ratio*x*x + y*y/aspect_ratio)/radius, gamma);
-    }
-  }  
-  //--------------------------------------------------------------------------------------------
-
+ 
   if( use_mask_texture == 0)
   {
+      // Compute the keyhole mask based on x0,y0, radius and gamma
+      float mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
+      
       // keyhole effect
       inside  = (1-mask)*volume.rgb;
       outside = mask*foreground.rgb;
@@ -63,4 +49,24 @@ void main(void)
   // Blend textures to get the final effect. 
   color.rgb = inside + surface + outside;
   color.a = 1.0;
+}
+
+// Calculates the mask
+float calc_mask(vec2 tcoord, float x0, float y0, float r, float ratio, float gamma, int t)
+{
+    float x = tcoord.x - x0;
+    float y = tcoord.y - y0;
+
+    if( pow(sqrt(ratio*x*x + y*y/ratio)/r, gamma) <= 1.0)
+    {
+        if( t == 1 )
+            return 0;
+        else
+        {  
+            float base_opacity = 0.08; // base opacity value
+            return (base_opacity + pow(sqrt(ratio*x*x + y*y/ratio)/r, gamma));
+        }
+    }
+    else 
+        return 1;
 }
