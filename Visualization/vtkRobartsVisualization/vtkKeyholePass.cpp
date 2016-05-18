@@ -49,7 +49,6 @@
 #include "vtkShaderProgram.h"
 #include "vtkTextureObject.h"
 #include "vtkTextureUnitManager.h"
-#include <cassert>
 
 // To be able to dump intermediate passes into png images for debugging.
 //#define VTK_KEYHOLE_PASS_DEBUG
@@ -61,6 +60,9 @@
 #include "vtkPNGWriter.h"
 #include "vtkPixelBufferObject.h"
 #include "vtkPixelBufferObject.h"
+
+#include <cassert>
+#include <sstream>
 
 vtkStandardNewMacro(vtkKeyholePass);
 
