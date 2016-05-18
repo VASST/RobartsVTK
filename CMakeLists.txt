@@ -41,23 +41,26 @@ MARK_AS_ADVANCED(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 
 #-----------------------------------------------------------------------------
+# Find OpenMP
+#-----------------------------------------------------------------------------
+FIND_PACKAGE(OpenMP REQUIRED)
+
+#-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
 FIND_PACKAGE(VTK 6.3.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
-# Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
-FOREACH(lib ${VTK_LIBRARIES})
-  IF(NOT TARGET ${lib})
-    continue()
-  ENDIF()
+INCLUDE(${VTK_CONFIG_TARGETS_FILE})
 
-  GET_TARGET_PROPERTY(LIB_TYPE ${lib} TYPE)
+# Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+FOREACH(target ${_expectedTargets})
+  GET_TARGET_PROPERTY(LIB_TYPE ${target} TYPE)
 
   IF(NOT ${LIB_TYPE} STREQUAL "INTERFACE_LIBRARY")
-    GET_TARGET_PROPERTY(VTK_DEBUG_FILE ${lib} IMPORTED_LOCATION_DEBUG)
-    GET_TARGET_PROPERTY(VTK_RELEASE_FILE ${lib} IMPORTED_LOCATION_RELEASE)
+    GET_TARGET_PROPERTY(VTK_DEBUG_FILE ${target} IMPORTED_LOCATION_DEBUG)
+    GET_TARGET_PROPERTY(VTK_RELEASE_FILE ${target} IMPORTED_LOCATION_RELEASE)
 
     IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
       IF( EXISTS ${VTK_RELEASE_FILE} )
@@ -80,11 +83,6 @@ FOREACH(lib ${VTK_LIBRARIES})
     ENDIF()
   ENDIF()
 ENDFOREACH()
-
-#-----------------------------------------------------------------------------
-# Include the important stuff for using VTK
-#-----------------------------------------------------------------------------
-INCLUDE (${VTK_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
@@ -251,17 +249,15 @@ IF(RobartsVTK_USE_ITK)
   IF(ITK_FOUND)
     MESSAGE(STATUS "Using ITK available at: ${ITK_DIR}")
     
-    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
-    FOREACH(lib ${ITK_LIBRARIES})
-      IF(NOT TARGET ${lib})
-        continue()
-      ENDIF()
+    INCLUDE(${ITK_CONFIG_TARGETS_FILE})
 
-      GET_TARGET_PROPERTY(LIB_TYPE ${lib} TYPE)
+    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+    FOREACH(target ${_expectedTargets})
+      GET_TARGET_PROPERTY(LIB_TYPE ${target} TYPE)
 
       IF(NOT ${LIB_TYPE} STREQUAL "INTERFACE_LIBRARY")
-        GET_TARGET_PROPERTY(ITK_DEBUG_FILE ${lib} IMPORTED_LOCATION_DEBUG)
-        GET_TARGET_PROPERTY(ITK_RELEASE_FILE ${lib} IMPORTED_LOCATION_RELEASE)
+        GET_TARGET_PROPERTY(ITK_DEBUG_FILE ${target} IMPORTED_LOCATION_DEBUG)
+        GET_TARGET_PROPERTY(ITK_RELEASE_FILE ${target} IMPORTED_LOCATION_RELEASE)
 
         IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
           IF( EXISTS ${ITK_RELEASE_FILE} )
@@ -328,18 +324,17 @@ OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
 IF(RobartsVTK_USE_PLUS)
     # PlusLib has been built already
   FIND_PACKAGE(PlusLib REQUIRED NO_MODULE PATHS ${PlusLib_DIR} NO_DEFAULT_PATH)
-  
+
   IF(PlusLib_FOUND)
     MESSAGE(STATUS "Using PlusLib available at: ${PlusLib_DIR}")
 
-    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
-    FOREACH(lib ${PlusLib_LIBRARIES})
-      IF(NOT TARGET ${lib})
-        continue()
-      ENDIF()
+    INCLUDE(${PlusLib_USE_FILE})
+    INCLUDE(${PlusLib_TARGETS_FILE})
 
-      GET_TARGET_PROPERTY(PlusLib_DEBUG_FILE ${lib} IMPORTED_LOCATION_DEBUG)
-      GET_TARGET_PROPERTY(PlusLib_RELEASE_FILE ${lib} IMPORTED_LOCATION_RELEASE)
+    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+    FOREACH(target ${_expectedTargets} OpenIGTLink)
+      GET_TARGET_PROPERTY(PlusLib_DEBUG_FILE ${target} IMPORTED_LOCATION_DEBUG)
+      GET_TARGET_PROPERTY(PlusLib_RELEASE_FILE ${target} IMPORTED_LOCATION_RELEASE)
 
       IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
         IF( EXISTS ${PlusLib_RELEASE_FILE} )
@@ -361,8 +356,6 @@ IF(RobartsVTK_USE_PLUS)
         ENDIF()
       ENDIF()
     ENDFOREACH()
-  
-    INCLUDE(${PlusLib_USE_FILE})
   ENDIF()
 ENDIF()
 
@@ -454,6 +447,21 @@ IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
 ENDIF()
 
 #-----------------------------------------------------------------------------
+# OpenCL Dependencies
+#-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_OpenCL "Build the OpenCL modules" OFF)
+IF (RobartsVTK_USE_OpenCL AND CUDA_FOUND)
+  FIND_PACKAGE(OpenCL REQUIRED)
+  
+  OPTION (RobartsVTK_USE_CL_VOLUMERECONSTRUCTION "Build the OpenCL Volume Reconstruction modules" ON)
+  IF (RobartsVTK_USE_CL_VOLUMERECONSTRUCTION)
+    ADD_SUBDIRECTORY(ImageProcessing/vtkCLVolumeReconstruction)
+
+    SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCLVolumeReconstruction CACHE INTERNAL "")
+  ENDIF()
+ENDIF()
+
+#-----------------------------------------------------------------------------
 # Applications
 #-----------------------------------------------------------------------------
 OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
@@ -463,22 +471,42 @@ IF(RobartsVTK_BUILD_APPS)
     IF(RobartsVTK_USE_QT)
       ADD_SUBDIRECTORY(Applications/FluoroPredViz)
       ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
-      
-      IF( RobartsVTK_USE_PLUS )
-        #-------------------------------------
-        # Find OpenCV
-        #-------------------------------------
-        FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
-        # TODO : Copy dlls to bin folder
-
-        #-------------------------------------
-        # Find OpenMP
-        #-------------------------------------
-        FIND_PACKAGE(OpenMP REQUIRED)
-
-        ADD_SUBDIRECTORY(Applications/StreamingUSVis)
-      ENDIF()
     ENDIF()
+  ENDIF()
+  
+  IF(RobartsVTK_USE_CL_VOLUMERECONSTRUCTION AND RobartsVTK_USE_PLUS)
+    #-------------------------------------
+    # Find OpenCV
+    #-------------------------------------
+    FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+
+    # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+    FOREACH(target ${OpenCV_LIBRARIES})
+      GET_TARGET_PROPERTY(OpenCV_DEBUG_FILE ${target} IMPORTED_LOCATION_DEBUG)
+      GET_TARGET_PROPERTY(OpenCV_RELEASE_FILE ${target} IMPORTED_LOCATION_RELEASE)
+
+      IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
+        IF( EXISTS ${OpenCV_RELEASE_FILE} )
+          FILE(COPY ${OpenCV_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release)
+        ENDIF()
+        IF( EXISTS ${OpenCV_DEBUG_FILE} )
+          FILE(COPY ${OpenCV_DEBUG_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug)
+        ENDIF()
+      ELSE()
+        IF( OpenCV_DEBUG_FILE EQUAL OpenCV_RELEASE_FILE AND EXISTS ${OpenCV_RELEASE_FILE})
+          FILE(COPY ${OpenCV_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+        ELSE()
+          IF( EXISTS ${OpenCV_RELEASE_FILE} )
+            FILE(COPY ${OpenCV_RELEASE_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+          ENDIF()
+          IF( EXISTS ${OpenCV_DEBUG_FILE} )
+            FILE(COPY ${OpenCV_DEBUG_FILE} DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH})
+          ENDIF()
+        ENDIF()
+      ENDIF()
+    ENDFOREACH()
+
+    ADD_SUBDIRECTORY(Applications/StreamingUSVis)
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)

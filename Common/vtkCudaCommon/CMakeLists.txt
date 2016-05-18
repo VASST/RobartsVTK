@@ -23,7 +23,7 @@ SET( Module_SRCS
 
 # -----------------------------------------------------------------
 # Build the library
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
 vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
 

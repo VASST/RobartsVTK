@@ -33,7 +33,7 @@ REMOVE_VTK_DEFINITIONS()
 
 #------------------------------------------------------------------
 # See VTK/Accelerators/Pistons
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
 vtk_module_impl()
 
 # -----------------------------------------------------------------

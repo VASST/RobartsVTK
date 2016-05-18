@@ -58,7 +58,7 @@ IF(WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio" AND NOT "${CMAKE_GENER
   STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 ENDIF()
 
-SET(${PROJECT_NAME}_INCLUDE_DIRS "")
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
 
 # -----------------------------------------------------------------
 # Build the library

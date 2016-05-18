@@ -32,6 +32,8 @@ SET ( Module_SRCS
   vtkCompactSupportRBFTransform.cxx
 )
 
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
+
 # -----------------------------------------------------------------
 # Build the library
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})

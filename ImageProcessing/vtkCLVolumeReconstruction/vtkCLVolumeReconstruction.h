@@ -30,24 +30,22 @@
   THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGES.
   =========================================================================*/
-#ifndef ACCELERATEDRECON_H
-#define ACCELERATEDRECON_H
 
-#include <queue>
+#ifndef _vtkCLVolumeReconstruction_h_
+#define _vtkCLVolumeReconstruction_h_
 
-#include "CudaReconstructionModule.h"
+#include "vtkCLVolumeReconstructionModule.h"
 
-// VTK Includes
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
+#include "vtkObject.h"
 #include "vtkSmartPointer.h"
-
-#include <algorithm>
 #include <CL/cl.h>
+#include <algorithm>
 #include <omp.h>
-#include <vector_types.h>
+#include <queue>
 #include <vector_functions.h>
-#include "vector_math.h"
+#include <vector_types.h>
 
 #define max3(a,b,c) std::max(a, std::max(b, c))
 #define distance(v, plane) (plane.x*v.x + plane.y*v.y + plane.z*v.z + plane.w)/sqrt(plane.x*plane.x + plane.y*plane.y + plane.z*plane.z)
@@ -55,15 +53,14 @@
 
 #define pos_matrix_a(x,y) (pos_matrix[(y)*4 + (x)])
 
-class CUDARECONSTRUCTION_EXPORT CudaReconstruction
+class VTKCLVOLUMERECONSTRUCTION_EXPORT vtkCLVolumeReconstruction : public vtkObject
 {
 public:
-  /* Constructor */
-  CudaReconstruction();
+  static vtkCLVolumeReconstruction *New();
+  vtkTypeMacro(vtkCLVolumeReconstruction, vtkObject);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
-  /* Destructor */
-  ~CudaReconstruction();
-
+public:
   /* Initializes devices */
   void Initialize();
 
@@ -103,7 +100,7 @@ public:
   /* Start doing freehand reconstruction */
   void StartReconstruction();
 
-  /* Starts realtime reconstruction */
+  /* Starts real time reconstruction */
   void UpdateReconstruction();
 
   /* Get Output Volume */
@@ -113,15 +110,56 @@ public:
   void GetOrigin(double *);
 
   /* Get Spacing */
-  double * GetSpacing();
+  const double* GetSpacing() const;
 
   /* Get output extent */
   int * GetOutputExtent();
   void GetOutputExtent(int *);
 
+protected:
+  /* Utility functions */
+  char* FileToString(const char*, const char*, size_t*);
 
-private:
+  /* creates the OpenCL kernel given the device */
+  cl_kernel OpenCLKernelBuild(cl_program, cl_device_id, char *);
 
+  /* Initialize buffers */
+  void InitializeBuffers();
+
+  /*  create CL buffers */
+  cl_mem OpenCLCreateBuffer(cl_context, cl_mem_flags, size_t, void * );
+
+  /* */
+  void OpenCLCheckError(int, char *info = "");
+
+  /* Multiply calibration matrix into position matrix */
+  void CalibratePositionMatrix(float *, float * );
+
+  /* */
+  void InsertPlanePoints(float *);
+
+  /* Fill bscan_plane_equation */
+  void InsertPlaneEquation();
+
+  /* */
+  int FindIntersections(int axis);
+
+  /* */
+  void FillVoxels();
+
+  /* Shifts data queues. 1 - if the queues are full  0- otherwise */
+  int ShiftQueues();
+
+  /* Wait for input data */
+  void GrabInputData();
+
+  /* Update output volume */
+  void UpdateOutputVolume();
+
+  /* Print the content of a matrix */
+  void DumpMatrix(int, int, float *);
+
+protected:
   typedef struct
   {
     float4 corner0;
@@ -175,10 +213,10 @@ private:
   float bscan_spacing_x, bscan_spacing_y;
 
   /* Input Image Data */
-  vtkImageData *imageData;
+  vtkImageData* imageData;
 
   /* Input pose data matrix */
-  vtkMatrix4x4 *poseData;
+  vtkMatrix4x4* poseData;
 
   /* timestamp of input data */
   float timestamp;
@@ -219,7 +257,6 @@ private:
   cl_mem dev_bscan_timetags_queue;
   cl_mem dev_bscan_plane_equation_queue;
 
-
   /* Buffers */
   float4 * x_vector_queue;
   float4 * y_vector_queue;
@@ -240,60 +277,8 @@ private:
 
   vtkSmartPointer< vtkImageData > reconstructedvolume;
 
-  /* Private methods */
-
-
-  /* Utility functions */
-  char* file2string(const char*, const char*, size_t*);
-
-  /* creates the OpenCL kernel given the device */
-  cl_kernel ocl_kernel_build(cl_program, cl_device_id, char *);
-
-  /* Initialize buffers */
-  void initialize_buffers();
-
-  /*  create CL buffers */
-  cl_mem ocl_create_buffer(cl_context, cl_mem_flags, size_t, void * );
-
-  /* */
-  void ocl_check_error(int, char *info = "");
-
-  /* Multiply calibration matrix into position matrix */
-  void calibrate_pos_matrix(float *, float * );
-
-  /* */
-  void insert_plane_points(float *);
-
-  /* Fill bscan_plane_equation */
-  void insert_plane_eq();
-
-
-  /* */
-  int find_intersections(int axis);
-
-  /* */
-  void fill_voxels();
-
-  /* Stops realtime reconstruction */
-
-  /* Shifts data queues. 1 - if the queues are full  0- otherwise */
-  int shift_queues();
-
-  /* Wait for input data */
-  void grab_input_data();
-
-  /* Update output volume */
-  void update_output_volume();
-
-  /* Print the content of a matrix */
-  void dump_matrix(int, int, float *);
-
-  /* Inline functin */
-  // cross product (for float4 without taking 4th dimension into account)
-  inline __host__ __device__ float4 cross(float4 a, float4 b)
-  {
-    return make_float4(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x, 0);
-  }
-
+private:
+  vtkCLVolumeReconstruction();
+  ~vtkCLVolumeReconstruction();
 };
-#endif // ACCELERATEDRECON_H
+#endif // _vtkCLVolumeReconstruction_h_

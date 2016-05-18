@@ -112,7 +112,7 @@
 #include "opencv2/opencv.hpp"
 #endif
 
-#include "CudaReconstruction.h"
+#include "vtkCLVolumeReconstruction.h"
 
 #include <iostream>
 #include <chrono> // For timing
@@ -133,7 +133,7 @@ public:
   vtkPlusTrackedFrameList *PlusTrackedFrames;
   vtkPlusTransformRepository *repository;
   vtkPlusVolumeReconstructor *reconstructor;
-  CudaReconstruction *accRecon;
+  vtkCLVolumeReconstruction *accRecon;
   vtkImageData *usVolume;
   vtkSmartVolumeMapper *volMapper;
   vtkCuda1DVolumeMapper *cudaMapper;
@@ -188,9 +188,38 @@ public slots:
   void ontfInExButtonClick(const QString &);
   void onScCaptureRadioButtonClick(const QString &);
 
-private:
-  Ui::MainWindow *ui;
+protected:
+  /* Initialize PLUS pipeline */
+  int InitPLUSPipeline();
 
+  /* Initialize VTK pipeline */
+  int InitVTKPipeline();
+
+  /* Initialize OpenCV variables */
+  int InitCVPipeline();
+
+  /* Initialize PLUS-bypass pipeline */
+  int InitPLUSBypassPipeline();
+
+  /* Setup VTK Camera from intrinsics */
+  void SetupVTKCamera(cv::Mat, double, double, vtkCamera*);
+  void SetupVTKCamera(cv::Mat, vtkCamera*);
+
+  /* Setup Volume Rendering Pipeline */
+  void SetupVolumeRenderingPipeline();
+
+  /* Setup AR-Volume Rendering Pipeline */
+  void SetupARVolumeRenderingPipeline();
+
+  /* Setup US Volume Reconstruction Pipeline */
+  int SetupVolumeReconstructionPipeline();
+
+  int GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
+    double spacing, int *, double *);
+
+  void GetFirstFramePosition(PlusTrackedFrame *,  vtkPlusTransformRepository *, double *);
+
+protected:
   /* Structure to hold camera video properties */
   struct VideoCaptureProperties
   {
@@ -238,83 +267,55 @@ private:
   /* Tracked US framelist used for online 3DUS reconstruction */
   vtkSmartPointer< vtkPlusTrackedFrameList > PlusTrackedFrameList4Recon;
 
-  vtkSmartPointer< vtkPlusVolumeReconstructor >  volumeReconstructor;
-  CudaReconstruction * acceleratedVolumeReconstructor;
-  vtkSmartPointer< vtkPlusTransformRepository > repository;
-  vtkSmartPointer< vtkRenderer > camImgRenderer;
-  vtkSmartPointer< vtkRenderWindow > camImgRenWin;
-  vtkSmartPointer< vtkRenderWindow > augmentedRenWin;
-  vtkSmartPointer< vtkImageData > reconstructedVol;
-  vtkSmartPointer< vtkImageData > usImageData;
-  vtkSmartPointer< vtkImageData > usVolume;
-  vtkSmartPointer< vtkImageViewer2 > usViewer;
-  vtkSmartPointer< vtkImageClip > usImageClip;
-  vtkSmartPointer< vtkImageFlip > usImageFlip;
-  vtkSmartPointer< vtkImageImport > camImgImport;
-  vtkSmartPointer< vtkTexture > camImgTexture;
-  vtkSmartPointer< vtkImageActor > camImgActor;
-  vtkPlusChannel* aChannel;
-  vtkSmartPointer< vtkRenderer > us_renderer;
-  vtkSmartPointer<vtkRenderer > endo_renderer;
-  vtkSmartPointer< vtkRenderWindowInteractor > interactor;
-  vtkSmartPointer< vtkMetaImageWriter > metaWriter;
-  vtkSmartPointer< vtkUSEventCallback > us_callback;
+  vtkSmartPointer< vtkPlusVolumeReconstructor >   volumeReconstructor;
+  vtkSmartPointer< vtkCLVolumeReconstruction >    acceleratedVolumeReconstructor;
+  vtkSmartPointer< vtkPlusTransformRepository >   repository;
+  vtkSmartPointer< vtkRenderer >                  camImgRenderer;
+  vtkSmartPointer< vtkRenderWindow >              camImgRenWin;
+  vtkSmartPointer< vtkRenderWindow >              augmentedRenWin;
+  vtkSmartPointer< vtkImageData >                 reconstructedVol;
+  vtkSmartPointer< vtkImageData >                 usImageData;
+  vtkSmartPointer< vtkImageData >                 usVolume;
+  vtkSmartPointer< vtkImageViewer2 >              usViewer;
+  vtkSmartPointer< vtkImageClip >                 usImageClip;
+  vtkSmartPointer< vtkImageFlip >                 usImageFlip;
+  vtkSmartPointer< vtkImageImport >               camImgImport;
+  vtkSmartPointer< vtkTexture >                   camImgTexture;
+  vtkSmartPointer< vtkImageActor >                camImgActor;
+  vtkPlusChannel*                                 aChannel;
+  vtkSmartPointer< vtkRenderer >                  us_renderer;
+  vtkSmartPointer<vtkRenderer >                   endo_renderer;
+  vtkSmartPointer< vtkRenderWindowInteractor >    interactor;
+  vtkSmartPointer< vtkMetaImageWriter >           metaWriter;
+  vtkSmartPointer< vtkUSEventCallback >           us_callback;
 
   /* Members for volume rendering */
-  vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper;
-  vtkSmartPointer< vtkCuda1DVolumeMapper > cudaVolumeMapper;
-  vtkSmartPointer< vtkCuda2DVolumeMapper > cuda2DVolumeMapper;
-  vtkSmartPointer< vtkCuda2DTransferFunction > cuda2DTransferFun;
-  vtkSmartPointer< vtkCuda2DTransferFunction > backgroundTF;
+  vtkSmartPointer< vtkSmartVolumeMapper >         volumeMapper;
+  vtkSmartPointer< vtkCuda1DVolumeMapper >        cudaVolumeMapper;
+  vtkSmartPointer< vtkCuda2DVolumeMapper >        cuda2DVolumeMapper;
+  vtkSmartPointer< vtkCuda2DTransferFunction >    cuda2DTransferFun;
+  vtkSmartPointer< vtkCuda2DTransferFunction >    backgroundTF;
   vtkSmartPointer< vtkCudaFunctionPolygonReader > polyReader;
   vtkSmartPointer< vtkCuda2DInExLogicVolumeMapper > inExVolumeMapper;
-  vtkSmartPointer< vtkBoxWidget > box;
-  vtkSmartPointer< vtkTransform > boxTransform;
-  vtkSmartPointer< vtkTransform > transform;
-  vtkSmartPointer< vtkPlanes > boxPlanes;
-  vtkSmartPointer< vtkImageCanvasSource2D > background;
-  vtkSmartPointer< vtkVolumeProperty > volumeProperty;
-  vtkSmartPointer< vtkPiecewiseFunction > compositeOpacity;
-  vtkSmartPointer< vtkColorTransferFunction > color;
-  vtkSmartPointer< vtkVolume > volume;
-  vtkSmartPointer< vtkRenderer > volRenderer;
-  vtkSmartPointer< vtkRenderWindow > volRenWin;
-  qTransferFunctionWindowWidget * tfWidget;
-  vtkSmartPointer< vtkSphereSource > sphere;
-  vtkSmartPointer< vtkActor > actor;
-  vtkSmartPointer< vtkWindowToImageFilter > windowToImage;
-  vtkSmartPointer< vtkPNGWriter > imageWriter;
+  vtkSmartPointer< vtkBoxWidget >                   box;
+  vtkSmartPointer< vtkTransform >                   boxTransform;
+  vtkSmartPointer< vtkTransform >                   transform;
+  vtkSmartPointer< vtkPlanes >                      boxPlanes;
+  vtkSmartPointer< vtkImageCanvasSource2D >         background;
+  vtkSmartPointer< vtkVolumeProperty >              volumeProperty;
+  vtkSmartPointer< vtkPiecewiseFunction >           compositeOpacity;
+  vtkSmartPointer< vtkColorTransferFunction >       color;
+  vtkSmartPointer< vtkVolume >                      volume;
+  vtkSmartPointer< vtkRenderer >                    volRenderer;
+  vtkSmartPointer< vtkRenderWindow >                volRenWin;
+  qTransferFunctionWindowWidget *                   tfWidget;
+  vtkSmartPointer< vtkSphereSource >                sphere;
+  vtkSmartPointer< vtkActor >                       actor;
+  vtkSmartPointer< vtkWindowToImageFilter >         windowToImage;
+  vtkSmartPointer< vtkPNGWriter >                 imageWriter;
 
-  /* Initialize PLUS pipeline */
-  int init_PLUS_Pipeline();
-
-  /* Initialize VTK pipeline */
-  int init_VTK_Pipeline();
-
-  /* Initialize OpenCV variables */
-  int init_CV_Pipeline();
-
-  /* Initialize PLUS-bypass pipeline */
-  int init_PLUS_Bypass_Pipeline();
-
-  /* Setup VTK Camera from intrinsics */
-  void setup_VTK_Camera(cv::Mat, double, double, vtkCamera*);
-  void setup_VTK_Camera(cv::Mat, vtkCamera*);
-
-  /* Setup Volume Rendering Pipeline */
-  void setup_VolumeRendering_Pipeline();
-
-  /* Setup AR-Volume Rendering Pipeline */
-  void setup_ARVolumeRendering_Pipeline();
-
-  /* Setup US Volume Reconstruction Pipeline */
-  int setup_VolumeReconstruction_Pipeline();
-
-  int get_extent_from_trackedList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
-                                  double spacing, int *, double *);
-
-  void get_first_frame_position(PlusTrackedFrame *,  vtkPlusTransformRepository *, double *);
-
+private:
+  Ui::MainWindow *ui;
 };
 
 #endif // MAINWINDOW_H

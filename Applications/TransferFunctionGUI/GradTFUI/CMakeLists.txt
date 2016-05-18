@@ -21,6 +21,8 @@ ELSE()
   LIST(APPEND ${PROJECT_NAME}_LIBS ${${PROJECT_NAME}_APPEND_LIBS})
 ENDIF()
 
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
+
 # -----------------------------------------------------------------
 # Build the executable
 vtk_add_executable(${PROJECT_NAME} ${Module_SRCS})

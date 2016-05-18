@@ -8,16 +8,14 @@ PROJECT(StreamingUSVis)
 FIND_PACKAGE(OpenCL REQUIRED)
 
 #-------------------------------------
-# Add CudaReconstruction
+# Load module to access include lists
 #-------------------------------------
-ADD_SUBDIRECTORY(CudaReconstruction)
-# Load module to access TFUIDual_INCLUDE_DIRS and TFUICommon_INCLUDE_DIRS
 vtk_module_load(TFUIDual)
 vtk_module_load(TFUICommon)
 vtk_module_load(vtkCudaCommon)
 vtk_module_load(vtkCudaVisualization)
 vtk_module_load(vtkCudaImageAnalytics)
-vtk_module_load(CudaReconstruction)
+vtk_module_load(vtkCLVolumeReconstruction)
 
 SET(StreamingUSVis_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR} 
@@ -32,7 +30,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
-  ${CudaReconstruction_INCLUDE_DIRS}
+  ${vtkCLVolumeReconstruction_INCLUDE_DIRS}
   CACHE INTERNAL ""
   )
 LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
@@ -49,7 +47,7 @@ SET(StreamingUSVis_LIBRARIES
   ${vtkCudaCommon_LIBRARIES}
   ${vtkCudaVisualization_LIBRARIES}
   ${vtkCudaImageAnalytics_LIBRARIES}
-  ${CudaReconstruction_LIBRARIES}
+  ${vtkCLVolumeReconstruction_LIBRARIES}
   vtksys
   vtkInteractionWidgets
   vtkInteractionImage
@@ -108,7 +106,5 @@ else()
  
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${QT_LIBRARIES})
 endif()
-
-ADD_DEPENDENCIES(${PROJECT_NAME} CudaReconstruction)
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${StreamingUSVis_LIBRARIES})

@@ -78,10 +78,10 @@ MainWindow::MainWindow(QWidget *parent) :
   calibration_filename = "left_calibration.xml";
   frame_rate = 30;
 
-  init_CV_Pipeline();
+  InitCVPipeline();
   //init_PLUS_Pipeline();
-  init_PLUS_Bypass_Pipeline();
-  init_VTK_Pipeline();
+  InitPLUSBypassPipeline();
+  InitVTKPipeline();
 
   outputDir = "./Data/";
 
@@ -95,9 +95,8 @@ MainWindow::~MainWindow()
 }
 
 /* Initialize PLUS pipeline */
-int MainWindow::init_PLUS_Pipeline()
+int MainWindow::InitPLUSPipeline()
 {
-
   inputTrackerBufferMetafile.clear();
   inputVideoBufferMetafile.clear();
 
@@ -114,7 +113,7 @@ int MainWindow::init_PLUS_Pipeline()
 
   if( dataCollector->ReadConfiguration( configRootElement ) != PLUS_SUCCESS )
   {
-    LOG_ERROR("Configuration incorrect for vtkPlusDataCollectorTest1.");
+    LOG_ERROR("Configuration incorrect for PLUS.");
     exit( EXIT_FAILURE );
   }
 
@@ -122,7 +121,7 @@ int MainWindow::init_PLUS_Pipeline()
   trackerDevice = NULL;
   volumeReconstructor = NULL;
 
-  if ( ! inputVideoBufferMetafile.empty() )
+  if ( !inputVideoBufferMetafile.empty() )
   {
     if( dataCollector->GetDevice(videoDevice, "VideoDevice") != PLUS_SUCCESS )
     {
@@ -139,10 +138,9 @@ int MainWindow::init_PLUS_Pipeline()
 
     videoSource->SetSequenceFile(inputVideoBufferMetafile.c_str());
     videoSource->SetRepeatEnabled(inputRepeat);
-
   }
 
-  if ( ! inputTrackerBufferMetafile.empty() )
+  if ( !inputTrackerBufferMetafile.empty() )
   {
     if( dataCollector->GetDevice(trackerDevice, "TrackerDevice") != PLUS_SUCCESS )
     {
@@ -169,7 +167,6 @@ int MainWindow::init_PLUS_Pipeline()
 
   if( dataCollector->GetDevice(videoDevice, "TrackedVideoDevice") != PLUS_SUCCESS )
   {
-
     LOG_ERROR("Unable to locate the device with Id=\"TrackedVideoDevice\". Check config file.");
     exit(EXIT_FAILURE);
   }
@@ -186,12 +183,13 @@ int MainWindow::init_PLUS_Pipeline()
     LOG_ERROR("Failed to start data collection!" );
     exit( EXIT_FAILURE );
   }
+
+  return EXIT_SUCCESS;
 }
 
 /* Initialize PLUS Bypass pipeline */
-int MainWindow::init_PLUS_Bypass_Pipeline()
+int MainWindow::InitPLUSBypassPipeline()
 {
-
   trackedUSFrameList = vtkSmartPointer<vtkPlusTrackedFrameList>::New();
   // Read sequence file into tracked frame list
   vtkPlusSequenceIO::Read(std::string("tracked_us_video.mha"), trackedUSFrameList);
@@ -215,10 +213,10 @@ int MainWindow::init_PLUS_Bypass_Pipeline()
   vtkPlusConfig::GetInstance()->SetDeviceSetConfigurationData(configRootElement);
 
   // Setup VolumeReconstruction pipeline
-  setup_VolumeReconstruction_Pipeline();
+  SetupVolumeReconstructionPipeline();
 
   // GPU Accelerated Reconstructor
-  acceleratedVolumeReconstructor = new CudaReconstruction();
+  acceleratedVolumeReconstructor = vtkSmartPointer<vtkCLVolumeReconstruction>::New();
 
   // calibration matrix
   float us_cal_mat[12] = {0.0727,    0.0076,   -0.0262,  -12.6030,
@@ -234,7 +232,7 @@ int MainWindow::init_PLUS_Bypass_Pipeline()
   double origin[3] = {0, 0, 0};
   double output_spacing = 0.5;
 
-  get_extent_from_trackedList( trackedUSFrameList, repository, output_spacing, extent, origin);
+  GetExtentFromTrackedFrameList( trackedUSFrameList, repository, output_spacing, extent, origin);
   acceleratedVolumeReconstructor->SetOutputExtent( extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]);
   acceleratedVolumeReconstructor->SetOutputSpacing( output_spacing );
   acceleratedVolumeReconstructor->SetOutputOrigin(origin[0], origin[1], origin[2]);
@@ -245,10 +243,9 @@ int MainWindow::init_PLUS_Bypass_Pipeline()
   return 0;
 }
 
-/* Initilize VTK pipeline */
-int MainWindow::init_VTK_Pipeline()
+/* Initialize VTK pipeline */
+int MainWindow::InitVTKPipeline()
 {
-
   // Setup US Image Viewer
   usViewer = vtkSmartPointer< vtkImageViewer2 >::New();
   usViewer->SetColorWindow( 255 );
@@ -281,7 +278,7 @@ int MainWindow::init_VTK_Pipeline()
   // Setup VTK camera
   vtkCamera *vtkCam = camImgRenderer->GetActiveCamera();
   //setup_VTK_Camera(intrinsics, vtkCam);
-  setup_VTK_Camera(intrinsics, this->ui->Endoscopic_View->width(), this->ui->Endoscopic_View->height(), vtkCam);
+  SetupVTKCamera(intrinsics, this->ui->Endoscopic_View->width(), this->ui->Endoscopic_View->height(), vtkCam);
 
   // Create Camera Render Window
   camImgRenWin = vtkSmartPointer< vtkRenderWindow >::New();
@@ -312,7 +309,7 @@ int MainWindow::init_VTK_Pipeline()
   // Setup volume Rendering pipeline for online US visualization
   // Make sure that volumeReconstructor is initialized before this.
   //setup_VolumeRendering_Pipeline();
-  setup_ARVolumeRendering_Pipeline();
+  SetupARVolumeRenderingPipeline();
 
   // Setup observers
   us_callback = vtkSmartPointer< vtkUSEventCallback >::New();
@@ -358,9 +355,8 @@ int MainWindow::init_VTK_Pipeline()
 }
 
 /* Initialize CV Pipeline */
-int MainWindow::init_CV_Pipeline()
+int MainWindow::InitCVPipeline()
 {
-
   // TODO : Test th
 
   // Read the calibration file.
@@ -403,13 +399,11 @@ int MainWindow::init_CV_Pipeline()
             << " frames]" << std::endl;
 
   return true;
-
 }
 
 /* Public slot onStartButtonClick() */
 void MainWindow::onStartButtonClick(const QString &str)
 {
-
   if( str == "START_BTN")
   {
     if(!streamingON)
@@ -439,14 +433,12 @@ void MainWindow::onScanTypeRadioButtonClick(const QString &str)
   if(str == "SCANTYPE_BTN")
   {
     std::cout << this->ui->scantype_RadioButton->isChecked() << std::endl;
-
   }
 }
 
 /* Public slot onSaveVolumeButtonClick() */
 void MainWindow::onSaveVolumeButtonClick( const QString &str)
 {
-
   if( str == "SAVEVOL_BTN")
   {
 
@@ -473,7 +465,6 @@ void MainWindow::onSaveVolumeButtonClick( const QString &str)
 /* Public slot ontf1ButtonClick() */
 void MainWindow::ontf1ButtonClick( const QString &str )
 {
-
   if( str == "TF1_BTN" )
   {
 
@@ -483,7 +474,7 @@ void MainWindow::ontf1ButtonClick( const QString &str )
 
     vtkCamera* renCam = vtkCamera::New();
     //setup_VTK_Camera(intrinsics, renCam);
-    setup_VTK_Camera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
+    SetupVTKCamera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
     volRenderer->SetActiveCamera( renCam );
     volRenderer->ResetCameraClippingRange();
 
@@ -497,7 +488,6 @@ void MainWindow::ontf1ButtonClick( const QString &str )
 /* Public slot ontf2ButtonClick() */
 void MainWindow::ontf2ButtonClick( const QString &str )
 {
-
   if( str == "TF2_BTN" )
   {
 
@@ -505,7 +495,7 @@ void MainWindow::ontf2ButtonClick( const QString &str )
 
     vtkCamera* renCam = vtkCamera::New();
     //setup_VTK_Camera(intrinsics, renCam);
-    setup_VTK_Camera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
+    SetupVTKCamera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
     volRenderer->SetActiveCamera( renCam );
     volRenderer->ResetCameraClippingRange();
 
@@ -519,7 +509,6 @@ void MainWindow::ontf2ButtonClick( const QString &str )
 /* Public slot ontfInExButtonClick */
 void MainWindow::ontfInExButtonClick( const QString &str )
 {
-
   if( str == "TFINEX_BTN" )
   {
     volume->SetMapper( this->inExVolumeMapper);
@@ -550,7 +539,7 @@ void MainWindow::ontfInExButtonClick( const QString &str )
 
     vtkCamera* renCam = vtkCamera::New();
     //setup_VTK_Camera(intrinsics, renCam);
-    setup_VTK_Camera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
+    SetupVTKCamera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
     volRenderer->SetActiveCamera( renCam );
     volRenderer->ResetCameraClippingRange();
 
@@ -561,10 +550,9 @@ void MainWindow::ontfInExButtonClick( const QString &str )
   }
 }
 
-/* Publick slot onScCaptureButtonClick */
+/* Public slot onScCaptureButtonClick */
 void MainWindow::onScCaptureRadioButtonClick( const QString &str)
 {
-
   if( str == "SCCAPTURE_BTN" )
   {
 
@@ -590,14 +578,12 @@ void MainWindow::onScCaptureRadioButtonClick( const QString &str)
       this->us_callback->sc_capture_on = false;
     }
   }
-
 }
 
 
 /* Setup VTK Camera */
-void MainWindow::setup_VTK_Camera(cv::Mat mat, double win_width, double win_height, vtkCamera* vtkCam)
+void MainWindow::SetupVTKCamera(cv::Mat mat, double win_width, double win_height, vtkCamera* vtkCam)
 {
-
   double fx( mat.at<double>(0,0) ), fy( mat.at<double>(1,1) );
   double cx( mat.at<double>(0,2) ), cy( mat.at<double>(1,2) );
 
@@ -639,9 +625,8 @@ void MainWindow::setup_VTK_Camera(cv::Mat mat, double win_width, double win_heig
 }
 
 /* Setup VTK Camera */
-void MainWindow::setup_VTK_Camera(cv::Mat mat, vtkCamera* vtkCam)
+void MainWindow::SetupVTKCamera(cv::Mat mat, vtkCamera* vtkCam)
 {
-
   double fx( mat.at<double>(0,0) ), fy( mat.at<double>(1,1) );
   double cx( mat.at<double>(0,2) ), cy( mat.at<double>(1,2) );
 
@@ -661,9 +646,8 @@ void MainWindow::setup_VTK_Camera(cv::Mat mat, vtkCamera* vtkCam)
 }
 
 /* Setup Volume Rendering Pipeline */
-void MainWindow::setup_VolumeRendering_Pipeline()
+void MainWindow::SetupVolumeRenderingPipeline()
 {
-
   volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
   volumeMapper->SetBlendModeToComposite();
   volumeMapper->SetRequestedRenderMode( vtkSmartVolumeMapper::GPURenderMode);
@@ -721,7 +705,7 @@ void MainWindow::setup_VolumeRendering_Pipeline()
   //augmentedRenWin->AddRenderer( volRenderer );
   /* TODO: Setup the render position */
   vtkCamera* renCam = volRenderer->GetActiveCamera();
-  setup_VTK_Camera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
+  SetupVTKCamera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
 
   //volRenderer->SetActiveCamera( renCam );
 
@@ -740,9 +724,8 @@ void MainWindow::setup_VolumeRendering_Pipeline()
 }
 
 /* Setup AR-Volume Rendering Pipeline */
-void MainWindow::setup_ARVolumeRendering_Pipeline()
+void MainWindow::SetupARVolumeRenderingPipeline()
 {
-
   boxTransform = vtkSmartPointer< vtkTransform >::New();
   boxTransform->PostMultiply();
   //box = vtkSmartPointer< vtkBoxWidget >::New();
@@ -756,7 +739,8 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
                            _extent[3] - _extent[2],
                            _extent[5] - _extent[4] );
   //usVolume->SetOrigin( acceleratedVolumeReconstructor->GetOrigin() );
-  usVolume->SetSpacing( acceleratedVolumeReconstructor->GetSpacing() );
+  const double* spacing = acceleratedVolumeReconstructor->GetSpacing();
+  usVolume->SetSpacing( spacing[0], spacing[1], spacing[2] );
   usVolume->AllocateScalars( VTK_UNSIGNED_CHAR, 1);
   usVolume->Modified();
   // Initialize buffers to 0
@@ -838,7 +822,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
   double _origin[3];
   acceleratedVolumeReconstructor->GetOrigin( _origin );
 
-  get_first_frame_position(trackedUSFrameList->GetTrackedFrame(0), repository, _origin);
+  GetFirstFramePosition(trackedUSFrameList->GetTrackedFrame(0), repository, _origin);
 
   volume->SetOrigin( _origin );
   //volume->SetPosition( _origin[0], _origin[1], _origin[2] );
@@ -869,7 +853,7 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
 
   // Set up vtk camera
   vtkCamera* renCam = vtkCamera::New();
-  setup_VTK_Camera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
+  SetupVTKCamera(intrinsics, this->ui->augmentedView->width(), this->ui->augmentedView->height(), renCam);
   //setup_VTK_Camera(intrinsics, renCam);
   volRenderer->SetActiveCamera( renCam );
   volRenderer->ResetCameraClippingRange();
@@ -884,9 +868,8 @@ void MainWindow::setup_ARVolumeRendering_Pipeline()
 }
 
 /* Setup Volume Reconstruction Pipeline */
-int MainWindow::setup_VolumeReconstruction_Pipeline()
+int MainWindow::SetupVolumeReconstructionPipeline()
 {
-
   volumeReconstructor = vtkSmartPointer< vtkPlusVolumeReconstructor >::New();
   /* Configure volumeReconstor from XML data */
   if(volumeReconstructor->ReadConfiguration( configRootElement ) != PLUS_SUCCESS)
@@ -915,10 +898,9 @@ int MainWindow::setup_VolumeReconstruction_Pipeline()
   return PLUS_SUCCESS;
 }
 
-int MainWindow::get_extent_from_trackedList(vtkPlusTrackedFrameList *frameList, vtkPlusTransformRepository *repository, double spacing,
+int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList *frameList, vtkPlusTransformRepository *repository, double spacing,
     int * outputExtent, double * origin)
 {
-
   PlusTransformName imageToReferenceTransformName;
   imageToReferenceTransformName = PlusTransformName("Image", "Tracker");
 
@@ -1026,10 +1008,8 @@ int MainWindow::get_extent_from_trackedList(vtkPlusTrackedFrameList *frameList, 
           }
         }
       }
-
     }
   }
-
 
   // Set the output extent from the current min and max values, using the user-defined image resolution.
   outputExtent[ 1 ] = int( ( extent_Ref[1] - extent_Ref[0] ) / spacing );
@@ -1043,12 +1023,10 @@ int MainWindow::get_extent_from_trackedList(vtkPlusTrackedFrameList *frameList, 
   return 0;
 }
 
-void MainWindow::get_first_frame_position(PlusTrackedFrame *frame,  vtkPlusTransformRepository *repository, double *pos)
+void MainWindow::GetFirstFramePosition(PlusTrackedFrame *frame,  vtkPlusTransformRepository *repository, double *pos)
 {
-
   PlusTransformName  transformName = PlusTransformName("Probe", "Tracker" );
   PlusTransformName  imageToReferenceTransformName = PlusTransformName("Image", "Tracker");
-
 
   vtkSmartPointer< vtkMatrix4x4 > pose = vtkSmartPointer< vtkMatrix4x4 >::New();
   vtkSmartPointer<vtkMatrix4x4> imageToReferenceTransformMatrix=vtkSmartPointer<vtkMatrix4x4>::New();
@@ -1067,7 +1045,6 @@ void MainWindow::get_first_frame_position(PlusTrackedFrame *frame,  vtkPlusTrans
   bool isMatrixValid(false);
   if ( repository->GetTransform(imageToReferenceTransformName, imageToReferenceTransformMatrix, &isMatrixValid ) != PLUS_SUCCESS )
   {
-
     std::string strImageToReferenceTransformName;
     imageToReferenceTransformName.GetTransformName(strImageToReferenceTransformName);
 
@@ -1157,7 +1134,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
 
     _boxWidget->SetInputData( usVolume );
     //_boxWidget->Modified();
-
   }
 
   //volMapper->SetInputData( usVolume );
@@ -1171,7 +1147,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
     // Display image if it's valid
     if (PlusTrackedFrame->GetImageData()->GetImageType()==US_IMG_BRIGHTNESS || PlusTrackedFrame->GetImageData()->GetImageType()==US_IMG_RGB_COLOR)
     {
-
       // B mode
       this->ImageData->DeepCopy(PlusTrackedFrame->GetImageData()->GetImage());
     }
@@ -1228,7 +1203,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
     }
     else
     {
-
       std::string strTransformName;
       TransformName.GetTransformName(strTransformName);
       ss  << "Transform '" << strTransformName << "' is invalid ...";
@@ -1242,7 +1216,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
 
   if( c_frame < n_frames-2 )
   {
-
     cv::cvtColor( cam_frame, cam_frame, CV_RGB2BGR );
     // Flip the image to compensate for the difference in coordinate systems in VTK and OpenCV
     cv::flip( cam_frame, cam_frame, 0);
@@ -1259,7 +1232,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
 
     if( sc_capture_on )
     {
-
       // Captures the screen and save the image
       std::string dir = "./screen_captures/";
       std::string prefix = "CAP_";

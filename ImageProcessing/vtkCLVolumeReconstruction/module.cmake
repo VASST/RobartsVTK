@@ -1,6 +1,7 @@
-vtk_module(CudaReconstruction 
+vtk_module(vtkCLVolumeReconstruction 
   GROUPS
-    Examples
+    Imaging
+    OpenCL
   DEPENDS
-    vtkCudaCommon 
+    vtkCommonCore
   )

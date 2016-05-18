@@ -22,6 +22,8 @@ ELSE()
   LIST(APPEND ${PROJECT_NAME}_LIBS ${PROJECT_NAME}_APPEND_LIBS)
 ENDIF()
 
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
+
 # -----------------------------------------------------------------
 # Build the library
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})

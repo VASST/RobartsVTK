@@ -31,26 +31,40 @@
   POSSIBILITY OF SUCH DAMAGES.
   =========================================================================*/
 
+#include "vector_math.h"
+#include "vtkCLVolumeReconstruction.h"
+#include "vtkObjectFactory.h"
 #include <iostream>
-#include "CudaReconstruction.h"
-
-//# define KERNEL_DEBUG
 
 //--------------------------------------------------------------
-CudaReconstruction::CudaReconstruction()
+
+vtkStandardNewMacro(vtkCLVolumeReconstruction);
+
+//--------------------------------------------------------------
+
+namespace
+{
+  // cross product (for float4 without taking 4th dimension into account)
+  inline __host__ __device__ float4 cross(float4 a, float4 b)
+  {
+      return make_float4(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x, 0);
+  }
+}
+
+//--------------------------------------------------------------
+vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 {
   size_t temp;
   device_index = 1;
-  program_src = file2string("./kernels.cl", "", &temp);
+  program_src = FileToString("./kernels.cl", "", &temp);
 
-  // Default values for bscan size
+  // Default values for b-scan size
   bscan_w = 640;
   bscan_h = 480;
 
   // Default values for the output volume
   volume_depth = volume_height = volume_width = 0;
   volume_spacing = 0.5;
-
 
   volume_origin[0] = 0;
   volume_origin[1] = 0;
@@ -78,9 +92,8 @@ CudaReconstruction::CudaReconstruction()
 }
 
 //--------------------------------------------------------------
-CudaReconstruction::~CudaReconstruction()
+vtkCLVolumeReconstruction::~vtkCLVolumeReconstruction()
 {
-
   // Release device memory
   clReleaseCommandQueue( reconstruction_cmd_queue );
 
@@ -110,8 +123,48 @@ CudaReconstruction::~CudaReconstruction()
   free( volume );
 }
 
+//----------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
+{
+  Superclass::PrintSelf(os, indent);
+
+  os << indent << "volume_width: " << this->volume_width;
+  os << indent << "volume_height: " << this->volume_height;
+  os << indent << "volume_depth: " << this->volume_depth;
+  os << indent << "volume_spacing: " << this->volume_spacing;
+  os << indent << "bscan_h: " << this->bscan_h;
+  os << indent << "bscan_spacing_x: " << this->bscan_spacing_x;
+  os << indent << "bscan_spacing_y: " << this->bscan_spacing_y;
+  os << indent << "timestamp: " << this->timestamp;
+  os << indent << "device_index: " << this->device_index;
+  os << indent << "program_src: " << this->program_src;
+  os << indent << "BSCAN_WINDOW: " << this->BSCAN_WINDOW;
+  os << indent << "intersections_size: " << this->intersections_size;
+  os << indent << "volume_size: " << this->volume_size;
+  os << indent << "max_vol_dim: " << this->max_vol_dim;
+  os << indent << "x_vector_queue_size: " << this->x_vector_queue_size;
+  os << indent << "y_vector_queue_size: " << this->y_vector_queue_size;
+  os << indent << "plane_points_queue_size: " << this->plane_points_queue_size;
+  os << indent << "mask_size: " << this->mask_size;
+  os << indent << "global_work_size[1]: " << this->global_work_size[1];
+  os << indent << "local_work_size[1]: " << this->local_work_size[1];
+  os << indent << "volume: " << this->volume;
+  os << indent << "mask: " << this->mask;
+  this->imageData->PrintSelf(os, indent);
+  this->poseData->PrintSelf(os, indent);
+  this->reconstructedvolume->PrintSelf(os, indent);
+  for(int i = 0; i < 3; ++i )
+  {
+    os << indent << "volume_origin[" << i << "]: " << volume_origin[i];
+  }
+  for(int i = 0; i < 6; ++i )
+  {
+    os << indent << "volume_extent[" << i << "]: " << volume_extent[i];
+  }
+}
+
 //--------------------------------------------------------------
-void CudaReconstruction::Initialize()
+void vtkCLVolumeReconstruction::Initialize()
 {
   cl_int err;
   cl_device_id devices[250];
@@ -182,15 +235,15 @@ void CudaReconstruction::Initialize()
   }
 
   // Now build kernels
-  fill_volume     = ocl_kernel_build(program, device, "fill_volume");
-  round_off_translate = ocl_kernel_build(program, device, "round_off_translate");
-  transform     = ocl_kernel_build(program, device, "transform");
-  fill_holes      = ocl_kernel_build(program, device, "fill_holes");
-  trace_intersections = ocl_kernel_build(program, device, "trace_intersections");
-  adv_fill_voxels   = ocl_kernel_build(program, device, "adv_fill_voxels");
+  fill_volume     = OpenCLKernelBuild(program, device, "fill_volume");
+  round_off_translate = OpenCLKernelBuild(program, device, "round_off_translate");
+  transform     = OpenCLKernelBuild(program, device, "transform");
+  fill_holes      = OpenCLKernelBuild(program, device, "fill_holes");
+  trace_intersections = OpenCLKernelBuild(program, device, "trace_intersections");
+  adv_fill_voxels   = OpenCLKernelBuild(program, device, "adv_fill_voxels");
 
   // Initialize Buffers
-  initialize_buffers();
+  InitializeBuffers();
 
   omp_init_lock(&lock);
 
@@ -200,7 +253,7 @@ void CudaReconstruction::Initialize()
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::PrintInfo()
+void vtkCLVolumeReconstruction::PrintInfo()
 {
   cl_uint platforms_n;
   cl_uint devices_n;
@@ -303,14 +356,14 @@ void CudaReconstruction::PrintInfo()
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetProgramSourcePath(char *path)
+void vtkCLVolumeReconstruction::SetProgramSourcePath(char *path)
 {
   size_t temp;
-  this->program_src = file2string(path, "", &temp);
+  this->program_src = FileToString(path, "", &temp);
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetBScanSize( int w, int h)
+void vtkCLVolumeReconstruction::SetBScanSize( int w, int h)
 {
   // Set width and height
   this->bscan_w = w;
@@ -318,7 +371,7 @@ void CudaReconstruction::SetBScanSize( int w, int h)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetBScanSpacing(double sx, double sy)
+void vtkCLVolumeReconstruction::SetBScanSpacing(double sx, double sy)
 {
   // Set BScan spacing
   this->bscan_spacing_x = (float)sx;
@@ -326,7 +379,7 @@ void CudaReconstruction::SetBScanSpacing(double sx, double sy)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetOutputOrigin( double x, double y, double z)
+void vtkCLVolumeReconstruction::SetOutputOrigin( double x, double y, double z)
 {
   this->volume_origin[0] = (float)x;
   this->volume_origin[1] = (float)y;
@@ -334,13 +387,13 @@ void CudaReconstruction::SetOutputOrigin( double x, double y, double z)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetCalMatrix(float *m)
+void vtkCLVolumeReconstruction::SetCalMatrix(float *m)
 {
   memcpy(this->cal_matrix, m, sizeof(float)*12);
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetInputImageData(double time, vtkImageData *data)
+void vtkCLVolumeReconstruction::SetInputImageData(double time, vtkImageData *data)
 {
   if( data != NULL )
   {
@@ -350,7 +403,7 @@ void CudaReconstruction::SetInputImageData(double time, vtkImageData *data)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetInputPoseData(double time, vtkMatrix4x4 *mat)
+void vtkCLVolumeReconstruction::SetInputPoseData(double time, vtkMatrix4x4 *mat)
 {
   if( mat != NULL )
   {
@@ -360,13 +413,13 @@ void CudaReconstruction::SetInputPoseData(double time, vtkMatrix4x4 *mat)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetOutputSpacing(double spacing)
+void vtkCLVolumeReconstruction::SetOutputSpacing(double spacing)
 {
   this->volume_spacing = (float)spacing;
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::SetOutputExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax)
+void vtkCLVolumeReconstruction::SetOutputExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax)
 {
   this->volume_extent[0] = xmin;
   this->volume_extent[1] = xmax;
@@ -381,7 +434,7 @@ void CudaReconstruction::SetOutputExtent(int xmin, int xmax, int ymin, int ymax,
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::StartReconstruction()
+void vtkCLVolumeReconstruction::StartReconstruction()
 {
   max_vol_dim = max3(volume_width, volume_height, volume_depth);
 
@@ -408,52 +461,52 @@ void CudaReconstruction::StartReconstruction()
   dev_y_vector_queue_size = BSCAN_WINDOW*sizeof(float)*4;
   dev_plane_points_queue_size = BSCAN_WINDOW*sizeof(float)*4*3;
 
-  dev_intersections = ocl_create_buffer(context, CL_MEM_READ_WRITE, intersections_size, NULL);
-  dev_volume = ocl_create_buffer(context, CL_MEM_READ_WRITE, volume_size, volume);
-  dev_x_vector_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, dev_x_vector_queue_size, NULL);
-  dev_y_vector_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, dev_y_vector_queue_size, NULL);
-  dev_plane_points_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, dev_plane_points_queue_size, NULL);
-  dev_mask = ocl_create_buffer(context, CL_MEM_READ_WRITE, mask_size, NULL);
-  dev_bscans_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, bscans_queue_size, NULL);
-  dev_bscan_timetags_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, bscan_timetags_queue_size, NULL);
-  dev_bscan_plane_equation_queue = ocl_create_buffer(context, CL_MEM_READ_WRITE, bscan_plane_equation_queue_size, NULL);
+  dev_intersections = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, intersections_size, NULL);
+  dev_volume = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, volume_size, volume);
+  dev_x_vector_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, dev_x_vector_queue_size, NULL);
+  dev_y_vector_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, dev_y_vector_queue_size, NULL);
+  dev_plane_points_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, dev_plane_points_queue_size, NULL);
+  dev_mask = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, mask_size, NULL);
+  dev_bscans_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, bscans_queue_size, NULL);
+  dev_bscan_timetags_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, bscan_timetags_queue_size, NULL);
+  dev_bscan_plane_equation_queue = OpenCLCreateBuffer(context, CL_MEM_READ_WRITE, bscan_plane_equation_queue_size, NULL);
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::UpdateReconstruction()
+void vtkCLVolumeReconstruction::UpdateReconstruction()
 {
   // Retrieve US data and perform reconstruction
-  if(shift_queues())
+  if(ShiftQueues())
   {
     // Multiply the position matrix with the calibration matrix
-    calibrate_pos_matrix( pos_matrices_queue[BSCAN_WINDOW-1], cal_matrix);
+    CalibratePositionMatrix( pos_matrices_queue[BSCAN_WINDOW-1], cal_matrix);
 
-    insert_plane_points(pos_matrices_queue[BSCAN_WINDOW-1]);
+    InsertPlanePoints(pos_matrices_queue[BSCAN_WINDOW-1]);
 
     // Fill BPlane Eq
-    insert_plane_eq();
+    InsertPlaneEquation();
 
     // Fill voxels
-    fill_voxels();
+    FillVoxels();
 
     // Fill Holes
     // TODO
 
     // Update output volume. Copy GPU buffers to vtkImage buffer.
     // This takes time, so avoid this if possible.
-    update_output_volume();
+    UpdateOutputVolume();
   }
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::GetOutputVolume(vtkImageData *v)
+void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData *v)
 {
   v->DeepCopy( reconstructedvolume );
   v->Modified();
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::GetOrigin(double *ptr)
+void vtkCLVolumeReconstruction::GetOrigin(double *ptr)
 {
   ptr[0] = (double)volume_origin[0];
   ptr[1] = (double)volume_origin[1];
@@ -461,7 +514,7 @@ void CudaReconstruction::GetOrigin(double *ptr)
 }
 
 //--------------------------------------------------------------
-double * CudaReconstruction::GetSpacing()
+const double* vtkCLVolumeReconstruction::GetSpacing() const
 {
   double _volume_spacing[3] = {(double)volume_spacing,
                                (double)volume_spacing,
@@ -471,19 +524,19 @@ double * CudaReconstruction::GetSpacing()
 }
 
 //--------------------------------------------------------------
-int * CudaReconstruction::GetOutputExtent()
+int * vtkCLVolumeReconstruction::GetOutputExtent()
 {
   return volume_extent;
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::GetOutputExtent(int * ptr)
+void vtkCLVolumeReconstruction::GetOutputExtent(int * ptr)
 {
   memcpy(ptr, volume_extent, sizeof(int)*6);
 }
 
 //--------------------------------------------------------------
-char* CudaReconstruction::file2string(const char* filename, const char* preamble, size_t* final_length)
+char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* preamble, size_t* final_length)
 {
   FILE * file_stream = NULL;
   size_t source_length;
@@ -524,7 +577,7 @@ char* CudaReconstruction::file2string(const char* filename, const char* preamble
 }
 
 //--------------------------------------------------------------
-cl_kernel CudaReconstruction::ocl_kernel_build(cl_program program, cl_device_id device, char * kernel_name)
+cl_kernel vtkCLVolumeReconstruction::OpenCLKernelBuild(cl_program program, cl_device_id device, char * kernel_name)
 {
   cl_int err;
   cl_kernel kernel = clCreateKernel(program, kernel_name, &err);
@@ -550,7 +603,7 @@ cl_kernel CudaReconstruction::ocl_kernel_build(cl_program program, cl_device_id 
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::initialize_buffers()
+void vtkCLVolumeReconstruction::InitializeBuffers()
 {
   x_vector_queue = (float4 *) malloc(BSCAN_WINDOW*sizeof(float4));
   y_vector_queue = (float4 *) malloc(BSCAN_WINDOW*sizeof(float4));
@@ -582,7 +635,7 @@ void CudaReconstruction::initialize_buffers()
 }
 
 //--------------------------------------------------------------
-cl_mem CudaReconstruction::ocl_create_buffer(cl_context context, cl_mem_flags flags, size_t size, void * host_data)
+cl_mem vtkCLVolumeReconstruction::OpenCLCreateBuffer(cl_context context, cl_mem_flags flags, size_t size, void * host_data)
 {
   if (host_data != NULL)
   {
@@ -600,7 +653,7 @@ cl_mem CudaReconstruction::ocl_create_buffer(cl_context context, cl_mem_flags fl
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::ocl_check_error(int err, char * info)
+void vtkCLVolumeReconstruction::OpenCLCheckError(int err, char * info)
 {
   if (err != CL_SUCCESS)
   {
@@ -610,7 +663,7 @@ void CudaReconstruction::ocl_check_error(int err, char * info)
 }
 
 //--------------------------------------------------------------
-int CudaReconstruction::shift_queues()
+int vtkCLVolumeReconstruction::ShiftQueues()
 {
   // Shift it to left
   for (int i = 0; i < BSCAN_WINDOW-1; i++)
@@ -626,17 +679,17 @@ int CudaReconstruction::shift_queues()
   }
 
   // Grab frame and insert it
-  grab_input_data();
+  GrabInputData();
 
   if( timestamp_queue.size() < BSCAN_WINDOW )  // Queues are not full
   {
     // Multiply the position matrix with the calibration matrix
-    calibrate_pos_matrix( pos_matrices_queue[BSCAN_WINDOW-1], cal_matrix);
+    CalibratePositionMatrix( pos_matrices_queue[BSCAN_WINDOW-1], cal_matrix);
 
-    insert_plane_points(pos_matrices_queue[BSCAN_WINDOW-1]);
+    InsertPlanePoints(pos_matrices_queue[BSCAN_WINDOW-1]);
 
     // Fill BPlane Eq
-    insert_plane_eq();
+    InsertPlaneEquation();
 
     return 0;
   }
@@ -652,7 +705,7 @@ int CudaReconstruction::shift_queues()
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::grab_input_data()
+void vtkCLVolumeReconstruction::GrabInputData()
 {
   timestamp_queue.push( timestamp );
   imageData_queue.push( imageData );
@@ -691,14 +744,14 @@ void CudaReconstruction::grab_input_data()
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::update_output_volume()
+void vtkCLVolumeReconstruction::UpdateOutputVolume()
 {
   // Copy volume to outptVolume
   memcpy( (unsigned char *)this->reconstructedvolume->GetScalarPointer( 0, 0, 0), volume, sizeof(unsigned char)*volume_width*volume_height*volume_depth);
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::dump_matrix(int r, int c, float * mat)
+void vtkCLVolumeReconstruction::DumpMatrix(int r, int c, float * mat)
 {
   std::cout << "Content of the matrix.. " << std::endl;
   for(int i=0; i<r; i++)
@@ -713,7 +766,7 @@ void CudaReconstruction::dump_matrix(int r, int c, float * mat)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::calibrate_pos_matrix(float * pos_matrix, float * cal_matrix)
+void vtkCLVolumeReconstruction::CalibratePositionMatrix(float * pos_matrix, float * cal_matrix)
 {
   // Multiply cal_matrix into pos_matrix
 
@@ -740,7 +793,7 @@ void CudaReconstruction::calibrate_pos_matrix(float * pos_matrix, float * cal_ma
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::insert_plane_points(float * pos_matrix)
+void vtkCLVolumeReconstruction::InsertPlanePoints(float * pos_matrix)
 {
   // Fill plane_points
   plane_points_queue[BSCAN_WINDOW-1].corner0 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -768,7 +821,7 @@ void CudaReconstruction::insert_plane_points(float * pos_matrix)
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::insert_plane_eq()
+void vtkCLVolumeReconstruction::InsertPlaneEquation()
 {
   // Fill bscan_plane_equation
   float4 a = plane_points_queue[BSCAN_WINDOW-1].corner0;
@@ -786,25 +839,25 @@ void CudaReconstruction::insert_plane_eq()
 }
 
 //--------------------------------------------------------------
-void CudaReconstruction::fill_voxels()
+void vtkCLVolumeReconstruction::FillVoxels()
 {
   int axis = 2; // Use axis 2 ( along Z axis )
-  int intersection_counter = find_intersections(axis);
+  int intersection_counter = FindIntersections(axis);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_x_vector_queue, CL_TRUE, 0, dev_x_vector_queue_size, x_vector_queue, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_x_vector_queue, CL_TRUE, 0, dev_x_vector_queue_size, x_vector_queue, 0, 0, 0));
   omp_unset_lock(&lock);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_y_vector_queue, CL_TRUE, 0, dev_y_vector_queue_size, y_vector_queue, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_y_vector_queue, CL_TRUE, 0, dev_y_vector_queue_size, y_vector_queue, 0, 0, 0));
   omp_unset_lock(&lock);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_plane_points_queue, CL_TRUE, 0, dev_plane_points_queue_size, plane_points_queue, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_plane_points_queue, CL_TRUE, 0, dev_plane_points_queue_size, plane_points_queue, 0, 0, 0));
   omp_unset_lock(&lock);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_mask, CL_TRUE, 0, mask_size, mask, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_mask, CL_TRUE, 0, mask_size, mask, 0, 0, 0));
   omp_unset_lock(&lock);
 
   unsigned char * temp = (unsigned char *) malloc(bscans_queue_size);
@@ -814,12 +867,12 @@ void CudaReconstruction::fill_voxels()
   }
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscans_queue, CL_TRUE, 0, bscans_queue_size, temp, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscans_queue, CL_TRUE, 0, bscans_queue_size, temp, 0, 0, 0));
   omp_unset_lock(&lock);
   free(temp);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_timetags_queue, CL_TRUE, 0, bscan_timetags_queue_size, bscan_timetags_queue, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_timetags_queue, CL_TRUE, 0, bscan_timetags_queue_size, bscan_timetags_queue, 0, 0, 0));
   omp_unset_lock(&lock);
 
   clSetKernelArg(adv_fill_voxels, 0, sizeof(cl_mem), &dev_intersections);
@@ -842,20 +895,20 @@ void CudaReconstruction::fill_voxels()
   clSetKernelArg(adv_fill_voxels, 17, sizeof(cl_int), &intersection_counter);
 
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueNDRangeKernel(reconstruction_cmd_queue, adv_fill_voxels, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
+  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, adv_fill_voxels, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
   omp_unset_lock(&lock);
 
   // Readout the device volume to local buffer
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueReadBuffer(reconstruction_cmd_queue, dev_volume, CL_TRUE, 0, volume_size, volume, 0, 0, 0));
+  OpenCLCheckError(clEnqueueReadBuffer(reconstruction_cmd_queue, dev_volume, CL_TRUE, 0, volume_size, volume, 0, 0, 0));
   omp_unset_lock(&lock);
 }
 
 //--------------------------------------------------------------
-int CudaReconstruction::find_intersections(int axis)
+int vtkCLVolumeReconstruction::FindIntersections(int axis)
 {
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_plane_equation_queue, CL_TRUE, 0, bscan_plane_equation_queue_size, bscan_plane_equation_queue, 0, 0, 0));
+  OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_plane_equation_queue, CL_TRUE, 0, bscan_plane_equation_queue_size, bscan_plane_equation_queue, 0, 0, 0));
   omp_unset_lock(&lock);
 
   clSetKernelArg(trace_intersections, 0, sizeof(cl_mem), &dev_intersections);
@@ -866,7 +919,7 @@ int CudaReconstruction::find_intersections(int axis)
   clSetKernelArg(trace_intersections, 5, sizeof(cl_mem), &dev_bscan_plane_equation_queue);
   clSetKernelArg(trace_intersections, 6, sizeof(cl_int), &axis);
   omp_set_lock(&lock);
-  ocl_check_error(clEnqueueNDRangeKernel(reconstruction_cmd_queue, trace_intersections, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
+  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, trace_intersections, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
   omp_unset_lock(&lock);
 
   return max_vol_dim*max_vol_dim;
