@@ -11,6 +11,8 @@ SET(RobartsVTK_PATCH_VERSION 0)
 INCLUDE(ExternalProject)
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 
+LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
+
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
 #-----------------------------------------------------------------------------
@@ -34,6 +36,8 @@ MARK_AS_ADVANCED(CMAKE_RUNTIME_OUTPUT_DIRECTORY
   CMAKE_LIBRARY_OUTPUT_DIRECTORY
   CMAKE_ARCHIVE_OUTPUT_DIRECTORY
   )
+
+SET(RobartsVTK_DATA_DIR ${CMAKE_SOURCE_DIR}/Data CACHE PATH "Location of the data directory.")
 
 #-----------------------------------------------------------------------------
 # Add configure file to included directories
@@ -434,6 +438,16 @@ IF (RobartsVTK_USE_CUDA)
 ENDIF()
 
 #-----------------------------------------------------------------------------
+# Add the Robarts Visualization Libraries
+#-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_VISUALIZATION "Build the Robarts Visualization modules" OFF)
+IF(RobartsVTK_USE_VISUALIZATION)
+  ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
+  
+  SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
+ENDIF()
+
+#-----------------------------------------------------------------------------
 # Add the CUDA Analytics Libraries
 #-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
@@ -506,7 +520,10 @@ IF(RobartsVTK_BUILD_APPS)
       ENDIF()
     ENDFOREACH()
 
-    ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+        IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
+          ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+          ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+        ENDIF()
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)
@@ -569,4 +586,3 @@ export(TARGETS ${RobartsVTK_LIBRARIES}
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake)
-

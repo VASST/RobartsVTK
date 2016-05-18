@@ -1,0 +1,9 @@
+vtk_module(vtkRobartsVisualization
+  GROUPS
+    Visualization
+  DEPENDS
+    vtkRobartsCommon
+    vtkInteractionStyle
+    vtkRenderingFreeType
+    vtkRendering${VTK_RENDERING_BACKEND}
+  )

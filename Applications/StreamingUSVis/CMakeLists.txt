@@ -14,6 +14,7 @@ vtk_module_load(TFUIDual)
 vtk_module_load(TFUICommon)
 vtk_module_load(vtkCudaCommon)
 vtk_module_load(vtkCudaVisualization)
+vtk_module_load(vtkRobartsVisualization)
 vtk_module_load(vtkCudaImageAnalytics)
 vtk_module_load(vtkCLVolumeReconstruction)
 
@@ -29,6 +30,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${OpenCL_INCLUDE_DIRS}
   ${vtkCudaCommon_INCLUDE_DIRS}
   ${vtkCudaVisualization_INCLUDE_DIRS}
+  ${vtkRobartsVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
   ${vtkCLVolumeReconstruction_INCLUDE_DIRS}
   CACHE INTERNAL ""
@@ -46,6 +48,7 @@ SET(StreamingUSVis_LIBRARIES
   ${OpenCL_LIBRARIES}
   ${vtkCudaCommon_LIBRARIES}
   ${vtkCudaVisualization_LIBRARIES}
+  ${vtkRobartsVisualization_LIBRARIES}
   ${vtkCudaImageAnalytics_LIBRARIES}
   ${vtkCLVolumeReconstruction_LIBRARIES}
   vtksys

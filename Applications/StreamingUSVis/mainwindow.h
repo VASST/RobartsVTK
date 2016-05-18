@@ -70,17 +70,30 @@
 #include <vtkSmartVolumeMapper.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
-#include <vtkTexture.h>
 #include <vtkTransform.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkXMLUtilities.h>
+#include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLProperty.h>
+#include <vtkOpenGLRenderer.h>
+#include <vtkDefaultPass.h>
+#include <vtkRenderPass.h>
+#include <vtkLightsPass.h>
+#include <vtkCameraPass.h>
+#include <vtkRenderPassCollection.h>
+#include <vtkSequencePass.h>
+#include <vtkTexture.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkTextureMapToPlane.h>
+#include <vtkPlaneSource.h>
 
 // Testing includes
 #include <vtkSphereSource.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkImageExtractComponents.h>
 
 // PLUS includes
 #include <vtkPlusChannel.h>
@@ -103,6 +116,7 @@
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCuda2DVolumeMapper.h"
 #include "vtkCudaFunctionPolygonReader.h"
+#include "vtkKeyholePass.h"
 
 // OpenCV includes
 #include "cv.h"
@@ -119,6 +133,79 @@
 
 //# define D_TIMING
 //# define ALIGNMENT_DEBUG
+
+class vtkWindowEventCallback : public vtkCommand
+{
+
+public:
+  static vtkWindowEventCallback *New()
+  {
+    return new vtkWindowEventCallback;
+  }
+  vtkWindowEventCallback()
+  {
+    this->size = 120;
+    this->gamma = 5.0;
+    x = y = 256;
+    this->pinned = true;
+  }
+
+  virtual void Execute(vtkObject *caller, unsigned long eventid, void* callData)
+  {
+
+    vtkRenderWindowInteractor *iren = vtkRenderWindowInteractor::SafeDownCast(caller);
+
+    if( eventid == vtkCommand::MouseMoveEvent && !this->pinned)
+    {
+      x = iren->GetEventPosition()[0];
+      y = iren->GetEventPosition()[1];
+    }
+    if( eventid == vtkCommand::LeftButtonPressEvent )
+    {
+      this->pinned = ( this->pinned == true )? false: true;
+    }
+    if( eventid == vtkCommand::MouseWheelForwardEvent )
+    {
+      this->size += 5;
+    }
+    if( eventid == vtkCommand::MouseWheelBackwardEvent )
+    {
+      this->size -= 5;
+    }
+    if( eventid == vtkCommand::RightButtonPressEvent )
+    {
+      this->gamma += 0.5;
+    }
+    if( eventid == vtkCommand::KeyPressEvent )
+    {
+      // Reset everything
+      char *c = iren->GetKeySym();
+      if( *c == 'r' )
+      {
+        this->size = 120;
+        x = 256;
+        y = 256;
+        this->gamma = 5.0;
+      }
+    }
+
+    // Set keyhole parameters.
+    keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+
+    iren->GetRenderWindow()->Render();
+
+  }
+
+  vtkKeyholePass *keyholePass;
+
+private:
+  int size;
+  double gamma;
+  int x, y;
+
+  bool pinned;
+};
+
 
 class vtkUSEventCallback : public vtkCommand
 {
@@ -161,6 +248,7 @@ public:
   QLabel *Info;
   vtkWindowToImageFilter *_win2Img;
   vtkPNGWriter *_imgWriter;
+  vtkKeyholePass *_keyholePass;
   std::string current_mapper;
   bool sc_capture_on;
   int index;
@@ -215,7 +303,7 @@ protected:
   int SetupVolumeReconstructionPipeline();
 
   int GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
-    double spacing, int *, double *);
+                                    double spacing, int *, double *);
 
   void GetFirstFramePosition(PlusTrackedFrame *,  vtkPlusTransformRepository *, double *);
 
@@ -290,12 +378,12 @@ protected:
   vtkSmartPointer< vtkUSEventCallback >           us_callback;
 
   /* Members for volume rendering */
-  vtkSmartPointer< vtkSmartVolumeMapper >         volumeMapper;
-  vtkSmartPointer< vtkCuda1DVolumeMapper >        cudaVolumeMapper;
-  vtkSmartPointer< vtkCuda2DVolumeMapper >        cuda2DVolumeMapper;
-  vtkSmartPointer< vtkCuda2DTransferFunction >    cuda2DTransferFun;
-  vtkSmartPointer< vtkCuda2DTransferFunction >    backgroundTF;
-  vtkSmartPointer< vtkCudaFunctionPolygonReader > polyReader;
+  vtkSmartPointer< vtkSmartVolumeMapper >           volumeMapper;
+  vtkSmartPointer< vtkCuda1DVolumeMapper >          cudaVolumeMapper;
+  vtkSmartPointer< vtkCuda2DVolumeMapper >          cuda2DVolumeMapper;
+  vtkSmartPointer< vtkCuda2DTransferFunction >      cuda2DTransferFun;
+  vtkSmartPointer< vtkCuda2DTransferFunction >      backgroundTF;
+  vtkSmartPointer< vtkCudaFunctionPolygonReader >   polyReader;
   vtkSmartPointer< vtkCuda2DInExLogicVolumeMapper > inExVolumeMapper;
   vtkSmartPointer< vtkBoxWidget >                   box;
   vtkSmartPointer< vtkTransform >                   boxTransform;
@@ -312,10 +400,19 @@ protected:
   vtkSmartPointer< vtkSphereSource >                sphere;
   vtkSmartPointer< vtkActor >                       actor;
   vtkSmartPointer< vtkWindowToImageFilter >         windowToImage;
-  vtkSmartPointer< vtkPNGWriter >                 imageWriter;
+  vtkSmartPointer< vtkPNGWriter >                   imageWriter;
 
-private:
-  Ui::MainWindow *ui;
+  /* Members for keyhole rendering */
+  vtkSmartPointer< vtkLightsPass >            lightsPass;
+  vtkSmartPointer< vtkDefaultPass >           defaultPass;
+  vtkSmartPointer< vtkCameraPass >            cameraPass;
+  vtkSmartPointer< vtkKeyholePass >           keyholePass;
+  vtkSmartPointer< vtkRenderPassCollection >  passCollection;
+  vtkSmartPointer< vtkSequencePass >          sequencePass;
+  vtkSmartPointer< vtkPlaneSource >           foregroundPlane;
+  vtkSmartPointer< vtkTextureMapToPlane >     foregroundTexturePlane;
+  vtkSmartPointer< vtkPolyDataMapper >        foregroundMapper;
+  vtkSmartPointer< vtkActor >                 foregroundTexturedPlane;
 };
 
 #endif // MAINWINDOW_H

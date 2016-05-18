@@ -3,6 +3,7 @@ PROJECT(vtkRobartsCommon)
 include(module.cmake)
 
 SET ( Module_SRCS
+  vtkRobartsCommon.h
   vtkReadWriteLock.cxx
   vtkBarrierLock.cxx
   vtkImagePipe.cxx
