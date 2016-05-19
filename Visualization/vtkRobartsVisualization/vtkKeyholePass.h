@@ -42,13 +42,12 @@
 #include "vtkOpenGLHelper.h"
 #include "vtkPixelBufferObject.h"
 #include "vtkRenderer.h"
-//#include "vtkRenderingOpenGL2Module.h" // For export macro
 #include "vtkTexture.h"
 
-class vtkOpenGLRenderWindow;
-class vtkShaderProgram2;
-class vtkShader2;
 class vtkFrameBufferObject;
+class vtkOpenGLRenderWindow;
+class vtkShader2;
+class vtkShaderProgram2;
 class vtkTextureObject;
 
 class VTKROBARTSVISUALIZATION_EXPORT vtkKeyholePass : public vtkImageProcessingPass
@@ -103,8 +102,6 @@ public:
   }
 
 protected:
-
-
   // Description:
   // Graphics resources.
   vtkFrameBufferObject* FrameBufferObject;

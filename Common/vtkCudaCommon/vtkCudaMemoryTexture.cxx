@@ -18,14 +18,8 @@
 #include <vtkVersion.h>
 
 // Fixed order
-#if VTK_GL_VERSION == 2
 #include "vtkOpenGLError.h"
 #include "vtkOpenGL.h"
-#else 
-#include "vtkgl.h"
-#include "vtkOpenGLExtensionManager.h"
-#endif
-
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
 // End fixed order
@@ -67,17 +61,10 @@ void vtkCudaMemoryTexture::Deinitialize(int withData)
 
   if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == true)
   {
-#if VTK_GL_VERSION == 2
-	if (this->BufferObjectID != 0 && glIsBufferARB(this->BufferObjectID))
+    if (this->BufferObjectID != 0 && glIsBufferARB(this->BufferObjectID))
     {
       glDeleteBuffersARB(1, &this->BufferObjectID);
     }
-#else 
-    if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
-    {
-      vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
-    }
-#endif
   }
 }
 
@@ -108,29 +95,18 @@ void vtkCudaMemoryTexture::Initialize()
   if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == false)
   {
     // check for the RenderMode
-#if VTK_GL_VERSION == 2
-		GLenum err = glewInit();
-		if(GLEW_OK != err){
-			std::cerr << "GLEW Error. " << std::endl;
-			return;
-		}
-
-		if(GLEW_ARB_vertex_buffer_object)
-		{
-			vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
-			this->CurrentRenderMode = RenderToTexture;
-		}
-#else
-    vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
-    extensions->SetRenderWindow(NULL);
-    if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
+    GLenum err = glewInit();
+    if(GLEW_OK != err)
     {
-      extensions->LoadExtension("GL_ARB_vertex_buffer_object");
+      std::cerr << "GLEW Error. " << std::endl;
+      return;
+    }
+
+    if(GLEW_ARB_vertex_buffer_object)
+    {
       vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
       this->CurrentRenderMode = RenderToTexture;
     }
-    extensions->Delete();
-#endif
   }
 }
 
@@ -218,7 +194,6 @@ void vtkCudaMemoryTexture::RebuildBuffer()
     // OpenGL Buffer Code
     this->ReserveGPU();
 
-#if VTK_GL_VERSION == 2
     if (this->BufferObjectID != 0 && glIsBufferARB(this->BufferObjectID))
     {
       glDeleteBuffersARB(1, &this->BufferObjectID);
@@ -227,16 +202,6 @@ void vtkCudaMemoryTexture::RebuildBuffer()
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
     glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->Width * Height * sizeof(uchar4), (void*) this->LocalOutputData, GL_STREAM_COPY);
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-#else
-    if (this->BufferObjectID != 0 && vtkgl::IsBufferARB(this->BufferObjectID))
-    {
-      vtkgl::DeleteBuffersARB(1, &this->BufferObjectID);
-    }
-    vtkgl::GenBuffersARB(1, &this->BufferObjectID);
-    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
-    vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->Width * Height * sizeof(uchar4), (void*) this->LocalOutputData, vtkgl::STREAM_COPY);
-    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
-#endif
   }
 }
 
@@ -277,12 +242,7 @@ void vtkCudaMemoryTexture::BindBuffer()
     this->ReserveGPU();
     cudaGLRegisterBufferObject(this->BufferObjectID) ;
     cudaStreamSynchronize(*(this->GetStream()));
-
-#if VTK_GL_VERSION == 2
-	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
-#else
-    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
-#endif
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
     cudaGLMapBufferObject((void**)&this->RenderDestination, this->BufferObjectID);
     cudaStreamSynchronize(*(this->GetStream()));
   }
@@ -309,12 +269,7 @@ void vtkCudaMemoryTexture::UnbindBuffer()
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
     cudaGLUnregisterBufferObject(this->BufferObjectID) ;
     cudaStreamSynchronize(*(this->GetStream()));
-
-#if VTK_GL_VERSION == 2
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-#else
-	vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
-#endif
   }
   else // (this->CurrentRenderMode == RenderToMemory)
   {

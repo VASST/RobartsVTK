@@ -21,13 +21,8 @@
 #include "RobartsVTKConfigure.h"
 
 // FIXED ORDER
-#if VTK_GL_VERSION == 2
 #include "vtkOpenGLError.h"
 #include "vtkOpenGL.h"
-#else
-#include "vtkgl.h"
-#include "vtkOpenGLExtensionManager.h"
-#endif
 #include "cuda_runtime_api.h"
 #include "cuda_gl_interop.h"
 // END FIXED ORDER

@@ -520,10 +520,10 @@ IF(RobartsVTK_BUILD_APPS)
       ENDIF()
     ENDFOREACH()
 
-        IF(RobartsVTK_USE_ROBARTS_VISUALIZATION)
-          ADD_SUBDIRECTORY(Applications/StreamingUSVis)
-          ADD_SUBDIRECTORY(Applications/KeyholeRendering)
-        ENDIF()
+    IF(RobartsVTK_USE_VISUALIZATION)
+      ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+      ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+    ENDIF()
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)
@@ -558,12 +558,6 @@ foreach( module ${RobartsVTK_LIBRARIES} )
   vtk_module_load(${module})
   SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${${module}_INCLUDE_DIRS} CACHE INTERNAL "")
 endforeach()
-
-IF( "${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2" )
-  SET(VTK_GL_VERSION 2)
-ELSE()
-  SET(VTK_GL_VERSION 1)
-ENDIF()
 
 #-----------------------------------------------------------------------------
 # Generate build configurations

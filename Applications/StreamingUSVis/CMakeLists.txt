@@ -32,11 +32,8 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${vtkCudaVisualization_INCLUDE_DIRS}
   ${vtkRobartsVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
-  ${vtkCLVolumeReconstruction_INCLUDE_DIRS}
-  CACHE INTERNAL ""
-  )
+  ${vtkCLVolumeReconstruction_INCLUDE_DIRS})
 LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
-MARK_AS_ADVANCED(StreamingUSVis_INCLUDE_DIRS)
 
 IF( VTK_QT_VERSION VERSION_LESS "5" )
   INCLUDE(${QT_USE_FILE})
@@ -60,11 +57,7 @@ SET(StreamingUSVis_LIBRARIES
   vtkPlusDataCollection
   opencv_core
   opencv_imgproc
-  opencv_videoio
-  CACHE INTERNAL ""
-  )
-
-MARK_AS_ADVANCED(StreamingUSVis_LIBRARIES)
+  opencv_videoio)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
