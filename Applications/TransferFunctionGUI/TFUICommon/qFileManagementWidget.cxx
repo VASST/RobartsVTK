@@ -339,11 +339,7 @@ bool qFileManagementWidget::addImageToMapper(vtkImageData* data)
   int numFramesInMapper = mapper->GetNumberOfFrames();
   if( numFrames == numFrames )
   {
-#if (VTK_MAJOR_VERSION < 6)
-    mapper->SetInput(data,numFrames-1);
-#else
     mapper->SetInputData(data, numFrames-1);
-#endif
     mapper->ChangeFrame(numFrames-1);
     mapper->Update();
     return true;
@@ -368,9 +364,6 @@ bool qFileManagementWidget::addMetaImage(std::string filename)
   metareader->Update();
   readers.push_back(metareader);
   vtkImageData* data = metareader->GetOutput();
-#if (VTK_MAJOR_VERSION < 6)
-  data->Update();
-#endif
 
   //load image into CUDA
   this->addImageToMapper(data);
@@ -400,11 +393,6 @@ bool qFileManagementWidget::addMincImage(std::string filename)
   mincreader->SetFileName(filename.c_str());
   readers.push_back(mincreader);
   vtkImageData* data = mincreader->GetOutput();
-#if (VTK_MAJOR_VERSION < 6)
-  data->Update();
-#else
-  //data->Modified();
-#endif
 
   //load image into CUDA
   this->addImageToMapper(data);
@@ -435,11 +423,6 @@ bool qFileManagementWidget::addDICOMImage(std::string dirname)
   dicomreader->Update();
   readers.push_back(dicomreader);
   vtkImageData* data = dicomreader->GetOutput();
-#if (VTK_MAJOR_VERSION < 6)
-  data->Update();
-#else
-  //data->Modified();
-#endif
 
   //load image into CUDA
   this->addImageToMapper(data);

@@ -68,11 +68,7 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i)
 void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
 {
   //load the input to a texture
-#if (VTK_MAJOR_VERSION < 6 )
-  this->Caster->SetInput(i);
-#else
   this->Caster->SetInputDataObject(i);
-#endif
   this->Caster->Update();
 
   //get the volume size from the input
@@ -221,20 +217,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   {
     this->DensOutput = vtkImageData::New();
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->DensOutput->SetNumberOfScalarComponents(1);
-  this->DensOutput->SetScalarTypeToFloat();
-  this->DensOutput->SetExtent(0,x-1,
-                              0,y-1,
-                              0,z-1);
-  this->DensOutput->SetWholeExtent(0,x-1,
-                                   0,y-1,
-                                   0,z-1);
-  this->DensOutput->SetOrigin(0,0,0);
-  this->DensOutput->SetSpacing(1.0,1.0,1.0);
-  this->DensOutput->Update();
-  this->DensOutput->AllocateScalars();
-#else
   this->DensOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
@@ -242,26 +224,11 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   this->DensOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
   this->DensOutput->AllocateScalars(VTK_FLOAT, 1);
-#endif
 
   if( !this->TransOutput)
   {
     this->TransOutput = vtkImageData::New();
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->TransOutput->SetNumberOfScalarComponents(1);
-  this->TransOutput->SetScalarTypeToFloat();
-  this->TransOutput->SetExtent(0,x-1,
-                               0,y-1,
-                               0,z-1);
-  this->TransOutput->SetWholeExtent(0,x-1,
-                                    0,y-1,
-                                    0,z-1);
-  this->TransOutput->SetOrigin(0,0,0);
-  this->TransOutput->SetSpacing(1.0,1.0,1.0);
-  this->TransOutput->Update();
-  this->TransOutput->AllocateScalars();
-#else
   this->TransOutput->SetExtent(0,x-1,
                                0,y-1,
                                0,z-1);
@@ -269,26 +236,11 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   this->TransOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
   this->TransOutput->AllocateScalars(VTK_FLOAT, 1);
-#endif
 
   if( !this->ReflOutput)
   {
     this->ReflOutput = vtkImageData::New();
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->ReflOutput->SetNumberOfScalarComponents(1);
-  this->ReflOutput->SetScalarTypeToFloat();
-  this->ReflOutput->SetExtent(0,x-1,
-                              0,y-1,
-                              0,z-1);
-  this->ReflOutput->SetWholeExtent(0,x-1,
-                                   0,y-1,
-                                   0,z-1);
-  this->ReflOutput->SetOrigin(0,0,0);
-  this->ReflOutput->SetSpacing(1.0,1.0,1.0);
-  this->ReflOutput->Update();
-  this->ReflOutput->AllocateScalars();
-#else
   this->ReflOutput->SetExtent(0,x-1,
                               0,y-1,
                               0,z-1);
@@ -296,27 +248,12 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   this->ReflOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
   this->ReflOutput->AllocateScalars(VTK_FLOAT, 1);
-#endif
 
   //create a new simulated image
   if( !this->UsOutput)
   {
     this->UsOutput = vtkImageData::New();
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->UsOutput->SetNumberOfScalarComponents(3);
-  this->UsOutput->SetScalarTypeToUnsignedChar();
-  this->UsOutput->SetExtent(0,x-1,
-                            0,y-1,
-                            0,z-1);
-  this->UsOutput->SetWholeExtent(0,x-1,
-                                 0,y-1,
-                                 0,z-1);
-  this->UsOutput->SetOrigin(0,0,0);
-  this->UsOutput->SetSpacing(1.0,1.0,1.0);
-  this->UsOutput->Update();
-  this->UsOutput->AllocateScalars();
-#else
   this->UsOutput->SetExtent(0,x-1,
                             0,y-1,
                             0,z-1);
@@ -324,8 +261,6 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   this->UsOutput->SetSpacing(1.0,1.0,1.0);
   this->Update();
   this->UsOutput->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
-#endif
-
 }
 
 void vtkCudaCT2USSimulation::SetLogarithmicScaleFactor(float factor)

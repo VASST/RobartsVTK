@@ -26,8 +26,6 @@ DataFileName: The file containing the image data
 #include <algorithm>
 #include <fstream>
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 void showHelpMessage()
 {
   std::cerr << "Usage:\t OutputFilename DeviceNumber MapFilename DataFilename" << std::endl;
@@ -84,11 +82,7 @@ int main( int argc, char** argv )
   vtkMetaImageReader* DataReader = vtkMetaImageReader::New();
   DataReader->SetFileName(DataFilename.c_str());
   vtkImageCast* Caster = vtkImageCast::New();
-#if (VTK_MAJOR_VERSION < 6)
-  Caster->SetInput(DataReader->GetOutput());
-#else
   Caster->SetInputConnection(DataReader->GetOutputPort());
-#endif
   Caster->SetOutputScalarTypeToFloat();
   Caster->Update();
   vtkMetaImageReader* MapReader = vtkMetaImageReader::New();
@@ -98,13 +92,8 @@ int main( int argc, char** argv )
   //run applier
   vtkCudaKSOMProbability* Applier = vtkCudaKSOMProbability::New();
   Applier->SetDevice(DeviceNumber);
-#if (VTK_MAJOR_VERSION < 6)
-  Applier->SetImageInput(Caster->GetOutput());
-  Applier->SetMapInput(MapReader->GetOutput());
-#else
   Applier->SetImageInputConnection(Caster->GetOutputPort());
   Applier->SetMapInputConnection(MapReader->GetOutputPort());
-#endif
   Applier->SetEntropy(true);
   Applier->Update();
 
@@ -114,11 +103,7 @@ int main( int argc, char** argv )
   vtkMetaImageWriter* Writer = vtkMetaImageWriter::New();
   Writer->SetFileName(OutputFilenameMHD.c_str());
   Writer->SetRAWFileName(OutputFilenameRAW.c_str());
-#if (VTK_MAJOR_VERSION < 6)
-  Writer->SetInput(Applier->GetOutput());
-#else
   Writer->SetInputConnection(Applier->GetOutputPort());
-#endif
   Writer->Write();
   Writer->Delete();
 

@@ -68,7 +68,7 @@ protected:
   std::vector< double > ScaleValues;
 
 private:
-  vtkRetinex();
+  vtkRetinex(){};
   vtkRetinex( const std::vector< double >& n_scales );
   ~vtkRetinex();
 };

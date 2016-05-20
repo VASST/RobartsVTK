@@ -413,6 +413,9 @@ protected:
   vtkSmartPointer< vtkTextureMapToPlane >     foregroundTexturePlane;
   vtkSmartPointer< vtkPolyDataMapper >        foregroundMapper;
   vtkSmartPointer< vtkActor >                 foregroundTexturedPlane;
+
+private:
+  Ui::MainWindow *ui;
 };
 
 #endif // MAINWINDOW_H

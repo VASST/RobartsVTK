@@ -110,7 +110,7 @@ public:
   void GetOrigin(double *);
 
   /* Get Spacing */
-  const double* GetSpacing() const;
+  void GetSpacing(double spacing[3]) const;
 
   /* Get output extent */
   int * GetOutputExtent();

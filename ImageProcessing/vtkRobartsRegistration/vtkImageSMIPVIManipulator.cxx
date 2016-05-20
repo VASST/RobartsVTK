@@ -16,7 +16,6 @@
 
 =========================================================================*/
 #include "vtkImageSMIPVIManipulator.h"
-#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
@@ -130,14 +129,6 @@ vtkImageData *vtkImageSMIPVIManipulator::GetInput2()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImageSMIPVIManipulator::UpdateScaled()
-{
-  this->inDataScl[0]->Update();
-}
-#endif
-
-//----------------------------------------------------------------------------
 void vtkImageSMIPVIManipulator::SetBinNumber(int numS, int numT)
 {
   this->BinNumber[0] = numS;
@@ -149,11 +140,7 @@ void vtkImageSMIPVIManipulator::SetBinNumber(int numS, int numT)
   this->HistST = new double[numS*numT];
 
   vtkImageShiftScale* scale0 = vtkImageShiftScale::New();
-#if (VTK_MAJOR_VERSION < 6)
-  scale0->SetInput(this->inData[0]);
-#else
   scale0->SetInputData(this->inData[0]);
-#endif
   scale0->SetShift(0.5*this->BinWidth[0]); // Shift to round not floor
   scale0->SetScale(1.0/this->BinWidth[0]);
   scale0->Update();
@@ -161,11 +148,7 @@ void vtkImageSMIPVIManipulator::SetBinNumber(int numS, int numT)
   inDataScl[0]->GetIncrements(this->inc[0], this->inc[1], this->inc[2]);
 
   vtkImageShiftScale* scale1 = vtkImageShiftScale::New();
-#if (VTK_MAJOR_VERSION < 6)
-  scale1->SetInput(this->inData[1]);
-#else
   scale1->SetInputData(this->inData[1]);
-#endif
   scale1->SetShift(0.5*this->BinWidth[1]); // Shift to round not floor
   scale1->SetScale(1.0/this->BinWidth[1]);
   scale1->Update();
@@ -181,11 +164,7 @@ void vtkImageSMIPVIManipulator::SetMaxIntensities(int maxS, int maxT)
   this->BinWidth[1] = (double)this->MaxIntensities[1] / ((double)this->BinNumber[1] - 1.0);
 
   vtkImageShiftScale* scale0 = vtkImageShiftScale::New();
-#if (VTK_MAJOR_VERSION < 6)
-  scale0->SetInput(this->inData[0]);
-#else
   scale0->SetInputData(this->inData[0]);
-#endif
   scale0->SetShift(0.5*this->BinWidth[0]); // Shift to round not floor
   scale0->SetScale(1.0/this->BinWidth[0]);
   scale0->Update();
@@ -193,11 +172,7 @@ void vtkImageSMIPVIManipulator::SetMaxIntensities(int maxS, int maxT)
   inDataScl[0]->GetIncrements(this->inc[0], this->inc[1], this->inc[2]);
 
   vtkImageShiftScale* scale1 = vtkImageShiftScale::New();
-#if (VTK_MAJOR_VERSION < 6)
-  scale1->SetInput(this->inData[1]);
-#else
   scale1->SetInputData(this->inData[1]);
-#endif
   scale1->SetShift(0.5*this->BinWidth[1]); // Shift to round not floor
   scale1->SetScale(1.0/this->BinWidth[1]);
   scale1->Update();
@@ -261,13 +236,8 @@ void vtkImageSMIPVIManipulator::SetExtent(int ext[6])
   // Calculate the entropy of image 2
   switch (this->inDataScl[1]->GetScalarType())
   {
-#if (VTK_MAJOR_VERSION < 5)
-    vtkTemplateMacro4(vtkImageSMIPVIManipulatorEntropyT,this,
-                      (VTK_TT *)(this->inPtr[1]), this->inc2, this->count);
-#else
     vtkTemplateMacro(vtkImageSMIPVIManipulatorEntropyT(this,
                      (VTK_TT *)(this->inPtr[1]), this->inc2, this->count));
-#endif
   default:
     vtkErrorMacro( "Execute: Unknown ScalarType");
   }

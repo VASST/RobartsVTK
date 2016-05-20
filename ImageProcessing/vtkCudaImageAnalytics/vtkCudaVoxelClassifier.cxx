@@ -119,20 +119,10 @@ int vtkCudaVoxelClassifier::RequestData(vtkInformation *request,
   }
 
   //figure out the extent of the output
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetScalarTypeToShort();
-  outData->SetNumberOfScalarComponents(1);
-  outData->SetExtent( inData->GetExtent() );
-  outData->SetWholeExtent( inData->GetExtent() );
-  outData->SetOrigin( inData->GetOrigin() );
-  outData->SetSpacing( inData->GetSpacing() );
-  outData->AllocateScalars();
-#else
   outData->SetExtent( inData->GetExtent() );
   outData->SetOrigin( inData->GetOrigin() );
   outData->SetSpacing( inData->GetSpacing() );
   outData->AllocateScalars(VTK_SHORT, 1);
-#endif
 
   //update planes
   this->ComputeMatrices( inData );

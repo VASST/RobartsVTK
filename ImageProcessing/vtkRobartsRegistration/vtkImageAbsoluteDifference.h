@@ -28,7 +28,6 @@
 #include "vtkObjectFactory.h"
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // This number must be greater than the number of CPU's
 #define THREAD_NUM 2
@@ -37,28 +36,15 @@ class VTKROBARTSREGISTRATION_EXPORT vtkImageAbsoluteDifference : public vtkThrea
 {
 public:
   static vtkImageAbsoluteDifference *New();
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkImageAbsoluteDifference,vtkImageMultipleInputFilter);
-#else
   vtkTypeMacro(vtkImageAbsoluteDifference, vtkThreadedImageAlgorithm);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/get the 2 input images and stencil to specify which voxels to accumulate.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput1(vtkImageData *input);
-  virtual void SetInput2(vtkImageData *input);
-#else
   virtual void SetInput1Data(vtkImageData *input);
   virtual void SetInput2Data(vtkImageData *input);
-#endif
 
-#if (VTK_MAJOR_VERSION < 6)
-  void SetStencil(vtkImageStencilData *stencil);
-#else
   void SetStencilData(vtkImageStencilData *stencil);
-#endif
 
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();

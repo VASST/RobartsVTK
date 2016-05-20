@@ -45,7 +45,6 @@
 #include <set>
 #include <list>
 #include <vector>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define SQR(X) X*X
 
@@ -678,11 +677,7 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
     vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outputBuffer->SetExtent(Extent);
     outputBuffer->Modified();
-#if (VTK_MAJOR_VERSION < 6)
-    outputBuffer->AllocateScalars();
-#else
     outputBuffer->AllocateScalars(outputInfo);
-#endif
     leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
@@ -1042,14 +1037,6 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(
       vtkDataSet *output = vtkDataSet::SafeDownCast(
                              info->Get(vtkDataObject::DATA_OBJECT()));
 
-#if (VTK_MAJOR_VERSION < 6)
-      if (!output || !output->IsA(input->GetClassName()))
-      {
-        vtkImageData* newOutput = input->NewInstance();
-        newOutput->SetPipelineInformation(info);
-        newOutput->Delete();
-      }
-#endif
       return 1;
     }
   }

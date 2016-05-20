@@ -13,5 +13,7 @@ vtk_module(TFUIGradient
     vtkIOImage 
     vtkCommonCore 
     vtkGUISupportQt
+    vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
+    ${VTK_EXTRA_MODULES}
   EXCLUDE_FROM_WRAPPING
   )

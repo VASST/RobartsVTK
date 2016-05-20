@@ -1,12 +1,5 @@
 PROJECT(vtkCudaCommon)
 
-# Enabling support of OpenGL/OpenGL2 rendering backend
-IF(TARGET vtkglew)
-  SET(VTKGLEW_LIBRARY vtkglew)
-ELSE()
-  SET(VTKGLEW_LIBRARY)
-ENDIF()
-
 include(module.cmake)
 
 SET( Module_SRCS
@@ -23,9 +16,9 @@ SET( Module_SRCS
 
 # -----------------------------------------------------------------
 # Build the library
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
+SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES} ${VTK_LIBRARIES} ${OPENGL_LIBRARIES})
 
 # -----------------------------------------------------------------
 LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})

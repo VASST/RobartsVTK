@@ -3,7 +3,6 @@
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkImageSeedFilter);
 
@@ -74,13 +73,8 @@ int vtkImageSeedFilter::RequestData(vtkInformation* request,
   outData->SetExtent( extent );
   outData->SetSpacing( inData->GetSpacing() );
   outData->SetOrigin( inData->GetOrigin() );
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetNumberOfScalarComponents( this->NumberOfComponents );
-  outData->SetScalarType( VTK_FLOAT );
-  outData->AllocateScalars();
-#else
   outData->AllocateScalars(VTK_FLOAT, this->NumberOfComponents);
-#endif
+
   float* outDataPtr = (float*) outData->GetScalarPointer();
 
   //cycle through input points in voxel co-ordinates

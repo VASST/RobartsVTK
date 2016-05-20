@@ -24,15 +24,11 @@ public:
 
   void SetScale( double s );
   double GetScale();
-#if (VTK_MAJOR_VERSION < 6)
-  void SetDataInput(vtkImageData* d);
-  void SetMapInput(vtkImageData* d);
-#else
   void SetDataInputData(vtkImageData* d);
   void SetMapInputData(vtkImageData* d);
   void SetDataInputConnection(vtkAlgorithmOutput* d);
   void SetMapInputConnection(vtkAlgorithmOutput* d);
-#endif
+
   vtkImageData* GetDataInput();
   vtkImageData* GetMapInput();
 

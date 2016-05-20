@@ -56,7 +56,6 @@
 #include "vtkRobartsRegistrationModule.h"
 
 #include "vtkPolyDataAlgorithm.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define VTK_CURVATURE_GAUSS 0
 #define VTK_CURVATURE_MEAN  1
@@ -64,15 +63,8 @@
 class VTKROBARTSREGISTRATION_EXPORT vtkMeshSmootheness : public vtkPolyDataAlgorithm
 {
 public:
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkMeshSmootheness, vtkPolyDataToPolyDataFilter);
-#else
   vtkTypeMacro(vtkMeshSmootheness, vtkPolyDataAlgorithm);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
-
-  // Description:
-  // Construct with curvature type set to Gauss
   static vtkMeshSmootheness *New();
 
   // Description:
@@ -92,11 +84,7 @@ public:
     this->SetCurvatureType(VTK_CURVATURE_MEAN);
   }
 
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput(vtkPolyData *input);
-#else
   virtual void SetInputConnection(vtkAlgorithmOutput *input);
-#endif
 
   vtkGetMacro(Smootheness,double);
   double Smootheness;

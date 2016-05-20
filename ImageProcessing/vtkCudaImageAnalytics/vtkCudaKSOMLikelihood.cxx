@@ -111,16 +111,8 @@ int vtkCudaKSOMLikelihood::RequestData(vtkInformation *request,
   //figure out the extent of the output
   this->Info.NumberOfDimensions = inputDataImage->GetNumberOfScalarComponents();
   this->Info.NumberOfLabels = seededDataImage->GetScalarRange()[1];
-#if (VTK_MAJOR_VERSION < 6)
-  outputGMMImage->SetScalarTypeToFloat();
-  outputGMMImage->SetNumberOfScalarComponents( this->Info.NumberOfLabels );
-  outputGMMImage->SetExtent(inputGMMImage->GetExtent());
-  outputGMMImage->SetWholeExtent(inputGMMImage->GetExtent());
-  outputGMMImage->AllocateScalars();
-#else
   outputGMMImage->SetExtent(inputGMMImage->GetExtent());
   outputGMMImage->AllocateScalars(VTK_FLOAT, this->Info.NumberOfLabels);
-#endif
 
   //get volume information for containers
   inputDataImage->GetDimensions( this->Info.VolumeSize );

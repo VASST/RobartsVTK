@@ -44,11 +44,7 @@
 #include "vtkImageExtractComponents.h"
 #include "vtkImageAppendComponents.h"
 #include "vtkImageMathematics.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkImageHackedPlaneWidget, "$Revision: 1.19 $");
-#endif
 vtkStandardNewMacro(vtkImageHackedPlaneWidget);
 
 vtkCxxSetObjectMacro(vtkImageHackedPlaneWidget, PlaneProperty, vtkProperty);
@@ -1308,11 +1304,11 @@ void vtkImageHackedPlaneWidget::ManageTextDisplay()
     else
     {
       sprintf(this->TextBuff,
-                "( %g, %g, %g ): %g",
-                this->CurrentCursorPosition[0],
-                this->CurrentCursorPosition[1],
-                this->CurrentCursorPosition[2],
-                this->CurrentImageValue);
+              "( %g, %g, %g ): %g",
+              this->CurrentCursorPosition[0],
+              this->CurrentCursorPosition[1],
+              this->CurrentCursorPosition[2],
+              this->CurrentImageValue);
     }
   }
 
@@ -1429,12 +1425,7 @@ void vtkImageHackedPlaneWidget::SetPlaneOrientation(int i)
   }
 
   int extent[6];
-#if (VTK_MAJOR_VERSION < 6)
-  this->ImageData->UpdateInformation();
-  this->ImageData->GetWholeExtent(extent);
-#else
   this->ImageData->GetExtent(extent);
-#endif
   double origin[3];
   this->ImageData->GetOrigin(origin);
   double spacing[3];
@@ -1498,11 +1489,7 @@ void vtkImageHackedPlaneWidget::SetPlaneOrientation(int i)
 //----------------------------------------------------------------------------
 void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
 {
-#if (VTK_MAJOR_VERSION < 6)
-  this->Superclass::SetInput(input);
-#else
   this->Superclass::SetInputData(input);
-#endif
   this->ImageData = vtkImageData::SafeDownCast(this->GetInput());
 
   if( !this->ImageData )
@@ -1510,15 +1497,9 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
     // If NULL is passed, remove any reference that Reslice had
     // on the old ImageData
     //
-#if (VTK_MAJOR_VERSION < 6)
-    this->ResliceR->SetInput(NULL);
-    this->ResliceG->SetInput(NULL);
-    this->ResliceB->SetInput(NULL);
-#else
     this->ResliceR->SetInputData(NULL);
     this->ResliceG->SetInputData(NULL);
     this->ResliceB->SetInputData(NULL);
-#endif
     return;
   }
 
@@ -1548,135 +1529,70 @@ void vtkImageHackedPlaneWidget::SetInput(vtkDataSet* input, double* minMax)
 
   if(!minMax)
   {
-#if (VTK_MAJOR_VERSION < 6)
-    this->ResliceR->SetInput(this->ImageData);
-#else
     this->ResliceR->SetInputData(this->ImageData);
-#endif
     int interpolate = this->ResliceInterpolate;
     this->ResliceInterpolate = -1; // Force change
     this->SetResliceInterpolate(interpolate);
-#if (VTK_MAJOR_VERSION < 6)
-    this->ColorMap->SetInput(this->ResliceR->GetOutput());
-    this->Texture->SetInput(this->ColorMap->GetOutput());
-#else
     this->ColorMap->SetInputConnection(this->ResliceR->GetOutputPort());
     this->Texture->SetInputConnection(this->ColorMap->GetOutputPort());
-#endif
   }
   else
   {
 
     vtkImageExtractComponents* Extractor0 = vtkImageExtractComponents::New();
-#if (VTK_MAJOR_VERSION < 6)
-    Extractor0->SetInput(this->ImageData);
-#else
     Extractor0->SetInputData(this->ImageData);
-#endif
     Extractor0->SetComponents(0);
     vtkImageExtractComponents* Extractor1 = vtkImageExtractComponents::New();
-#if (VTK_MAJOR_VERSION < 6)
-    Extractor1->SetInput(this->ImageData);
-#else
     Extractor1->SetInputData(this->ImageData);
-#endif
     Extractor1->SetComponents(1);
     vtkImageExtractComponents* Extractor2 = vtkImageExtractComponents::New();
-#if (VTK_MAJOR_VERSION < 6)
-    Extractor2->SetInput(this->ImageData);
-#else
     Extractor2->SetInputData(this->ImageData);
-#endif
     Extractor2->SetComponents(2);
 
-#if (VTK_MAJOR_VERSION < 6)
-    this->ResliceR->SetInput(Extractor0->GetOutput());
-    this->ResliceG->SetInput(Extractor1->GetOutput());
-    this->ResliceB->SetInput(Extractor2->GetOutput());
-#else
     this->ResliceR->SetInputConnection(Extractor0->GetOutputPort());
     this->ResliceG->SetInputConnection(Extractor1->GetOutputPort());
     this->ResliceB->SetInputConnection(Extractor2->GetOutputPort());
-#endif
 
     int comps = this->ResliceR->GetOutput()->GetNumberOfScalarComponents();
 
     vtkImageMathematics* Shift0 = vtkImageMathematics::New();
     Shift0->SetOperationToAddConstant();
     Shift0->SetConstantC(-minMax[0]);
-#if (VTK_MAJOR_VERSION < 6)
-    Shift0->SetInput1(this->ResliceR->GetOutput());
-#else
     Shift0->SetInput1Data(this->ResliceR->GetOutput());
-#endif
     vtkImageMathematics* Shift1 = vtkImageMathematics::New();
     Shift1->SetOperationToAddConstant();
     Shift1->SetConstantC(-minMax[2]);
-#if (VTK_MAJOR_VERSION < 6)
-    Shift1->SetInput1(this->ResliceG->GetOutput());
-#else
     Shift1->SetInput1Data(this->ResliceG->GetOutput());
-#endif
     vtkImageMathematics* Shift2 = vtkImageMathematics::New();
     Shift2->SetOperationToAddConstant();
     Shift2->SetConstantC(-minMax[4]);
-#if (VTK_MAJOR_VERSION < 6)
-    Shift2->SetInput1(this->ResliceB->GetOutput());
-#else
     Shift2->SetInput1Data(this->ResliceB->GetOutput());
-#endif
 
     vtkImageMathematics* Scale0 = vtkImageMathematics::New();
     Scale0->SetOperationToMultiplyByK();
     Scale0->SetConstantK(255.0/(minMax[1]-minMax[0]));
-#if (VTK_MAJOR_VERSION < 6)
-    Scale0->SetInput1(Shift0->GetOutput());
-#else
     Scale0->SetInput1Data(Shift0->GetOutput());
-#endif
     vtkImageMathematics* Scale1 = vtkImageMathematics::New();
     Scale1->SetOperationToMultiplyByK();
     Scale1->SetConstantK(255.0/(minMax[3]-minMax[2]));
-#if (VTK_MAJOR_VERSION < 6)
-    Scale1->SetInput1(Shift1->GetOutput());
-#else
     Scale1->SetInput1Data(Shift1->GetOutput());
-#endif
     vtkImageMathematics* Scale2 = vtkImageMathematics::New();
     Scale2->SetOperationToMultiplyByK();
     Scale2->SetConstantK(255.0/(minMax[5]-minMax[4]));
-#if (VTK_MAJOR_VERSION < 6)
-    Scale2->SetInput1(Shift2->GetOutput());
-#else
     Scale2->SetInput1Data(Shift2->GetOutput());
-#endif
 
     vtkImageAppendComponents* Appender = vtkImageAppendComponents::New();
-#if (VTK_MAJOR_VERSION < 6)
-    Appender->SetInput(0,Scale0->GetOutput());
-    Appender->SetInput(1,Scale1->GetOutput());
-    Appender->SetInput(2,Scale2->GetOutput());
-#else
     Appender->SetInputConnection(0,Scale0->GetOutputPort());
     Appender->SetInputConnection(1,Scale1->GetOutputPort());
     Appender->SetInputConnection(2,Scale2->GetOutputPort());
-#endif
     Appender->Update();
 
     vtkImageCast* Caster = vtkImageCast::New();
-#if (VTK_MAJOR_VERSION < 6)
-    Caster->SetInput(Appender->GetOutput());
-#else
     Caster->SetInputConnection(Appender->GetOutputPort());
-#endif
     Caster->SetOutputScalarTypeToUnsignedChar();
     Caster->Update();
 
-#if (VTK_MAJOR_VERSION < 6)
-    this->Texture->SetInput(Caster->GetOutput());
-#else
     this->Texture->SetInputConnection(Caster->GetOutputPort());
-#endif
     Extractor0->Delete();
     Extractor1->Delete();
     Extractor2->Delete();
@@ -1708,12 +1624,7 @@ void vtkImageHackedPlaneWidget::UpdatePlane()
   // Calculate appropriate pixel spacing for the reslicing
   //
   int extent[6];
-#if (VTK_MAJOR_VERSION < 6)
-  this->ImageData->UpdateInformation();
-  this->ImageData->GetWholeExtent(extent);
-#else
   this->ImageData->GetExtent(extent);
-#endif
   double spacing[3];
   this->ImageData->GetSpacing(spacing);
   double origin[3];
@@ -2113,9 +2024,6 @@ void vtkImageHackedPlaneWidget::SetSliceIndex(int index)
   {
     return;
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->ImageData->UpdateInformation();
-#endif
   double origin[3];
   this->ImageData->GetOrigin(origin);
   double spacing[3];
@@ -2171,9 +2079,6 @@ int vtkImageHackedPlaneWidget::GetSliceIndex()
   {
     return 0;
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->ImageData->UpdateInformation();
-#endif
   double origin[3];
   this->ImageData->GetOrigin(origin);
   double spacing[3];
@@ -2270,11 +2175,6 @@ void vtkImageHackedPlaneWidget::UpdateCursor(int X, int Y )
   // up to date already, this call doesn't cost very much.  If we don't make
   // this call and the data is not up to date, the GetScalar... call will
   // cause a segfault.
-#if (VTK_MAJOR_VERSION < 6)
-  this->ImageData->Update();
-#else
-  //this->ImageData->Modified();
-#endif
 
   vtkAssemblyPath *path;
   this->PlanePicker->Pick(X,Y,0.0,this->CurrentRenderer);
@@ -2957,11 +2857,7 @@ void vtkImageHackedPlaneWidget::GeneratePlaneOutline()
   cells->Delete();
 
   vtkPolyDataMapper* planeOutlineMapper = vtkPolyDataMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  planeOutlineMapper->SetInput( this->PlaneOutlinePolyData );
-#else
   planeOutlineMapper->SetInputData( this->PlaneOutlinePolyData );
-#endif
   planeOutlineMapper->SetResolveCoincidentTopologyToPolygonOffset();
   this->PlaneOutlineActor->SetMapper(planeOutlineMapper);
   this->PlaneOutlineActor->PickableOff();
@@ -2980,12 +2876,7 @@ void vtkImageHackedPlaneWidget::GenerateTexturePlane()
   this->ColorMap->PassAlphaToOutputOn();
 
   vtkPolyDataMapper* texturePlaneMapper = vtkPolyDataMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  texturePlaneMapper->SetInput(
-    vtkPolyData::SafeDownCast(this->PlaneSource->GetOutput()));
-#else
   texturePlaneMapper->SetInputConnection(this->PlaneSource->GetOutputPort());
-#endif
 
   this->Texture->SetQualityTo32Bit();
   this->Texture->MapColorScalarsThroughLookupTableOff();
@@ -3033,11 +2924,7 @@ void vtkImageHackedPlaneWidget::GenerateMargins()
   cells->Delete();
 
   vtkPolyDataMapper* marginMapper = vtkPolyDataMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  marginMapper->SetInput( this->MarginPolyData );
-#else
   marginMapper->SetInputData( this->MarginPolyData );
-#endif
   marginMapper->SetResolveCoincidentTopologyToPolygonOffset();
   this->MarginActor->SetMapper(marginMapper);
   this->MarginActor->PickableOff();
@@ -3074,11 +2961,7 @@ void vtkImageHackedPlaneWidget::GenerateCursor()
   cells->Delete();
 
   vtkPolyDataMapper* cursorMapper = vtkPolyDataMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  cursorMapper->SetInput( this->CursorPolyData );
-#else
   cursorMapper->SetInputData( this->CursorPolyData );
-#endif
   cursorMapper->SetResolveCoincidentTopologyToPolygonOffset();
   this->CursorActor->SetMapper(cursorMapper);
   this->CursorActor->PickableOff();

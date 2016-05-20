@@ -17,6 +17,7 @@ SET(KeyholeRendering_LIBRARIES
   ${vtkRobartsVisualization_LIBRARIES}
   ${VTK_LIBRARIES} 
   ${OpenCV_LIBS}
+  ${OPENGL_LIBRARIES}
   )
 
 INCLUDE_DIRECTORIES(${KeyholeRendering_INCLUDE_DIRS})

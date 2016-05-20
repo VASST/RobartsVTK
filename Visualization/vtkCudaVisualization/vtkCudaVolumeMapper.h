@@ -50,11 +50,7 @@ public:
    *  @pre All dataset being rendered are the same size, anatomy, patient and modality
    */
 
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput( vtkImageData * image);
-#else
   virtual void SetInputData( vtkImageData * image);
-#endif
 
   /** @brief Sets the 3D image data for a particular frame in the 4D sequence
    *
@@ -63,11 +59,7 @@ public:
    *
    *  @pre All dataset being rendered are the same size, anatomy, patient and modality
    */
-#if (VTK_MAJOR_VERSION < 6)
-  void SetInput( vtkImageData * image, int frame);
-#else
   void SetInputData( vtkImageData * image, int frame);
-#endif
 
   virtual void SetInputInternal( vtkImageData * image, int frame) = 0;
 

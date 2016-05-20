@@ -39,7 +39,6 @@
 #include "vtkRobartsRegistrationModule.h"
 
 #include "vtkWarpTransform.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 #define VTK_RBF_CUSTOM 0
 #define VTK_RBF_CS3D0C 1
@@ -49,11 +48,7 @@
 class VTKROBARTSREGISTRATION_EXPORT vtkCompactSupportRBFTransform : public vtkWarpTransform
 {
 public:
-#if(VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkCompactSupportRBFTransform,vtkWarpTransform);
-#else
   vtkTypeMacro(vtkCompactSupportRBFTransform,vtkWarpTransform);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
   static vtkCompactSupportRBFTransform *New();
 

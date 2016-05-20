@@ -17,8 +17,6 @@
 =========================================================================*/
 #include "vtkImageADManipulator.h"
 
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
-
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
 // and is used a lot in this code, optimize for different CPU architectures

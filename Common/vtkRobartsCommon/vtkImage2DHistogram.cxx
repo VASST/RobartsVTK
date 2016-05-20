@@ -7,7 +7,6 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 namespace
 {
@@ -151,13 +150,7 @@ int vtkImage2DHistogram::RequestData(vtkInformation* request,
     int updateExtent[6];
     outputInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), updateExtent);
   outData->SetExtent(updateExtent);
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetNumberOfScalarComponents( 1 );
-  outData->SetScalarType( VTK_INT );
-  outData->AllocateScalars();
-#else
   outData->AllocateScalars(VTK_INT, 1);
-#endif
 
   //set all the spacing and origin parameters
   double* Range1 = inData->GetPointData()->GetScalars()->GetRange(0);

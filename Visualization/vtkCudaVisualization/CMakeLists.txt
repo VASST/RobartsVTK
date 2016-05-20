@@ -49,7 +49,7 @@ LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
 # -----------------------------------------------------------------
 # Build the library
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES} ${OPENGL_LIBRARIES})
 
 # -----------------------------------------------------------------
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES module_uses_cuda ON)

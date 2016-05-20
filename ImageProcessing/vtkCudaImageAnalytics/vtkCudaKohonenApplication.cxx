@@ -65,17 +65,6 @@ double vtkCudaKohonenApplication::GetScale()
   return this->Scale;
 }
 
-#if (VTK_MAJOR_VERSION < 6)
-void vtkCudaKohonenApplication::SetDataInput(vtkImageData* d)
-{
-  this->SetInput(0,d);
-}
-
-void vtkCudaKohonenApplication::SetMapInput(vtkImageData* d)
-{
-  this->SetInput(1,d);
-}
-#else
 void vtkCudaKohonenApplication::SetDataInputData(vtkImageData* d)
 {
   this->SetInputData(0,d);
@@ -94,7 +83,7 @@ void vtkCudaKohonenApplication::SetMapInputConnection(vtkAlgorithmOutput* d)
 {
   this->vtkImageAlgorithm::SetInputConnection(1,d);
 }
-#endif
+
 vtkImageData* vtkCudaKohonenApplication::GetDataInput()
 {
   return (vtkImageData*) this->GetInput(0);
@@ -147,16 +136,8 @@ int vtkCudaKohonenApplication::RequestData(vtkInformation *request,
   vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   outData->ShallowCopy(inData);
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetScalarTypeToFloat();
-  outData->SetNumberOfScalarComponents(2);
-  outData->SetExtent(inData->GetExtent());
-  outData->SetWholeExtent(inData->GetExtent());
-  outData->AllocateScalars();
-#else
   outData->SetExtent(inData->GetExtent());
   outData->AllocateScalars(VTK_FLOAT, 2);
-#endif
 
   //update information container
   this->Info.NumberOfDimensions = inData->GetNumberOfScalarComponents();

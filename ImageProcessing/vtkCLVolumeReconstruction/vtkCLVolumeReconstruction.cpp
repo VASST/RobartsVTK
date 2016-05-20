@@ -514,13 +514,11 @@ void vtkCLVolumeReconstruction::GetOrigin(double *ptr)
 }
 
 //--------------------------------------------------------------
-const double* vtkCLVolumeReconstruction::GetSpacing() const
+void vtkCLVolumeReconstruction::GetSpacing(double spacing[3]) const
 {
-  double _volume_spacing[3] = {(double)volume_spacing,
-                               (double)volume_spacing,
-                               (double)volume_spacing
-                              };
-  return _volume_spacing;
+  spacing[0] = (double)volume_spacing;
+  spacing[1] = (double)volume_spacing;
+  spacing[2] = (double)volume_spacing;
 }
 
 //--------------------------------------------------------------

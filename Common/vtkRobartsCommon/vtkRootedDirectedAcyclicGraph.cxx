@@ -1,3 +1,16 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    vtkRootedDirectedAcyclicGraph.cxx
+
+  Copyright (c) 2016 John SH Baxter, Robarts Research Institute
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
 #include "limits.h"
 #include "vtkRootedDirectedAcyclicGraph.h"
 
@@ -7,9 +20,9 @@
 #include "vtkOutEdgeIterator.h"
 #include "vtkSmartPointer.h"
 
-#include <vtksys/stl/vector>
+#include <vector>
 
-using vtksys_stl::vector;
+//----------------------------------------------------------------------------
 
 vtkStandardNewMacro(vtkRootedDirectedAcyclicGraph);
 
@@ -168,8 +181,8 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
   }
 
   // Make sure the rooted DAG is connected with no directed cycles.
-  vector<bool> visited(g->GetNumberOfVertices(), false);
-  vector<bool> active(g->GetNumberOfVertices(), false);
+  std::vector<bool> visited(g->GetNumberOfVertices(), false);
+  std::vector<bool> active(g->GetNumberOfVertices(), false);
   if(this->UpLevel)
   {
     delete this->UpLevel;
@@ -190,7 +203,7 @@ bool vtkRootedDirectedAcyclicGraph::IsStructureValid(vtkGraph *g)
   }
   this->UpLevel[root] = 0;
   this->DownLevel[root] = 0;
-  vector<vtkIdType> stack;
+  std::vector<vtkIdType> stack;
   stack.push_back(root);
   vtkSmartPointer<vtkOutEdgeIterator> outIter =
     vtkSmartPointer<vtkOutEdgeIterator>::New();

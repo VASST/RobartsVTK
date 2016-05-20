@@ -267,11 +267,7 @@ void vtkImageLogLikelihood::ThreadedRequestData(
 
   inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
   outPtr = outData[0]->GetScalarPointerForExtent(outExt);
-#if (VTK_MAJOR_VERSION < 6)
-  outData[0]->SetScalarTypeToFloat();
-#else
   outData[0]->SetScalarType(VTK_FLOAT, outputVector->GetInformationObject(0));
-#endif
 
   int numLabelMaps = 0;
   for(int i = 0; i < inputVector[1]->GetNumberOfInformationObjects(); i++)
@@ -354,13 +350,7 @@ void vtkImageLogLikelihood::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os,indent);
 
 }
-#if (VTK_MAJOR_VERSION < 6)
-//----------------------------------------------------------------------------
-void vtkImageLogLikelihood::SetInputImage(vtkDataObject *in)
-{
-  this->SetInput(0,in);
-}
-#else
+
 //----------------------------------------------------------------------------
 void vtkImageLogLikelihood::SetInputDataImage(vtkDataObject *in)
 {
@@ -372,17 +362,7 @@ void vtkImageLogLikelihood::SetInputConnection(vtkAlgorithmOutput *in)
 {
   this->vtkThreadedImageAlgorithm::SetInputConnection(0, in);
 }
-#endif
-#if (VTK_MAJOR_VERSION < 6)
-//----------------------------------------------------------------------------
-void vtkImageLogLikelihood::SetInputLabelMap(vtkDataObject *in, int number)
-{
-  if(number >= 0)
-  {
-    this->SetNthInputConnection(1,number,in->GetProducerPort());
-  }
-}
-#else
+
 //----------------------------------------------------------------------------
 void vtkImageLogLikelihood::SetInputLabelMapConnection(vtkAlgorithmOutput *in, int number)
 {
@@ -400,7 +380,7 @@ void vtkImageLogLikelihood::SetInputLabelMapData(vtkDataObject *in, int number)
     this->SetInputDataInternal(number, in);
   }
 }
-#endif
+
 //----------------------------------------------------------------------------
 void vtkImageLogLikelihood::SetNormalizeDataTermOn()
 {

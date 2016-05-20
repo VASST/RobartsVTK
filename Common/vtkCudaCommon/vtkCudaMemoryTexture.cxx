@@ -292,22 +292,12 @@ bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
 {
   // setting up the data type and size.
 
-#if (VTK_MAJOR_VERSION < 6)
-  data->SetScalarTypeToUnsignedChar();
-  data->SetNumberOfScalarComponents(4);
-#endif
-
   data->SetDimensions(this->Width, Height, 1);
   data->SetExtent(0, this->Width - 1,
                   0, this->Height - 1,
                   0, 1 - 1);
 
-#if (VTK_MAJOR_VERSION < 6)
-  data->SetNumberOfScalarComponents(4);
-  data->AllocateScalars();
-#else
   data->AllocateScalars(VTK_UNSIGNED_CHAR, 4);
-#endif
 
   this->ReserveGPU();
   cudaMemcpyAsync( (void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));

@@ -169,11 +169,7 @@ void vtkImageAtlasLabelProbability::ThreadedRequestData(
 
   inPtr1 = inData[0][0]->GetScalarPointerForExtent(outExt);
   outPtr = outData[0]->GetScalarPointerForExtent(outExt);
-#if (VTK_MAJOR_VERSION < 6)
-  outData[0]->SetScalarTypeToFloat();
-#else
   outData[0]->SetScalarType(VTK_FLOAT, outputVector->GetInformationObject(0));
-#endif
 
   int numLabelMaps = 0;
   for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)

@@ -33,7 +33,6 @@
 
 #include <float.h>
 #include <limits.h>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTKROBARTSCOMMON_EXPORT vtkImageLogLikelihood : public vtkThreadedImageAlgorithm
 {
@@ -44,21 +43,13 @@ public:
 
   // Description:
   // Set the input image who you want to define a log likelihood data term for.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInputImage(vtkDataObject *in);
-#else
   virtual void SetInputDataImage(vtkDataObject *in);
   virtual void SetInputConnection(vtkAlgorithmOutput *in);
-#endif
 
   // Description:
   // Set a collection of label maps for the seeding operation.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInputLabelMap(vtkDataObject *in, int number);
-#else
   virtual void SetInputLabelMapConnection(vtkAlgorithmOutput *in, int number);
   virtual void SetInputLabelMapData(vtkDataObject *in, int number);
-#endif
 
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] (on) or [0,inf) (off).

@@ -22,7 +22,6 @@
 #include "vtkPointData.h"
 
 #include <iostream>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkImagePipe);
 
@@ -113,13 +112,8 @@ void vtkImagePipe::ReleaseSystemResources()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImagePipe::SetInput( vtkImageData* in )
-{
-#else
 void vtkImagePipe::SetInputData( vtkImageData* in )
 {
-#endif
   if( !this->serverSet || !this->isServer )
   {
     vtkErrorMacro("Must be in server mode.");
@@ -383,9 +377,6 @@ void vtkImagePipe::Update()
   {
     //protect buffer updating with read/write lock
     this->rwBufferLock->WriterLock();
-#if (VTK_MAJOR_VERSION < 6)
-    this->buffer->Update();
-#endif
     this->rwBufferLock->WriterUnlock();
   }
   else
@@ -427,13 +418,7 @@ void vtkImagePipe::ClientSideUpdate()
     vtkErrorMacro("Image information packet does not conform to the image size error check.");
     return;
   }
-#if (VTK_MAJOR_VERSION < 6)
-  this->buffer->SetNumberOfScalarComponents( initData.numComponents );
-  this->buffer->SetScalarType( initData.scalarType );
-  this->buffer->AllocateScalars();
-#else
   this->buffer->AllocateScalars(initData.scalarType, initData.numComponents);
-#endif
 
   //grab the data from the socket
   serverThere = this->clientSocket->Receive( this->buffer->GetScalarPointer(), this->ImageSize, 1 );

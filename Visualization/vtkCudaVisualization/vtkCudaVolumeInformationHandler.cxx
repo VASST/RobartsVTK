@@ -79,11 +79,7 @@ const cudaVolumeInformation& vtkCudaVolumeInformationHandler::GetVolumeInfo() co
 
 void vtkCudaVolumeInformationHandler::UpdateImageData(int index)
 {
-#if (VTK_MAJOR_VERSION < 6)
-  this->InputData->Update();
-#else
   this->Update();
-#endif
 
   int* dims = this->InputData->GetDimensions();
   double* spacing = this->InputData->GetSpacing();
@@ -115,9 +111,6 @@ void vtkCudaVolumeInformationHandler::Update()
 {
   if(this->InputData)
   {
-#if (VTK_MAJOR_VERSION < 6)
-    this->InputData->Update();
-#endif
     this->Modified();
   }
 }

@@ -40,20 +40,10 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   }
 
   //scale the output image appropriately
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetScalarTypeToFloat();
-  outData->SetNumberOfScalarComponents(seedData->GetNumberOfScalarComponents());
-  outData->SetExtent( seedData->GetExtent() );
-  outData->SetWholeExtent( seedData->GetExtent() );
-  outData->SetSpacing( seedData->GetSpacing() );
-  outData->SetOrigin( seedData->GetOrigin() );
-  outData->AllocateScalars();
-#else
   outData->SetExtent( seedData->GetExtent() );
   outData->SetSpacing( seedData->GetSpacing() );
   outData->SetOrigin( seedData->GetOrigin() );
   outData->AllocateScalars(VTK_FLOAT, seedData->GetNumberOfScalarComponents());
-#endif
 
   //load the CUDA information struct
   this->Information->snorm = this->SNorm;

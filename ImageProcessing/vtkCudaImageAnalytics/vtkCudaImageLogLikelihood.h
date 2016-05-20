@@ -43,29 +43,13 @@ public:
 
   // Description:
   // Set the input image who you want to define a log likelihood data term for.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInputImage(vtkDataObject *in)
-  {
-    this->SetInput(0,in);
-  }
-#else
   virtual void SetInputImageConnection(vtkAlgorithmOutput *in)
   {
     this->SetInputConnection(0,in);
   }
-#endif
 
   // Description:
   // Set a collection of label maps for the seeding operation.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInputLabelMap(vtkDataObject *in, int number)
-  {
-    if(number >= 0)
-    {
-      this->SetNthInputConnection(1,number,in->GetProducerPort());
-    }
-  }
-#else
   virtual void SetInputLabelMap(vtkAlgorithmOutput *in, int number)
   {
     if(number >= 0)
@@ -73,7 +57,6 @@ public:
       this->SetNthInputConnection(1,number,in);
     }
   }
-#endif
 
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] (on) or [0,inf) (off).

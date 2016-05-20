@@ -34,13 +34,14 @@
 #ifndef __vtkRobartsCommon_h__
 #define __vtkRobartsCommon_h__
 
-template<class T>
+#include "vtkSetGet.h"
+
 int CompareValues( const void *x, const void *y )
 {
   double dx, dy;
 
-  dx = *(T *)x;
-  dy = *(T *)y;
+  dx = *(double*) x;
+  dy = *(double*) y;
 
   if (dx < dy)
   {

@@ -24,17 +24,12 @@
 #include "vtkRobartsCommonModule.h"
 
 #include "vtkThreadedImageAlgorithm.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTKROBARTSCOMMON_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageDataTerm *New();
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkImageDataTerm,vtkThreadedImageAlgorithm);
-#else
   vtkTypeMacro(vtkImageDataTerm,vtkThreadedImageAlgorithm);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -103,16 +98,6 @@ public:
   // Description:
   // Set the two inputs to this filter. For some operations, the second input
   // is not used.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput1(vtkDataObject *in)
-  {
-    this->SetInput(0,in);
-  }
-  virtual void SetInput2(vtkDataObject *in)
-  {
-    this->SetInput(1,in);
-  }
-#else
   virtual void SetInput1Data(vtkDataObject *in)
   {
     this->SetInputDataObject(0,in);
@@ -121,8 +106,6 @@ public:
   {
     this->SetInputDataObject(1,in);
   }
-#endif
-
 
   // Description:
   // Take the negative log of the output to convert from a probability to an

@@ -10,8 +10,6 @@
 
 #include <math.h>
 #include <float.h>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 
 vtkStandardNewMacro(vtkDiceCoefficient);
 
@@ -102,18 +100,10 @@ void vtkDiceCoefficient::vtkDiceCoefficientExecute(vtkDiceCoefficient *self,
   vtkImageCast *in1Cast = vtkImageCast::New();
   vtkImageCast *in2Cast = vtkImageCast::New();
 
-#if (VTK_MAJOR_VERSION < 6)
-  in1Cast->SetInput(in1Data);
-#else
   in1Cast->SetInputDataObject(in1Data);
-#endif
   in1Cast->SetOutputScalarTypeToUnsignedChar();
   in1Cast->Update();
-#if (VTK_MAJOR_VERSION < 6)
-  in2Cast->SetInput(in2Data);
-#else
   in2Cast->SetInputDataObject(in2Data);
-#endif
   in2Cast->SetOutputScalarTypeToUnsignedChar();
   in2Cast->Update();
 

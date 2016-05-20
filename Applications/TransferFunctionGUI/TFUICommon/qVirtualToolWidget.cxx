@@ -233,15 +233,9 @@ void qVirtualToolWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r,
   zPlaneRenderer = vtkRenderer::New();
 
   //set up orthogonal planes pipeline
-#if (VTK_MAJOR_VERSION < 6)
-  xPlaneMapper->SetInput(xPlaneReslice->GetResliceOutput());
-  yPlaneMapper->SetInput(yPlaneReslice->GetResliceOutput());
-  zPlaneMapper->SetInput(zPlaneReslice->GetResliceOutput());
-#else
   xPlaneMapper->SetInputConnection(xPlaneReslice->GetResliceOutputPort());
   yPlaneMapper->SetInputConnection(yPlaneReslice->GetResliceOutputPort());
   zPlaneMapper->SetInputConnection(zPlaneReslice->GetResliceOutputPort());
-#endif
   xPlaneActor->SetMapper(xPlaneMapper);
   yPlaneActor->SetMapper(yPlaneMapper);
   zPlaneActor->SetMapper(zPlaneMapper);
@@ -560,11 +554,8 @@ void qVirtualToolWidget::selectImage(vtkImageData* image)
 {
   //create extraction widget
   vtkImageExtractComponents* extractor = vtkImageExtractComponents::New();
-#if (VTK_MAJOR_VERSION < 6)
-  extractor->SetInput(image);
-#else
   extractor->SetInputData(image);
-#endif
+
   if(image->GetNumberOfScalarComponents()==1)
   {
     extractor->SetComponents(0);
@@ -613,20 +604,12 @@ void qVirtualToolWidget::selectImage(vtkImageData* image)
   }
 
   //prepare the clipping planes for use
-#if (VTK_MAJOR_VERSION < 6)
-  ClippingPlanes->SetInput( image );
-#else
   ClippingPlanes->SetInputData( image );
-#endif
   ClippingPlanes->PlaceWidget();
   ClippingPlanes->EnabledOn();
 
   //prepare the keyhole planes for use
-#if (VTK_MAJOR_VERSION < 6)
-  KeyholePlanes->SetInput( image );
-#else
   KeyholePlanes->SetInputData( image );
-#endif
   KeyholePlanes->PlaceWidget();
   KeyholePlanes->EnabledOn();
 
@@ -645,11 +628,7 @@ bool qVirtualToolWidget::addVTKFile(std::string filename)
 
   //create a mapper
   vtkPolyDataMapper* vrMapper = vtkPolyDataMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  vrMapper->SetInput(vrInput->GetOutput());
-#else
   vrMapper->SetInputConnection(vrInput->GetOutputPort());
-#endif
   vrMapper->SetScalarVisibility( 0 );
   VirtualToolMappers.push_back(vrMapper);
 

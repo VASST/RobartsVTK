@@ -20,8 +20,6 @@
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 class VTKROBARTSCOMMON_EXPORT vtkImageMultiStatistics : public vtkAlgorithm
 {
 public:
@@ -77,10 +75,6 @@ public:
 
   void Update();
 
-#if (VTK_MAJOR_VERSION < 6)
-  void SetInput(int port, vtkImageData *input);
-  void SetInput(vtkImageData *input);
-#else
   void SetInputData(int port, vtkImageData *input);
   void SetInputData(vtkImageData *input)
   {
@@ -88,7 +82,7 @@ public:
   }
   void SetInputConnection(int port, vtkAlgorithmOutput *input);
   void SetInputConnection(vtkAlgorithmOutput  *input);
-#endif
+
   vtkImageData *GetInput(int port);
   vtkImageData *GetInput();
 

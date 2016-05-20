@@ -755,7 +755,8 @@ void MainWindow::SetupARVolumeRenderingPipeline()
                            _extent[3] - _extent[2],
                            _extent[5] - _extent[4] );
   //usVolume->SetOrigin( acceleratedVolumeReconstructor->GetOrigin() );
-  const double* spacing = acceleratedVolumeReconstructor->GetSpacing();
+  double spacing[3];
+  acceleratedVolumeReconstructor->GetSpacing(spacing);
   usVolume->SetSpacing( spacing[0], spacing[1], spacing[2] );
   usVolume->AllocateScalars( VTK_UNSIGNED_CHAR, 1);
   usVolume->Modified();

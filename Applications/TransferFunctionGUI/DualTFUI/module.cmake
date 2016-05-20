@@ -12,7 +12,9 @@ vtk_module(TFUIDual
     vtkImagingCore 
     vtkIOImage 
     vtkCommonCore 
+    vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
     vtkGUISupportQt
     vtksys
+    ${VTK_EXTRA_MODULES}
   EXCLUDE_FROM_WRAPPING
   )

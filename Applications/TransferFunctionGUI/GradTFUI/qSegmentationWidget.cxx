@@ -75,28 +75,14 @@ void qSegmentationWidget::segment()
   mapper->GetInput();
 
   vtkImageGradientMagnitude* gradient = vtkImageGradientMagnitude::New();
-#if ( VTK_MAJOR_VERSION < 6 )
-  gradient->SetInput( mapper->GetInput( mapper->GetCurrentFrame() ) );
-  gradient->Update();
-#else
   gradient->SetInputData( mapper->GetInput(mapper->GetCurrentFrame() ) );
-#endif
 
   vtkImageAppendComponents* appender = vtkImageAppendComponents::New();
-#if ( VTK_MAJOR_VERSION < 6 )
-  appender->SetInput(0, mapper->GetInput( mapper->GetCurrentFrame() ) );
-  appender->SetInput(1, gradient->GetOutput() );
-#else
   appender->SetInputData(0, mapper->GetInput( mapper->GetCurrentFrame() ) );
   appender->SetInputData(1, gradient->GetOutput() );
-#endif
 
   vtkCudaVoxelClassifier* classifier = vtkCudaVoxelClassifier::New();
-#if ( VTK_MAJOR_VERSION < 6 )
-  classifier->SetInput( appender->GetOutput() );
-#else
   classifier->SetInputData( appender->GetOutput() );
-#endif
   classifier->SetClippingPlanes( mapper->GetClippingPlanes() );
   classifier->SetKeyholePlanes( mapper->GetKeyholePlanes() );
   classifier->SetFunction( mapper->GetFunction() );
@@ -113,11 +99,7 @@ void qSegmentationWidget::segment()
     writer->SetCompression(false);
     writer->SetFileName( filename.toLatin1().data() );
     writer->SetRAWFileName( rawfilename.c_str() );
-#if ( VTK_MAJOR_VERSION < 6 )
-    writer->SetInput( classifier->GetOutput() );
-#else
     writer->SetInputData( classifier->GetOutput() );
-#endif
     writer->Write();
     writer->Delete();
   }

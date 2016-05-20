@@ -5,22 +5,22 @@ include(module.cmake)
 SET ( Module_SRCS
   vtkKeyholePass.cpp
 )
+
 SET(${PROJECT_NAME}_INCLUDE_DIRS 
   ${VTK_INCLUDE_DIRS}
   )
 
-FIND_PACKAGE(fftw)
-FIND_PACKAGE(libpng)
-
-IF(fftw_FOUND AND libpng_FOUND)
+SET(${PROJECT_NAME}_LIBRARIES ${OPENGL_LIBRARIES})
+  
+IF(FFTW_FOUND AND PNG_FOUND)
   SET( Module_SRCS ${Module_SRCS}
     vtkRetinex.cpp
   )
   SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS}
     ${fftw_INCLUDE_DIRS}
-    ${libpng_INCLUDE_DIRS}
+    ${PNG_INCLUDE_DIRS}
   )
-  SET(${PROJECT_NAME}_LIBRARIES ${libpng_LIBS} ${fftw_LIBRARIES})
+  SET(${PROJECT_NAME}_LIBRARIES ${${PROJECT_NAME}_LIBRARIES} ${PNG_LIBRARIES} ${fftw_LIBRARIES})
 ENDIF()
 
 # -----------------------------------------------------------------
