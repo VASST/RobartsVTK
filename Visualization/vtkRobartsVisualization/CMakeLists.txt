@@ -15,6 +15,8 @@ SET(${PROJECT_NAME}_LIBRARIES ${OPENGL_LIBRARIES})
 IF(FFTW_FOUND AND PNG_FOUND)
   SET( Module_SRCS ${Module_SRCS}
     vtkRetinex.cpp
+    vtkDisparityMap.cpp
+    vtkXBLImage.cpp
   )
   SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS}
     ${fftw_INCLUDE_DIRS}
