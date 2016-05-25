@@ -880,7 +880,7 @@ void MainWindow::SetupARVolumeRenderingPipeline()
 
   // Add foreground texture as a textured plane
   foregroundPlane = vtkSmartPointer< vtkPlaneSource >::New();
-  foregroundPlane->SetCenter(0.0, 0.0, 1000.0); // Render this back of the camera. 
+  foregroundPlane->SetCenter(0.0, 0.0, 1000.0); 
   foregroundPlane->SetNormal(0.0, 0.0, 1.0);
 
   foregroundTexturePlane = vtkSmartPointer< vtkTextureMapToPlane >::New();
@@ -1134,7 +1134,6 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   }
 
   PlusTrackedFrame *PlusTrackedFrame = PlusTrackedFrames->GetTrackedFrame( index );
-  std::cout << "Here.. " << std::endl;
 
   /*    // Update transform repository
   if ( repository->SetTransforms(*PlusTrackedFrame) != PLUS_SUCCESS ){
@@ -1183,9 +1182,9 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
   }
   else if ( !std::strcmp( current_mapper.c_str(), "2D_MAPPER") )
   {
+	usVolume->Modified();
     cudaMapper2->SetInputData( usVolume );
     cudaMapper2->Modified();
-    //cudaMapper2->Update();
   }
   else if( !std::strcmp( current_mapper.c_str(), "INEX_MAPPER") )
   {
