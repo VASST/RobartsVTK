@@ -134,38 +134,22 @@ int main(int argc, char** argv)
   test3->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l3));
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-#if (VTK_MAJOR_VERSION < 6)
-  writer->SetInput(test0);
-#else
   writer->SetInputData(test0);
-#endif
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.raw").c_str());
   writer->Update();
   writer->Write();
-#if (VTK_MAJOR_VERSION < 6)
-  writer->SetInput(test1);
-#else
   writer->SetInputData(test1);
-#endif
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.raw").c_str());
   writer->Update();
   writer->Write();
-#if (VTK_MAJOR_VERSION < 6)
-  writer->SetInput(test2);
-#else
   writer->SetInputData(test2);
-#endif
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.raw").c_str());
   writer->Update();
   writer->Write();
-#if (VTK_MAJOR_VERSION < 6)
-  writer->SetInput(test3);
-#else
   writer->SetInputData(test3);
-#endif
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.raw").c_str());
   writer->Update();

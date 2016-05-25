@@ -17,13 +17,8 @@
 =========================================================================*/
 #include "vtkImageAbsoluteDifference.h"
 
-#if (VTK_MAJOR_VERSION >= 6)
 #include <vtkExecutive.h>
-#endif
 
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkImageAbsoluteDifference, "$Revision: 1.1 $");
-#endif
 vtkStandardNewMacro(vtkImageAbsoluteDifference);
 
 //----------------------------------------------------------------------------
@@ -34,58 +29,24 @@ vtkImageAbsoluteDifference::vtkImageAbsoluteDifference()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImageAbsoluteDifference::SetInput1(vtkImageData *input)
-{
-  this->vtkProcessObject::SetNthInput(0,input);
-}
-#else
 void vtkImageAbsoluteDifference::SetInput1Data(vtkImageData *input)
 {
   this->SetInputData(0,input);
 }
-#endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImageAbsoluteDifference::SetInput2(vtkImageData *input)
-{
-  this->vtkProcessObject::SetNthInput(1,input);
-}
-#else
 void vtkImageAbsoluteDifference::SetInput2Data(vtkImageData *input)
 {
   this->SetInputData(1,input);
 }
-#endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImageAbsoluteDifference::SetStencil(vtkImageStencilData *stencil)
-{
-  this->vtkProcessObject::SetNthInput(2, stencil);
-}
-#else
 void vtkImageAbsoluteDifference::SetStencilData(vtkImageStencilData *stencil)
 {
   this->SetInputData(2, stencil);
 }
-#endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-vtkImageData *vtkImageAbsoluteDifference::GetInput1()
-{
-  if (this->NumberOfInputs < 1)
-  {
-    return NULL;
-  }
-  else
-  {
-    return (vtkImageData *)(this->Inputs[0]);
-  }
-}
-#else
 vtkImageData *vtkImageAbsoluteDifference::GetInput1()
 {
   if (this->GetNumberOfInputConnections(0) < 1)
@@ -95,22 +56,8 @@ vtkImageData *vtkImageAbsoluteDifference::GetInput1()
 
   return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, 0) );
 }
-#endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-vtkImageData *vtkImageAbsoluteDifference::GetInput2()
-{
-  if (this->NumberOfInputs < 2)
-  {
-    return NULL;
-  }
-  else
-  {
-    return (vtkImageData *)(this->Inputs[1]);
-  }
-}
-#else
 vtkImageData *vtkImageAbsoluteDifference::GetInput2()
 {
   if (this->GetNumberOfInputConnections(1) < 1)
@@ -120,20 +67,8 @@ vtkImageData *vtkImageAbsoluteDifference::GetInput2()
 
   return vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(1, 0) );
 }
-#endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-vtkImageStencilData *vtkImageAbsoluteDifference::GetStencil()
-{
-  if (this->NumberOfInputs < 3)
-  {
-    return NULL;
-  }
-
-  return (vtkImageStencilData *)(this->Inputs[2]);
-}
-#else
 vtkImageStencilData *vtkImageAbsoluteDifference::GetStencil()
 {
   if (this->GetNumberOfInputConnections(2) < 1)
@@ -143,7 +78,6 @@ vtkImageStencilData *vtkImageAbsoluteDifference::GetStencil()
 
   return vtkImageStencilData::SafeDownCast( this->GetExecutive()->GetInputData(2, 0) );
 }
-#endif
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
@@ -251,17 +185,10 @@ void vtkImageAbsoluteDifference::ThreadedExecute(vtkImageData **inData,
 
   switch (inData[0]->GetScalarType())
   {
-#if (VTK_MAJOR_VERSION < 5)
-    vtkTemplateMacro7(vtkImageAbsoluteDifferenceExecute,this,
-                      inData[0], (VTK_TT *)(inPtr1),
-                      inData[1], (VTK_TT *)(inPtr2),
-                      outExt, id);
-#else
     vtkTemplateMacro(vtkImageAbsoluteDifferenceExecute(this,
                      inData[0], (VTK_TT *)(inPtr1),
                      inData[1], (VTK_TT *)(inPtr2),
                      outExt, id));
-#endif
   default:
     vtkErrorMacro( "Execute: Unknown ScalarType");
     return;

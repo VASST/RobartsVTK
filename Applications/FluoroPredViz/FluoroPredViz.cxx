@@ -964,11 +964,8 @@ void FluoroPredViz::ConnectUpPipeline()
   //build remaining DRR pipeline
   DRRMapper = vtkCudaDRRImageVolumeMapper::New();
   DRRMapper->SetImageFlipped(true);
-#if (VTK_MAJOR_VERSION < 6)
-  DRRMapper->SetInput(Extractor->GetOutput());
-#else
   DRRMapper->SetInputData(Extractor->GetOutput());
-#endif
+
   //MapperDRR->SetCTOffset(16.0);
   ImageVolumeDRR = vtkVolume::New();
   ImageVolumeDRR->SetMapper(DRRMapper);
@@ -982,11 +979,8 @@ void FluoroPredViz::ConnectUpPipeline()
 
   //buidl remaining DVR pipeline
   this->DVRMapper = vtkCudaDualImageVolumeMapper::New();
-#if (VTK_MAJOR_VERSION < 6)
-  DVRMapper->SetInput(Reader->GetOutput());
-#else
   DVRMapper->SetInputData(Reader->GetOutput());
-#endif
+
   //DVRMapper->SetInput(Extractor->GetOutput());
   DVRMapper->SetImageFlipped(false);
   ImageVolumeDVR = vtkVolume::New();
@@ -1013,11 +1007,7 @@ void FluoroPredViz::ConnectUpPipeline()
   ((vtkClippingBoxWidgetCallback*)ClippingCallback)->SetMapper(DVRMapper,DRRMapper);
   ClippingPlanes->AddObserver(vtkCommand::InteractionEvent, ClippingCallback);
   ClippingPlanes->GetSelectedFaceProperty()->SetOpacity(0.05);
-#if (VTK_MAJOR_VERSION < 6)
-  ClippingPlanes->SetInput( Extractor->GetOutput() );
-#else
   ClippingPlanes->SetInputConnection( Extractor->GetOutputPort() );
-#endif
 
   //start cleaning
   DVRMapper->Delete();

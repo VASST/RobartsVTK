@@ -6,7 +6,6 @@
 #include "vtkDataArray.h"
 #include "vtkMath.h"
 #include <vtkStreamingDemandDrivenPipeline.h>
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
 
 //------------------------------------------------------------------------------
 vtkImageMultiStatistics* vtkImageMultiStatistics::New()
@@ -72,20 +71,6 @@ int vtkImageMultiStatistics::FillInputPortInformation(int i, vtkInformation* inf
   return this->Superclass::FillInputPortInformation(i,info);
 }
 
-#if (VTK_MAJOR_VERSION < 6)
-void vtkImageMultiStatistics::SetInput(int idx, vtkImageData *input)
-{
-  // Ask the superclass to connect the input.
-  this->SetNthInputConnection(0, idx, (input ? input->GetProducerPort() : 0));
-}
-
-//----------------------------------------------------------------------------
-void vtkImageMultiStatistics::SetInput(vtkImageData *input)
-{
-  SetInput(0,input);
-}
-
-#else
 void vtkImageMultiStatistics::SetInputData(int port, vtkImageData *input)
 {
   // Ask the superclass to connect the input.
@@ -103,8 +88,6 @@ void vtkImageMultiStatistics::SetInputConnection(vtkAlgorithmOutput *input)
 {
   SetInputConnection(0,input);
 }
-
-#endif
 
 vtkImageData *vtkImageMultiStatistics::GetInput(int idx)
 {
@@ -404,13 +387,8 @@ static void vtkImageMultiStatisticsExecuteWithMask(vtkImageMultiStatistics *self
   memset( SingleHistogram, 0, sizeof(unsigned int) * N * Resolution );
 
   // Get increments to march through data 
-#if (VTK_MAJOR_VERSION < 6)
-  inData->GetWholeExtent(wholeInExt);
-  maskData->GetWholeExtent(wholeMaskExt);
-#else
   inData->GetExtent(wholeInExt);
   maskData->GetExtent(wholeMaskExt);
-#endif
   inData->GetContinuousIncrements(wholeInExt, inIncX, inIncY, inIncZ);
   maskData->GetContinuousIncrements(wholeMaskExt, maskIncX, maskIncY, maskIncZ);
 
@@ -535,11 +513,7 @@ static void vtkImageMultiStatisticsExecuteWithMaskStart(vtkImageMultiStatistics 
                                                         long int *Count,
                                                         double *WholeEntropy, int N)
 {
-#if (VTK_MAJOR_VERSION < 6)
-  void* maskPtr = maskData->GetScalarPointerForExtent( maskData->GetWholeExtent() );
-#else
   void* maskPtr = maskData->GetScalarPointerForExtent( maskData->GetExtent() );
-#endif
 
   switch (maskData->GetScalarType()) {
     vtkTemplateMacro(vtkImageMultiStatisticsExecuteWithMask(
@@ -598,11 +572,7 @@ static void vtkImageMultiStatisticsExecuteWithoutMask(vtkImageMultiStatistics *s
   memset( SingleHistogram, 0, sizeof(unsigned int) * N * Resolution );
 
   // Get increments to march through data
-#if (VTK_MAJOR_VERSION < 6)
-  inData->GetWholeExtent(wholeInExt);
-#else
   inData->GetExtent(wholeInExt);
-#endif
   inData->GetContinuousIncrements(wholeInExt, inIncX, inIncY, inIncZ);
   *Count = 0;
 
@@ -715,14 +685,9 @@ void vtkImageMultiStatistics::Update() {
     vtkErrorMacro( "No input...can't execute!");
     return;
   }
-#if (VTK_MAJOR_VERSION < 6)
-  input->Update();
-  input->GetWholeExtent(wholeInExt);
-#else
   this->Update();
   this->UpdateInformation();
   this->GetOutputInformation(0)->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), wholeInExt);
-#endif
   inPtr = input->GetScalarPointerForExtent(wholeInExt);
 
   // get the number of input components
@@ -737,12 +702,9 @@ void vtkImageMultiStatistics::Update() {
   vtkImageData *mask = this->GetInput(1);
   if( mask ){
     int MaskExtent[6];
-#if (VTK_MAJOR_VERSION < 6)
-    mask->GetWholeExtent( MaskExtent );
-#else
     this->UpdateInformation();
     this->GetOutputInformation(1)->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), MaskExtent);
-#endif
+
     if( MaskExtent[0] != wholeInExt[0] || MaskExtent[1] != wholeInExt[1] || MaskExtent[2] != wholeInExt[2] ||
       MaskExtent[3] != wholeInExt[3] || MaskExtent[4] != wholeInExt[4] || MaskExtent[5] != wholeInExt[5] ){
         vtkErrorMacro( "Mask is not the same extent as the input.");
@@ -833,12 +795,6 @@ void vtkImageMultiStatistics::Update() {
     }
     this->InvokeEvent(vtkCommand::EndEvent, NULL);
   }
-
-#if (VTK_MAJOR_VERSION < 6)
-  if (input->ShouldIReleaseData()) {
-    input->ReleaseData();
-  }
-#endif
 
   //update PCA results
   double** temporaryCovariance = new double* [this->NumberOfComponents];

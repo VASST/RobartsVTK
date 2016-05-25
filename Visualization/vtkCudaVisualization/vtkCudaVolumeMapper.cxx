@@ -223,34 +223,6 @@ vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
   if (this->KeyholePlanes)
     this->KeyholePlanes->UnRegister(this);
 }
-#if (VTK_MAJOR_VERSION < 6)
-void vtkCudaVolumeMapper::SetInput(vtkImageData * input){
-
-  //set information at this level
-  this->vtkVolumeMapper::SetInput(input);
-  this->VolumeInfoHandler->SetInput(input, 0);
-  this->inputImages.insert( std::pair<int,vtkImageData*>(0,input) );
-
-  //pass down to subclass
-  this->SetInputInternal( input, 0 );
-  if( this->currFrame == 0 ) this->ChangeFrame(0);
-}
-
-void vtkCudaVolumeMapper::SetInput(vtkImageData * input, int index){
-  //check for consistency
-  if( index < 0 || !(index < this->numFrames) ) return;
-
-  //set information at this level
-  this->vtkVolumeMapper::SetInput(input);
-  this->VolumeInfoHandler->SetInput(input, index);
-  this->inputImages.insert( std::pair<int,vtkImageData*>(index,input) );
-
-  //pass down to subclass
-  this->SetInputInternal(input, index);
-  if( this->currFrame == 0 ) this->ChangeFrame(0);
-}
-
-#else
 
 void vtkCudaVolumeMapper::SetInputData(vtkImageData * input){
 
@@ -277,8 +249,6 @@ void vtkCudaVolumeMapper::SetInputData(vtkImageData * input, int index){
   this->SetInputInternal(input, index);
   if( this->currFrame == 0 ) this->ChangeFrame(0);
 }
-
-#endif
 
 vtkImageData * vtkCudaVolumeMapper::GetInput(){
   return GetInput(0);

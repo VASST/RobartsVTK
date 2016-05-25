@@ -147,13 +147,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetDataInput(int idx, vtkDataObjec
       this->InputDataPortMapping[idx] = portNumber;
       this->BackwardsInputDataPortMapping[portNumber] = idx;
     }
-#if (VTK_MAJOR_VERSION < 6)
-    this->SetNthInputConnection(2, this->InputDataPortMapping[idx], input->GetProducerPort() );
-#else
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
     tp->SetInputDataObject(input);
     this->SetNthInputConnection(2, this->InputDataPortMapping[idx], tp->GetOutputPort() );
-#endif
   }
   else
   {
@@ -176,13 +172,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetDataInput(int idx, vtkDataObjec
     {
       //if we are not, move the last input into this spot
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(2, this->InputSmoothnessPortMapping[idx], swappedInput->GetProducerPort() );
-#else
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
       tp->SetInputDataObject(swappedInput);
       this->SetNthInputConnection(2, this->InputSmoothnessPortMapping[idx], tp->GetOutputPort() );
-#endif
       this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
 
       //correct the mappings
@@ -212,14 +204,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetSmoothnessInput(int idx, vtkDat
       this->InputSmoothnessPortMapping[idx] = portNumber;
       this->BackwardsInputSmoothnessPortMapping[portNumber] = idx;
     }
-#if (VTK_MAJOR_VERSION < 6)
-    this->SetNthInputConnection(2, this->InputSmoothnessPortMapping[idx], input->GetProducerPort() );
-#else
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
     tp->SetInputDataObject(input);
     this->SetNthInputConnection(2, this->InputSmoothnessPortMapping[idx], tp->GetOutputPort() );
-#endif
-
   }
   else
   {
@@ -243,13 +230,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetSmoothnessInput(int idx, vtkDat
     else
     {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedSmoothnessPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(2, portNumber, swappedInput->GetProducerPort() );
-#else
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
       tp->SetInputDataObject(swappedInput);
       this->SetNthInputConnection(2, portNumber, tp->GetOutputPort() );
-#endif
       this->SetNthInputConnection(2, this->FirstUnusedSmoothnessPort - 1, 0 );
 
       //correct the mappings
@@ -298,13 +281,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
       this->InputLabelPortMapping[idx] = portNumber;
       this->BackwardsInputLabelPortMapping[portNumber] = idx;
     }
-#if (VTK_MAJOR_VERSION < 6 )
-    this->SetNthInputConnection(1, this->InputLabelPortMapping[idx], input->GetProducerPort() );
-#else
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
     tp->SetInputDataObject(input);
     this->SetNthInputConnection(1, this->InputLabelPortMapping[idx], tp->GetOutputPort() );
-#endif
   }
   else
   {
@@ -328,13 +307,9 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
     else
     {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedLabelPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(1, portNumber, swappedInput->GetProducerPort() );
-#else
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
       tp->SetInputDataObject(swappedInput);
       this->SetNthInputConnection(1, portNumber, tp->GetOutputPort() );
-#endif
       this->SetNthInputConnection(1, this->FirstUnusedLabelPort - 1, 0 );
 
       //correct the mappings
@@ -343,7 +318,6 @@ void vtkCudaHierarchicalMaxFlowDecomposition::SetLabelInput(int idx, vtkDataObje
       //this->BackwardsInputLabelPortMapping.erase(this->BackwardsInputLabelPortMapping.find(this->FirstUnusedLabelPort - 1));
       this->InputLabelPortMapping[swappedId] = portNumber;
       this->BackwardsInputLabelPortMapping[portNumber] = swappedId;
-
     }
 
     //decrement the number of unused ports

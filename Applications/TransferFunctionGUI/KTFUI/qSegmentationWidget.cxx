@@ -74,11 +74,7 @@ void qSegmentationWidget::setStandardWidgets( vtkRenderWindow* w, vtkRenderer* r
 void qSegmentationWidget::segment()
 {
   vtkCudaVoxelClassifier* classifier = vtkCudaVoxelClassifier::New();
-#if ( VTK_MAJOR_VERSION < 6 )
-  classifier->SetInput(mapper->GetInput( mapper->GetCurrentFrame() ));
-#else
   classifier->SetInputData(mapper->GetInput( mapper->GetCurrentFrame() ));
-#endif
   classifier->SetClippingPlanes( mapper->GetClippingPlanes() );
   classifier->SetKeyholePlanes( mapper->GetKeyholePlanes() );
   classifier->SetFunction( mapper->GetFunction() );
@@ -95,12 +91,8 @@ void qSegmentationWidget::segment()
     writer->SetCompression(false);
     writer->SetFileName( filename.toLatin1().data() );
     writer->SetRAWFileName( rawfilename.c_str() );
-#if ( VTK_MAJOR_VERSION < 6 )
-    writer->SetInput( classifier->GetOutput() );
-#else
     writer->SetInputConnection(classifier->GetOutputPort());
     writer->Update();
-#endif
     writer->Write();
     writer->Delete();
   }

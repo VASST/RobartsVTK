@@ -3,7 +3,6 @@
 #include "vtkInformationVector.h"
 #include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 vtkStandardNewMacro(vtkImageBasicAffinityFilter);
 
@@ -124,13 +123,7 @@ int vtkImageBasicAffinityFilter::RequestData(vtkInformation* request,
                (outData->GetExtent()[5] != inData->GetExtent()[5]) ;
   if(reallocateScalars){
     outData->SetExtent(extent);
-#if (VTK_MAJOR_VERSION < 6)
-    outData->SetNumberOfScalarComponents( 3 );
-    outData->SetScalarType( VTK_FLOAT );
-    outData->AllocateScalars();
-#else
     outData->AllocateScalars(VTK_FLOAT, 3);
-#endif
   }
 
   //set all the spacing and origin parameters

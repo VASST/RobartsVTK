@@ -16,7 +16,6 @@
 
 =========================================================================*/
 #include "vtkImageRMIManipulator.h"
-#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
@@ -209,14 +208,8 @@ void vtkImageRMIManipulator::SetExtent(int ext[6])
   memset((void *)this->HistT, 0, this->BinNumber[1]*sizeof(long));
   switch (this->inData[1]->GetScalarType())
     {
-#if (VTK_MAJOR_VERSION < 5)
-      vtkTemplateMacro4(vtkImageRMIManipulatorEntropyT,this, 
-      (VTK_TT *)(inPtr), this->inc2, this->count);
-#else
       vtkTemplateMacro(vtkImageRMIManipulatorEntropyT(this, 
-      (VTK_TT *)(inPtr), this->inc2, this->count));
-#endif
-
+        (VTK_TT *)(inPtr), this->inc2, this->count));
     default:
       vtkErrorMacro( "Execute: Unknown ScalarType");
     }

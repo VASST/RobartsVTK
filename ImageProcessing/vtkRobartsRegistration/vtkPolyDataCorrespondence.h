@@ -31,16 +31,11 @@
 #include "vtkLongArray.h"
 #include "vtkCurvatures.h"
 #include "vtkPolyDataNormals.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTKROBARTSREGISTRATION_EXPORT vtkPolyDataCorrespondence : public vtkPolyDataAlgorithm
 {
 public:
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkPolyDataCorrespondence,vtkPolyDataToPolyDataFilter);
-#else
   vtkTypeMacro(vtkPolyDataCorrespondence,vtkPolyDataAlgorithm);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

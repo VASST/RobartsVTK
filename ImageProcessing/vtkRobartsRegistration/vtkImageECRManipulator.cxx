@@ -16,7 +16,6 @@
 
 =========================================================================*/
 #include "vtkImageECRManipulator.h"
-#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these
@@ -202,13 +201,8 @@ void vtkImageECRManipulator::SetExtent(int ext[6])
   // Calculate the entropy of image 2
   switch (this->inData[1]->GetScalarType())
   {
-#if (VTK_MAJOR_VERSION < 5)
-    vtkTemplateMacro4(vtkImageECRManipulatorEntropyT,this,
-                      (VTK_TT *)(inPtr), this->inc2, this->count);
-#else
     vtkTemplateMacro(vtkImageECRManipulatorEntropyT(this,
                      (VTK_TT *)(inPtr), this->inc2, this->count));
-#endif
   default:
     vtkErrorMacro( "Execute: Unknown ScalarType");
   }

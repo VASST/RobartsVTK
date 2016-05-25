@@ -4,7 +4,7 @@ vtk_module(vtkCudaCommon
   DEPENDS
     vtkCommonCore
     vtkRendering${VTK_RENDERING_BACKEND}
-    ${VTKGLEW_LIBRARY}
+    vtkglew
     vtkRenderingFreeType
     vtkInteractionStyle
   )

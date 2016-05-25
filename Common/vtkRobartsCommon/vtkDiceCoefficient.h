@@ -22,7 +22,6 @@
 
 #include <float.h>
 #include <limits.h>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTKROBARTSCOMMON_EXPORT vtkDiceCoefficient : public vtkThreadedImageAlgorithm
 {
@@ -31,16 +30,6 @@ public:
   vtkTypeMacro(vtkDiceCoefficient,vtkThreadedImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput1(vtkDataObject *in)
-  {
-    this->SetInput(0,in);
-  }
-  virtual void SetInput2(vtkDataObject *in)
-  {
-    this->SetInput(1,in);
-  }
-#else
   virtual void SetInput1Data(vtkDataObject *in)
   {
     this->SetInputDataObject(0,in);
@@ -49,8 +38,6 @@ public:
   {
     this->SetInputDataObject(1,in);
   }
-#endif
-
 
   vtkSetClampMacro(LabelID,int, 0, INT_MAX);
   vtkGetMacro(LabelID,int);

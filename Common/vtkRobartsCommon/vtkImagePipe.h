@@ -35,8 +35,6 @@
 
 #include <vector>
 
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
-
 class VTKROBARTSCOMMON_EXPORT vtkImagePipe : public vtkAlgorithm
 {
 
@@ -46,11 +44,7 @@ public:
 
   // Description:
   // Input media to be communicated across the pipe
-#if (VTK_MAJOR_VERSION < 6)
-  void SetInput( vtkImageData* in );
-#else
   void SetInputData( vtkImageData* in );
-#endif
   vtkImageData* GetOutput();
   void Update();
 

@@ -29,31 +29,20 @@
 #include "vtkImageStencilData.h"
 #include "vtkImageData.h"
 #include "vtkImageMathematics.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class VTKROBARTSREGISTRATION_EXPORT vtkImagePatternIntensity : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImagePatternIntensity *New();
-
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkImagePatternIntensity,vtkImageMultipleInputFilter);
-#else
   vtkTypeMacro(vtkImagePatternIntensity,vtkThreadedImageAlgorithm);
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set/get the 2 input images and stencil to specify which voxels to accumulate.
-#if (VTK_MAJOR_VERSION < 6)
-  virtual void SetInput1(vtkImageData *input);
-  virtual void SetInput2(vtkImageData *input);
-  void SetStencil(vtkImageStencilData *stencil);
-#else
   virtual void SetInput1Data(vtkImageData *input);
   virtual void SetInput2Data(vtkImageData *input);
   void SetStencilData(vtkImageStencilData *stencil);
-#endif
+
   vtkImageData *GetInput1();
   vtkImageData *GetInput2();
   vtkImageStencilData *GetStencil();

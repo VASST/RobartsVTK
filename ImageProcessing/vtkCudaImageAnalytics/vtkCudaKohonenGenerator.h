@@ -45,11 +45,7 @@ public:
   void SetKohonenMapSize(int SizeX, int SizeY);
 
   vtkDataObject* GetInput(int idx);
-#if (VTK_MAJOR_VERSION < 6)
-  void SetInput(int idx, vtkDataObject *input);
-#else
   void SetInputConnection(int idx, vtkAlgorithmOutput *input);
-#endif
 
   bool GetUseMaskFlag();
   void SetUseMaskFlag(bool t);

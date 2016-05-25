@@ -4,4 +4,5 @@ vtk_module(vtkCLVolumeReconstruction
     OpenCL
   DEPENDS
     vtkCommonCore
+    vtkCommonDataModel
   )

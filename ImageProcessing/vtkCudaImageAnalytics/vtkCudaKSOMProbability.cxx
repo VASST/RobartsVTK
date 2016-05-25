@@ -29,23 +29,7 @@ vtkCudaKSOMProbability::vtkCudaKSOMProbability()
 vtkCudaKSOMProbability::~vtkCudaKSOMProbability()
 {
 }
-#if (VTK_MAJOR_VERSION < 6)
-void vtkCudaKSOMProbability::SetImageInput(vtkImageData* in)
-{
-  this->SetInput(0,in);
-}
 
-void vtkCudaKSOMProbability::SetMapInput(vtkImageData* in)
-{
-  this->SetInput(1,in);
-}
-
-void vtkCudaKSOMProbability::SetProbabilityInput(vtkImageData* in, int index)
-{
-  this->SetNthInputConnection( 2, index,  in->GetProducerPort() );
-  this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
-}
-#else
 void vtkCudaKSOMProbability::SetImageInputConnection(vtkAlgorithmOutput* in)
 {
   this->SetInputConnection(0,in);
@@ -61,7 +45,7 @@ void vtkCudaKSOMProbability::SetProbabilityInputConnection(vtkAlgorithmOutput* i
   this->SetNthInputConnection( 2, index,  in );
   this->SetNumberOfOutputPorts( std::max( this->GetNumberOfOutputPorts(), index+1 ) );
 }
-#endif
+
 int vtkCudaKSOMProbability::FillInputPortInformation(int i, vtkInformation* info)
 {
   if( i == 2 )
@@ -153,18 +137,11 @@ int vtkCudaKSOMProbability::RequestData(vtkInformation *request,
     vtkImageData* outData = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outData->ShallowCopy(inData);
     outData->SetExtent(inData->GetExtent());
-#if (VTK_MAJOR_VERSION < 6)
-    outData->SetWholeExtent(inData->GetExtent());
-    outData->SetSpacing(inData->GetSpacing());
-    outData->SetOrigin(inData->GetOrigin());
-    outData->SetScalarTypeToFloat();
-    outData->SetNumberOfScalarComponents(1);
-    outData->AllocateScalars();
-#else
+
     outData->SetSpacing(inData->GetSpacing());
     outData->SetOrigin(inData->GetOrigin());
     outData->AllocateScalars(VTK_FLOAT, 1);
-#endif
+
     outputBuffers[i] = (float*) outData->GetScalarPointer();
   }
 

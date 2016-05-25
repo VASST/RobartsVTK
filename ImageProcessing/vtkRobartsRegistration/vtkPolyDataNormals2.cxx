@@ -24,11 +24,7 @@
 #include "vtkPolygon.h"
 #include "vtkTriangleStrip.h"
 #include "vtkPriorityQueue.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkPolyDataNormals2, "$Revision: 1.1 $");
-#endif
 vtkStandardNewMacro(vtkPolyDataNormals2);
 
 // Construct with feature angle=30, splitting and consistency turned on,
@@ -73,17 +69,8 @@ void vtkPolyDataNormals2::Execute()
   vtkCellArray *newPolys;
   vtkIdType ptId, oldId;
 
-#if (VTK_MAJOR_VERSION < 6)
-  vtkPolyData* input = this->GetInput();
-#else
   vtkPolyData* input = vtkPolyData::SafeDownCast(this->GetInputDataObject(0, 0));
-#endif
-
-#if (VTK_MAJOR_VERSION < 6)
-  vtkPolyData* output = this->GetOutput();
-#else
   vtkPolyData* output = vtkPolyData::SafeDownCast(this->GetOutputDataObject(0));
-#endif
 
   vtkDebugMacro("Generating surface normals");
 

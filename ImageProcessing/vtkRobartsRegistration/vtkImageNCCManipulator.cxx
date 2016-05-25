@@ -16,7 +16,6 @@
 
 =========================================================================*/
 #include "vtkImageNCCManipulator.h"
-#include <vtkVersion.h> //For VTK_MAJOR_VERSION
 
 //--------------------------------------------------------------------------
 // The 'floor' function on x86 and mips is many times slower than these

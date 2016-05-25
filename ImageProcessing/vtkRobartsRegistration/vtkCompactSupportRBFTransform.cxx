@@ -20,11 +20,7 @@
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
 #include "vtkPoints.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkCompactSupportRBFTransform, "$Revision: 1.1 $");
-#endif
 vtkStandardNewMacro(vtkCompactSupportRBFTransform);
 
 //------------------------------------------------------------------------

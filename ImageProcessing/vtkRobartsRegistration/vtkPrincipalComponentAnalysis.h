@@ -32,7 +32,6 @@
 #include "vtkImageData.h"
 #include "vtkDoubleArray.h"
 #include "vtkPoints.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 // This is the maximum number of images fitable.
 #define MAX_M 40
@@ -41,11 +40,7 @@ class VTKROBARTSREGISTRATION_EXPORT vtkPrincipalComponentAnalysis : public vtkOb
 {
 public:
   static vtkPrincipalComponentAnalysis *New();
-#if(VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkPrincipalComponentAnalysis,vtkObject);
-#else
   vtkTypeMacro(vtkPrincipalComponentAnalysis,vtkObject);
-#endif
 
   // Add an image to fit
   virtual void AddImage(vtkImageData *image);

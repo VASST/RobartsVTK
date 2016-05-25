@@ -44,9 +44,6 @@ vtkPolyDataSurfaceArea::~vtkPolyDataSurfaceArea()
 void vtkPolyDataSurfaceArea::SetInput(vtkPolyData *input)
 {
   this->inData = input;
-#if (VTK_MAJOR_VERSION < 6)
-  this->inData->Update();
-#endif
   this->NumCells = this->inData->GetNumberOfCells();
 
   if (this->NumCells < 1 || this->inData->GetNumberOfPoints() < 1)
@@ -64,10 +61,6 @@ double vtkPolyDataSurfaceArea::GetSurfaceArea()
   double i[3],j[3],k[3];
   double ii[3],jj[3],kk[3];
   double a,b,c,s;  
-
-#if (VTK_MAJOR_VERSION < 6)
-  this->inData->Update();
-#endif
 
   vtkIdList *pointIds = vtkIdList::New();
   pointIds->Allocate(VTK_CELL_SIZE);  

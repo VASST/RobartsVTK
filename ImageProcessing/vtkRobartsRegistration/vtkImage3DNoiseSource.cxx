@@ -46,14 +46,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkObjectFactory.h"
 
 #include "vtkImageData.h" //Ravi
-
-#include <vtkVersion.h> // For VTK_MAJOR_VERSION
-
-#if (VTK_MAJOR_VERSION >= 6)
 #include "vtkExecutive.h"
 #include "vtkInformation.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#endif
 
 //------------------------------------------------------------------------------
 vtkImage3DNoiseSource* vtkImage3DNoiseSource::New()
@@ -137,16 +132,10 @@ void vtkImage3DNoiseSource::SetNumberOfScalarComponents(int num)
 void vtkImage3DNoiseSource::ExecuteInformation()
 {
   vtkImageData *output = this->GetOutput();
-#if( VTK_MAJOR_VERSION < 6 )
-  output->SetWholeExtent(this->WholeExtent);
-  output->SetScalarType(this->OutputScalarType);
-  output->SetNumberOfScalarComponents(this->NumberOfScalarComponents);
-#else
   vtkInformation* outInfo = this->GetExecutive()->GetOutputInformation(0);
   outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), this->WholeExtent, 6);
   output->SetScalarType(this->OutputScalarType, outInfo);
   output->SetNumberOfScalarComponents(this->NumberOfScalarComponents, outInfo);
-#endif
 }
 
 template <class T>
@@ -201,22 +190,14 @@ void vtkImage3DNoiseExecute(vtkImage3DNoiseSource *self, vtkImageData *data, T *
 
 void vtkImage3DNoiseSource::ExecuteData(vtkDataObject *output)
 {
-#if( VTK_MAJOR_VERSION < 6 )
-  vtkImageData *data = this->AllocateOutputData(output);
-#else
   vtkInformation* outInfo = this->GetExecutive()->GetOutputInformation(0);
   vtkImageData* data = this->AllocateOutputData(output, outInfo);
-#endif
 
   void *outPtr = data->GetScalarPointer();
 
   switch (this->OutputScalarType)
   {
-#if (VTK_MAJOR_VERSION < 5)
-    vtkTemplateMacro3(vtkImage3DNoiseExecute, this, data, (VTK_TT *)(outPtr));
-#else
     vtkTemplateMacro(vtkImage3DNoiseExecute(this, data, (VTK_TT *)(outPtr)));
-#endif
   default:
     vtkErrorMacro( "Execute: Unknown output ScalarType");
   }
@@ -226,11 +207,7 @@ void vtkImage3DNoiseSource::ExecuteData(vtkDataObject *output)
 
 void vtkImage3DNoiseSource::PrintSelf(ostream& os, vtkIndent indent)
 {
-#if (VTK_MAJOR_VERSION < 6)
-  vtkImageSource::PrintSelf(os,indent);
-#else
   vtkImageAlgorithm::PrintSelf(os,indent);
-#endif
 
   os << indent << "Minimum: " << this->Minimum << "\n";
   os << indent << "Maximum: " << this->Maximum << "\n";
@@ -238,4 +215,3 @@ void vtkImage3DNoiseSource::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "NumberOfScalarComponents: " <<
      this->NumberOfScalarComponents << "\n";
 }
-

@@ -32,7 +32,8 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${vtkCudaVisualization_INCLUDE_DIRS}
   ${vtkRobartsVisualization_INCLUDE_DIRS}
   ${vtkCudaImageAnalytics_INCLUDE_DIRS}
-  ${vtkCLVolumeReconstruction_INCLUDE_DIRS})
+  ${vtkCLVolumeReconstruction_INCLUDE_DIRS}
+  ${PlusLib_INCLUDE_DIRS})
 LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
 
 IF( VTK_QT_VERSION VERSION_LESS "5" )
@@ -61,11 +62,6 @@ SET(StreamingUSVis_LIBRARIES
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-
-#-------------------------------------
-# Add PLUS
-#-------------------------------------
-INCLUDE(${PlusLib_USE_FILE})
 
 #-------------------------------------
 # Retrieve source files

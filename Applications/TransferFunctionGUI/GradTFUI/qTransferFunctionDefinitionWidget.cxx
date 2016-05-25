@@ -773,11 +773,7 @@ char* qTransferFunctionDefinitionWidget::getHistogram(vtkImageData* image, float
 
   //grab the image you intend to work with
   vtkImageGradientMagnitude* gradientCalculator = vtkImageGradientMagnitude::New();
-#if ( VTK_MAJOR_VERSION < 6 )
-  gradientCalculator->SetInput(image);
-#else
   gradientCalculator->SetInputData(image);
-#endif
   gradientCalculator->SetDimensionality(3);
   gradientCalculator->Update();
   vtkImageData* gradient = gradientCalculator->GetOutput();

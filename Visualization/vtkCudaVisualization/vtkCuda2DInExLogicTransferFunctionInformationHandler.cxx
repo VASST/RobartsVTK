@@ -209,9 +209,6 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::Update()
 {
   if(this->InputData)
   {
-#if (VTK_MAJOR_VERSION < 6)
-    this->InputData->Update();
-#endif
     this->Modified();
   }
   if(this->Function && this->inExFunction)

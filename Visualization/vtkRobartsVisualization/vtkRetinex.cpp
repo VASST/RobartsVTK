@@ -1,5 +1,7 @@
 #include "vtkRetinex.h"
 #include "vtkObjectFactory.h"
+#include "vtkMath.h"
+#include "fftw3.h"
 
 //----------------------------------------------------------------------------
 
@@ -49,8 +51,8 @@ double * vtkRetinex::GaussianConvolution(double *img_data, double *out_data, siz
 
   /// some parameters for the Gaussian convolution
   double sigma= scale * scale  / 2.;
-  double w_norm = M_PI / ( double )w;
-  double h_norm = M_PI / ( double )h;
+  double w_norm = vtkMath::Pi() / ( double )w;
+  double h_norm = vtkMath::Pi() / ( double )h;
   w_norm *= w_norm;
   h_norm *= h_norm;
   int img_size = (int)w * (int)h;
@@ -135,7 +137,6 @@ double* vtkRetinex::HistogramEqualizer(double *img_data, double *out_data, int w
   double _min_  = sort_data[per_left];
   int per_right = (int)(p_right * img_size / 100 );
   double _max_  = sort_data[ img_size - per_right - 1 ];
-
 
   double se = 255.0 / ( _max_ - _min_ );
   if( _max_  <= _min_ )

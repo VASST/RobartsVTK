@@ -38,7 +38,6 @@
 #include "vtkRobartsRegistrationModule.h"
 
 #include "vtkPolyDataAlgorithm.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
 class vtkFloatArray;
 class vtkIdList;
@@ -47,11 +46,7 @@ class vtkPolyData;
 class VTKROBARTSREGISTRATION_EXPORT vtkPolyDataNormals2 : public  vtkPolyDataAlgorithm 
 {
 public:
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkPolyDataNormals2,vtkPolyDataToPolyDataFilter);
-#else
   vtkTypeMacro(vtkPolyDataNormals2, vtkPolyDataAlgorithm );
-#endif
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -21,11 +21,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 
 #include <math.h>
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
 
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkImageDataTerm, "$Revision: 1.56 $");
-#endif
 vtkStandardNewMacro(vtkImageDataTerm);
 
 //----------------------------------------------------------------------------

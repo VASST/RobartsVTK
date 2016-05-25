@@ -52,7 +52,7 @@ FIND_PACKAGE(OpenMP REQUIRED)
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK 6.3.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
+FIND_PACKAGE(VTK 7.1.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
@@ -87,6 +87,12 @@ FOREACH(target ${_expectedTargets})
     ENDIF()
   ENDIF()
 ENDFOREACH()
+
+IF(TARGET vtkOpenVR)
+  vtk_module_load(vtkOpenVR)
+  
+  SET(VTK_EXTRA_MODULES vtkOpenVR)
+ENDIF()
 
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
@@ -184,7 +190,10 @@ IF (RobartsVTK_USE_QT)
       SET(Qt5_DIR ${QT_ROOT_DIR}/lib/cmake/Qt5 CACHE PATH "Path to Qt5Config.cmake" FORCE)
     ENDIF()
 
-    FIND_PACKAGE(Qt5 QUIET COMPONENTS Widgets NO_MODULE)
+    IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
+      SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent)
+    ENDIF()
+    FIND_PACKAGE(Qt5 QUIET COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS} NO_MODULE)
 
     IF ( NOT Qt5_FOUND )
       MESSAGE( FATAL_ERROR "This project requires Qt4 or Qt5 for building PlusApp. These components are missing. Please verify configuration by selecting QT_QMAKE_EXECUTABLE (Qt4) or Qt5_DIR (Qt5) or turn off RobartsVTK_USE_QT option.")
@@ -332,7 +341,6 @@ IF(RobartsVTK_USE_PLUS)
   IF(PlusLib_FOUND)
     MESSAGE(STATUS "Using PlusLib available at: ${PlusLib_DIR}")
 
-    INCLUDE(${PlusLib_USE_FILE})
     INCLUDE(${PlusLib_TARGETS_FILE})
 
     # Copy libraries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
@@ -414,6 +422,7 @@ OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
+  FIND_PACKAGE(OpenGL REQUIRED)
 
   # Add Robart's CUDA libraries
   ADD_SUBDIRECTORY(Common/vtkCudaCommon)
@@ -431,6 +440,8 @@ ENDIF ()
 IF (RobartsVTK_USE_CUDA)
   OPTION (RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
   IF (RobartsVTK_USE_CUDA_VISUALIZATION)
+    FIND_PACKAGE(OpenGL REQUIRED)
+
     ADD_SUBDIRECTORY(Visualization/vtkCudaVisualization)
 
     SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaVisualization CACHE INTERNAL "")
@@ -442,8 +453,12 @@ ENDIF()
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_VISUALIZATION "Build the Robarts Visualization modules" OFF)
 IF(RobartsVTK_USE_VISUALIZATION)
+  FIND_PACKAGE(OpenGL REQUIRED)
+  FIND_PACKAGE(fftw REQUIRED)
+  FIND_PACKAGE(PNG REQUIRED)
+
   ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
-  
+
   SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkRobartsVisualization CACHE INTERNAL "")
 ENDIF()
 

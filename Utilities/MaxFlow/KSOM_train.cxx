@@ -33,8 +33,6 @@ where widths are expressed by ratio of map size.
 #include <algorithm>
 #include <fstream>
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 void showHelpMessage()
 {
   std::cerr << "Usage:\t OutputFilename DeviceNumber MapSize NumberOfIterations ScheduleFilename DataFileList [LabelFileList Label]" << std::endl;
@@ -152,18 +150,12 @@ int main(int argc, char** argv)
       vtkMetaImageReader* DataReader = vtkMetaImageReader::New();
       DataReader->SetFileName(DataFileName.c_str());
       vtkImageCast* Caster = vtkImageCast::New();
-#if (VTK_MAJOR_VERSION < 6)
-      Caster->SetInput(DataReader->GetOutput());
-#else
       Caster->SetInputConnection(DataReader->GetOutputPort());
-#endif
       Caster->SetOutputScalarTypeToFloat();
       Caster->Update();
-#if (VTK_MAJOR_VERSION < 6)
-      Generator->SetInput(i,Caster->GetOutput());
-#else
+
       Generator->SetInputConnection(i, Caster->GetOutputPort());
-#endif
+
       std::cout << "Read data file:  " << DataFileName << std::endl;
       DataReader->Delete();
       Caster->Delete();
@@ -186,18 +178,11 @@ int main(int argc, char** argv)
       vtkMetaImageReader* DataReader = vtkMetaImageReader::New();
       DataReader->SetFileName(DataFileName.c_str());
       vtkImageCast* Caster = vtkImageCast::New();
-#if (VTK_MAJOR_VERSION < 6)
-      Caster->SetInput(DataReader->GetOutput());
-#else
       Caster->SetInputConnection(DataReader->GetOutputPort());
-#endif
       Caster->SetOutputScalarTypeToFloat();
       Caster->Update();
-#if (VTK_MAJOR_VERSION < 6)
-      Generator->SetInput(i,Caster->GetOutput());
-#else
+
       Generator->SetInputConnection(i, Caster->GetOutputPort());
-#endif
       std::cout << "Read data file: " << DataFileName << std::endl;
       DataReader->Delete();
       Caster->Delete();
@@ -210,38 +195,24 @@ int main(int argc, char** argv)
       if( Label < 0 )
       {
         vtkImageCast* Caster = vtkImageCast::New();
-#if (VTK_MAJOR_VERSION < 6)
-        Caster->SetInput(LabelReader->GetOutput());
-#else
         Caster->SetInputConnection(LabelReader->GetOutputPort());
-#endif
         Caster->SetOutputScalarTypeToChar();
         Caster->Update();
-#if (VTK_MAJOR_VERSION < 6)
-        Generator->SetInput(2*i+1, Caster->GetOutput());
-#else
+
         Generator->SetInputConnection(2*i+1, Caster->GetOutputPort());
-#endif
+
         Caster->Delete();
       }
       else
       {
         vtkImageThreshold* Threshold = vtkImageThreshold::New();
-#if (VTK_MAJOR_VERSION < 6)
-        Threshold->SetInput(LabelReader->GetOutput());
-#else
         Threshold->SetInputConnection(LabelReader->GetOutputPort());
-#endif
         Threshold->SetInValue(1);
         Threshold->SetOutValue(0);
         Threshold->ThresholdBetween(Label,Label);
         Threshold->SetOutputScalarTypeToChar();
         Threshold->Update();
-#if (VTK_MAJOR_VERSION < 6)
-        Generator->SetInput(2*i+1, Threshold->GetOutput());
-#else
         Generator->SetInputConnection(2*i+1, Threshold->GetOutputPort());
-#endif
         Threshold->Delete();
       }
       std::cout << "Read label file: " << LabelFileName << std::endl;
@@ -260,11 +231,7 @@ int main(int argc, char** argv)
   std::string OutputFilenameMHD = OutputFilename + ".mhd";
   std::string OutputFilenameRAW = OutputFilename + ".raw";
   vtkMetaImageWriter* Writer = vtkMetaImageWriter::New();
-#if (VTK_MAJOR_VERSION < 6)
-  Writer->SetInput(Generator->GetOutput());
-#else
   Writer->SetInputConnection(Generator->GetOutputPort());
-#endif
   Writer->SetFileName(OutputFilenameMHD.c_str());
   Writer->SetRAWFileName(OutputFilenameRAW.c_str());
   Writer->Write();

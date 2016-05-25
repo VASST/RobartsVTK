@@ -20,11 +20,6 @@
 #include "vtkMath.h"
 #include "vtkImageAccumulate.h"
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkPrincipalComponentAnalysis, "$Revision: 1.1 $");
-#endif
 vtkStandardNewMacro(vtkPrincipalComponentAnalysis);
 
 //------------------------------------------------------------------------
@@ -35,9 +30,9 @@ inline double** vtkNewMatrix(int rows, int cols)
   double *matrix = new double[rows*cols];
   double **m = new double *[rows];
   for(int i = 0; i < rows; i++)
-    {
+  {
     m[i] = &matrix[i*cols];
-    }
+  }
   return m;
 }
 
@@ -52,12 +47,12 @@ inline void vtkDeleteMatrix(double **m)
 inline void vtkZeroMatrix(double **m, int rows, int cols)
 {
   for(int i = 0; i < rows; i++)
-    {
-      for(int j = 0; j < cols; j++)
   {
-    m[i][j] = 0.0;
-  }
+    for(int j = 0; j < cols; j++)
+    {
+      m[i][j] = 0.0;
     }
+  }
 }
 
 //------------------------------------------------------------------------
@@ -65,53 +60,53 @@ inline void vtkMatrixMultiply(double **a, double **b, double **c,
                               int arows, int acols, int brows, int bcols)
 {
   if(acols != brows)
-    {
-      return;     // acols must equal br otherwise we can't proceed
-    }
+  {
+    return;     // acols must equal br otherwise we can't proceed
+  }
 
   // c must have size arows*bcols (we assume this)
 
   for(int i = 0; i < arows; i++)
-    {
-      for(int j = 0; j < bcols; j++)
   {
-    c[i][j] = 0.0;
-    for(int k = 0; k < acols; k++)
+    for(int j = 0; j < bcols; j++)
+    {
+      c[i][j] = 0.0;
+      for(int k = 0; k < acols; k++)
       {
         c[i][j] += a[i][k]*b[k][j];
       }
-  }
     }
+  }
 }
 
 //------------------------------------------------------------------------
 inline void vtkMatrixTranspose(double **a, double **b, int rows, int cols)
 {
   for(int i = 0; i < rows; i++)
-    {
-      for(int j = 0; j < cols; j++)
   {
-    b[j][i] = a[i][j];
-  }
+    for(int j = 0; j < cols; j++)
+    {
+      b[j][i] = a[i][j];
     }
+  }
 }
 
 //------------------------------------------------------------------------
 inline void vtkReduceMatrix(double **a, double **b, int arows, int acols,
-          int brows, int bcols)
+                            int brows, int bcols)
 {
   if ((arows < brows) | (acols < bcols))
   {
-      cout << "\n Error in vtkReduceMatrix: a is smaller than b.\n";
-      return;      // matrix b must be smaller or the same size as a
+    cout << "\n Error in vtkReduceMatrix: a is smaller than b.\n";
+    return;      // matrix b must be smaller or the same size as a
   }
 
   for(int i = 0; i < brows; i++)
   {
     for(int j = 0; j < bcols; j++)
-  {
-    b[i][j] = a[i][j];
-  }
+    {
+      b[i][j] = a[i][j];
+    }
   }
 }
 
@@ -129,38 +124,28 @@ vtkPrincipalComponentAnalysis::vtkPrincipalComponentAnalysis()
 void vtkPrincipalComponentAnalysis::AddImage(vtkImageData *input)
 {
   if (this->M > (MAX_M - 1))
-    {
-      cout << "\n Warning: Max # of images fitable is " << MAX_M << ", ignoring this image\n";
-    }
-  else
-    {
-      this->Images[this->M] = input;
-      this->M++;
-
-      if (this->M == 1)
   {
-
-    input->GetExtent(this->ext);
-    input->GetSpacing(this->spa);
-    input->GetOrigin(this->ori);
-
-    this->OutputImage = vtkImageData::New();
-#if (VTK_MAJOR_VERSION < 6)
-    this->OutputImage->SetWholeExtent(this->ext);
-#endif
-    this->OutputImage->SetExtent(this->ext);
-    this->OutputImage->SetSpacing(this->spa);
-    this->OutputImage->SetOrigin(this->ori);
-#if (VTK_MAJOR_VERSION < 6)
-    this->OutputImage->SetNumberOfScalarComponents(1);
-    this->OutputImage->SetScalarType(this->Images[0]->GetScalarType());
-    this->OutputImage->AllocateScalars();
-#else
-    this->OutputImage->AllocateScalars(this->Images[0]->GetScalarType(), 1);
-#endif
-
+    cout << "\n Warning: Max # of images fitable is " << MAX_M << ", ignoring this image\n";
   }
+  else
+  {
+    this->Images[this->M] = input;
+    this->M++;
+
+    if (this->M == 1)
+    {
+
+      input->GetExtent(this->ext);
+      input->GetSpacing(this->spa);
+      input->GetOrigin(this->ori);
+
+      this->OutputImage = vtkImageData::New();
+      this->OutputImage->SetExtent(this->ext);
+      this->OutputImage->SetSpacing(this->spa);
+      this->OutputImage->SetOrigin(this->ori);
+      this->OutputImage->AllocateScalars(this->Images[0]->GetScalarType(), 1);
     }
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -191,11 +176,7 @@ void vtkPrincipalComponentAnalysis::Fit()
   // to avoid round off errors with this hokey method.
   vtkImageAccumulate *accumulate;
   accumulate = vtkImageAccumulate::New();
-#if (VTK_MAJOR_VERSION < 6)
-  accumulate->SetInput(this->MaskImage);
-#else
   accumulate->SetInputData(this->MaskImage);
-#endif
   accumulate->Update();
   N = int(0.5 + accumulate->GetVoxelCount() * accumulate->GetMean()[0]);
   this->N = N;
@@ -225,27 +206,27 @@ void vtkPrincipalComponentAnalysis::Fit()
   for (int i = ext[0]; i <= ext[1]; i++)
   {
     for (int j = ext[2]; j <= ext[3]; j++)
-   {
-     for (int k = ext[4]; k <= ext[5]; k++)
-     {
-      if (this->MaskImage->GetScalarComponentAsFloat(i,j,k,0))
     {
-       for (int l = 0; l < M; l++)
+      for (int k = ext[4]; k <= ext[5]; k++)
       {
-          A[n][l] = double(this->Images[l]->GetScalarComponentAsFloat(i,j,k,0));
-          psi[n][0] = psi[n][0] + A[n][l];
-      }
-       psi[n][0] = psi[n][0] / M;
+        if (this->MaskImage->GetScalarComponentAsFloat(i,j,k,0))
+        {
+          for (int l = 0; l < M; l++)
+          {
+            A[n][l] = double(this->Images[l]->GetScalarComponentAsFloat(i,j,k,0));
+            psi[n][0] = psi[n][0] + A[n][l];
+          }
+          psi[n][0] = psi[n][0] / M;
 
-       for (int lGN = 0; lGN < M; lGN++)
-       {
-          A[n][lGN] = A[n][lGN] - psi[n][0];
-       }
-      n++;
-      this->MaskPoints->InsertNextPoint(i,j,k);
+          for (int lGN = 0; lGN < M; lGN++)
+          {
+            A[n][lGN] = A[n][lGN] - psi[n][0];
+          }
+          n++;
+          this->MaskPoints->InsertNextPoint(i,j,k);
+        }
+      }
     }
-    }
-  }
   }
 
   // Calculate AT and the matrix L.
@@ -263,14 +244,14 @@ void vtkPrincipalComponentAnalysis::Fit()
   cout << "\n Eigenvalues: ";
   for (int iGN = 0; iGN < M; iGN++)
   {
-      cout << mu[iGN] << " ";
-      if (mu[iGN] > 0)
+    cout << mu[iGN] << " ";
+    if (mu[iGN] > 0)
     {
-       muinvsqrt[iGN][iGN] = 1.0 / sqrt(mu[iGN]);
+      muinvsqrt[iGN][iGN] = 1.0 / sqrt(mu[iGN]);
     }
-      else
+    else
     {
-        muinvsqrt[iGN][iGN] = 0.0;
+      muinvsqrt[iGN][iGN] = 0.0;
     }
   }
   cout << "\n\n";
@@ -302,28 +283,18 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetEigenVectorsImage()
 
   vtkImageData *EVI;
   EVI = vtkImageData::New();
-#if (VTK_MAJOR_VERSION < 6)
-  EVI->SetWholeExtent(0,N-1,0,M-1,0,0);
-#endif
   EVI->SetExtent(0,N-1,0,M-1,0,0);
-#if (VTK_MAJOR_VERSION < 6)
-  EVI->SetNumberOfScalarComponents(1);
-  EVI->SetScalarTypeToFloat();
-  EVI->AllocateScalars();
-#else
   EVI->AllocateScalars(VTK_FLOAT, 1);
-#endif
 
   for (int i = 0; i < N; i++)
-    {
-      for (int j = 0; j < M; j++)
   {
-    EVI->SetScalarComponentFromFloat(i,j,0,0,this->EigenVectors[i][j]);
-  }
+    for (int j = 0; j < M; j++)
+    {
+      EVI->SetScalarComponentFromFloat(i,j,0,0,this->EigenVectors[i][j]);
     }
+  }
 
   return EVI;
-
 }
 
 //----------------------------------------------------------------------------
@@ -333,25 +304,15 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetMeanIntensitiesImage()
 
   vtkImageData *MII;
   MII = vtkImageData::New();
-#if (VTK_MAJOR_VERSION < 6)
-  MII->SetWholeExtent(0,N-1,0,0,0,0);
-#endif
   MII->SetExtent(0,N-1,0,0,0,0);
-#if (VTK_MAJOR_VERSION < 6)
-  MII->SetNumberOfScalarComponents(1);
-  MII->SetScalarTypeToFloat();
-  MII->AllocateScalars();
-#else
   MII->AllocateScalars(VTK_FLOAT, 1);
-#endif
 
   for (int i = 0; i < N; i++)
-    {
-      MII->SetScalarComponentFromFloat(i,0,0,0,this->MeanIntensities[i][0]);
-    }
+  {
+    MII->SetScalarComponentFromFloat(i,0,0,0,this->MeanIntensities[i][0]);
+  }
 
   return MII;
-
 }
 
 //----------------------------------------------------------------------------
@@ -371,12 +332,12 @@ void vtkPrincipalComponentAnalysis::SetEigenVectorsImage(vtkImageData *EVI)
   this->EigenVectors = vtkNewMatrix(N,M);
 
   for (int i = 0; i < N; i++)
+  {
+    for (int j = 0; j < M; j++)
     {
-      for (int j = 0; j < M; j++)
-   {
-     this->EigenVectors[i][j] = EVI->GetScalarComponentAsFloat(i,j,0,0);
-   }
+      this->EigenVectors[i][j] = EVI->GetScalarComponentAsFloat(i,j,0,0);
     }
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -392,9 +353,9 @@ void vtkPrincipalComponentAnalysis::SetMeanIntensitiesImage(vtkImageData *MII)
   this->MeanIntensities = vtkNewMatrix(N,1);
 
   for (int i = 0; i < N; i++)
-    {
-     this->MeanIntensities[i][0] = MII->GetScalarComponentAsFloat(i,0,0,0);
-    }
+  {
+    this->MeanIntensities[i][0] = MII->GetScalarComponentAsFloat(i,0,0,0);
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -409,11 +370,11 @@ vtkDoubleArray *vtkPrincipalComponentAnalysis::GetWeightsForImage(vtkImageData *
   double **w = vtkNewMatrix(M,1);
 
   for (int i = 0; i < this->MaskPoints->GetNumberOfPoints(); i++)
-    {
-      this->MaskPoints->GetPoint(i,locs);
-      gammaMinusPsi[i][0] = image->GetScalarComponentAsFloat(int(locs[0]),int(locs[1]),int(locs[2]),0);
-      gammaMinusPsi[i][0] = gammaMinusPsi[i][0] - this->MeanIntensities[i][0];
-    }
+  {
+    this->MaskPoints->GetPoint(i,locs);
+    gammaMinusPsi[i][0] = image->GetScalarComponentAsFloat(int(locs[0]),int(locs[1]),int(locs[2]),0);
+    gammaMinusPsi[i][0] = gammaMinusPsi[i][0] - this->MeanIntensities[i][0];
+  }
 
   vtkMatrixTranspose(this->EigenVectors,ut,N,M);
   vtkMatrixMultiply(ut,gammaMinusPsi,w,M,N,N,1);
@@ -422,9 +383,9 @@ vtkDoubleArray *vtkPrincipalComponentAnalysis::GetWeightsForImage(vtkImageData *
   wRet = vtkDoubleArray::New();
 
   for (int iGN = 0; iGN < M; iGN++)
-    {
-      wRet->InsertNextValue(w[iGN][0]);
-    }
+  {
+    wRet->InsertNextValue(w[iGN][0]);
+  }
 
   vtkDeleteMatrix(ut);
   vtkDeleteMatrix(gammaMinusPsi);
@@ -445,15 +406,18 @@ vtkImageData *vtkPrincipalComponentAnalysis::GetOutput(vtkDoubleArray *weights)
 
   double locs[3];
 
-  for (int i = 0; i < M; i++) { w[i][0] = weights->GetValue(i); }
+  for (int i = 0; i < M; i++)
+  {
+    w[i][0] = weights->GetValue(i);
+  }
   vtkMatrixMultiply(this->EigenVectors,w,gamma,N,M,M,1);
 
   for (int iGN = 0; iGN < this->MaskPoints->GetNumberOfPoints(); iGN++)
-    {
-      this->MaskPoints->GetPoint(iGN,locs);
-      this->OutputImage->SetScalarComponentFromFloat(int(locs[0]),int(locs[1]),int(locs[2]),0,
-                 int(0.5 + gamma[iGN][0] + this->MeanIntensities[iGN][0]));
-    }
+  {
+    this->MaskPoints->GetPoint(iGN,locs);
+    this->OutputImage->SetScalarComponentFromFloat(int(locs[0]),int(locs[1]),int(locs[2]),0,
+        int(0.5 + gamma[iGN][0] + this->MeanIntensities[iGN][0]));
+  }
 
   vtkDeleteMatrix(w);
   vtkDeleteMatrix(gamma);

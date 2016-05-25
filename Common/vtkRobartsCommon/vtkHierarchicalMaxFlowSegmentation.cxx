@@ -43,8 +43,6 @@
 #include <set>
 #include <list>
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 #define SQR(X) X*X
 
 vtkStandardNewMacro(vtkHierarchicalMaxFlowSegmentation);
@@ -667,11 +665,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestData(vtkInformation *request,
     vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
     outputBuffer->SetExtent(Extent);
     outputBuffer->Modified();
-#if (VTK_MAJOR_VERSION < 6)
-    outputBuffer->AllocateScalars();
-#else
     outputBuffer->AllocateScalars(outputInfo);
-#endif
     leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
@@ -962,11 +956,7 @@ int vtkHierarchicalMaxFlowSegmentation::RequestDataObject(
       if (!output || !output->IsA(input->GetClassName()))
       {
         vtkImageData* newOutput = input->NewInstance();
-#if (VTK_MAJOR_VERSION < 6)
-        newOutput->SetPipelineInformation(info);
-#else
         newOutput->CopyInformationFromPipeline(info);
-#endif
         newOutput->Delete();
       }
       return 1;

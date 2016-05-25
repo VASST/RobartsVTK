@@ -56,9 +56,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vtkImageAlgorithm.h"
 
-#include <vtkVersion.h> // for VTK_MAJOR_VERSION
-
-
 class VTKROBARTSREGISTRATION_EXPORT vtkShapeBasedInterpolation : public vtkImageAlgorithm 
 {
 public:
@@ -74,11 +71,7 @@ public:
   vtkSetVector3Macro(OutputSpacing, double);
   vtkGetVector3Macro(OutputSpacing, double);
 
-#if (VTK_MAJOR_VERSION < 6)
-  void SetInput(vtkImageData *input);
-#else
   void SetInputConnection(vtkAlgorithmOutput *input);
-#endif
   vtkImageData *GetOutput();
   void Update();
 

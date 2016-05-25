@@ -89,14 +89,9 @@ void vtkCudaImageVote::SetInput(int idx, vtkDataObject *input)
       this->InputPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
       this->BackwardsInputPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
     }
-#if (VTK_MAJOR_VERSION < 6)
-    this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, input->GetProducerPort() );
-#else
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
     tp->SetInputDataObject(input);
     this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, tp->GetOutputPort() );
-#endif
-
   }
   else
   {
@@ -120,13 +115,9 @@ void vtkCudaImageVote::SetInput(int idx, vtkDataObject *input)
     else
     {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedPort - 1));
-#if (VTK_MAJOR_VERSION < 6)
-      this->SetNthInputConnection(0, portNumber, swappedInput->GetProducerPort() );
-#else
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
       tp->SetInputDataObject(swappedInput);
       this->SetNthInputConnection(0, portNumber, tp->GetOutputPort() );
-#endif
       this->SetNthInputConnection(0, this->FirstUnusedPort - 1, 0 );
 
       //correct the mappings
@@ -342,14 +333,7 @@ int vtkCudaImageVote::RequestData(vtkInformation *request,
 
   //allocate output image (using short)
   outData->SetExtent(Extent);
-#if (VTK_MAJOR_VERSION < 6)
-  outData->SetScalarType(this->OutputDataType);
-  outData->SetWholeExtent(Extent);
-  outData->SetNumberOfScalarComponents(NumComponents);
-  outData->AllocateScalars();
-#else
   outData->AllocateScalars(this->OutputDataType, NumComponents);
-#endif
 
   //call typed method
   switch (DataType)
@@ -362,5 +346,4 @@ int vtkCudaImageVote::RequestData(vtkInformation *request,
 
   delete[] inData;
   return 1;
-
 }

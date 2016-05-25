@@ -38,8 +38,6 @@ The tree is saved in a VTK file with the following attributes:
 #include <string>
 #include <algorithm>
 
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
 void showHelpMessage()
 {
   std::cerr << "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN " <<
@@ -235,11 +233,7 @@ int main(int argc, char** argv)
     vtkMetaImageWriter* Writer = vtkMetaImageWriter::New();
     Writer->SetFileName( OutFileMHD.c_str() );
     Writer->SetRAWFileName( OutFileRAW.c_str() );
-#if (VTK_MAJOR_VERSION < 6)
-    Writer->SetInput(Segmenter->GetOutputDataObject(Node));
-#else
     Writer->SetInputConnection(Segmenter->GetOutputPort(Node));
-#endif
     Writer->Write();
     Writer->Delete();
   }
@@ -271,11 +265,7 @@ int main(int argc, char** argv)
     vtkMetaImageWriter* Writer = vtkMetaImageWriter::New();
     Writer->SetFileName(OutFileMHD.c_str());
     Writer->SetRAWFileName(OutFileRAW.c_str());
-#if (VTK_MAJOR_VERSION < 6)
-    Writer->SetInput((vtkDataObject*)Voter->GetOutput());
-#else
     Writer->SetInputConnection(Voter->GetOutputPort());
-#endif
     Writer->Write();
     Writer->Delete();
     Voter->Delete();

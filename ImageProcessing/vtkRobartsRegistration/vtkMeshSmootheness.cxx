@@ -27,29 +27,12 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPolyData.h"
 #include "vtkPolyDataNormals.h"
 #include "vtkPolygon.h"
-#include "vtkTensor.h"
 #include "vtkTriangle.h"
-#include <vtkVersion.h> //for VTK_MAJOR_VERSION
-
-#if (VTK_MAJOR_VERSION < 6)
-vtkCxxRevisionMacro(vtkMeshSmootheness, "$Revision: 1.1 $");
-#endif
-vtkStandardNewMacro(vtkMeshSmootheness);
 
 //------------------------------------------------------------------------------
-#if VTK3
-vtkMeshSmootheness* vtkMeshSmootheness::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMeshSmootheness");
-  if(ret)
-  {
-    return (vtkMeshSmootheness*)ret;
-  }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMeshSmootheness;
-}
-#endif
+
+vtkStandardNewMacro(vtkMeshSmootheness);
+
 //-------------------------------------------------------//
 vtkMeshSmootheness::vtkMeshSmootheness()
 {
@@ -65,18 +48,6 @@ vtkMeshSmootheness::~vtkMeshSmootheness()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION < 6)
-void vtkMeshSmootheness::SetInput(vtkPolyData *input)
-{
-  this->vtkPolyDataAlgorithm::SetNthInput(0, input);
-  this->mesh = this->GetInput();
-  this->NumPts = this->mesh->GetNumberOfPoints();
-  this->NumCls = this->mesh->GetNumberOfCells();
-
-  this->MeanCurvature = new double[this->NumPts];
-  this->NumNeighb =  new int[this->NumPts];
-}
-#else
 void vtkMeshSmootheness::SetInputConnection(vtkAlgorithmOutput *input)
 {
   this->vtkPolyDataAlgorithm::SetNthInputConnection(0, 0, input);
@@ -87,7 +58,6 @@ void vtkMeshSmootheness::SetInputConnection(vtkAlgorithmOutput *input)
   this->MeanCurvature = new double[this->NumPts];
   this->NumNeighb =  new int[this->NumPts];
 }
-#endif
 
 //-------------------------------------------------------//
 void vtkMeshSmootheness::GetMeanCurvature()
@@ -221,11 +191,7 @@ void vtkMeshSmootheness::GetMeanCurvature()
 void vtkMeshSmootheness::GetGaussCurvature()
 {
   // vtk data
-#if (VTK_MAJOR_VERSION < 6)
-  vtkPolyData* output = this->GetInput();
-#else
   vtkPolyData* output = vtkPolyData::SafeDownCast(this->GetInputDataObject(0, 0));
-#endif
   vtkCellArray* facets = output->GetPolys();
   vtkTriangle* facet = vtkTriangle::New();
 
@@ -274,7 +240,7 @@ void vtkMeshSmootheness::GetGaussCurvature()
     e2[1] -= v2[1];
     e2[2] -= v2[2];
 
-    // normalise
+    // normalize
     vtkMath::Normalize(e0);
     vtkMath::Normalize(e1);
     vtkMath::Normalize(e2);

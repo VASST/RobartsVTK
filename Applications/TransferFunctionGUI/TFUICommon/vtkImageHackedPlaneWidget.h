@@ -134,13 +134,7 @@ public:
   // Description:
   // Instantiate the object.
   static vtkImageHackedPlaneWidget *New();
-
-#if (VTK_MAJOR_VERSION < 6)
-  vtkTypeRevisionMacro(vtkImageHackedPlaneWidget, vtkPolyDataSourceWidget);
-#else
   vtkTypeMacro(vtkImageHackedPlaneWidget, vtkPolyDataSourceWidget);
-#endif
-
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
