@@ -22,6 +22,7 @@ OPTION(RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
   OPTION(RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
 ENDIF()
+OPTION(RobartsVTK_USE_OpenCL "Build the OpenCL modules" OFF)
 OPTION(RobartsVTK_USE_VISUALIZATION  "Build the visualization modules" ON)
 IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
   OPTION(RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
@@ -507,8 +508,7 @@ ENDIF()
 #-----------------------------------------------------------------------------
 # OpenCL Dependencies
 #-----------------------------------------------------------------------------
-OPTION (RobartsVTK_USE_OpenCL "Build the OpenCL modules" OFF)
-IF (RobartsVTK_USE_OpenCL AND CUDA_FOUND)
+IF (RobartsVTK_USE_OpenCL)
   FIND_PACKAGE(OpenCL REQUIRED)
   
   OPTION (RobartsVTK_USE_CL_VOLUMERECONSTRUCTION "Build the OpenCL Volume Reconstruction modules" ON)
