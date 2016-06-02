@@ -13,6 +13,35 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
 
+OPTION(RobartsVTK_USE_QT "Build with QT enabled" OFF)
+OPTION(RobartsVTK_USE_ITK "Use ITK in RobartsITK" OFF)
+OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
+OPTION(RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OFF)
+OPTION(RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
+OPTION(RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
+IF (RobartsVTK_USE_CUDA)
+  OPTION(RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
+ENDIF()
+OPTION(RobartsVTK_USE_VISUALIZATION  "Build the visualization modules" ON)
+IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
+  OPTION(RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
+ENDIF()
+OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
+OPTION(RobartsVTK_WRAP_PYTHON "Wrap the RobartsVTK libs in Python." ON)
+OPTION(BUILD_SHARED_LIBS "Build shared libraries." ON)
+OPTION(BUILD_TESTING "Build testing." OFF)
+OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
+IF( RobartsVTK_USE_QT )
+  OPTION(RobartsVTK_USE_QT5_ONLY "Only search for Qt5." OFF)
+ENDIF()
+
+IF(MSVC)
+  add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
+ENDIF()
+
+SET(RobartsVTK_VTK_VERSION 6.3.0 CACHE STRING "The requested version of VTK to use")
+set_property(CACHE RobartsVTK_VTK_VERSION PROPERTY STRINGS "6.3.0" "7.1.0")
+
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
 #-----------------------------------------------------------------------------
@@ -52,7 +81,7 @@ FIND_PACKAGE(OpenMP REQUIRED)
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK 7.1.0 REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
+FIND_PACKAGE(VTK ${RobartsVTK_VTK_VERSION} REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
@@ -455,7 +484,7 @@ OPTION (RobartsVTK_USE_VISUALIZATION "Build the Robarts Visualization modules" O
 IF(RobartsVTK_USE_VISUALIZATION)
   FIND_PACKAGE(OpenGL REQUIRED)
   FIND_PACKAGE(FFTW REQUIRED)
-  FIND_PACKAGE(PNG REQUIRED)
+  INCLUDE(${PNG_CMAKE_FILE})
 
   ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
 

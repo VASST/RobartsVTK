@@ -7,7 +7,6 @@ vtk_module(TFUIKohonen
     vtkCudaImageAnalytics 
     vtkCudaCommon 
     vtkRenderingVolume${VTK_RENDERING_BACKEND} 
-    vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
     vtkRenderingCore 
     vtkFiltersCore 
     vtkImagingCore 

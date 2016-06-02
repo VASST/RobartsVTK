@@ -6,6 +6,5 @@ vtk_module(vtkRobartsVisualization
     vtkInteractionStyle
     vtkRenderingFreeType
     vtkRendering${VTK_RENDERING_BACKEND}
-    vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
     ${VTK_EXTRA_MODULES}
   )

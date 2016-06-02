@@ -8,7 +8,6 @@ vtk_module(FluoroPredViz
     vtkRobartsCommon 
     vtkRenderingVolume${VTK_RENDERING_BACKEND} 
     vtkRenderingCore 
-    vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
     vtkFiltersCore 
     vtkImagingCore 
     vtkInteractionWidgets 
