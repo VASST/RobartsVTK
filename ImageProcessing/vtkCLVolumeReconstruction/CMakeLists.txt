@@ -17,7 +17,7 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
 # -----------------------------------------------------------------
 # Build the library
 vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${OpenCL_LIBRARY})
+vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE OpenCL)
 
 # -----------------------------------------------------------------
 LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})

@@ -5,13 +5,19 @@
 #  FFTW_LIBRARIES       - List of libraries when using FFTW.
 #  FFTW_FOUND           - True if FFTW found.
 
-FIND_PATH(FFTW_INCLUDE_DIRS fftw3.h PATHS ${FFTW_ROOT_DIR})
+FIND_PATH(FFTW_INCLUDE_DIRS fftw3.h PATHS ${FFTW_ROOT_DIR} PATH_SUFFIXES include)
 
-FIND_LIBRARY(fftw3-3_LIB NAMES libfftw3-3 PATHS ${FFTW_ROOT_DIR})
-FIND_LIBRARY(fftw3f-3_LIB NAMES libfftw3f-3 PATHS ${FFTW_ROOT_DIR})
-FIND_LIBRARY(fftw3l-3_LIB NAMES libfftw3l-3 PATHS ${FFTW_ROOT_DIR})
+IF(WIN32)
+  FIND_LIBRARY(fftw3-3_LIB NAMES libfftw3-3 PATHS ${FFTW_ROOT_DIR})
+  FIND_LIBRARY(fftw3f-3_LIB NAMES libfftw3f-3 PATHS ${FFTW_ROOT_DIR})
+  FIND_LIBRARY(fftw3l-3_LIB NAMES libfftw3l-3 PATHS ${FFTW_ROOT_DIR})
+  SET(FFTW_LIBRARIES ${fftw3-3_LIB} ${fftw3f-3_LIB} ${fftw3l-3_LIB})
+ELSE()
+  FIND_LIBRARY(fftw3-3_LIB NAMES fftw3 PATHS ${FFTW_ROOT_DIR}/lib)
+  SET(FFTW_LIBRARIES ${fftw3-3_LIB})
+ENDIF()
 
-SET(FFTW_LIBRARIES ${fftw3-3_LIB} ${fftw3f-3_LIB} ${fftw3l-3_LIB})
+
 
 # handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if
 # all listed variables are TRUE
