@@ -2,6 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 
 PROJECT( KeyholeRendering )
 
+FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+
 vtk_module_load(vtkRobartsVisualization)
 
 SET(KeyholeRendering_INCLUDE_DIRS 

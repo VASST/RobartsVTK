@@ -2,10 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 
 PROJECT(StreamingUSVis)
 
-#-------------------------------------
-# Find OpenCL
-#-------------------------------------
-FIND_PACKAGE(OpenCL REQUIRED)
+FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
 
 #-------------------------------------
 # Load module to access include lists
@@ -23,6 +20,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${OpenCV_INCLUDE_DIRS} 
   ${VTK_INCLUDE_DIRS}
+  ${ITK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
   ${PLUSLIB_INCLUDE_DIRS}
   ${TFUIDual_INCLUDE_DIRS}
@@ -72,6 +70,7 @@ FILE(GLOB CXX_FILES *.cxx)
 FILE(GLOB CPP_FILES *.cpp)
 
 INCLUDE_DIRECTORIES(${StreamingUSVis_INCLUDE_DIRS})
+
 #-------------------------------------
 # Create executable
 #-------------------------------------
