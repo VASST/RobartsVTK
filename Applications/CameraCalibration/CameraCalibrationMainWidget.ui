@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1199</width>
-    <height>1750</height>
+    <width>449</width>
+    <height>433</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Camera Calibration</string>
@@ -22,12 +16,6 @@
   <layout class="QHBoxLayout" name="hboxLayout_Main">
    <item>
     <widget class="QWidget" name="verticalWidget_ButtonGroupContainer" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QGroupBox" name="groupBox_DataCollection">
@@ -45,15 +33,9 @@
         <property name="title">
          <string>OpenCV Video</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_OpenCv" stretch="0,0">
-         <item alignment="Qt::AlignHCenter">
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="1" alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_LeftVideo">
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
            <property name="text">
             <string>Left Video</string>
            </property>
@@ -62,14 +44,8 @@
            </property>
           </widget>
          </item>
-         <item alignment="Qt::AlignHCenter">
+         <item row="1" column="1" alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_RightVideo">
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
            <property name="text">
             <string>Right Video</string>
            </property>
@@ -81,6 +57,12 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QComboBox" name="comboBox_LeftCamera"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="comboBox_RightCamera"/>
+         </item>
         </layout>
        </widget>
       </item>
@@ -89,159 +71,117 @@
         <property name="title">
          <string>Files</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_Files" stretch="0,0,0,0,0,0,0,0">
+        <layout class="QVBoxLayout" name="verticalLayout_Files" stretch="0,0,0,0">
          <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadLeftIntrinsic">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Left Intrinsic</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
+          <widget class="QWidget" name="widget_LeftContainerFiles" native="true">
+           <layout class="QVBoxLayout" name="verticalLayout_LeftContainerFiles">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadLeftIntrinsic">
+              <property name="text">
+               <string>Left Intrinsic</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadLeftDistortion">
+              <property name="maximumSize">
+               <size>
+                <width>250</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Left Distortion</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadLeftLandmark">
+              <property name="text">
+               <string>Left Landmark</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadLeftDistortion">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Left Distortion</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadLeftLandmark">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Left Landmark</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadRightIntrinsic">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Right Intrinsic</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadRightDistortion">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Right Distortion</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LoadRightLandmark">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Right Landmark</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
-             <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
-           </property>
+          <widget class="QWidget" name="widget_RightContainerFiles" native="true">
+           <layout class="QVBoxLayout" name="verticalLayout_RightContainerFiles">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadRightIntrinsic">
+              <property name="text">
+               <string>Right Intrinsic</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadRightDistortion">
+              <property name="text">
+               <string>Right Distortion</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_LoadRightLandmark">
+              <property name="text">
+               <string>Right Landmark</string>
+              </property>
+              <property name="icon">
+               <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+                <normaloff>:/icons/Resources/icon_OpenFile.png</normaloff>:/icons/Resources/icon_OpenFile.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_LoadCalibChessReg">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
            <property name="text">
             <string>Calib Chess Reg.</string>
            </property>
@@ -253,18 +193,6 @@
          </item>
          <item alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_LoadValidChessReg">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>57</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>16777215</height>
-            </size>
-           </property>
            <property name="text">
             <string>Valid Chess Reg.</string>
            </property>
@@ -282,28 +210,10 @@
    </item>
    <item>
     <widget class="QTabWidget" name="tabWidget_Configurations">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>800</width>
-       <height>0</height>
-      </size>
-     </property>
      <property name="currentIndex">
       <number>1</number>
      </property>
      <widget class="QWidget" name="tab_Configuration">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <attribute name="title">
        <string>Configuration</string>
       </attribute>
@@ -316,12 +226,6 @@
          <layout class="QGridLayout" name="gridLayout_CheckerboardCalibration">
           <item row="2" column="2" alignment="Qt::AlignHCenter">
            <widget class="QDoubleSpinBox" name="doubleSpinBox_QuadSizeCalib">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -341,12 +245,6 @@
           </item>
           <item row="0" column="2" alignment="Qt::AlignHCenter">
            <widget class="QSpinBox" name="spinBox_BoardWidthCalib">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -373,12 +271,6 @@
           </item>
           <item row="1" column="2" alignment="Qt::AlignHCenter">
            <widget class="QSpinBox" name="spinBox_BoardHeightCalib">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -422,12 +314,6 @@
          <layout class="QGridLayout" name="gridLayout_CheckboardValidation">
           <item row="2" column="1" alignment="Qt::AlignHCenter">
            <widget class="QDoubleSpinBox" name="doubleSpinBox_QuadSizeValid">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -447,12 +333,6 @@
           </item>
           <item row="1" column="1" alignment="Qt::AlignHCenter">
            <widget class="QSpinBox" name="spinBox_BoardHeightValid">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -466,12 +346,6 @@
           </item>
           <item row="0" column="1" alignment="Qt::AlignHCenter">
            <widget class="QSpinBox" name="spinBox_BoardWidthValid">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
@@ -523,93 +397,25 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_Acquire">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <attribute name="title">
        <string>Acquire</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_AcquireTab">
-       <item>
-        <widget class="QGroupBox" name="groupBox_IntrinsicAcquisition">
+      <layout class="QGridLayout" name="gridLayout_AcquireTab">
+       <item row="0" column="1">
+        <widget class="QGroupBox" name="groupBox_IntrinsicsRightAcquisition">
          <property name="title">
-          <string>Intrinsics</string>
+          <string>Intrinsics Right</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_IntrinsicAcquisition">
-          <item row="2" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_ComputeLeftIntrinsic">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Compute Left</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" alignment="Qt::AlignHCenter">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
            <widget class="QPushButton" name="pushButton_CaptureRight">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Capture Right</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_CaptureLeft">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Capture Left</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0" alignment="Qt::AlignHCenter">
+          <item>
            <widget class="QPushButton" name="pushButton_ComputeRightIntrinsic">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Compute Right</string>
             </property>
@@ -618,209 +424,64 @@
          </layout>
         </widget>
        </item>
-       <item>
+       <item row="1" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_BoardRegistration">
          <property name="title">
           <string>Board Registration</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_BoardRegistration">
-          <item row="1" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_HeightCount">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Height Count</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <item row="2" column="0">
            <widget class="QPushButton" name="pushButton_CollectCalibChess">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Collect Calib Chess</string>
             </property>
            </widget>
           </item>
-          <item row="6" column="0" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_RegValidChess">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Reg. Valid Chess</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QSpinBox" name="spinBox_WidthCount">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>250</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
+           <widget class="QSpinBox" name="spinBox_WidthCount"/>
           </item>
           <item row="1" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QSpinBox" name="spinBox_HeightCount">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>250</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
+           <widget class="QSpinBox" name="spinBox_HeightCount"/>
           </item>
-          <item row="5" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <item row="3" column="0">
            <widget class="QPushButton" name="pushButton_CollectValidChess">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Collect Valid Chess</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_WidthCount">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Width Count</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <item row="2" column="1">
            <widget class="QPushButton" name="pushButton_RegCalibChess">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Reg. Calib Chess</string>
             </property>
            </widget>
           </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_FundamentalMatrix">
-         <property name="title">
-          <string>Fundamental Matrix</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_FundamentalMatrix">
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_StereoAcquire">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="pushButton_RegValidChess">
             <property name="text">
-             <string>Stereo Acquire</string>
+             <string>Reg. Valid Chess</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QPushButton" name="pushButton_StereoCompute">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_WidthCount">
             <property name="text">
-             <string>Compute</string>
+             <string>Width Count:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_HeightCount">
+            <property name="text">
+             <string>Height Count:</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item>
+       <item row="3" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_HMDRegistration">
          <property name="title">
           <string>HMD Registration</string>
@@ -828,18 +489,6 @@
          <layout class="QGridLayout" name="gridLayout_HMDRegistration">
           <item row="0" column="0" alignment="Qt::AlignHCenter">
            <widget class="QPushButton" name="pushButton_RecordLeftHMD">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Record Left</string>
             </property>
@@ -847,39 +496,61 @@
           </item>
           <item row="1" column="0" alignment="Qt::AlignHCenter">
            <widget class="QPushButton" name="pushButton_RecordRightHMD">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Record Right</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0" alignment="Qt::AlignHCenter">
+          <item row="0" column="1">
            <widget class="QPushButton" name="pushButton_ComputeHMDLandmarks">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>57</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <property name="text">
              <string>Compute Landmarks</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QGroupBox" name="groupBox_FundamentalMatrix">
+         <property name="title">
+          <string>Fundamental Matrix</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_FundamentalMatrix">
+          <item row="1" column="1">
+           <widget class="QPushButton" name="pushButton_StereoCompute">
+            <property name="text">
+             <string>Compute</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" alignment="Qt::AlignHCenter">
+           <widget class="QPushButton" name="pushButton_StereoAcquire">
+            <property name="text">
+             <string>Stereo Acquire</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="groupBox_IntrinsicsLeftAcquisition">
+         <property name="title">
+          <string>Intrinsics Left</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QPushButton" name="pushButton_ComputeLeftIntrinsic">
+            <property name="text">
+             <string>Compute Left</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_CaptureLeft">
+            <property name="text">
+             <string>Capture Left</string>
             </property>
            </widget>
           </item>
@@ -889,30 +560,12 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_Validation">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <attribute name="title">
        <string>Validation</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_BoardRegistration">
+      <layout class="QGridLayout" name="gridLayout_Validation">
        <item row="4" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_VisualTracking">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>57</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Visual Tracking</string>
          </property>
@@ -920,18 +573,6 @@
        </item>
        <item row="2" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_ValidateVisual">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>57</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Validate Visual</string>
          </property>
@@ -939,18 +580,6 @@
        </item>
        <item row="1" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_ValidCalibChess">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>57</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Validate with Calib Chess</string>
          </property>
@@ -958,18 +587,6 @@
        </item>
        <item row="3" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_ValidateValidChess">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>57</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Validate with Valid Chess</string>
          </property>
@@ -977,18 +594,6 @@
        </item>
        <item row="0" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_ValidateStylus">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>57</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Validate with Stylus</string>
          </property>

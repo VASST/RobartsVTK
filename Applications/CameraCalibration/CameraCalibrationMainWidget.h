@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 // C++ includes
 #include <vector>
+#include <map>
 
 // QT include
 #include <QWidget>
@@ -66,12 +67,13 @@ POSSIBILITY OF SUCH DAMAGES.
 // QT forward declaration
 class QButtonGroup;
 class QDoubleSpinBox;
-class QVTKWidget;
+class QDoubleSpinBox;
 class QGroupBox;
 class QPushButton;
-class QTimer;
 class QSpinBox;
-class QDoubleSpinBox;
+class QStatusBar;
+class QTimer;
+class QVTKWidget;
 
 // PLUS forward declaration
 class vtkPlusDataCollector;
@@ -80,15 +82,14 @@ class vtkPlusChannel;
 class vtkPlusDataSource;
 class PlusDeviceSetSelectorWidget;
 class PlusToolStateDisplayWidget;
+class PlusStatusIcon;
 
 // VTK forward declaration
 class vtkActor;
 class vtkLandmarkTransform;
+class vtkPoints;
 class vtkRenderer;
 class vtkTransform;
-class vtkPoints;
-
-struct CvCapture;
 
 class CameraCalibrationMainWidget : public QWidget
 {
@@ -115,83 +116,85 @@ protected:
 
   // process a single checkerboard
   int ProcessCheckerBoard( int cameraIndex, int width, int height, double size, processingMode mode,
-    vtkPoints* source, vtkPoints* target, std::string videoTitle );
+                           vtkPoints* source, vtkPoints* target, std::string videoTitle );
 
   // show OpenCV videos
   void ShowOpenCVVideo( int cameraIndex, const std::string& videoTitle );
 
   bool StartDataCollection();
 
-  protected slots:
-    /*!
-    Connect to devices described in the argument configuration file in response by clicking on the Connect button
-    \param aConfigFile DeviceSet configuration file path and name
-    */
-    void ConnectToDevicesByConfigFile(std::string);
+protected slots:
+  /*!
+  Connect to devices described in the argument configuration file in response by clicking on the Connect button
+  \param aConfigFile DeviceSet configuration file path and name
+  */
+  void ConnectToDevicesByConfigFile(std::string);
 
-    // OpenCV
-    void ResetCalibrationCheckerboards();
+  // OpenCV
+  void ResetCalibrationCheckerboards();
 
-    // start the video feeds
-    void StartLeftVideo( bool checked );
-    void StartRightVideo( bool checked );
+  // start the video feeds
+  void StartLeftVideo( bool checked );
+  void StartRightVideo( bool checked );
+  void OnLeftCameraIndexChanged( int index );
+  void OnRightCameraIndexChanged( int index );
 
-    // start opencv video
-    void UpdateLeftVideo();
-    void UpdateRightVideo();
+  // start opencv video
+  void UpdateLeftVideo();
+  void UpdateRightVideo();
 
-    // process the recorded image
-    void CaptureAndProcessLeftImage();
-    void CaptureAndProcessRightImage();
+  // process the recorded image
+  void CaptureAndProcessLeftImage();
+  void CaptureAndProcessRightImage();
 
-    // compute the intrinsics
-    void ComputeLeftIntrinsic();
-    void ComputeRightIntrinsic();
+  // compute the intrinsics
+  void ComputeLeftIntrinsic();
+  void ComputeRightIntrinsic();
 
-    // for finding the landmark registration
-    // between the optical axis and the attached reference tool
-    void DrawLeftChessBoardCorners();
-    void DrawRightChessBoardCorners();
-    void ComputeHMDRegistration();
+  // for finding the landmark registration
+  // between the optical axis and the attached reference tool
+  void DrawLeftChessBoardCorners();
+  void DrawRightChessBoardCorners();
+  void ComputeHMDRegistration();
 
-    // collect a single point using the sharp tool
-    void CollectStylusPoint();
-    // perform landmark registration of the calibration checkerboard to reference tool
-    void PerformBoardRegistration();
+  // collect a single point using the sharp tool
+  void CollectStylusPoint();
+  // perform landmark registration of the calibration checkerboard to reference tool
+  void PerformBoardRegistration();
 
-    // collect a single point using the sharp tool
-    void CollectRegPoint();
-    // perform landmark registration of the validation checkerboard to reference tool
-    void PerformRegBoardRegistration();
+  // collect a single point using the sharp tool
+  void CollectRegPoint();
+  // perform landmark registration of the validation checkerboard to reference tool
+  void PerformRegBoardRegistration();
 
-    // optical flow tracking
-    void OpticalFlowTracking();
+  // optical flow tracking
+  void OpticalFlowTracking();
 
-    // validation
-    void ValidateStylus();
-    void ValidateStylusStartTimer( bool v );
-    void ValidateChess();
-    void ValidateValidChess();
-    void ValidateChessVisual();
-    void ValidateChessVisualTimer( bool v);
-    void ValidateChessStartTimer( bool v );
+  // validation
+  void ValidateStylus();
+  void ValidateStylusStartTimer( bool v );
+  void ValidateChess();
+  void ValidateValidChess();
+  void ValidateChessVisual();
+  void ValidateChessVisualTimer( bool v);
+  void ValidateChessStartTimer( bool v );
 
-    // file operation
-    void LoadLeftIntrinsic();
-    void LoadRightIntrinsic();
-    void LoadLeftDistortion();
-    void LoadRightDistortion();
-    void LoadLeftLandmark();
-    void LoadRightLandmark();
-    void LoadChessRegistration();
-    void LoadValidChessRegistration();
+  // file operation
+  void LoadLeftIntrinsic();
+  void LoadRightIntrinsic();
+  void LoadLeftDistortion();
+  void LoadRightDistortion();
+  void LoadLeftLandmark();
+  void LoadRightLandmark();
+  void LoadChessRegistration();
+  void LoadValidChessRegistration();
 
-    void WriteIntrinsicsToFile( int cameraIndex, const std::string& filename );
-    void WriteDistortionToFile( int cameraIndex, const std::string& filename );
+  void WriteIntrinsicsToFile( int cameraIndex, const std::string& filename );
+  void WriteDistortionToFile( int cameraIndex, const std::string& filename );
 
-    /// acquire images from both camera, find the corners, and store them
-    void StereoAcquire();
-    void ComputeFundamentalMatrix();
+  /// acquire images from both camera, find the corners, and store them
+  void StereoAcquire();
+  void ComputeFundamentalMatrix();
 
 protected:
   void ComputeIntrinsicsAndDistortion( int cameraIndex );
@@ -207,13 +210,15 @@ protected:
   double GetBoardQuadSizeCalib() const;
 
 protected:
-  OpenCVInternals* internals;
-  cv::Mat cameraImages[ OpenCVInternals::NUM_CAMERAS ];
-  int captureCount[ OpenCVInternals::NUM_CAMERAS ];
-  std::vector<std::vector<std::vector<cv::Point2f> > > image_points;
-  std::vector<std::vector<std::vector<cv::Point2f> > > object_points;
-  std::vector<std::vector<std::vector<cv::Point2f> > > point_counts;
+  OpenCVInternals* CVInternals;
+  std::map<int, cv::Mat> CameraImages;
+  std::map<int, int> CaptureCount;
+  std::map<int, std::vector<std::vector<cv::Point2f> > > image_points;
+  std::map<int, std::vector<std::vector<cv::Point2f> > > object_points;
+  std::map<int, std::vector<std::vector<cv::Point2f> > > point_counts;
   int MinBoardNeeded;
+  int LeftCameraIndex;
+  int RightCameraIndex;
   ofstream* fileOutput[4];
   QTimer*                                       TrackingDataTimer;
   QTimer*                                       LeftCameraTimer;
@@ -221,8 +226,7 @@ protected:
   QTimer*                                       ValidateStylusTimer;
   QTimer*                                       ValidateChessTimer;
   QTimer*                                       ValidateTrackingTimer;
-  PlusDeviceSetSelectorWidget*                  DeviceSetSelectorWidget;
-  PlusToolStateDisplayWidget*                   ToolStateDisplayWidget;
+  QStatusBar*                                   StatusBar;
   vtkSmartPointer< vtkPoints >                  BoardSource;
   vtkSmartPointer< vtkPoints >                  BoardTarget;
   vtkSmartPointer< vtkLandmarkTransform >       BoardRegTransform;
@@ -235,9 +239,6 @@ protected:
   vtkSmartPointer< vtkPoints >                  BoardCornerRightTarget;
   vtkSmartPointer< vtkLandmarkTransform >       LeftLandmarkTransform;
   vtkSmartPointer< vtkLandmarkTransform >       RightLandmarkTransform;
-  vtkSmartPointer< vtkPlusDataCollector >       DataCollector;
-  vtkPlusChannel*                               TrackingDataChannel;
-  vtkSmartPointer< vtkPlusTransformRepository > TransformRepository;
   bool LeftLandmarkAvailable, RightLandmarkAvailable;
   bool LeftIntrinsicAvailable, RightIntrinsicAvailable;
   bool LeftDistortionAvailable, RightDistortionAvailable;
@@ -248,8 +249,15 @@ protected:
   std::vector< p3 > TrackedPointsLeft, TrackedPointsRight;
   std::string TrackingDataChannelName;
 
+  vtkSmartPointer< vtkPlusDataCollector >       DataCollector;
+  vtkPlusChannel*                               TrackingDataChannel;
+  vtkSmartPointer< vtkPlusTransformRepository > TransformRepository;
+  PlusDeviceSetSelectorWidget*                  DeviceSetSelectorWidget;
+  PlusToolStateDisplayWidget*                   ToolStateDisplayWidget;
+  PlusStatusIcon*                               StatusIcon;
+
 public:
-  CameraCalibrationMainWidget();
+  CameraCalibrationMainWidget(QWidget* parent = 0);
   ~CameraCalibrationMainWidget();
 
 private:

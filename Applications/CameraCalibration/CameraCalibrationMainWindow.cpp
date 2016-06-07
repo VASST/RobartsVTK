@@ -51,8 +51,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 CameraCalibrationMainWindow::CameraCalibrationMainWindow()
 {
-  CCMainWidget = new CameraCalibrationMainWidget();
-  CCMainWidget->setMinimumSize( 1200, 900 );
+  CCMainWidget = new CameraCalibrationMainWidget(this);
   setCentralWidget( CCMainWidget );
 
   createActions();

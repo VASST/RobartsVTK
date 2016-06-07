@@ -49,6 +49,11 @@ ELSEIF( Qt4_FOUND )
   TARGET_LINK_LIBRARIES( CameraCalibration ${QT_LIBRARIES} )
 ENDIF()
 
+IF(WIN32)
+  # From PLUS, use MSMF capture library to query webcams
+  TARGET_LINK_LIBRARIES( CameraCalibration MfVideoCaptureLibrary )
+ENDIF()
+
 TARGET_LINK_LIBRARIES( CameraCalibration
   ${OpenCV_LIBS}
   vtkndicapi
