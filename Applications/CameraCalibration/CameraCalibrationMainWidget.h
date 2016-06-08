@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 // QT include
 #include <QWidget>
+#include <QSettings>
 
 // VTK includes
 #include <vtkSmartPointer.h>
@@ -118,10 +119,26 @@ protected:
   int ProcessCheckerBoard( int cameraIndex, int width, int height, double size, processingMode mode,
                            vtkPoints* source, vtkPoints* target, std::string videoTitle );
 
-  // show OpenCV videos
-  void ShowOpenCVVideo( int cameraIndex, const std::string& videoTitle );
-
   bool StartDataCollection();
+
+  void CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3d>& corners);
+
+  void ComputeIntrinsicsAndDistortion( int cameraIndex, double& totalAvgErr, std::vector<float>& perViewErrors );
+  void ValidateStylusVideo( int cameraIndex, std::string videoTitle, double* pos );
+
+  void InitUI();
+
+  int GetBoardWidthCalib() const;
+  int GetBoardHeightCalib() const;
+  double GetBoardQuadSizeCalib() const;
+
+  void ShowStatusMessage(const char* message);
+
+  double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3d> >& objectPoints,
+                                    const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                    const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                    const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
+                                    std::vector<float>& perViewErrors, bool fisheye);
 
 protected slots:
   /*!
@@ -130,12 +147,13 @@ protected slots:
   */
   void ConnectToDevicesByConfigFile(std::string);
 
+  /// Refresh contents (e.g. GUI elements) of toolbox according to the state in the toolbox controller
+  virtual void RefreshContent();
+
   // OpenCV
   void ResetCalibrationCheckerboards();
 
   // start the video feeds
-  void StartLeftVideo( bool checked );
-  void StartRightVideo( bool checked );
   void OnLeftCameraIndexChanged( int index );
   void OnRightCameraIndexChanged( int index );
 
@@ -146,6 +164,14 @@ protected slots:
   // process the recorded image
   void CaptureAndProcessLeftImage();
   void CaptureAndProcessRightImage();
+
+  void CalibBoardWidthValueChanged(int i);
+  void CalibBoardHeightValueChanged(int i);
+  void CalibBoardQuadSizeValueChanged(double i);
+
+  void ValidationBoardWidthValueChanged(int i);
+  void ValidationBoardHeightValueChanged(int i);
+  void ValidationBoardQuadSizeValueChanged(double i);
 
   // compute the intrinsics
   void ComputeLeftIntrinsic();
@@ -197,24 +223,11 @@ protected slots:
   void ComputeFundamentalMatrix();
 
 protected:
-  void ComputeIntrinsicsAndDistortion( int cameraIndex );
-  void ValidateStylusVideo( int cameraIndex, std::string videoTitle, double* pos );
-
-  // reset OpenCV variables if the checkerboard geometry has been changed
-  int ResetCalibrationCheckerboards( int cameraIndex );
-
-  void InitUI();
-
-  int GetBoardWidthCalib() const;
-  int GetBoardHeightCalib() const;
-  double GetBoardQuadSizeCalib() const;
-
-protected:
+  QSettings appSettings;
   OpenCVInternals* CVInternals;
   std::map<int, cv::Mat> CameraImages;
   std::map<int, int> CaptureCount;
   std::map<int, std::vector<std::vector<cv::Point2f> > > image_points;
-  std::map<int, std::vector<std::vector<cv::Point2f> > > object_points;
   std::map<int, std::vector<std::vector<cv::Point2f> > > point_counts;
   int MinBoardNeeded;
   int LeftCameraIndex;
@@ -226,6 +239,7 @@ protected:
   QTimer*                                       ValidateStylusTimer;
   QTimer*                                       ValidateChessTimer;
   QTimer*                                       ValidateTrackingTimer;
+  QTimer*                                       GUITimer;
   QStatusBar*                                   StatusBar;
   vtkSmartPointer< vtkPoints >                  BoardSource;
   vtkSmartPointer< vtkPoints >                  BoardTarget;

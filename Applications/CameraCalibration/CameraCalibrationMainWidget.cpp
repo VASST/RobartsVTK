@@ -82,9 +82,11 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <opencv2/cvconfig.h>
 
 // PLUS includes
+#ifdef _WIN32
 #include <MediaFoundationCaptureLibrary.h>
 #include <MediaFoundationVideoDevice.h>
 #include <MediaFoundationVideoDevices.h>
+#endif
 #include <PlusDeviceSetSelectorWidget.h>
 #include <PlusStatusIcon.h>
 #include <PlusToolStateDisplayWidget.h>
@@ -110,6 +112,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   : QWidget(parent)
+  , appSettings("cameraCalibration.ini", QSettings::IniFormat)
   , TrackingDataChannel(NULL)
   , LeftCameraIndex(-1)
   , RightCameraIndex(-1)
@@ -118,11 +121,16 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   , DeviceSetSelectorWidget(NULL)
   , ToolStateDisplayWidget(NULL)
   , StatusIcon(NULL)
+  , GUITimer(NULL)
+  , TrackingDataTimer(NULL)
+  , LeftCameraTimer(NULL)
+  , RightCameraTimer(NULL)
+  , ValidateStylusTimer(NULL)
+  , ValidateChessTimer(NULL)
+  , ValidateTrackingTimer(NULL)
 {
   // Set up UI
   ui.setupUi(this);
-
-  CVInternals = new OpenCVInternals();
 
   DeviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(ui.groupBox_DataCollection);
   DeviceSetSelectorWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
@@ -148,6 +156,7 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
     }
   }
 
+  CVInternals = new OpenCVInternals();
 
   InitUI();
 
@@ -195,6 +204,7 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
 //---------------------------------------------------------
 CameraCalibrationMainWidget::~CameraCalibrationMainWidget()
 {
+  appSettings.sync();
   DataCollector->Stop();
 
   delete CVInternals;
@@ -218,6 +228,18 @@ void CameraCalibrationMainWidget::InitUI()
   ValidateStylusTimer = new QTimer( this );
   ValidateChessTimer = new QTimer( this );
   ValidateTrackingTimer = new QTimer( this );
+  GUITimer = new QTimer( this );
+
+  // Load settings
+  ui.spinBox_BoardWidthCalib->setValue(appSettings.value("calib/boardWidth", 7).toInt());
+  ui.spinBox_BoardHeightCalib->setValue(appSettings.value("calib/boardHeight", 5).toInt());
+  ui.doubleSpinBox_QuadSizeCalib->setValue(appSettings.value("calib/quadSize", 18.125).toDouble());
+
+  ui.spinBox_BoardWidthValid->setValue(appSettings.value("validation/boardWidth", 4).toInt());
+  ui.spinBox_BoardHeightValid->setValue(appSettings.value("validation/boardHeight", 3).toInt());
+  ui.doubleSpinBox_QuadSizeValid->setValue(appSettings.value("validation/quadSize", 20.0).toDouble());
+
+  connect( GUITimer, SIGNAL( timeout() ), this, SLOT( RefreshContent() ) );
 
   // Disable acquisition until cameras are selected
   ui.groupBox_IntrinsicsLeftAcquisition->setEnabled(false);
@@ -229,12 +251,8 @@ void CameraCalibrationMainWidget::InitUI()
   ui.widget_RightContainerFiles->setEnabled(false);
 
   // set up all the signal/slots here
-  connect( ui.pushButton_LeftVideo, SIGNAL( toggled( bool ) ),
-           this, SLOT( StartLeftVideo( bool ) ) );
   connect( LeftCameraTimer, SIGNAL( timeout() ),
            this, SLOT( UpdateLeftVideo() ) );
-  connect( ui.pushButton_RightVideo, SIGNAL( toggled( bool ) ),
-           this, SLOT( StartRightVideo( bool ) ) );
   connect( RightCameraTimer, SIGNAL( timeout() ),
            this, SLOT( UpdateRightVideo() ) );
   connect( ui.pushButton_LoadLeftIntrinsic, SIGNAL( clicked() ),
@@ -256,11 +274,18 @@ void CameraCalibrationMainWidget::InitUI()
 
   // Configuration
   connect( ui.spinBox_BoardWidthCalib, SIGNAL( valueChanged( int ) ),
-           this, SLOT( ResetCalibrationCheckerboards() ) );
+           this, SLOT( CalibBoardWidthValueChanged( int ) ) );
   connect( ui.spinBox_BoardHeightCalib, SIGNAL( valueChanged( int ) ),
-           this, SLOT( ResetCalibrationCheckerboards() ) );
+           this, SLOT( CalibBoardHeightValueChanged( int ) ) );
   connect( ui.doubleSpinBox_QuadSizeCalib, SIGNAL( valueChanged( double ) ),
-           this, SLOT( ResetCalibrationCheckerboards() ) );
+           this, SLOT( CalibBoardQuadSizeValueChanged( double ) ) );
+
+  connect( ui.spinBox_BoardWidthValid, SIGNAL( valueChanged( int ) ),
+           this, SLOT( ValidationBoardWidthValueChanged( int ) ) );
+  connect( ui.spinBox_BoardHeightValid, SIGNAL( valueChanged( int ) ),
+           this, SLOT( ValidationBoardHeightValueChanged( int ) ) );
+  connect( ui.doubleSpinBox_QuadSizeValid, SIGNAL( valueChanged( double ) ),
+           this, SLOT( ValidationBoardQuadSizeValueChanged( double ) ) );
 
   // Calibration
   connect( ui.pushButton_CaptureLeft, SIGNAL( clicked() ),
@@ -310,6 +335,7 @@ void CameraCalibrationMainWidget::InitUI()
 
   ui.comboBox_LeftCamera->addItem("None", QVariant(-1));
   ui.comboBox_RightCamera->addItem("None", QVariant(-1));
+#ifdef _WIN32
   MfVideoCapture::MediaFoundationCaptureLibrary::GetInstance().BuildListOfDevices();
   for( int i = 0; i < MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetCount(); ++i )
   {
@@ -318,11 +344,14 @@ void CameraCalibrationMainWidget::InitUI()
     ui.comboBox_LeftCamera->addItem(name, QVariant(i));
     ui.comboBox_RightCamera->addItem(name, QVariant(i));
   }
+#else
+  // TODO : other camera libraries to detect cameras
+#endif
 
   connect( ui.comboBox_LeftCamera, SIGNAL( currentIndexChanged( int ) ),
            this, SLOT(OnLeftCameraIndexChanged( int ) ) );
   connect( ui.comboBox_RightCamera, SIGNAL( currentIndexChanged( int ) ),
-    this, SLOT(OnRightCameraIndexChanged( int ) ) );
+           this, SLOT(OnRightCameraIndexChanged( int ) ) );
 }
 
 //---------------------------------------------------------
@@ -341,6 +370,51 @@ int CameraCalibrationMainWidget::GetBoardHeightCalib() const
 double CameraCalibrationMainWidget::GetBoardQuadSizeCalib() const
 {
   return ui.doubleSpinBox_QuadSizeCalib->value();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::ShowStatusMessage(const char* message)
+{
+  if( StatusBar != NULL )
+  {
+    StatusBar->showMessage(message);
+  }
+}
+
+//----------------------------------------------------------------------------
+double CameraCalibrationMainWidget::ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3d> >& objectPoints,
+    const std::vector<std::vector<cv::Point2f> >& imagePoints,
+    const std::vector<cv::Mat>& rvecs,
+    const std::vector<cv::Mat>& tvecs,
+    const cv::Mat& cameraMatrix ,
+    const cv::Mat& distCoeffs,
+    std::vector<float>& perViewErrors,
+    bool fisheye)
+{
+  std::vector<cv::Point2f> imagePoints2;
+  size_t totalPoints = 0;
+  double totalErr = 0, err;
+  perViewErrors.resize(objectPoints.size());
+
+  for(size_t i = 0; i < objectPoints.size(); ++i )
+  {
+    if (fisheye)
+    {
+      cv::fisheye::projectPoints(objectPoints[i], imagePoints2, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+    }
+    else
+    {
+      projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+    }
+    err = norm(imagePoints[i], imagePoints2, cv::NORM_L2);
+
+    size_t n = objectPoints[i].size();
+    perViewErrors[i] = (float) std::sqrt(err*err/n);
+    totalErr        += err*err;
+    totalPoints     += n;
+  }
+
+  return std::sqrt(totalErr/totalPoints);
 }
 
 //---------------------------------------------------------
@@ -406,19 +480,18 @@ bool CameraCalibrationMainWidget::StartDataCollection()
   return true;
 }
 
-//---------------------------------------------------------
-// show OpenCV videos
-void CameraCalibrationMainWidget::ShowOpenCVVideo( int cameraIndex, const std::string& videoTitle )
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3d>& corners)
 {
-  // make sure we have the correct video feed
-  if ( cameraIndex >= CVInternals->CameraCount() )
-  {
-    return;
-  }
+  corners.clear();
 
-  CVInternals->QueryFrame(cameraIndex, CameraImages[cameraIndex]);
-  cv::imshow( videoTitle, CameraImages[cameraIndex] );
-  cv::waitKey(25);
+  for( int i = 0; i < height; ++i )
+  {
+    for( int j = 0; j < width; ++j )
+    {
+      corners.push_back(cv::Point3d(j*quadSize, i*quadSize, 0));
+    }
+  }
 }
 
 //---------------------------------------------------------
@@ -435,6 +508,9 @@ void CameraCalibrationMainWidget::ConnectToDevicesByConfigFile(std::string aConf
     DeviceSetSelectorWidget->SetConnectionSuccessful(false);
     DeviceSetSelectorWidget->ShowResetTrackerButton(false);
     ToolStateDisplayWidget->InitializeTools(NULL, false);
+    GUITimer->stop();
+
+    DataCollector = vtkSmartPointer< vtkPlusDataCollector >::New();
 
     QApplication::restoreOverrideCursor();
     return;
@@ -503,6 +579,7 @@ void CameraCalibrationMainWidget::ConnectToDevicesByConfigFile(std::string aConf
       // Successful connection
       DeviceSetSelectorWidget->SetConnectionSuccessful(true);
       ToolStateDisplayWidget->InitializeTools(TrackingDataChannel, true);
+      GUITimer->start(33);
 
       vtkPlusConfig::GetInstance()->SaveApplicationConfigurationToFile();
     }
@@ -518,46 +595,12 @@ void CameraCalibrationMainWidget::ConnectToDevicesByConfigFile(std::string aConf
   QApplication::restoreOverrideCursor();
 }
 
-//---------------------------------------------------------
-// start the video feeds
-void CameraCalibrationMainWidget::StartLeftVideo( bool checked )
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::RefreshContent()
 {
-  if ( CVInternals->IsFeedAvailable( 0 ) )
+  if( ToolStateDisplayWidget != NULL && ToolStateDisplayWidget->IsInitialized() )
   {
-    if ( checked )
-    {
-      LeftCameraTimer->start( 0 );
-    }
-    else
-    {
-      LeftCameraTimer->stop();
-    }
-  }
-  else
-  {
-    LOG_ERROR("Left video not available");
-    StatusBar->showMessage("Left video not available");
-  }
-}
-
-//---------------------------------------------------------
-void CameraCalibrationMainWidget::StartRightVideo( bool checked )
-{
-  if ( CVInternals->IsFeedAvailable( 1 ) )
-  {
-    if ( checked )
-    {
-      RightCameraTimer->start( 0 );
-    }
-    else
-    {
-      RightCameraTimer->stop();
-    }
-  }
-  else
-  {
-    LOG_ERROR("Right video not available");
-    StatusBar->showMessage("Right video not available");
+    ToolStateDisplayWidget->Update();
   }
 }
 
@@ -568,6 +611,7 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
 
   if( cameraIndex == -1 )
   {
+    LeftCameraTimer->stop();
     ui.groupBox_IntrinsicsLeftAcquisition->setEnabled(false);
     ui.pushButton_RecordLeftHMD->setEnabled(false);
     ui.groupBox_FundamentalMatrix->setEnabled(false);
@@ -580,7 +624,6 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
       CameraImages.erase(CameraImages.find(LeftCameraIndex));
       CaptureCount.erase(CaptureCount.find(LeftCameraIndex));
       image_points.erase(image_points.find(LeftCameraIndex));
-      object_points.erase(object_points.find(LeftCameraIndex));
       point_counts.erase(point_counts.find(LeftCameraIndex));
     }
 
@@ -598,7 +641,6 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   CameraImages[LeftCameraIndex];
   CaptureCount[LeftCameraIndex];
   image_points[LeftCameraIndex];
-  object_points[LeftCameraIndex];
   point_counts[LeftCameraIndex];
 
   ui.groupBox_IntrinsicsLeftAcquisition->setEnabled(true);
@@ -609,6 +651,8 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   {
     ui.groupBox_FundamentalMatrix->setEnabled(true);
   }
+
+  LeftCameraTimer->start(33);
 }
 
 //---------------------------------------------------------
@@ -617,6 +661,7 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   int cameraIndex = ui.comboBox_RightCamera->currentData().toInt();
   if( cameraIndex == -1 )
   {
+    RightCameraTimer->stop();
     ui.groupBox_IntrinsicsRightAcquisition->setEnabled(false);
     ui.widget_RightContainerFiles->setEnabled(false);
     ui.pushButton_RecordRightHMD->setEnabled(false);
@@ -629,7 +674,6 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
       CameraImages.erase(CameraImages.find(RightCameraIndex));
       CaptureCount.erase(CaptureCount.find(RightCameraIndex));
       image_points.erase(image_points.find(RightCameraIndex));
-      object_points.erase(object_points.find(RightCameraIndex));
       point_counts.erase(point_counts.find(RightCameraIndex));
     }
 
@@ -647,7 +691,6 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   CameraImages[RightCameraIndex];
   CaptureCount[RightCameraIndex];
   image_points[RightCameraIndex];
-  object_points[RightCameraIndex];
   point_counts[RightCameraIndex];
 
   ui.groupBox_IntrinsicsRightAcquisition->setEnabled(true);
@@ -658,19 +701,39 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   {
     ui.groupBox_FundamentalMatrix->setEnabled(true);
   }
+
+  RightCameraTimer->start(33);
 }
 
 //---------------------------------------------------------
 // start opencv video
 void CameraCalibrationMainWidget::UpdateLeftVideo()
 {
-  ShowOpenCVVideo( LeftCameraIndex, "LeftCamera" );
+  if( !CVInternals->QueryFrame(LeftCameraIndex, CameraImages[LeftCameraIndex]) )
+  {
+    return;
+  }
+
+  //QImage imgIn(CameraImages[LeftCameraIndex].data, CameraImages[LeftCameraIndex].cols, CameraImages[LeftCameraIndex].rows, CameraImages[LeftCameraIndex].step, QImage::Format_RGB888);
+
+  //ui.openGLWidget_LeftVideo->setPixmap(QPixmap::fromImage(imgIn));
+  //ui.openGLWidget_LeftVideo->update();
+  cv::imshow("Left Result", CameraImages[LeftCameraIndex]);
 }
 
 //---------------------------------------------------------
 void CameraCalibrationMainWidget::UpdateRightVideo()
 {
-  ShowOpenCVVideo( RightCameraIndex, "RightCamera" );
+  if( !CVInternals->QueryFrame(RightCameraIndex, CameraImages[RightCameraIndex]) )
+  {
+    return;
+  }
+
+  //QImage imgIn(CameraImages[RightCameraIndex].data, CameraImages[RightCameraIndex].cols, CameraImages[RightCameraIndex].rows, CameraImages[RightCameraIndex].step, QImage::Format_RGB888);
+
+  //ui.openGLWidget_RightVideo->setPixmap(QPixmap::fromImage(imgIn));
+  //ui.openGLWidget_RightVideo->update();
+  cv::imshow("Right Result", CameraImages[RightCameraIndex]);
 }
 
 //---------------------------------------------------------
@@ -994,8 +1057,8 @@ int CameraCalibrationMainWidget::ProcessCheckerBoard( int cameraIndex, int width
 
     // finds the pose of the checkerboard
     // BUG:!!  NOTE THAT OPENCV MAY FIND A FLIPPED ROTATION!
-    std::vector<cv::Point3f> rotationsVector;
-    std::vector<cv::Point3f> translationsVector;
+    std::vector<cv::Mat> rotationsVector;
+    std::vector<cv::Mat> translationsVector;
     cv::calibrateCamera(objectPoints, imagePoints, board_sz, *CVInternals->GetInstrinsicMatrix(cameraIndex), *CVInternals->GetDistortionCoeffs(cameraIndex), rotationsVector, translationsVector);
     cv::Rodrigues(rotationsVector, rotationMat);
 
@@ -1178,11 +1241,55 @@ void CameraCalibrationMainWidget::CaptureAndProcessRightImage()
   }
 }
 
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CalibBoardWidthValueChanged(int i)
+{
+  appSettings.setValue("calib/boardWidth", i);
+  ResetCalibrationCheckerboards();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CalibBoardHeightValueChanged(int i)
+{
+  appSettings.setValue("calib/boardHeight", i);
+  ResetCalibrationCheckerboards();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CalibBoardQuadSizeValueChanged(double i)
+{
+  appSettings.setValue("calib/quadSize", i);
+  ResetCalibrationCheckerboards();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::ValidationBoardWidthValueChanged(int i)
+{
+  appSettings.setValue("validation/boardWidth", i);
+  ResetCalibrationCheckerboards();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::ValidationBoardHeightValueChanged(int i)
+{
+  appSettings.setValue("validation/boardHeight", i);
+  ResetCalibrationCheckerboards();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::ValidationBoardQuadSizeValueChanged(double i)
+{
+  appSettings.setValue("validation/quadSize", i);
+  ResetCalibrationCheckerboards();
+}
+
 //---------------------------------------------------------
 // compute the intrinsics
 void CameraCalibrationMainWidget::ComputeLeftIntrinsic()
 {
-  this->ComputeIntrinsicsAndDistortion( LeftCameraIndex );
+  double totalAvgErr;
+  std::vector<float> perViewErrors;
+  this->ComputeIntrinsicsAndDistortion( LeftCameraIndex, totalAvgErr, perViewErrors );
 
   // TODO : file dialogs
   this->WriteIntrinsicsToFile( LeftCameraIndex, "Left_Intrinsics.xml" );
@@ -1194,7 +1301,9 @@ void CameraCalibrationMainWidget::ComputeLeftIntrinsic()
 //---------------------------------------------------------
 void CameraCalibrationMainWidget::ComputeRightIntrinsic()
 {
-  this->ComputeIntrinsicsAndDistortion( RightCameraIndex );
+  double totalAvgErr;
+  std::vector<float> perViewErrors;
+  this->ComputeIntrinsicsAndDistortion( RightCameraIndex, totalAvgErr, perViewErrors );
 
   // TODO : file dialogs
   this->WriteIntrinsicsToFile( RightCameraIndex, "Right_Intrinsics.xml" );
@@ -1226,7 +1335,7 @@ void CameraCalibrationMainWidget::WriteDistortionToFile( int cameraIndex, const 
 }
 
 //---------------------------------------------------------
-void CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraIndex )
+void CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraIndex, double& totalAvgErr, std::vector<float>& perViewErrors )
 {
   if ( cameraIndex >= this->CVInternals->CameraCount() )
   {
@@ -1238,23 +1347,31 @@ void CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraInde
     std::stringstream ss;
     ss << "Not enough board images recorded: " << CaptureCount[cameraIndex] << "/" << MinBoardNeeded;
     LOG_ERROR(ss.str());
-    StatusBar->showMessage(ss.str().c_str());
+    ShowStatusMessage(ss.str().c_str());
     return;
   }
 
-  std::vector<cv::Point3f> rotationsVector;
-  std::vector<cv::Point3f> translationsVector;
+  std::vector<cv::Mat> rotationsVector;
+  std::vector<cv::Mat> translationsVector;
 
-  double reprojectionError = cv::calibrateCamera(object_points[cameraIndex], image_points[cameraIndex], cv::Size(CameraImages[cameraIndex].size[0], CameraImages[cameraIndex].size[1]),
+  std::vector<std::vector<cv::Point3d> > objectPoints(1);
+  CalcBoardCornerPositions(GetBoardHeightCalib(), GetBoardWidthCalib(), GetBoardQuadSizeCalib(), objectPoints[0]);
+
+  objectPoints.resize(image_points[cameraIndex].size(), objectPoints[0]);
+
+  double reprojectionError = cv::calibrateCamera(objectPoints, image_points[cameraIndex], cv::Size(CameraImages[cameraIndex].size[0], CameraImages[cameraIndex].size[1]),
                              *CVInternals->GetInstrinsicMatrix(cameraIndex), *CVInternals->GetDistortionCoeffs(cameraIndex), rotationsVector, translationsVector);
+
+  totalAvgErr = ComputeReprojectionErrors(objectPoints, image_points[cameraIndex], rotationsVector, translationsVector, *CVInternals->GetInstrinsicMatrix(cameraIndex),
+                                          *CVInternals->GetDistortionCoeffs(cameraIndex), perViewErrors, true);
 
   LOG_INFO("Camera calibrated with reprojection error: " << reprojectionError);
 
-  if ( cameraIndex == 0 )
+  if ( cameraIndex == LeftCameraIndex )
   {
     LeftIntrinsicAvailable = LeftDistortionAvailable = true;
   }
-  else if ( cameraIndex == 1 )
+  else if ( cameraIndex == RightCameraIndex )
   {
     RightIntrinsicAvailable = RightDistortionAvailable = true;
   }
@@ -1271,7 +1388,7 @@ void CameraCalibrationMainWidget::CollectRegPoint()
     if( TransformRepository->SetTransforms(frame) != PLUS_SUCCESS)
     {
       LOG_ERROR("Unable to load transforms into repository. Aborting.");
-      StatusBar->showMessage("Unable to load transforms into repository. Aborting.");
+      ShowStatusMessage("Unable to load transforms into repository. Aborting.");
       return;
     }
     bool isValid(false);
@@ -1280,7 +1397,7 @@ void CameraCalibrationMainWidget::CollectRegPoint()
     if( TransformRepository->GetTransform(checkboardToReferenceName, checkboardToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate checkerboard to reference transform.");
-      StatusBar->showMessage("Unable to locate checkerboard to reference transform.");
+      ShowStatusMessage("Unable to locate checkerboard to reference transform.");
       return;
     }
     checkboardToReferenceTransform->Invert();
@@ -1290,7 +1407,7 @@ void CameraCalibrationMainWidget::CollectRegPoint()
     if( TransformRepository->GetTransform(stylusToReferenceName, stylusToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate stylus to reference transform.");
-      StatusBar->showMessage("Unable to locate stylus to reference transform.");
+      ShowStatusMessage("Unable to locate stylus to reference transform.");
       return;
     }
 
@@ -1332,7 +1449,7 @@ void CameraCalibrationMainWidget::PerformRegBoardRegistration()
     if ( ValidBoardSource->GetNumberOfPoints() < 4 )
     {
       LOG_INFO("Please collect more than 4 points from the checkerboard.");
-      StatusBar->showMessage("Please collect more than 4 points from the checkerboard.");
+      ShowStatusMessage("Please collect more than 4 points from the checkerboard.");
     }
     else
     {
@@ -1361,7 +1478,7 @@ void CameraCalibrationMainWidget::CollectStylusPoint()
     if( TransformRepository->SetTransforms(frame) != PLUS_SUCCESS)
     {
       LOG_ERROR("Unable to load transforms into repository. Aborting.");
-      StatusBar->showMessage("Unable to load transforms into repository. Aborting.");
+      ShowStatusMessage("Unable to load transforms into repository. Aborting.");
       return;
     }
     bool isValid(false);
@@ -1370,7 +1487,7 @@ void CameraCalibrationMainWidget::CollectStylusPoint()
     if( TransformRepository->GetTransform(checkboardToReferenceName, checkboardToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate checkerboard to reference transform.");
-      StatusBar->showMessage("Unable to locate checkerboard to reference transform.");
+      ShowStatusMessage("Unable to locate checkerboard to reference transform.");
       return;
     }
     checkboardToReferenceTransform->Invert();
@@ -1380,7 +1497,7 @@ void CameraCalibrationMainWidget::CollectStylusPoint()
     if( TransformRepository->GetTransform(stylusToReferenceName, stylusToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate stylus to reference transform.");
-      StatusBar->showMessage("Unable to locate stylus to reference transform.");
+      ShowStatusMessage("Unable to locate stylus to reference transform.");
       return;
     }
 
@@ -1407,7 +1524,7 @@ void CameraCalibrationMainWidget::CollectStylusPoint()
   else
   {
     LOG_ERROR("Either the tracker is not initialized or it is not tracking.");
-    StatusBar->showMessage("Either the tracker is not initialized or it is not tracking.");
+    ShowStatusMessage("Either the tracker is not initialized or it is not tracking.");
     return;
   }
 }
@@ -1421,7 +1538,7 @@ void CameraCalibrationMainWidget::PerformBoardRegistration()
     if ( BoardSource->GetNumberOfPoints() < 4 )
     {
       LOG_ERROR("Please collect more than 4 points from the checkerboard");
-      StatusBar->showMessage("Please collect more than 4 points from the checkerboard");
+      ShowStatusMessage("Please collect more than 4 points from the checkerboard");
       return;
     }
     else
@@ -1454,14 +1571,14 @@ void CameraCalibrationMainWidget::DrawLeftChessBoardCorners()
   if( CaptureCount[LeftCameraIndex] - beforeAttempt == 0 )
   {
     LOG_WARNING("Unable to locate checkerboard in camera image. Try again.");
-    StatusBar->showMessage("Unable to locate checkerboard in camera image. Try again.");
+    ShowStatusMessage("Unable to locate checkerboard in camera image. Try again.");
   }
   else
   {
     std::stringstream ss;
     ss << "Success! Captured " << k << " left calibration points thus far.";
     LOG_INFO(ss.str());
-    StatusBar->showMessage(ss.str().c_str());
+    ShowStatusMessage(ss.str().c_str());
   }
 }
 
@@ -1477,14 +1594,14 @@ void CameraCalibrationMainWidget::DrawRightChessBoardCorners()
   if( CaptureCount[RightCameraIndex] - beforeAttempt == 0 )
   {
     LOG_WARNING("Unable to locate checkerboard in camera image. Try again.");
-    StatusBar->showMessage("Unable to locate checkerboard in camera image. Try again.");
+    ShowStatusMessage("Unable to locate checkerboard in camera image. Try again.");
   }
   else
   {
     std::stringstream ss;
     ss << "Success! Captured " << k << " right calibration points thus far.";
     LOG_INFO(ss.str());
-    StatusBar->showMessage(ss.str().c_str());
+    ShowStatusMessage(ss.str().c_str());
   }
 }
 
@@ -1494,7 +1611,7 @@ void CameraCalibrationMainWidget::ComputeHMDRegistration()
   if ( BoardCornerLeftSource->GetNumberOfPoints() != BoardCornerLeftTarget->GetNumberOfPoints() )
   {
     LOG_ERROR("Number of points do not match in HMD registration.");
-    StatusBar->showMessage("Number of points do not match in HMD registration.");
+    ShowStatusMessage("Number of points do not match in HMD registration.");
     return;
   }
   else
@@ -1517,7 +1634,7 @@ void CameraCalibrationMainWidget::ComputeHMDRegistration()
   if ( BoardCornerRightSource->GetNumberOfPoints() != BoardCornerRightTarget->GetNumberOfPoints() )
   {
     LOG_ERROR("Number of points do not match in HMD registration.");
-    StatusBar->showMessage("Number of points do not match in HMD registration.");
+    ShowStatusMessage("Number of points do not match in HMD registration.");
     return;
   }
   else
@@ -1625,14 +1742,14 @@ void CameraCalibrationMainWidget::ValidateValidChess()
   {
     if ( LeftLandmarkAvailable && LeftIntrinsicAvailable && LeftDistortionAvailable && ValidBoardAvailable )
     {
-      ProcessCheckerBoard( 0,
+      ProcessCheckerBoard( LeftCameraIndex,
                            ui.spinBox_BoardWidthValid->value(), ui.spinBox_BoardHeightValid->value(), ui.doubleSpinBox_QuadSizeValid->value(),
                            forEvaluation, 0, 0, std::string( "Left Result" ) );
     }
 
     if ( RightLandmarkAvailable && RightIntrinsicAvailable && RightDistortionAvailable && ValidBoardAvailable )
     {
-      ProcessCheckerBoard( 1,
+      ProcessCheckerBoard( RightCameraIndex,
                            ui.spinBox_BoardWidthValid->value(), ui.spinBox_BoardHeightValid->value(), ui.doubleSpinBox_QuadSizeValid->value(),
                            forEvaluation, 0, 0, std::string( "Right Result" ) );
     }
@@ -1652,7 +1769,7 @@ void CameraCalibrationMainWidget::ValidateChessVisual()
     if( TransformRepository->SetTransforms(frame) != PLUS_SUCCESS)
     {
       LOG_ERROR("Unable to load transforms into repository. Aborting.");
-      StatusBar->showMessage("Unable to load transforms into repository. Aborting.");
+      ShowStatusMessage("Unable to load transforms into repository. Aborting.");
       return;
     }
     bool isValid(false);
@@ -1661,7 +1778,7 @@ void CameraCalibrationMainWidget::ValidateChessVisual()
     if( TransformRepository->GetTransform(checkboardToReferenceName, checkboardToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate checkerboard to reference transform.");
-      StatusBar->showMessage("Unable to locate checkerboard to reference transform.");
+      ShowStatusMessage("Unable to locate checkerboard to reference transform.");
       return;
     }
 
@@ -1670,7 +1787,7 @@ void CameraCalibrationMainWidget::ValidateChessVisual()
     if( TransformRepository->GetTransform(HMDToReferenceName, HMDToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate HMD to reference transform.");
-      StatusBar->showMessage("Unable to locate HMD to reference transform.");
+      ShowStatusMessage("Unable to locate HMD to reference transform.");
       return;
     }
     HMDToReferenceTransform->Invert();
@@ -1725,11 +1842,11 @@ void CameraCalibrationMainWidget::ValidateChessVisual()
           // Mres is the projected 2D pixel of Phm
           text_origin.x = Mres.at<double>(0,0) = points[2];
           text_origin.y = Mres.at<double>(0,1) = points[2];
-          cv::circle(CameraImages[0], text_origin, 3, cv::Scalar(255,0,0), 2);
+          cv::circle(CameraImages[LeftCameraIndex], text_origin, 3, cv::Scalar(255,0,0), 2);
         }
       }
 
-      cv::imshow("Left Result", CameraImages[0]);
+      cv::imshow("Left Result", CameraImages[LeftCameraIndex]);
     }
 
     if ( RightLandmarkAvailable && RightIntrinsicAvailable && RightDistortionAvailable && BoardRegAvailable )
@@ -1761,10 +1878,10 @@ void CameraCalibrationMainWidget::ValidateChessVisual()
           // Mres is the projected 2D pixel of Phm
           text_origin.x = Mres.at<double>(0,0) = points[2];
           text_origin.y = Mres.at<double>(0,1) = points[2];
-          cv::circle(CameraImages[1], text_origin, 3, cv::Scalar(255,0,0), 2);
+          cv::circle(CameraImages[RightCameraIndex], text_origin, 3, cv::Scalar(255,0,0), 2);
         }
       }
-      cv::imshow( "Right Result", CameraImages[1] );
+      cv::imshow( "Right Result", CameraImages[RightCameraIndex] );
     }
   }
 }
@@ -1776,14 +1893,14 @@ void CameraCalibrationMainWidget::ValidateChess()
   {
     if ( LeftLandmarkAvailable && LeftIntrinsicAvailable && LeftDistortionAvailable && BoardRegAvailable )
     {
-      ProcessCheckerBoard( 0,
+      ProcessCheckerBoard( LeftCameraIndex,
                            GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(),
                            forEvaluation, 0, 0, std::string( "Left Result" ) );
     }
 
     if ( RightLandmarkAvailable && RightIntrinsicAvailable && RightDistortionAvailable && BoardRegAvailable )
     {
-      ProcessCheckerBoard( 1,
+      ProcessCheckerBoard( RightCameraIndex,
                            GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(),
                            forEvaluation, 0, 0, std::string( "Right Result" ) );
     }
@@ -1802,7 +1919,7 @@ void CameraCalibrationMainWidget::ValidateChess()
                                    0, 1, 0, 0,
                                    0, 0, 1, 0
                                  };
-      CvMat LeftExtrinsic = cvMat( 3, 4, CV_64F, leftExtrinsic );
+      cv::Mat LeftExtrinsic( 3, 4, CV_64F, leftExtrinsic );
 
       // the projection matrix for the right camera is
       // Right_landmark * inverse( Left_landmark )
@@ -1827,32 +1944,29 @@ void CameraCalibrationMainWidget::ValidateChess()
                                     tTransform->GetMatrix()->Element[2][2],
                                     tTransform->GetMatrix()->Element[2][3]
                                   };
-      CvMat RightExtrinsic = cvMat( 3, 4, CV_64F, rightExtrinsic );
+      cv::Mat RightExtrinsic( 3, 4, CV_64F, rightExtrinsic );
 
-      CvMat *leftImagePoints = cvCreateMat( 2, nPoints, CV_64FC1 );
-      CvMat *rightImagePoints = cvCreateMat( 2, nPoints, CV_64FC1 );
-      CvMat *points4D = cvCreateMat( 4, nPoints, CV_64F );
+      std::vector<cv::Point2d> leftImagePoints;
+      std::vector<cv::Point2d> rightImagePoints;
+      std::vector<cv::Vec4d> points4D;
 
       // copy the points over
       for ( int i = 0; i < nPoints; i++ )
       {
-        CV_MAT_ELEM( *leftImagePoints, double, 0, i ) = ImagePointsLeft[i].x;
-        CV_MAT_ELEM( *leftImagePoints, double, 1, i ) = ImagePointsLeft[i].y;
-        CV_MAT_ELEM( *rightImagePoints, double, 0, i ) = ImagePointsRight[i].x;
-        CV_MAT_ELEM( *rightImagePoints, double, 1, i ) = ImagePointsRight[i].y;
+        leftImagePoints.push_back(cv::Point2d(ImagePointsLeft[i].x, ImagePointsLeft[i].y));
+        rightImagePoints.push_back(cv::Point2d(ImagePointsRight[i].x, ImagePointsRight[i].y));
       }
 
-      cvTriangulatePoints( &LeftExtrinsic, &RightExtrinsic,
-                           leftImagePoints, rightImagePoints,
-                           points4D );
+      cv::triangulatePoints(LeftExtrinsic, RightExtrinsic, leftImagePoints, rightImagePoints, points4D);
 
       double x, y, z;
       for ( int i = 0; i < nPoints; i++ )
       {
         // output to file
-        x = cvmGet( points4D, 0, i ) / cvmGet( points4D, 3, i );
-        y = cvmGet( points4D, 1, i ) / cvmGet( points4D, 3, i );
-        z = cvmGet( points4D, 2, i ) / cvmGet( points4D, 3, i );
+        cv::Vec4d result = points4D[i]/points4D[i][3];
+        x = result[0];
+        y = result[1];
+        z = result[2];
         std::cout << x << ", " << y << ", " << z << std::endl;
         *(fileOutput[2]) << x << ", "
                          << y << ", "
@@ -1880,11 +1994,6 @@ void CameraCalibrationMainWidget::ValidateChess()
                          << TrackedPointsRight[i].z << ", , ,"
                          << x << ", " << y << ", " << z << std::endl;
       }
-
-      // clean up
-      cvReleaseMat( &points4D );
-      cvReleaseMat( &rightImagePoints );
-      cvReleaseMat( &leftImagePoints );
     }
   }
 }
@@ -1931,7 +2040,7 @@ void CameraCalibrationMainWidget::ValidateStylus( )
     if( TransformRepository->SetTransforms(frame) != PLUS_SUCCESS)
     {
       LOG_ERROR("Unable to load transforms into repository. Aborting.");
-      StatusBar->showMessage("Unable to load transforms into repository. Aborting.");
+      ShowStatusMessage("Unable to load transforms into repository. Aborting.");
       return;
     }
     bool isValid(false);
@@ -1940,7 +2049,7 @@ void CameraCalibrationMainWidget::ValidateStylus( )
     if( TransformRepository->GetTransform(stylusToReferenceName, stylusToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate stylus to reference transform.");
-      StatusBar->showMessage("Unable to locate stylus to reference transform.");
+      ShowStatusMessage("Unable to locate stylus to reference transform.");
       return;
     }
 
@@ -1949,7 +2058,7 @@ void CameraCalibrationMainWidget::ValidateStylus( )
     if( TransformRepository->GetTransform(HMDToReferenceName, HMDToReferenceTransform, &isValid) != PLUS_SUCCESS || !isValid )
     {
       LOG_ERROR("Unable to locate HMD to reference transform.");
-      StatusBar->showMessage("Unable to locate HMD to reference transform.");
+      ShowStatusMessage("Unable to locate HMD to reference transform.");
       return;
     }
     HMDToReferenceTransform->Invert();
@@ -1968,7 +2077,7 @@ void CameraCalibrationMainWidget::ValidateStylus( )
       tempTransformLeft->Concatenate( LeftLandmarkTransform->GetMatrix() );
       tempTransformLeft->Update();
       tempTransformLeft->GetPosition( pos );
-      this->ValidateStylusVideo( 0, "LeftCamera", pos );
+      this->ValidateStylusVideo( LeftCameraIndex, "LeftCamera", pos );
     }
 
     if ( RightLandmarkAvailable && RightIntrinsicAvailable && RightDistortionAvailable )
@@ -1979,7 +2088,7 @@ void CameraCalibrationMainWidget::ValidateStylus( )
       tempTransformRight->Concatenate( RightLandmarkTransform->GetMatrix() );
       tempTransformRight->Update();
       tempTransformRight->GetPosition( pos );
-      this->ValidateStylusVideo( 1, "RightCamera", pos );
+      this->ValidateStylusVideo( RightCameraIndex, "RightCamera", pos );
     }
   }
 }
@@ -2020,24 +2129,8 @@ void CameraCalibrationMainWidget::ValidateStylusVideo( int cameraIndex, std::str
 //---------------------------------------------------------
 void CameraCalibrationMainWidget::ResetCalibrationCheckerboards()
 {
-  for ( int i = 0; i < this->CVInternals->CameraCount(); i++ )
-  {
-    ResetCalibrationCheckerboards( i );
-  }
-}
-
-//---------------------------------------------------------
-// reset OpenCV variables if the checkerboard geometry has been changed
-int CameraCalibrationMainWidget::ResetCalibrationCheckerboards( int cameraIndex )
-{
-  if ( cameraIndex >= this->CVInternals->CameraCount() )
-  {
-    return ( -1 );
-  }
-
-  CaptureCount[cameraIndex] = 0;
-
-  return 0;
+  CaptureCount[LeftCameraIndex] = 0;
+  CaptureCount[RightCameraIndex] = 0;
 }
 
 //---------------------------------------------------------

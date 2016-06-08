@@ -46,10 +46,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <cv.h>
 
 #include <vtksys/CommandLineArguments.hxx>
-
 #include "CameraCalibrationMainWindow.h"
 
-int main(int argc, char *argv[])
+int appMain(int argc, char *argv[])
 {
   Q_INIT_RESOURCE(PlusCommonWidgets);
 
@@ -87,3 +86,69 @@ int main(int argc, char *argv[])
   mainWin->show();
   return app.exec();
 }
+
+#ifdef _WIN32
+#include <windows.h>
+#include <stdlib.h>
+#include <string.h>
+#include <tchar.h>
+
+// TODO: remove these two functions when VTK is updated to a version that contains vtksys::Encoding
+size_t vtksys_Encoding_wcstombs(char* dest, const wchar_t* str, size_t n)
+{
+  if(str == 0)
+  {
+    return (size_t)-1;
+  }
+  return WideCharToMultiByte(CP_ACP, 0, str, -1, dest, (int)n, NULL, NULL) - 1;
+}
+vtksys_stl::string vtksys_Encoding_ToNarrow(const vtksys_stl::wstring& wcstr)
+{
+  vtksys_stl::string str;
+  size_t length = vtksys_Encoding_wcstombs(0, wcstr.c_str(), 0) + 1;
+  if(length > 0)
+  {
+    std::vector<char> chars(length);
+    if(vtksys_Encoding_wcstombs(&chars[0], wcstr.c_str(), length) > 0)
+    {
+      str = &chars[0];
+    }
+  }
+  return str; 
+}
+
+int WINAPI WinMain(HINSTANCE hInstance,
+                   HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine,
+                   int nCmdShow)
+{
+  Q_UNUSED(hInstance);
+  Q_UNUSED(hPrevInstance);
+  Q_UNUSED(nCmdShow);
+
+  // CommandLineToArgvW has no narrow-character version, so we get the arguments in wide strings
+  // and then convert to regular string.
+  int argc=0;
+  LPWSTR* argvStringW = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+  std::vector< const char* > argv(argc); // usual const char** array used in main() functions
+  std::vector< std::string > argvString(argc); // this stores the strings that the argv pointers point to
+  for(int i=0; i<argc; i++)
+  {
+    // TODO: replace this by vtksys::Encoding::ToNarrow when VTK is updated to a version that contains vtksys::Encoding
+    argvString[i] = vtksys_Encoding_ToNarrow(argvStringW[i]);
+    argv[i] = argvString[i].c_str();
+  }
+
+  LocalFree(argvStringW);
+
+  return appMain(argc, const_cast< char** >(&argv[0]));
+}
+#else
+
+int main(int argc, char *argv[])
+{
+  return appMain(argc, argv);
+}
+
+#endif

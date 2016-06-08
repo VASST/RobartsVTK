@@ -29,7 +29,11 @@ INCLUDE(${PlusLib_USE_FILE})
 FIND_PACKAGE(PlusApp REQUIRED)
 INCLUDE_DIRECTORIES(${PlusApp_INCLUDE_DIRS})
 
-ADD_EXECUTABLE( CameraCalibration
+IF(WIN32)
+  SET(CameraCalib_WIN32 WIN32)
+ENDIF()
+
+ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
   main.cpp
   CameraCalibrationMainWindow.h
   CameraCalibrationMainWindow.cpp
@@ -38,6 +42,8 @@ ADD_EXECUTABLE( CameraCalibration
   CameraCalibrationMainWidget.ui
   OpenCVInternals.h
   OpenCVInternals.cpp
+  QScaledView.h
+  QScaledView.cpp
   mathUtil.cpp
   ${PlusApp_CommonWidgets_QRC}
   ${UISrcs}

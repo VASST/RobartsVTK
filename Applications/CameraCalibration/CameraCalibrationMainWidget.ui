@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>CameraCalibrationMainWidget</class>
  <widget class="QWidget" name="CameraCalibrationMainWidget">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>449</width>
-    <height>433</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Camera Calibration</string>
   </property>
@@ -19,6 +11,12 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QGroupBox" name="groupBox_DataCollection">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="title">
          <string>Data Collection</string>
         </property>
@@ -34,29 +32,6 @@
          <string>OpenCV Video</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="1" alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_LeftVideo">
-           <property name="text">
-            <string>Left Video</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1" alignment="Qt::AlignHCenter">
-          <widget class="QPushButton" name="pushButton_RightVideo">
-           <property name="text">
-            <string>Right Video</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="0">
           <widget class="QComboBox" name="comboBox_LeftCamera"/>
          </item>
@@ -71,8 +46,8 @@
         <property name="title">
          <string>Files</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_Files" stretch="0,0,0,0">
-         <item alignment="Qt::AlignHCenter">
+        <layout class="QGridLayout" name="gridLayout_Files">
+         <item row="0" column="1" alignment="Qt::AlignHCenter">
           <widget class="QWidget" name="widget_LeftContainerFiles" native="true">
            <layout class="QVBoxLayout" name="verticalLayout_LeftContainerFiles">
             <property name="leftMargin">
@@ -129,7 +104,7 @@
            </layout>
           </widget>
          </item>
-         <item alignment="Qt::AlignHCenter">
+         <item row="0" column="2" alignment="Qt::AlignHCenter">
           <widget class="QWidget" name="widget_RightContainerFiles" native="true">
            <layout class="QVBoxLayout" name="verticalLayout_RightContainerFiles">
             <property name="leftMargin">
@@ -180,7 +155,7 @@
            </layout>
           </widget>
          </item>
-         <item alignment="Qt::AlignHCenter">
+         <item row="2" column="1" colspan="2" alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_LoadCalibChessReg">
            <property name="text">
             <string>Calib Chess Reg.</string>
@@ -191,7 +166,7 @@
            </property>
           </widget>
          </item>
-         <item alignment="Qt::AlignHCenter">
+         <item row="1" column="1" colspan="2" alignment="Qt::AlignHCenter">
           <widget class="QPushButton" name="pushButton_LoadValidChessReg">
            <property name="text">
             <string>Valid Chess Reg.</string>
@@ -209,9 +184,29 @@
     </widget>
    </item>
    <item>
+    <widget class="QScaledView" name="openGLWidget_LeftVideo">
+     <property name="minimumSize">
+      <size>
+       <width>400</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QScaledView" name="openGLWidget_RightVideo">
+     <property name="minimumSize">
+      <size>
+       <width>400</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QTabWidget" name="tabWidget_Configurations">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_Configuration">
       <attribute name="title">
@@ -417,7 +412,11 @@
           <item>
            <widget class="QPushButton" name="pushButton_ComputeRightIntrinsic">
             <property name="text">
-             <string>Compute Right</string>
+             <string>Compute &amp;&amp; Save</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
             </property>
            </widget>
           </item>
@@ -484,7 +483,7 @@
        <item row="3" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_HMDRegistration">
          <property name="title">
-          <string>HMD Registration</string>
+          <string>HMD Landmark Registration</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_HMDRegistration">
           <item row="0" column="0" alignment="Qt::AlignHCenter">
@@ -504,7 +503,11 @@
           <item row="0" column="1">
            <widget class="QPushButton" name="pushButton_ComputeHMDLandmarks">
             <property name="text">
-             <string>Compute Landmarks</string>
+             <string>Compute &amp;&amp; Save</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
             </property>
            </widget>
           </item>
@@ -520,7 +523,11 @@
           <item row="1" column="1">
            <widget class="QPushButton" name="pushButton_StereoCompute">
             <property name="text">
-             <string>Compute</string>
+             <string>Compute &amp;&amp; Save</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
             </property>
            </widget>
           </item>
@@ -541,16 +548,20 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QPushButton" name="pushButton_ComputeLeftIntrinsic">
+           <widget class="QPushButton" name="pushButton_CaptureLeft">
             <property name="text">
-             <string>Compute Left</string>
+             <string>Capture Left</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_CaptureLeft">
+           <widget class="QPushButton" name="pushButton_ComputeLeftIntrinsic">
             <property name="text">
-             <string>Capture Left</string>
+             <string>Compute &amp;&amp; Save</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
             </property>
            </widget>
           </item>
@@ -569,12 +580,18 @@
          <property name="text">
           <string>Visual Tracking</string>
          </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item row="2" column="0" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="pushButton_ValidateVisual">
          <property name="text">
           <string>Validate Visual</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -597,6 +614,9 @@
          <property name="text">
           <string>Validate with Stylus</string>
          </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item row="5" column="0">
@@ -618,6 +638,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QScaledView</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">QScaledView.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc"/>
  </resources>

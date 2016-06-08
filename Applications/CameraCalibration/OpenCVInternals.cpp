@@ -71,7 +71,6 @@ bool OpenCVInternals::QueryFrame(int cameraIndex, cv::Mat& outFrame, int flags /
   }
   else
   {
-    cameraFeeds[cameraIndex]->grab();
     *cameraFeeds[cameraIndex] >> outFrame;
   }
 
