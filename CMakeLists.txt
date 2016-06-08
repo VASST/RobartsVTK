@@ -192,7 +192,7 @@ IF (RobartsVTK_USE_QT)
     FIND_PACKAGE(Qt5 QUIET COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS} NO_MODULE)
 
     IF ( NOT Qt5_FOUND )
-      MESSAGE( FATAL_ERROR "This project requires Qt4 or Qt5 for building PlusApp. These components are missing. Please verify configuration by selecting QT_QMAKE_EXECUTABLE (Qt4) or Qt5_DIR (Qt5) or turn off RobartsVTK_USE_QT option.")
+      MESSAGE( FATAL_ERROR "This project requires Qt4 or Qt5 for building RobartsVTK. These components are missing. Please verify configuration by selecting QT_QMAKE_EXECUTABLE (Qt4) or Qt5_DIR (Qt5) or turn off RobartsVTK_USE_QT option.")
     ENDIF()
     SET(QT_VERSION_MAJOR ${Qt5Widgets_VERSION_MAJOR})
   ENDIF()
