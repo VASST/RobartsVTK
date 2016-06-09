@@ -750,7 +750,8 @@ void CameraCalibrationMainWidget::LoadLeftIntrinsic()
     return;
   }
 
-  CVInternals->SetIntrinsicMatrix(LeftCameraIndex, cv::imread( FileName.toStdString() ));
+  cv::Mat image = cv::imread( FileName.toStdString() );
+  CVInternals->SetIntrinsicMatrix(LeftCameraIndex, image);
 
   LeftIntrinsicAvailable = true;
 }
@@ -768,7 +769,8 @@ void CameraCalibrationMainWidget::LoadRightIntrinsic()
     return;
   }
 
-  CVInternals->SetIntrinsicMatrix(RightCameraIndex, cv::imread( FileName.toStdString() ) );
+  cv::Mat image = cv::imread( FileName.toStdString() );
+  CVInternals->SetIntrinsicMatrix(RightCameraIndex, image);
 
   RightIntrinsicAvailable = true;
 }
@@ -786,7 +788,8 @@ void CameraCalibrationMainWidget::LoadLeftDistortion()
     return;
   }
 
-  CVInternals->SetDistortionCoeffs(LeftCameraIndex, cv::imread( FileName.toStdString() ) );
+  cv::Mat image = cv::imread( FileName.toStdString() );
+  CVInternals->SetDistortionCoeffs(LeftCameraIndex, image);
 
   LeftDistortionAvailable = true;
 }
@@ -804,7 +807,8 @@ void CameraCalibrationMainWidget::LoadRightDistortion()
     return;
   }
 
-  CVInternals->SetDistortionCoeffs(RightCameraIndex, cv::imread( FileName.toStdString() ) );
+  cv::Mat image = cv::imread( FileName.toStdString() );
+  CVInternals->SetDistortionCoeffs(RightCameraIndex, image);
 
   RightDistortionAvailable = true;
 }
@@ -1460,7 +1464,7 @@ void CameraCalibrationMainWidget::PerformRegBoardRegistration()
 
       // TODO : file dialog
       double *data = (double*)ValidBoardRegTransform->GetMatrix()->Element;
-      cvSave( "validCheckerBoardReg.xml", &cvMat( 4, 4, CV_64FC1, data ) );
+      cv::imwrite("validCheckerBoardReg.xml", cv::Mat(4, 4, CV_64FC1, data));
 
       ValidBoardAvailable = true;
     }
@@ -1550,7 +1554,7 @@ void CameraCalibrationMainWidget::PerformBoardRegistration()
 
       // TODO : file dialog
       double *data = (double*)BoardRegTransform->GetMatrix()->Element;
-      cvSave( "CheckerBoardReg.xml", &cvMat( 4, 4, CV_64FC1, data ) );
+      cv::imwrite("CheckerBoardReg.xml", cv::Mat(4, 4, CV_64FC1, data));
 
       BoardRegAvailable = true;
     }
@@ -1627,7 +1631,7 @@ void CameraCalibrationMainWidget::ComputeHMDRegistration()
       double *data = (double*)LeftLandmarkTransform->GetMatrix()->Element;
 
       // TODO : file dialog
-      cvSave( "Left_Landmark.xml", &cvMat(4,4,CV_64FC1, data ) );
+      cv::imwrite("Left_Landmark.xml", cv::Mat(4, 4, CV_64FC1, data));
     }
   }
 
@@ -1650,7 +1654,7 @@ void CameraCalibrationMainWidget::ComputeHMDRegistration()
       double *data = (double*)RightLandmarkTransform->GetMatrix()->Element;
 
       // TODO : file dialog
-      cvSave( "Right_Landmark.xml", &cvMat( 4, 4, CV_64FC1, data ) );
+      cv::imwrite("Right_Landmark.xml", cv::Mat(4, 4, CV_64FC1, data));
     }
   }
 }

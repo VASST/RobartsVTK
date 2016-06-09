@@ -894,7 +894,7 @@ void vtkCLVolumeReconstruction::FillVoxels()
   clSetKernelArg(adv_fill_voxels, 17, sizeof(cl_int), &intersection_counter);
 
   omp_set_lock(&lock);
-  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, adv_fill_voxels, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
+  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, adv_fill_voxels, 1, NULL, global_work_size, local_work_size, 0, NULL, NULL));
   omp_unset_lock(&lock);
 
   // Readout the device volume to local buffer
@@ -918,7 +918,7 @@ int vtkCLVolumeReconstruction::FindIntersections(int axis)
   clSetKernelArg(trace_intersections, 5, sizeof(cl_mem), &dev_bscan_plane_equation_queue);
   clSetKernelArg(trace_intersections, 6, sizeof(cl_int), &axis);
   omp_set_lock(&lock);
-  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, trace_intersections, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
+  OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, trace_intersections, 1, NULL, global_work_size, local_work_size, 0, NULL, NULL));
   omp_unset_lock(&lock);
 
   return max_vol_dim*max_vol_dim;
