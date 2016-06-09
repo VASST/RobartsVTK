@@ -121,7 +121,7 @@ protected:
   char* FileToString(const char*, const char*, size_t*);
 
   /* creates the OpenCL kernel given the device */
-  cl_kernel OpenCLKernelBuild(cl_program, cl_device_id, char *);
+  cl_kernel OpenCLKernelBuild(cl_program, cl_device_id, const std::string&);
 
   /* Initialize buffers */
   void InitializeBuffers();
@@ -130,7 +130,7 @@ protected:
   cl_mem OpenCLCreateBuffer(cl_context, cl_mem_flags, size_t, void * );
 
   /* */
-  void OpenCLCheckError(int, char *info = "");
+  void OpenCLCheckError(int, char *info = NULL);
 
   /* Multiply calibration matrix into position matrix */
   void CalibratePositionMatrix(float *, float * );

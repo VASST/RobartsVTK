@@ -534,9 +534,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(const float* zBuffer, const
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Load Z-Buffer: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Load Z-Buffer: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -553,9 +551,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadZBuffer(cudaStream_t* stream)
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Unload Z-Buffer: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Unload Z-Buffer: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -569,9 +565,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_loadrandomRayOffsets(const float* rando
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Load ray offsets: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std:cout << "Load ray offsets: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -582,9 +576,7 @@ bool CUDA_vtkCudaVolumeMapper_renderAlgo_unloadrandomRayOffsets(cudaStream_t* st
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Unload ray offsets: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Unload ray offsets: " << cudaGetErrorString( cudaGetLastError() ) << std:endl;
 #endif
 
   return (cudaGetLastError() == 0);

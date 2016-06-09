@@ -118,7 +118,4 @@ private:
   void operator=(const vtkImageMultiStatistics&) {}; //not implemented
 };
 
-#endif \\__VTKIMAGEMULTISTATISTICS_H__
-
-
-
+#endif

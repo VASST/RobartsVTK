@@ -106,9 +106,7 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   cudaBindTextureToArray(ClassifyKeyholeTexture, KeyholeTextureArray, Voxel_Classifier_ChannelDesc);
 
   cudaThreadSynchronize();
-  printf( "Load textures: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Load textures: " << std::endl << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 
   //allocate working memory for the output
   short* dev_OutputData = 0;
@@ -120,9 +118,7 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   ClassifyVolume<<< grid, threads, 0, *stream >>>((float2*)dev_InputData, dev_OutputData);
 
   cudaThreadSynchronize();
-  printf( "Classify: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Classify: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 
   //retrieve classified output
   cudaMemcpyAsync( outputData, dev_OutputData, sizeof(short)*VolumeSize,
@@ -130,9 +126,7 @@ void CUDAalgo_classifyVoxels( float* inputData, short* inputPrimaryTexture, shor
   cudaStreamSynchronize(*stream);
 
   cudaThreadSynchronize();
-  printf( "Memcpy: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Memcpy: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 
   //deallocate textures and image memory
   cudaFree( dev_InputData );

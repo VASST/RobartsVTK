@@ -575,7 +575,7 @@ char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* 
 }
 
 //--------------------------------------------------------------
-cl_kernel vtkCLVolumeReconstruction::OpenCLKernelBuild(cl_program program, cl_device_id device, char * kernel_name)
+cl_kernel vtkCLVolumeReconstruction::OpenCLKernelBuild(cl_program program, cl_device_id device, const std::string& kernel_name)
 {
   cl_int err;
   cl_kernel kernel = clCreateKernel(program, kernel_name, &err);
@@ -655,7 +655,7 @@ void vtkCLVolumeReconstruction::OpenCLCheckError(int err, char * info)
 {
   if (err != CL_SUCCESS)
   {
-    std::cout << "ERROR  " << info << ": " << err << std::endl;
+    std::cout << "ERROR  " << (info == NULL ? "" : info) << ": " << err << std::endl;
     exit(err);
   }
 }

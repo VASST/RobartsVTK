@@ -536,9 +536,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "DualImage Rendering Error Status 0.1: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "DualImage Rendering Error Status 0.1: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   if( transInfo.useSecondTransferFunction )
@@ -554,9 +552,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
     cudaThreadSynchronize();
-    printf( "DualImage Rendering Error Status 0.2: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "DualImage Rendering Error Status 0.2: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   }
@@ -571,9 +567,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "DualImage Rendering Error Status 1: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "DualImage Rendering Error Status 1: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   if( transInfo.useSecondTransferFunction )
@@ -588,9 +582,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "DualImage Rendering Error Status 2: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "DualImage Rendering Error Status 2: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   //shade the image
@@ -602,18 +594,14 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(const cudaOutputImage
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "DualImage Rendering Error Status 3: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "DualImage Rendering Error Status 3: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   CUDAkernel_shadeAlgo_doCelShade <<< grid, threads, 0, *stream >>>();
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "DualImage Rendering Error Status 4: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "DualImage Rendering Error Status 4: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
 
@@ -636,9 +624,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(const int frame, c
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Change Frame Status: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Change Frame Status: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -679,9 +665,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadTextures(cudaDualImageTran
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Bind transfer functions: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Bind transfer functions: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -744,9 +728,7 @@ bool CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadImageInfo(const float* dat
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Load volume information: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Load volume information: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);

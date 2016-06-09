@@ -276,18 +276,14 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "1D Rendering Error Status 1: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "1D Rendering Error Status 1: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   CUDA_vtkCuda1DVolumeMapper_CUDAkernel_Composite <<< grid, threads, 0, *stream >>>();
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "1D Rendering Error Status 2: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "1D Rendering Error Status 2: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   //shade the image
@@ -300,9 +296,7 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_doRender(const cudaOutputImageInforma
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "1D Rendering Error Status 3: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "1D Rendering Error Status 3: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -441,9 +435,7 @@ bool CUDA_vtkCuda1DVolumeMapper_renderAlgo_loadImageInfo(const float* data, cons
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Load volume information: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Load volume information: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);

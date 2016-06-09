@@ -185,9 +185,7 @@ bool CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo_changeFrame(const cudaArray* fr
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Change Frame Status: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Change Frame Status: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -224,9 +222,7 @@ bool CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo_doRender(const cudaOutputImageI
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "2D Rendering Error Status 1: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "2D Rendering Error Status 1: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   CUDA_vtkCudaDRRImageVolumeMapper_CUDAkernel_Composite <<< grid, threads, 0, *stream >>>();
@@ -248,9 +244,7 @@ bool CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo_doRender(const cudaOutputImageI
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "2D Rendering Error Status 3: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std:cout << "2D Rendering Error Status 3: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
@@ -288,9 +282,7 @@ bool CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo_loadImageInfo(const float* data
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "Load volume information: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "Load volume information: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   return (cudaGetLastError() == 0);
