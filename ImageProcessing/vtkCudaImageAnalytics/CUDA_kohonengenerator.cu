@@ -3,7 +3,7 @@
 #include "vtkCudaCommon.h"
 #include <float.h>
 #include <iostream>
-#include <stdio.h>
+#include <iostream>
 #include <time.h>
 
 //parameters held in constant memory

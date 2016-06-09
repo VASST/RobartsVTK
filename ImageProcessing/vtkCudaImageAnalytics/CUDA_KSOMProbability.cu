@@ -14,7 +14,7 @@
 #include "CUDA_commonKernels.h"
 #include "vtkCudaCommon.h"
 #include <float.h>
-#include <stdio.h>
+#include <iostream>
 
 __constant__ Kohonen_Probability_Information info;
 

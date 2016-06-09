@@ -4,9 +4,7 @@
 #include "CUDA_vtkCudaVolumeMapper_renderAlgo.h"
 #include <cuda.h>
 
-#include <stdio.h>
-
-#define DEBUG_VTKCUDAVISUALIZATION
+#include <iostream>
 
 #define BLOCK_DIM2D 16 //16 is optimal, 4 is the minimum and 16 is the maximum
 

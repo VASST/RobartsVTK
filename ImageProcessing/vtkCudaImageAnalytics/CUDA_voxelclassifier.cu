@@ -1,7 +1,7 @@
 #include "CUDA_voxelclassifier.h"
 #include "vtkCudaCommon.h"
 #include <float.h>
-#include <stdio.h>
+#include <iostream>
 
 __constant__ Voxel_Classifier_Information info;
 texture<short, 2, cudaReadModeElementType> ClassifyPrimaryTexture;

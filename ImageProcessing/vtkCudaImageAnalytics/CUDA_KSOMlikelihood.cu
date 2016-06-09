@@ -14,7 +14,7 @@
 #include "CUDA_commonKernels.h"
 #include "vtkCudaCommon.h"
 #include <float.h>
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 
 __constant__ KSOMLL_Information info;

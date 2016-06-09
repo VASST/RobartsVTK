@@ -1,7 +1,7 @@
 #include "CUDA_kohonenapplication.h"
 #include "vtkCudaCommon.h"
 #include <float.h>
-#include <stdio.h>
+#include <iostream>
 
 __constant__ Kohonen_Application_Information info;
 

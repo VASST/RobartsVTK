@@ -35,6 +35,7 @@
 #include "vtkCLVolumeReconstruction.h"
 #include "vtkObjectFactory.h"
 #include <iostream>
+#include <string>
 
 //--------------------------------------------------------------
 
@@ -578,7 +579,7 @@ char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* 
 cl_kernel vtkCLVolumeReconstruction::OpenCLKernelBuild(cl_program program, cl_device_id device, const std::string& kernel_name)
 {
   cl_int err;
-  cl_kernel kernel = clCreateKernel(program, kernel_name, &err);
+  cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &err);
   if (err != CL_SUCCESS)
   {
     size_t len;
