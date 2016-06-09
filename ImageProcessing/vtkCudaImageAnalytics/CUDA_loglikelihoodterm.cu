@@ -56,9 +56,7 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_IncrementInformation: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_IncrementInformation: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   dim3 threads(NUMTHREADS,1,1);
@@ -68,9 +66,7 @@ void CUDA_ILLT_IncrementInformation(T* labelData, T desiredValue, short* agreeme
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_IncrementInformation: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_IncrementInformation: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -83,9 +79,7 @@ void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* str
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_GetRelevantBuffers: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_GetRelevantBuffers: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -97,9 +91,7 @@ void CUDA_ILLT_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cuda
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CopyBackResult: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CopyBackResult: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -111,9 +103,7 @@ void CUDA_ILLT_AllocateHistogram(float** histogramGPU, int size, cudaStream_t* s
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_AllocateHistogram: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_AllocateHistogram: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -357,9 +347,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
   kern_PopulateWorkingUp<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CalculateMinMax: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   for(int t = (imageSize-1)/2+1; t > 0; t/=2)
   {
@@ -369,9 +357,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 #ifdef DEBUG_VTKCUDA_ILLT
     cudaThreadSynchronize();
-    printf( "CUDA_ILLT_CalculateMinMax: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   }
   cudaMemcpyAsync( &imMax, GPUWorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
@@ -390,9 +376,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 #ifdef DEBUG_VTKCUDA_ILLT
     cudaThreadSynchronize();
-    printf( "CUDA_ILLT_CalculateMinMax: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   }
   cudaMemcpyAsync( &imMin, GPUWorkingBuffer, sizeof(float), cudaMemcpyDeviceToHost, *stream );
@@ -405,9 +389,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CalculateHistogram: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CalculateHistogram: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   grid = GetGrid(imageSize);
@@ -417,9 +399,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms(float* outputBuffer, float* histogramG
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CalculateTerms: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CalculateTerms: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   cudaFree(GPUOutputBuffer);
@@ -450,9 +430,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
   kern_PopulateWorkingUp<T><<<grid,threads,0,*stream>>>(GPUWorkingBuffer, agreement, GPUInputBuffer, requiredAgreement, imageSize);
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CalculateMinMax: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   int t = 1;
   while(t/2<imageSize)
@@ -467,9 +445,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 #ifdef DEBUG_VTKCUDA_ILLT
     cudaThreadSynchronize();
-    printf( "CUDA_ILLT_CalculateMinMax: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   }
   cudaMemcpyAsync( &imMax, GPUWorkingBuffer, sizeof(float2), cudaMemcpyDeviceToHost, *stream );
@@ -492,9 +468,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 #ifdef DEBUG_VTKCUDA_ILLT
     cudaThreadSynchronize();
-    printf( "CUDA_ILLT_CalculateMinMax: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "CUDA_ILLT_CalculateMinMax: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
   }
   cudaMemcpyAsync( &imMin, GPUWorkingBuffer, sizeof(float2), cudaMemcpyDeviceToHost, *stream );
@@ -512,9 +486,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_PopulateHistogram: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_PopulateHistogram: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   //normalize histogram
@@ -537,9 +509,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_NormalizeHistogram: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_NormalizeHistogram: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   grid = GetGrid(imageSize);;
@@ -554,9 +524,7 @@ void CUDA_ILLT_CalculateHistogramAndTerms2D(float* outputBuffer, float* histogra
 
 #ifdef DEBUG_VTKCUDA_ILLT
   cudaThreadSynchronize();
-  printf( "CUDA_ILLT_CalculateTerms: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ILLT_CalculateTerms: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   cudaFree(GPUOutputBuffer);

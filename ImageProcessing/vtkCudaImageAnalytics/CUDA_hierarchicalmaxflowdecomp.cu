@@ -68,9 +68,7 @@ double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStre
 
 #ifdef DEBUG_VTKCUDAHMFD
     cudaThreadSynchronize();
-    printf( "Reduce: " );
-    printf( cudaGetErrorString( cudaGetLastError() ) );
-    printf( "\n" );
+    std::cout << "Reduce: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   }

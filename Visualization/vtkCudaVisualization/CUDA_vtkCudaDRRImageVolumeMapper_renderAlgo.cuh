@@ -230,9 +230,7 @@ bool CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo_doRender(const cudaOutputImageI
 
 #ifdef DEBUG_VTKCUDAVISUALIZATION
   cudaThreadSynchronize();
-  printf( "2D Rendering Error Status 2: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "2D Rendering Error Status 2: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   //shade the image

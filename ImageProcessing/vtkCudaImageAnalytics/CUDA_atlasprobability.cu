@@ -52,9 +52,7 @@ void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, i
 
 #ifdef DEBUG_VTKCUDA_IALP
   cudaThreadSynchronize();
-  printf( "CUDA_IncrementInformation: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_IncrementInformation: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 
   dim3 threads(NUMTHREADS,1,1);
@@ -64,9 +62,7 @@ void CUDA_IncrementInformation(T* labelData, T desiredValue, short* agreement, i
 
 #ifdef DEBUG_VTKCUDA_IALP
   cudaThreadSynchronize();
-  printf( "CUDA_IncrementInformation: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_IncrementInformation: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -80,9 +76,7 @@ void CUDA_GetRelevantBuffers(short** agreement, float** output, int size, cudaSt
 
 #ifdef DEBUG_VTKCUDA_IALP
   cudaThreadSynchronize();
-  printf( "CUDA_GetRelevantBuffers: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_GetRelevantBuffers: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -94,9 +88,7 @@ void CUDA_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cudaStrea
 
 #ifdef DEBUG_VTKCUDA_IALP
   cudaThreadSynchronize();
-  printf( "CUDA_CopyBackResult: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_CopyBackResult: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
 
@@ -242,8 +234,6 @@ void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int 
 
 #ifdef DEBUG_VTKCUDA_IALP
   cudaThreadSynchronize();
-  printf( "CUDA_ConvertInformation: " );
-  printf( cudaGetErrorString( cudaGetLastError() ) );
-  printf( "\n" );
+  std::cout << "CUDA_ConvertInformation: " << cudaGetErrorString( cudaGetLastError() ) << std::endl;
 #endif
 }
