@@ -118,7 +118,7 @@ public:
 
 protected:
   /* Utility functions */
-  char* FileToString(const char*, const char*, size_t*);
+  char* FileToString(const std::string& filename, const std::string& preamble, size_t*);
 
   /* creates the OpenCL kernel given the device */
   cl_kernel OpenCLKernelBuild(cl_program, cl_device_id, const std::string&);

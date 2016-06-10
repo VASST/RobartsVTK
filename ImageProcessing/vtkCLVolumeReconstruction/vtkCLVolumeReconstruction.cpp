@@ -36,6 +36,7 @@
 #include "vtkObjectFactory.h"
 #include <iostream>
 #include <string>
+#include <fstream>
 
 //--------------------------------------------------------------
 
@@ -535,42 +536,33 @@ void vtkCLVolumeReconstruction::GetOutputExtent(int * ptr)
 }
 
 //--------------------------------------------------------------
-char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* preamble, size_t* final_length)
+char* vtkCLVolumeReconstruction::FileToString(const std::string& filename, const std::string& preamble, size_t* final_length)
 {
-  FILE * file_stream = NULL;
-  size_t source_length;
-
   // open the OpenCL source code file
-  file_stream = fopen(filename, "rb");
-  if(file_stream == 0)
+  std::ifstream file_stream(filename, ios::in | ios::binary);
+  if(!file_stream.is_open())
   {
     return NULL;
   }
 
-  size_t preamble_length = strlen(preamble);
-
   // get the length of the source code
-  fseek(file_stream, 0, SEEK_END);
-  source_length = ftell(file_stream);
-  fseek(file_stream, 0, SEEK_SET);
+  file_stream.seekg (0, file_stream.end);
+  int source_length = file_stream.tellg();
+  file_stream.seekg (preamble.length(), file_stream.beg);
 
   // allocate a buffer for the source code string and read it in
-  char* source_str = (char *)malloc(source_length + preamble_length + 1);
-  memcpy(source_str, preamble, preamble_length);
-  if (fread((source_str) + preamble_length, source_length, 1, file_stream) != 1)
-  {
-    fclose(file_stream);
-    free(source_str);
-    return 0;
-  }
+  char* source_str = (char *)malloc(source_length + preamble.length() + 1);
+  memcpy(source_str, preamble.c_str(), preamble.length());
+
+  file_stream.read(&source_str[preamble.length()], source_length);
 
   // close the file and return the total length of the combined (preamble + source) string
-  fclose(file_stream);
+  file_stream.close();
   if(final_length != 0)
   {
-    *final_length = source_length + preamble_length;
+    *final_length = source_length + preamble.length();
   }
-  source_str[source_length + preamble_length] = '\0';
+  source_str[source_length + preamble.length()] = '\0';
 
   return source_str;
 }
