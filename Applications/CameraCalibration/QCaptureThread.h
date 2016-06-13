@@ -1,16 +1,14 @@
 /*=========================================================================
 
-Program:   tracking with GUI
-Module:    $RCSfile: usqvtk.h,v $
-Creator:   Elvis C. S. Chen <chene@robarts.ca>
+Program:   Camera Calibration
+Module:    $RCSfile: QCaptureThread.h,v $
+Creator:   Adam Rankin <arankin@robarts.ca>
 Language:  C++
-Author:    $Author: Elvis Chen $
-Date:      $Date: 2011/07/04 15:28:30 $
-Version:   $Revision: 0.99 $
+Author:    $Author: Adam Rankin $
 
 ==========================================================================
 
-Copyright (c) Elvis C. S. Chen, elvis.chen@gmail.com
+Copyright (c) Adam Rankin, arankin@robarts.ca
 
 Use, modification and redistribution of the software, in source or
 binary forms, are permitted provided that the following terms and
@@ -40,49 +38,41 @@ OR LOSS OF PROFIT OR BUSINESS INTERRUPTION) ARISING IN ANY WAY OUT OF
 THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
-
 =========================================================================*/
 
+#ifndef __QCAPTURETHREAD_H__
+#define __QCAPTURETHREAD_H__
 
-#ifndef __CameraCalibrationMainWindow_H__
-#define __CameraCalibrationMainWindow_H__
+#include "OpenCVInternals.h"
+#include <QThread>
+#include <opencv2/core.hpp>
 
-#include <QMainWindow>
-#include "CameraCalibrationMainWidget.h"
-
-// forward declaration
-class QAction;
-class QMenu;
-
-class CameraCalibrationMainWindow : public QMainWindow
+class QCaptureThread : public QThread
 {
   Q_OBJECT
 
 public:
-  CameraCalibrationMainWindow();
+  QCaptureThread(QObject *parent = 0);
+  ~QCaptureThread();
 
-  void SetPLUSTrackingChannel(const std::string& trackingChannel);
+  bool StartCapture(int cameraIndex);
+  void StopCapture(bool shouldWait = true);
 
-protected slots:
-  void LoadLeftIntrinsic();
-  void LoadRightIntrinsic();
-  void LoadLeftDistortion();
-  void LoadRightDistortion();
+  void SetCommonMutex(QMutex* mutex);
+  void SetOpenCVInternals(OpenCVInternals& cameraCapture);
 
-  void AboutApp();
-  void AboutRobarts();
+signals:
+  void capturedImage(const cv::Mat& image, int cameraIndex);
 
 protected:
-  void CreateActions();
+  void run() Q_DECL_OVERRIDE;
 
-private:
-  QAction *aboutAppAct;
-  QAction *aboutRobartsAct;
-  QAction *exitAct;
-  QMenu *fileMenu;
-  QMenu *helpMenu;
-
-  CameraCalibrationMainWidget *CCMainWidget;
+  cv::Mat CapturedImage;
+  OpenCVInternals* CameraCapture;
+  QMutex LocalMutex;
+  QMutex* CommonMutex;  
+  bool abort;
+  int CameraIndex;
 };
 
 #endif

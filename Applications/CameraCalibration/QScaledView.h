@@ -21,13 +21,15 @@ public:
   void mouseMoveEvent(QMouseEvent *ev);
   void mousePressEvent(QMouseEvent *ev);
   virtual void setPixmap(const QPixmap &pixmap);
+  virtual void clearPixmap();
 
 protected:
   virtual void cursorAction(QMouseEvent *ev, bool click = false);
 
+  bool isDataSet;
   qreal scale;
   QTransform scaler, scalerI;
-  const QPixmap *pixmap;
+  QPixmap pixmap;
 };
 
 #endif // SCALEDVIEW_H

@@ -1,7 +1,7 @@
 /*=========================================================================
 
-Program:   tracking with GUI
-Module:    $RCSfile: usqvtk.cpp,v $
+Program:   Main window
+Module:    $RCSfile: CameraCalibrationMainWindow.cpp,v $
 Creator:   Elvis C. S. Chen <chene@robarts.ca>
 Language:  C++
 Author:    $Author: Elvis Chen $
@@ -40,52 +40,68 @@ OR LOSS OF PROFIT OR BUSINESS INTERRUPTION) ARISING IN ANY WAY OUT OF
 THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
-
 =========================================================================*/
 
 #include "CameraCalibrationMainWindow.h"
 #include <QAction>
+#include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
 
+//----------------------------------------------------------------------------
 CameraCalibrationMainWindow::CameraCalibrationMainWindow()
 {
   CCMainWidget = new CameraCalibrationMainWidget(this);
   setCentralWidget( CCMainWidget );
 
-  createActions();
-  createMenus();
-  createStatusBar();
+  CreateActions();
 }
 
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWindow::SetPLUSTrackingChannel(const std::string& trackingChannel)
 {
   this->CCMainWidget->SetPLUSTrackingChannel(trackingChannel);
 }
 
-void CameraCalibrationMainWindow::createActions()
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::CreateActions()
 {
   exitAct = new QAction( tr( "E&xit" ), this );
   exitAct->setShortcuts( QKeySequence::Quit );
   exitAct->setStatusTip( tr( "Exit the application" ) );
-  connect( exitAct, SIGNAL( triggered() ),
-    this, SLOT( close() ) );
+  connect( exitAct, SIGNAL( triggered() ), this, SLOT( close() ) );
 
   aboutAppAct = new QAction( tr( "&About this App" ), this );
   aboutAppAct->setStatusTip( tr("About Camera Calibration" ) );
-  connect( aboutAppAct, SIGNAL( triggered() ),
-    this, SLOT( aboutApp() ) );
+  connect( aboutAppAct, SIGNAL( triggered() ), this, SLOT( AboutApp() ) );
 
   aboutRobartsAct = new QAction( tr( "About &Robarts" ), this );
   aboutAppAct->setStatusTip( tr("About Robarts Research Institute" ) );
-  connect( aboutRobartsAct, SIGNAL( triggered() ),
-    this, SLOT( aboutRobarts() ) );
-}
+  connect( aboutRobartsAct, SIGNAL( triggered() ), this, SLOT( AboutRobarts() ) );
 
-void CameraCalibrationMainWindow::createMenus()
-{
+  QAction* leftIntrinsicAct = new QAction( tr( "Load Left Intrinsic" ), this );
+  leftIntrinsicAct->setStatusTip( tr( "Load Left Intrinsic" ) );
+  connect( leftIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadLeftIntrinsic() ) );
+
+  QAction* rightIntrinsicAct = new QAction( tr( "Load Right Intrinsic" ), this );
+  rightIntrinsicAct->setStatusTip( tr( "Load Right Intrinsic" ) );
+  connect( rightIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadRightIntrinsic() ) );
+
+  QAction* leftDistortionAct = new QAction( tr( "Load Left Distortion" ), this );
+  leftDistortionAct->setStatusTip( tr( "Load Left Distortion" ) );
+  connect( leftDistortionAct, SIGNAL( triggered() ), this, SLOT( LoadLeftDistortion() ) );
+
+  QAction* rightDistortionAct = new QAction( tr( "Load Right Distortion" ), this );
+  rightDistortionAct->setStatusTip( tr( "Load Right Distortion" ) );
+  connect( rightDistortionAct, SIGNAL( triggered() ), this, SLOT( LoadRightDistortion() ) );
+
   fileMenu = menuBar()->addMenu( tr( "&File" ) );
+  fileMenu->addSeparator();
+  fileMenu->addAction( leftIntrinsicAct );
+  fileMenu->addAction( leftDistortionAct );
+  fileMenu->addAction( rightIntrinsicAct );
+  fileMenu->addAction( rightDistortionAct );
   fileMenu->addSeparator();
   fileMenu->addAction( exitAct );
 
@@ -96,7 +112,73 @@ void CameraCalibrationMainWindow::createMenus()
   helpMenu->addAction( aboutRobartsAct );
 }
 
-void CameraCalibrationMainWindow::aboutApp()
+//---------------------------------------------------------
+// file operation
+void CameraCalibrationMainWindow::LoadLeftIntrinsic()
+{
+  QString FileName = QFileDialog::getOpenFileName( this,
+    tr( "Open Left Intrinsic" ),
+    QDir::currentPath(),
+    "OpenCV XML (*.xml *.XML)" );
+
+  if ( FileName.size() == 0 )
+  {
+    return;
+  }
+
+  this->CCMainWidget->LoadLeftIntrinsic(FileName.toStdString());
+}
+
+//---------------------------------------------------------
+void CameraCalibrationMainWindow::LoadRightIntrinsic()
+{
+  QString FileName = QFileDialog::getOpenFileName( this,
+    tr( "Open Right Intrinsic" ),
+    QDir::currentPath(),
+    "OpenCV XML (*.xml *.XML)" );
+
+  if ( FileName.size() == 0 )
+  {
+    return;
+  }
+
+  this->CCMainWidget->LoadRightIntrinsic(FileName.toStdString());
+}
+
+//---------------------------------------------------------
+void CameraCalibrationMainWindow::LoadLeftDistortion()
+{
+  QString FileName = QFileDialog::getOpenFileName( this,
+    tr( "Open left Distortion" ),
+    QDir::currentPath(),
+    "OpenCV XML (*.xml *.XML)" );
+
+  if ( FileName.size() == 0 )
+  {
+    return;
+  }
+
+  this->CCMainWidget->LoadLeftDistortion(FileName.toStdString());
+}
+
+//---------------------------------------------------------
+void CameraCalibrationMainWindow::LoadRightDistortion()
+{
+  QString FileName = QFileDialog::getOpenFileName( this,
+    tr( "Open right Distortion" ),
+    QDir::currentPath(),
+    "OpenCV XML (*.xml *.XML)" );
+
+  if ( FileName.size() == 0 )
+  {
+    return;
+  }
+
+  this->CCMainWidget->LoadRightDistortion(FileName.toStdString());
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::AboutApp()
 {
   QMessageBox::about( this, tr( "About Camera Calibration" ),
     tr( "This camera calibration application is brought to you by:\n\n"
@@ -105,18 +187,12 @@ void CameraCalibrationMainWindow::aboutApp()
     ) );
 }
 
-
-void CameraCalibrationMainWindow::aboutRobarts()
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::AboutRobarts()
 {
   QMessageBox::about( this, tr( "About Robarts Research Institute" ),
     tr( "Robarts Research Institute\n\n"
     "London, Ontario\n"
     "Canada, N6A 5K8"
     ) );
-}
-
-
-void CameraCalibrationMainWindow::createStatusBar()
-{
-  statusBar()->showMessage( tr( "Ready" ) );
 }

@@ -11,6 +11,7 @@ OpenCVInternals::~OpenCVInternals()
 {
   for ( std::map<int, cv::VideoCapture*>::iterator it = cameraFeeds.begin(); it != cameraFeeds.end(); ++it )
   {
+    it->second->release();
     delete it->second;
   }
 }
@@ -54,6 +55,7 @@ bool OpenCVInternals::ReleaseCamera(int cameraIndex)
     return true;
   }
 
+  cameraFeeds[cameraIndex]->release();
   delete cameraFeeds[cameraIndex];
   cameraFeeds.erase(cameraFeeds.find(cameraIndex));
 

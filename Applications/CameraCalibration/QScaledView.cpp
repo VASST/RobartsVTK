@@ -15,28 +15,40 @@
 //----------------------------------------------------------------------------
 QScaledView::QScaledView(QWidget *parent)
   : QOpenGLWidget(parent)
-  , pixmap(NULL)
 {
 }
 
 //----------------------------------------------------------------------------
 void QScaledView::setPixmap(const QPixmap &p)
 {
-  pixmap = &p;
-  resizeEvent(0);
+  isDataSet = true;
+  QSize oldSize = pixmap.size();
+  pixmap = p;
+  if( oldSize != pixmap.size() )
+  {
+    resizeEvent(0);
+  }
   update();
+}
+
+
+//----------------------------------------------------------------------------
+void QScaledView::clearPixmap()
+{
+  pixmap = QPixmap();
+  isDataSet = false;
 }
 
 //----------------------------------------------------------------------------
 void QScaledView::resizeEvent(QResizeEvent *ev)
 {
-  if (!pixmap)
+  if (!isDataSet)
   {
     return;
   }
 
   // determine scale of correct aspect-ratio
-  float src_aspect = pixmap->width()/(float)pixmap->height();
+  float src_aspect = pixmap.width()/(float)pixmap.height();
   float dest_aspect = width()/(float)height();
   float w;  // new width
   if (src_aspect > dest_aspect)
@@ -48,7 +60,7 @@ void QScaledView::resizeEvent(QResizeEvent *ev)
     w = height()*src_aspect - 1;
   }
 
-  scale = w/pixmap->width();
+  scale = w/pixmap.width();
   scaler = QTransform().scale(scale, scale);
   scalerI = scaler.inverted();
 }
@@ -57,17 +69,12 @@ void QScaledView::resizeEvent(QResizeEvent *ev)
 void QScaledView::paintEvent(QPaintEvent *ev)
 {
   QPainter painter(this);
-  if (!pixmap)
-  {
-    painter.fillRect(this->rect(), QBrush(Qt::gray, Qt::BDiagPattern));
-    return;
-  }
 
-  painter.setRenderHint(QPainter::SmoothPixmapTransform);
+  painter.setRenderHints(QPainter::SmoothPixmapTransform);
 
   painter.setWorldTransform(scaler);
   QRect damaged = scalerI.mapRect(ev->rect());
-  painter.drawPixmap(damaged, *pixmap, damaged);
+  painter.drawPixmap(damaged, pixmap, damaged);
 }
 
 
