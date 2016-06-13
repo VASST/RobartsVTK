@@ -59,7 +59,6 @@ POSSIBILITY OF SUCH DAMAGES.
 // local includes
 #include "OpenCVInternals.h"
 #include "QCaptureThread.h"
-#include "mathUtil.h"
 
 #include <fstream>
 #include <cv.h>
@@ -100,14 +99,17 @@ class CameraCalibrationMainWidget : public QWidget
 public:
   void SetPLUSTrackingChannel(const std::string& trackingChannel);
 
-  void LoadLeftIntrinsic(const std::string& fileName);
-  void LoadRightIntrinsic(const std::string& fileName);
-  void LoadLeftDistortion(const std::string& fileName);
-  void LoadRightDistortion(const std::string& fileName);
+  void LoadLeftCameraParameters(const std::string& fileName);
+  void LoadRightCameraParameters(const std::string& fileName);
 
 protected:
   /// Initialize all UI elements
   void InitUI();
+
+  /// Thread-safe retrieval of latest captured image
+  bool RetrieveLatestImage(int cameraIndex, cv::Mat& outImage);
+  bool RetrieveLatestLeftImage(cv::Mat& outImage);
+  bool RetrieveLatestRightImage(cv::Mat& outImage);
 
   /// Process a single checkerboard
   bool ProcessCheckerBoard( const cv::Mat& image, int width, int height, double size, std::vector<cv::Point2f>& outCorners );
@@ -120,9 +122,9 @@ protected:
   /// \param width number of horizontal squares
   /// \param quadSize size of the board in unit of choice
   /// \param outCorners vector of 3d points to export the points too
-  void CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3d>& outCorners);
+  void CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3f>& outCorners);
 
-  void ComputeIntrinsicsAndDistortion( int cameraIndex, double& totalAvgErr, std::vector<float>& perViewErrors );
+  bool ComputeIntrinsicsAndDistortion( int cameraIndex, double& totalAvgErr, std::vector<cv::Mat>& rotationsVector, std::vector<cv::Mat>& translationsVector, std::vector<float>& perViewErrors );
 
   int GetBoardWidthCalib() const;
   int GetBoardHeightCalib() const;
@@ -130,11 +132,18 @@ protected:
 
   void ShowStatusMessage(const char* message);
 
-  double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3d> >& objectPoints,
+  double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
                                     const std::vector<std::vector<cv::Point2f> >& imagePoints,
                                     const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
                                     const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
                                     std::vector<float>& perViewErrors, bool fisheye);
+
+  void SaveCameraParameters( const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs,
+    const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+    const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+    double totalAvgErr );
+
+  void LoadCameraParameters(int cameraIndex, const std::string& fileName);
 
 protected slots:
   /*!
@@ -149,6 +158,7 @@ protected slots:
   // OpenCV
   void ResetCaptureCount();
 
+  /// When the image capture thread fires a signal with a new image, store it and show it
   void OnImageCaptured(const cv::Mat& image, int cameraIndex);
 
   // start the video feeds
@@ -171,9 +181,6 @@ protected slots:
   // optical flow tracking
   void OpticalFlowTracking();
 
-  void WriteIntrinsicsToFile( int cameraIndex, const std::string& filename );
-  void WriteDistortionToFile( int cameraIndex, const std::string& filename );
-
   /// acquire images from both camera, find the corners, and store them
   void StereoAcquire();
   void ComputeFundamentalMatrix();
@@ -183,6 +190,7 @@ protected:
   OpenCVInternals* CVInternals;
   std::map<int, cv::Mat> CameraImages;
   std::map<int, int> CaptureCount;
+  int StereoCaptureCount;
   std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPoints;
   std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPointsCount;
   int MinBoardNeeded;
@@ -201,14 +209,9 @@ protected:
   bool RightIntrinsicAvailable;
   bool LeftDistortionAvailable;
   bool RightDistortionAvailable;
-  std::vector< p3 > ImagePointsLeft;
-  std::vector< p3 > ImagePointsRight;
-  std::vector< p3 > ReprojectionPointsLeft;
-  std::vector< p3 > ReprojectionPointsRight;
-  std::vector< p3 > HomographyPointsLeft;
-  std::vector< p3 > HomographyPointsRight;
-  std::vector< p3 > TrackedPointsLeft;
-  std::vector< p3 > TrackedPointsRight;
+  std::map<int, std::vector< cv::Vec3d > > StereoImagePoints;
+  std::map<int, std::vector< cv::Vec3d > > ReprojectionPoints;
+  std::map<int, std::vector< cv::Vec3d > > HomographyPoints;
 
   /// PLUS related variables
   std::string TrackingDataChannelName;

@@ -64,8 +64,8 @@ public:
   void SetPLUSTrackingChannel(const std::string& trackingChannel);
 
 protected slots:
-  void LoadLeftIntrinsic();
-  void LoadRightIntrinsic();
+  void LoadLeftCameraParameters();
+  void LoadRightCameraParameters();
   void LoadLeftDistortion();
   void LoadRightDistortion();
 

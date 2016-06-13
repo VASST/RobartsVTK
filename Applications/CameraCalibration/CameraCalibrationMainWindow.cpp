@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
+#include <vtkPlusConfig.h>
 
 //----------------------------------------------------------------------------
 CameraCalibrationMainWindow::CameraCalibrationMainWindow()
@@ -56,6 +57,15 @@ CameraCalibrationMainWindow::CameraCalibrationMainWindow()
   setCentralWidget( CCMainWidget );
 
   CreateActions();
+
+  // Give some time for other widget events to propagate
+  for( int i = 0; i < 10; ++i )
+  {
+    QCoreApplication::processEvents();
+  }
+
+  // Then shrink window to minimum size possible
+  this->resize(this->minimumSizeHint());
 }
 
 //----------------------------------------------------------------------------
@@ -80,28 +90,18 @@ void CameraCalibrationMainWindow::CreateActions()
   aboutAppAct->setStatusTip( tr("About Robarts Research Institute" ) );
   connect( aboutRobartsAct, SIGNAL( triggered() ), this, SLOT( AboutRobarts() ) );
 
-  QAction* leftIntrinsicAct = new QAction( tr( "Load Left Intrinsic" ), this );
-  leftIntrinsicAct->setStatusTip( tr( "Load Left Intrinsic" ) );
-  connect( leftIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadLeftIntrinsic() ) );
+  QAction* leftIntrinsicAct = new QAction( tr( "Load Left Camera Parameters" ), this );
+  leftIntrinsicAct->setStatusTip( tr( "Load Left Camera Parameters" ) );
+  connect( leftIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadLeftCameraParameters() ) );
 
-  QAction* rightIntrinsicAct = new QAction( tr( "Load Right Intrinsic" ), this );
-  rightIntrinsicAct->setStatusTip( tr( "Load Right Intrinsic" ) );
-  connect( rightIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadRightIntrinsic() ) );
-
-  QAction* leftDistortionAct = new QAction( tr( "Load Left Distortion" ), this );
-  leftDistortionAct->setStatusTip( tr( "Load Left Distortion" ) );
-  connect( leftDistortionAct, SIGNAL( triggered() ), this, SLOT( LoadLeftDistortion() ) );
-
-  QAction* rightDistortionAct = new QAction( tr( "Load Right Distortion" ), this );
-  rightDistortionAct->setStatusTip( tr( "Load Right Distortion" ) );
-  connect( rightDistortionAct, SIGNAL( triggered() ), this, SLOT( LoadRightDistortion() ) );
+  QAction* rightIntrinsicAct = new QAction( tr( "Load Right Camera Parameters" ), this );
+  rightIntrinsicAct->setStatusTip( tr( "Load Right Camera Parameters" ) );
+  connect( rightIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadRightCameraParameters() ) );
 
   fileMenu = menuBar()->addMenu( tr( "&File" ) );
   fileMenu->addSeparator();
   fileMenu->addAction( leftIntrinsicAct );
-  fileMenu->addAction( leftDistortionAct );
   fileMenu->addAction( rightIntrinsicAct );
-  fileMenu->addAction( rightDistortionAct );
   fileMenu->addSeparator();
   fileMenu->addAction( exitAct );
 
@@ -114,85 +114,53 @@ void CameraCalibrationMainWindow::CreateActions()
 
 //---------------------------------------------------------
 // file operation
-void CameraCalibrationMainWindow::LoadLeftIntrinsic()
+void CameraCalibrationMainWindow::LoadLeftCameraParameters()
 {
   QString FileName = QFileDialog::getOpenFileName( this,
-    tr( "Open Left Intrinsic" ),
-    QDir::currentPath(),
-    "OpenCV XML (*.xml *.XML)" );
+                     tr( "Open Left Camera Parameters" ),
+                     QString(vtkPlusConfig::GetInstance()->GetOutputDirectory().c_str()),
+                     "OpenCV XML (*.xml *.XML)" );
 
   if ( FileName.size() == 0 )
   {
     return;
   }
 
-  this->CCMainWidget->LoadLeftIntrinsic(FileName.toStdString());
+  this->CCMainWidget->LoadLeftCameraParameters(FileName.toStdString());
 }
 
 //---------------------------------------------------------
-void CameraCalibrationMainWindow::LoadRightIntrinsic()
+void CameraCalibrationMainWindow::LoadRightCameraParameters()
 {
   QString FileName = QFileDialog::getOpenFileName( this,
-    tr( "Open Right Intrinsic" ),
-    QDir::currentPath(),
-    "OpenCV XML (*.xml *.XML)" );
+                     tr( "Open Right Camera Parameters" ),
+                     QString(vtkPlusConfig::GetInstance()->GetOutputDirectory().c_str()),
+                     "OpenCV XML (*.xml *.XML)" );
 
   if ( FileName.size() == 0 )
   {
     return;
   }
 
-  this->CCMainWidget->LoadRightIntrinsic(FileName.toStdString());
-}
-
-//---------------------------------------------------------
-void CameraCalibrationMainWindow::LoadLeftDistortion()
-{
-  QString FileName = QFileDialog::getOpenFileName( this,
-    tr( "Open left Distortion" ),
-    QDir::currentPath(),
-    "OpenCV XML (*.xml *.XML)" );
-
-  if ( FileName.size() == 0 )
-  {
-    return;
-  }
-
-  this->CCMainWidget->LoadLeftDistortion(FileName.toStdString());
-}
-
-//---------------------------------------------------------
-void CameraCalibrationMainWindow::LoadRightDistortion()
-{
-  QString FileName = QFileDialog::getOpenFileName( this,
-    tr( "Open right Distortion" ),
-    QDir::currentPath(),
-    "OpenCV XML (*.xml *.XML)" );
-
-  if ( FileName.size() == 0 )
-  {
-    return;
-  }
-
-  this->CCMainWidget->LoadRightDistortion(FileName.toStdString());
+  this->CCMainWidget->LoadRightCameraParameters(FileName.toStdString());
 }
 
 //----------------------------------------------------------------------------
 void CameraCalibrationMainWindow::AboutApp()
 {
   QMessageBox::about( this, tr( "About Camera Calibration" ),
-    tr( "This camera calibration application is brought to you by:\n\n"
-    "Elvis C.S. Chen\n\n"
-    "chene@robarts.ca"
-    ) );
+                      tr( "This camera calibration application is brought to you by:\n\n"
+                          "Elvis C.S. Chen\n\n"
+                          "chene@robarts.ca"
+                        ) );
 }
 
 //----------------------------------------------------------------------------
 void CameraCalibrationMainWindow::AboutRobarts()
 {
   QMessageBox::about( this, tr( "About Robarts Research Institute" ),
-    tr( "Robarts Research Institute\n\n"
-    "London, Ontario\n"
-    "Canada, N6A 5K8"
-    ) );
+                      tr( "Robarts Research Institute\n\n"
+                          "London, Ontario\n"
+                          "Canada, N6A 5K8"
+                        ) );
 }

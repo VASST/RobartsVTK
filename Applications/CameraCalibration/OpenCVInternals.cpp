@@ -96,7 +96,7 @@ void OpenCVInternals::SetIntrinsicMatrix(int cameraIndex, cv::Mat& matrix)
   }
   else
   {
-    intrinsic_matrix[cameraIndex] = matrix;
+    matrix.copyTo(intrinsic_matrix[cameraIndex]);
   }
 }
 
@@ -126,7 +126,7 @@ void OpenCVInternals::SetDistortionCoeffs(int cameraIndex, cv::Mat& matrix)
   }
   else
   {
-    distortion_coeffs[cameraIndex] = matrix;
+    matrix.copyTo(distortion_coeffs[cameraIndex]);
   }
 }
 
