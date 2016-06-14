@@ -179,7 +179,7 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
     }
   }
 
-  CVInternals = new OpenCVInternals();
+  CVInternals = new OpenCVCameraCapture();
 
   LeftCameraCaptureThread = new QCaptureThread();
   RightCameraCaptureThread = new QCaptureThread();
@@ -189,31 +189,6 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   RightCameraCaptureThread->SetCommonMutex(&OpenCVInternalsMutex);
 
   InitUI();
-
-  fileOutput[0] = new ofstream( "Left_Results.csv" );
-  fileOutput[1] = new ofstream( "Right_Results.csv" );
-  fileOutput[2] = new ofstream( "triangulation.csv" );
-  fileOutput[3] = new ofstream( "Results.csv" );
-
-  for(int i = 0; i < 2; i++)
-  {
-    *(fileOutput[i]) << "IndexNumber" << ", " <<"ImageSegX" << ", " << "ImageSegY" << ", "
-                     << "HomographyX" << ", " << "HomographyY" << ", " << "HomographyZ" << ", "
-                     << "ReprojectionX" << ", " << "ReprojectionY" << ", "
-                     << "ActualPosX" << ", " << "ActualPosY" << ", " << "ActualPosZ" << std::endl;
-  }
-
-  *(fileOutput[2]) << "triangulate_x" << ", " << "triangulate_y" << ", " << "triangulate_z" << std::endl;
-
-  *(fileOutput[3]) << "IndexNumber" << ", " <<"ImageSegX" << ", " << "ImageSegY" << ", "
-                   << "HomographyX" << ", " << "HomographyY" << ", " << "HomographyZ" << ", "
-                   << "ReprojectionX" << ", " << "ReprojectionY" << ", "
-                   << "ActualPosX" << ", " << "ActualPosY" << ", " << "ActualPosZ" << ", , ,"
-                   << "IndexNumber" << ", " << "ImageSegX" << ", " << "ImageSegY" << ", "
-                   << "HomographyX" << ", " << "HomographyY" << ", " << "HomographyZ" << ", "
-                   << "ReprojectionX" << ", " << "ReprojectionY" << ", "
-                   << "ActualPosX" << ", " << "ActualPosY" << ", " << "ActualPosZ" << ", , ,"
-                   << "triangulate_x" << ", " << "triangulate_y" << ", " << "triangulate_z" << std::endl;
 }
 
 //---------------------------------------------------------
@@ -227,15 +202,6 @@ CameraCalibrationMainWidget::~CameraCalibrationMainWidget()
   RightCameraCaptureThread->StopCapture(true);
   delete RightCameraCaptureThread;
   delete CVInternals;
-
-  for(int i = 0; i < 4; i++)
-  {
-    if( fileOutput[i] )
-    {
-      fileOutput[i]->close();
-      delete fileOutput[i];
-    }
-  }
 
   delete GUITimer;
   delete OpticalFlowTrackingTimer;
@@ -376,6 +342,36 @@ int CameraCalibrationMainWidget::GetBoardHeightCalib() const
 double CameraCalibrationMainWidget::GetBoardQuadSizeCalib() const
 {
   return ui.doubleSpinBox_QuadSizeCalib->value();
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::SetIntrinsicMatrix(int cameraIndex, cv::Mat& matrix)
+{
+  if( cameraIndex != INVALID_CAMERA_INDEX )
+  {
+    matrix.copyTo(IntrinsicMatrix[cameraIndex]);
+  }
+}
+
+//----------------------------------------------------------------------------
+cv::Mat& CameraCalibrationMainWidget::GetInstrinsicMatrix(int cameraIndex)
+{
+  return IntrinsicMatrix[cameraIndex];
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::SetDistortionCoeffs(int cameraIndex, cv::Mat& matrix)
+{
+  if( cameraIndex != INVALID_CAMERA_INDEX )
+  {
+    matrix.copyTo(DistortionCoefficients[cameraIndex]);
+  }
+}
+
+//----------------------------------------------------------------------------
+cv::Mat& CameraCalibrationMainWidget::GetDistortionCoeffs(int cameraIndex)
+{
+  return DistortionCoefficients[cameraIndex];
 }
 
 //----------------------------------------------------------------------------
@@ -630,6 +626,8 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
     CaptureCount.erase(CaptureCount.find(LeftCameraIndex));
     ChessboardCornerPoints.erase(ChessboardCornerPoints.find(LeftCameraIndex));
     ChessboardCornerPointsCount.erase(ChessboardCornerPointsCount.find(LeftCameraIndex));
+    IntrinsicMatrix.erase(IntrinsicMatrix.find(LeftCameraIndex));
+    DistortionCoefficients.erase(DistortionCoefficients.find(LeftCameraIndex));
   }
 
   if( cameraIndex == INVALID_CAMERA_INDEX )
@@ -653,6 +651,8 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   LeftCameraIndex = cameraIndex;
   CameraImages[LeftCameraIndex];
   CaptureCount[LeftCameraIndex] = 0;
+  IntrinsicMatrix[LeftCameraIndex];
+  DistortionCoefficients[LeftCameraIndex];
   StereoCaptureCount = 0;
   ChessboardCornerPoints[LeftCameraIndex];
   ChessboardCornerPointsCount[LeftCameraIndex];
@@ -684,6 +684,8 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
     CaptureCount.erase(CaptureCount.find(RightCameraIndex));
     ChessboardCornerPoints.erase(ChessboardCornerPoints.find(RightCameraIndex));
     ChessboardCornerPointsCount.erase(ChessboardCornerPointsCount.find(RightCameraIndex));
+    IntrinsicMatrix.erase(IntrinsicMatrix.find(RightCameraIndex));
+    DistortionCoefficients.erase(DistortionCoefficients.find(RightCameraIndex));
   }
 
   if( cameraIndex == INVALID_CAMERA_INDEX )
@@ -707,6 +709,8 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   RightCameraIndex = cameraIndex;
   CameraImages[RightCameraIndex];
   CaptureCount[RightCameraIndex] = 0;
+  IntrinsicMatrix[RightCameraIndex];
+  DistortionCoefficients[RightCameraIndex];
   StereoCaptureCount = 0;
   ChessboardCornerPoints[RightCameraIndex];
   ChessboardCornerPointsCount[RightCameraIndex];
@@ -881,8 +885,8 @@ void CameraCalibrationMainWidget::ComputeLeftIntrinsic()
   cv::Mat image;
   if( this->RetrieveLatestLeftImage(image) )
   {
-    this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), *CVInternals->GetInstrinsicMatrix(LeftCameraIndex),
-                                *CVInternals->GetDistortionCoeffs(LeftCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[LeftCameraIndex], totalAvgErr );
+    this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), GetInstrinsicMatrix(LeftCameraIndex),
+                                GetDistortionCoeffs(LeftCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[LeftCameraIndex], totalAvgErr );
   }
 
   LOG_INFO("Camera parameters written computed and saved to: " << saveFileName.toStdString());
@@ -911,8 +915,8 @@ void CameraCalibrationMainWidget::ComputeRightIntrinsic()
   cv::Mat image;
   if( this->RetrieveLatestRightImage(image) )
   {
-    this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), *CVInternals->GetInstrinsicMatrix(RightCameraIndex),
-                                *CVInternals->GetDistortionCoeffs(RightCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[RightCameraIndex], totalAvgErr );
+    this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), GetInstrinsicMatrix(RightCameraIndex),
+                                GetDistortionCoeffs(RightCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[RightCameraIndex], totalAvgErr );
   }
 
   LOG_INFO("Camera parameters written computed and saved to: " << saveFileName.toStdString());
@@ -980,7 +984,7 @@ void CameraCalibrationMainWidget::SaveCameraParameters( const std::string& filen
 //----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::SaveCameraParameters(const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs, const cv::Mat& rvec, const cv::Mat& tvec, const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints, double totalAvgErr)
 {
-    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+  cv::FileStorage fs(filename, cv::FileStorage::WRITE);
 
   fs << "calibration_time_utc" << vtkPlusAccurateTimer::GetUniversalTime();
 
@@ -1026,9 +1030,8 @@ void CameraCalibrationMainWidget::LoadCameraParameters(int cameraIndex, const st
   cv::Mat distCoeffs;
   fs["distortion_coefficients"] >> distCoeffs;
 
-  QMutexLocker locker(&OpenCVInternalsMutex);
-  CVInternals->SetIntrinsicMatrix(cameraIndex, cameraMatrix);
-  CVInternals->SetDistortionCoeffs(cameraIndex, distCoeffs);
+  SetIntrinsicMatrix(cameraIndex, cameraMatrix);
+  SetDistortionCoeffs(cameraIndex, distCoeffs);
 }
 
 //---------------------------------------------------------
@@ -1054,11 +1057,8 @@ bool CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraInde
   double reprojectionError = cv::calibrateCamera(objectPoints, ChessboardCornerPoints[cameraIndex], cv::Size(CameraImages[cameraIndex].size[0], CameraImages[cameraIndex].size[1]),
                              cameraMatrix, distCoeffs, rotationsVector, translationsVector, CV_CALIB_FIX_K4|CV_CALIB_FIX_K5);
 
-  {
-    QMutexLocker locker(&OpenCVInternalsMutex);
-    CVInternals->SetIntrinsicMatrix(cameraIndex, cameraMatrix);
-    CVInternals->SetDistortionCoeffs(cameraIndex, distCoeffs);
-  }
+  SetIntrinsicMatrix(cameraIndex, cameraMatrix);
+  SetDistortionCoeffs(cameraIndex, distCoeffs);
 
   totalAvgErr = ComputeReprojectionErrors(objectPoints, ChessboardCornerPoints[cameraIndex], rotationsVector, translationsVector, cameraMatrix,
                                           distCoeffs, perViewErrors, false);
@@ -1167,7 +1167,7 @@ void CameraCalibrationMainWidget::OnImageCaptured(const cv::Mat& image, int came
     ui.scaledView_LeftVideo->setPixmap(QPixmap::fromImage(img));
     ui.scaledView_LeftVideo->update();
   }
-  else
+  else if( cameraIndex == RightCameraIndex )
   {
     QMutexLocker locker(&RightImageStorageMutex);
     image.copyTo(CameraImages[RightCameraIndex]);
@@ -1214,7 +1214,7 @@ void CameraCalibrationMainWidget::StereoAcquire()
   if ( !leftFound || !rightFound )
   {
     LOG_WARNING("Unable to locate chessboards. Please try again.")
-      ShowStatusMessage("Unable to locate chessboards. Please try again.");
+    ShowStatusMessage("Unable to locate chessboards. Please try again.");
     return;
   }
 
@@ -1273,8 +1273,8 @@ void CameraCalibrationMainWidget::ComputeFundamentalMatrix()
       // if intrinsics are available, use them
       cv::stereoCalibrate(objectPoints,
                           StereoImagePoints[LeftCameraIndex], StereoImagePoints[RightCameraIndex],
-                          *CVInternals->GetInstrinsicMatrix(LeftCameraIndex), *CVInternals->GetDistortionCoeffs(LeftCameraIndex),
-                          *CVInternals->GetInstrinsicMatrix(RightCameraIndex), *CVInternals->GetDistortionCoeffs(RightCameraIndex),
+                          GetInstrinsicMatrix(LeftCameraIndex), GetDistortionCoeffs(LeftCameraIndex),
+                          GetInstrinsicMatrix(RightCameraIndex), GetDistortionCoeffs(RightCameraIndex),
                           cv::Size(image.size[0], image.size[1]),
                           rvec, tvec,
                           essentialMatrix,
@@ -1306,11 +1306,10 @@ void CameraCalibrationMainWidget::ComputeFundamentalMatrix()
                          0,
                          cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6));
 
-    QMutexLocker locker(&OpenCVInternalsMutex);
-    CVInternals->SetIntrinsicMatrix(LeftCameraIndex, leftIntrinsicMatrix);
-    CVInternals->SetIntrinsicMatrix(RightCameraIndex, rightIntrinsicMatrix);
-    CVInternals->SetDistortionCoeffs(LeftCameraIndex, leftDistortionCoefficients);
-    CVInternals->SetDistortionCoeffs(RightCameraIndex, rightDistortionCoefficients);
+    SetIntrinsicMatrix(LeftCameraIndex, leftIntrinsicMatrix);
+    SetIntrinsicMatrix(RightCameraIndex, rightIntrinsicMatrix);
+    SetDistortionCoeffs(LeftCameraIndex, leftDistortionCoefficients);
+    SetDistortionCoeffs(RightCameraIndex, rightDistortionCoefficients);
 
     LOG_INFO("Stereo and dual mono calibrations performed with average reprojection error of " << totalAvgErr);
     ShowStatusMessage("Stereo and dual mono calibrations performed.");

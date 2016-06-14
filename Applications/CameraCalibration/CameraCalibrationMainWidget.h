@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkSmartPointer.h>
 
 // local includes
-#include "OpenCVInternals.h"
+#include "OpenCVCameraCapture.h"
 #include "QCaptureThread.h"
 
 #include <fstream>
@@ -130,6 +130,12 @@ protected:
   int GetBoardHeightCalib() const;
   double GetBoardQuadSizeCalib() const;
 
+  void SetIntrinsicMatrix(int cameraIndex, cv::Mat& matrix);
+  cv::Mat& GetInstrinsicMatrix(int cameraIndex);
+
+  void SetDistortionCoeffs(int cameraIndex, cv::Mat& matrix);
+  cv::Mat& GetDistortionCoeffs(int cameraIndex);
+
   void ShowStatusMessage(const char* message);
 
   double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
@@ -191,16 +197,17 @@ protected slots:
 
 protected:
   QSettings AppSettings;
-  OpenCVInternals* CVInternals;
+  OpenCVCameraCapture* CVInternals;
   std::map<int, cv::Mat> CameraImages;
   std::map<int, int> CaptureCount;
+  std::map<int, cv::Mat> IntrinsicMatrix;
+  std::map<int, cv::Mat> DistortionCoefficients;
   int StereoCaptureCount;
   std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPoints;
   std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPointsCount;
   int MinBoardNeeded;
   int LeftCameraIndex;
   int RightCameraIndex;
-  ofstream* fileOutput[4];
   QCaptureThread*                               LeftCameraCaptureThread;
   QCaptureThread*                               RightCameraCaptureThread;
   QMutex                                        OpenCVInternalsMutex;

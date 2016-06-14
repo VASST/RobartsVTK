@@ -42,10 +42,12 @@ ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
   CameraCalibrationMainWidget.h
   CameraCalibrationMainWidget.cpp
   CameraCalibrationMainWidget.ui
-  OpenCVInternals.h
-  OpenCVInternals.cpp
+  OpenCVCameraCapture.h
+  OpenCVCameraCapture.cpp
   QScaledView.h
   QScaledView.cpp
+  Threads/QComputeThread.h
+  Threads/QComputeThread.cpp
   QCaptureThread.h
   QCaptureThread.cpp
   ${PlusApp_CommonWidgets_QRC}

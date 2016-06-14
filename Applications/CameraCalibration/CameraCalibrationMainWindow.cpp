@@ -56,16 +56,9 @@ CameraCalibrationMainWindow::CameraCalibrationMainWindow()
   CCMainWidget = new CameraCalibrationMainWidget(this);
   setCentralWidget( CCMainWidget );
 
+  this->layout()->setSizeConstraint(QLayout::SetFixedSize);
+
   CreateActions();
-
-  // Give some time for other widget events to propagate
-  for( int i = 0; i < 10; ++i )
-  {
-    QCoreApplication::processEvents();
-  }
-
-  // Then shrink window to minimum size possible
-  this->resize(this->minimumSizeHint());
 }
 
 //----------------------------------------------------------------------------

@@ -4,19 +4,15 @@
 #include <map>
 #include <opencv2/videoio.hpp>
 
-class OpenCVInternals 
+class OpenCVCameraCapture 
 {
   typedef std::map<int, cv::VideoCapture*> IndexFeedMap;
   typedef IndexFeedMap::iterator IndexFeedMapIterator;
   typedef IndexFeedMap::const_iterator IndexFeedMapConstIterator;
 
-  typedef std::map<int, cv::Mat> IndexMatrixMap;
-  typedef IndexMatrixMap::iterator IndexMatrixMapIterator;
-  typedef IndexMatrixMap::const_iterator IndexMatrixMapConstIterator;
-
 public:
-	OpenCVInternals();
-	~OpenCVInternals();
+	OpenCVCameraCapture();
+	~OpenCVCameraCapture();
 
 	// return true if a particular feed is available
 	bool IsFeedAvailable( int i ) const;
@@ -27,16 +23,8 @@ public:
 
 	int CameraCount() const;
 
-  void SetIntrinsicMatrix(int cameraIndex, cv::Mat& matrix);
-  cv::Mat* GetInstrinsicMatrix(int cameraIndex);
-
-  void SetDistortionCoeffs(int cameraIndex, cv::Mat& matrix);
-  cv::Mat* GetDistortionCoeffs(int cameraIndex);
-
 protected:
 	std::map<int, cv::VideoCapture*> cameraFeeds;
-	std::map<int, cv::Mat> intrinsic_matrix;
-	std::map<int, cv::Mat> distortion_coeffs;
 };
 
 #endif // of __OPENCVINTERNALS_H__

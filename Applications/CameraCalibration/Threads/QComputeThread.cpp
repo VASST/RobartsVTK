@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Camera Calibration
-Module:    $RCSfile: QCaptureThread.cpp,v $
+Module:    $RCSfile: QComputeThread.cpp,v $
 Creator:   Adam Rankin <arankin@robarts.ca>
 Language:  C++
 Author:    $Author: Adam Rankin $
@@ -40,7 +40,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 =========================================================================*/
 
-#include "QCaptureThread.h"
+#include "QComputeThread.h"
 
 // PLUS includes
 #include <PlusCommon.h>
@@ -52,118 +52,68 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <opencv2/imgproc.hpp>
 
 //----------------------------------------------------------------------------
-QCaptureThread::QCaptureThread(QObject *parent /*= 0*/)
+QComputeThread::QComputeThread(QObject *parent /*= 0*/)
   : QThread(parent)
-  , CameraCapture(NULL)
-  , CameraIndex(-1)
-  , abort(false)
+  , Computation(COMPUTATION_NONE)
 {
 
 }
 
 //----------------------------------------------------------------------------
-QCaptureThread::~QCaptureThread()
+QComputeThread::~QComputeThread()
 {
-  {
-    QMutexLocker locker(&LocalMutex);
-    abort = true;
-  }
-
   wait();
 }
 
 //----------------------------------------------------------------------------
-bool QCaptureThread::StartCapture(int cameraIndex)
+void QComputeThread::run()
+{
+  ComputationType compType;
+  {
+    QMutexLocker locker(&Mutex);
+    compType = Computation;
+  }
+
+  if( compType == COMPUTATION_MONO_CALIBRATE )
+  {
+    emit monoCalibrationComplete();
+  }
+  else if( compType == COMPUTATION_STEREO_CALIBRATE )
+  {
+    emit stereoCalibrationComplete();
+  }
+
+  return;
+}
+
+//----------------------------------------------------------------------------
+bool QComputeThread::CalibrateCamera()
 {
   if (!isRunning())
   {
-    if( CommonMutex == NULL )
     {
-      LOG_ERROR("Common mutex not set. Cannot co-operate with other capture threads.");
-      return false;
-    }
-
-    CommonMutex->lock();
-    if( !CameraCapture->InitializeCamera(cameraIndex) )
-    {
-      LOG_ERROR("Unable to initialize camera with camera index: " << cameraIndex);
-      CommonMutex->unlock();
-      return false;
-    }
-    CommonMutex->unlock();
-
-    {
-      QMutexLocker locker(&LocalMutex);
-      CameraIndex = cameraIndex;
+      QMutexLocker locker(&Mutex);
+      Computation = COMPUTATION_MONO_CALIBRATE;
     }
 
     start(LowPriority);
   }
 
-  return true;
+  return false;
 }
 
 //----------------------------------------------------------------------------
-void QCaptureThread::StopCapture(bool shouldWait /* = true */)
+bool QComputeThread::StereoCalibrate()
 {
-  if (isRunning())
+  if (!isRunning())
   {
     {
-      QMutexLocker locker(&LocalMutex);
-      abort = true;
+      QMutexLocker locker(&Mutex);
+      Computation = COMPUTATION_STEREO_CALIBRATE;
     }
 
-    if( shouldWait )
-    {
-      wait();
-    }
-
-    CommonMutex->lock();
-    CameraCapture->ReleaseCamera(CameraIndex);
-    CommonMutex->unlock();
-  }
-}
-
-//----------------------------------------------------------------------------
-void QCaptureThread::SetCommonMutex(QMutex* mutex)
-{
-  if( isRunning() )
-  {
-    LOG_ERROR("Critical failure. Common mutex changed while thread is running.");
-    return;
+    start(LowPriority);
   }
 
-  QMutexLocker locker(&LocalMutex);
-  if( mutex != NULL )
-  {
-    this->CommonMutex = mutex;
-  }
-}
-
-//----------------------------------------------------------------------------
-void QCaptureThread::SetOpenCVInternals(OpenCVCameraCapture& cameraCapture)
-{
-  QMutexLocker locker(&LocalMutex);
-  this->CameraCapture = &cameraCapture;
-}
-
-//----------------------------------------------------------------------------
-void QCaptureThread::run()
-{
-  while(true)
-  {
-    QMutexLocker locker(&LocalMutex);
-    if( this->CameraCapture != NULL )
-    {
-      if( CameraCapture->QueryFrame(CameraIndex, CapturedImage) )
-      {
-        emit capturedImage(CapturedImage, CameraIndex);
-      }
-    }
-
-    if( abort )
-    {
-      return;
-    }
-  }
+  return false;
 }

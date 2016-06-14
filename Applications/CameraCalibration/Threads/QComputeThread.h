@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Camera Calibration
-Module:    $RCSfile: QCaptureThread.h,v $
+Module:    $RCSfile: QComputeThread.h,v $
 Creator:   Adam Rankin <arankin@robarts.ca>
 Language:  C++
 Author:    $Author: Adam Rankin $
@@ -40,39 +40,39 @@ POSSIBILITY OF SUCH DAMAGES.
 
 =========================================================================*/
 
-#ifndef __QCAPTURETHREAD_H__
-#define __QCAPTURETHREAD_H__
+#ifndef __QCOMPUTETHREAD_H__
+#define __QCOMPUTETHREAD_H__
 
-#include "OpenCVCameraCapture.h"
 #include <QThread>
 #include <opencv2/core.hpp>
 
-class QCaptureThread : public QThread
+class QComputeThread : public QThread
 {
+  enum ComputationType
+  {
+    COMPUTATION_NONE,
+    COMPUTATION_MONO_CALIBRATE,
+    COMPUTATION_STEREO_CALIBRATE
+  };
+
   Q_OBJECT
 
 public:
-  QCaptureThread(QObject *parent = 0);
-  ~QCaptureThread();
+  QComputeThread(QObject *parent = 0);
+  ~QComputeThread();
 
-  bool StartCapture(int cameraIndex);
-  void StopCapture(bool shouldWait = true);
-
-  void SetCommonMutex(QMutex* mutex);
-  void SetOpenCVInternals(OpenCVCameraCapture& cameraCapture);
+  bool CalibrateCamera();
+  bool StereoCalibrate();
 
 signals:
-  void capturedImage(const cv::Mat& image, int cameraIndex);
+  void monoCalibrationComplete();
+  void stereoCalibrationComplete();
 
 protected:
   void run() Q_DECL_OVERRIDE;
 
-  cv::Mat CapturedImage;
-  OpenCVCameraCapture* CameraCapture;
-  QMutex LocalMutex;
-  QMutex* CommonMutex;  
-  bool abort;
-  int CameraIndex;
+  ComputationType Computation;
+  QMutex          Mutex;
 };
 
 #endif
