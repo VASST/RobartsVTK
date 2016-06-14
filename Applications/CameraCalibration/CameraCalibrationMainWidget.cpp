@@ -882,7 +882,7 @@ void CameraCalibrationMainWidget::ComputeLeftIntrinsic()
   if( this->RetrieveLatestLeftImage(image) )
   {
     this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), *CVInternals->GetInstrinsicMatrix(LeftCameraIndex),
-                                       *CVInternals->GetDistortionCoeffs(LeftCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[LeftCameraIndex], totalAvgErr );
+                                *CVInternals->GetDistortionCoeffs(LeftCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[LeftCameraIndex], totalAvgErr );
   }
 
   LOG_INFO("Camera parameters written computed and saved to: " << saveFileName.toStdString());
@@ -912,7 +912,7 @@ void CameraCalibrationMainWidget::ComputeRightIntrinsic()
   if( this->RetrieveLatestRightImage(image) )
   {
     this->SaveCameraParameters( saveFileName.toStdString(), cv::Size(image.size[0], image.size[1]), *CVInternals->GetInstrinsicMatrix(RightCameraIndex),
-                                       *CVInternals->GetDistortionCoeffs(RightCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[RightCameraIndex], totalAvgErr );
+                                *CVInternals->GetDistortionCoeffs(RightCameraIndex), rvecs, tvecs, perViewErrors, ChessboardCornerPoints[RightCameraIndex], totalAvgErr );
   }
 
   LOG_INFO("Camera parameters written computed and saved to: " << saveFileName.toStdString());
@@ -963,6 +963,45 @@ void CameraCalibrationMainWidget::SaveCameraParameters( const std::string& filen
 
     fs << "extrinsic_parameters" << bigmat;
   }
+
+  if(!imagePoints.empty() )
+  {
+    cv::Mat imagePtMat((int)imagePoints.size(), (int)imagePoints[0].size(), CV_32FC2);
+    for( size_t i = 0; i < imagePoints.size(); i++ )
+    {
+      cv::Mat r = imagePtMat.row(int(i)).reshape(2, imagePtMat.cols);
+      cv::Mat imgpti(imagePoints[i]);
+      imgpti.copyTo(r);
+    }
+    fs << "image_points" << imagePtMat;
+  }
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::SaveCameraParameters(const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs, const cv::Mat& rvec, const cv::Mat& tvec, const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints, double totalAvgErr)
+{
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+
+  fs << "calibration_time_utc" << vtkPlusAccurateTimer::GetUniversalTime();
+
+  fs << "camera_matrix" << cameraMatrix;
+
+  fs << "distortion_coefficients" << distCoeffs;
+
+  fs << "image_width" << imageSize.width;
+  fs << "image_height" << imageSize.height;
+  fs << "board_width" << ui.spinBox_BoardWidthCalib->value();
+  fs << "board_height" << ui.spinBox_BoardHeightCalib->value();
+  fs << "square_size" << ui.doubleSpinBox_QuadSizeCalib->value();
+
+  fs << "avg_reprojection_error" << totalAvgErr;
+  if (!reprojErrs.empty())
+  {
+    fs << "per_view_reprojection_errors" << cv::Mat(reprojErrs);
+  }
+
+  fs << "rotation_matrix" << rvec;
+  fs << "translation_matrix" << tvec;
 
   if(!imagePoints.empty() )
   {
@@ -1174,6 +1213,8 @@ void CameraCalibrationMainWidget::StereoAcquire()
   // make sure we found equal number of corners from both images
   if ( !leftFound || !rightFound )
   {
+    LOG_WARNING("Unable to locate chessboards. Please try again.")
+      ShowStatusMessage("Unable to locate chessboards. Please try again.");
     return;
   }
 
@@ -1181,8 +1222,8 @@ void CameraCalibrationMainWidget::StereoAcquire()
   cv::cvtColor( leftCopy, leftGray, CV_BGR2GRAY );
   cv::cvtColor( rightCopy, rightGray, CV_BGR2GRAY );
 
-  cv::cornerSubPix(leftGray, leftCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ) );
-  cv::cornerSubPix(rightGray, rightCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ) );
+  cv::cornerSubPix(leftGray, leftCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.1 ) );
+  cv::cornerSubPix(rightGray, rightCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.1 ) );
 
   cv::drawChessboardCorners(leftCopy, board_sz, leftCorners, leftFound);
   cv::drawChessboardCorners(rightCopy, board_sz, rightCorners, leftFound);
@@ -1190,124 +1231,108 @@ void CameraCalibrationMainWidget::StereoAcquire()
   cv::imshow("LeftResult", leftCopy);
   cv::imshow("RightResult", rightCopy);
 
-  bool leftFlip = false;
-  bool rightFlip = false;
+  StereoImagePoints[LeftCameraIndex].push_back(leftCorners);
+  StereoImagePoints[RightCameraIndex].push_back(rightCorners);
 
-  // sometimes OpenCV returns the corner in the wrong order
-  if ( leftCorners[board_n-1].x < leftCorners[0].x )
-  {
-    leftFlip = true;
-  }
-
-  if ( rightCorners[board_n-1].x < rightCorners[0].x )
-  {
-    rightFlip = true;
-  }
-
-  // now, enter everything into the external storage
-  cv::Vec3d point;
-  point[2] = 0.0;
-  for ( int i = 0, idx=(board_n-1); i < leftCorners.size(); i++, idx-- )
-  {
-    if ( !leftFlip )
-    {
-      point[0] = leftCorners[i].x;
-      point[1] = leftCorners[i].y;
-    }
-    else
-    {
-      point[0] = leftCorners[idx].x;
-      point[1] = leftCorners[idx].y;
-    }
-    StereoImagePoints[LeftCameraIndex].push_back( point );
-  }
-
-  LOG_INFO("Collected: " << StereoImagePoints[LeftCameraIndex].size() << " left points so far.");
-
-  point[2] = 0.0;
-  for ( int i = 0, idx=(board_n-1); i < rightCorners.size(); i++, idx-- )
-  {
-    if ( !rightFlip )
-    {
-      point[0] = rightCorners[i].x;
-      point[1] = rightCorners[i].y;
-    }
-    else
-    {
-      point[0] = rightCorners[idx].x;
-      point[1] = rightCorners[idx].y;
-    }
-    StereoImagePoints[RightCameraIndex].push_back( point );
-  }
-
-  LOG_INFO("Collected: " << StereoImagePoints[RightCameraIndex].size() << " right points so far.");
+  StereoCaptureCount++;
 
   if( StereoCaptureCount >= MinBoardNeeded )
   {
     ui.pushButton_StereoCompute->setEnabled(true);
   }
 
-  StereoCaptureCount++;
+  std::stringstream ss;
+  ss << "Captured " << StereoCaptureCount << " images so far. " << MinBoardNeeded << " needed.";
+  LOG_INFO(ss.str());
+  ShowStatusMessage(ss.str().c_str());
 }
 
 //---------------------------------------------------------
 void CameraCalibrationMainWidget::ComputeFundamentalMatrix()
 {
-  int nPoints = StereoImagePoints[LeftCameraIndex].size();
-
-  // make sure we have more than 8 points and same for both cameras
-  if ( nPoints != StereoImagePoints[RightCameraIndex].size() || nPoints < 8 )
+  // make sure we have same for both cameras
+  if ( StereoImagePoints[LeftCameraIndex].size() != StereoImagePoints[RightCameraIndex].size() )
   {
     return;
   }
 
-  cv::Mat image_pointsL(nPoints, 2, CV_32FC1);
-  cv::Mat image_pointsR( nPoints, 2, CV_32FC1 );
-  cv::Mat object_points( nPoints, 3, CV_32FC1 );
+  std::vector<std::vector<cv::Point3f> > objectPoints(1);
+  CalcBoardCornerPositions(GetBoardHeightCalib(), GetBoardWidthCalib(), GetBoardQuadSizeCalib(), objectPoints[0]);
+  objectPoints.resize(StereoImagePoints[LeftCameraIndex].size(), objectPoints[0]);
 
-  // copy over
-  int board_n = GetBoardWidthCalib() * GetBoardHeightCalib();
-
-  for ( int i = 0; i < nPoints; i++ )
-  {
-    image_pointsL.at<float>(i,0) = StereoImagePoints[LeftCameraIndex][i].x;
-    image_pointsL.at<float>(i,1) = StereoImagePoints[LeftCameraIndex][i].y;
-    image_pointsR.at<float>(i,0) = StereoImagePoints[LeftCameraIndex][i].x;
-    image_pointsR.at<float>(i,1) = StereoImagePoints[LeftCameraIndex][i].y;
-
-    object_points.at<float>(i,0) = (float)((i%board_n)/GetBoardWidthCalib()) * 17.0;
-    object_points.at<float>(i,1) = (float)((i%board_n)/GetBoardWidthCalib()) * 17.0;
-    object_points.at<float>(i,2) = 0.0;
-  }
-
-  cv::Mat intrinsic_matrixL( 3, 3, CV_64FC1 );
-  cv::Mat intrinsic_matrixR( 3, 3, CV_64FC1 );
-  cv::Mat rmat( 3, 3, CV_64FC1 );
-  cv::Mat tmat( 3, 1, CV_64FC1 );
-  cv::Mat distortion_coeffsL( 4, 1,CV_64FC1 );
-  cv::Mat distortion_coeffsR( 4, 1,CV_64FC1 );
-  cv::Mat Essential_matrix( 3, 3, CV_64FC1 );
-  cv::Mat Fundamental_matrix( 3, 3, CV_64FC1 );
-  cv::Mat point_counts( nPoints / board_n, 1, CV_32SC1 );
-  cv::Mat fundamental_matrix( 3, 3, CV_32FC1 );
-  cv::Mat status( 1, nPoints, CV_8UC1 );
-
-  for ( int i = 0; i < nPoints/board_n; i++ )
-  {
-    point_counts.at<float>(i,0) = board_n;
-  }
+  cv::Mat rvec;
+  cv::Mat tvec;
+  cv::Mat essentialMatrix( 3, 3, CV_64FC1 );
+  cv::Mat fundamentalMatrix( 3, 3, CV_64FC1 );
 
   if ( LeftIntrinsicAvailable && RightIntrinsicAvailable )
   {
-    // if intrinsics are available, use them
-    cv::stereoCalibrate(object_points, image_pointsL, image_pointsR, *CVInternals->GetInstrinsicMatrix(LeftCameraIndex), *CVInternals->GetDistortionCoeffs(LeftCameraIndex), *CVInternals->GetInstrinsicMatrix(RightCameraIndex), *CVInternals->GetDistortionCoeffs(RightCameraIndex),
-                        cv::Size(CameraImages[0].size[0], CameraImages[0].size[1]), rmat, tmat, Essential_matrix, Fundamental_matrix, CV_CALIB_FIX_INTRINSIC, cv::TermCriteria(CV_TERMCRIT_ITER+CV_TERMCRIT_EPS, 30, 1e-6));
+    cv::Mat image;
+    if( this->RetrieveLatestLeftImage(image) || this->RetrieveLatestRightImage(image) )
+    {
+      // if intrinsics are available, use them
+      cv::stereoCalibrate(objectPoints,
+                          StereoImagePoints[LeftCameraIndex], StereoImagePoints[RightCameraIndex],
+                          *CVInternals->GetInstrinsicMatrix(LeftCameraIndex), *CVInternals->GetDistortionCoeffs(LeftCameraIndex),
+                          *CVInternals->GetInstrinsicMatrix(RightCameraIndex), *CVInternals->GetDistortionCoeffs(RightCameraIndex),
+                          cv::Size(image.size[0], image.size[1]),
+                          rvec, tvec,
+                          essentialMatrix,
+                          fundamentalMatrix,
+                          CV_CALIB_FIX_INTRINSIC,
+                          cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6));
+
+      QString saveFileName = QFileDialog::getSaveFileName(this, "Save stereo parameters", vtkPlusConfig::GetInstance()->GetOutputDirectory().c_str(), "*.xml");
+      cv::FileStorage fs(saveFileName.toStdString(), cv::FileStorage::WRITE);
+      fs << "fundamental_matrix" << fundamentalMatrix;
+      fs << "essential_matrix" << essentialMatrix;
+    }
   }
   else
   {
-    cv::stereoCalibrate(object_points, image_pointsL, image_pointsR, intrinsic_matrixL, distortion_coeffsL, intrinsic_matrixR, distortion_coeffsR, cv::Size(CameraImages[0].size[0], CameraImages[0].size[1]),
-                        rmat, tmat, Essential_matrix, Fundamental_matrix, 0, cv::TermCriteria(CV_TERMCRIT_ITER+CV_TERMCRIT_EPS, 30, 1e-6));
-  }
+    cv::Mat leftIntrinsicMatrix(cv::Mat::eye(3, 3, CV_64F));
+    cv::Mat rightIntrinsicMatrix(cv::Mat::eye(3, 3, CV_64F));
+    cv::Mat leftDistortionCoefficients(cv::Mat::zeros(8, 1, CV_64F));
+    cv::Mat rightDistortionCoefficients(cv::Mat::zeros(8, 1, CV_64F));
 
-  fundamental_matrix = cv::findFundamentalMat(image_pointsL, image_pointsR, CV_FM_RANSAC, 1.0, 0.99);
+    double totalAvgErr = cv::stereoCalibrate(objectPoints,
+                         StereoImagePoints[LeftCameraIndex], StereoImagePoints[RightCameraIndex],
+                         leftIntrinsicMatrix, leftDistortionCoefficients,
+                         rightIntrinsicMatrix, rightDistortionCoefficients,
+                         cv::Size(CameraImages[0].size[0], CameraImages[0].size[1]),
+                         rvec, tvec,
+                         essentialMatrix,
+                         fundamentalMatrix,
+                         0,
+                         cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6));
+
+    QMutexLocker locker(&OpenCVInternalsMutex);
+    CVInternals->SetIntrinsicMatrix(LeftCameraIndex, leftIntrinsicMatrix);
+    CVInternals->SetIntrinsicMatrix(RightCameraIndex, rightIntrinsicMatrix);
+    CVInternals->SetDistortionCoeffs(LeftCameraIndex, leftDistortionCoefficients);
+    CVInternals->SetDistortionCoeffs(RightCameraIndex, rightDistortionCoefficients);
+
+    LOG_INFO("Stereo and dual mono calibrations performed with average reprojection error of " << totalAvgErr);
+    ShowStatusMessage("Stereo and dual mono calibrations performed.");
+
+    QString saveFileName = QFileDialog::getSaveFileName(this, "Save camera parameters", vtkPlusConfig::GetInstance()->GetOutputDirectory().c_str(), "*.xml");
+    std::string fileNameNoExt = vtksys::SystemTools::GetFilenamePath(saveFileName.toStdString()) + "/" + vtksys::SystemTools::GetFilenameWithoutExtension(saveFileName.toStdString());
+
+    cv::Mat image;
+    std::vector<float> emptyPerViewErrors;
+    if( this->RetrieveLatestLeftImage(image) )
+    {
+      this->SaveCameraParameters( fileNameNoExt + "_left.xml", cv::Size(image.size[0], image.size[1]), leftIntrinsicMatrix,
+                                  leftDistortionCoefficients, rvec, tvec, emptyPerViewErrors, StereoImagePoints[LeftCameraIndex], totalAvgErr );
+    }
+    if( this->RetrieveLatestRightImage(image) )
+    {
+      this->SaveCameraParameters( fileNameNoExt + "_right.xml", cv::Size(image.size[0], image.size[1]), rightIntrinsicMatrix,
+                                  rightDistortionCoefficients, rvec, tvec, emptyPerViewErrors, StereoImagePoints[RightCameraIndex], totalAvgErr );
+    }
+
+    cv::FileStorage fs(fileNameNoExt + "_stereo.xml", cv::FileStorage::WRITE);
+    fs << "fundamental_matrix" << fundamentalMatrix;
+    fs << "essential_matrix" << essentialMatrix;
+  }
 }

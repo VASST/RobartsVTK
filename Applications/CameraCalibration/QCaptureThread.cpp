@@ -64,8 +64,10 @@ QCaptureThread::QCaptureThread(QObject *parent /*= 0*/)
 //----------------------------------------------------------------------------
 QCaptureThread::~QCaptureThread()
 {
-  QMutexLocker locker(&LocalMutex);
-  abort = true;
+  {
+    QMutexLocker locker(&LocalMutex);
+    abort = true;
+  }
 
   wait();
 }
@@ -90,8 +92,10 @@ bool QCaptureThread::StartCapture(int cameraIndex)
     }
     CommonMutex->unlock();
 
-    QMutexLocker locker(&LocalMutex);
-    CameraIndex = cameraIndex;
+    {
+      QMutexLocker locker(&LocalMutex);
+      CameraIndex = cameraIndex;
+    }
 
     start(LowPriority);
   }
@@ -104,8 +108,10 @@ void QCaptureThread::StopCapture(bool shouldWait /* = true */)
 {
   if (isRunning())
   {
-    QMutexLocker locker(&LocalMutex);
-    abort = true;
+    {
+      QMutexLocker locker(&LocalMutex);
+      abort = true;
+    }
 
     if( shouldWait )
     {

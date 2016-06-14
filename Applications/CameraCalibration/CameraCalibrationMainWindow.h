@@ -66,8 +66,6 @@ public:
 protected slots:
   void LoadLeftCameraParameters();
   void LoadRightCameraParameters();
-  void LoadLeftDistortion();
-  void LoadRightDistortion();
 
   void AboutApp();
   void AboutRobarts();

@@ -142,6 +142,10 @@ protected:
     const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
     const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
     double totalAvgErr );
+  void SaveCameraParameters( const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs,
+    const cv::Mat& rvec, const cv::Mat& tvec,
+    const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+    double totalAvgErr );
 
   void LoadCameraParameters(int cameraIndex, const std::string& fileName);
 
@@ -209,9 +213,9 @@ protected:
   bool RightIntrinsicAvailable;
   bool LeftDistortionAvailable;
   bool RightDistortionAvailable;
-  std::map<int, std::vector< cv::Vec3d > > StereoImagePoints;
-  std::map<int, std::vector< cv::Vec3d > > ReprojectionPoints;
-  std::map<int, std::vector< cv::Vec3d > > HomographyPoints;
+  std::map<int, std::vector< std::vector< cv::Point2f > > > StereoImagePoints;
+  std::map<int, std::vector< std::vector< cv::Point2f > > > ReprojectionPoints;
+  std::map<int, std::vector< std::vector< cv::Point2f > > > HomographyPoints;
 
   /// PLUS related variables
   std::string TrackingDataChannelName;

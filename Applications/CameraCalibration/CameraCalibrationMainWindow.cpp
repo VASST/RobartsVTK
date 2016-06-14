@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
-#include <vtkPlusConfig.h>
+#include <PlusCommon.h>
 
 //----------------------------------------------------------------------------
 CameraCalibrationMainWindow::CameraCalibrationMainWindow()
