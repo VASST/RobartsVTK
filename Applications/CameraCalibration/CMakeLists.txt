@@ -35,6 +35,8 @@ IF(WIN32)
   SET(CameraCalib_WIN32 WIN32)
 ENDIF()
 
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Threads)
+
 ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
   main.cpp
   CameraCalibrationMainWindow.h
@@ -48,8 +50,8 @@ ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
   QScaledView.cpp
   Threads/QComputeThread.h
   Threads/QComputeThread.cpp
-  QCaptureThread.h
-  QCaptureThread.cpp
+  Threads/QCaptureThread.h
+  Threads/QCaptureThread.cpp
   ${PlusApp_CommonWidgets_QRC}
   ${UISrcs}
 )

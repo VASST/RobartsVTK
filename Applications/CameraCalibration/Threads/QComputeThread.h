@@ -58,21 +58,108 @@ class QComputeThread : public QThread
   Q_OBJECT
 
 public:
-  QComputeThread(QObject *parent = 0);
+  QComputeThread(int computeIndex, QObject *parent = 0);
   ~QComputeThread();
 
-  bool CalibrateCamera();
-  bool StereoCalibrate();
+  /// Calibrate a single camera
+  bool CalibrateCamera(int cameraIndex,
+                       const std::vector<std::vector<cv::Point3f> >& patternPoints,
+                       const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                       const cv::Size& imageSize,
+                       int flags = 0);
+
+  /// This prototype is called if the intrinsics for both cameras has already been determined
+  bool StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints,
+                       const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
+                       const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
+                       const cv::Mat& leftCameraMatrix,
+                       const cv::Mat& leftDistCoeffs,
+                       const cv::Mat& rightCameraMatrix,
+                       const cv::Mat& rightDistCoeffs,
+                       const cv::Size& imageSize,
+                       int flags,
+                       const cv::TermCriteria& termCriteria);
+
+  /// This prototype is called if the intrinsics are being determined at the same time
+  bool StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints,
+                       const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
+                       const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
+                       const cv::Size& imageSize,
+                       int flags,
+                       const cv::TermCriteria& termCriteria);
+
+protected:
+  double ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints,
+                                   const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                   const std::vector<cv::Mat>& rvecs,
+                                   const std::vector<cv::Mat>& tvecs,
+                                   const cv::Mat& cameraMatrix,
+                                   const cv::Mat& distCoeffs,
+                                   std::vector<float>& perViewErrors,
+                                   bool fisheye);
 
 signals:
-  void monoCalibrationComplete();
-  void stereoCalibrationComplete();
+  void monoCalibrationComplete(int computeIndex,
+                               int cameraIndex,
+                               const cv::Mat& cameraMatrix,
+                               const cv::Mat& distCoeffs,
+                               const cv::Size& imageSize,
+                               double reprojError,
+                               double totalAvgErr,
+                               const std::vector<cv::Mat>& rvecs,
+                               const std::vector<cv::Mat>& tvecs,
+                               const std::vector<float>& perViewErrors);
+
+  /// This prototype is fired if the intrinsics have already been determined
+  void stereoCalibrationComplete(int computeIndex,
+                                 double reprojError,
+                                 const cv::Mat& rotationMatrix,
+                                 const cv::Mat& translationMatrix,
+                                 const cv::Mat& essentialMatrix,
+                                 const cv::Mat& fundamentalMatrix);
+
+  /// This prototype is fired if the intrinsics are being determined as well
+  void stereoCalibrationComplete(int computeIndex,
+                                 double reprojError,
+                                 const cv::Mat& leftCameraMatrix,
+                                 const cv::Mat& leftDistCoeffs,
+                                 const cv::Mat& rightCameraMatrix,
+                                 const cv::Mat& rightDistCoeffs,
+                                 const cv::Mat& rotationMatrix,
+                                 const cv::Mat& translationMatrix,
+                                 const cv::Mat& essentialMatrix,
+                                 const cv::Mat& fundamentalMatrix);
 
 protected:
   void run() Q_DECL_OVERRIDE;
 
+  // Variables related to both
+  int ComputeIndex;
   ComputationType Computation;
-  QMutex          Mutex;
+  QMutex Mutex;
+  std::vector<std::vector<cv::Point3f> > PatternPoints;
+  std::vector<std::vector<cv::Point2f> > LeftImagePoints;
+  cv::Size ImageSize;
+  int Flags;
+  cv::Mat LeftCameraMatrix;
+  cv::Mat LeftDistCoeffs;
+
+  // Mono related variables
+  int CameraIndex;
+  std::vector<float> PerViewErrors;
+  std::vector<cv::Mat> RotationsVector;
+  std::vector<cv::Mat> TranslationsVector;
+
+  // Stereo related variables
+  bool IntrinsicsAvailable;
+  std::vector<std::vector<cv::Point2f> > RightImagePoints;
+  cv::Mat RotationMatrix;
+  cv::Mat TranslationMatrix;
+  cv::Mat RightCameraMatrix;
+  cv::Mat RightDistCoeffs;
+  cv::Mat EssentialMatrix;
+  cv::Mat FundamentalMatrix;
+  cv::TermCriteria TerminationCriteria;
 };
 
 #endif

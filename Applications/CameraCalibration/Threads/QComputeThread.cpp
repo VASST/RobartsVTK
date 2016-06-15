@@ -50,10 +50,12 @@ POSSIBILITY OF SUCH DAMAGES.
 
 // Open CV includes
 #include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
 
 //----------------------------------------------------------------------------
-QComputeThread::QComputeThread(QObject *parent /*= 0*/)
+QComputeThread::QComputeThread(int computeIndex, QObject *parent /*= 0*/)
   : QThread(parent)
+  , ComputeIndex(computeIndex)
   , Computation(COMPUTATION_NONE)
 {
 
@@ -68,32 +70,77 @@ QComputeThread::~QComputeThread()
 //----------------------------------------------------------------------------
 void QComputeThread::run()
 {
-  ComputationType compType;
-  {
-    QMutexLocker locker(&Mutex);
-    compType = Computation;
-  }
+  QMutexLocker locker(&Mutex);
 
-  if( compType == COMPUTATION_MONO_CALIBRATE )
+  if( Computation == COMPUTATION_MONO_CALIBRATE )
   {
-    emit monoCalibrationComplete();
+    LeftCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+    LeftDistCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+
+    double reprojectionError = cv::calibrateCamera(PatternPoints, LeftImagePoints, ImageSize,
+                               LeftCameraMatrix, LeftDistCoeffs, RotationsVector, TranslationsVector, Flags);
+
+    double totalAvgErr = ComputeReprojectionErrors(PatternPoints, LeftImagePoints, RotationsVector, TranslationsVector, LeftCameraMatrix,
+                         LeftDistCoeffs, PerViewErrors, false);
+
+    emit monoCalibrationComplete(ComputeIndex, CameraIndex, LeftCameraMatrix, LeftDistCoeffs, ImageSize, reprojectionError, totalAvgErr, RotationsVector, TranslationsVector, PerViewErrors);
   }
-  else if( compType == COMPUTATION_STEREO_CALIBRATE )
+  else if( Computation == COMPUTATION_STEREO_CALIBRATE )
   {
-    emit stereoCalibrationComplete();
+    if( IntrinsicsAvailable )
+    {
+      double reprojError = cv::stereoCalibrate(PatternPoints,
+                           LeftImagePoints, RightImagePoints,
+                           LeftCameraMatrix, LeftDistCoeffs,
+                           RightCameraMatrix, RightDistCoeffs,
+                           ImageSize,
+                           RotationMatrix,
+                           TranslationMatrix,
+                           EssentialMatrix,
+                           FundamentalMatrix,
+                           Flags,
+                           TerminationCriteria);
+      emit stereoCalibrationComplete(ComputeIndex, reprojError, RotationMatrix, TranslationMatrix, EssentialMatrix, FundamentalMatrix);
+    }
+    else
+    {
+      LeftCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+      RightCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+      LeftDistCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+      RightDistCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+
+      double reprojError = cv::stereoCalibrate(PatternPoints,
+                           LeftImagePoints, RightImagePoints,
+                           LeftCameraMatrix, LeftDistCoeffs,
+                           RightCameraMatrix, RightDistCoeffs,
+                           ImageSize,
+                           RotationMatrix,
+                           TranslationMatrix,
+                           EssentialMatrix,
+                           FundamentalMatrix,
+                           Flags,
+                           TerminationCriteria);
+      emit stereoCalibrationComplete(ComputeIndex, reprojError, LeftCameraMatrix, LeftDistCoeffs, RightCameraMatrix, RightDistCoeffs, RotationMatrix, TranslationMatrix, EssentialMatrix, FundamentalMatrix);
+    }
   }
 
   return;
 }
 
 //----------------------------------------------------------------------------
-bool QComputeThread::CalibrateCamera()
+bool QComputeThread::CalibrateCamera(int cameraIndex, const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                     const cv::Size& imageSize, int flags)
 {
   if (!isRunning())
   {
     {
       QMutexLocker locker(&Mutex);
+      CameraIndex = cameraIndex;
       Computation = COMPUTATION_MONO_CALIBRATE;
+      PatternPoints = patternPoints;
+      LeftImagePoints = imagePoints;
+      ImageSize = imageSize;
+      Flags = flags;
     }
 
     start(LowPriority);
@@ -103,17 +150,81 @@ bool QComputeThread::CalibrateCamera()
 }
 
 //----------------------------------------------------------------------------
-bool QComputeThread::StereoCalibrate()
+bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector< std::vector< cv::Point2f > >& leftImagePoints, const std::vector< std::vector< cv::Point2f > >& rightImagePoints, const cv::Mat& leftCameraMatrix, const cv::Mat& leftDistCoeffs, const cv::Mat& rightCameraMatrix, const cv::Mat& rightDistCoeffs, const cv::Size& imageSize, int flags, const cv::TermCriteria& termCriteria)
 {
   if (!isRunning())
   {
     {
       QMutexLocker locker(&Mutex);
       Computation = COMPUTATION_STEREO_CALIBRATE;
+      Flags = flags | CV_CALIB_FIX_INTRINSIC;
+      IntrinsicsAvailable = true;
+      PatternPoints = patternPoints;
+      LeftImagePoints = leftImagePoints;
+      RightImagePoints = rightImagePoints;
+      LeftCameraMatrix = leftCameraMatrix;
+      RightCameraMatrix = rightCameraMatrix;
+      LeftDistCoeffs = leftDistCoeffs;
+      RightDistCoeffs = rightDistCoeffs;
+      ImageSize = imageSize;
+      TerminationCriteria = termCriteria;
     }
 
     start(LowPriority);
   }
 
   return false;
+  
+}
+
+//----------------------------------------------------------------------------
+bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector< std::vector< cv::Point2f > >& leftImagePoints, const std::vector< std::vector< cv::Point2f > >& rightImagePoints, const cv::Size& imageSize, int flags, const cv::TermCriteria& termCriteria)
+{
+  if (!isRunning())
+  {
+    {
+      QMutexLocker locker(&Mutex);
+      Computation = COMPUTATION_STEREO_CALIBRATE;
+      Flags = flags;
+      IntrinsicsAvailable = false;
+      PatternPoints = patternPoints;
+      LeftImagePoints = leftImagePoints;
+      RightImagePoints = rightImagePoints;
+      ImageSize = imageSize;
+      TerminationCriteria = termCriteria;
+    }
+
+    start(LowPriority);
+  }
+
+  return false;
+}
+
+//----------------------------------------------------------------------------
+double QComputeThread::ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints, const std::vector<std::vector<cv::Point2f> >& imagePoints, const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs, const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs, std::vector<float>& perViewErrors, bool fisheye)
+{
+  std::vector<cv::Point2f> imagePoints2;
+  size_t totalPoints = 0;
+  double totalErr = 0, err;
+  perViewErrors.resize(objectPoints.size());
+
+  for(size_t i = 0; i < objectPoints.size(); ++i )
+  {
+    if (fisheye)
+    {
+      cv::fisheye::projectPoints(objectPoints[i], imagePoints2, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+    }
+    else
+    {
+      cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+    }
+    err = norm(imagePoints[i], imagePoints2, cv::NORM_L2);
+
+    size_t n = objectPoints[i].size();
+    perViewErrors[i] = (float) std::sqrt(err*err/n);
+    totalErr        += err*err;
+    totalPoints     += n;
+  }
+
+  return std::sqrt(totalErr/totalPoints);
 }

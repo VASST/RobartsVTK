@@ -59,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // local includes
 #include "OpenCVCameraCapture.h"
 #include "QCaptureThread.h"
+#include "QComputeThread.h"
 
 #include <fstream>
 #include <cv.h>
@@ -124,16 +125,16 @@ protected:
   /// \param outCorners vector of 3d points to export the points too
   void CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3f>& outCorners);
 
-  bool ComputeIntrinsicsAndDistortion( int cameraIndex, double& totalAvgErr, std::vector<cv::Mat>& rotationsVector, std::vector<cv::Mat>& translationsVector, std::vector<float>& perViewErrors );
+  bool ComputeIntrinsicsAndDistortion( int cameraIndex );
 
   int GetBoardWidthCalib() const;
   int GetBoardHeightCalib() const;
   double GetBoardQuadSizeCalib() const;
 
-  void SetIntrinsicMatrix(int cameraIndex, cv::Mat& matrix);
+  void SetIntrinsicMatrix(int cameraIndex, const cv::Mat& matrix);
   cv::Mat& GetInstrinsicMatrix(int cameraIndex);
 
-  void SetDistortionCoeffs(int cameraIndex, cv::Mat& matrix);
+  void SetDistortionCoeffs(int cameraIndex, const cv::Mat& matrix);
   cv::Mat& GetDistortionCoeffs(int cameraIndex);
 
   void ShowStatusMessage(const char* message);
@@ -144,16 +145,23 @@ protected:
                                     const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
                                     std::vector<float>& perViewErrors, bool fisheye);
 
-  void SaveCameraParameters( const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs,
-    const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-    const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
-    double totalAvgErr );
-  void SaveCameraParameters( const std::string& filename, cv::Size& imageSize, cv::Mat& cameraMatrix, cv::Mat& distCoeffs,
-    const cv::Mat& rvec, const cv::Mat& tvec,
-    const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
-    double totalAvgErr );
+  void SaveMonoCameraParameters( const std::string& filename, const cv::Size& imageSize, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,
+                                 const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                 const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                 double totalAvgErr );
 
-  void LoadCameraParameters(int cameraIndex, const std::string& fileName);
+  void SaveStereoCameraParameters( const std::string& filename, const cv::Size& imageSize,
+                                   const cv::Mat& leftCameraMatrix, const cv::Mat& leftDistCoeffs,
+                                   const cv::Mat& rightCameraMatrix, const cv::Mat& rightDistCoeffs,
+                                   const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix,
+                                   const std::vector<std::vector<cv::Point2f> >& leftImagePoints, const std::vector<std::vector<cv::Point2f> >& rightImagePoints,
+                                   double reprojError, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix );
+
+  /// Load mono camera parameters from file
+  void LoadMonoCameraParameters(int cameraIndex, const std::string& fileName);
+
+  /// Reset the capture counts when any parameter affecting capturing changes
+  void ResetCaptureCount();
 
 protected slots:
   /*!
@@ -165,17 +173,24 @@ protected slots:
   /// Refresh contents (e.g. GUI elements) of toolbox according to the state in the toolbox controller
   virtual void RefreshGUI();
 
-  // OpenCV
-  void ResetCaptureCount();
-
   /// When the image capture thread fires a signal with a new image, store it and show it
   void OnImageCaptured(const cv::Mat& image, int cameraIndex);
+
+  /// When a mono camera calibration is finished, this slot is called
+  void OnMonoComputationFinished(int computeIndex, int cameraIndex, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs, const cv::Size& imageSize,
+                                 double reprojError, double totalAvgErr, const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs, const std::vector<float>& perViewErrors);
+
+  /// When a stereo calibration is finished, this slot is called
+  void OnStereoComputationFinished(int computeIndex, double reprojError, const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix);
+  void OnStereoComputationFinished(int computeIndex, double reprojError, const cv::Mat& leftIntrinsicMatrix, const cv::Mat& leftDistCoeffs, const cv::Mat& rightIntrinsicMatrix, const cv::Mat& rightDistCoeffs,
+                                   const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix);
 
   // start the video feeds
   void OnLeftCameraIndexChanged( int index );
   void OnRightCameraIndexChanged( int index );
 
-  // process the recorded image
+  /// Capture and process images to find checkerboard corners
+  void CaptureAndProcessStereoImages();
   void CaptureAndProcessLeftImage();
   void CaptureAndProcessRightImage();
   void CaptureAndProcessImage(int cameraIndex);
@@ -187,13 +202,10 @@ protected slots:
   // compute the intrinsics
   void ComputeLeftIntrinsic();
   void ComputeRightIntrinsic();
+  void ComputeStereoCalibration();
 
   // optical flow tracking
   void OpticalFlowTracking();
-
-  /// acquire images from both camera, find the corners, and store them
-  void StereoAcquire();
-  void ComputeFundamentalMatrix();
 
 protected:
   QSettings AppSettings;
@@ -210,6 +222,8 @@ protected:
   int RightCameraIndex;
   QCaptureThread*                               LeftCameraCaptureThread;
   QCaptureThread*                               RightCameraCaptureThread;
+  std::map<int, QComputeThread*>                ComputeThreads;
+  int                                           LatestComputeIndex;
   QMutex                                        OpenCVInternalsMutex;
   QMutex                                        LeftImageStorageMutex;
   QMutex                                        RightImageStorageMutex;
