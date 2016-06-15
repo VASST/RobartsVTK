@@ -100,6 +100,8 @@ class CameraCalibrationMainWidget : public QWidget
 public:
   void SetPLUSTrackingChannel(const std::string& trackingChannel);
 
+  void SetCalibrationPattern(QComputeThread::CalibrationPattern pattern);
+
   void LoadLeftCameraParameters(const std::string& fileName);
   void LoadRightCameraParameters(const std::string& fileName);
 
@@ -112,20 +114,10 @@ protected:
   bool RetrieveLatestLeftImage(cv::Mat& outImage);
   bool RetrieveLatestRightImage(cv::Mat& outImage);
 
-  /// Process a single checkerboard
-  bool ProcessCheckerBoard( const cv::Mat& image, int width, int height, double size, std::vector<cv::Point2f>& outCorners );
-
   /// Start collecting data from the chosen device set
   bool StartDataCollection();
 
-  /// Calculate the corner positions of the board given the parametric description of a checkerboard
-  /// \param height number of vertical squares
-  /// \param width number of horizontal squares
-  /// \param quadSize size of the board in unit of choice
-  /// \param outCorners vector of 3d points to export the points too
-  void CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3f>& outCorners);
-
-  bool ComputeIntrinsicsAndDistortion( int cameraIndex );
+  bool ComputeIntrinsicsAndDistortionAsync( int cameraIndex );
 
   int GetBoardWidthCalib() const;
   int GetBoardHeightCalib() const;
@@ -137,13 +129,13 @@ protected:
   void SetDistortionCoeffs(int cameraIndex, const cv::Mat& matrix);
   cv::Mat& GetDistortionCoeffs(int cameraIndex);
 
-  void ShowStatusMessage(const char* message);
+  void ShowStatusMessage(const std::string& message);
 
   double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
                                     const std::vector<std::vector<cv::Point2f> >& imagePoints,
                                     const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
                                     const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
-                                    std::vector<float>& perViewErrors, bool fisheye);
+                                    std::vector<float>& perViewErrors);
 
   void SaveMonoCameraParameters( const std::string& filename, const cv::Size& imageSize, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,
                                  const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
@@ -162,6 +154,8 @@ protected:
 
   /// Reset the capture counts when any parameter affecting capturing changes
   void ResetCaptureCount();
+  void EraseCameraEntries(int cameraIndex);
+  void InitializeCameraEntries(int cameraIndex);
 
 protected slots:
   /*!
@@ -185,15 +179,22 @@ protected slots:
   void OnStereoComputationFinished(int computeIndex, double reprojError, const cv::Mat& leftIntrinsicMatrix, const cv::Mat& leftDistCoeffs, const cv::Mat& rightIntrinsicMatrix, const cv::Mat& rightDistCoeffs,
                                    const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix);
 
+  /// When an image has been processed and a checkerboard located, this slot is called
+  void OnBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage);
+
+  /// When performing stereo calibration, we need to know which result has finished
+  void OnLeftBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage);
+  void OnRightBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage);
+
   // start the video feeds
   void OnLeftCameraIndexChanged( int index );
   void OnRightCameraIndexChanged( int index );
 
   /// Capture and process images to find checkerboard corners
-  void CaptureAndProcessStereoImages();
+  void CaptureAndProcessStereoImagesAsync();
   void CaptureAndProcessLeftImage();
   void CaptureAndProcessRightImage();
-  void CaptureAndProcessImage(int cameraIndex);
+  void CaptureAndProcessImageAsync(int cameraIndex);
 
   void CalibBoardWidthValueChanged(int i);
   void CalibBoardHeightValueChanged(int i);
@@ -202,7 +203,7 @@ protected slots:
   // compute the intrinsics
   void ComputeLeftIntrinsic();
   void ComputeRightIntrinsic();
-  void ComputeStereoCalibration();
+  void ComputeStereoCalibrationAsync();
 
   // optical flow tracking
   void OpticalFlowTracking();
@@ -210,6 +211,7 @@ protected slots:
 protected:
   QSettings AppSettings;
   OpenCVCameraCapture* CVInternals;
+  QComputeThread::CalibrationPattern Pattern;
   std::map<int, cv::Mat> CameraImages;
   std::map<int, int> CaptureCount;
   std::map<int, cv::Mat> IntrinsicMatrix;
@@ -224,6 +226,9 @@ protected:
   QCaptureThread*                               RightCameraCaptureThread;
   std::map<int, QComputeThread*>                ComputeThreads;
   int                                           LatestComputeIndex;
+  QMutex                                        StereoResultMutex;
+  bool                                          LeftStereoFailed;
+  bool                                          RightStereoFailed;
   QMutex                                        OpenCVInternalsMutex;
   QMutex                                        LeftImageStorageMutex;
   QMutex                                        RightImageStorageMutex;

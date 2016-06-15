@@ -43,12 +43,14 @@ POSSIBILITY OF SUCH DAMAGES.
 =========================================================================*/
 
 #include "CameraCalibrationMainWindow.h"
+#include "QComputeThread.h"
+#include <PlusCommon.h>
 #include <QAction>
+#include <QActionGroup>
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
-#include <PlusCommon.h>
 
 //----------------------------------------------------------------------------
 CameraCalibrationMainWindow::CameraCalibrationMainWindow()
@@ -92,13 +94,38 @@ void CameraCalibrationMainWindow::CreateActions()
   connect( rightIntrinsicAct, SIGNAL( triggered() ), this, SLOT( LoadRightCameraParameters() ) );
 
   fileMenu = menuBar()->addMenu( tr( "&File" ) );
-  fileMenu->addSeparator();
   fileMenu->addAction( leftIntrinsicAct );
   fileMenu->addAction( rightIntrinsicAct );
   fileMenu->addSeparator();
   fileMenu->addAction( exitAct );
 
   menuBar()->addSeparator();
+
+  QAction* chessboardAction = new QAction( tr( "Chessboard" ), this );
+  chessboardAction->setStatusTip( tr( "Chessboard pattern" ) );
+  chessboardAction->setCheckable(true);
+  connect( chessboardAction, SIGNAL( triggered() ), this, SLOT( SetCalibrationPatternChessboard() ) );
+
+  QAction* circlesAction = new QAction( tr( "Circles" ), this );
+  circlesAction->setStatusTip( tr( "Circles pattern" ) );
+  circlesAction->setCheckable(true);
+  connect( circlesAction, SIGNAL( triggered() ), this, SLOT( SetCalibrationPatternCircles() ) );
+
+  QAction* asymCirclesAction = new QAction( tr( "Asymmetric Circles" ), this );
+  asymCirclesAction->setStatusTip( tr( "Asymmetric circles pattern" ) );
+  asymCirclesAction->setCheckable(true);
+  connect( asymCirclesAction, SIGNAL( triggered() ), this, SLOT( SetCalibrationPatternAsymCircles() ) );
+
+  QActionGroup* patternGroup = new QActionGroup(this);
+  patternGroup->addAction(chessboardAction);
+  patternGroup->addAction(circlesAction);
+  patternGroup->addAction(asymCirclesAction);
+  chessboardAction->setChecked(true);
+
+  patternMenu = menuBar()->addMenu( tr( "&Pattern") );
+  patternMenu->addAction(chessboardAction);
+  patternMenu->addAction(circlesAction);
+  patternMenu->addAction(asymCirclesAction);
 
   helpMenu = menuBar()->addMenu( tr( "&Help" ) );
   helpMenu->addAction( aboutAppAct );
@@ -136,6 +163,24 @@ void CameraCalibrationMainWindow::LoadRightCameraParameters()
   }
 
   this->CCMainWidget->LoadRightCameraParameters(FileName.toStdString());
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::SetCalibrationPatternChessboard()
+{
+  this->CCMainWidget->SetCalibrationPattern(QComputeThread::CHESSBOARD);
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::SetCalibrationPatternCircles()
+{
+  this->CCMainWidget->SetCalibrationPattern(QComputeThread::CIRCLES_GRID);
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWindow::SetCalibrationPatternAsymCircles()
+{
+  this->CCMainWidget->SetCalibrationPattern(QComputeThread::ASYMMETRIC_CIRCLES_GRID);
 }
 
 //----------------------------------------------------------------------------

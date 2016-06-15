@@ -124,13 +124,18 @@ QImage cvMatToQImage(const cv::Mat& src)
 
 const static double VIDEO_WIDGET_SCREEN_WIDTH_RATIO = 0.25;
 const static int INVALID_CAMERA_INDEX = -1;
+const static std::string LEFT_RESULT_IMAGE_WINDOW_NAME = "Left Result";
+const static std::string RIGHT_RESULT_IMAGE_WINDOW_NAME = "Right Result";
+const static std::string PATTERN_RESULT_IMAGE_WINDOW_NAME = "Pattern Result";
 }
 
+//----------------------------------------------------------------------------
 CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   : QWidget(parent)
   , AppSettings("cameraCalibration.ini", QSettings::IniFormat)
   , TrackingDataChannel(NULL)
   , LatestComputeIndex(0)
+  , Pattern(QComputeThread::CHESSBOARD)
   , LeftCameraIndex(INVALID_CAMERA_INDEX)
   , RightCameraIndex(INVALID_CAMERA_INDEX)
   , MinBoardNeeded(6)
@@ -187,7 +192,7 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   InitUI();
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 CameraCalibrationMainWidget::~CameraCalibrationMainWidget()
 {
   AppSettings.sync();
@@ -203,7 +208,7 @@ CameraCalibrationMainWidget::~CameraCalibrationMainWidget()
   delete OpticalFlowTrackingTimer;
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::InitUI()
 {
   // create timers;
@@ -232,30 +237,20 @@ void CameraCalibrationMainWidget::InitUI()
   ui.pushButton_VisualTracking->setEnabled(false);
 
   // Configuration
-  connect( ui.spinBox_BoardWidthCalib, SIGNAL( valueChanged( int ) ),
-           this, SLOT( CalibBoardWidthValueChanged( int ) ) );
-  connect( ui.spinBox_BoardHeightCalib, SIGNAL( valueChanged( int ) ),
-           this, SLOT( CalibBoardHeightValueChanged( int ) ) );
-  connect( ui.doubleSpinBox_QuadSizeCalib, SIGNAL( valueChanged( double ) ),
-           this, SLOT( CalibBoardQuadSizeValueChanged( double ) ) );
+  connect( ui.spinBox_BoardWidthCalib, SIGNAL( valueChanged( int ) ), this, SLOT( CalibBoardWidthValueChanged( int ) ) );
+  connect( ui.spinBox_BoardHeightCalib, SIGNAL( valueChanged( int ) ), this, SLOT( CalibBoardHeightValueChanged( int ) ) );
+  connect( ui.doubleSpinBox_QuadSizeCalib, SIGNAL( valueChanged( double ) ), this, SLOT( CalibBoardQuadSizeValueChanged( double ) ) );
 
   // Calibration
-  connect( ui.pushButton_CaptureLeft, SIGNAL( clicked() ),
-           this, SLOT( CaptureAndProcessLeftImage() ) );
-  connect( ui.pushButton_CaptureRight, SIGNAL( clicked() ),
-           this, SLOT( CaptureAndProcessRightImage() ) );
-  connect( ui.pushButton_ComputeLeftIntrinsic, SIGNAL( clicked() ),
-           this, SLOT( ComputeLeftIntrinsic() ) );
-  connect( ui.pushButton_ComputeRightIntrinsic, SIGNAL( clicked() ),
-           this, SLOT( ComputeRightIntrinsic() ) );
-  connect( ui.pushButton_StereoAcquire, SIGNAL( clicked() ),
-           this, SLOT( CaptureAndProcessStereoImages() ) );
-  connect( ui.pushButton_StereoCompute, SIGNAL( clicked() ),
-           this, SLOT( ComputeStereoCalibration() ) );
+  connect( ui.pushButton_CaptureLeft, SIGNAL( clicked() ), this, SLOT( CaptureAndProcessLeftImage() ) );
+  connect( ui.pushButton_CaptureRight, SIGNAL( clicked() ), this, SLOT( CaptureAndProcessRightImage() ) );
+  connect( ui.pushButton_ComputeLeftIntrinsic, SIGNAL( clicked() ), this, SLOT( ComputeLeftIntrinsic() ) );
+  connect( ui.pushButton_ComputeRightIntrinsic, SIGNAL( clicked() ), this, SLOT( ComputeRightIntrinsic() ) );
+  connect( ui.pushButton_StereoAcquire, SIGNAL( clicked() ), this, SLOT( CaptureAndProcessStereoImagesAsync() ) );
+  connect( ui.pushButton_StereoCompute, SIGNAL( clicked() ), this, SLOT( ComputeStereoCalibrationAsync() ) );
 
   // Validation
-  connect( OpticalFlowTrackingTimer, SIGNAL( timeout() ),
-           this, SLOT( OpticalFlowTracking() ) );
+  connect( OpticalFlowTrackingTimer, SIGNAL( timeout() ), this, SLOT( OpticalFlowTracking() ) );
 
   ui.comboBox_LeftCamera->addItem("None", QVariant(INVALID_CAMERA_INDEX));
   ui.comboBox_RightCamera->addItem("None", QVariant(INVALID_CAMERA_INDEX));
@@ -272,10 +267,8 @@ void CameraCalibrationMainWidget::InitUI()
   // TODO : other camera libraries to detect cameras
 #endif
 
-  connect( ui.comboBox_LeftCamera, SIGNAL( currentIndexChanged( int ) ),
-           this, SLOT(OnLeftCameraIndexChanged( int ) ) );
-  connect( ui.comboBox_RightCamera, SIGNAL( currentIndexChanged( int ) ),
-           this, SLOT(OnRightCameraIndexChanged( int ) ) );
+  connect( ui.comboBox_LeftCamera, SIGNAL( currentIndexChanged( int ) ), this, SLOT(OnLeftCameraIndexChanged( int ) ) );
+  connect( ui.comboBox_RightCamera, SIGNAL( currentIndexChanged( int ) ), this, SLOT(OnRightCameraIndexChanged( int ) ) );
 }
 
 //----------------------------------------------------------------------------
@@ -322,19 +315,19 @@ bool CameraCalibrationMainWidget::RetrieveLatestRightImage(cv::Mat& outImage)
   return this->RetrieveLatestImage(RightCameraIndex, outImage);
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 int CameraCalibrationMainWidget::GetBoardWidthCalib() const
 {
   return ui.spinBox_BoardWidthCalib->value();
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 int CameraCalibrationMainWidget::GetBoardHeightCalib() const
 {
   return ui.spinBox_BoardHeightCalib->value();
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 double CameraCalibrationMainWidget::GetBoardQuadSizeCalib() const
 {
   return ui.doubleSpinBox_QuadSizeCalib->value();
@@ -371,18 +364,39 @@ cv::Mat& CameraCalibrationMainWidget::GetDistortionCoeffs(int cameraIndex)
 }
 
 //----------------------------------------------------------------------------
-void CameraCalibrationMainWidget::ShowStatusMessage(const char* message)
+void CameraCalibrationMainWidget::ShowStatusMessage(const std::string& message)
 {
   if( StatusBar != NULL )
   {
-    StatusBar->showMessage(message);
+    StatusBar->showMessage(QString::fromStdString(message));
   }
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::SetPLUSTrackingChannel(const std::string& trackingChannel)
 {
   this->TrackingDataChannelName = trackingChannel;
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::SetCalibrationPattern(QComputeThread::CalibrationPattern pattern)
+{
+  if( this->Pattern != pattern )
+  {
+    this->Pattern = pattern;
+
+    ResetCaptureCount();
+    if( LeftCameraIndex != INVALID_CAMERA_INDEX )
+    {
+      EraseCameraEntries(LeftCameraIndex);
+      InitializeCameraEntries(LeftCameraIndex);
+    }
+    if( RightCameraIndex != INVALID_CAMERA_INDEX )
+    {
+      EraseCameraEntries(RightCameraIndex);
+      InitializeCameraEntries(RightCameraIndex);
+    }
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -417,7 +431,7 @@ void CameraCalibrationMainWidget::LoadRightCameraParameters(const std::string& f
   RightDistortionAvailable = true;
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 // initialize the data collection system
 bool CameraCalibrationMainWidget::StartDataCollection()
 {
@@ -446,20 +460,6 @@ bool CameraCalibrationMainWidget::StartDataCollection()
 }
 
 //----------------------------------------------------------------------------
-void CameraCalibrationMainWidget::CalcBoardCornerPositions(int height, int width, double quadSize, std::vector<cv::Point3f>& outCorners)
-{
-  outCorners.clear();
-
-  for( int i = 0; i < height; ++i )
-  {
-    for( int j = 0; j < width; ++j )
-    {
-      outCorners.push_back(cv::Point3d(j*quadSize, i*quadSize, 0));
-    }
-  }
-}
-
-//---------------------------------------------------------
 void CameraCalibrationMainWidget::ConnectToDevicesByConfigFile(std::string aConfigFile)
 {
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
@@ -567,7 +567,7 @@ void CameraCalibrationMainWidget::RefreshGUI()
   }
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
 {
   int cameraIndex = ui.comboBox_LeftCamera->currentData().toInt();
@@ -581,13 +581,7 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   {
     LeftCameraCaptureThread->StopCapture(true);
 
-    // Remove camera entry from maps
-    CameraImages.erase(CameraImages.find(LeftCameraIndex));
-    CaptureCount.erase(CaptureCount.find(LeftCameraIndex));
-    ChessboardCornerPoints.erase(ChessboardCornerPoints.find(LeftCameraIndex));
-    ChessboardCornerPointsCount.erase(ChessboardCornerPointsCount.find(LeftCameraIndex));
-    IntrinsicMatrix.erase(IntrinsicMatrix.find(LeftCameraIndex));
-    DistortionCoefficients.erase(DistortionCoefficients.find(LeftCameraIndex));
+    EraseCameraEntries(LeftCameraIndex);
   }
 
   if( cameraIndex == INVALID_CAMERA_INDEX )
@@ -609,12 +603,8 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   }
 
   LeftCameraIndex = cameraIndex;
-  CameraImages[LeftCameraIndex];
   ResetCaptureCount();
-  IntrinsicMatrix[LeftCameraIndex];
-  DistortionCoefficients[LeftCameraIndex];
-  ChessboardCornerPoints[LeftCameraIndex];
-  ChessboardCornerPointsCount[LeftCameraIndex];
+  InitializeCameraEntries(LeftCameraIndex);
 
   ui.pushButton_CaptureLeft->setEnabled(true);
 
@@ -624,7 +614,7 @@ void CameraCalibrationMainWidget::OnLeftCameraIndexChanged(int index)
   }
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
 {
   int cameraIndex = ui.comboBox_RightCamera->currentData().toInt();
@@ -638,13 +628,7 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   {
     RightCameraCaptureThread->StopCapture(true);
 
-    // Remove camera entry from maps
-    CameraImages.erase(CameraImages.find(RightCameraIndex));
-    CaptureCount.erase(CaptureCount.find(RightCameraIndex));
-    ChessboardCornerPoints.erase(ChessboardCornerPoints.find(RightCameraIndex));
-    ChessboardCornerPointsCount.erase(ChessboardCornerPointsCount.find(RightCameraIndex));
-    IntrinsicMatrix.erase(IntrinsicMatrix.find(RightCameraIndex));
-    DistortionCoefficients.erase(DistortionCoefficients.find(RightCameraIndex));
+    EraseCameraEntries(RightCameraIndex);
   }
 
   if( cameraIndex == INVALID_CAMERA_INDEX )
@@ -666,12 +650,8 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   }
 
   RightCameraIndex = cameraIndex;
-  CameraImages[RightCameraIndex];
   ResetCaptureCount();
-  IntrinsicMatrix[RightCameraIndex];
-  DistortionCoefficients[RightCameraIndex];
-  ChessboardCornerPoints[RightCameraIndex];
-  ChessboardCornerPointsCount[RightCameraIndex];
+  InitializeCameraEntries(RightCameraIndex);
 
   ui.pushButton_CaptureRight->setEnabled(true);
 
@@ -679,123 +659,52 @@ void CameraCalibrationMainWidget::OnRightCameraIndexChanged(int index)
   {
     ui.pushButton_StereoAcquire->setEnabled(true);
   }
-
-  // Acquire a frame, determine aspect ratio and change scaled view size
-  // TODO : figure out why this widget can't be resized
-  /*
-  cv::Mat image;
-  if( CVInternals->QueryFrame(RightCameraIndex, image) )
-  {
-    double aspectRatio = (double)image.cols / image.rows;
-
-    QDesktopWidget widget;
-    QRect screenSize = widget.availableGeometry(widget.screenNumber(this));
-
-    // Take up VIDEO_WIDGET_SCREEN_WIDTH_RATIO of the screen width, scale height to aspect ratio
-    ui.scaledView_RightVideo->setPixmap(QPixmap::fromImage(cvMatToQImage(image)));
-    ui.scaledView_RightVideo->setFixedSize(screenSize.width() * VIDEO_WIDGET_SCREEN_WIDTH_RATIO, screenSize.width() * VIDEO_WIDGET_SCREEN_WIDTH_RATIO * aspectRatio);
-  }
-  */
-}
-
-//---------------------------------------------------------
-// process a single checkerboard
-bool CameraCalibrationMainWidget::ProcessCheckerBoard( const cv::Mat& image, int width, int height, double size, std::vector<cv::Point2f>& outCorners )
-{
-  LOG_INFO("Checkerboard dimension: " << width << "x" << height << "x" << size);
-
-  // make a copy of the current feed
-  // need to do so as the current feed may be self-updating
-  cv::Mat copy(image);
-
-  cv::Size board_sz(width, height);
-  int board_n = width * height;
-
-  cv::Point text_origin;
-  int chessBoardFlags = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
-
-  //if(!s.useFisheye)
-  {
-    // fast check erroneously fails with high distortions like fisheye
-    chessBoardFlags |= cv::CALIB_CB_FAST_CHECK;
-  }
-  bool found = cv::findChessboardCorners( copy, board_sz, outCorners, chessBoardFlags );
-
-  //if the checkerboard is not entirely visible, chuck this image and return
-  if ( !found )
-  {
-    return false;
-  }
-
-  cv::Mat viewGray;
-  cv::cvtColor(copy, viewGray, cv::COLOR_BGR2GRAY);
-  cv::cornerSubPix( viewGray, outCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
-
-  // sometimes OpenCV returned a flipped image
-  bool flip = false;
-
-  if ( outCorners[board_n-1].x < outCorners[0].x )
-  {
-    flip = true;
-    LOG_INFO("Image is flipped.");
-  }
-
-  cv::drawChessboardCorners( copy, board_sz, cv::Mat(outCorners), found );
-
-  cv::imshow( "Chessboard Corners", copy );
-  cv::waitKey(25);
-
-  return true;
-}
-
-//---------------------------------------------------------
-// process the recorded image
-void CameraCalibrationMainWidget::CaptureAndProcessLeftImage()
-{
-  CaptureAndProcessImage(LeftCameraIndex);
-  if( CaptureCount[LeftCameraIndex] >= MinBoardNeeded )
-  {
-    ui.pushButton_ComputeLeftIntrinsic->setEnabled(true);
-  }
-}
-
-//---------------------------------------------------------
-void CameraCalibrationMainWidget::CaptureAndProcessRightImage()
-{
-  CaptureAndProcessImage(RightCameraIndex);
-  if( CaptureCount[RightCameraIndex] >= MinBoardNeeded )
-  {
-    ui.pushButton_ComputeRightIntrinsic->setEnabled(true);
-  }
 }
 
 //----------------------------------------------------------------------------
-void CameraCalibrationMainWidget::CaptureAndProcessImage(int cameraIndex)
+void CameraCalibrationMainWidget::InitializeCameraEntries(int cameraIndex)
+{
+  CameraImages[cameraIndex];
+  IntrinsicMatrix[cameraIndex];
+  DistortionCoefficients[cameraIndex];
+  ChessboardCornerPoints[cameraIndex];
+  ChessboardCornerPointsCount[cameraIndex];
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CaptureAndProcessLeftImage()
+{
+  CaptureAndProcessImageAsync(LeftCameraIndex);
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CaptureAndProcessRightImage()
+{
+  CaptureAndProcessImageAsync(RightCameraIndex);
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CaptureAndProcessImageAsync(int cameraIndex)
 {
   cv::Mat image;
   if( this->RetrieveLatestImage(cameraIndex, image) )
   {
-    std::vector<cv::Point2f> corners;
-    if( ProcessCheckerBoard( image, GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(), corners) )
-    {
-      // Store located corners in local database of corners
-      ChessboardCornerPoints[cameraIndex].push_back(corners);
-      CaptureCount[cameraIndex]++;
-      std::stringstream ss;
-      ss << "Success! Captured " << CaptureCount[cameraIndex] << " calibration image thus far.";
-      LOG_INFO(ss.str());
-      ShowStatusMessage(ss.str().c_str());
-    }
-    else
-    {
-      LOG_WARNING("Unable to locate checkerboard in camera image. Try again.");
-      ShowStatusMessage("Unable to locate checkerboard in camera image. Try again.");
-    }
+    LOG_INFO("Board dimensions: " << GetBoardWidthCalib() << "x" << GetBoardHeightCalib() << "x" << GetBoardQuadSizeCalib());
+
+    ComputeThreads[LatestComputeIndex] = new QComputeThread(LatestComputeIndex);
+    qRegisterMetaType< cv::Mat >("cv::Mat");
+    qRegisterMetaType< std::vector<cv::Point2f> >("std::vector<cv::Point2f>");
+    connect( ComputeThreads[LatestComputeIndex],
+             SIGNAL(patternProcessingComplete(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)),
+             this,
+             SLOT(OnBoardPatternProcessingFinished(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)) );
+    ComputeThreads[LatestComputeIndex]->LocatePatternInImage(cameraIndex, GetBoardWidthCalib(), GetBoardHeightCalib(), Pattern, image);
+    LatestComputeIndex++;
   }
   else
   {
-    LOG_ERROR("Unable to retrieve latest iamge.");
-    ShowStatusMessage("Unable to retrieve latest image.");
+    LOG_ERROR("Unable to retrieve latest image. Cannot process for board pattern.");
+    ShowStatusMessage("Unable to retrieve latest image. Cannot process for board pattern.");
   }
 }
 
@@ -820,33 +729,33 @@ void CameraCalibrationMainWidget::CalibBoardQuadSizeValueChanged(double i)
   ResetCaptureCount();
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 // compute the intrinsics
 void CameraCalibrationMainWidget::ComputeLeftIntrinsic()
 {
   ui.pushButton_CaptureLeft->setEnabled(false);
   ui.pushButton_ComputeLeftIntrinsic->setEnabled(false);
   ui.pushButton_ComputeLeftIntrinsic->setText("Computing...");
-  if( !this->ComputeIntrinsicsAndDistortion( LeftCameraIndex ) )
+  if( !this->ComputeIntrinsicsAndDistortionAsync( LeftCameraIndex ) )
   {
     return;
   }
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::ComputeRightIntrinsic()
 {
   ui.pushButton_CaptureRight->setEnabled(false);
   ui.pushButton_ComputeRightIntrinsic->setEnabled(false);
   ui.pushButton_ComputeRightIntrinsic->setText("Computing...");
-  if( !this->ComputeIntrinsicsAndDistortion( RightCameraIndex ) )
+  if( !this->ComputeIntrinsicsAndDistortionAsync( RightCameraIndex ) )
   {
     return;
   }
 }
 
-//---------------------------------------------------------
-void CameraCalibrationMainWidget::ComputeStereoCalibration()
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::ComputeStereoCalibrationAsync()
 {
   cv::Mat image;
   if( this->RetrieveLatestLeftImage(image) || this->RetrieveLatestRightImage(image) )
@@ -859,10 +768,6 @@ void CameraCalibrationMainWidget::ComputeStereoCalibration()
 
     ComputeThreads[LatestComputeIndex] = new QComputeThread(LatestComputeIndex);
 
-    std::vector<std::vector<cv::Point3f> > objectPoints(1);
-    CalcBoardCornerPositions(GetBoardHeightCalib(), GetBoardWidthCalib(), GetBoardQuadSizeCalib(), objectPoints[0]);
-    objectPoints.resize(StereoImagePoints[LeftCameraIndex].size(), objectPoints[0]);
-
     qRegisterMetaType< cv::Mat >("cv::Mat");
     if ( LeftIntrinsicAvailable && RightIntrinsicAvailable )
     {
@@ -870,7 +775,7 @@ void CameraCalibrationMainWidget::ComputeStereoCalibration()
                SIGNAL(stereoCalibrationComplete(int, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&)),
                this,
                SLOT(OnStereoComputationFinished(int, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&)) );
-      ComputeThreads[LatestComputeIndex]->StereoCalibrate(objectPoints,
+      ComputeThreads[LatestComputeIndex]->StereoCalibrate(GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(), Pattern,
           StereoImagePoints[LeftCameraIndex], StereoImagePoints[RightCameraIndex],
           GetInstrinsicMatrix(LeftCameraIndex), GetDistortionCoeffs(LeftCameraIndex),
           GetInstrinsicMatrix(RightCameraIndex), GetDistortionCoeffs(RightCameraIndex),
@@ -884,13 +789,17 @@ void CameraCalibrationMainWidget::ComputeStereoCalibration()
                SIGNAL(stereoCalibrationComplete(int, double, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&)),
                this,
                SLOT(OnStereoComputationFinished(int, double, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&, const cv::Mat&)) );
-      ComputeThreads[LatestComputeIndex]->StereoCalibrate(objectPoints,
+      ComputeThreads[LatestComputeIndex]->StereoCalibrate(GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(), Pattern,
           StereoImagePoints[LeftCameraIndex], StereoImagePoints[RightCameraIndex],
           cv::Size(image.size[0], image.size[1]),
           0,
           cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6));
     }
     LatestComputeIndex++;
+
+    ui.pushButton_StereoAcquire->setEnabled(false);
+    ui.pushButton_StereoCompute->setEnabled(false);
+    ui.pushButton_StereoCompute->setText("Computing...");
   }
   else
   {
@@ -899,7 +808,7 @@ void CameraCalibrationMainWidget::ComputeStereoCalibration()
   }
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::SaveMonoCameraParameters( const std::string& filename, const cv::Size& imageSize, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,
     const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
     const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
@@ -1027,21 +936,17 @@ void CameraCalibrationMainWidget::LoadMonoCameraParameters(int cameraIndex, cons
   SetDistortionCoeffs(cameraIndex, distCoeffs);
 }
 
-//---------------------------------------------------------
-bool CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraIndex )
+//----------------------------------------------------------------------------
+bool CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortionAsync( int cameraIndex )
 {
   if ( CaptureCount[cameraIndex] < MinBoardNeeded )
   {
     std::stringstream ss;
     ss << "Not enough board images recorded: " << CaptureCount[cameraIndex] << "/" << MinBoardNeeded;
     LOG_ERROR(ss.str());
-    ShowStatusMessage(ss.str().c_str());
+    ShowStatusMessage(ss.str());
     return false;
   }
-
-  std::vector<std::vector<cv::Point3f> > objectPoints(1);
-  CalcBoardCornerPositions(GetBoardHeightCalib(), GetBoardWidthCalib(), GetBoardQuadSizeCalib(), objectPoints[0]);
-  objectPoints.resize(ChessboardCornerPoints[cameraIndex].size(), objectPoints[0]);
 
   ComputeThreads[LatestComputeIndex] = new QComputeThread(LatestComputeIndex);
   qRegisterMetaType< cv::Mat >("cv::Mat");
@@ -1052,12 +957,12 @@ bool CameraCalibrationMainWidget::ComputeIntrinsicsAndDistortion( int cameraInde
            SIGNAL(monoCalibrationComplete(int, int, const cv::Mat&, const cv::Mat&, const cv::Size&, double, double, const std::vector<cv::Mat>&, const std::vector<cv::Mat>&, const std::vector<float>&)),
            this,
            SLOT(OnMonoComputationFinished(int, int, const cv::Mat&, const cv::Mat&, const cv::Size&, double, double, const std::vector<cv::Mat>&, const std::vector<cv::Mat>&, const std::vector<float>&)) );
-  ComputeThreads[LatestComputeIndex]->CalibrateCamera(cameraIndex, objectPoints, ChessboardCornerPoints[cameraIndex], cv::Size(CameraImages[cameraIndex].size[0], CameraImages[cameraIndex].size[1]), CV_CALIB_FIX_K4|CV_CALIB_FIX_K5);
+  ComputeThreads[LatestComputeIndex]->CalibrateCamera(cameraIndex, GetBoardWidthCalib(), GetBoardHeightCalib(), GetBoardQuadSizeCalib(), Pattern, ChessboardCornerPoints[cameraIndex], cv::Size(CameraImages[cameraIndex].size[0], CameraImages[cameraIndex].size[1]), CV_CALIB_FIX_K4|CV_CALIB_FIX_K5);
   LatestComputeIndex++;
   return true;
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::OpticalFlowTracking()
 {
   // only do something when we have stereo
@@ -1119,17 +1024,28 @@ void CameraCalibrationMainWidget::OpticalFlowTracking()
     cv::circle(rightImage, cv::Point(rightCircles[i][0], rightCircles[i][1]), rightCircles[i][2], cv::Scalar(255, 0, 0), 3, 8, 0);
   }
 
-  cv::imshow("Left Result", leftImage);
-  cv::imshow("Right Result", rightImage);
-  cv::waitKey();
+  cv::imshow(LEFT_RESULT_IMAGE_WINDOW_NAME, leftImage);
+  cv::imshow(RIGHT_RESULT_IMAGE_WINDOW_NAME, rightImage);
 }
 
-//---------------------------------------------------------
+//----------------------------------------------------------------------------
 void CameraCalibrationMainWidget::ResetCaptureCount()
 {
   CaptureCount[LeftCameraIndex] = 0;
   CaptureCount[RightCameraIndex] = 0;
   StereoCaptureCount = 0;
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::EraseCameraEntries(int cameraIndex)
+{
+  // Remove camera entry from maps
+  CameraImages.erase(CameraImages.find(cameraIndex));
+  CaptureCount.erase(CaptureCount.find(cameraIndex));
+  ChessboardCornerPoints.erase(ChessboardCornerPoints.find(cameraIndex));
+  ChessboardCornerPointsCount.erase(ChessboardCornerPointsCount.find(cameraIndex));
+  IntrinsicMatrix.erase(IntrinsicMatrix.find(cameraIndex));
+  DistortionCoefficients.erase(DistortionCoefficients.find(cameraIndex));
 }
 
 //----------------------------------------------------------------------------
@@ -1165,7 +1081,7 @@ void CameraCalibrationMainWidget::OnMonoComputationFinished(int computeIndex, in
   std::stringstream ss;
   ss << "Camera calibrated with re-projection error: " << reprojError;
   LOG_INFO(ss.str());
-  ShowStatusMessage(ss.str().c_str());
+  ShowStatusMessage(ss.str());
 
   if ( cameraIndex == LeftCameraIndex )
   {
@@ -1279,71 +1195,117 @@ void CameraCalibrationMainWidget::OnStereoComputationFinished(int computeIndex, 
   ui.pushButton_StereoCompute->setText("Compute && Save");
 }
 
-//---------------------------------------------------------
-// acquire images from both camera, find the corners, and store them
-void CameraCalibrationMainWidget::CaptureAndProcessStereoImages()
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::OnBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage)
 {
-  // only do something when we have stereo
-  if ( this->CVInternals->CameraCount() < 2 )
+  if( outImagePoints.empty() )
   {
-    return;
+    LOG_WARNING("Unable to locate checkerboard in camera image. Try again.");
+    ShowStatusMessage("Unable to locate checkerboard in camera image. Try again.");
   }
+  else
+  {
+    // Store located corners in local database of corners
+    ChessboardCornerPoints[cameraIndex].push_back(outImagePoints);
+    CaptureCount[cameraIndex]++;
+    std::stringstream ss;
+    ss << "Success! Captured " << CaptureCount[cameraIndex] << " calibration image thus far.";
+    LOG_INFO(ss.str());
+    ShowStatusMessage(ss.str());
 
-  // get both images
+    cv::imshow( PATTERN_RESULT_IMAGE_WINDOW_NAME, resultImage );
+
+    if( CaptureCount[cameraIndex] >= MinBoardNeeded )
+    {
+      if( cameraIndex == LeftCameraIndex )
+      {
+        ui.pushButton_ComputeLeftIntrinsic->setEnabled(true);
+      }
+      else if( cameraIndex == RightCameraIndex )
+      {
+        ui.pushButton_ComputeRightIntrinsic->setEnabled(true);
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::OnLeftBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage)
+{
+  if( outImagePoints.empty() )
+  {
+    LOG_WARNING("Unable to locate checkerboard in left camera image. Try again.");
+    ShowStatusMessage("Unable to locate checkerboard in left camera image. Try again.");
+  }
+  else
+  {
+    cv::imshow(LEFT_RESULT_IMAGE_WINDOW_NAME, resultImage);
+
+    {
+      QMutexLocker locker(&StereoResultMutex);
+      // TODO : what if one succeeds and the other fails
+      StereoImagePoints[LeftCameraIndex].push_back(outImagePoints);
+      StereoCaptureCount++;
+    }
+
+    if( StereoCaptureCount >= 2*MinBoardNeeded ) // StereoCaptureCount is for each individual camera
+    {
+      ui.pushButton_StereoCompute->setEnabled(true);
+    }
+
+    std::stringstream ss;
+    ss << "Captured " << StereoCaptureCount << " images so far. " << MinBoardNeeded << " needed.";
+    LOG_INFO(ss.str());
+    ShowStatusMessage(ss.str());
+  }
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::OnRightBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage)
+{
+  if( outImagePoints.empty() )
+  {
+    LOG_WARNING("Unable to locate checkerboard in right camera image. Try again.");
+    ShowStatusMessage("Unable to locate checkerboard in right camera image. Try again.");
+  }
+  else
+  {
+    cv::imshow(RIGHT_RESULT_IMAGE_WINDOW_NAME, resultImage);
+    StereoImagePoints[RightCameraIndex].push_back(outImagePoints);
+  }
+}
+
+//----------------------------------------------------------------------------
+void CameraCalibrationMainWidget::CaptureAndProcessStereoImagesAsync()
+{
   cv::Mat leftImage;
-  this->RetrieveLatestLeftImage(leftImage);
   cv::Mat rightImage;
-  this->RetrieveLatestRightImage(rightImage);
-
-  // make a copy
-  cv::Mat leftCopy = leftImage.clone();
-  cv::Mat rightCopy = rightImage.clone();
-
-  // BW image
-  cv::Mat leftGray(cv::Size(leftImage.size[0], leftImage.size[1]), CV_8UC1);
-  cv::Mat rightGray(cv::Size(leftImage.size[0], leftImage.size[1]), CV_8UC1);
-
-  cv::Size board_sz = cv::Size( GetBoardWidthCalib(), GetBoardHeightCalib() );
-  int board_n = GetBoardWidthCalib() * GetBoardHeightCalib();
-  std::vector<cv::Point2f> leftCorners;
-  std::vector<cv::Point2f> rightCorners;
-
-  bool leftFound = cv::findChessboardCorners(leftCopy, board_sz, leftCorners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
-  bool rightFound = cv::findChessboardCorners(rightCopy, board_sz, rightCorners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
-
-  // make sure we found equal number of corners from both images
-  if ( !leftFound || !rightFound )
+  // get both images
+  if( this->RetrieveLatestLeftImage(leftImage) && this->RetrieveLatestRightImage(rightImage) )
   {
-    LOG_WARNING("Unable to locate chessboards. Please try again.")
-    ShowStatusMessage("Unable to locate chessboards. Please try again.");
-    return;
+    LOG_INFO("Board dimensions: " << GetBoardWidthCalib() << "x" << GetBoardHeightCalib() << "x" << GetBoardQuadSizeCalib());
+
+    ComputeThreads[LatestComputeIndex] = new QComputeThread(LatestComputeIndex);
+    qRegisterMetaType< cv::Mat >("cv::Mat");
+    qRegisterMetaType< std::vector<cv::Point2f> >("std::vector<cv::Point2f>");
+    connect( ComputeThreads[LatestComputeIndex],
+             SIGNAL(patternProcessingComplete(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)),
+             this,
+             SLOT(OnLeftBoardPatternProcessingFinished(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)) );
+    ComputeThreads[LatestComputeIndex]->LocatePatternInImage(LeftCameraIndex, GetBoardWidthCalib(), GetBoardHeightCalib(), Pattern, leftImage);
+    LatestComputeIndex++;
+
+    ComputeThreads[LatestComputeIndex] = new QComputeThread(LatestComputeIndex);
+    connect( ComputeThreads[LatestComputeIndex],
+             SIGNAL(patternProcessingComplete(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)),
+             this,
+             SLOT(OnRightBoardPatternProcessingFinished(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)) );
+    ComputeThreads[LatestComputeIndex]->LocatePatternInImage(RightCameraIndex, GetBoardWidthCalib(), GetBoardHeightCalib(), Pattern, rightImage);
+    LatestComputeIndex++;
   }
-
-  // get subpixel accuracy
-  cv::cvtColor( leftCopy, leftGray, CV_BGR2GRAY );
-  cv::cvtColor( rightCopy, rightGray, CV_BGR2GRAY );
-
-  cv::cornerSubPix(leftGray, leftCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.1 ) );
-  cv::cornerSubPix(rightGray, rightCorners, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.1 ) );
-
-  cv::drawChessboardCorners(leftCopy, board_sz, leftCorners, leftFound);
-  cv::drawChessboardCorners(rightCopy, board_sz, rightCorners, leftFound);
-
-  cv::imshow("LeftResult", leftCopy);
-  cv::imshow("RightResult", rightCopy);
-
-  StereoImagePoints[LeftCameraIndex].push_back(leftCorners);
-  StereoImagePoints[RightCameraIndex].push_back(rightCorners);
-
-  StereoCaptureCount++;
-
-  if( StereoCaptureCount >= MinBoardNeeded )
+  else
   {
-    ui.pushButton_StereoCompute->setEnabled(true);
+    LOG_ERROR("Unable to retrieve latest images. Cannot process for board pattern.");
+    ShowStatusMessage("Unable to retrieve latest images. Cannot process for board pattern.");
   }
-
-  std::stringstream ss;
-  ss << "Captured " << StereoCaptureCount << " images so far. " << MinBoardNeeded << " needed.";
-  LOG_INFO(ss.str());
-  ShowStatusMessage(ss.str().c_str());
 }

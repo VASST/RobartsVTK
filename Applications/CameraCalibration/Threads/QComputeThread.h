@@ -52,10 +52,20 @@ class QComputeThread : public QThread
   {
     COMPUTATION_NONE,
     COMPUTATION_MONO_CALIBRATE,
-    COMPUTATION_STEREO_CALIBRATE
+    COMPUTATION_STEREO_CALIBRATE,
+    COMPUTATION_PROCESS_IMAGE
   };
 
   Q_OBJECT
+
+public:
+  enum CalibrationPattern
+  {
+    NOT_EXISTING,
+    CHESSBOARD,
+    CIRCLES_GRID,
+    ASYMMETRIC_CIRCLES_GRID
+  };
 
 public:
   QComputeThread(int computeIndex, QObject *parent = 0);
@@ -63,13 +73,19 @@ public:
 
   /// Calibrate a single camera
   bool CalibrateCamera(int cameraIndex,
-                       const std::vector<std::vector<cv::Point3f> >& patternPoints,
+                       int width,
+                       int height,
+                       double size,
+                       CalibrationPattern pattern,
                        const std::vector<std::vector<cv::Point2f> >& imagePoints,
                        const cv::Size& imageSize,
                        int flags = 0);
 
   /// This prototype is called if the intrinsics for both cameras has already been determined
-  bool StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints,
+  bool StereoCalibrate(int width,
+                       int height,
+                       double size,
+                       CalibrationPattern pattern,
                        const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
                        const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
                        const cv::Mat& leftCameraMatrix,
@@ -81,12 +97,22 @@ public:
                        const cv::TermCriteria& termCriteria);
 
   /// This prototype is called if the intrinsics are being determined at the same time
-  bool StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints,
+  bool StereoCalibrate(int width,
+                       int height,
+                       double size,
+                       CalibrationPattern pattern,
                        const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
                        const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
                        const cv::Size& imageSize,
                        int flags,
                        const cv::TermCriteria& termCriteria);
+
+  /// Process a single pattern
+  bool LocatePatternInImage(int cameraIndex,
+                            int width,
+                            int height,
+                            CalibrationPattern pattern,
+                            const cv::Mat& image );
 
 protected:
   double ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints,
@@ -95,8 +121,19 @@ protected:
                                    const std::vector<cv::Mat>& tvecs,
                                    const cv::Mat& cameraMatrix,
                                    const cv::Mat& distCoeffs,
-                                   std::vector<float>& perViewErrors,
-                                   bool fisheye);
+                                   std::vector<float>& perViewErrors);
+
+  /// Calculate the corner positions of the board given the parametric description of a checkerboard
+  /// \param height number of vertical squares
+  /// \param width number of horizontal squares
+  /// \param quadSize size of the board in unit of choice
+  /// \param outCorners vector of 3d points to export the points too
+  /// \param patternType the pattern to compute corners for
+  void CalcBoardCornerPositions(int height,
+                                int width,
+                                double quadSize,
+                                std::vector<cv::Point3f>& outCorners,
+                                QComputeThread::CalibrationPattern patternType);
 
 signals:
   void monoCalibrationComplete(int computeIndex,
@@ -130,19 +167,26 @@ signals:
                                  const cv::Mat& essentialMatrix,
                                  const cv::Mat& fundamentalMatrix);
 
+  void patternProcessingComplete(int computeIndex,
+                                 int cameraIndex,
+                                 const std::vector<cv::Point2f>& outImagePoints,
+                                 const cv::Mat& resultImage);
+
 protected:
   void run() Q_DECL_OVERRIDE;
 
-  // Variables related to both
   int ComputeIndex;
   ComputationType Computation;
   QMutex Mutex;
+
+  // Variables related to both calibrations
   std::vector<std::vector<cv::Point3f> > PatternPoints;
   std::vector<std::vector<cv::Point2f> > LeftImagePoints;
   cv::Size ImageSize;
   int Flags;
   cv::Mat LeftCameraMatrix;
   cv::Mat LeftDistCoeffs;
+  CalibrationPattern Pattern;
 
   // Mono related variables
   int CameraIndex;
@@ -160,6 +204,14 @@ protected:
   cv::Mat EssentialMatrix;
   cv::Mat FundamentalMatrix;
   cv::TermCriteria TerminationCriteria;
+
+  // Variables relating to pattern locating
+  int Width;
+  int Height;
+  double QuadSize;
+  cv::Mat Image;
+  cv::Mat ResultImage;
+  std::vector<cv::Point2f> ImagePoints;
 };
 
 #endif

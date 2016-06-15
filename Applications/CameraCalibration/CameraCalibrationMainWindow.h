@@ -67,6 +67,10 @@ protected slots:
   void LoadLeftCameraParameters();
   void LoadRightCameraParameters();
 
+  void SetCalibrationPatternChessboard();
+  void SetCalibrationPatternCircles();
+  void SetCalibrationPatternAsymCircles();
+
   void AboutApp();
   void AboutRobarts();
 
@@ -78,6 +82,7 @@ private:
   QAction *aboutRobartsAct;
   QAction *exitAct;
   QMenu *fileMenu;
+  QMenu *patternMenu;
   QMenu *helpMenu;
 
   CameraCalibrationMainWidget *CCMainWidget;

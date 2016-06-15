@@ -74,6 +74,10 @@ void QComputeThread::run()
 
   if( Computation == COMPUTATION_MONO_CALIBRATE )
   {
+    PatternPoints = std::vector<std::vector<cv::Point3f> >(1);
+    CalcBoardCornerPositions(Height, Width, QuadSize, PatternPoints[0], Pattern);
+    PatternPoints.resize(LeftImagePoints.size(), PatternPoints[0]);
+
     LeftCameraMatrix = cv::Mat::eye(3, 3, CV_64F);
     LeftDistCoeffs = cv::Mat::zeros(8, 1, CV_64F);
 
@@ -81,12 +85,16 @@ void QComputeThread::run()
                                LeftCameraMatrix, LeftDistCoeffs, RotationsVector, TranslationsVector, Flags);
 
     double totalAvgErr = ComputeReprojectionErrors(PatternPoints, LeftImagePoints, RotationsVector, TranslationsVector, LeftCameraMatrix,
-                         LeftDistCoeffs, PerViewErrors, false);
+                         LeftDistCoeffs, PerViewErrors);
 
     emit monoCalibrationComplete(ComputeIndex, CameraIndex, LeftCameraMatrix, LeftDistCoeffs, ImageSize, reprojectionError, totalAvgErr, RotationsVector, TranslationsVector, PerViewErrors);
   }
   else if( Computation == COMPUTATION_STEREO_CALIBRATE )
   {
+    PatternPoints = std::vector<std::vector<cv::Point3f> >(1);
+    CalcBoardCornerPositions(Height, Width, QuadSize, PatternPoints[0], Pattern);
+    PatternPoints.resize(LeftImagePoints.size(), PatternPoints[0]);
+
     if( IntrinsicsAvailable )
     {
       double reprojError = cv::stereoCalibrate(PatternPoints,
@@ -123,12 +131,57 @@ void QComputeThread::run()
       emit stereoCalibrationComplete(ComputeIndex, reprojError, LeftCameraMatrix, LeftDistCoeffs, RightCameraMatrix, RightDistCoeffs, RotationMatrix, TranslationMatrix, EssentialMatrix, FundamentalMatrix);
     }
   }
+  else if( Computation == COMPUTATION_PROCESS_IMAGE )
+  {
+    // make a copy of the current feed
+    cv::Mat ResultImage = Image.clone();
+
+    cv::Size boardSize(Width, Height);
+
+    int chessBoardFlags = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK;
+
+    bool found(false);
+    switch( Pattern ) // Find feature points on the input format
+    {
+    case QComputeThread::CHESSBOARD:
+      found = cv::findChessboardCorners( ResultImage, boardSize, ImagePoints, chessBoardFlags );
+      break;
+    case QComputeThread::CIRCLES_GRID:
+      found = cv::findCirclesGrid( ResultImage, boardSize, ImagePoints );
+      break;
+    case QComputeThread::ASYMMETRIC_CIRCLES_GRID:
+      found = cv::findCirclesGrid( ResultImage, boardSize, ImagePoints, cv::CALIB_CB_ASYMMETRIC_GRID );
+      break;
+    default:
+      found = false;
+      break;
+    }
+
+    if ( found )
+    {
+      // improve the found corners' coordinate accuracy for chessboard
+      if( Pattern == QComputeThread::CHESSBOARD)
+      {
+        cv::Mat viewGray;
+        cv::cvtColor(ResultImage, viewGray, cv::COLOR_BGR2GRAY);
+        cv::cornerSubPix(viewGray, ImagePoints, cv::Size(11,11), cv::Size(-1,-1), cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+      }
+
+      // Draw the corners.
+      cv::drawChessboardCorners(ResultImage, boardSize, cv::Mat(ImagePoints), found);
+    }
+  }
 
   return;
 }
 
 //----------------------------------------------------------------------------
-bool QComputeThread::CalibrateCamera(int cameraIndex, const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+bool QComputeThread::CalibrateCamera(int cameraIndex,
+                                     int width,
+                                     int height,
+                                     double size,
+                                     CalibrationPattern pattern,
+                                     const std::vector<std::vector<cv::Point2f> >& imagePoints,
                                      const cv::Size& imageSize, int flags)
 {
   if (!isRunning())
@@ -137,9 +190,12 @@ bool QComputeThread::CalibrateCamera(int cameraIndex, const std::vector<std::vec
       QMutexLocker locker(&Mutex);
       CameraIndex = cameraIndex;
       Computation = COMPUTATION_MONO_CALIBRATE;
-      PatternPoints = patternPoints;
+      Pattern = pattern;
       LeftImagePoints = imagePoints;
       ImageSize = imageSize;
+      Width = width;
+      Height = height;
+      QuadSize = QuadSize;
       Flags = flags;
     }
 
@@ -150,7 +206,19 @@ bool QComputeThread::CalibrateCamera(int cameraIndex, const std::vector<std::vec
 }
 
 //----------------------------------------------------------------------------
-bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector< std::vector< cv::Point2f > >& leftImagePoints, const std::vector< std::vector< cv::Point2f > >& rightImagePoints, const cv::Mat& leftCameraMatrix, const cv::Mat& leftDistCoeffs, const cv::Mat& rightCameraMatrix, const cv::Mat& rightDistCoeffs, const cv::Size& imageSize, int flags, const cv::TermCriteria& termCriteria)
+bool QComputeThread::StereoCalibrate(int width,
+                                     int height,
+                                     double size,
+                                     CalibrationPattern pattern,
+                                     const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
+                                     const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
+                                     const cv::Mat& leftCameraMatrix,
+                                     const cv::Mat& leftDistCoeffs,
+                                     const cv::Mat& rightCameraMatrix,
+                                     const cv::Mat& rightDistCoeffs,
+                                     const cv::Size& imageSize,
+                                     int flags,
+                                     const cv::TermCriteria& termCriteria)
 {
   if (!isRunning())
   {
@@ -159,7 +227,7 @@ bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> 
       Computation = COMPUTATION_STEREO_CALIBRATE;
       Flags = flags | CV_CALIB_FIX_INTRINSIC;
       IntrinsicsAvailable = true;
-      PatternPoints = patternPoints;
+      Pattern = pattern;
       LeftImagePoints = leftImagePoints;
       RightImagePoints = rightImagePoints;
       LeftCameraMatrix = leftCameraMatrix;
@@ -167,6 +235,9 @@ bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> 
       LeftDistCoeffs = leftDistCoeffs;
       RightDistCoeffs = rightDistCoeffs;
       ImageSize = imageSize;
+      Width = width;
+      Height = height;
+      QuadSize = QuadSize;
       TerminationCriteria = termCriteria;
     }
 
@@ -174,11 +245,19 @@ bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> 
   }
 
   return false;
-  
+
 }
 
 //----------------------------------------------------------------------------
-bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> >& patternPoints, const std::vector< std::vector< cv::Point2f > >& leftImagePoints, const std::vector< std::vector< cv::Point2f > >& rightImagePoints, const cv::Size& imageSize, int flags, const cv::TermCriteria& termCriteria)
+bool QComputeThread::StereoCalibrate(int width,
+                                     int height,
+                                     double size,
+                                     CalibrationPattern pattern,
+                                     const std::vector< std::vector< cv::Point2f > >& leftImagePoints,
+                                     const std::vector< std::vector< cv::Point2f > >& rightImagePoints,
+                                     const cv::Size& imageSize,
+                                     int flags,
+                                     const cv::TermCriteria& termCriteria)
 {
   if (!isRunning())
   {
@@ -187,10 +266,13 @@ bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> 
       Computation = COMPUTATION_STEREO_CALIBRATE;
       Flags = flags;
       IntrinsicsAvailable = false;
-      PatternPoints = patternPoints;
+      Pattern = pattern;
       LeftImagePoints = leftImagePoints;
       RightImagePoints = rightImagePoints;
       ImageSize = imageSize;
+      Width = width;
+      Height = height;
+      QuadSize = QuadSize;
       TerminationCriteria = termCriteria;
     }
 
@@ -201,7 +283,32 @@ bool QComputeThread::StereoCalibrate(const std::vector<std::vector<cv::Point3f> 
 }
 
 //----------------------------------------------------------------------------
-double QComputeThread::ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints, const std::vector<std::vector<cv::Point2f> >& imagePoints, const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs, const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs, std::vector<float>& perViewErrors, bool fisheye)
+bool QComputeThread::LocatePatternInImage(int cameraIndex, 
+                                          int width,
+                                          int height,
+                                          CalibrationPattern pattern, 
+                                          const cv::Mat& image)
+{
+  if (!isRunning())
+  {
+    {
+      QMutexLocker locker(&Mutex);
+      Computation = COMPUTATION_PROCESS_IMAGE;
+      CameraIndex = cameraIndex;
+      Pattern = pattern;
+      Image = image;
+      Width = width;
+      Height = height;
+    }
+
+    start(LowPriority);
+  }
+
+  return false;
+}
+
+//----------------------------------------------------------------------------
+double QComputeThread::ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints, const std::vector<std::vector<cv::Point2f> >& imagePoints, const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs, const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs, std::vector<float>& perViewErrors)
 {
   std::vector<cv::Point2f> imagePoints2;
   size_t totalPoints = 0;
@@ -210,14 +317,8 @@ double QComputeThread::ComputeReprojectionErrors(const std::vector<std::vector<c
 
   for(size_t i = 0; i < objectPoints.size(); ++i )
   {
-    if (fisheye)
-    {
-      cv::fisheye::projectPoints(objectPoints[i], imagePoints2, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
-    }
-    else
-    {
-      cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
-    }
+    cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+
     err = norm(imagePoints[i], imagePoints2, cv::NORM_L2);
 
     size_t n = objectPoints[i].size();
@@ -227,4 +328,34 @@ double QComputeThread::ComputeReprojectionErrors(const std::vector<std::vector<c
   }
 
   return std::sqrt(totalErr/totalPoints);
+}
+
+//----------------------------------------------------------------------------
+void QComputeThread::CalcBoardCornerPositions(int height, int width, double quadSize,
+                                                           std::vector<cv::Point3f>& outCorners,
+                                                           QComputeThread::CalibrationPattern patternType)
+{
+  outCorners.clear();
+
+  switch(patternType)
+  {
+  case QComputeThread::CHESSBOARD:
+  case QComputeThread::CIRCLES_GRID:
+    for( int i = 0; i < height; ++i )
+      for( int j = 0; j < width; ++j )
+      {
+        outCorners.push_back(cv::Point3f(j*quadSize, i*quadSize, 0));
+      }
+      break;
+
+  case QComputeThread::ASYMMETRIC_CIRCLES_GRID:
+    for( int i = 0; i < height; i++ )
+      for( int j = 0; j < width; j++ )
+      {
+        outCorners.push_back(cv::Point3f((2*j + i % 2)*quadSize, i*quadSize, 0));
+      }
+      break;
+  default:
+    break;
+  }
 }
