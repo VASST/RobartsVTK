@@ -204,6 +204,8 @@ CameraCalibrationMainWidget::~CameraCalibrationMainWidget()
   delete RightCameraCaptureThread;
   delete CVInternals;
 
+  cv::destroyAllWindows();
+
   delete GUITimer;
   delete OpticalFlowTrackingTimer;
 }
@@ -1214,6 +1216,15 @@ void CameraCalibrationMainWidget::OnBoardPatternProcessingFinished(int computeIn
     ShowStatusMessage(ss.str());
 
     cv::imshow( PATTERN_RESULT_IMAGE_WINDOW_NAME, resultImage );
+
+    disconnect( ComputeThreads[LatestComputeIndex],
+                SIGNAL(patternProcessingComplete(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)),
+                this,
+                SLOT(OnBoardPatternProcessingFinished(int, int, const std::vector<cv::Point2f>&, const cv::Mat&)) );
+
+    ComputeThreads[computeIndex]->wait();
+    delete ComputeThreads[computeIndex];
+    ComputeThreads.erase(ComputeThreads.find(computeIndex));
 
     if( CaptureCount[cameraIndex] >= MinBoardNeeded )
     {

@@ -133,6 +133,8 @@ void QComputeThread::run()
   }
   else if( Computation == COMPUTATION_PROCESS_IMAGE )
   {
+    ImagePoints.clear();
+
     // make a copy of the current feed
     cv::Mat ResultImage = Image.clone();
 
@@ -170,6 +172,8 @@ void QComputeThread::run()
       // Draw the corners.
       cv::drawChessboardCorners(ResultImage, boardSize, cv::Mat(ImagePoints), found);
     }
+
+    emit patternProcessingComplete(ComputeIndex, CameraIndex, ImagePoints, ResultImage);
   }
 
   return;

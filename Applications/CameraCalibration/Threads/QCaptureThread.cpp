@@ -106,22 +106,19 @@ bool QCaptureThread::StartCapture(int cameraIndex)
 //----------------------------------------------------------------------------
 void QCaptureThread::StopCapture(bool shouldWait /* = true */)
 {
-  if (isRunning())
   {
-    {
-      QMutexLocker locker(&LocalMutex);
-      abort = true;
-    }
-
-    if( shouldWait )
-    {
-      wait();
-    }
-
-    CommonMutex->lock();
-    CameraCapture->ReleaseCamera(CameraIndex);
-    CommonMutex->unlock();
+    QMutexLocker locker(&LocalMutex);
+    abort = true;
   }
+
+  if( shouldWait )
+  {
+    wait();
+  }
+
+  CommonMutex->lock();
+  CameraCapture->ReleaseCamera(CameraIndex);
+  CommonMutex->unlock();
 }
 
 //----------------------------------------------------------------------------
