@@ -40,8 +40,8 @@ IF(MSVC)
   add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 ENDIF()
 
-SET(RobartsVTK_VTK_VERSION 6.3.0 CACHE STRING "The requested version of VTK to use")
-set_property(CACHE RobartsVTK_VTK_VERSION PROPERTY STRINGS "6.3.0" "7.1.0")
+SET(RobartsVTK_VTK_VERSION 7.0.0 CACHE STRING "The requested version of VTK to use")
+set_property(CACHE RobartsVTK_VTK_VERSION PROPERTY STRINGS "6.3.0" "7.0.0" "7.1.0")
 
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
