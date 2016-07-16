@@ -46,8 +46,6 @@ set_property(CACHE RobartsVTK_VTK_VERSION PROPERTY STRINGS "6.3.0" "7.0.0" "7.1.
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
 #-----------------------------------------------------------------------------
-SET (RobartsVTK_EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
-
 # Set up our directory structure for output libraries and binaries
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -87,8 +85,6 @@ FIND_PACKAGE(VTK ${RobartsVTK_VTK_VERSION} REQUIRED NO_MODULE PATHS ${VTK_DIR} N
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
 INCLUDE(${VTK_CONFIG_TARGETS_FILE})
-
-CopyDllsToOutputDirectories("${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug" "${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release" ${VTK_LIBRARIES})
 
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
@@ -209,7 +205,7 @@ IF (RobartsVTK_USE_QT)
   ENDIF()
   
   # --------------------------------------------------------------------------
-  # Copy Qt binaries to RobartsVTK_EXECUTABLE_OUTPUT_PATH
+  # Copy Qt binaries to CMAKE_RUNTIME_OUTPUT_DIRECTORY
 
   # Determine shared library extension without the dot (dll instead of .dll)
   STRING(SUBSTRING ${CMAKE_SHARED_LIBRARY_SUFFIX} 1 -1 CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR)
@@ -226,11 +222,11 @@ IF (RobartsVTK_USE_QT)
   # Copy shared libraries to bin directory to allow running Plus applications in the build tree
   IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
     FILE(COPY "${QT_BINARY_DIR}/"
-      DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release
+      DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release
       FILES_MATCHING REGEX ${RELEASE_REGEX_PATTERN}
       )
     FILE(COPY "${QT_BINARY_DIR}/"
-      DESTINATION ${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug
+      DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug
       FILES_MATCHING REGEX ${DEBUG_REGEX_PATTERN}
       )
   ENDIF()
@@ -252,8 +248,6 @@ IF(RobartsVTK_USE_ITK)
   
   IF(ITK_FOUND)
     MESSAGE(STATUS "Using ITK available at: ${ITK_DIR}")
-
-    CopyDllsToOutputDirectories("${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug" "${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release" ${ITK_LIBRARIES})
  
     SET (RobartsVTK_ITK_DIR "${ITK_DIR}" CACHE INTERNAL "Path to store itk binaries")
   ENDIF()
@@ -299,8 +293,6 @@ IF(RobartsVTK_USE_PLUS)
 
   IF(PlusLib_FOUND)
     MESSAGE(STATUS "Using PlusLib available at: ${PlusLib_DIR}")
-
-    CopyDllsToOutputDirectories("${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug" "${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release" ${PlusLib_LIBRARIES};OpenIGTLink)
   ENDIF()
 ENDIF()
 
@@ -468,8 +460,6 @@ IF(RobartsVTK_BUILD_APPS)
     # Find OpenCV
     #-------------------------------------
     FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
-
-    CopyDllsToOutputDirectories("${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Debug" "${RobartsVTK_EXECUTABLE_OUTPUT_PATH}/Release" ${OpenCV_LIBRARIES})
   ENDIF()
 ENDIF()
 
