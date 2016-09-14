@@ -32,9 +32,6 @@ OPTION(RobartsVTK_WRAP_PYTHON "Wrap the RobartsVTK libs in Python." ON)
 OPTION(BUILD_SHARED_LIBS "Build shared libraries." ON)
 OPTION(BUILD_TESTING "Build testing." OFF)
 OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
-IF( RobartsVTK_USE_QT )
-  OPTION(RobartsVTK_USE_QT5_ONLY "Only search for Qt5." OFF)
-ENDIF()
 
 IF(MSVC)
   add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
@@ -90,14 +87,8 @@ INCLUDE(${VTK_CONFIG_TARGETS_FILE})
 # Confirm that VTK was built with Qt if requested
 #-----------------------------------------------------------------------------
 IF(RobartsVTK_USE_QT)
-  IF (${VTK_MAJOR_VERSION} VERSION_LESS 6)
-    IF (NOT VTK_USE_QT)
-      MESSAGE( SEND_ERROR "You have to build VTK with VTK_USE_QT flag ON if you need to use RobartsVTK_USE_QT.")
-    ENDIF (NOT VTK_USE_QT)
-  ELSE()
-    IF (NOT TARGET vtkGUISupportQt)
-      MESSAGE( SEND_ERROR "You have to build VTK with VTK_USE_QT flag ON if you need to use RobartsVTK_USE_QT.")
-    ENDIF()
+  IF (NOT TARGET vtkGUISupportQt)
+    MESSAGE( SEND_ERROR "You have to build VTK with VTK_USE_QT flag ON if you need to use RobartsVTK_USE_QT.")
   ENDIF()
 ENDIF()
 
@@ -158,69 +149,31 @@ ENDIF()
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
 IF (RobartsVTK_USE_QT)
-  IF(NOT EXISTS ${QT_QMAKE_EXECUTABLE})
-    FIND_FILE(QT_QMAKE_EXECUTABLE qmake${CMAKE_EXECUTABLE_SUFFIX} 
-      PATH
-        $ENV{QTDIR}
-        "C:/Qt/4.7.4/bin"
-        "../Qt/4.7.4/bin"
-        "../../Qt/4.7.4/bin"
-        "C:/Qt/4.8.7/bin"
-        "../Qt/4.8.7/bin"
-        "../../Qt/4.8.7/bin"
-      )
+  IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
+    SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent)
   ENDIF()
 
-  IF(NOT RobartsVTK_USE_QT5_ONLY)
-    FIND_PACKAGE(Qt4 COMPONENTS QTCORE QTGUI QUIET)
-  ENDIF()
+  FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS} NO_MODULE)
 
-  IF ( NOT QT4_FOUND )
-    IF(EXISTS ${QT_QMAKE_EXECUTABLE} )
-      GET_FILENAME_COMPONENT(QT_BINARY_DIR ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-      GET_FILENAME_COMPONENT(QT_ROOT_DIR ${QT_BINARY_DIR} DIRECTORY)
-      SET(Qt5_DIR ${QT_ROOT_DIR}/lib/cmake/Qt5 CACHE PATH "Path to Qt5Config.cmake" FORCE)
-    ENDIF()
-
-    IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
-      SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent)
-    ENDIF()
-    FIND_PACKAGE(Qt5 QUIET COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS} NO_MODULE)
-
-    IF ( NOT Qt5_FOUND )
-      MESSAGE( FATAL_ERROR "This project requires Qt4 or Qt5 for building RobartsVTK. These components are missing. Please verify configuration by selecting QT_QMAKE_EXECUTABLE (Qt4) or Qt5_DIR (Qt5) or turn off RobartsVTK_USE_QT option.")
-    ENDIF()
-    SET(QT_VERSION_MAJOR ${Qt5Widgets_VERSION_MAJOR})
-  ENDIF()
-  
+  SET(QT_VERSION_MAJOR ${Qt5Widgets_VERSION_MAJOR})
   SET(CMAKE_AUTOMOC ON)
-  IF( QT_QMAKE_EXECUTABLE STREQUAL "NOTFOUND" AND Qt5_DIR )
-    GET_FILENAME_COMPONENT(QT_CMAKE_DIR ${Qt5_DIR} DIRECTORY)
-    GET_FILENAME_COMPONENT(QT_LIB_DIR ${QT_CMAKE_DIR} DIRECTORY)
-    GET_FILENAME_COMPONENT(CMAKE_PREFIX_PATH ${QT_LIB_DIR} DIRECTORY)
-    SET(QT_BINARY_DIR ${CMAKE_PREFIX_PATH}/bin)
-    SET(QT_QMAKE_EXECUTABLE ${QT_BINARY_DIR}/qmake${CMAKE_EXECUTABLE_SUFFIX} CACHE FILEPATH "Location of Qt QMake executable." FORCE)
-  ELSEIF( NOT QT_QMAKE_EXECUTABLE STREQUAL "NOTFOUND" )
-    GET_FILENAME_COMPONENT(QT_BINARY_DIR ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-  ENDIF()
+
+  GET_FILENAME_COMPONENT(QT_CMAKE_DIR ${Qt5_DIR} DIRECTORY)
+  GET_FILENAME_COMPONENT(QT_LIB_DIR ${QT_CMAKE_DIR} DIRECTORY)
+  GET_FILENAME_COMPONENT(QT_ROOT_DIR ${QT_LIB_DIR} DIRECTORY)
+  SET(QT_BINARY_DIR ${QT_ROOT_DIR}/bin)
   
   # --------------------------------------------------------------------------
   # Copy Qt binaries to CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
+    # Determine shared library extension without the dot (dll instead of .dll)
+    STRING(SUBSTRING ${CMAKE_SHARED_LIBRARY_SUFFIX} 1 -1 CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR)
 
-  # Determine shared library extension without the dot (dll instead of .dll)
-  STRING(SUBSTRING ${CMAKE_SHARED_LIBRARY_SUFFIX} 1 -1 CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR)
-
-  # Get all Qt shared library names
-  IF( ${QT_VERSION_MAJOR} AND ${QT_VERSION_MAJOR} EQUAL 5 )
+    # Get all Qt shared library names
     SET(RELEASE_REGEX_PATTERN .t5.*[^d][.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR})
     SET(DEBUG_REGEX_PATTERN .t5.*d[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR})
-  ELSE()
-    SET(RELEASE_REGEX_PATTERN .*[^d]4[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR} )
-    SET(DEBUG_REGEX_PATTERN .*d4[.]${CMAKE_SHARED_LIBRARY_SUFFIX_NO_SEPARATOR} )
-  ENDIF()
 
-  # Copy shared libraries to bin directory to allow running Plus applications in the build tree
-  IF ( ${CMAKE_GENERATOR} MATCHES "Visual Studio" )
+    # Copy shared libraries to bin directory to allow running Plus applications in the build tree  
     FILE(COPY "${QT_BINARY_DIR}/"
       DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release
       FILES_MATCHING REGEX ${RELEASE_REGEX_PATTERN}
@@ -230,7 +183,7 @@ IF (RobartsVTK_USE_QT)
       FILES_MATCHING REGEX ${DEBUG_REGEX_PATTERN}
       )
   ENDIF()
-ENDIF ()
+ENDIF()
 
 #-----------------------------------------------------------------------------
 # Load the necessary macros to use the VTK module environment

@@ -34,28 +34,13 @@ FILE(GLOB CPP_FILES *.cpp)
 #-------------------------------------
 # Create executable
 #-------------------------------------
-if( VTK_QT_VERSION VERSION_GREATER "4" )
-  qt5_wrap_ui(UISrcs ${UI_FILES} )
+qt5_wrap_ui(UISrcs ${UI_FILES})
 
-  ADD_EXECUTABLE(${PROJECT_NAME}
-    ${CXX_FILES} 
-    ${CPP_FILES} 
-    ${UISrcs} 
-    ${QT_WRAP}
-  )
+ADD_EXECUTABLE(${PROJECT_NAME}
+  ${CXX_FILES} 
+  ${CPP_FILES} 
+  ${UISrcs} 
+  ${QT_WRAP}
+)
 
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Widgets)
-else()
-  QT4_WRAP_UI(UISrcs ${UI_FILES})
-
-  ADD_EXECUTABLE(${PROJECT_NAME}
-    ${CXX_FILES} 
-    ${CPP_FILES} 
-    ${UISrcs} 
-    ${QT_WRAP}
-  )
- 
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${QT_LIBRARIES})
-endif()
-
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${KeyholeRendering_LIBRARIES})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Widgets ${KeyholeRendering_LIBRARIES})

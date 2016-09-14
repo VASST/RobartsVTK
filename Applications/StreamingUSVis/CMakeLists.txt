@@ -34,11 +34,7 @@ SET(StreamingUSVis_INCLUDE_DIRS
   ${PlusLib_INCLUDE_DIRS})
 LIST(REMOVE_DUPLICATES StreamingUSVis_INCLUDE_DIRS)
 
-IF( VTK_QT_VERSION VERSION_LESS "5" )
-  INCLUDE(${QT_USE_FILE})
-ELSE()
-  SET(StreamingUSVis_INCLUDE_DIRS ${StreamingUSVis_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
-ENDIF()
+SET(StreamingUSVis_INCLUDE_DIRS ${StreamingUSVis_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
 
 SET(StreamingUSVis_LIBRARIES 
   ${OpenCL_LIBRARIES}
@@ -74,28 +70,13 @@ INCLUDE_DIRECTORIES(${StreamingUSVis_INCLUDE_DIRS})
 #-------------------------------------
 # Create executable
 #-------------------------------------
-if( VTK_QT_VERSION VERSION_GREATER "4" )
-  qt5_wrap_ui(UISrcs ${UI_FILES} )
+qt5_wrap_ui(UISrcs ${UI_FILES} )
 
-  ADD_EXECUTABLE(${PROJECT_NAME}
-    ${CXX_FILES} 
-    ${CPP_FILES} 
-    ${UISrcs} 
-    ${QT_WRAP}
-  )
+ADD_EXECUTABLE(${PROJECT_NAME}
+  ${CXX_FILES} 
+  ${CPP_FILES} 
+  ${UISrcs} 
+  ${QT_WRAP}
+)
 
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Widgets)
-else()
-  QT4_WRAP_UI(UISrcs ${UI_FILES})
-
-  ADD_EXECUTABLE(${PROJECT_NAME}
-    ${CXX_FILES} 
-    ${CPP_FILES} 
-    ${UISrcs} 
-    ${QT_WRAP}
-  )
- 
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${QT_LIBRARIES})
-endif()
-
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${StreamingUSVis_LIBRARIES})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Widgets ${StreamingUSVis_LIBRARIES})
