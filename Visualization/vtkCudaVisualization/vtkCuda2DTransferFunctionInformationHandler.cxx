@@ -6,6 +6,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkObjectFactory.h"
 #include <vtkVersion.h>
+#include <algorithm>
 
 vtkStandardNewMacro(vtkCuda2DTransferFunctionInformationHandler);
 

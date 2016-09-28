@@ -10,6 +10,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTransform.h"
 #include <vtkVersion.h>
+#include <algorithm>
 
 vtkStandardNewMacro(vtkCudaKSOMProbability);
 

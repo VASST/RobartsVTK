@@ -26,6 +26,7 @@
 #include "vtkTransform.h"
 #include "vtkVolume.h"
 #include <vtkVersion.h>
+#include <algorithm>
 
 vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {

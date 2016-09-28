@@ -42,11 +42,11 @@ POSSIBILITY OF SUCH DAMAGES.
 
 =========================================================================*/
 
+#include "CameraCalibrationMainWindow.h"
 #include <QApplication>
 #include <cv.h>
-
 #include <vtksys/CommandLineArguments.hxx>
-#include "CameraCalibrationMainWindow.h"
+#include <vtksys/Encoding.hxx>
 
 int appMain(int argc, char *argv[])
 {
@@ -93,30 +93,6 @@ int appMain(int argc, char *argv[])
 #include <string.h>
 #include <tchar.h>
 
-// TODO: remove these two functions when VTK is updated to a version that contains vtksys::Encoding
-size_t vtksys_Encoding_wcstombs(char* dest, const wchar_t* str, size_t n)
-{
-  if(str == 0)
-  {
-    return (size_t)-1;
-  }
-  return WideCharToMultiByte(CP_ACP, 0, str, -1, dest, (int)n, NULL, NULL) - 1;
-}
-vtksys_stl::string vtksys_Encoding_ToNarrow(const vtksys_stl::wstring& wcstr)
-{
-  vtksys_stl::string str;
-  size_t length = vtksys_Encoding_wcstombs(0, wcstr.c_str(), 0) + 1;
-  if(length > 0)
-  {
-    std::vector<char> chars(length);
-    if(vtksys_Encoding_wcstombs(&chars[0], wcstr.c_str(), length) > 0)
-    {
-      str = &chars[0];
-    }
-  }
-  return str; 
-}
-
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
@@ -136,7 +112,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
   for(int i=0; i<argc; i++)
   {
     // TODO: replace this by vtksys::Encoding::ToNarrow when VTK is updated to a version that contains vtksys::Encoding
-    argvString[i] = vtksys_Encoding_ToNarrow(argvStringW[i]);
+    argvString[i] = vtksys::Encoding::ToNarrow(argvStringW[i]);
     argv[i] = argvString[i].c_str();
   }
 

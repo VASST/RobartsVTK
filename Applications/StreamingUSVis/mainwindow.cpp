@@ -1212,7 +1212,7 @@ void vtkUSEventCallback::Execute(vtkObject *caller, unsigned long, void*)
       this->ImageData->DeepCopy(PlusTrackedFrame->GetImageData()->GetImage());
     }
 
-    this->Viewer->SetInputData_vtk5compatible( ImageData );
+    this->Viewer->SetInputData( ImageData );
     this->Viewer->Modified();
   }
 

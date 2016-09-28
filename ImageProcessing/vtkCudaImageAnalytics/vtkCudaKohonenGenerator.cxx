@@ -15,6 +15,7 @@
 #include "vtkTable.h"
 #include "vtkTransform.h"
 #include <vtkVersion.h>
+#include <algorithm>
 
 vtkStandardNewMacro(vtkCudaKohonenGenerator);
 
