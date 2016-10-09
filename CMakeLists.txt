@@ -8,11 +8,16 @@ SET(RobartsVTK_MAJOR_VERSION 2)
 SET(RobartsVTK_MINOR_VERSION 0)
 SET(RobartsVTK_PATCH_VERSION 0)
 
-INCLUDE(ExternalProject)
-INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
+# Use solution folders.
+IF(MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+  set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
+ENDIF()
 
+INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
 
+# Options
 OPTION(RobartsVTK_USE_QT "Build with QT enabled" OFF)
 OPTION(RobartsVTK_USE_ITK "Use ITK in RobartsITK" OFF)
 OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
@@ -28,7 +33,6 @@ IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
   OPTION(RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
 ENDIF()
 OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
-OPTION(RobartsVTK_WRAP_PYTHON "Wrap the RobartsVTK libs in Python." ON)
 OPTION(BUILD_SHARED_LIBS "Build shared libraries." ON)
 OPTION(BUILD_TESTING "Build testing." OFF)
 OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
@@ -36,9 +40,6 @@ OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
 IF(MSVC)
   add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 ENDIF()
-
-SET(RobartsVTK_VTK_VERSION 7.0.0 CACHE STRING "The requested version of VTK to use")
-set_property(CACHE RobartsVTK_VTK_VERSION PROPERTY STRINGS "6.3.0" "7.0.0" "7.1.0")
 
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
@@ -77,11 +78,9 @@ FIND_PACKAGE(OpenMP REQUIRED)
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK ${RobartsVTK_VTK_VERSION} REQUIRED NO_MODULE PATHS ${VTK_DIR} NO_DEFAULT_PATH)
+FIND_PACKAGE(VTK 7.0 REQUIRED NO_MODULE)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
-
-INCLUDE(${VTK_CONFIG_TARGETS_FILE})
 
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
@@ -93,70 +92,20 @@ IF(RobartsVTK_USE_QT)
 ENDIF()
 
 #-----------------------------------------------------------------------------
-# Setup python wrapping details
-#-----------------------------------------------------------------------------
-OPTION(RobartsVTK_WRAP_PYTHON "Wrap the Robarts classes in Python." OFF)
-IF( RobartsVTK_WRAP_PYTHON AND VTK_WRAP_PYTHON)
-  FIND_PACKAGE(PythonLibs REQUIRED)
-  
-  # Add the vtkpython executable target so that we can properly depend on it
-  add_executable(vtkpython IMPORTED)
-  # Import target "vtkpython" for configuration "Debug"
-  set_property(TARGET vtkpython APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
-  set_target_properties(vtkpython PROPERTIES
-    IMPORTED_LOCATION_DEBUG "${VTK_BINARY_DIR}/Debug/vtkpython.exe"
-    )
-  # Import target "vtkpython" for configuration "Release"
-  set_property(TARGET vtkpython APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-  set_target_properties(vtkpython PROPERTIES
-    IMPORTED_LOCATION_RELEASE "${VTK_BINARY_DIR}/Release/vtkpython.exe"
-    )
-    
-  # Import target "vtkpython" for configuration "MinSizeRel"
-  set_property(TARGET vtkpython APPEND PROPERTY IMPORTED_CONFIGURATIONS MINSIZEREL)
-  set_target_properties(vtkpython PROPERTIES
-    IMPORTED_LOCATION_MINSIZEREL "${VTK_BINARY_DIR}/MinSizeRel/vtkpython.exe"
-    )
-    
-  # Import target "vtkpython" for configuration "RelWithDebInfo"
-  set_property(TARGET vtkpython APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
-  set_target_properties(vtkpython PROPERTIES
-    IMPORTED_LOCATION_RELWITHDEBINFO "${VTK_BINARY_DIR}/RelWithDebInfo/vtkpython.exe"
-    )
-
-  # Export location of python module dirs in install and build tree for every vtkpython module to use
-  # As long as those modules depend on vtkpython, they can retrieve and use these
-  IF(NOT VTK_INSTALL_PYTHON_MODULE_DIR)
-    SET(VTK_INSTALL_PYTHON_MODULE_DIR
-        "${VTK_INSTALL_LIBRARY_DIR}/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages"
-        CACHE
-        PATH "Directory where python modules will be installed" FORCE)
-    MARK_AS_ADVANCED(VTK_INSTALL_PYTHON_MODULE_DIR)
-  ENDIF()
-
-  # this is only necessary if there is a module written in python
-  IF(NOT VTK_BUILD_PYTHON_MODULE_DIR)
-    SET(VTK_BUILD_PYTHON_MODULE_DIR
-        "Wrapping/Python"
-        CACHE
-        PATH "Directory where python modules will be built" FORCE)
-    MARK_AS_ADVANCED(VTK_BUILD_PYTHON_MODULE_DIR)
-  ENDIF()
-ENDIF()
-
-#-----------------------------------------------------------------------------
 # Qt
 #-----------------------------------------------------------------------------
 OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
 IF (RobartsVTK_USE_QT)
   IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
-    SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent)
+    SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent Xml)
   ENDIF()
 
-  FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS} NO_MODULE)
+  FIND_PACKAGE(Qt5 REQUIRED COMPONENTS Widgets ${RobartsVTK_VIS_QT_COMPONENTS})
 
   SET(QT_VERSION_MAJOR ${Qt5Widgets_VERSION_MAJOR})
   SET(CMAKE_AUTOMOC ON)
+  SET(CMAKE_AUTOUIC ON)
+  SET(CMAKE_AUTORCC ON)
 
   GET_FILENAME_COMPONENT(QT_CMAKE_DIR ${Qt5_DIR} DIRECTORY)
   GET_FILENAME_COMPONENT(QT_LIB_DIR ${QT_CMAKE_DIR} DIRECTORY)
@@ -186,18 +135,12 @@ IF (RobartsVTK_USE_QT)
 ENDIF()
 
 #-----------------------------------------------------------------------------
-# Load the necessary macros to use the VTK module environment
-#-----------------------------------------------------------------------------
-SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${VTK_CMAKE_DIR})
-INCLUDE(vtkExternalModuleMacros)
-
-#-----------------------------------------------------------------------------
 # Look for an ITK build directory (optional)
 #-----------------------------------------------------------------------------
 OPTION(RobartsVTK_USE_ITK "Use ITK in RobartsITK" OFF)
 IF(RobartsVTK_USE_ITK)
   # ITK has been built already
-  FIND_PACKAGE(ITK REQUIRED NO_MODULE PATHS ${ITK_DIR} NO_DEFAULT_PATH)
+  FIND_PACKAGE(ITK REQUIRED NO_MODULE)
   
   IF(ITK_FOUND)
     MESSAGE(STATUS "Using ITK available at: ${ITK_DIR}")
@@ -209,7 +152,7 @@ ENDIF()
 #-----------------------------------------------------------------------------
 # Choose static or shared libraries.
 #-----------------------------------------------------------------------------
-OPTION(BUILD_SHARED_LIBS "Build shared libraries." OFF)
+OPTION(BUILD_SHARED_LIBS "Build shared libraries." ${BUILD_SHARED_LIBS} )
 SET (RobartsVTK_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 IF (BUILD_SHARED_LIBS)
   SET (BUILD_SHARED_LIBS_CONFIG 1)
@@ -228,11 +171,12 @@ ENDIF()
 #-----------------------------------------------------------------------------
 # Output directories.
 #-----------------------------------------------------------------------------
-SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-SET(RobartsVTK_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
-SET(RobartsVTK_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
-SET(CXX_TEST_PATH ${EXECUTABLE_OUTPUT_PATH})
+IF(NOT LIBRARY_OUTPUT_PATH)
+  SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+ENDIF()
+IF(NOT EXECUTABLE_OUTPUT_PATH)
+  SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF()
 
 SET(RobartsVTK_Export_Template ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKExport.h.in)
 
@@ -242,30 +186,12 @@ SET(RobartsVTK_Export_Template ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKExport.h.in
 OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
 IF(RobartsVTK_USE_PLUS)
     # PlusLib has been built already
-  FIND_PACKAGE(PlusLib REQUIRED NO_MODULE PATHS ${PlusLib_DIR} NO_DEFAULT_PATH)
+  FIND_PACKAGE(PlusLib REQUIRED NO_MODULE)
 
   IF(PlusLib_FOUND)
     MESSAGE(STATUS "Using PlusLib available at: ${PlusLib_DIR}")
   ENDIF()
 ENDIF()
-
-#-----------------------------------------------------------------------------
-# Enable inclusion of global configuration files in all projects (RobartsVTKConfigure.h)
-#-----------------------------------------------------------------------------
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-
-#-----------------------------------------------------------------------------
-# Correct installation folder for RobartsVTK modules not to end up in VTK
-#-----------------------------------------------------------------------------
-SET(VTK_INSTALL_RUNTIME_DIR bin)
-SET(VTK_INSTALL_LIBRARY_DIR lib)
-SET(VTK_INSTALL_ARCHIVE_DIR lib)
-SET(VTK_INSTALL_PACKAGE_DIR "lib/cmake/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}")
-SET(VTK_INSTALL_INCLUDE_DIR include/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-SET(VTK_INSTALL_DATA_DIR share/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-SET(VTK_INSTALL_DOC_DIR share/doc/RobartsVTK-${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION})
-SET(VTK_INSTALL_EXPORT_NAME RobartsVTKTargets)
-SET(VTK_MODULES_DIR "${RobartsVTK_BINARY_DIR}/${VTK_INSTALL_PACKAGE_DIR}/Modules")
 
 #-----------------------------------------------------------------------------
 # Start listing the RobartsVTK modules
@@ -300,6 +226,104 @@ OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
+  
+  # Allow the user to define the CUDA build architectures
+  set(_generations "Fermi" "Kepler" "Maxwell" "Pascal")
+  set(CUDA_GENERATION "" CACHE STRING "Build CUDA device code only for specific GPU architecture. Leave empty to build for all architectures.")
+  if( CMAKE_VERSION VERSION_GREATER "2.8" )
+    set_property( CACHE CUDA_GENERATION PROPERTY STRINGS "" ${_generations} )
+  endif()
+
+  if(CUDA_GENERATION)
+    if(NOT ";${_generations};" MATCHES ";${CUDA_GENERATION};")
+      string(REPLACE ";" ", " _generations "${_generations}")
+      message(FATAL_ERROR "ERROR: ${_generations} Generations are suppered.")
+    endif()
+    unset(CUDA_ARCH_BIN CACHE)
+    unset(CUDA_ARCH_PTX CACHE)
+  endif()
+
+  set(__cuda_arch_ptx "")
+  if(CUDA_GENERATION STREQUAL "Fermi")
+    set(__cuda_arch_bin "2.0")
+  elseif(CUDA_GENERATION STREQUAL "Kepler")
+    set(__cuda_arch_bin "3.0 3.5 3.7")
+  elseif(CUDA_GENERATION STREQUAL "Maxwell")
+    set(__cuda_arch_bin "5.0")
+  elseif(CUDA_GENERATION STREQUAL "Pascal")
+    set(__cuda_arch_bin "6.0")
+  endif()
+
+  if(NOT DEFINED __cuda_arch_bin)
+    if(ARM)
+      set(__cuda_arch_bin "3.2")
+      set(__cuda_arch_ptx "")
+    elseif(AARCH64)
+      set(__cuda_arch_bin "5.3")
+      set(__cuda_arch_ptx "")
+    else()
+      if(${CUDA_VERSION} VERSION_LESS "8.0")
+        set(__cuda_arch_bin "2.0 3.0 3.5 3.7 5.0")
+      else()
+        set(__cuda_arch_bin "2.0 3.0 3.5 3.7 5.0 6.0")
+      endif()
+      set(__cuda_arch_ptx "")
+    endif()
+  endif()
+
+  set(CUDA_ARCH_BIN ${__cuda_arch_bin} CACHE STRING "Specify 'real' GPU architectures to build binaries for, BIN(PTX) format is supported")
+  set(CUDA_ARCH_PTX ${__cuda_arch_ptx} CACHE STRING "Specify 'virtual' PTX architectures to build PTX intermediate code for")
+
+  string(REGEX REPLACE "\\." "" ARCH_BIN_NO_POINTS "${CUDA_ARCH_BIN}")
+  string(REGEX REPLACE "\\." "" ARCH_PTX_NO_POINTS "${CUDA_ARCH_PTX}")
+  
+  # Ckeck if user specified 1.0 compute capability: we don't support it
+  string(REGEX MATCH "1.0" HAS_ARCH_10 "${CUDA_ARCH_BIN} ${CUDA_ARCH_PTX}")
+  set(CUDA_ARCH_BIN_OR_PTX_10 0)
+  if(NOT ${HAS_ARCH_10} STREQUAL "")
+    set(CUDA_ARCH_BIN_OR_PTX_10 1)
+  endif()
+
+  # NVCC flags to be set
+  set(NVCC_FLAGS_EXTRA "")
+
+  # These vars will be passed into the templates
+  set(RobartsVTK_CUDA_ARCH_BIN "")
+  set(RobartsVTK_CUDA_ARCH_PTX "")
+  set(RobartsVTK_CUDA_ARCH_FEATURES "")
+
+  # Tell NVCC to add binaries for the specified GPUs
+  string(REGEX MATCHALL "[0-9()]+" ARCH_LIST "${ARCH_BIN_NO_POINTS}")
+  foreach(ARCH IN LISTS ARCH_LIST)
+    if(ARCH MATCHES "([0-9]+)\\(([0-9]+)\\)")
+      # User explicitly specified PTX for the concrete BIN
+      set(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${CMAKE_MATCH_2},code=sm_${CMAKE_MATCH_1})
+      set(RobartsVTK_CUDA_ARCH_BIN "${RobartsVTK_CUDA_ARCH_BIN} ${CMAKE_MATCH_1}")
+      set(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${CMAKE_MATCH_2}")
+    else()
+      # User didn't explicitly specify PTX for the concrete BIN, we assume PTX=BIN
+      set(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${ARCH},code=sm_${ARCH})
+      set(RobartsVTK_CUDA_ARCH_BIN "${RobartsVTK_CUDA_ARCH_BIN} ${ARCH}")
+      set(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${ARCH}")
+    endif()
+  endforeach()
+  set(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -D_FORCE_INLINES)
+
+  # Tell NVCC to add PTX intermediate code for the specified architectures
+  string(REGEX MATCHALL "[0-9]+" ARCH_LIST "${ARCH_PTX_NO_POINTS}")
+  foreach(ARCH IN LISTS ARCH_LIST)
+    set(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${ARCH},code=compute_${ARCH})
+    set(RobartsVTK_CUDA_ARCH_PTX "${RobartsVTK_CUDA_ARCH_PTX} ${ARCH}")
+    set(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${ARCH}")
+  endforeach()
+
+  # These vars will be processed in other scripts
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} ${NVCC_FLAGS_EXTRA})
+  set(RobartsVTK_CUDA_CC "${NVCC_FLAGS_EXTRA}")
+
+  message(STATUS "CUDA NVCC target flags: ${CUDA_NVCC_FLAGS}")
+
+  # Look for OpenGL
   FIND_PACKAGE(OpenGL REQUIRED)
 
   # Add Robart's CUDA libraries
@@ -333,10 +357,15 @@ OPTION (RobartsVTK_USE_VISUALIZATION "Build the Robarts Visualization modules" O
 IF(RobartsVTK_USE_VISUALIZATION)
   FIND_PACKAGE(OpenGL REQUIRED)
   FIND_PACKAGE(FFTW REQUIRED)
+  MESSAGE(STATUS "Using FFTW available at: ${FFTW_ROOT_DIR}")
+
   IF(NOT PNG_CMAKE_FILE)
     MESSAGE(FATAL_ERROR "libpng include file not specified. Unable to find PNG library. Please set PNG_CMAKE_FILE:FILEPATH to the location of libpng16.cmake")
   ENDIF()
   INCLUDE(${PNG_CMAKE_FILE})
+  
+  MESSAGE(STATUS "Using libpng available at: ${PNG_CMAKE_FILE}")
+  MESSAGE(STATUS "Using zlib available at: ${ZLIB_ROOT}")
 
   ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
 
@@ -350,7 +379,6 @@ IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
   OPTION (RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
   IF (RobartsVTK_USE_CUDA_ANALYTICS)
     ADD_SUBDIRECTORY(ImageProcessing/vtkCudaImageAnalytics)
-    ADD_SUBDIRECTORY(Utilities/MaxFlow)
 
     SET(RobartsVTK_LIBRARIES ${RobartsVTK_LIBRARIES} vtkCudaImageAnalytics CACHE INTERNAL "")
   ENDIF()
@@ -384,65 +412,63 @@ ENDIF()
 OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
 IF(RobartsVTK_BUILD_APPS)
   IF(RobartsVTK_USE_CUDA)
-    ADD_SUBDIRECTORY(Applications/Cuda)
+    ADD_SUBDIRECTORY(Applications/Cuda2DTFVolumeRendering)
+    set_target_properties(Cuda2DTFVolumeRendering PROPERTIES FOLDER Applications)
     IF(RobartsVTK_USE_QT)
       ADD_SUBDIRECTORY(Applications/FluoroPredViz)
+      set_target_properties(FluoroPredViz PROPERTIES FOLDER Applications)
       ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
+      set_target_properties(TFUIDual PROPERTIES FOLDER Applications)
+      set_target_properties(TFUIGradient PROPERTIES FOLDER Applications)
+      set_target_properties(TFUIKohonen PROPERTIES FOLDER Applications)
     ENDIF()
   ENDIF()
   
   IF(RobartsVTK_USE_CL_VOLUMERECONSTRUCTION AND RobartsVTK_USE_PLUS)
-    SET(OpenCV_NEEDED TRUE)
+    #-------------------------------------
+    # Find OpenCV
+    #-------------------------------------
+    FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+
     IF(RobartsVTK_USE_VISUALIZATION)
+      FIND_PACKAGE(PlusApp REQUIRED)
+      MESSAGE(STATUS "Using PlusApp available at: ${PlusApp_DIR}")
       ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+      set_target_properties(StreamingUSVis PROPERTIES FOLDER Applications)
       ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+      set_target_properties(KeyholeRendering PROPERTIES FOLDER Applications)
     ENDIF()
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)
     ADD_SUBDIRECTORY(Applications/MaxFlow)
+    set_target_properties(MaxFlow GHMFSegment KSOMTrain KSOMApply PROPERTIES FOLDER Applications)
   ENDIF()
   
   IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT)
-    SET(OpenCV_NEEDED TRUE)
-    ADD_SUBDIRECTORY(Applications/CameraCalibration)
-  ENDIF()
-  
-  IF(OpenCV_NEEDED)
     #-------------------------------------
     # Find OpenCV
     #-------------------------------------
     FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+
+    ADD_SUBDIRECTORY(Applications/CameraCalibration)
+    set_target_properties(CameraCalibration PROPERTIES FOLDER Applications)
+  ENDIF()
+  
+  IF(OpenCV_FOUND)
+    MESSAGE(STATUS "Using OpenCV available at: ${OpenCV_DIR}")
   ENDIF()
 ENDIF()
 
-#-----------------------------------------------------------------------------
-# Perform the actual python wrapping
-#-----------------------------------------------------------------------------
-IF(VTK_WRAP_PYTHON)
-  # Locate the python executable
-  IF( NOT PYTHON_EXECUTABLE )
-    FIND_FILE(PYTHON_EXECUTABLE python${CMAKE_EXECUTABLE_SUFFIX} 
-    PATH
-      ${PYTHON_INCLUDE_DIR}/../
-    )
-  ENDIF()
-  
-  IF( NOT PYTHON_EXECUTABLE )
-    MESSAGE(FATAL_ERROR "Python executable needed for python wrapping.")
-  ENDIF()
-
-  # Use our clone of the VTK environment to do our python wrapping
-  ADD_SUBDIRECTORY(Wrapping/Python)
-ENDIF(VTK_WRAP_PYTHON)
-
+SET(RobartsVTK_INCLUDE_DIRS ${CMAKE_BINARY_DIR})
 #-----------------------------------------------------------------------------
 # Populate export variables
 #-----------------------------------------------------------------------------
-foreach( module ${RobartsVTK_LIBRARIES} )
-  vtk_module_load(${module})
-  SET(RobartsVTK_INCLUDE_DIRS ${RobartsVTK_INCLUDE_DIRS} ${${module}_INCLUDE_DIRS} CACHE INTERNAL "")
+foreach( lib ${RobartsVTK_LIBRARIES} )
+  GET_TARGET_PROPERTY(lib_DIRS ${lib} INTERFACE_INCLUDE_DIRECTORIES)
+  LIST(APPEND RobartsVTK_INCLUDE_DIRS ${lib_DIRS})
 endforeach()
+LIST(REMOVE_DUPLICATES RobartsVTK_INCLUDE_DIRS)
 
 #-----------------------------------------------------------------------------
 # Generate build configurations

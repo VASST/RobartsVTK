@@ -1,3 +1,14 @@
+/*=========================================================================
+
+Program:   Robarts Visualization Toolkit
+
+Copyright (c) John Stuart Haberl Baxter, Robarts Research Institute
+
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
 #include "CUDA_vtkCuda2DInExLogicVolumeMapper_renderAlgo.h"
 #include "vtkCuda2DInExLogicTransferFunctionInformationHandler.h"
 #include "vtkCuda2DTransferFunction.h"

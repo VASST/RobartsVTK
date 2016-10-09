@@ -1,28 +1,40 @@
-//For transfer function
+/*=========================================================================
+
+Program:   Robarts Visualization Toolkit
+
+Copyright (c) John Stuart Haberl Baxter, Robarts Research Institute
+
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
+
+// vtkCudaCommon includes
 #include "vtkCuda2DTransferFunction.h"
 #include "vtkCudaFunctionPolygon.h"
 #include "vtkCudaFunctionPolygonReader.h"
 
-//For ray-caster
+// vtkCudaVisualization includes
 #include "vtkCuda2DVolumeMapper.h"
-#include "vtkVolume.h"
-#include "vtkVolumeProperty.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkColorTransferFunction.h"
-#include "vtkBoxWidget.h"
-#include "vtkCommand.h"
-#include "vtkPlanes.h"
 
-//general use
-#include "vtkImageData.h"
-#include "vtkMetaImageReader.h"
-#include "vtkImageAppendComponents.h"
-#include "vtkActor.h"
-#include "vtkRenderer.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkProperty.h"
-#include "vtkCamera.h"
+// VTK includes
+#include <vtkActor.h>
+#include <vtkBoxWidget.h>
+#include <vtkCamera.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkCommand.h>
+#include <vtkImageAppendComponents.h>
+#include <vtkImageData.h>
+#include <vtkMetaImageReader.h>
+#include <vtkPiecewiseFunction.h>
+#include <vtkPlanes.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkVolume.h>
+#include <vtkVolumeProperty.h>
 
 // ---------------------------------------------------------------------------------------------------
 // Callback for moving the planes from the box widget to the mapper

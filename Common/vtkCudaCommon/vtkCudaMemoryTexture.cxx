@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
 
   Copyright (c) Adam Rankin, Robarts Research Institute
 

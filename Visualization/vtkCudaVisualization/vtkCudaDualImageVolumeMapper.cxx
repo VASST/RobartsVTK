@@ -1,3 +1,14 @@
+/*=========================================================================
+
+Program:   Robarts Visualization Toolkit
+
+Copyright (c) John Stuart Haberl Baxter, Robarts Research Institute
+
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the above copyright notice for more information.
+
+=========================================================================*/
 /** @file vtkVolumeMapper.h
  *
  *  @brief Implementation defining a volume mapper (ray caster) using CUDA kernels for parallel ray calculation

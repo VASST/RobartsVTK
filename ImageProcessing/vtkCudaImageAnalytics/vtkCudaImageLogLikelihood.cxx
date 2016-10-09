@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkCudaImageLogLikelihood.cxx
 
   Copyright (c) John SH Baxter, Robarts Research Institute

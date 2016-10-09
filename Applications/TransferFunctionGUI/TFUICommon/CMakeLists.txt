@@ -1,8 +1,6 @@
 PROJECT(TFUICommon)
 
-include(module.cmake)
-
-SET ( Module_SRCS 
+SET ( ${PROJECT_NAME}_SRCS 
   qTransferFunctionWindowWidgetInterface.cxx
   qFileManagementWidget.cxx
   qStereoRenderingWidget.cxx
@@ -12,17 +10,35 @@ SET ( Module_SRCS
   vtkImageHackedPlaneWidget.cxx
 )
 
-LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${Qt5Widgets_INCLUDE_DIRS})
-SET(${PROJECT_NAME}_APPEND_LIBS Qt5::Widgets ${_Qt5Widgets_LIB_DEPENDENCIES})
-LIST(APPEND ${PROJECT_NAME}_LIBS ${PROJECT_NAME}_APPEND_LIBS)
-
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
+IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  SET ( ${PROJECT_NAME}_HDRS 
+    qTransferFunctionWindowWidgetInterface.h
+    qFileManagementWidget.h
+    qStereoRenderingWidget.h
+    qVirtualToolWidget.h
+    qShadingWidget.h
+    qDeviceManagementWidget.h
+    vtkImageHackedPlaneWidget.h
+  )
+ENDIF()
 
 # -----------------------------------------------------------------
 # Build the library
-vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_APPEND_LIBS})
-
-# -----------------------------------------------------------------
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR} 
+  ${VTK_INCLUDE_DIRS}
+  )
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  Qt5::Widgets
+  vtkCudaCommon
+  vtkCudaVisualization
+  vtkRenderingVolume${VTK_RENDERING_BACKEND}
+  vtkInteractionWidgets
+  vtksys
+  vtkIOLegacy
+  vtkIOMINC
+  vtkImagingMath
+  )
+GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

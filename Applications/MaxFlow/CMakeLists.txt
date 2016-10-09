@@ -1,20 +1,65 @@
-PROJECT( MaxFlowExample )
+PROJECT( MaxFlow )
 
-vtk_module_impl()
-
-SET ( Module_SRCS 
-  MaxFlowExample.cxx
+SET ( ${PROJECT_NAME}_SRCS 
+  MaxFlow.cxx
 )
 
 # -----------------------------------------------------------------
 # Build the library
-vtk_add_executable(${PROJECT_NAME} ${Module_SRCS})
-foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
-  vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${dep})
-endforeach()
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_APPEND_LIBS})
-vtk_target_install(${PROJECT_NAME})
+ADD_EXECUTABLE(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS} )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC 
+  vtkRenderingCore 
+  vtkFiltersCore 
+  vtkImagingCore 
+  vtkIOImage 
+  vtkCommonCore 
+  vtkRobartsCommon 
+  vtkCudaImageAnalytics 
+  vtkCudaCommon
+  vtksys
+  )
+  
+# -----------------------------------------------------------------
+# Build the GHMF_Segment executable
+SET ( Module_SRCS GHMF_Segment.cxx)
+ADD_EXECUTABLE(GHMFSegment ${Module_SRCS})
+target_link_libraries(GHMFSegment
+  vtkFiltersCore 
+  vtkImagingCore 
+  vtkIOCore 
+  vtkIOImage 
+  vtkCommonCore 
+  vtkCudaCommon 
+  vtkCudaImageAnalytics 
+  vtkRobartsCommon
+  )
 
 # -----------------------------------------------------------------
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+# Build the KSOM_train executable
+SET ( Module_SRCS KSOM_train.cxx)
+ADD_EXECUTABLE(KSOMTrain ${Module_SRCS})
+target_link_libraries(KSOMTrain
+  vtkFiltersCore 
+  vtkImagingCore 
+  vtkIOCore 
+  vtkIOImage 
+  vtkCommonCore 
+  vtkCudaCommon 
+  vtkCudaImageAnalytics 
+  vtkRobartsCommon
+  )
+
+# -----------------------------------------------------------------
+# Build the KSOM_apply executable
+SET ( Module_SRCS KSOM_apply.cxx)
+ADD_EXECUTABLE(KSOMApply ${Module_SRCS})
+target_link_libraries(KSOMApply
+  vtkFiltersCore 
+  vtkImagingCore 
+  vtkIOCore 
+  vtkIOImage 
+  vtkCommonCore 
+  vtkCudaCommon 
+  vtkCudaImageAnalytics 
+  vtkRobartsCommon
+  )

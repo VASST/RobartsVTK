@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkCudaCommon.h
 
   Copyright (c) Adam Rankin, Robarts Research Institute

@@ -119,12 +119,7 @@
 #include "vtkKeyholePass.h"
 
 // OpenCV includes
-#include "cv.h"
-#include "highgui.h"
-
-#ifdef __OPENCV_OLD_CV_H__
-#include "opencv2/opencv.hpp"
-#endif
+#include <opencv2/videoio.hpp>
 
 #include "vtkCLVolumeReconstruction.h"
 
@@ -138,7 +133,7 @@ class vtkWindowEventCallback : public vtkCommand
 {
 
 public:
-  static vtkWindowEventCallback *New()
+  static vtkWindowEventCallback* New()
   {
     return new vtkWindowEventCallback;
   }
@@ -150,19 +145,19 @@ public:
     this->pinned = true;
   }
 
-  virtual void Execute(vtkObject *caller, unsigned long eventid, void* callData)
+  virtual void Execute( vtkObject* caller, unsigned long eventid, void* callData )
   {
 
-    vtkRenderWindowInteractor *iren = vtkRenderWindowInteractor::SafeDownCast(caller);
+    vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::SafeDownCast( caller );
 
-    if( eventid == vtkCommand::MouseMoveEvent && !this->pinned)
+    if( eventid == vtkCommand::MouseMoveEvent && !this->pinned )
     {
       x = iren->GetEventPosition()[0];
       y = iren->GetEventPosition()[1];
     }
     if( eventid == vtkCommand::LeftButtonPressEvent )
     {
-      this->pinned = ( this->pinned == true )? false: true;
+      this->pinned = ( this->pinned == true ) ? false : true;
     }
     if( eventid == vtkCommand::MouseWheelForwardEvent )
     {
@@ -179,7 +174,7 @@ public:
     if( eventid == vtkCommand::KeyPressEvent )
     {
       // Reset everything
-      char *c = iren->GetKeySym();
+      char* c = iren->GetKeySym();
       if( *c == 'r' )
       {
         this->size = 120;
@@ -190,13 +185,13 @@ public:
     }
 
     // Set keyhole parameters.
-    keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+    keyholePass->SetKeyholeParameters( x, y, size, this->gamma );
 
     iren->GetRenderWindow()->Render();
 
   }
 
-  vtkKeyholePass *keyholePass;
+  vtkKeyholePass* keyholePass;
 
 private:
   int size;
@@ -210,45 +205,45 @@ private:
 class vtkUSEventCallback : public vtkCommand
 {
 public:
-  static vtkUSEventCallback *New()
+  static vtkUSEventCallback* New()
   {
     return new vtkUSEventCallback;
   }
 
-  virtual void Execute(vtkObject *caller, unsigned long, void*);
+  virtual void Execute( vtkObject* caller, unsigned long, void* );
 
-  vtkPlusTrackedFrameList *PlusTrackedFrames;
-  vtkPlusTransformRepository *repository;
-  vtkPlusVolumeReconstructor *reconstructor;
-  vtkCLVolumeReconstruction *accRecon;
-  vtkImageData *usVolume;
-  vtkSmartVolumeMapper *volMapper;
-  vtkCuda1DVolumeMapper *cudaMapper;
-  vtkCuda2DVolumeMapper *cudaMapper2;
-  vtkImageViewer2 *Viewer;
-  vtkImageFlip *imgFlip;
-  vtkRenderWindowInteractor *Iren;
+  vtkPlusTrackedFrameList* PlusTrackedFrames;
+  vtkPlusTransformRepository* repository;
+  vtkPlusVolumeReconstructor* reconstructor;
+  vtkCLVolumeReconstruction* accRecon;
+  vtkImageData* usVolume;
+  vtkSmartVolumeMapper* volMapper;
+  vtkCuda1DVolumeMapper* cudaMapper;
+  vtkCuda2DVolumeMapper* cudaMapper2;
+  vtkImageViewer2* Viewer;
+  vtkImageFlip* imgFlip;
+  vtkRenderWindowInteractor* Iren;
   PlusTransformName TransformName;
-  vtkImageData *ImageData;
-  cv::VideoCapture *_camCapture;
+  vtkImageData* ImageData;
+  cv::VideoCapture* _camCapture;
   int n_frames;
-  vtkImageImport *_imgImport;
-  vtkRenderWindow *_camRenWin;
-  vtkRenderWindow *_volRenWin;
-  vtkVolume *_vol;
-  vtkRenderWindow *_augmentedRenWin;
-  vtkRenderer *_volRenderer;
-  vtkTexture *_camImgTexture;
-  vtkTransform *_boxTransform;
-  vtkTransform *_transform;
-  vtkBoxWidget *_boxWidget;
-  vtkPlanes *_boxPlanes;
-  vtkCuda2DInExLogicVolumeMapper *_inExMapper;
-  QVTKWidget * _screen;
-  QLabel *Info;
-  vtkWindowToImageFilter *_win2Img;
-  vtkPNGWriter *_imgWriter;
-  vtkKeyholePass *_keyholePass;
+  vtkImageImport* _imgImport;
+  vtkRenderWindow* _camRenWin;
+  vtkRenderWindow* _volRenWin;
+  vtkVolume* _vol;
+  vtkRenderWindow* _augmentedRenWin;
+  vtkRenderer* _volRenderer;
+  vtkTexture* _camImgTexture;
+  vtkTransform* _boxTransform;
+  vtkTransform* _transform;
+  vtkBoxWidget* _boxWidget;
+  vtkPlanes* _boxPlanes;
+  vtkCuda2DInExLogicVolumeMapper* _inExMapper;
+  QVTKWidget* _screen;
+  QLabel* Info;
+  vtkWindowToImageFilter* _win2Img;
+  vtkPNGWriter* _imgWriter;
+  vtkKeyholePass* _keyholePass;
   std::string current_mapper;
   bool sc_capture_on;
   int index;
@@ -256,7 +251,7 @@ public:
 
 namespace Ui
 {
-class MainWindow;
+  class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -264,17 +259,17 @@ class MainWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget *parent = 0);
+  explicit MainWindow( QWidget* parent = 0 );
   ~MainWindow();
 
 public slots:
-  void onStartButtonClick(const QString &);
-  void onScanTypeRadioButtonClick(const QString &);
-  void onSaveVolumeButtonClick(const QString &);
-  void ontf1ButtonClick(const QString &);
-  void ontf2ButtonClick(const QString &);
-  void ontfInExButtonClick(const QString &);
-  void onScCaptureRadioButtonClick(const QString &);
+  void onStartButtonClick( const QString& );
+  void onScanTypeRadioButtonClick( const QString& );
+  void onSaveVolumeButtonClick( const QString& );
+  void ontf1ButtonClick( const QString& );
+  void ontf2ButtonClick( const QString& );
+  void ontfInExButtonClick( const QString& );
+  void onScCaptureRadioButtonClick( const QString& );
 
 protected:
   /* Initialize PLUS pipeline */
@@ -290,8 +285,8 @@ protected:
   int InitPLUSBypassPipeline();
 
   /* Setup VTK Camera from intrinsics */
-  void SetupVTKCamera(cv::Mat, double, double, vtkCamera*);
-  void SetupVTKCamera(cv::Mat, vtkCamera*);
+  void SetupVTKCamera( cv::Mat, double, double, vtkCamera* );
+  void SetupVTKCamera( cv::Mat, vtkCamera* );
 
   /* Setup Volume Rendering Pipeline */
   void SetupVolumeRenderingPipeline();
@@ -302,10 +297,10 @@ protected:
   /* Setup US Volume Reconstruction Pipeline */
   int SetupVolumeReconstructionPipeline();
 
-  int GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
-                                    double spacing, int *, double *);
+  int GetExtentFromTrackedFrameList( vtkPlusTrackedFrameList*, vtkPlusTransformRepository*,
+                                     double spacing, int*, double* );
 
-  void GetFirstFramePosition(PlusTrackedFrame *,  vtkPlusTransformRepository *, double *);
+  void GetFirstFramePosition( PlusTrackedFrame*,  vtkPlusTransformRepository*, double* );
 
 protected:
   /* Structure to hold camera video properties */
@@ -396,7 +391,7 @@ protected:
   vtkSmartPointer< vtkVolume >                      volume;
   vtkSmartPointer< vtkRenderer >                    volRenderer;
   vtkSmartPointer< vtkRenderWindow >                volRenWin;
-  qTransferFunctionWindowWidget *                   tfWidget;
+  qTransferFunctionWindowWidget*                    tfWidget;
   vtkSmartPointer< vtkSphereSource >                sphere;
   vtkSmartPointer< vtkActor >                       actor;
   vtkSmartPointer< vtkWindowToImageFilter >         windowToImage;
@@ -415,7 +410,7 @@ protected:
   vtkSmartPointer< vtkActor >                 foregroundTexturedPlane;
 
 private:
-  Ui::MainWindow *ui;
+  Ui::MainWindow* ui;
 };
 
 #endif // MAINWINDOW_H
