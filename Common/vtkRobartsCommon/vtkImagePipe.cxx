@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkImagePipe.cxx
 
   Copyright (c) John Baxter, Robarts Research Institute

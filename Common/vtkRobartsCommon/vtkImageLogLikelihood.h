@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkImageLogLikelihood.h
 
   Copyright (c) Martin Rajchl, Robarts Research Institute

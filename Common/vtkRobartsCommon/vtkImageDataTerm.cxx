@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    $RCSfile: vtkImageDataTerm.cxx,v $
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen

@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkCudaDeviceManager.h
 
   Copyright (c) John SH Baxter, Robarts Research Institute

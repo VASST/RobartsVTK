@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    $RCSfile: vtkRootedDirectedAcyclicGraphForwardIterator.h,v $
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen

@@ -1,29 +1,35 @@
 PROJECT( FluoroPredViz )
 
-include(module.cmake)
-vtk_module_impl()
-
-SET ( Module_SRCS 
+SET ( ${PROJECT_NAME}_SRCS
   main.cxx
-  FluoroPredViz.h
   FluoroPredViz.cxx
-  ResizableQVTKWidget.h
   ResizableQVTKWidget.cxx
 )
 
-LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${Qt5Widgets_INCLUDE_DIRS})
-SET(${PROJECT_NAME}_APPEND_LIBS Qt5::Widgets ${_Qt5Widgets_LIB_DEPENDENCIES})
-LIST(APPEND ${PROJECT_NAME}_LIBS ${${PROJECT_NAME}_APPEND_LIBS})
+IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  SET ( ${PROJECT_NAME}_HDRS 
+    FluoroPredViz.h
+    ResizableQVTKWidget.h
+    )
+ENDIF()
 
 # -----------------------------------------------------------------
 # Build the executable
-vtk_add_executable(${PROJECT_NAME} ${Module_SRCS})
-foreach(dep IN LISTS ${PROJECT_NAME}_DEPENDS)
-  vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${dep})
-endforeach()
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PUBLIC ${${PROJECT_NAME}_LIBS})
-vtk_target_install(${PROJECT_NAME})
-
-# -----------------------------------------------------------------
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+ADD_EXECUTABLE(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${VTK_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  Qt5::Widgets
+  vtkCudaCommon
+  vtkCudaVisualization
+  vtkCudaImageAnalytics
+  vtkRobartsCommon
+  vtkRenderingVolume${VTK_RENDERING_BACKEND}
+  vtkRenderingCore 
+  vtkFiltersCore 
+  vtkImagingCore 
+  vtkInteractionWidgets 
+  vtkGUISupportQt 
+  vtkIOCore 
+  vtkCommonCore 
+  vtkIOMINC 
+  )

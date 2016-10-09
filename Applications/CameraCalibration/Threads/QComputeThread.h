@@ -43,7 +43,11 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifndef __QCOMPUTETHREAD_H__
 #define __QCOMPUTETHREAD_H__
 
+// Qt includes
 #include <QThread>
+#include <QMutex>
+
+// OpenCV includes
 #include <opencv2/core.hpp>
 
 class QComputeThread : public QThread
@@ -68,7 +72,7 @@ public:
   };
 
 public:
-  QComputeThread(int computeIndex, QObject *parent = 0);
+  QComputeThread(int computeIndex, QObject* parent = 0);
   ~QComputeThread();
 
   /// Calibrate a single camera
@@ -112,7 +116,7 @@ public:
                             int width,
                             int height,
                             CalibrationPattern pattern,
-                            const cv::Mat& image );
+                            const cv::Mat& image);
 
 protected:
   double ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints,

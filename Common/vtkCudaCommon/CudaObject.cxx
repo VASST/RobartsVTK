@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    CudaObject.cxx
 
   Copyright (c) John SH Baxter, Robarts Research Institute

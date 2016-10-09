@@ -1,7 +1,7 @@
 #ifndef __CTTOUSSIMULATION_H__
 #define __CTTOUSSIMULATION_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+//#include "vtkCudaImageAnalyticsModule.h"
 
 #include "vector_types.h"
 
