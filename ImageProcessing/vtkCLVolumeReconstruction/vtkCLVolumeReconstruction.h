@@ -70,6 +70,9 @@ public:
   /* Releases resources */
   void ReleaseDevices();
 
+  /* Set Cuda device index ex. 0, 1, 2 */
+  void SetDevice(int);
+
   /* Set program_src */
   void SetProgramSourcePath(char*);
 

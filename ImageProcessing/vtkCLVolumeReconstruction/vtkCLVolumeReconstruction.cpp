@@ -57,7 +57,7 @@ namespace
 vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 {
   size_t temp;
-  device_index = 1;
+  device_index = 0;
   program_src = FileToString("./kernels.cl", "", &temp);
 
   // Default values for b-scan size
@@ -165,6 +165,11 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
   }
 }
 
+//-----------------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::SetDevice(int idx)
+{
+	this->device_index = idx;
+}
 //--------------------------------------------------------------
 void vtkCLVolumeReconstruction::Initialize()
 {
