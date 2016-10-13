@@ -7,6 +7,7 @@ cmake_policy(SET CMP0003 NEW)
 SET(RobartsVTK_MAJOR_VERSION 2)
 SET(RobartsVTK_MINOR_VERSION 0)
 SET(RobartsVTK_PATCH_VERSION 0)
+SET(RobartsVTK_VERSION ${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}.${RobartsVTK_PATCH_VERSION})
 
 # Use solution folders.
 IF(MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
@@ -23,15 +24,12 @@ OPTION(RobartsVTK_USE_ITK "Use ITK in RobartsITK" OFF)
 OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
 OPTION(RobartsVTK_USE_REGISTRATION "Build the vtkRobartsRegistration module" OFF)
 OPTION(RobartsVTK_USE_COMMON "Build the vtkRobartsCommon module" ON)
-IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-  # Cuda is only available for 64 bit
-  OPTION(RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
-  IF (RobartsVTK_USE_CUDA)
-    OPTION(RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
-  ENDIF()
-  IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
-    OPTION(RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
-  ENDIF()
+OPTION(RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
+IF (RobartsVTK_USE_CUDA)
+  OPTION(RobartsVTK_USE_CUDA_VISUALIZATION "Build the CUDA visualization modules" ON)
+ENDIF()
+IF (RobartsVTK_USE_CUDA AND RobartsVTK_USE_COMMON)
+  OPTION(RobartsVTK_USE_CUDA_ANALYTICS "Build the CUDA image analytics modules" ON)
 ENDIF()
 OPTION(RobartsVTK_USE_OpenCL "Build the OpenCL modules" OFF)
 OPTION(RobartsVTK_USE_VISUALIZATION  "Build the visualization modules" ON)
@@ -229,9 +227,14 @@ OPTION (RobartsVTK_USE_CUDA "Build the CUDA modules" OFF)
 IF (RobartsVTK_USE_CUDA)
   # Look for CUDA facilities
   FIND_PACKAGE(CUDA REQUIRED)
-  
+
   # Allow the user to define the CUDA build architectures
-  set(_generations "Fermi" "Kepler" "Maxwell" "Pascal")
+  IF(${CUDA_VERSION} VERSION_LESS "7.0.0")
+    set(_generations "Fermi" "Kepler" "Maxwell")
+  ELSE()
+    set(_generations "Fermi" "Kepler" "Maxwell" "Pascal")
+  ENDIF()
+
   set(CUDA_GENERATION "" CACHE STRING "Build CUDA device code only for specific GPU architecture. Leave empty to build for all architectures.")
   if( CMAKE_VERSION VERSION_GREATER "2.8" )
     set_property( CACHE CUDA_GENERATION PROPERTY STRINGS "" ${_generations} )
@@ -493,7 +496,12 @@ SET(RobartsVTK_TARGETS_FILE ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKTargets.cmake)
 export(TARGETS ${RobartsVTK_LIBRARIES}
   FILE ${RobartsVTK_TARGETS_FILE}
   )
-  
+
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake)
+  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake
+  )
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfigVersion.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfigVersion.cmake 
+  @ONLY)
