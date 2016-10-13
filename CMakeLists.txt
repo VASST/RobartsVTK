@@ -7,6 +7,7 @@ cmake_policy(SET CMP0003 NEW)
 SET(RobartsVTK_MAJOR_VERSION 2)
 SET(RobartsVTK_MINOR_VERSION 0)
 SET(RobartsVTK_PATCH_VERSION 0)
+SET(RobartsVTK_VERSION ${RobartsVTK_MAJOR_VERSION}.${RobartsVTK_MINOR_VERSION}.${RobartsVTK_PATCH_VERSION})
 
 # Use solution folders.
 IF(MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
@@ -487,7 +488,12 @@ SET(RobartsVTK_TARGETS_FILE ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKTargets.cmake)
 export(TARGETS ${RobartsVTK_LIBRARIES}
   FILE ${RobartsVTK_TARGETS_FILE}
   )
-  
+
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake)
+  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfig.cmake
+  )
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfigVersion.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfigVersion.cmake 
+  @ONLY)
