@@ -1,6 +1,6 @@
 PROJECT(vtkCudaVisualization)
 
-SET( Module_SRCS
+SET( ${PROJECT_NAME}_SRCS
   vtkCudaVolumeMapper.cxx
   vtkCudaRendererInformationHandler.cxx
   vtkCudaVolumeInformationHandler.cxx
@@ -16,7 +16,7 @@ SET( Module_SRCS
   vtkCudaDRRImageVolumeMapper.cxx
 )
 
-SET( Module_CUDA_SRCS
+SET( ${PROJECT_NAME}_CUDA_SRCS
   CUDA_vtkCudaVolumeMapper_renderAlgo.cu
   CUDA_vtkCuda1DVolumeMapper_renderAlgo.cuh
   CUDA_vtkCuda2DVolumeMapper_renderAlgo.cuh
@@ -25,33 +25,50 @@ SET( Module_CUDA_SRCS
   CUDA_vtkCudaDRRImageVolumeMapper_renderAlgo.cuh
   )
 
+IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  SET ( ${PROJECT_NAME}_HDRS 
+    vtkCudaVolumeMapper.h
+    vtkCudaRendererInformationHandler.h
+    vtkCudaVolumeInformationHandler.h
+    vtkCudaOutputImageInformationHandler.h
+    vtkCuda1DVolumeMapper.h
+    vtkCuda1DTransferFunctionInformationHandler.h
+    vtkCuda2DVolumeMapper.h
+    vtkCuda2DTransferFunctionInformationHandler.h
+    vtkCuda2DInExLogicVolumeMapper.h
+    vtkCuda2DInExLogicTransferFunctionInformationHandler.h
+    vtkCudaDualImageVolumeMapper.h
+    vtkCudaDualImageTransferFunctionInformationHandler.h
+    vtkCudaDRRImageVolumeMapper.h
+  )
+ENDIF()
+
 IF(BUILD_SHARED_LIBS)
   SET(GPGPU_BUILD_TYPE SHARED)
 ENDIF()
 
 REMOVE_VTK_DEFINITIONS()
 
-#------------------------------------------------------------------
-# See VTK/Accelerators/Pistons
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
-vtk_module_impl()
-
 # -----------------------------------------------------------------
 # Generate the cuda sources
-cuda_compile(Module_CUDA_C_SRCS ${Module_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
-
-SET_SOURCE_FILES_PROPERTIES(
-  ${Module_CUDA_C_SRCS} 
-  WRAP_EXCLUDE
-  )
-LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
+cuda_compile(${PROJECT_NAME}_CUDA_C_SRCS ${${PROJECT_NAME}_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
+LIST(APPEND ${PROJECT_NAME}_SRCS ${${PROJECT_NAME}_CUDA_C_SRCS})
 
 # -----------------------------------------------------------------
 # Build the library
-vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES} ${OPENGL_LIBRARIES})
-
-# -----------------------------------------------------------------
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES module_uses_cuda ON)
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${VTK_INCLUDE_DIRS} 
+  ${CUDA_INCLUDE_DIRS}
+  )
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  ${CUDA_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+  vtkCudaCommon
+  vtkCudaCommonStatic
+  vtkRenderingVolume
+  vtkRenderingVolume${VTK_RENDERING_BACKEND}
+  )
+GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

@@ -1,6 +1,6 @@
 PROJECT(vtkCudaImageAnalytics)
 
-SET( Module_SRCS
+SET( ${PROJECT_NAME}_SRCS
   vtkCudaVoxelClassifier.cxx
   vtkCudaCT2USSimulation.cxx
   vtkCudaFuzzyConnectednessFilter.cxx
@@ -22,7 +22,31 @@ SET( Module_SRCS
   vtkCudaImageVote.cxx
 )
 
-SET( Module_CUDA_SRCS
+IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  SET ( ${PROJECT_NAME}_HDRS 
+    vtkCudaVoxelClassifier.h
+    vtkCudaCT2USSimulation.h
+    vtkCudaFuzzyConnectednessFilter.h
+    vtkCudaKohonenGenerator.h
+    vtkCudaKohonenApplication.h
+    vtkCudaKohonenReprojector.h
+    vtkCudaPAGMMEstimator.h
+    vtkCudaKSOMLikelihood.h
+    vtkCudaKSOMProbability.h
+    vtkCudaHierarchicalMaxFlowSegmentation.h
+    vtkCudaHierarchicalMaxFlowSegmentation2.h
+    vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h
+    vtkCudaMaxFlowSegmentationWorker.h
+    vtkCudaMaxFlowSegmentationScheduler.h
+    vtkCudaMaxFlowSegmentationTask.h
+    vtkCudaHierarchicalMaxFlowDecomposition.h
+    vtkCudaImageAtlasLabelProbability.h
+    vtkCudaImageLogLikelihood.h
+    vtkCudaImageVote.h
+  )
+ENDIF()
+
+SET( ${PROJECT_NAME}_CUDA_SRCS
   CUDA_voxelclassifier.cu
   CUDA_fuzzyconnectednessfilter.cu
   CUDA_kohonengenerator.cu
@@ -45,30 +69,32 @@ ENDIF()
 
 REMOVE_VTK_DEFINITIONS()
 
-#------------------------------------------------------------------
-# See VTK/Accelerators/Pistons
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
-vtk_module_impl()
-
 # -----------------------------------------------------------------
 # Generate the cuda sources
-cuda_compile(Module_CUDA_C_SRCS ${Module_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
-
-SET_SOURCE_FILES_PROPERTIES(
-  ${Module_CUDA_C_SRCS} 
-  vtkCudaMaxFlowSegmentationWorker.cxx  
-  vtkCudaMaxFlowSegmentationScheduler.cxx 
-  vtkCudaMaxFlowSegmentationTask.cxx 
-  WRAP_EXCLUDE
-  )
-LIST(APPEND Module_SRCS ${Module_CUDA_C_SRCS})
+foreach(dir ${vtkCudaCommon_INCLUDE_DIRS})
+  LIST(APPEND CUDA_NVCC_FLAGS -I${dir})
+endforeach()
+foreach(dir ${vtkCudaCommonStatic_INCLUDE_DIRS})
+  LIST(APPEND CUDA_NVCC_FLAGS -I${dir})
+endforeach()
+cuda_compile(${PROJECT_NAME}_CUDA_C_SRCS ${${PROJECT_NAME}_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
+LIST(APPEND ${PROJECT_NAME}_SRCS ${${PROJECT_NAME}_CUDA_C_SRCS})
 
 # -----------------------------------------------------------------
 # Build the library
-vtk_module_library(${PROJECT_NAME} ${Module_SRCS} ${Module_CUDA_HDRS})
-vtk_module_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${CUDA_LIBRARIES})
-
-# -----------------------------------------------------------------
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES module_uses_cuda ON)
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${VTK_INCLUDE_DIRS} 
+  ${CUDA_INCLUDE_DIRS}
+  )
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+  ${CUDA_LIBRARIES}
+  vtkRobartsCommon
+  vtkCudaCommon
+  vtkCudaCommonStatic
+  vtkFiltersCore
+  vtkCommonCore
+  )
+GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

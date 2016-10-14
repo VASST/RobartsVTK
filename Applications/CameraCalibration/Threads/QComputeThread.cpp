@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 // Qt includes
 #include <QImage>
+#include <QMutexLocker>
 
 // Open CV includes
 #include <opencv2/imgproc.hpp>

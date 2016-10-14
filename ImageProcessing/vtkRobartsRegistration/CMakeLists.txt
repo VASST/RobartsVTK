@@ -1,8 +1,6 @@
 PROJECT(vtkRobartsRegistration)
 
-include(module.cmake)
-
-SET ( Module_SRCS
+SET ( ${PROJECT_NAME}_SRCS
   vtkShapeBasedInterpolation.cxx
   vtkTPSRegistration.cxx
   vtkPrincipalComponentAnalysis.cxx
@@ -32,12 +30,54 @@ SET ( Module_SRCS
   vtkCompactSupportRBFTransform.cxx
 )
 
-SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
+IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
+  SET ( ${PROJECT_NAME}_HDRS 
+    vtkShapeBasedInterpolation.h
+    vtkTPSRegistration.h
+    vtkPrincipalComponentAnalysis.h
+    vtkPowellMinimizer.h
+    vtkPolyDataSurfaceArea.h
+    vtkPolyDataNormals2.h
+    vtkPolyDataCorrespondence.h
+    vtkMeshSmootheness.h
+    vtkImageTMIManipulator.h
+    vtkImageSMIPVIManipulator.h
+    vtkImageSMIManipulator.h
+    vtkImageSMIManipulator2.h
+    vtkImageSDManipulator.h
+    vtkImageRMIManipulator.h
+    vtkImagePatternIntensity.h
+    vtkImageNormalizedCrossCorrelation.h
+    vtkImageNMIManipulator.h
+    vtkImageNCCManipulator.h
+    vtkImageMIManipulator.h
+    vtkImageECRManipulator.h
+    vtkImageADManipulator.h
+    vtkImageAbsoluteDifference.h
+    vtkImage3DNoiseSource.h
+    vtkGBEFixed.h
+    vtkGBE.h
+    vtkFunctionMinimizer.h
+    vtkCompactSupportRBFTransform.h
+  )
+ENDIF()
 
 # -----------------------------------------------------------------
 # Build the library
-vtk_module_library(${PROJECT_NAME} ${Module_SRCS})
-
-# -----------------------------------------------------------------
-LIST(APPEND VTK_MODULES_ENABLED ${PROJECT_NAME})
-SET(VTK_MODULES_ENABLED ${VTK_MODULES_ENABLED} PARENT_SCOPE)
+ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR} 
+  ${VTK_INCLUDE_DIRS}
+  )
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  vtkImagingHybrid 
+  vtkImagingCore
+  vtkImagingStatistics
+  vtkFiltersGeneral
+  vtkFiltersCore
+  vtkImagingMath
+  vtkCommonDataModel
+  vtkFiltersGeneral
+  )
+GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

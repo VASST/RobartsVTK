@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    $RCSfile: vtkImageMIManipulator.h,v $
   Language:  C++
   Date:      $Date: 2007/05/04 14:34:34 $

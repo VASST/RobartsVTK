@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
   Module:    vtkRootedDirectedAcyclicGraph.cxx
 
   Copyright (c) 2016 John SH Baxter, Robarts Research Institute

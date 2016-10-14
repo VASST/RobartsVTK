@@ -1,32 +1,11 @@
 PROJECT( CameraCalibration )
 
-CMAKE_POLICY(SET CMP0020 NEW)
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_AUTOUIC ON)
-CMAKE_MINIMUM_REQUIRED( VERSION 3.0 )
-
-FIND_PACKAGE( Qt5 COMPONENTS Gui Widgets Xml)
-
-INCLUDE_DIRECTORIES(${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
-
-FIND_PACKAGE(OpenCV 3.1 REQUIRED)
-
-FIND_PACKAGE(VTK REQUIRED)
-INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-
-FIND_PACKAGE(PlusLib REQUIRED)
-INCLUDE(${PlusLib_USE_FILE})
-
-FIND_PACKAGE(PlusApp REQUIRED)
-INCLUDE_DIRECTORIES(${PlusApp_INCLUDE_DIRS})
-
+SET(CameraCalib_APPTYPE MACOSX_BUNDLE)
 IF(WIN32)
-  SET(CameraCalib_WIN32 WIN32)
+  SET(CameraCalib_APPTYPE WIN32)
 ENDIF()
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/Threads)
-
-ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
+ADD_EXECUTABLE( ${PROJECT_NAME} ${CameraCalib_APPTYPE}
   main.cpp
   CameraCalibrationMainWindow.h
   CameraCalibrationMainWindow.cpp
@@ -42,18 +21,25 @@ ADD_EXECUTABLE( CameraCalibration ${CameraCalib_WIN32}
   Threads/QCaptureThread.h
   Threads/QCaptureThread.cpp
   ${PlusApp_CommonWidgets_QRC}
-  ${UISrcs}
 )
-
-TARGET_LINK_LIBRARIES( CameraCalibration Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Xml)
-
 IF(WIN32)
   # From PLUS, use MSMF capture library to query webcams
-  TARGET_LINK_LIBRARIES( CameraCalibration MfVideoCaptureLibrary )
+  TARGET_LINK_LIBRARIES( ${PROJECT_NAME} MfVideoCaptureLibrary )
 ENDIF()
 
-TARGET_LINK_LIBRARIES( CameraCalibration
-  ${OpenCV_LIBS}
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${CMAKE_CURRENT_BINARY_DIR} 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Threads
+  ${OpenCV_INCLUDE_DIRS}
+  )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
+  opencv_core
+  opencv_imgproc
+  opencv_videoio
+  opencv_highgui
+  opencv_features2d
+  opencv_calib3d
   vtkndicapi
   vtkPlusDataCollection
   vtkCommonCore
@@ -61,4 +47,9 @@ TARGET_LINK_LIBRARIES( CameraCalibration
   vtkGUISupportQt
   PlusCommonWidgets
   ${OPENGL_LIBRARIES}
+  Qt5::Concurrent
+  Qt5::Widgets 
+  Qt5::Core 
+  Qt5::Gui 
+  Qt5::Xml
 )

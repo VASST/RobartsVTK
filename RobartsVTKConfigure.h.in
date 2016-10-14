@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Program:   Visualization Toolkit
+  Program:   Robarts Visualization Toolkit
 
   Copyright (c) Adam Rankin, Robarts Research Institute
 
@@ -28,12 +28,6 @@
   #define RobartsVTK_STATIC
 #endif
 
-// For VTK 6 and later include the header file that defines
-// VTK version (VTK_MAJOR_VERSION, VTK_MINOR_VERSION, etc.)
-// In earlier VTK releases, the version information was included
-// in vtkConfigure.h, therefore no additional include was needed.
-#if (@VTK_MAJOR_VERSION@ >= 6)  
-  #include "vtkVersionMacros.h"
-#endif
+#include "vtkVersionMacros.h"
 
 #endif // __RobartsVTKConfigure_h

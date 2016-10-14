@@ -44,8 +44,13 @@ POSSIBILITY OF SUCH DAMAGES.
 #define __QCAPTURETHREAD_H__
 
 #include "OpenCVCameraCapture.h"
-#include <QThread>
+
+// OpenCV includes
 #include <opencv2/core.hpp>
+
+// Qt includes
+#include <QMutex>
+#include <QThread>
 
 class QCaptureThread : public QThread
 {

@@ -1,3 +1,18 @@
+# --------------------------------------------------------------------------
+# Library export directive file generation
+
+# This macro generates a ...Export.h file that specifies platform-specific DLL export directives,
+# for example on Windows: __declspec( dllexport )
+MACRO(GENERATE_EXPORT_DIRECTIVE_FILE LIBRARY_NAME)
+  SET (MY_LIBNAME ${LIBRARY_NAME})
+  SET (MY_EXPORT_HEADER_PREFIX ${MY_LIBNAME})
+  SET (MY_LIBRARY_EXPORT_DIRECTIVE "${MY_LIBNAME}Export")
+  CONFIGURE_FILE(
+    ${RobartsVTK_Export_Template}
+    ${CMAKE_CURRENT_BINARY_DIR}/${MY_EXPORT_HEADER_PREFIX}Export.h
+    )
+ENDMACRO()
+
 macro(REMOVE_VTK_DEFINITIONS)
   get_directory_property(_dir_defs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
   set(_vtk_definitions)
@@ -7,42 +22,4 @@ macro(REMOVE_VTK_DEFINITIONS)
       endif()
   endforeach()
   remove_definitions(${_vtk_definitions})
-endmacro(REMOVE_VTK_DEFINITIONS)
-
-macro(CopyDllsToOutputDirectories DESTINATION_DEBUG_DIRECTORY DESTINATION_RELEASE_DIRECTORY)
-  # Copy libraries to DESTINATION_RELEASE_DIRECTORY and DESTINATION_DEBUG_DIRECTORY
-  FOREACH(target ${ARGN})
-    IF(NOT TARGET ${target})
-      CONTINUE()
-    ENDIF()
-
-    GET_TARGET_PROPERTY(LIB_TYPE ${target} TYPE)
-
-    IF(${LIB_TYPE} STREQUAL "SHARED_LIBRARY" AND ${CMAKE_GENERATOR} MATCHES "Visual Studio")
-      GET_TARGET_PROPERTY(LIB_DEBUG_FILE ${target} IMPORTED_LOCATION_DEBUG)
-      GET_TARGET_PROPERTY(LIB_RELEASE_FILE ${target} IMPORTED_LOCATION_RELEASE)
-
-      IF(NOT LIB_DEBUG_FILE AND NOT LIB_RELEASE_FILE)
-        GET_TARGET_PROPERTY(LIB_FILE ${target} IMPORTED_LOCATION)
-        IF("${LIB_FILE}" STREQUAL "")
-          MESSAGE(STATUS "Unable to copy target ${target} to runtime directory. No file associated with target.")
-        ELSE()
-          SET(LIB_RELEASE_FILE ${LIB_FILE})
-          SET(LIB_DEBUG_FILE ${LIB_FILE})
-        ENDIF()
-      ENDIF()
-
-      IF( EXISTS ${LIB_RELEASE_FILE} )
-        FILE(COPY ${LIB_RELEASE_FILE} DESTINATION ${DESTINATION_RELEASE_DIRECTORY})
-      ENDIF()
-      IF( EXISTS ${LIB_DEBUG_FILE} )
-        FILE(COPY ${LIB_DEBUG_FILE} DESTINATION ${DESTINATION_DEBUG_DIRECTORY})
-        # Also copy the .pdb if it exists
-        STRING(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".pdb" LIB_DEBUG_PDB_FILE ${LIB_DEBUG_FILE})
-        IF( EXISTS ${LIB_DEBUG_PDB_FILE})
-          FILE(COPY ${LIB_DEBUG_PDB_FILE} DESTINATION ${DESTINATION_DEBUG_DIRECTORY})
-        ENDIF()
-      ENDIF()
-    ENDIF()
-  ENDFOREACH()
 endmacro()
