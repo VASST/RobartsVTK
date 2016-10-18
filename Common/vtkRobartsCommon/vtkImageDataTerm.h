@@ -21,11 +21,11 @@
 #define VTK_GAUSSIAN           2
 #define VTK_SPIKE              3
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 
-class VTKROBARTSCOMMON_EXPORT vtkImageDataTerm : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkImageDataTerm : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageDataTerm *New();

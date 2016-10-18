@@ -14,13 +14,13 @@
 #ifndef __VTKIMAGEMULTISTATISTICS_H__
 #define __VTKIMAGEMULTISTATISTICS_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 
-class VTKROBARTSCOMMON_EXPORT vtkImageMultiStatistics : public vtkAlgorithm
+class vtkRobartsCommonExport vtkImageMultiStatistics : public vtkAlgorithm
 {
 public:
   static vtkImageMultiStatistics *New();

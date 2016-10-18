@@ -13,7 +13,7 @@
 #ifndef FILEMANAGEMENTWIDGET
 #define FILEMANAGEMENTWIDGET
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 
@@ -31,7 +31,7 @@ class vtkVolume;
 
 class qTransferFunctionWindowWidgetInterface;
 
-class TFUICOMMON_EXPORT qFileManagementWidget : public QWidget
+class TFUICommonExport qFileManagementWidget : public QWidget
 {
   Q_OBJECT
 

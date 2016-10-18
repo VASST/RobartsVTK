@@ -1,7 +1,7 @@
 #ifndef __vtkCudaFuzzyConnectednessFilter_H__
 #define __vtkCudaFuzzyConnectednessFilter_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CUDA_fuzzyconnectednessfilter.h"
 #include "CudaObject.h"
@@ -12,7 +12,7 @@ class vtkInformation;
 class vtkInformationVector;
 struct vtkCudaFuzzyConnectednessFilterInformation;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaFuzzyConnectednessFilter : public vtkImageAlgorithm, public CudaObject
 {
 public:
 

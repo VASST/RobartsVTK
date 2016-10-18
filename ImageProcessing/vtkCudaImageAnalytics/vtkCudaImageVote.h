@@ -26,7 +26,7 @@
 #ifndef __VTKCUDAIMAGEVOTE_H__
 #define __VTKCUDAIMAGEVOTE_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CudaObject.h"
 #include "vtkImageAlgorithm.h"
@@ -35,7 +35,7 @@
 class vtkInformation;
 class vtkInformationVector;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaImageVote : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaImageVote : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaImageVote, vtkImageAlgorithm );

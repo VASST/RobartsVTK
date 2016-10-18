@@ -22,7 +22,7 @@
 #ifndef VTKCUDAFUNCTIONPOLYGONREADER_H
 #define VTKCUDAFUNCTIONPOLYGONREADER_H
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkCudaFunctionPolygon.h"
 #include <string>
@@ -33,7 +33,7 @@
  *  @see vtkCudaFunctionPolygon vtkCudaFunctionPolygonReader
  *
  */
-class VTKCUDACOMMON_EXPORT vtkCudaFunctionPolygonReader : public vtkObject
+class vtkCudaCommonExport vtkCudaFunctionPolygonReader : public vtkObject
 {
 public:
   static vtkCudaFunctionPolygonReader* New();

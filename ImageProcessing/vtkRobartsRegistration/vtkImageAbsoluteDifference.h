@@ -22,7 +22,7 @@
 #ifndef __vtkImageAbsoluteDifference_h
 #define __vtkImageAbsoluteDifference_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkObjectFactory.h"
@@ -32,7 +32,7 @@
 // This number must be greater than the number of CPU's
 #define THREAD_NUM 2
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImageAbsoluteDifference : public vtkThreadedImageAlgorithm
+class vtkRobartsRegistrationExport vtkImageAbsoluteDifference : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageAbsoluteDifference *New();

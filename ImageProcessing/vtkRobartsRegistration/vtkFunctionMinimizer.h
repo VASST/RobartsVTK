@@ -1,11 +1,11 @@
 #ifndef __vtkFunctionMinimizer_h
 #define __vtkFunctionMinimizer_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkFunctionMinimizer : public vtkObject
+class vtkRobartsRegistrationExport vtkFunctionMinimizer : public vtkObject
 {
 public:
   static vtkFunctionMinimizer *New();

@@ -10,7 +10,7 @@
 #ifndef VTKCUDAOUTPUTIMAGEINFORMATIONHANDLER_H_
 #define VTKCUDAOUTPUTIMAGEINFORMATIONHANDLER_H_
 
-#include "vtkCudaVisualizationModule.h"
+#include "vtkCudaVisualizationExport.h"
 
 #include "CUDA_containerOutputImageInformation.h"
 #include "CudaObject.h"
@@ -25,7 +25,7 @@ class vtkVolume;
 /** @brief vtkCudaOutputImageInformationHandler handles all output image, buffering, texturing and OpenGL related information on behalf of the CUDA volume mapper to facilitate the rendering and display process
  *
  */
-class VTKCUDAVISUALIZATION_EXPORT vtkCudaOutputImageInformationHandler : public vtkObject, public CudaObject
+class vtkCudaVisualizationExport vtkCudaOutputImageInformationHandler : public vtkObject, public CudaObject
 {
 public:
 

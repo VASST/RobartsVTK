@@ -20,14 +20,14 @@
 #ifndef __VTKBARRIERLOCK_H
 #define __VTKBARRIERLOCK_H
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkObject.h"
 #include "vtkMutexLock.h"
 #include "vtkConditionVariable.h"
 #include "vtkSetGet.h"
 
-class VTKROBARTSCOMMON_EXPORT vtkBarrierLock : public vtkObject
+class vtkRobartsCommonExport vtkBarrierLock : public vtkObject
 {
 public:
   static vtkBarrierLock *New();

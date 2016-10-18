@@ -24,13 +24,13 @@
 #ifndef __CudaObject_H__
 #define __CudaObject_H__
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkCudaDeviceManager.h"
 
 typedef struct CUstream_st cudaStream;
 
-class VTKCUDACOMMON_EXPORT CudaObject
+class vtkCudaCommonExport CudaObject
 {
 public:
   void SetDevice( int d, int withData = 0 );

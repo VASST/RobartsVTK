@@ -10,7 +10,7 @@
 #ifndef __vtkCudaVolumeMapper_H
 #define __vtkCudaVolumeMapper_H
 
-#include "vtkCudaVisualizationModule.h"
+#include "vtkCudaVisualizationExport.h"
 
 #include "CUDA_containerOutputImageInformation.h"
 #include "CUDA_containerRendererInformation.h"
@@ -37,7 +37,7 @@ class vtkVolume;
 /** @brief vtkCudaVolumeMapper is a volume mapper, taking a set of 3D image data objects, volume and renderer as input and creates a 2D ray casted projection of the scene which is then displayed to screen
  *
  */
-class VTKCUDAVISUALIZATION_EXPORT vtkCudaVolumeMapper : public vtkVolumeMapper, public CudaObject
+class vtkCudaVisualizationExport vtkCudaVolumeMapper : public vtkVolumeMapper, public CudaObject
 {
 public:
 

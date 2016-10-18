@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAPAGMMESTIMATOR_H__
 #define __VTKCUDAPAGMMESTIMATOR_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CUDA_PAGMMestimator.h"
 #include "CudaObject.h"
@@ -29,7 +29,7 @@ class vtkTransform;
 //[1] PAGMM Set - M by N image with L float components interlaced (VTK default) representing the
 //                activation of each Gaussian component in the histogram estimate of each label
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaPAGMMEstimator : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaPAGMMEstimator, vtkImageAlgorithm );

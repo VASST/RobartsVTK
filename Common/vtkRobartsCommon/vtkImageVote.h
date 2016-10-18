@@ -26,7 +26,7 @@
 #ifndef __VTKIMAGEVOTE_H__
 #define __VTKIMAGEVOTE_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 #include "vtkVersionMacros.h"
 
 #include "vtkThreadedImageAlgorithm.h"
@@ -39,7 +39,7 @@
 
 #include <limits.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkImageVote : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkImageVote : public vtkThreadedImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkImageVote, vtkThreadedImageAlgorithm );

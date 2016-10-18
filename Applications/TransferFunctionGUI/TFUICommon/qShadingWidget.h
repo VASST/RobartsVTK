@@ -13,7 +13,7 @@
 #ifndef SHADINGWIDGET
 #define SHADINGWIDGET
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 
@@ -25,7 +25,7 @@ class vtkCudaVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUICOMMON_EXPORT qShadingWidget : public QWidget
+class TFUICommonExport qShadingWidget : public QWidget
 {
   Q_OBJECT
 public:

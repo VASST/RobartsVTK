@@ -14,13 +14,13 @@
 #ifndef __vtkRootedDirectedAcyclicGraph_h
 #define __vtkRootedDirectedAcyclicGraph_h
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkDirectedAcyclicGraph.h"
 
 class vtkIdTypeArray;
 
-class VTKROBARTSCOMMON_EXPORT vtkRootedDirectedAcyclicGraph : public vtkDirectedAcyclicGraph
+class vtkRobartsCommonExport vtkRootedDirectedAcyclicGraph : public vtkDirectedAcyclicGraph
 {
 public:
   static vtkRootedDirectedAcyclicGraph *New();

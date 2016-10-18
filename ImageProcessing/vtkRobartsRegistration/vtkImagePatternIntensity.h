@@ -22,7 +22,7 @@
 #ifndef __vtkImagePatternIntensity_h
 #define __vtkImagePatternIntensity_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkObjectFactory.h"
@@ -30,7 +30,7 @@
 #include "vtkImageData.h"
 #include "vtkImageMathematics.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImagePatternIntensity : public vtkThreadedImageAlgorithm
+class vtkRobartsRegistrationExport vtkImagePatternIntensity : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImagePatternIntensity *New();

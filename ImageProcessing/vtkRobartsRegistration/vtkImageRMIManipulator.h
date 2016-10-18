@@ -27,14 +27,14 @@
 #ifndef __vtkImageRMIManipulator_h
 #define __vtkImageRMIManipulator_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "math.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImageRMIManipulator : public vtkObject
+class vtkRobartsRegistrationExport vtkImageRMIManipulator : public vtkObject
 {
 public:
   static vtkImageRMIManipulator *New();

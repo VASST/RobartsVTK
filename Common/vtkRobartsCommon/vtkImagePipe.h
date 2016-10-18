@@ -22,7 +22,7 @@
 #ifndef __vtkImagePipe_h
 #define __vtkImagePipe_h
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
@@ -35,7 +35,7 @@
 
 #include <vector>
 
-class VTKROBARTSCOMMON_EXPORT vtkImagePipe : public vtkAlgorithm
+class vtkRobartsCommonExport vtkImagePipe : public vtkAlgorithm
 {
 
 public:

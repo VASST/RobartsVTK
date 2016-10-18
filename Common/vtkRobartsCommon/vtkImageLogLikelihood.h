@@ -25,7 +25,7 @@
 #ifndef __vtkImageLogLikelihood_h
 #define __vtkImageLogLikelihood_h
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkDataObject.h"
@@ -34,7 +34,7 @@
 #include <float.h>
 #include <limits.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkImageLogLikelihood : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkImageLogLikelihood : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageLogLikelihood *New();

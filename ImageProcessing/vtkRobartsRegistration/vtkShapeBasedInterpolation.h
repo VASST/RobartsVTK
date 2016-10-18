@@ -52,11 +52,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkShapeBasedInterpolation_h
 #define __vtkShapeBasedInterpolation_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkImageAlgorithm.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkShapeBasedInterpolation : public vtkImageAlgorithm 
+class vtkRobartsRegistrationExport vtkShapeBasedInterpolation : public vtkImageAlgorithm 
 {
 public:
   static vtkShapeBasedInterpolation *New();

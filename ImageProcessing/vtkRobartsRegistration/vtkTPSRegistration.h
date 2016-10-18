@@ -20,7 +20,7 @@
 #ifndef __vtkTPSRegistration_h
 #define __vtkTPSRegistration_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
@@ -29,7 +29,7 @@
 #include "vtkGeneralTransform.h"
 #include "vtkIndent.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkTPSRegistration : public vtkObject
+class vtkRobartsRegistrationExport vtkTPSRegistration : public vtkObject
 {
 public:
   static vtkTPSRegistration *New();

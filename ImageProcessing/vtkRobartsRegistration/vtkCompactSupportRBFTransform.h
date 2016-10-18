@@ -36,7 +36,7 @@
 #ifndef __vtkCompactSupportRBFTransform_h
 #define __vtkCompactSupportRBFTransform_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkWarpTransform.h"
 
@@ -45,7 +45,7 @@
 #define VTK_RBF_CS3D2C 2
 #define VTK_RBF_CS3D4C 3
 
-class VTKROBARTSREGISTRATION_EXPORT vtkCompactSupportRBFTransform : public vtkWarpTransform
+class vtkRobartsRegistrationExport vtkCompactSupportRBFTransform : public vtkWarpTransform
 {
 public:
   vtkTypeMacro(vtkCompactSupportRBFTransform,vtkWarpTransform);

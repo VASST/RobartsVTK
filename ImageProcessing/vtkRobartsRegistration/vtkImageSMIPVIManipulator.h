@@ -27,7 +27,7 @@
 #ifndef __vtkImageSMIPVIManipulator_h
 #define __vtkImageSMIPVIManipulator_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 #include "vtkVersionMacros.h"
 
 #include "vtkObject.h"
@@ -35,7 +35,7 @@
 #include "vtkImageData.h"
 #include "vtkImageShiftScale.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImageSMIPVIManipulator : public vtkObject
+class vtkRobartsRegistrationExport vtkImageSMIPVIManipulator : public vtkObject
 {
 public:
   static vtkImageSMIPVIManipulator *New();

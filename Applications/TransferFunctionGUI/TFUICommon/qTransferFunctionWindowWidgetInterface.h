@@ -13,14 +13,14 @@
 #ifndef TRANSFERFUNCTIONWINDOWWIDGETINTERFACE
 #define TRANSFERFUNCTIONWINDOWWIDGETINTERFACE
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 #include <vector>
 
 class CudaObject;
 
-class TFUICOMMON_EXPORT qTransferFunctionWindowWidgetInterface : public QWidget
+class TFUICommonExport qTransferFunctionWindowWidgetInterface : public QWidget
 {
 
 public:

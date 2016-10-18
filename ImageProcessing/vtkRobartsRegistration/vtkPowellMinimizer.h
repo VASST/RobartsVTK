@@ -1,11 +1,11 @@
 #ifndef __vtkPowellMinimizer_h
 #define __vtkPowellMinimizer_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkPowellMinimizer : public vtkObject
+class vtkRobartsRegistrationExport vtkPowellMinimizer : public vtkObject
 {
 public:
   static vtkPowellMinimizer *New();

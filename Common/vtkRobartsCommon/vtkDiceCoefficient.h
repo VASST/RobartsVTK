@@ -14,7 +14,7 @@
 #ifndef __vtkDiceCoefficient_h
 #define __vtkDiceCoefficient_h
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkDataObject.h"
@@ -23,7 +23,7 @@
 #include <float.h>
 #include <limits.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkDiceCoefficient : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkDiceCoefficient : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkDiceCoefficient *New();

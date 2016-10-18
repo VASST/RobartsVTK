@@ -22,12 +22,12 @@
 #ifndef __vtkGBEFixed_h
 #define __vtkGBEFixed_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkGBEFixed : public vtkObject
+class vtkRobartsRegistrationExport vtkGBEFixed : public vtkObject
 {
 public:
   static vtkGBEFixed *New();

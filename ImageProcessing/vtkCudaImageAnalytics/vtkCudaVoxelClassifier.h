@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAVOXELCLASSIFIER_H__
 #define __VTKCUDAVOXELCLASSIFIER_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CUDA_voxelclassifier.h"
 #include "vtkImageAlgorithm.h"
@@ -18,7 +18,7 @@ class vtkPlaneCollection;
 class vtkPlanes;
 class vtkTransform;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaVoxelClassifier : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaVoxelClassifier : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaVoxelClassifier, vtkImageAlgorithm );

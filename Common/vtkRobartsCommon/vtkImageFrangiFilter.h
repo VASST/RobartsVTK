@@ -1,13 +1,13 @@
 #ifndef __VTKIMAGEFRANGIFILTER_H__
 #define __VTKIMAGEFRANGIFILTER_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkSimpleImageToImageFilter.h"
 #include "vtkImageData.h"
 #include "vtkSetGet.h"
 
-class VTKROBARTSCOMMON_EXPORT vtkImageFrangiFilter : public vtkSimpleImageToImageFilter
+class vtkRobartsCommonExport vtkImageFrangiFilter : public vtkSimpleImageToImageFilter
 {
 public:
   vtkTypeMacro( vtkImageFrangiFilter, vtkSimpleImageToImageFilter );

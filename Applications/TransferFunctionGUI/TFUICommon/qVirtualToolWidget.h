@@ -13,7 +13,7 @@
 #ifndef VIRTUALTOOLWIDGET
 #define VIRTUALTOOLWIDGET
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 
@@ -33,7 +33,7 @@ class vtkProperty;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUICOMMON_EXPORT qVirtualToolWidget : public QWidget
+class TFUICommonExport qVirtualToolWidget : public QWidget
 {
   Q_OBJECT
 

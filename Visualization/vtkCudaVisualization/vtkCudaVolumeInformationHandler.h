@@ -9,7 +9,7 @@
 #ifndef VTKCUDAVOLUMEINFORMATIONHANDLER_H_
 #define VTKCUDAVOLUMEINFORMATIONHANDLER_H_
 
-#include "vtkCudaVisualizationModule.h"
+#include "vtkCudaVisualizationExport.h"
 
 #include "CUDA_containerVolumeInformation.h"
 #include "CudaObject.h"
@@ -21,7 +21,7 @@ class vtkVolume;
 /** @brief vtkCudaVolumeInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class VTKCUDAVISUALIZATION_EXPORT vtkCudaVolumeInformationHandler : public vtkObject, public CudaObject
+class vtkCudaVisualizationExport vtkCudaVolumeInformationHandler : public vtkObject, public CudaObject
 {
 public:
 

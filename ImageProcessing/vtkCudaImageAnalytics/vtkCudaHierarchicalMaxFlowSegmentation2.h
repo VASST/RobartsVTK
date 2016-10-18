@@ -26,7 +26,7 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION2_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "vtkHierarchicalMaxFlowSegmentation.h"
 #include <map>
@@ -37,7 +37,7 @@ class vtkCudaMaxFlowSegmentationScheduler;
 class vtkCudaMaxFlowSegmentationTask;
 class vtkCudaMaxFlowSegmentationWorker;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
+class vtkCudaImageAnalyticsExport vtkCudaHierarchicalMaxFlowSegmentation2 : public vtkHierarchicalMaxFlowSegmentation
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation2, vtkHierarchicalMaxFlowSegmentation );

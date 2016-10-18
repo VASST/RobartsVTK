@@ -26,14 +26,14 @@
 #ifndef __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKCUDAHIERARCHICALMAXFLOWSEGMENTATION_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "vtkHierarchicalMaxFlowSegmentation.h"
 #include "CudaObject.h"
 #include <map>
 #include <set>
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaHierarchicalMaxFlowSegmentation : public vtkHierarchicalMaxFlowSegmentation, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaHierarchicalMaxFlowSegmentation, vtkHierarchicalMaxFlowSegmentation );

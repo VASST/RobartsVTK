@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAKOHONENAPPLICATION_H__
 #define __VTKCUDAKOHONENAPPLICATION_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 #include "vtkVersionMacros.h"
 
 #include "CUDA_kohonenapplication.h"
@@ -15,7 +15,7 @@ class vtkInformation;
 class vtkInformationVector;
 class vtkTransform;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKohonenApplication : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaKohonenApplication : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenApplication, vtkImageAlgorithm );

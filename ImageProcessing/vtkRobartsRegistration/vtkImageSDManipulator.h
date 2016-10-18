@@ -26,13 +26,13 @@
 #ifndef __vtkImageSDManipulator_h
 #define __vtkImageSDManipulator_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImageSDManipulator : public vtkObject
+class vtkRobartsRegistrationExport vtkImageSDManipulator : public vtkObject
 {
 public:
   static vtkImageSDManipulator *New();

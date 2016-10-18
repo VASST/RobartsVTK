@@ -14,13 +14,13 @@
 #ifndef __vtkRootedDirectedAcyclicGraphIterator_h
 #define __vtkRootedDirectedAcyclicGraphIterator_h
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkObject.h"
 
 class vtkRootedDirectedAcyclicGraph;
 
-class VTKROBARTSCOMMON_EXPORT vtkRootedDirectedAcyclicGraphIterator : public vtkObject
+class vtkRobartsCommonExport vtkRootedDirectedAcyclicGraphIterator : public vtkObject
 {
 public:
   vtkTypeMacro(vtkRootedDirectedAcyclicGraphIterator, vtkObject);

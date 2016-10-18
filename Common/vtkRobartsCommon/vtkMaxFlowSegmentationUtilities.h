@@ -6,7 +6,7 @@
 #ifndef VTKMAXFLOWSEGMENTATIONUTILITIES_H
 #define VTKMAXFLOWSEGMENTATIONUTILITIES_H
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 void zeroOutBuffer(float* buffer, int size);
 void setBufferToValue(float* buffer, float value, int size);

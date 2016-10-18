@@ -9,7 +9,7 @@
 #ifndef vtkCudaDualImageTransferFunctionInformationHandler_H_
 #define vtkCudaDualImageTransferFunctionInformationHandler_H_
 
-#include "vtkCudaVisualizationModule.h"
+#include "vtkCudaVisualizationExport.h"
 #include "vtkVersionMacros.h"
 
 #include "CUDA_containerDualImageTransferFunctionInformation.h"
@@ -22,7 +22,7 @@ class vtkImageData;
 /** @brief vtkCudaDualImageTransferFunctionInformationHandler handles all volume and transfer function related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class VTKCUDAVISUALIZATION_EXPORT vtkCudaDualImageTransferFunctionInformationHandler : public vtkObject, public CudaObject
+class vtkCudaVisualizationExport vtkCudaDualImageTransferFunctionInformationHandler : public vtkObject, public CudaObject
 {
 public:
 

@@ -19,7 +19,7 @@
 #ifndef __vtkPolyDataCorrespondence_h
 #define __vtkPolyDataCorrespondence_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkPolyDataAlgorithm.h"
 #include "vtkObjectFactory.h"
@@ -32,7 +32,7 @@
 #include "vtkCurvatures.h"
 #include "vtkPolyDataNormals.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkPolyDataCorrespondence : public vtkPolyDataAlgorithm
+class vtkRobartsRegistrationExport vtkPolyDataCorrespondence : public vtkPolyDataAlgorithm
 {
 public:
   vtkTypeMacro(vtkPolyDataCorrespondence,vtkPolyDataAlgorithm);

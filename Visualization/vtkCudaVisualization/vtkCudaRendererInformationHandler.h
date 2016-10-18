@@ -10,7 +10,7 @@
 #ifndef VTKCUDARENDERERINFORMATIONHANDLER_H_
 #define VTKCUDARENDERERINFORMATIONHANDLER_H_
 
-#include "vtkCudaVisualizationModule.h"
+#include "vtkCudaVisualizationExport.h"
 
 #include "CUDA_containerRendererInformation.h"
 #include "CudaObject.h"
@@ -25,7 +25,7 @@ class vtkRenderer;
 /** @brief vtkCudaRendererInformationHandler handles all renderer, shading, geometry and camera related information on behalf of the CUDA volume mapper to facilitate the rendering process
  *
  */
-class VTKCUDAVISUALIZATION_EXPORT vtkCudaRendererInformationHandler : public vtkObject, public CudaObject
+class vtkCudaVisualizationExport vtkCudaRendererInformationHandler : public vtkObject, public CudaObject
 {
 public:
 

@@ -26,7 +26,7 @@
 #ifndef __vtkImageAtlasLabelProbability_H__
 #define __vtkImageAtlasLabelProbability_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 #include "vtkVersionMacros.h"
 
 #include "vtkThreadedImageAlgorithm.h"
@@ -35,7 +35,7 @@
 #include <float.h>
 #include <limits.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkImageAtlasLabelProbability : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkImageAtlasLabelProbability : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageAtlasLabelProbability *New();

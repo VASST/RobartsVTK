@@ -26,7 +26,7 @@
 #ifndef __vtkCudaImageLogLikelihood_h
 #define __vtkCudaImageLogLikelihood_h
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 #include "vtkVersionMacros.h"
 
 #include "CudaObject.h"
@@ -34,7 +34,7 @@
 
 class vtkDataObject;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaImageLogLikelihood : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaImageLogLikelihood : public vtkImageAlgorithm, public CudaObject
 {
 public:
   static vtkCudaImageLogLikelihood *New();

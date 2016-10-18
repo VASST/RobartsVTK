@@ -22,7 +22,7 @@
 #ifndef __vtkImageNormalizedCrossCorrelation_h
 #define __vtkImageNormalizedCrossCorrelation_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkObjectFactory.h"
@@ -32,7 +32,7 @@
 // Constants used for array declaration.
 #define THREAD_NUM 2
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImageNormalizedCrossCorrelation : public vtkThreadedImageAlgorithm
+class vtkRobartsRegistrationExport vtkImageNormalizedCrossCorrelation : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageNormalizedCrossCorrelation *New();

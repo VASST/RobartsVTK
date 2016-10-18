@@ -53,14 +53,14 @@
 #ifndef __vtkMeshSmootheness_h
 #define __vtkMeshSmootheness_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkPolyDataAlgorithm.h"
 
 #define VTK_CURVATURE_GAUSS 0
 #define VTK_CURVATURE_MEAN  1
 
-class VTKROBARTSREGISTRATION_EXPORT vtkMeshSmootheness : public vtkPolyDataAlgorithm
+class vtkRobartsRegistrationExport vtkMeshSmootheness : public vtkPolyDataAlgorithm
 {
 public:
   vtkTypeMacro(vtkMeshSmootheness, vtkPolyDataAlgorithm);

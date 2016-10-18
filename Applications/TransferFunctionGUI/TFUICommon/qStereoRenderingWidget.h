@@ -13,7 +13,7 @@
 #ifndef STEREORENDERINGWIDGET
 #define STEREORENDERINGWIDGET
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 
@@ -25,7 +25,7 @@ class vtkCudaVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUICOMMON_EXPORT qStereoRenderingWidget : public QWidget
+class TFUICommonExport qStereoRenderingWidget : public QWidget
 {
   Q_OBJECT
 

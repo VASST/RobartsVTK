@@ -23,7 +23,7 @@
 #ifndef __VTKCUDADEVICEMANAGER_H__
 #define __VTKCUDADEVICEMANAGER_H__
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkObject.h"
 #include "vector_types.h"
@@ -33,7 +33,7 @@
 class vtkMutexLock;
 class CudaObject;
 
-class VTKCUDACOMMON_EXPORT vtkCudaDeviceManager : public vtkObject
+class vtkCudaCommonExport vtkCudaDeviceManager : public vtkObject
 {
 public:
   vtkTypeMacro( vtkCudaDeviceManager, vtkObject );

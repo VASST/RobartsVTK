@@ -24,14 +24,14 @@
 #ifndef __VTKCUDAMEMORYTEXTURE_H__
 #define __VTKCUDAMEMORYTEXTURE_H__
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkObject.h"
 #include "CudaObject.h"
 #include "vtkImageData.h"
 #include "vector_types.h"
 
-class VTKCUDACOMMON_EXPORT vtkCudaMemoryTexture : public vtkObject, public CudaObject
+class vtkCudaCommonExport vtkCudaMemoryTexture : public vtkObject, public CudaObject
 {
 public:
   typedef enum

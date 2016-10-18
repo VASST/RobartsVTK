@@ -21,13 +21,13 @@
 #ifndef __VTKREADWRITELOCK_H
 #define __VTKREADWRITELOCK_H
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkObject.h"
 
 class vtkMutexLock;
 
-class VTKROBARTSCOMMON_EXPORT vtkReadWriteLock : public vtkObject
+class vtkRobartsCommonExport vtkReadWriteLock : public vtkObject
 {
 public:
   static vtkReadWriteLock *New();

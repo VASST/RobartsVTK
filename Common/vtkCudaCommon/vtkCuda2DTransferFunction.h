@@ -22,7 +22,7 @@
 #ifndef VTKCUDA2DTRANSFERFUNCTION_H
 #define VTKCUDA2DTRANSFERFUNCTION_H
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkCudaFunctionObject.h"
 #include <vector>
@@ -30,7 +30,7 @@
 /**
  *  @brief 2D transfer functions are composed of a list of function objects which define which parts of the transfer function are given which attributes.
  */
-class VTKCUDACOMMON_EXPORT vtkCuda2DTransferFunction : public vtkObject
+class vtkCudaCommonExport vtkCuda2DTransferFunction : public vtkObject
 {
 public:
 

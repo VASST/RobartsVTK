@@ -14,7 +14,7 @@
 #ifndef __vtkImage2DHistogram_H__
 #define __vtkImage2DHistogram_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkImageAlgorithm.h"
 
@@ -23,7 +23,7 @@ class vtkMultiThreader;
 class vtkInformationVector;
 class vtkInformation;
 
-class VTKROBARTSCOMMON_EXPORT vtkImage2DHistogram : public vtkImageAlgorithm
+class vtkRobartsCommonExport vtkImage2DHistogram : public vtkImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkImage2DHistogram, vtkImageAlgorithm )

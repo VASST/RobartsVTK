@@ -26,7 +26,7 @@
 #ifndef __VTKCUDADIRECTEDACYCLICGRAPHMAXFLOWSEGMENTATION_H__
 #define __VTKCUDADIRECTEDACYCLICGRAPHMAXFLOWSEGMENTATION_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "vtkDirectedAcyclicGraphMaxFlowSegmentation.h"
 #include <map>
@@ -37,7 +37,7 @@ class vtkCudaMaxFlowSegmentationScheduler;
 class vtkCudaMaxFlowSegmentationTask;
 class vtkCudaMaxFlowSegmentationWorker;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaDirectedAcyclicGraphMaxFlowSegmentation : public vtkDirectedAcyclicGraphMaxFlowSegmentation
+class vtkCudaImageAnalyticsExport vtkCudaDirectedAcyclicGraphMaxFlowSegmentation : public vtkDirectedAcyclicGraphMaxFlowSegmentation
 {
 public:
   vtkTypeMacro( vtkCudaDirectedAcyclicGraphMaxFlowSegmentation, vtkDirectedAcyclicGraphMaxFlowSegmentation );

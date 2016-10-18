@@ -36,7 +36,7 @@
 #ifndef __vtkPolyDataSurfaceArea_h
 #define __vtkPolyDataSurfaceArea_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 #include "vtkVersionMacros.h"
 
 #include "vtkObjectFactory.h"
@@ -44,7 +44,7 @@
 #include "vtkCell.h"
 #include "vtkIdList.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkPolyDataSurfaceArea : public vtkObject
+class vtkRobartsRegistrationExport vtkPolyDataSurfaceArea : public vtkObject
 {
 public:
   // Description:

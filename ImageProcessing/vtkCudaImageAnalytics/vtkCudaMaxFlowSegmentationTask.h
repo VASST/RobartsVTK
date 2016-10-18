@@ -27,7 +27,7 @@
 #ifndef __VTKCUDAMAXFLOWSEGMENTATIONTASK_H__
 #define __VTKCUDAMAXFLOWSEGMENTATIONTASK_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "vtkType.h"
 #include <vector>
@@ -37,7 +37,7 @@ class vtkCudaMaxFlowSegmentationWorker;
 
 #define SQR(X) X*X
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationTask
+class vtkCudaImageAnalyticsExport vtkCudaMaxFlowSegmentationTask
 {
 public:
   enum TaskType

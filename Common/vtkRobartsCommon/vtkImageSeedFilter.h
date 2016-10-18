@@ -14,7 +14,7 @@
 #ifndef __vtkImageSeedFilter_H__
 #define __vtkImageSeedFilter_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkImageAlgorithm.h"
 
@@ -23,7 +23,7 @@ class vtkInformation;
 
 #include <vector>
 
-class VTKROBARTSCOMMON_EXPORT vtkImageSeedFilter : public vtkImageAlgorithm
+class vtkRobartsCommonExport vtkImageSeedFilter : public vtkImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkImageSeedFilter, vtkImageAlgorithm )

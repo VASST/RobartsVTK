@@ -26,7 +26,7 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 #ifndef __vtkCudaImageAtlasLabelProbability_h
 #define __vtkCudaImageAtlasLabelProbability_h
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 #include "vtkVersionMacros.h"
 
 #include "CudaObject.h"
@@ -35,7 +35,7 @@ Copyright (c) John SH Baxter, Robarts Research Institute
 
 class vtkDataObject;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaImageAtlasLabelProbability : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaImageAtlasLabelProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
   static vtkCudaImageAtlasLabelProbability *New();

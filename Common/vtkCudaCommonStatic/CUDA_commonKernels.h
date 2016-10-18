@@ -25,7 +25,7 @@
 #ifndef __CUDA_COMMON_KERNELS_H__
 #define __CUDA_COMMON_KERNELS_H__
 
-#include "vtkCudaCommonStaticModule.h"
+#include "vtkCudaCommonStaticExport.h"
 
 //---------------------------------------------------------------------------//
 //-------------------------COMMON UNARY OPERATORS----------------------------//

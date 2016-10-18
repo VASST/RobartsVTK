@@ -14,7 +14,7 @@
 #ifndef __vtkImageBasicAffinityFilter_H__
 #define __vtkImageBasicAffinityFilter_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkImageData.h"
@@ -22,7 +22,7 @@
 #include "vtkInformation.h"
 #include "vtkMultiThreader.h"
 
-class VTKROBARTSCOMMON_EXPORT vtkImageBasicAffinityFilter : public vtkThreadedImageAlgorithm
+class vtkRobartsCommonExport vtkImageBasicAffinityFilter : public vtkThreadedImageAlgorithm
 {
 public:
 

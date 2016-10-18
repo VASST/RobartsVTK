@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAKSOMPROBABILITY_H__
 #define __VTKCUDAKSOMPROBABILITY_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 #include "vtkVersionMacros.h"
 
 #include "CUDA_KSOMProbability.h"
@@ -16,7 +16,7 @@ class vtkInformation;
 class vtkInformationVector;
 class vtkTransform;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKSOMProbability : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaKSOMProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKSOMProbability, vtkImageAlgorithm );

@@ -34,7 +34,7 @@
 #ifndef _vtkCLVolumeReconstruction_h_
 #define _vtkCLVolumeReconstruction_h_
 
-#include "vtkCLVolumeReconstructionModule.h"
+#include "vtkCLVolumeReconstructionExport.h"
 
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
@@ -53,7 +53,7 @@
 
 #define pos_matrix_a(x,y) (pos_matrix[(y)*4 + (x)])
 
-class VTKCLVOLUMERECONSTRUCTION_EXPORT vtkCLVolumeReconstruction : public vtkObject
+class vtkCLVolumeReconstructionExport vtkCLVolumeReconstruction : public vtkObject
 {
 public:
   static vtkCLVolumeReconstruction *New();

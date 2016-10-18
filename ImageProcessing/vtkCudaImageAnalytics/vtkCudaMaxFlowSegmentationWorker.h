@@ -26,7 +26,7 @@
 #ifndef __VTKCUDAMAXFLOWSEGMENTATIONWORKER_H__
 #define __VTKCUDAMAXFLOWSEGMENTATIONWORKER_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CudaObject.h"
 #include <list>
@@ -35,7 +35,7 @@
 
 class vtkCudaMaxFlowSegmentationScheduler;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationWorker : public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaMaxFlowSegmentationWorker : public CudaObject
 {
 public:
   void UpdateBuffersInUse();

@@ -27,7 +27,7 @@
 #ifndef __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 #define __VTKHIERARCHICALMAXFLOWSEGMENTATION_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkImageAlgorithm.h"
 #include "vtkTree.h"
@@ -40,7 +40,7 @@ class vtkInformationVector;
 #include <limits.h>
 #include <float.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm
+class vtkRobartsCommonExport vtkHierarchicalMaxFlowSegmentation : public vtkImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkHierarchicalMaxFlowSegmentation, vtkImageAlgorithm );

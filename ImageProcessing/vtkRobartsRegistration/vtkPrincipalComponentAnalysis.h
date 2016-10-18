@@ -26,7 +26,7 @@
 #ifndef __vtkPrincipalComponentAnalysis_h
 #define __vtkPrincipalComponentAnalysis_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkImageData.h"
@@ -36,7 +36,7 @@
 // This is the maximum number of images fitable.
 #define MAX_M 40
 
-class VTKROBARTSREGISTRATION_EXPORT vtkPrincipalComponentAnalysis : public vtkObject
+class vtkRobartsRegistrationExport vtkPrincipalComponentAnalysis : public vtkObject
 {
 public:
   static vtkPrincipalComponentAnalysis *New();

@@ -52,13 +52,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __vtkImage3DNoiseSource_h
 #define __vtkImage3DNoiseSource_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 
 #include "vtkImageAlgorithm.h"
 
 
-class VTKROBARTSREGISTRATION_EXPORT vtkImage3DNoiseSource : public vtkImageAlgorithm 
+class vtkRobartsRegistrationExport vtkImage3DNoiseSource : public vtkImageAlgorithm 
 {
 public:
   static vtkImage3DNoiseSource *New();

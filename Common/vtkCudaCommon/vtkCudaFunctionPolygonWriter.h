@@ -31,7 +31,7 @@
  *  @see vtkCudaFunctionPolygon vtkCudaFunctionPolygonReader
  *
  */
-class VTKCUDACOMMON_EXPORT vtkCudaFunctionPolygonWriter : public vtkObject
+class vtkCudaCommonExport vtkCudaFunctionPolygonWriter : public vtkObject
 {
 public:
 

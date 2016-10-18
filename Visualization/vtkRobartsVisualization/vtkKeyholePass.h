@@ -34,7 +34,7 @@
 #ifndef vtkKeyholePass_h
 #define vtkKeyholePass_h
 
-#include "vtkRobartsVisualizationModule.h"
+#include "vtkRobartsVisualizationExport.h"
 
 #include "vtkActorCollection.h"
 #include "vtkImageData.h"
@@ -50,7 +50,7 @@ class vtkShader2;
 class vtkShaderProgram2;
 class vtkTextureObject;
 
-class VTKROBARTSVISUALIZATION_EXPORT vtkKeyholePass : public vtkImageProcessingPass
+class vtkRobartsVisualizationExport vtkKeyholePass : public vtkImageProcessingPass
 {
 public:
 

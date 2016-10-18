@@ -35,7 +35,7 @@
 #ifndef __vtkPolyDataNormals2_h
 #define __vtkPolyDataNormals2_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkPolyDataAlgorithm.h"
 
@@ -43,7 +43,7 @@ class vtkFloatArray;
 class vtkIdList;
 class vtkPolyData;
 
-class VTKROBARTSREGISTRATION_EXPORT vtkPolyDataNormals2 : public  vtkPolyDataAlgorithm 
+class vtkRobartsRegistrationExport vtkPolyDataNormals2 : public  vtkPolyDataAlgorithm 
 {
 public:
   vtkTypeMacro(vtkPolyDataNormals2, vtkPolyDataAlgorithm );

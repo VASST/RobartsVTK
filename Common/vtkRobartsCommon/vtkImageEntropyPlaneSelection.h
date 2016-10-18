@@ -26,7 +26,7 @@
 #ifndef _VTKIMAGEENTROPYPLANESELECTION_H__
 #define _VTKIMAGEENTROPYPLANESELECTION_H__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkAlgorithm.h"
 #include "vtkImageData.h"
@@ -38,7 +38,7 @@
 
 #include <map>
 
-class VTKROBARTSCOMMON_EXPORT vtkImageEntropyPlaneSelection : public vtkImageAlgorithm
+class vtkRobartsCommonExport vtkImageEntropyPlaneSelection : public vtkImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkImageEntropyPlaneSelection, vtkImageAlgorithm );

@@ -22,12 +22,12 @@
 #ifndef __vtkGBE_h
 #define __vtkGBE_h
 
-#include "vtkRobartsRegistrationModule.h"
+#include "vtkRobartsRegistrationExport.h"
 
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
-class VTKROBARTSREGISTRATION_EXPORT vtkGBE : public vtkObject
+class vtkRobartsRegistrationExport vtkGBE : public vtkObject
 {
 public:
   static vtkGBE *New();

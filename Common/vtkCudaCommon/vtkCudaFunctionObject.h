@@ -24,14 +24,14 @@
 #ifndef VTKCUDAFUNCTIONOBJECT_H
 #define VTKCUDAFUNCTIONOBJECT_H
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 
 #include "vtkObject.h"
 
 /** @brief Function objects are contiguous regions with equal colour, opacity and identifier in a 2D transfer function. They are used to define discernable structures in the ray caster and voxel classifier.
  *
  */
-class VTKCUDACOMMON_EXPORT vtkCudaFunctionObject : public vtkObject
+class vtkCudaCommonExport vtkCudaFunctionObject : public vtkObject
 {
 public:
 

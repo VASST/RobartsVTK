@@ -14,7 +14,7 @@
 #ifndef __vtkCudaCommon_h__
 #define __vtkCudaCommon_h__
 
-#include "vtkCudaCommonModule.h"
+#include "vtkCudaCommonExport.h"
 #include "vector_types.h"
 
 //-- COMMON STATEMENTS -------------------------
@@ -23,7 +23,7 @@
 #define NUMTHREADS 512
 #define CUDASTDOFFSET threadIdx.x + blockDim.x * (blockIdx.x + gridDim.x * (blockIdx.y + gridDim.y * blockIdx.z))
 
-VTKCUDACOMMON_EXPORT dim3 GetGrid(int size);
+vtkCudaCommonExport dim3 GetGrid(int size);
 
 
 #endif // __vtkCudaCommon_h__

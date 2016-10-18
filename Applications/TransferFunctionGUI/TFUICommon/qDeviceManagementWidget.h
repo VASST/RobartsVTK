@@ -13,7 +13,7 @@
 #ifndef DEVICEMANAGEMENTWIDGET
 #define DEVICEMANAGEMENTWIDGET
 
-#include "TFUICommonModule.h"
+#include "TFUICommonExport.h"
 
 #include <QWidget>
 
@@ -23,7 +23,7 @@ class vtkCudaVolumeMapper;
 class vtkRenderWindow;
 class vtkRenderer;
 
-class TFUICOMMON_EXPORT qDeviceManagementWidget : public QWidget
+class TFUICommonExport qDeviceManagementWidget : public QWidget
 {
   Q_OBJECT
 

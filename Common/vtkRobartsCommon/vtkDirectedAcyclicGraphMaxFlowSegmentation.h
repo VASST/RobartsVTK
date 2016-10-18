@@ -27,7 +27,7 @@
 #ifndef __vtkDirectedAcyclicGraphMaxFlowSegmentation_h__
 #define __vtkDirectedAcyclicGraphMaxFlowSegmentation_h__
 
-#include "vtkRobartsCommonModule.h"
+#include "vtkRobartsCommonExport.h"
 
 #include "vtkImageAlgorithm.h"
 #include "vtkRootedDirectedAcyclicGraph.h"
@@ -40,7 +40,7 @@ class vtkInformationVector;
 #include <limits.h>
 #include <float.h>
 
-class VTKROBARTSCOMMON_EXPORT vtkDirectedAcyclicGraphMaxFlowSegmentation : public vtkImageAlgorithm
+class vtkRobartsCommonExport vtkDirectedAcyclicGraphMaxFlowSegmentation : public vtkImageAlgorithm
 {
 public:
   vtkTypeMacro( vtkDirectedAcyclicGraphMaxFlowSegmentation, vtkImageAlgorithm );

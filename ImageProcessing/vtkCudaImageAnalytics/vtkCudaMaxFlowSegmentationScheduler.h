@@ -27,7 +27,7 @@
 #ifndef __VTKCUDAMAXFLOWSEGMENTATIONSCHEDULER_H__
 #define __VTKCUDAMAXFLOWSEGMENTATIONSCHEDULER_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CUDA_hierarchicalmaxflow.h"
 #include <map>
@@ -36,7 +36,7 @@
 class vtkCudaMaxFlowSegmentationTask;
 class vtkCudaMaxFlowSegmentationWorker;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaMaxFlowSegmentationScheduler
+class vtkCudaImageAnalyticsExport vtkCudaMaxFlowSegmentationScheduler
 {
 private:
   vtkCudaMaxFlowSegmentationScheduler();

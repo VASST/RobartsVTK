@@ -1,7 +1,7 @@
 #ifndef __VTKCUDAKOHONENREPROJECTOR_H__
 #define __VTKCUDAKOHONENREPROJECTOR_H__
 
-#include "vtkCudaImageAnalyticsModule.h"
+#include "vtkCudaImageAnalyticsExport.h"
 
 #include "CudaObject.h"
 #include "CUDA_kohonenreprojector.h"
@@ -14,7 +14,7 @@ class vtkInformation;
 class vtkInformationVector;
 class vtkTransform;
 
-class VTKCUDAIMAGEANALYTICS_EXPORT vtkCudaKohonenReprojector : public vtkImageAlgorithm, public CudaObject
+class vtkCudaImageAnalyticsExport vtkCudaKohonenReprojector : public vtkImageAlgorithm, public CudaObject
 {
 public:
   vtkTypeMacro( vtkCudaKohonenReprojector, vtkImageAlgorithm );
