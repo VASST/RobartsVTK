@@ -445,7 +445,7 @@ void vtkCLVolumeReconstruction::StartReconstruction()
 {
   max_vol_dim = max3(volume_width, volume_height, volume_depth);
 
-  global_work_size[0] = ((max_vol_dim*max_vol_dim)/256+1)*256;
+  global_work_size[0] = ((max_vol_dim*max_vol_dim) / 256 + 1) * 256;
   local_work_size[0] = 256;
 
   // Initialize output volume to zero
