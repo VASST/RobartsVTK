@@ -88,6 +88,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 
 	imageData = vtkImageData::New();
 	poseData = vtkMatrix4x4::New();
+	mutex = vtkSmartPointer< vtkMutexLock >::New();
 
 #ifdef VCLVR_DEBUG
 	// Print device information
@@ -521,8 +522,9 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData *v)
 {
-
+	mutex->Lock();
 	v->DeepCopy( reconstructedvolume );
+	mutex->Unlock();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------

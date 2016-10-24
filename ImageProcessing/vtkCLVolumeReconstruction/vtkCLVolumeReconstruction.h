@@ -39,6 +39,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkObject.h"
 #include "vtkSmartPointer.h"
+#include "vtkMutexLock.h"
 #include <CL/cl.h>
 #include <algorithm>
 #include <omp.h>
@@ -278,6 +279,7 @@ protected:
 	float * pos_timetags, * pos_matrices, * bscan_timetags, * cal_matrix;
 
 	vtkSmartPointer< vtkImageData > reconstructedvolume;
+	vtkSmartPointer< vtkMutexLock > mutex;
 
 private: 
 	vtkCLVolumeReconstruction();
