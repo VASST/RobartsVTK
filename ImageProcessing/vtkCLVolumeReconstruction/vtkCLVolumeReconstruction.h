@@ -284,20 +284,13 @@ protected:
   // cal_matrix is the 1x16 us calibration matrix
   float* pos_timetags, * pos_matrices, * bscan_timetags, * cal_matrix;
 
-<<<<<<< HEAD
-	vtkSmartPointer< vtkImageData > reconstructedvolume;
-	vtkSmartPointer< vtkMutexLock > mutex;
-
-private: 
-	vtkCLVolumeReconstruction();
-	~vtkCLVolumeReconstruction();
-=======
   vtkSmartPointer< vtkImageData > reconstructedvolume;
+  vtkSmartPointer< vtkMutexLock > mutex;
 
 private:
   vtkCLVolumeReconstruction();
   ~vtkCLVolumeReconstruction();
->>>>>>> 2e80ae9a4aeebaeb2a104ec2a50aff73627a1aa8
+
 };
 #endif //_vtkCLVolumeReconstruction_h_
 

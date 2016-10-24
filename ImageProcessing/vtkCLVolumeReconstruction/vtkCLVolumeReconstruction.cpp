@@ -55,7 +55,6 @@ namespace
 vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 {
 
-<<<<<<< HEAD
 	size_t temp;
 	device_index = 0;
 	program_src = FileToString("./kernels.cl", "", &temp);
@@ -90,41 +89,6 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 	imageData = vtkImageData::New();
 	poseData = vtkMatrix4x4::New();
 	mutex = vtkSmartPointer< vtkMutexLock >::New();
-=======
-  size_t temp;
-  device_index = 0;
-  program_src = FileToString("./kernels.cl", "", &temp);
-
-  // Default values for bscan size
-  bscan_w = 640;
-  bscan_h = 480;
-
-  // Default values for the output volume
-  volume_depth = volume_height = volume_width = 0;
-  volume_spacing = 0.5;
-
-
-  volume_origin[0] = 0;
-  volume_origin[1] = 0;
-  volume_origin[2] = 0;
-
-  // Default value for cal_matrix is identity matrix
-  cal_matrix = (float*)malloc(sizeof(float) * 16);
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      cal_matrix[4 * i + j] = 0;
-      if (i == j)
-      {
-        cal_matrix[4 * i + j] = 1;
-      }
-    }
-  }
-
-  imageData = vtkImageData::New();
-  poseData = vtkMatrix4x4::New();
->>>>>>> 2e80ae9a4aeebaeb2a104ec2a50aff73627a1aa8
 
 #ifdef VCLVR_DEBUG
   // Print device information
@@ -565,12 +529,11 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 {
-<<<<<<< HEAD
 	mutex->Lock();
 	v->DeepCopy( reconstructedvolume );
 	mutex->Unlock();
-=======
-  v->DeepCopy(reconstructedvolume);
+
+	v->DeepCopy(reconstructedvolume);
 }
 
 //--------------------------------------------------------------
@@ -587,7 +550,6 @@ void vtkCLVolumeReconstruction::GetSpacing(double spacing[3]) const
   spacing[0] = (double)volume_spacing;
   spacing[1] = (double)volume_spacing;
   spacing[2] = (double)volume_spacing;
->>>>>>> 2e80ae9a4aeebaeb2a104ec2a50aff73627a1aa8
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
