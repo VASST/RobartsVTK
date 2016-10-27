@@ -16,21 +16,21 @@ class vtkCudaImageAnalyticsExport vtkCudaFuzzyConnectednessFilter : public vtkIm
 {
 public:
 
-  vtkTypeMacro( vtkCudaFuzzyConnectednessFilter, vtkImageAlgorithm )
+  vtkTypeMacro(vtkCudaFuzzyConnectednessFilter, vtkImageAlgorithm)
 
-  static vtkCudaFuzzyConnectednessFilter *New();
+  static vtkCudaFuzzyConnectednessFilter* New();
 
   // Description:
   // Get/Set the t-Norm and s-Norm type
-  vtkSetClampMacro( TNorm, int, 0, 2 );
-  vtkGetMacro( TNorm, int );
-  vtkSetClampMacro( SNorm, int, 0, 2 );
-  vtkGetMacro( SNorm, int );
+  vtkSetClampMacro(TNorm, int, 0, 2);
+  vtkGetMacro(TNorm, int);
+  vtkSetClampMacro(SNorm, int, 0, 2);
+  vtkGetMacro(SNorm, int);
 
 protected:
 
-  void Reinitialize(int withData);
-  void Deinitialize(int withData);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   int RequestData(vtkInformation* request,
                   vtkInformationVector** inputVector,

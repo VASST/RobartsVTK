@@ -25,27 +25,27 @@ class vtkCudaVisualizationExport vtkCudaDRRImageVolumeMapper : public vtkCudaVol
 {
 public:
 
-  vtkTypeMacro( vtkCudaDRRImageVolumeMapper, vtkCudaVolumeMapper );
+  vtkTypeMacro(vtkCudaDRRImageVolumeMapper, vtkCudaVolumeMapper);
 
   /** @brief VTK compatible constructor method
    *
    */
-  static vtkCudaDRRImageVolumeMapper *New();
+  static vtkCudaDRRImageVolumeMapper* New();
 
-  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void SetInputInternal(vtkImageData* image, int frame);
   virtual void ClearInputInternal();
   virtual void ChangeFrameInternal(int frame);
-  virtual void InternalRender ( vtkRenderer* ren, vtkVolume* vol,
-                                const cudaRendererInformation& rendererInfo,
-                                const cudaVolumeInformation& volumeInfo,
-                                const cudaOutputImageInformation& outputInfo );
+  virtual void InternalRender(vtkRenderer* ren, vtkVolume* vol,
+                              const cudaRendererInformation& rendererInfo,
+                              const cudaVolumeInformation& volumeInfo,
+                              const cudaOutputImageInformation& outputInfo);
 
-  vtkSetMacro(CTIntercept,float)
-  vtkGetMacro(CTIntercept,float)
-  vtkSetMacro(CTSlope,float)
-  vtkGetMacro(CTSlope,float)
-  vtkSetMacro(CTOffset,float)
-  vtkGetMacro(CTOffset,float)
+  vtkSetMacro(CTIntercept, float)
+  vtkGetMacro(CTIntercept, float)
+  vtkSetMacro(CTSlope, float)
+  vtkGetMacro(CTSlope, float)
+  vtkSetMacro(CTOffset, float)
+  vtkGetMacro(CTOffset, float)
 
 protected:
   /** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
@@ -57,8 +57,8 @@ protected:
    *
    */
   ~vtkCudaDRRImageVolumeMapper();
-  virtual void Reinitialize(int withData = 0);
-  virtual void Deinitialize(int withData = 0);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   float CTIntercept;
   float CTSlope;

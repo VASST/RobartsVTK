@@ -26,7 +26,7 @@ class vtkCudaVisualizationExport vtkCuda2DInExLogicTransferFunctionInformationHa
 {
 public:
 
-  vtkTypeMacro( vtkCuda2DInExLogicTransferFunctionInformationHandler, vtkObject );
+  vtkTypeMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler, vtkObject);
 
   /** @brief VTK compatible constructor method
    *
@@ -94,8 +94,8 @@ public:
    */
   virtual void Update();
 
-  void SetUseBlackKeyhole( bool t );
-  vtkGetMacro( UseBlackKeyhole, bool );
+  void SetUseBlackKeyhole(bool t);
+  vtkGetMacro(UseBlackKeyhole, bool);
 
 protected:
 
@@ -114,8 +114,8 @@ protected:
    */
   void UpdateTransferFunction();
 
-  void Deinitialize(int withData = 0);
-  void Reinitialize(int withData = 0);
+  virtual void Deinitialize(bool withData = false);
+  virtual void Reinitialize(bool withData = false);
 
 private:
   vtkCuda2DInExLogicTransferFunctionInformationHandler& operator=(const vtkCuda2DInExLogicTransferFunctionInformationHandler&); /**< Not implemented */

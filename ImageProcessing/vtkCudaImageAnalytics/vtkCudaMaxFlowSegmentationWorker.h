@@ -39,28 +39,28 @@ class vtkCudaImageAnalyticsExport vtkCudaMaxFlowSegmentationWorker : public Cuda
 {
 public:
   void UpdateBuffersInUse();
-  void AddToStack( float* CPUBuffer );
-  void RemoveFromStack( float* CPUBuffer );
-  void BuildStackUpToPriority( unsigned int priority );
+  void AddToStack(float* CPUBuffer);
+  void RemoveFromStack(float* CPUBuffer);
+  void BuildStackUpToPriority(unsigned int priority);
   void TakeDownPriorityStacks();
   int LowestBufferShift(unsigned int n);
   void ReturnLeafLabels();
   void ReturnBuffer(float* CPUBuffer);
 
-  virtual void Reinitialize(int withData = 0){};
-  virtual void Deinitialize(int withData = 0){};
+  virtual void Reinitialize(bool withData = false) {};
+  virtual void Deinitialize(bool withData = false) {};
 
 public:
   vtkCudaMaxFlowSegmentationScheduler* const Parent;
   const int GPU;
   int NumBuffers;
-  std::map<float*,float*> CPU2GPUMap;
-  std::map<float*,float*> GPU2CPUMap;
+  std::map<float*, float*> CPU2GPUMap;
+  std::map<float*, float*> GPU2CPUMap;
   std::set<float*> CPUInUse;
   std::list<float*> UnusedGPUBuffers;
   std::list<float*> AllGPUBufferBlocks;
   std::vector< std::list< float* > > PriorityStacks;
-  vtkCudaMaxFlowSegmentationWorker(int g, double usage, vtkCudaMaxFlowSegmentationScheduler* p );
+  vtkCudaMaxFlowSegmentationWorker(int g, double usage, vtkCudaMaxFlowSegmentationScheduler* p);
   ~vtkCudaMaxFlowSegmentationWorker();
 };
 

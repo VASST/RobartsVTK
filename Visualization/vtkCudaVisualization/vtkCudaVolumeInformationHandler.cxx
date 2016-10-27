@@ -29,12 +29,12 @@ vtkCudaVolumeInformationHandler::~vtkCudaVolumeInformationHandler()
   this->SetInputData(NULL, 0);
 }
 
-void vtkCudaVolumeInformationHandler::Deinitialize(int withData)
+void vtkCudaVolumeInformationHandler::Deinitialize(bool withData /*= false*/)
 {
   //TODO
 }
 
-void vtkCudaVolumeInformationHandler::Reinitialize(int withData)
+void vtkCudaVolumeInformationHandler::Reinitialize(bool withData /*= false*/)
 {
   //TODO
 }
@@ -109,7 +109,7 @@ void vtkCudaVolumeInformationHandler::UpdateImageData(int index)
 
 void vtkCudaVolumeInformationHandler::Update()
 {
-  if(this->InputData)
+  if (this->InputData)
   {
     this->Modified();
   }

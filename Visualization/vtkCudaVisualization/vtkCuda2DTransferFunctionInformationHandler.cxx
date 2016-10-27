@@ -57,23 +57,23 @@ vtkCuda2DTransferFunctionInformationHandler::~vtkCuda2DTransferFunctionInformati
 {
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if(this->Function)
+  if (this->Function)
   {
     this->Function->UnRegister(this);
   }
-  if(this->KeyholeFunction)
+  if (this->KeyholeFunction)
   {
     this->KeyholeFunction->UnRegister(this);
   }
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::Deinitialize(int withData)
+void vtkCuda2DTransferFunctionInformationHandler::Deinitialize(bool withData /*= false*/)
 {
   this->ReserveGPU();
   CUDA_vtkCuda2DVolumeMapper_renderAlgo_unloadTextures(this->TransInfo, this->GetStream());
 }
 
-void vtkCuda2DTransferFunctionInformationHandler::Reinitialize(int withData)
+void vtkCuda2DTransferFunctionInformationHandler::Reinitialize(bool withData /*= false*/)
 {
   this->LastModifiedTime = 0;
   this->UpdateTransferFunction();
@@ -104,18 +104,18 @@ const cuda2DTransferFunctionInformation& vtkCuda2DTransferFunctionInformationHan
 
 void vtkCuda2DTransferFunctionInformationHandler::SetTransferFunction(vtkCuda2DTransferFunction* f)
 {
-  if( this->Function ==  f )
+  if (this->Function ==  f)
   {
     return;
   }
-  if( this->Function )
+  if (this->Function)
   {
-    this->Function->UnRegister( this );
+    this->Function->UnRegister(this);
   }
   this->Function = f;
-  if( this->Function )
+  if (this->Function)
   {
-    this->Function->Register( this );
+    this->Function->Register(this);
   }
   this->LastModifiedTime = 0;
   this->Modified();
@@ -128,19 +128,19 @@ vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetTrans
 
 void vtkCuda2DTransferFunctionInformationHandler::SetKeyholeTransferFunction(vtkCuda2DTransferFunction* f)
 {
-  this->TransInfo.useSecondTransferFunction = ( f != 0 );
-  if( this->KeyholeFunction ==  f )
+  this->TransInfo.useSecondTransferFunction = (f != 0);
+  if (this->KeyholeFunction ==  f)
   {
     return;
   }
-  if( this->KeyholeFunction )
+  if (this->KeyholeFunction)
   {
-    this->KeyholeFunction->UnRegister( this );
+    this->KeyholeFunction->UnRegister(this);
   }
   this->KeyholeFunction = f;
-  if( this->KeyholeFunction )
+  if (this->KeyholeFunction)
   {
-    this->KeyholeFunction->Register( this );
+    this->KeyholeFunction->Register(this);
   }
   this->LastModifiedTime = 0;
   this->Modified();
@@ -154,21 +154,21 @@ vtkCuda2DTransferFunction* vtkCuda2DTransferFunctionInformationHandler::GetKeyho
 void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
 {
   //if we don't need to update the transfer function, don't
-  if(!this->Function || !this->InputData )
+  if (!this->Function || !this->InputData)
   {
     return;
   }
-  if( this->KeyholeFunction == 0 && this->Function->GetMTime() <= LastModifiedTime)
+  if (this->KeyholeFunction == 0 && this->Function->GetMTime() <= LastModifiedTime)
   {
     return;
   }
-  if( this->KeyholeFunction != 0 && this->KeyholeFunction->GetMTime() <= LastModifiedTime && this->Function->GetMTime() <= LastModifiedTime)
+  if (this->KeyholeFunction != 0 && this->KeyholeFunction->GetMTime() <= LastModifiedTime && this->Function->GetMTime() <= LastModifiedTime)
   {
     return;
   }
-  if( this->KeyholeFunction )
+  if (this->KeyholeFunction)
   {
-    LastModifiedTime = (this->KeyholeFunction->GetMTime() > this->Function->GetMTime() ) ? this->KeyholeFunction->GetMTime() : this->Function->GetMTime();
+    LastModifiedTime = (this->KeyholeFunction->GetMTime() > this->Function->GetMTime()) ? this->KeyholeFunction->GetMTime() : this->Function->GetMTime();
   }
   else
   {
@@ -176,9 +176,9 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
   }
 
   //tell if we can safely ignore the second function
-  if( this->KeyholeFunction )
+  if (this->KeyholeFunction)
   {
-    if( this->KeyholeFunction->GetNumberOfFunctionObjects() == 0 )
+    if (this->KeyholeFunction->GetNumberOfFunctionObjects() == 0)
     {
       this->TransInfo.useSecondTransferFunction = false;
     }
@@ -192,32 +192,32 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
   double functionRange[] = {  this->Function->getMinIntensity(), this->Function->getMaxIntensity(),
                               this->Function->getMinGradient(), this->Function->getMaxGradient()
                            };
-  if( this->TransInfo.useSecondTransferFunction )
+  if (this->TransInfo.useSecondTransferFunction)
   {
     double kfunctionRange[] = {  this->KeyholeFunction->getMinIntensity(), this->KeyholeFunction->getMaxIntensity(),
                                  this->KeyholeFunction->getMinGradient(), this->KeyholeFunction->getMaxGradient()
                               };
-    functionRange[0] = (kfunctionRange[0] < functionRange[0] ) ? kfunctionRange[0] : functionRange[0];
-    functionRange[1] = (kfunctionRange[1] > functionRange[1] ) ? kfunctionRange[1] : functionRange[1];
-    functionRange[2] = (kfunctionRange[2] < functionRange[2] ) ? kfunctionRange[2] : functionRange[2];
-    functionRange[3] = (kfunctionRange[3] > functionRange[3] ) ? kfunctionRange[3] : functionRange[3];
+    functionRange[0] = (kfunctionRange[0] < functionRange[0]) ? kfunctionRange[0] : functionRange[0];
+    functionRange[1] = (kfunctionRange[1] > functionRange[1]) ? kfunctionRange[1] : functionRange[1];
+    functionRange[2] = (kfunctionRange[2] < functionRange[2]) ? kfunctionRange[2] : functionRange[2];
+    functionRange[3] = (kfunctionRange[3] > functionRange[3]) ? kfunctionRange[3] : functionRange[3];
   }
-  double minIntensity = (this->InputData->GetScalarRange()[0] > functionRange[0] ) ? this->InputData->GetScalarRange()[0] : functionRange[0];
-  double maxIntensity = (this->InputData->GetScalarRange()[1] < functionRange[1] ) ? this->InputData->GetScalarRange()[1] : functionRange[1];
+  double minIntensity = (this->InputData->GetScalarRange()[0] > functionRange[0]) ? this->InputData->GetScalarRange()[0] : functionRange[0];
+  double maxIntensity = (this->InputData->GetScalarRange()[1] < functionRange[1]) ? this->InputData->GetScalarRange()[1] : functionRange[1];
 
   //estimate the gradient (to get max gradient values)
   this->LowGradient = 0;
-  this->HighGradient = abs(this->InputData->GetScalarRange()[0]-this->InputData->GetScalarRange()[1]) / std::min( this->InputData->GetSpacing()[0], std::min(this->InputData->GetSpacing()[1], this->InputData->GetSpacing()[2] ) );
-  double minGradient = (this->LowGradient > functionRange[2] ) ? this->LowGradient : functionRange[2];
-  double maxGradient = (this->HighGradient < functionRange[3] ) ? this->HighGradient : functionRange[3];
+  this->HighGradient = abs(this->InputData->GetScalarRange()[0] - this->InputData->GetScalarRange()[1]) / std::min(this->InputData->GetSpacing()[0], std::min(this->InputData->GetSpacing()[1], this->InputData->GetSpacing()[2]));
+  double minGradient = (this->LowGradient > functionRange[2]) ? this->LowGradient : functionRange[2];
+  double maxGradient = (this->HighGradient < functionRange[3]) ? this->HighGradient : functionRange[3];
   double gradientOffset = maxGradient * 0.8;
-  maxGradient = (log(maxGradient*maxGradient+gradientOffset) - log(gradientOffset) )/ log(2.0) + 1.0;
-  minGradient = (log(minGradient*minGradient+gradientOffset) - log(gradientOffset) )/ log(2.0);
+  maxGradient = (log(maxGradient * maxGradient + gradientOffset) - log(gradientOffset)) / log(2.0) + 1.0;
+  minGradient = (log(minGradient * minGradient + gradientOffset) - log(gradientOffset)) / log(2.0);
 
   //figure out the multipliers for applying the transfer function in GPU
   this->TransInfo.intensityLow = minIntensity;
-  this->TransInfo.intensityMultiplier = 1.0 / ( maxIntensity - minIntensity );
-  this->TransInfo.gradientMultiplier = 1.0 / (maxGradient-minGradient);
+  this->TransInfo.intensityMultiplier = 1.0 / (maxIntensity - minIntensity);
+  this->TransInfo.gradientMultiplier = 1.0 / (maxGradient - minGradient);
   this->TransInfo.gradientOffset = gradientOffset;
   this->TransInfo.gradientLow = - minGradient - log(gradientOffset) / log(2.0);
 
@@ -238,7 +238,7 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
   float* KLocalDiffuseTransferFunction =      0;
   float* KLocalSpecularTransferFunction =      0;
   float* KLocalSpecularPowerTransferFunction =  0;
-  if( this->TransInfo.useSecondTransferFunction )
+  if (this->TransInfo.useSecondTransferFunction)
   {
     KLocalColorRedTransferFunction =    new float[this->FunctionSize * this->FunctionSize];
     KLocalColorGreenTransferFunction =    new float[this->FunctionSize * this->FunctionSize];
@@ -255,7 +255,7 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
                                    this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
   this->Function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
                                   this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
-  if( this->TransInfo.useSecondTransferFunction )
+  if (this->TransInfo.useSecondTransferFunction)
   {
     this->KeyholeFunction->GetTransferTable(KLocalColorRedTransferFunction, KLocalColorGreenTransferFunction, KLocalColorBlueTransferFunction, KLocalAlphaTransferFunction,
                                             this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
@@ -294,7 +294,7 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
   delete LocalDiffuseTransferFunction;
   delete LocalSpecularTransferFunction;
   delete LocalSpecularPowerTransferFunction;
-  if(this->TransInfo.useSecondTransferFunction)
+  if (this->TransInfo.useSecondTransferFunction)
   {
     delete KLocalColorRedTransferFunction;
     delete KLocalColorGreenTransferFunction;
@@ -309,11 +309,11 @@ void vtkCuda2DTransferFunctionInformationHandler::UpdateTransferFunction()
 
 void vtkCuda2DTransferFunctionInformationHandler::Update()
 {
-  if(this->InputData)
+  if (this->InputData)
   {
     this->Modified();
   }
-  if(this->Function)
+  if (this->Function)
   {
     this->UpdateTransferFunction();
     this->Modified();

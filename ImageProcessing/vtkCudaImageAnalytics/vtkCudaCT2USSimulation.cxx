@@ -7,40 +7,40 @@
 
 vtkStandardNewMacro(vtkCudaCT2USSimulation);
 
-void vtkCudaCT2USSimulation::Reinitialize(int withData)
+void vtkCudaCT2USSimulation::Reinitialize(bool withData /*= false*/)
 {
-  if( withData && this->Caster->GetInput() )
+  if (withData && this->Caster->GetInput())
   {
     this->SetInput((vtkImageData*) this->Caster->GetInput());
   }
 }
 
-void vtkCudaCT2USSimulation::Deinitialize(int withData)
+void vtkCudaCT2USSimulation::Deinitialize(bool withData /*= false*/)
 {
-  if(this->Caster->GetInput())
+  if (this->Caster->GetInput())
   {
     this->ReserveGPU();
-    CUDAsetup_unloadCTImage( this->GetStream() );
+    CUDAsetup_unloadCTImage(this->GetStream());
   }
 }
 
-void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i)
+void vtkCudaCT2USSimulation::SetInput(vtkImageData* inData, int i)
 {
   //if 0 is our identifier, we are adding the CT
-  if( i == 0 )
+  if (i == 0)
   {
     this->SetInput(inData);
 
     //if 1 is the identifier, we are adding a base ultrasound
   }
-  else if ( i == 1 && inData != 0 && inData->GetScalarType() == VTK_UNSIGNED_CHAR )
+  else if (i == 1 && inData != 0 && inData->GetScalarType() == VTK_UNSIGNED_CHAR)
   {
     this->Information.optimalParam = true;
-    if( this->InputUltrasound == inData )
+    if (this->InputUltrasound == inData)
     {
       return;
     }
-    if( this->InputUltrasound )
+    if (this->InputUltrasound)
     {
       this->InputUltrasound->UnRegister(this);
     }
@@ -49,15 +49,15 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i)
 
     //load the input volume into the CUDA kernel
     this->ReserveGPU();
-    CUDAsetup_loadUSImage((unsigned char*) this->InputUltrasound->GetScalarPointer(),this->InputUltrasound->GetDimensions(),
-                          this->GetStream() );
+    CUDAsetup_loadUSImage((unsigned char*) this->InputUltrasound->GetScalarPointer(), this->InputUltrasound->GetDimensions(),
+                          this->GetStream());
 
     //if we pass a null image, treat as if we don't want to compute cross-correlation
   }
-  else if ( i == 1 && inData == 0 )
+  else if (i == 1 && inData == 0)
   {
     this->Information.optimalParam = false;
-    if( this->InputUltrasound )
+    if (this->InputUltrasound)
     {
       this->InputUltrasound->UnRegister(this);
     }
@@ -65,7 +65,7 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * inData, int i)
   }
 }
 
-void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
+void vtkCudaCT2USSimulation::SetInput(vtkImageData* i)
 {
   //load the input to a texture
   this->Caster->SetInputDataObject(i);
@@ -95,28 +95,28 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
   // but we want to consider (0,0,0) in voxels to be at
   // (inputExtent[0], inputExtent[2], inputExtent[4]).
   double extentOrigin[3];
-  extentOrigin[0] = inputOrigin[0] + inputExtent[0]*spacing[0];
-  extentOrigin[1] = inputOrigin[1] + inputExtent[2]*spacing[1];
-  extentOrigin[2] = inputOrigin[2] + inputExtent[4]*spacing[2];
+  extentOrigin[0] = inputOrigin[0] + inputExtent[0] * spacing[0];
+  extentOrigin[1] = inputOrigin[1] + inputExtent[2] * spacing[1];
+  extentOrigin[2] = inputOrigin[2] + inputExtent[4] * spacing[2];
 
   // Create a transform that will account for the scaling and translation of
   // the scalar data. The is the volume to voxels matrix.
   vtkTransform* VoxelsTransform = vtkTransform::New();
   VoxelsTransform->Identity();
-  VoxelsTransform->Translate( extentOrigin[0], extentOrigin[1], extentOrigin[2] );
-  VoxelsTransform->Scale( spacing[0], spacing[1], spacing[2] );
+  VoxelsTransform->Translate(extentOrigin[0], extentOrigin[1], extentOrigin[2]);
+  VoxelsTransform->Scale(spacing[0], spacing[1], spacing[2]);
 
   // Now we actually have the world to voxels matrix - copy it out
   vtkMatrix4x4* WorldToVoxelsMatrix = vtkMatrix4x4::New();
-  WorldToVoxelsMatrix->DeepCopy( VoxelsTransform->GetMatrix() );
+  WorldToVoxelsMatrix->DeepCopy(VoxelsTransform->GetMatrix());
   WorldToVoxelsMatrix->Invert();
 
   //output the CT location information to the information holder
-  for(int i = 0; i < 4; i++)
+  for (int i = 0; i < 4; i++)
   {
-    for(int j = 0; j < 4; j++)
+    for (int j = 0; j < 4; j++)
     {
-      this->Information.WorldToVolume[i*4+j] = WorldToVoxelsMatrix->GetElement(i,j);
+      this->Information.WorldToVolume[i * 4 + j] = WorldToVoxelsMatrix->GetElement(i, j);
     }
   }
   VoxelsTransform->Delete();
@@ -124,12 +124,12 @@ void vtkCudaCT2USSimulation::SetInput( vtkImageData * i )
 
   //load the input volume into the CUDA kernel
   this->ReserveGPU();
-  CUDAsetup_loadCTImage((float*) this->Caster->GetOutput()->GetScalarPointer(),this->Information,
-                        this->GetStream() );
+  CUDAsetup_loadCTImage((float*) this->Caster->GetOutput()->GetScalarPointer(), this->Information,
+                        this->GetStream());
 
 }
 
-void vtkCudaCT2USSimulation::SetTransform( vtkTransform * t )
+void vtkCudaCT2USSimulation::SetTransform(vtkTransform* t)
 {
   this->UsTransform = t;
   this->Modified();
@@ -141,7 +141,7 @@ void vtkCudaCT2USSimulation::Update()
 {
 
   //if we are missing either input or transform, do not update
-  if( !this->Caster->GetInput() || !this->UsTransform )
+  if (!this->Caster->GetInput() || !this->UsTransform)
   {
     return;
   }
@@ -150,11 +150,11 @@ void vtkCudaCT2USSimulation::Update()
   timer->StartTimer();
 
   //output the ultrasound location information to the information holder
-  for(int i = 0; i < 4; i++)
+  for (int i = 0; i < 4; i++)
   {
-    for(int j = 0; j < 4; j++)
+    for (int j = 0; j < 4; j++)
     {
-      this->Information.UltraSoundToWorld[i*4+j] = this->UsTransform->GetMatrix()->GetElement(i,j);
+      this->Information.UltraSoundToWorld[i * 4 + j] = this->UsTransform->GetMatrix()->GetElement(i, j);
     }
   }
 
@@ -164,7 +164,7 @@ void vtkCudaCT2USSimulation::Update()
                               (float*) this->TransOutput->GetScalarPointer(),
                               (float*) this->ReflOutput->GetScalarPointer(),
                               (unsigned char*) this->UsOutput->GetScalarPointer(),
-                              this->Information, this->GetStream() );
+                              this->Information, this->GetStream());
   this->CallSyncThreads();
 
   timer->StopTimer();
@@ -180,7 +180,7 @@ vtkImageData* vtkCudaCT2USSimulation::GetOutput()
 
 vtkImageData* vtkCudaCT2USSimulation::GetOutput(int i)
 {
-  switch(i)
+  switch (i)
   {
   case 0:
     return this->UsOutput;
@@ -199,7 +199,7 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
 {
 
   //if we are 2D, treat us as such (make sure z is still depth)
-  if( z == 1)
+  if (z == 1)
   {
     this->Information.Resolution.x = x;
     this->Information.Resolution.y = z;
@@ -213,52 +213,52 @@ void vtkCudaCT2USSimulation::SetOutputResolution(int x, int y, int z)
   }
 
   //create new output image buffers
-  if( !this->DensOutput)
+  if (!this->DensOutput)
   {
     this->DensOutput = vtkImageData::New();
   }
-  this->DensOutput->SetExtent(0,x-1,
-                              0,y-1,
-                              0,z-1);
-  this->DensOutput->SetOrigin(0,0,0);
-  this->DensOutput->SetSpacing(1.0,1.0,1.0);
+  this->DensOutput->SetExtent(0, x - 1,
+                              0, y - 1,
+                              0, z - 1);
+  this->DensOutput->SetOrigin(0, 0, 0);
+  this->DensOutput->SetSpacing(1.0, 1.0, 1.0);
   this->Update();
   this->DensOutput->AllocateScalars(VTK_FLOAT, 1);
 
-  if( !this->TransOutput)
+  if (!this->TransOutput)
   {
     this->TransOutput = vtkImageData::New();
   }
-  this->TransOutput->SetExtent(0,x-1,
-                               0,y-1,
-                               0,z-1);
-  this->TransOutput->SetOrigin(0,0,0);
-  this->TransOutput->SetSpacing(1.0,1.0,1.0);
+  this->TransOutput->SetExtent(0, x - 1,
+                               0, y - 1,
+                               0, z - 1);
+  this->TransOutput->SetOrigin(0, 0, 0);
+  this->TransOutput->SetSpacing(1.0, 1.0, 1.0);
   this->Update();
   this->TransOutput->AllocateScalars(VTK_FLOAT, 1);
 
-  if( !this->ReflOutput)
+  if (!this->ReflOutput)
   {
     this->ReflOutput = vtkImageData::New();
   }
-  this->ReflOutput->SetExtent(0,x-1,
-                              0,y-1,
-                              0,z-1);
-  this->ReflOutput->SetOrigin(0,0,0);
-  this->ReflOutput->SetSpacing(1.0,1.0,1.0);
+  this->ReflOutput->SetExtent(0, x - 1,
+                              0, y - 1,
+                              0, z - 1);
+  this->ReflOutput->SetOrigin(0, 0, 0);
+  this->ReflOutput->SetSpacing(1.0, 1.0, 1.0);
   this->Update();
   this->ReflOutput->AllocateScalars(VTK_FLOAT, 1);
 
   //create a new simulated image
-  if( !this->UsOutput)
+  if (!this->UsOutput)
   {
     this->UsOutput = vtkImageData::New();
   }
-  this->UsOutput->SetExtent(0,x-1,
-                            0,y-1,
-                            0,z-1);
-  this->UsOutput->SetOrigin(0,0,0);
-  this->UsOutput->SetSpacing(1.0,1.0,1.0);
+  this->UsOutput->SetExtent(0, x - 1,
+                            0, y - 1,
+                            0, z - 1);
+  this->UsOutput->SetOrigin(0, 0, 0);
+  this->UsOutput->SetSpacing(1.0, 1.0, 1.0);
   this->Update();
   this->UsOutput->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
 }
@@ -318,7 +318,7 @@ void vtkCudaCT2USSimulation::SetDensityScaleModel(float scale, float offset)
 
 float vtkCudaCT2USSimulation::GetCrossCorrelation()
 {
-  if( this->AutoGenerateLinearCombination )
+  if (this->AutoGenerateLinearCombination)
   {
     return this->Information.crossCorrelation;
   }
@@ -358,7 +358,7 @@ vtkCudaCT2USSimulation::vtkCudaCT2USSimulation()
 
 vtkCudaCT2USSimulation::~vtkCudaCT2USSimulation()
 {
-  if(this->UsOutput)
+  if (this->UsOutput)
   {
     this->UsOutput->Delete();
     this->TransOutput->Delete();

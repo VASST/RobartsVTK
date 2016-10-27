@@ -28,16 +28,16 @@ class vtkMutexLock;
 class vtkCudaVisualizationExport vtkCuda2DInExLogicVolumeMapper : public vtkCudaVolumeMapper
 {
 public:
-  vtkTypeMacro( vtkCuda2DInExLogicVolumeMapper, vtkCudaVolumeMapper );
-  static vtkCuda2DInExLogicVolumeMapper *New();
+  vtkTypeMacro(vtkCuda2DInExLogicVolumeMapper, vtkCudaVolumeMapper);
+  static vtkCuda2DInExLogicVolumeMapper* New();
 
-  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void SetInputInternal(vtkImageData* image, int frame);
   virtual void ClearInputInternal();
   virtual void ChangeFrameInternal(int frame);
-  virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
-                                 const cudaRendererInformation& rendererInfo,
-                                 const cudaVolumeInformation& volumeInfo,
-                                 const cudaOutputImageInformation& outputInfo );
+  virtual void InternalRender(vtkRenderer* ren, vtkVolume* vol,
+                              const cudaRendererInformation& rendererInfo,
+                              const cudaVolumeInformation& volumeInfo,
+                              const cudaOutputImageInformation& outputInfo);
 
   /** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
    *  @param func The 2 dimensional transfer function
@@ -55,8 +55,8 @@ public:
   /// @brief Get the transfer function used for determining inclusion and exclusion in the volume rendering process which is given to the volume information handler
   vtkCuda2DTransferFunction* GetInExLogicFunction();
 
-  void SetUseBlackKeyhole( bool t );
-  vtkGetMacro( UseBlackKeyhole, bool );
+  void SetUseBlackKeyhole(bool t);
+  vtkGetMacro(UseBlackKeyhole, bool);
 
 protected:
   /// @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
@@ -65,8 +65,8 @@ protected:
   /// @brief Destructor which deallocates the various information handlers and matrices
   ~vtkCuda2DInExLogicVolumeMapper();
 
-  virtual void Reinitialize(int withData = 0);
-  virtual void Deinitialize(int withData = 0);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   vtkCuda2DInExLogicTransferFunctionInformationHandler* transferFunctionInfoHandler;
 

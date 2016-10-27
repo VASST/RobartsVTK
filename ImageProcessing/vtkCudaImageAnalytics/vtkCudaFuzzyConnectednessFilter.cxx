@@ -13,36 +13,36 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
     vtkInformationVector* outputVector)
 {
   // get the info objects
-  vtkImageData *seedData = vtkImageData::SafeDownCast(this->GetInput(0));
-  vtkImageData *affData = vtkImageData::SafeDownCast(this->GetInput(1));
-  vtkImageData *outData = this->GetOutput();
-  if( !affData || !seedData || !outData )
+  vtkImageData* seedData = vtkImageData::SafeDownCast(this->GetInput(0));
+  vtkImageData* affData = vtkImageData::SafeDownCast(this->GetInput(1));
+  vtkImageData* outData = this->GetOutput();
+  if (!affData || !seedData || !outData)
   {
     return -1;
   }
 
   //make sure that there is only 1 component and it is not a double
-  if( seedData->GetScalarType() != VTK_FLOAT ||
+  if (seedData->GetScalarType() != VTK_FLOAT ||
       affData->GetScalarType() != VTK_FLOAT ||
-      affData->GetNumberOfScalarComponents() != 3 )
+      affData->GetNumberOfScalarComponents() != 3)
   {
-    vtkErrorMacro( "Execute: Input data is not in FLOAT form or the affinity does not have 3 components");
+    vtkErrorMacro("Execute: Input data is not in FLOAT form or the affinity does not have 3 components");
     return -1;
   }
 
   //make sure the seed image and the actual image are the same size
   int* dimAff = affData->GetDimensions();
   int* dimSeed = seedData->GetDimensions();
-  if( dimAff[0] != dimSeed[0] || dimAff[1] != dimSeed[1] || dimAff[2] != dimSeed[2] )
+  if (dimAff[0] != dimSeed[0] || dimAff[1] != dimSeed[1] || dimAff[2] != dimSeed[2])
   {
-    vtkErrorMacro( "Execute: Seed image not the same size as the affinity image");
+    vtkErrorMacro("Execute: Seed image not the same size as the affinity image");
     return -1;
   }
 
   //scale the output image appropriately
-  outData->SetExtent( seedData->GetExtent() );
-  outData->SetSpacing( seedData->GetSpacing() );
-  outData->SetOrigin( seedData->GetOrigin() );
+  outData->SetExtent(seedData->GetExtent());
+  outData->SetSpacing(seedData->GetSpacing());
+  outData->SetOrigin(seedData->GetOrigin());
   outData->AllocateScalars(VTK_FLOAT, seedData->GetNumberOfScalarComponents());
 
   //load the CUDA information struct
@@ -57,8 +57,8 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   this->Information->Spacing.z = seedData->GetSpacing()[2];
 
   //figure out a good number of iterations (exact number required for SNORM=0, lower bound for rest)
-  int numIts = this->Information->VolumeSize.x*
-               this->Information->VolumeSize.y*
+  int numIts = this->Information->VolumeSize.x *
+               this->Information->VolumeSize.y *
                this->Information->VolumeSize.z;
 
   //run algorithm
@@ -66,16 +66,16 @@ int vtkCudaFuzzyConnectednessFilter::RequestData(vtkInformation* request,
   CUDAalgo_calculateConnectedness((float*) outData->GetScalarPointer(),
                                   (float*) seedData->GetScalarPointer(),
                                   (float*) affData->GetScalarPointer(),
-                                  numIts, *(this->Information), this->GetStream() );
+                                  numIts, *(this->Information), this->GetStream());
   return 1;
 }
 
-void vtkCudaFuzzyConnectednessFilter::Reinitialize(int withData = 0)
+void vtkCudaFuzzyConnectednessFilter::Reinitialize(bool withData /*= false*/)
 {
   //no long-term data stored and no helper classes, so no body for this method
 }
 
-void vtkCudaFuzzyConnectednessFilter::Deinitialize(int withData = 0)
+void vtkCudaFuzzyConnectednessFilter::Deinitialize(bool withData /*= false*/)
 {
   //no long-term data stored and no helper classes, so no body for this method
 }

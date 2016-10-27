@@ -1,13 +1,21 @@
 /*=========================================================================
 
-  Program:   Robarts Visualization Toolkit
-  Module:    CudaObject.h
+Robarts Visualization Toolkit
 
-  Copyright (c) John SH Baxter, Robarts Research Institute
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
 
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 
 =========================================================================*/
 
@@ -33,21 +41,21 @@ typedef struct CUstream_st cudaStream;
 class vtkCudaCommonExport CudaObject
 {
 public:
-  void SetDevice( int d, int withData = 0 );
+  void SetDevice(int d, int withData = 0);
   int GetDevice();
 
-  void ReserveGPU( );
-  void CallSyncThreads( );
-  cudaStream_t* GetStream( );
+  void ReserveGPU();
+  void CallSyncThreads();
+  cudaStream_t* GetStream();
 
-  void ReplicateObject( CudaObject* object, int withData = 0  );
+  void ReplicateObject(CudaObject* object, int withData = 0);
 
 protected:
   CudaObject(int d = 0);
   ~CudaObject();
 
-  virtual void Reinitialize(int withData = 0) = 0;
-  virtual void Deinitialize(int withData = 0) = 0;
+  virtual void Reinitialize(bool withData = false) = 0;
+  virtual void Deinitialize(bool withData = false) = 0;
 
 private:
   int DeviceNumber;

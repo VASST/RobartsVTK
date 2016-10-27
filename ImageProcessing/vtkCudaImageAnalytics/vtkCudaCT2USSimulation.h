@@ -15,13 +15,13 @@ class vtkCudaImageAnalyticsExport vtkCudaCT2USSimulation : public vtkAlgorithm, 
 {
 public:
 
-  vtkTypeMacro( vtkCudaCT2USSimulation, vtkAlgorithm )
+  vtkTypeMacro(vtkCudaCT2USSimulation, vtkAlgorithm)
 
-  static vtkCudaCT2USSimulation *New();
+  static vtkCudaCT2USSimulation* New();
 
-  void SetInput( vtkImageData * );
-  void SetInput( vtkImageData *, int i);
-  void SetTransform( vtkTransform * );
+  void SetInput(vtkImageData*);
+  void SetInput(vtkImageData*, int i);
+  void SetTransform(vtkTransform*);
   void Update();
   vtkImageData* GetOutput();
   vtkImageData* GetOutput(int);
@@ -51,8 +51,8 @@ protected:
   vtkCudaCT2USSimulation();
   virtual ~vtkCudaCT2USSimulation();
 
-  void Reinitialize(int withData);
-  void Deinitialize(int withData);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   CT_To_US_Information Information;
   vtkTransform* UsTransform;

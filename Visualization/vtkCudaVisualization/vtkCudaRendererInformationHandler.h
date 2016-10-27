@@ -29,7 +29,7 @@ class vtkCudaVisualizationExport vtkCudaRendererInformationHandler : public vtkO
 {
 public:
 
-  vtkTypeMacro( vtkCudaRendererInformationHandler, vtkObject );
+  vtkTypeMacro(vtkCudaRendererInformationHandler, vtkObject);
 
   /** @brief VTK compatible constructor method
    *
@@ -131,8 +131,8 @@ protected:
    */
   vtkCudaRendererInformationHandler();
 
-  void Deinitialize(int withData = 0);
-  void Reinitialize(int withData = 0);
+  virtual void Deinitialize(bool withData = false);
+  virtual void Reinitialize(bool withData = false);
 
 private:
   vtkCudaRendererInformationHandler& operator=(const vtkCudaRendererInformationHandler&); /**< not implemented */

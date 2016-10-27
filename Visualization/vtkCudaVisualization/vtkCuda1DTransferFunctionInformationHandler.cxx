@@ -56,27 +56,27 @@ vtkCuda1DTransferFunctionInformationHandler::~vtkCuda1DTransferFunctionInformati
 {
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if( this->ColourFunction )
+  if (this->ColourFunction)
   {
     this->ColourFunction->UnRegister(this);
   }
-  if( this->OpacityFunction )
+  if (this->OpacityFunction)
   {
     this->OpacityFunction->UnRegister(this);
   }
-  if( this->GradientOpacityFunction )
+  if (this->GradientOpacityFunction)
   {
     this->GradientOpacityFunction->UnRegister(this);
   }
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(int withData)
+void vtkCuda1DTransferFunctionInformationHandler::Deinitialize(bool withData /*= false*/)
 {
   this->ReserveGPU();
-  CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures( this->TransInfo, this->GetStream() );
+  CUDA_vtkCuda1DVolumeMapper_renderAlgo_UnloadTextures(this->TransInfo, this->GetStream());
 }
 
-void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(int withData)
+void vtkCuda1DTransferFunctionInformationHandler::Reinitialize(bool withData /*= false*/)
 {
   LastModifiedTime = 0;
   UpdateTransferFunction();
@@ -109,14 +109,14 @@ const cuda1DTransferFunctionInformation& vtkCuda1DTransferFunctionInformationHan
 
 void vtkCuda1DTransferFunctionInformationHandler::SetColourTransferFunction(vtkColorTransferFunction* f)
 {
-  if( f != this->ColourFunction )
+  if (f != this->ColourFunction)
   {
-    if(this->ColourFunction)
+    if (this->ColourFunction)
     {
       this->ColourFunction->UnRegister(this);
     }
     this->ColourFunction = f;
-    if(this->ColourFunction)
+    if (this->ColourFunction)
     {
       this->ColourFunction->Register(this);
     }
@@ -127,14 +127,14 @@ void vtkCuda1DTransferFunctionInformationHandler::SetColourTransferFunction(vtkC
 
 void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtkPiecewiseFunction* f)
 {
-  if( f != this->OpacityFunction )
+  if (f != this->OpacityFunction)
   {
-    if(this->OpacityFunction)
+    if (this->OpacityFunction)
     {
       this->OpacityFunction->UnRegister(this);
     }
     this->OpacityFunction = f;
-    if(this->OpacityFunction)
+    if (this->OpacityFunction)
     {
       this->OpacityFunction->Register(this);
     }
@@ -145,14 +145,14 @@ void vtkCuda1DTransferFunctionInformationHandler::SetOpacityTransferFunction(vtk
 
 void vtkCuda1DTransferFunctionInformationHandler::SetGradientOpacityTransferFunction(vtkPiecewiseFunction* f)
 {
-  if( f != this->GradientOpacityFunction )
+  if (f != this->GradientOpacityFunction)
   {
-    if(this->GradientOpacityFunction)
+    if (this->GradientOpacityFunction)
     {
       this->GradientOpacityFunction->UnRegister(this);
     }
     this->GradientOpacityFunction = f;
-    if(this->GradientOpacityFunction)
+    if (this->GradientOpacityFunction)
     {
       this->GradientOpacityFunction->Register(this);
     }
@@ -164,9 +164,9 @@ void vtkCuda1DTransferFunctionInformationHandler::SetGradientOpacityTransferFunc
 void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction()
 {
   //if we don't need to update the transfer function, don't
-  if(!this->ColourFunction || !this->OpacityFunction ||
+  if (!this->ColourFunction || !this->OpacityFunction ||
       (this->ColourFunction->GetMTime() <= LastModifiedTime &&
-       this->OpacityFunction->GetMTime() <= LastModifiedTime) )
+       this->OpacityFunction->GetMTime() <= LastModifiedTime))
   {
     return;
   }
@@ -176,48 +176,48 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction()
   //get the ranges from the transfer function
   double minIntensity;
   double maxIntensity;
-  this->OpacityFunction->GetRange( minIntensity, maxIntensity );
-  minIntensity = (this->InputData->GetScalarRange()[0] > minIntensity ) ? this->InputData->GetScalarRange()[0] : minIntensity;
-  maxIntensity = (this->InputData->GetScalarRange()[1] < maxIntensity ) ? this->InputData->GetScalarRange()[1] : maxIntensity;
+  this->OpacityFunction->GetRange(minIntensity, maxIntensity);
+  minIntensity = (this->InputData->GetScalarRange()[0] > minIntensity) ? this->InputData->GetScalarRange()[0] : minIntensity;
+  maxIntensity = (this->InputData->GetScalarRange()[1] < maxIntensity) ? this->InputData->GetScalarRange()[1] : maxIntensity;
 
   //get the gradient ranges from the transfer function
   double minGradient;
   double maxGradient;
-  this->GradientOpacityFunction->GetRange( minGradient, maxGradient );
+  this->GradientOpacityFunction->GetRange(minGradient, maxGradient);
 
   //figure out the multipliers for applying the transfer function in GPU
   this->TransInfo.intensityLow = minIntensity;
-  this->TransInfo.intensityMultiplier = 1.0 / ( maxIntensity - minIntensity );
+  this->TransInfo.intensityMultiplier = 1.0 / (maxIntensity - minIntensity);
   this->TransInfo.gradientLow = minGradient;
-  this->TransInfo.gradientMultiplier = 1.0 / ( maxGradient - minGradient );
+  this->TransInfo.gradientMultiplier = 1.0 / (maxGradient - minGradient);
 
   //create local buffers to house the transfer function
   float* LocalColorRedTransferFunction = new float[this->FunctionSize];
   float* LocalColorGreenTransferFunction = new float[this->FunctionSize];
   float* LocalColorBlueTransferFunction = new float[this->FunctionSize];
-  float* LocalColorWholeTransferFunction = new float[3*this->FunctionSize];
+  float* LocalColorWholeTransferFunction = new float[3 * this->FunctionSize];
   float* LocalAlphaTransferFunction = new float[this->FunctionSize];
   float* LocalGAlphaTransferFunction = new float[this->FunctionSize];
 
-  memset( (void*) LocalColorRedTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
-  memset( (void*) LocalColorGreenTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
-  memset( (void*) LocalColorBlueTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
-  memset( (void*) LocalColorWholeTransferFunction, 0.0f, 3*sizeof(float) * this->FunctionSize);
-  memset( (void*) LocalAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
-  memset( (void*) LocalGAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
+  memset((void*) LocalColorRedTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+  memset((void*) LocalColorGreenTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+  memset((void*) LocalColorBlueTransferFunction, 0.0f, sizeof(float) * this->FunctionSize);
+  memset((void*) LocalColorWholeTransferFunction, 0.0f, 3 * sizeof(float) * this->FunctionSize);
+  memset((void*) LocalAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
+  memset((void*) LocalGAlphaTransferFunction, 1.0f, sizeof(float) * this->FunctionSize);
 
   //populate the table
-  this->OpacityFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
-                                   LocalAlphaTransferFunction );
-  this->GradientOpacityFunction->GetTable( minGradient, maxGradient, this->FunctionSize,
-      LocalGAlphaTransferFunction );
-  this->ColourFunction->GetTable( minIntensity, maxIntensity, this->FunctionSize,
-                                  LocalColorWholeTransferFunction );
-  for( int i = 0; i < this->FunctionSize; i++ )
+  this->OpacityFunction->GetTable(minIntensity, maxIntensity, this->FunctionSize,
+                                  LocalAlphaTransferFunction);
+  this->GradientOpacityFunction->GetTable(minGradient, maxGradient, this->FunctionSize,
+                                          LocalGAlphaTransferFunction);
+  this->ColourFunction->GetTable(minIntensity, maxIntensity, this->FunctionSize,
+                                 LocalColorWholeTransferFunction);
+  for (int i = 0; i < this->FunctionSize; i++)
   {
-    LocalColorRedTransferFunction[i] = LocalColorWholeTransferFunction[3*i];
-    LocalColorGreenTransferFunction[i] = LocalColorWholeTransferFunction[3*i+1];
-    LocalColorBlueTransferFunction[i] = LocalColorWholeTransferFunction[3*i+2];
+    LocalColorRedTransferFunction[i] = LocalColorWholeTransferFunction[3 * i];
+    LocalColorGreenTransferFunction[i] = LocalColorWholeTransferFunction[3 * i + 1];
+    LocalColorBlueTransferFunction[i] = LocalColorWholeTransferFunction[3 * i + 2];
   }
 
   //map the trasfer functions to textures for fast access
@@ -230,7 +230,7 @@ void vtkCuda1DTransferFunctionInformationHandler::UpdateTransferFunction()
       LocalColorBlueTransferFunction,
       LocalAlphaTransferFunction,
       LocalGAlphaTransferFunction,
-      this->GetStream() );
+      this->GetStream());
 
   //clean up the garbage
   delete LocalColorRedTransferFunction;
@@ -249,10 +249,10 @@ void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol)
   this->TransInfo.Diffuse = 0.0f;
   this->TransInfo.Specular.x = 0.0f;
   this->TransInfo.Specular.y = 1.0f;
-  if( vol && vol->GetProperty() )
+  if (vol && vol->GetProperty())
   {
     int shadingType = vol->GetProperty()->GetShade();
-    if(shadingType)
+    if (shadingType)
     {
       this->TransInfo.Ambient = vol->GetProperty()->GetAmbient();
       this->TransInfo.Diffuse = vol->GetProperty()->GetDiffuse();
@@ -261,11 +261,11 @@ void vtkCuda1DTransferFunctionInformationHandler::Update(vtkVolume* vol)
     }
   }
 
-  if(this->InputData)
+  if (this->InputData)
   {
     this->Modified();
   }
-  if(this->ColourFunction && this->OpacityFunction)
+  if (this->ColourFunction && this->OpacityFunction)
   {
     this->UpdateTransferFunction();
     this->Modified();

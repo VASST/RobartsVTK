@@ -38,13 +38,13 @@ class vtkDataObject;
 class vtkCudaImageAnalyticsExport vtkCudaImageAtlasLabelProbability : public vtkImageAlgorithm, public CudaObject
 {
 public:
-  static vtkCudaImageAtlasLabelProbability *New();
-  vtkTypeMacro(vtkCudaImageAtlasLabelProbability,vtkImageAlgorithm);
+  static vtkCudaImageAtlasLabelProbability* New();
+  vtkTypeMacro(vtkCudaImageAtlasLabelProbability, vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Set a collection of label maps for the seeding operation.
-  virtual void SetInputLabelMapConnection(vtkAlgorithmOutput *in, int number);
+  virtual void SetInputLabelMapConnection(vtkAlgorithmOutput* in, int number);
 
   // Description:
   // Determine whether to normalize entropy data terms over [0,1] or [0,inf). This
@@ -55,14 +55,14 @@ public:
 
   // Description:
   // Determine which label is being used as the seed.
-  vtkSetClampMacro(LabelID,int, 0, INT_MAX);
-  vtkGetMacro(LabelID,int);
+  vtkSetClampMacro(LabelID, int, 0, INT_MAX);
+  vtkGetMacro(LabelID, int);
 
   // Description:
   // Determine whether or not to use entropy rather than probability in the output
   // image.
-  vtkSetMacro(Entropy,bool);
-  vtkGetMacro(Entropy,bool);
+  vtkSetMacro(Entropy, bool);
+  vtkGetMacro(Entropy, bool);
   void SetOutputToEntropy();
   void SetOutputToProbability();
 
@@ -70,14 +70,14 @@ public:
   // If no labels seed a particular voxel, theoretically, the entropy cost is infinity,
   // here is where you define the cut off, which does effect the scaling of the normalized
   // terms.
-  vtkSetClampMacro(MaxValueToGive,double,0.0,DBL_MAX);
-  vtkGetMacro(MaxValueToGive,double);
+  vtkSetClampMacro(MaxValueToGive, double, 0.0, DBL_MAX);
+  vtkGetMacro(MaxValueToGive, double);
 
   // Description:
   // Determine if the results should be spatially blurred (as probabilities) before being
   // returned. Helps account for some possible registration or alignment errors.
-  vtkSetMacro(GaussianBlurOn,bool);
-  vtkGetMacro(GaussianBlurOn,bool);
+  vtkSetMacro(GaussianBlurOn, bool);
+  vtkGetMacro(GaussianBlurOn, bool);
 
   // Description:
   // Determine how much blurring should occur.
@@ -92,8 +92,8 @@ protected:
   vtkCudaImageAtlasLabelProbability();
   ~vtkCudaImageAtlasLabelProbability();
 
-  void Reinitialize(int withData) {} // not implemented;
-  void Deinitialize(int withData) {} // not implemented;
+  virtual void Reinitialize(bool withData = false) {} // not implemented;
+  virtual void Deinitialize(bool withData = false) {} // not implemented;
 
   int LabelID;
   int NormalizeDataTerm;
@@ -104,13 +104,13 @@ protected:
   bool GaussianBlurOn;
   double GaussianDevs[3];
 
-  virtual int RequestInformation (vtkInformation *,
-                                  vtkInformationVector **,
-                                  vtkInformationVector *);
+  virtual int RequestInformation(vtkInformation*,
+                                 vtkInformationVector**,
+                                 vtkInformationVector*);
 
-  virtual int RequestData(vtkInformation *request,
-                          vtkInformationVector **inputVector,
-                          vtkInformationVector *outputVector );
+  virtual int RequestData(vtkInformation* request,
+                          vtkInformationVector** inputVector,
+                          vtkInformationVector* outputVector);
 
   virtual int FillInputPortInformation(int port, vtkInformation* info);
 

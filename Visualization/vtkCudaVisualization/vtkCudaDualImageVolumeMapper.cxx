@@ -41,7 +41,7 @@ vtkMutexLock* vtkCudaDualImageVolumeMapper::tfLock = 0;
 vtkCudaDualImageVolumeMapper::vtkCudaDualImageVolumeMapper()
 {
   this->transferFunctionInfoHandler = vtkCudaDualImageTransferFunctionInformationHandler::New();
-  if( this->tfLock == 0 )
+  if (this->tfLock == 0)
   {
     this->tfLock = vtkMutexLock::New();
   }
@@ -59,26 +59,26 @@ vtkCudaDualImageVolumeMapper::~vtkCudaDualImageVolumeMapper()
   this->tfLock->UnRegister(this);
 }
 
-void vtkCudaDualImageVolumeMapper::Deinitialize(int withData)
+void vtkCudaDualImageVolumeMapper::Deinitialize(bool withData /*= false*/)
 {
   this->vtkCudaVolumeMapper::Deinitialize(withData);
   this->ReserveGPU();
   CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_clearImageArray(this->GetStream());
 }
 
-void vtkCudaDualImageVolumeMapper::Reinitialize(int withData)
+void vtkCudaDualImageVolumeMapper::Reinitialize(bool withData /*= false*/)
 {
   this->vtkCudaVolumeMapper::Reinitialize(withData);
   this->transferFunctionInfoHandler->ReplicateObject(this, withData);
   this->ReserveGPU();
   CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_initImageArray(this->GetStream());
-  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(this->currFrame, this->GetStream());
+  CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(this->CurrentFrame, this->GetStream());
 }
 
-void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int index)
+void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData* input, int index)
 {
 
-  if( input->GetNumberOfScalarComponents() != 2 )
+  if (input->GetNumberOfScalarComponents() != 2)
   {
     vtkErrorMacro("Input must have 2 components.");
     return;
@@ -87,55 +87,55 @@ void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int in
   //convert data to float
   const cudaVolumeInformation& VolumeInfo = this->VolumeInfoHandler->GetVolumeInfo();
   float* buffer = 0;
-  if(input->GetScalarType() == VTK_CHAR)
+  if (input->GetScalarType() == VTK_CHAR)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<char,float>( (char*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<char, float>((char*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_UNSIGNED_CHAR)
+  else if (input->GetScalarType() == VTK_UNSIGNED_CHAR)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<unsigned char,float>( (unsigned char*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<unsigned char, float>((unsigned char*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_SIGNED_CHAR)
+  else if (input->GetScalarType() == VTK_SIGNED_CHAR)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<char,float>( (char*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<char, float>((char*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_INT)
+  else if (input->GetScalarType() == VTK_INT)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<int,float>( (int*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<int, float>((int*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_UNSIGNED_INT)
+  else if (input->GetScalarType() == VTK_UNSIGNED_INT)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<unsigned int,float>( (unsigned int*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<unsigned int, float>((unsigned int*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_SHORT)
+  else if (input->GetScalarType() == VTK_SHORT)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<short,float>( (short*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<short, float>((short*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_UNSIGNED_SHORT)
+  else if (input->GetScalarType() == VTK_UNSIGNED_SHORT)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<unsigned short,float>( (unsigned short*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<unsigned short, float>((unsigned short*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_LONG)
+  else if (input->GetScalarType() == VTK_LONG)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<long,float>( (long*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<long, float>((long*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_UNSIGNED_LONG)
+  else if (input->GetScalarType() == VTK_UNSIGNED_LONG)
   {
     this->ReserveGPU();
-    CUDA_castBuffer<unsigned long,float>( (unsigned long*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_castBuffer<unsigned long, float>((unsigned long*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
-  else if(input->GetScalarType() == VTK_FLOAT)
+  else if (input->GetScalarType() == VTK_FLOAT)
   {
     this->ReserveGPU();
-    CUDA_allocBuffer<float>( (float*) input->GetScalarPointer(), &buffer, 2*VolumeInfo.VolumeSize.x*VolumeInfo.VolumeSize.y*VolumeInfo.VolumeSize.z );
+    CUDA_allocBuffer<float>((float*) input->GetScalarPointer(), &buffer, 2 * VolumeInfo.VolumeSize.x * VolumeInfo.VolumeSize.y * VolumeInfo.VolumeSize.z);
   }
   else
   {
@@ -144,34 +144,34 @@ void vtkCudaDualImageVolumeMapper::SetInputInternal(vtkImageData * input, int in
   }
 
   //load data onto the GPU and clean up the CPU
-  if(!this->erroredOut)
+  if (!this->CanRender)
   {
     this->ReserveGPU();
-    this->erroredOut = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadImageInfo( buffer, VolumeInfoHandler->GetVolumeInfo(),
-                       index, this->GetStream());
+    this->CanRender = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_loadImageInfo(buffer, VolumeInfoHandler->GetVolumeInfo(),
+                      index, this->GetStream());
   }
 
   //deallocate memory
   this->ReserveGPU();
-  CUDA_deallocateMemory( (void*) buffer );
+  CUDA_deallocateMemory((void*) buffer);
 
   //inform transfer function handler of the data
-  this->transferFunctionInfoHandler->SetInputData(input,index);
+  this->transferFunctionInfoHandler->SetInputData(input, index);
 }
 
 void vtkCudaDualImageVolumeMapper::ChangeFrameInternal(int frame)
 {
-  if(!this->erroredOut)
+  if (!this->CanRender)
   {
     this->ReserveGPU();
-    this->erroredOut = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());
+    this->CanRender = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_changeFrame(frame, this->GetStream());
   }
 }
 
-void vtkCudaDualImageVolumeMapper::InternalRender (  vtkRenderer* ren, vtkVolume* vol,
+void vtkCudaDualImageVolumeMapper::InternalRender(vtkRenderer* ren, vtkVolume* vol,
     const cudaRendererInformation& rendererInfo,
     const cudaVolumeInformation& volumeInfo,
-    const cudaOutputImageInformation& outputInfo )
+    const cudaOutputImageInformation& outputInfo)
 {
   //handle the transfer function changes
   this->transferFunctionInfoHandler->Update();
@@ -179,8 +179,8 @@ void vtkCudaDualImageVolumeMapper::InternalRender (  vtkRenderer* ren, vtkVolume
   //perform the render
   this->tfLock->Lock();
   this->ReserveGPU();
-  this->erroredOut = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
-                     this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream() );
+  this->CanRender = !CUDA_vtkCudaDualImageVolumeMapper_renderAlgo_doRender(outputInfo, rendererInfo, volumeInfo,
+                    this->transferFunctionInfoHandler->GetTransferFunctionInfo(), this->GetStream());
   this->tfLock->Unlock();
 
 }

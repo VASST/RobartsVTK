@@ -29,20 +29,20 @@ class vtkCudaVisualizationExport vtkCuda2DVolumeMapper : public vtkCudaVolumeMap
 {
 public:
 
-  vtkTypeMacro( vtkCuda2DVolumeMapper, vtkCudaVolumeMapper );
+  vtkTypeMacro(vtkCuda2DVolumeMapper, vtkCudaVolumeMapper);
 
   /** @brief VTK compatible constructor method
    *
    */
-  static vtkCuda2DVolumeMapper *New();
+  static vtkCuda2DVolumeMapper* New();
 
-  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void SetInputInternal(vtkImageData* image, int frame);
   virtual void ClearInputInternal();
   virtual void ChangeFrameInternal(int frame);
-  virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
-                                 const cudaRendererInformation& rendererInfo,
-                                 const cudaVolumeInformation& volumeInfo,
-                                 const cudaOutputImageInformation& outputInfo );
+  virtual void InternalRender(vtkRenderer* ren, vtkVolume* vol,
+                              const cudaRendererInformation& rendererInfo,
+                              const cudaVolumeInformation& volumeInfo,
+                              const cudaOutputImageInformation& outputInfo);
 
   /** @brief Set the transfer function used for determining colour and opacity in the volume rendering process which is given to the volume information handler
    *
@@ -76,8 +76,8 @@ protected:
    *
    */
   ~vtkCuda2DVolumeMapper();
-  virtual void Reinitialize(int withData = 0);
-  virtual void Deinitialize(int withData = 0);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   vtkCuda2DTransferFunctionInformationHandler* transferFunctionInfoHandler;
 
