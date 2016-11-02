@@ -521,7 +521,7 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
     // TODO
 
     // Update output volume. Copy GPU buffers to vtkImage buffer.
-    // A this if possible to save time.
+    // Remove this if possible to save time.
     UpdateOutputVolume();
   }
 }
@@ -532,8 +532,6 @@ void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 	mutex->Lock();
 	v->DeepCopy( reconstructedvolume );
 	mutex->Unlock();
-
-	v->DeepCopy(reconstructedvolume);
 }
 
 //--------------------------------------------------------------
@@ -768,7 +766,9 @@ void vtkCLVolumeReconstruction::UpdateOutputVolume()
 {
 
   // Copy volume to outptVolume
+  mutex->Lock();
   memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(0, 0, 0), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  mutex->Lock();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------
