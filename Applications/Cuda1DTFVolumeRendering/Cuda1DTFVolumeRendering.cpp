@@ -1,6 +1,6 @@
 /*==========================================================================
 
-  Copyright (c) 2015 Uditha L. Jayarathne, ujayarat@robarts.ca
+  Copyright (c) 2016 Uditha L. Jayarathne, ujayarat@robarts.ca
 
   Use, modification and redistribution of the software, in source or
   binary forms, are permitted provided that the following terms and
@@ -54,10 +54,12 @@
 
 int main(){
 
+	// Read the volume
 	vtkSmartPointer< vtkMetaImageReader > metaReader = vtkSmartPointer< vtkMetaImageReader >::New();
 	metaReader->SetFileName("3DUS-output.mhd");
 	metaReader->Update();
 
+	// Set Cuda mapper
 	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
 	cudaMapper->UseFullVTKCompatibility();
 	cudaMapper->SetBlendModeToComposite();
@@ -84,6 +86,7 @@ int main(){
 	usVolume->SetMapper(cudaMapper);
 	usVolume->SetProperty(volumeProperty);
 
+	// Set up renderers
 	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
 	ren->AddViewProp(usVolume);	
 
