@@ -59,6 +59,7 @@
 #include <vtkImageData.h>
 #include <vtkCamera.h> 
 #include <vtkCommand.h> 
+#include <vtkMetaImageReader.h>
 
 #include <vtkCLVolumeReconstruction.h>
 #include <vtkCuda1DVolumeMapper.h>
@@ -86,14 +87,21 @@ public:
 		imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
 		imgFlip->Modified();
 		imgFlip->Update();
-		reconstructor->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
+		//reconstructor->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
 
 		// Set pose Data
 		trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
-		reconstructor->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
+		//reconstructor->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
+
+		
+		imagePose->SetMatrix(tFrame2Tracker);
+		//imagePose->Modified();
+		reconstructor->SetInputData(imgFlip->GetOutput());
+		reconstructor->Update();
+
 
 		// Update Reconstruction
-		reconstructor->UpdateReconstruction();
+		//reconstructor->UpdateReconstruction();
 		reconstructor->GetOutputVolume(outputVolume);
 		outputVolume->Modified();
 
@@ -120,6 +128,7 @@ public:
 	vtkSmartPointer < vtkImageData > outputVolume;
 	PlusTransformName transformName;
 	vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker;
+	vtkSmartPointer< vtkTransform > imagePose;
 };
 
 // This is for timing. 
@@ -211,6 +220,8 @@ int main(){
 	recon->SetCalMatrix(us_cal_mat);
 	recon->Initialize();
 	recon->StartReconstruction();	
+	vtkTransform *pose = vtkTransform::New();
+	recon->SetImagePoseTransform(pose);
 
 	std::cout << "vtkCLReconstruction initialized. " << std::endl;
 
@@ -226,8 +237,14 @@ int main(){
 								extent[5] - extent[4]);
 	outputVolume->SetSpacing(output_spacing, output_spacing, output_spacing);
 	outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-	recon->GetOutputVolume(outputVolume);
+	//recon->GetOutputVolume(outputVolume);	
 	outputVolume->Modified();
+
+
+
+
+
+
 
 	// Set-up visualization pipeline
 
@@ -236,6 +253,8 @@ int main(){
 	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
 	cudaMapper->UseFullVTKCompatibility();
 	cudaMapper->SetBlendModeToComposite();
+	cudaMapper->SetInputConnection(recon->GetOutputPort());
+
 
 	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
 	volumeMapper->SetBlendModeToComposite();
@@ -261,10 +280,15 @@ int main(){
 	usVolume->SetMapper(cudaMapper);
 	//usVolume->SetMapper(volumeMapper);
 	usVolume->SetProperty(volumeProperty);
-	usVolume->SetOrigin(0, 0, 0);
-	usVolume->SetPosition(0, 0, 0);
-	//cudaMapper->SetInputData(outputVolume);
+	//usVolume->SetOrigin(0, 0, 0);
+	//usVolume->SetPosition(0, 0, 0);
+	cudaMapper->SetInputData(outputVolume);
 	usVolume->Modified();
+
+	vtkMetaImageReader *reader = vtkMetaImageReader::New();
+	reader->SetFileName("./3DUS-output.mhd");
+	reader->Update();
+	cudaMapper->SetInputData(reader->GetOutput()); 
 
 	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
 	ren->AddViewProp(usVolume);
@@ -284,6 +308,7 @@ int main(){
 	renwin->SetSize(win_size);
 	renwin->AddRenderer(ren);
 
+
 	vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
 	callback->trackedFrameList = trackedFrameList;
 	callback->reconstructor = recon;
@@ -295,6 +320,7 @@ int main(){
 	callback->outputVolume = outputVolume;
 	callback->transformName = transformName;
 	callback->tFrame2Tracker = tFrame2Tracker;
+	callback->imagePose = pose;
 
 	vtkSmartPointer< vtkRenderWindowInteractor > iren = vtkSmartPointer< vtkRenderWindowInteractor >::New();
 	iren->SetRenderWindow(renwin);

@@ -34,6 +34,12 @@
 #include "vector_math.h"
 #include "vtkCLVolumeReconstruction.h"
 #include "vtkObjectFactory.h"
+#include "vtkCommand.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -168,6 +174,127 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << indent << "volume_extent[" << i << "]: " << volume_extent[i];
   }
+}
+/*
+//-----------------------------------------------------------------------------------------
+int vtkCLVolumeReconstruction::ProcessRequest(vtkInformation* request,
+												vtkInformationVector** inputVector,
+												vtkInformationVector* outputVector)
+{
+	// Create an output object of the correct type
+	if (request->Has(vtkDemandDrivenPipeline::REQUEST_DATA_OBJECT()))
+	{
+		return this->RequestDataObject(request, inputVector, outputVector);
+	}
+	// generate the data
+	if (request->Has(vtkDemandDrivenPipeline::REQUEST_DATA()))
+	{
+		return this->RequestData(request, inputVector, outputVector);
+	}
+
+	if (request->Has(vtkStreamingDemandDrivenPipeline::REQUEST_UPDATE_EXTENT()))
+	{
+		return this->RequestUpdateExtent(request, inputVector, outputVector);
+	}
+
+	// execute information
+	if (request->Has(vtkDemandDrivenPipeline::REQUEST_INFORMATION()))
+	{
+		return this->RequestInformation(request, inputVector, outputVector);
+	}
+
+	return this->Superclass::ProcessRequest(request, inputVector, outputVector);
+}
+
+//------------------------------------------------------------------------------------------
+int vtkCLVolumeReconstruction::FillOutputPortInformation(int vtkNotUsed(port),
+															vtkInformation* info)
+{
+	// Now add info
+	info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkImageData");
+	return 1;
+}
+
+//-------------------------------------------------------------------------------------------
+int vtkCLVolumeReconstruction::FillInputPortInformation(int vtkNotUsed(port), vtkInformation* info)
+{
+	info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
+	return 1;
+}
+
+int vtkCLVolumeReconstruction::RequestDataObject(vtkInformation* vtkNotUsed(request),
+												vtkInformationVector** vtkNotUsed(inputVector),
+												vtkInformationVector* outputVector)
+{
+	// RequestDataObject(RDO) is an earlier pipeline pass. 
+	// During RDO, each filter is supposed to produce and empty data object of proper type
+	vtkInformation* outInfo = outputVector->GetInformationObject(0);
+	vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(
+															vtkDataObject::DATA_OBJECT()));
+
+	if (!output)
+	{
+		output = vtkImageData::New();
+		outInfo->Set(vtkDataObject::DATA_OBJECT(), output);
+		output->FastDelete();
+
+		this->GetOutputPortInformation(0)->Set(
+			vtkDataObject::DATA_EXTENT_TYPE(), output->GetExtentType());
+	}
+
+	return 1;
+}
+
+//----------------------------------------------------------------------------------------------
+int vtkCLVolumeReconstruction::RequestInformation(vtkInformation* vtkNotUsed(request),
+														vtkInformationVector** vtkNotUsed(inputVector),
+														vtkInformationVector* vtkNotUsed(outputVector))
+{
+	// Do nothing: Let the superclass handle it. 
+	return 1;
+}
+
+//-----------------------------------------------------------------------------------------------------
+int vtkCLVolumeReconstruction::RequestUpdateExtent(vtkInformation* vtkNotUsed(Request),
+														vtkInformationVector** inputVector,
+														vtkInformationVector* outputVector)
+{
+	int numInputPorts = this->GetNumberOfInputPorts();
+	for (int i = 0; i < numInputPorts; i++)
+	{
+		int numInputConnections = this->GetNumberOfInputConnections(i);
+		for (int j = 0; j < numInputConnections; j++)
+		{
+			vtkInformation* inputInfo = inputVector[i]->GetInformationObject(j);
+			inputInfo->Set(vtkStreamingDemandDrivenPipeline::EXACT_EXTENT(), 1);
+		}
+	}
+	return 1;
+}
+*/
+
+//---------------------------------------------------------------------------------------------------------
+// This is the superclass style of Execute method. 
+int vtkCLVolumeReconstruction::RequestData(vtkInformation* vtkNotUsed(request),
+											vtkInformationVector** inputVector,
+											vtkInformationVector* outputVector)
+{
+	// During RD each filter examines any inputs it has, then fills in that empty date object with real data
+	vtkInformation* outInfo = outputVector->GetInformationObject(0);
+	vtkImageData* output = vtkImageData::SafeDownCast(
+														outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+	vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+	vtkImageData *input = vtkImageData::SafeDownCast(
+														inInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+
+	// Setinput data
+	imageData = input;
+	imagePose->GetMatrix(poseData);	
+	this->UpdateReconstruction();
+		
+	return 1;
 }
 
 //-----------------------------------------------------------------------------------
@@ -429,6 +556,12 @@ void vtkCLVolumeReconstruction::SetInputPoseData(double time, vtkMatrix4x4* mat)
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
+{
+	this->imagePose = t;
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::SetOutputSpacing(double spacing)
 {
 
@@ -522,16 +655,17 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
 
     // Update output volume. Copy GPU buffers to vtkImage buffer.
     // Remove this if possible to save time.
-    UpdateOutputVolume();
+    //UpdateOutputVolume();
   }
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 {
-	mutex->Lock();
-	v->DeepCopy( reconstructedvolume );
-	mutex->Unlock();
+	//mutex->Lock();
+	v->ShallowCopy(reconstructedvolume);
+	memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+	//mutex->Unlock();
 }
 
 //--------------------------------------------------------------
@@ -636,7 +770,7 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   plane_points_queue = (plane_pts*) malloc(BSCAN_WINDOW * sizeof(plane_pts));
   mask = (unsigned char*)malloc(sizeof(unsigned char) * bscan_w * bscan_h);
   volume = (unsigned char*) malloc(sizeof(unsigned char) * volume_width * volume_height * volume_depth);
-  memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  memset(volume, '0', sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   reconstructedvolume = vtkSmartPointer< vtkImageData >::New();
   reconstructedvolume->SetOrigin((double)volume_origin[0], (double)volume_origin[1], (double)volume_origin[2]);
@@ -750,7 +884,7 @@ void vtkCLVolumeReconstruction::GrabInputData()
   matrixPtr2[10] = (float)matrixPtr[10];
   matrixPtr2[11] = (float)matrixPtr[11];
 
-  unsigned char* imgDataPtr = (unsigned char*)imageData_queue.front()->GetScalarPointer(0, 0, 0);
+  unsigned char* imgDataPtr = (unsigned char*)imageData_queue.front()->GetScalarPointer();
 
   // Copy data to buffers
   bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
@@ -766,9 +900,9 @@ void vtkCLVolumeReconstruction::UpdateOutputVolume()
 {
 
   // Copy volume to outptVolume
-  mutex->Lock();
-  memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(0, 0, 0), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
-  mutex->Lock();
+  //mutex->Lock();
+  memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+ // mutex->Lock();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------

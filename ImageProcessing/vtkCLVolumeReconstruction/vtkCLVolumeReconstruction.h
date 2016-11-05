@@ -35,8 +35,10 @@
 
 #include "vtkCLVolumeReconstructionExport.h"
 
+#include "vtkImageAlgorithm.h"
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
 #include "vtkObject.h"
 #include "vtkSmartPointer.h"
 #include "vtkMutexLock.h"
@@ -47,6 +49,8 @@
 #include <vector_functions.h>
 #include <vector_types.h>
 
+class vtkDataSet;
+
 //# define KERNEL_DEBUG
 //# define VCLVR_DEBUG
 
@@ -56,14 +60,20 @@
 
 #define pos_matrix_a(x,y) (pos_matrix[(y)*4 + (x)])
 
-class vtkCLVolumeReconstructionExport vtkCLVolumeReconstruction : public vtkObject
+class vtkCLVolumeReconstructionExport vtkCLVolumeReconstruction : public vtkImageAlgorithm
 {
 public:
   static vtkCLVolumeReconstruction* New();
-  vtkTypeMacro(vtkCLVolumeReconstruction, vtkObject);
+  vtkTypeMacro(vtkCLVolumeReconstruction, vtkAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-public:
+  // Description:
+  // See vtkAlgorithm for details
+  /*virtual int ProcessRequest(vtkInformation*,
+							  vtkInformationVector**,
+							  vtkInformationVector*); */
+
+  // ---- 
   /* Initializes devices */
   void Initialize();
 
@@ -96,6 +106,7 @@ public:
 
   /* Set input position data */
   void SetInputPoseData(double, vtkMatrix4x4*);
+  void SetImagePoseTransform(vtkTransform*);
 
   /* Set output Extent. This needs to be set. Otherwise the volume will be zero. */
   void SetOutputExtent(int, int, int, int, int, int);
@@ -120,6 +131,44 @@ public:
 
   /* Get Spacing */
   void GetSpacing(double spacing[3]) const;
+
+protected:
+	vtkCLVolumeReconstruction();
+	~vtkCLVolumeReconstruction();
+	/*
+	// Description:
+	// This is called by the superclass. 
+	virtual int RequestDataObject(vtkInformation *request,
+									vtkInformationVector** inputVector,
+									vtkInformationVector* outputVector);
+
+	// convenience method
+	virtual int RequestInformation(vtkInformation *request,
+										vtkInformationVector** inputVector,
+										vtkInformationVector* outputVector); */
+
+	//int FillInputPortInformation(int port, vtkInformation* info);
+
+	// Description:
+	// This is called by the superclass. 
+	virtual int RequestData(vtkInformation* request,
+								vtkInformationVector** inputVector,
+								vtkInformationVector* outputVector);
+
+/*	// Description:
+	// This is called by the superclass
+	virtual int RequestUpdateExtent(vtkInformation*,
+									vtkInformationVector**,
+									vtkInformationVector*);
+
+	virtual int FillOutputPortInformation(int port, vtkInformation* info);
+	virtual int FillInputPortInformation(int port, vtkInformation* info); */
+
+//private:
+//	vtkCLVolumeReconstruction(const vtkCLVolumeReconstruction&); // Not implemented
+//	vtkCLVolumeReconstruction(const vtkCLVolumeReconstruction&); // Not implemented
+
+ 
 
 protected:
   /* Utility functions */
@@ -284,13 +333,9 @@ protected:
   // cal_matrix is the 1x16 us calibration matrix
   float* pos_timetags, * pos_matrices, * bscan_timetags, * cal_matrix;
 
+  vtkSmartPointer< vtkTransform > imagePose;
   vtkSmartPointer< vtkImageData > reconstructedvolume;
   vtkSmartPointer< vtkMutexLock > mutex;
-
-private:
-  vtkCLVolumeReconstruction();
-  ~vtkCLVolumeReconstruction();
-
 };
 #endif //_vtkCLVolumeReconstruction_h_
 

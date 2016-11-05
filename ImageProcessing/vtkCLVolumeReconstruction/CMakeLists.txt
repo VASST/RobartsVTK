@@ -32,5 +32,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   OpenCL 
   vtkCommonCore
   vtkCommonDataModel
+  vtkCommonExecutionModel
   )
 GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
