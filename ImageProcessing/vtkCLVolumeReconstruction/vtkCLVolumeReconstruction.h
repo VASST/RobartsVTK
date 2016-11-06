@@ -135,6 +135,7 @@ public:
 protected:
 	vtkCLVolumeReconstruction();
 	~vtkCLVolumeReconstruction();
+
 	/*
 	// Description:
 	// This is called by the superclass. 

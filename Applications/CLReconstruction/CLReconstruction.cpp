@@ -102,14 +102,17 @@ public:
 
 		// Update Reconstruction
 		//reconstructor->UpdateReconstruction();
-		reconstructor->GetOutputVolume(outputVolume);
-		outputVolume->Modified();
+		//reconstructor->GetOutputVolume(outputVolume);
+		//outputVolume->Modified();
 
 		// Visualize
-		cudaMapper->SetInputData(outputVolume);
+		cudaMapper->SetInputData(reconstructor->GetOutput());
+		//volumeMapper->SetInputData(outputVolume);
+
 
 		// Update rendering pipeline
 		renwin->Render();
+		ren->ResetCameraClippingRange();
 
 		idx++;
 	}
@@ -129,6 +132,7 @@ public:
 	PlusTransformName transformName;
 	vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker;
 	vtkSmartPointer< vtkTransform > imagePose;
+	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper;
 };
 
 // This is for timing. 
@@ -239,10 +243,7 @@ int main(){
 	outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 	//recon->GetOutputVolume(outputVolume);	
 	outputVolume->Modified();
-
-
-
-
+	recon->SetOutput(outputVolume);
 
 
 
@@ -253,11 +254,12 @@ int main(){
 	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
 	cudaMapper->UseFullVTKCompatibility();
 	cudaMapper->SetBlendModeToComposite();
-	cudaMapper->SetInputConnection(recon->GetOutputPort());
+	//cudaMapper->SetInputData(recon->GetOutput());
 
 
 	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
 	volumeMapper->SetBlendModeToComposite();
+	volumeMapper->SetInputData(outputVolume);
 
 	vtkSmartPointer< vtkVolumeProperty > volumeProperty = vtkSmartPointer< vtkVolumeProperty >::New();
 	volumeProperty->ShadeOff();
@@ -282,13 +284,13 @@ int main(){
 	usVolume->SetProperty(volumeProperty);
 	//usVolume->SetOrigin(0, 0, 0);
 	//usVolume->SetPosition(0, 0, 0);
-	cudaMapper->SetInputData(outputVolume);
+	//cudaMapper->SetInputData(outputVolume);
 	usVolume->Modified();
 
 	vtkMetaImageReader *reader = vtkMetaImageReader::New();
 	reader->SetFileName("./3DUS-output.mhd");
 	reader->Update();
-	cudaMapper->SetInputData(reader->GetOutput()); 
+	//cudaMapper->SetInputData(reader->GetOutput()); 
 
 	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
 	ren->AddViewProp(usVolume);
@@ -307,12 +309,15 @@ int main(){
 	vtkSmartPointer< vtkRenderWindow > renwin = vtkSmartPointer< vtkRenderWindow >::New();
 	renwin->SetSize(win_size);
 	renwin->AddRenderer(ren);
+	ren->ResetCamera();
+	ren->ResetCameraClippingRange();
 
 
 	vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
 	callback->trackedFrameList = trackedFrameList;
 	callback->reconstructor = recon;
 	callback->cudaMapper = cudaMapper;
+	callback->volumeMapper = volumeMapper;
 	callback->imgFlip = imgFlip;
 	callback->usVolume = usVolume;
 	callback->ren = ren;

@@ -39,6 +39,7 @@
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkPointData.h"
 
 #include <iostream>
 #include <string>
@@ -175,6 +176,7 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "volume_extent[" << i << "]: " << volume_extent[i];
   }
 }
+
 /*
 //-----------------------------------------------------------------------------------------
 int vtkCLVolumeReconstruction::ProcessRequest(vtkInformation* request,
@@ -275,25 +277,40 @@ int vtkCLVolumeReconstruction::RequestUpdateExtent(vtkInformation* vtkNotUsed(Re
 
 //---------------------------------------------------------------------------------------------------------
 // This is the superclass style of Execute method. 
-int vtkCLVolumeReconstruction::RequestData(vtkInformation* vtkNotUsed(request),
+int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
 											vtkInformationVector** inputVector,
 											vtkInformationVector* outputVector)
 {
 	// During RD each filter examines any inputs it has, then fills in that empty date object with real data
-	vtkInformation* outInfo = outputVector->GetInformationObject(0);
-	vtkImageData* output = vtkImageData::SafeDownCast(
-														outInfo->Get(vtkDataObject::DATA_OBJECT()));
-
+	
 	vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-	vtkImageData *input = vtkImageData::SafeDownCast(
-														inInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkInformation* outInfo = outputVector->GetInformationObject(0);
 
+	vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+	//exit and throw error message if something is wrong with input configuration
+	if (!input)
+	{
+		vtkErrorMacro("This filter requires an input image.");
+		return -1;
+	}
+	if (input->GetScalarType() != VTK_UNSIGNED_CHAR)
+	{
+		vtkErrorMacro("The input must be of type unsigned char.");
+		return -1;
+	}
+	
 
 	// Setinput data
 	imageData = input;
 	imagePose->GetMatrix(poseData);	
 	this->UpdateReconstruction();
-		
+
+	output->ShallowCopy(reconstructedvolume);
+	memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+
+
 	return 1;
 }
 
