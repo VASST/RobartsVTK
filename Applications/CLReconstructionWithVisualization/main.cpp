@@ -1,6 +1,6 @@
 /*==========================================================================
 
-Copyright (c) 2015 Uditha L. Jayarathne, ujayarat@robarts.ca
+Copyright (c) 2016 Uditha L. Jayarathne, ujayarat@robarts.ca
 
 Use, modification and redistribution of the software, in source or
 binary forms, are permitted provided that the following terms and
@@ -47,12 +47,94 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkMatrix4x4.h>
 #include <vtkMetaImageWriter.h>
 #include <vtkImageFlip.h>
+#include <vtkVolumeProperty.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkPiecewiseFunction.h> 
+#include <vtkVolume.h>
+#include <vtkRenderer.h> 
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
+#include <vtkSmartVolumeMapper.h> 
+#include <vtkImageData.h>
+#include <vtkCamera.h> 
+#include <vtkCommand.h> 
+#include <vtkMetaImageReader.h>
 
 #include <vtkCLVolumeReconstruction.h>
+#include <vtkCuda1DVolumeMapper.h>
 
 /* Sets output extent and origin from a vtkTrackedFrameList */
 int get_extent_from_trackedList(vtkPlusTrackedFrameList *, vtkPlusTransformRepository *,
 	double spacing, int *, double *);
+
+class vtkTimerCallback : public vtkCommand
+{
+public:
+	static vtkTimerCallback *New()
+	{
+		vtkTimerCallback *cb = new vtkTimerCallback;
+		return cb;
+	}
+
+	virtual void Execute(vtkObject *caller, unsigned long eventID, void *vtkNotUsed(callData))
+	{
+		if (idx == trackedFrameList->GetNumberOfTrackedFrames() - 1)
+			idx = 0;
+
+		// Set Image Dada
+		PlusTrackedFrame *trackedFrame = trackedFrameList->GetTrackedFrame(idx);
+		imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
+		imgFlip->Modified();
+		imgFlip->Update();
+		//reconstructor->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
+
+		// Set pose Data
+		trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
+		//reconstructor->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
+
+
+		imagePose->SetMatrix(tFrame2Tracker);
+		//imagePose->Modified();
+		reconstructor->SetInputData(imgFlip->GetOutput());
+		reconstructor->Update();
+
+
+		// Update Reconstruction
+		//reconstructor->UpdateReconstruction();
+		//reconstructor->GetOutputVolume(outputVolume);
+		//outputVolume->Modified();
+
+		// Visualize
+		//cudaMapper->SetInputData(reconstructor->GetOutput());
+		//volumeMapper->SetInputData(reconstructor->GetOutput());
+
+
+		// Update rendering pipeline
+		ren->Render();
+
+		std::cout << "Rendered.. " << std::endl;
+
+		idx++;
+	}
+
+private:
+	int idx = 0;
+
+public:
+	vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList;
+	vtkSmartPointer< vtkCLVolumeReconstruction > reconstructor;
+	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper;
+	vtkSmartPointer< vtkImageFlip > imgFlip;
+	vtkSmartPointer< vtkVolume > usVolume;
+	vtkSmartPointer< vtkRenderer > ren;
+	vtkSmartPointer< vtkRenderWindow > renwin;
+	vtkSmartPointer < vtkImageData > outputVolume;
+	PlusTransformName transformName;
+	vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker;
+	vtkSmartPointer< vtkTransform > imagePose;
+	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper;
+};
 
 // This is for timing. 
 int gettimeofday(struct timeval * tp)
@@ -118,6 +200,19 @@ int main(){
 		exit(EXIT_FAILURE);
 	}
 
+
+
+
+	// Set-up visualization pipeline
+	vtkMetaImageReader *reader = vtkMetaImageReader::New();
+	reader->SetFileName("3DUS.mhd");
+	reader->Update();
+
+	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
+	cudaMapper->UseCUDAOpenGLInteroperability();
+	cudaMapper->SetBlendModeToComposite();
+	cudaMapper->SetInputData(reader->GetOutput()); 
+
 	// Create vtkCLVolumeReconstructor
 	vtkSmartPointer< vtkCLVolumeReconstruction > recon = vtkSmartPointer< vtkCLVolumeReconstruction >::New();
 	recon->SetDevice(0);
@@ -128,7 +223,7 @@ int main(){
 		-0.0030, 0.0118, -0.9873, -7.8930,
 		-0.0069, 0.0753, 0.1568, 1.0670 };
 
-	recon->SetProgramSourcePath("kernels.cl");
+	recon->SetProgramSourcePath("./kernels.cl");
 	recon->SetBScanSize(820, 616);
 	recon->SetBScanSpacing(0.077, 0.073);
 
@@ -143,6 +238,8 @@ int main(){
 	recon->SetCalMatrix(us_cal_mat);
 	recon->Initialize();
 	recon->StartReconstruction();
+	vtkTransform *pose = vtkTransform::New();
+	recon->SetImagePoseTransform(pose);
 
 	std::cout << "vtkCLReconstruction initialized. " << std::endl;
 
@@ -152,64 +249,97 @@ int main(){
 	writer->SetFileName("3DUS-output.mhd");
 
 	vtkImageData *outputVolume = vtkImageData::New();
-
-	//---------------- Now reconstruct --------------------------------------------------------------------------
-
-
-	// For timing
-	timeval tv;
-	long current_time;
-
-
-	for (int i = 0; i<trackedFrameList->GetNumberOfTrackedFrames(); i++){
-		// Set Image Dada
-		PlusTrackedFrame *trackedFrame = trackedFrameList->GetTrackedFrame(i);
-		imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
-		imgFlip->Modified();
-		imgFlip->Update();
-		recon->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
-
-		// Set pose Data
-		trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
-		recon->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
-
-		// Update Reconstruction
-		std::cout << "Frame " << i << " : ";
-		gettimeofday(&tv);
-		current_time = tv.tv_usec;
-
-		recon->UpdateReconstruction();
-		recon->GetOutputVolume(outputVolume);
-		gettimeofday(&tv);
-		std::cout << "Elapsed time : " << tv.tv_usec - current_time << " micro seconds." << std::endl;
+	outputVolume->SetExtent(extent);
+	outputVolume->SetDimensions(extent[1] - extent[0],
+		extent[3] - extent[2],
+		extent[5] - extent[4]);
+	outputVolume->SetSpacing(output_spacing, output_spacing, output_spacing);
+	outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+	//recon->GetOutputVolume(outputVolume);	
+	outputVolume->Modified();
+	recon->SetOutput(outputVolume);
 
 
-		// Use Plus Reconstruction
-		// Update transform repository
-		/*if ( repository->SetTransforms(*trackedFrame) != PLUS_SUCCESS ){
-		LOG_ERROR("Failed to update transform repository with frame"  );
-		return -1;
-		}
+	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
+	volumeMapper->SetBlendModeToComposite();
+	volumeMapper->SetInputData(outputVolume); 
 
-		gettimeofday(&tv);
-		current_time = tv.tv_usec;
+	vtkSmartPointer< vtkVolumeProperty > volumeProperty = vtkSmartPointer< vtkVolumeProperty >::New();
+	volumeProperty->ShadeOff();
+	volumeProperty->SetInterpolationType(VTK_LINEAR_INTERPOLATION);
 
-		// Add this tracked frame to the reconstructor
-		if ( volumeReconstructor->AddTrackedFrame(trackedFrame, repository) != PLUS_SUCCESS ){
-		LOG_ERROR("Failed to add tracked frame to volume with frame");
-		return -1;
-		}
+	vtkSmartPointer< vtkPiecewiseFunction > compositeOpacity = vtkSmartPointer< vtkPiecewiseFunction >::New();
+	compositeOpacity->AddPoint(0.0, 0.0);
+	compositeOpacity->AddPoint(75.72, 0.079);
+	compositeOpacity->AddPoint(176.15, 0.98);
+	compositeOpacity->AddPoint(255.0, 1.0);
+	volumeProperty->SetScalarOpacity(compositeOpacity); // composite first.
 
-		gettimeofday(&tv);
-		std::cout << "Elapsed time (PLUS Recon) : " << tv.tv_usec - current_time << " micro seconds." << std::endl;
-		*/
-	}
+	vtkSmartPointer< vtkColorTransferFunction > colorTransferFun = vtkSmartPointer< vtkColorTransferFunction >::New();
+	colorTransferFun->AddRGBPoint(0.0, 0.0, 0.0, 1.0);
+	colorTransferFun->AddRGBPoint(40.0, 0.0, 0.1, 0.0);
+	colorTransferFun->AddRGBPoint(255.0, 1.0, 0.0, 0.0);
+	volumeProperty->SetColor(colorTransferFun);
 
-	recon->GetOutputVolume(outputVolume);
-	writer->SetInputData(outputVolume);
-	writer->Write();
+	vtkSmartPointer< vtkVolume > usVolume = vtkSmartPointer< vtkVolume >::New();
+	usVolume->SetMapper(cudaMapper);
+	//usVolume->SetMapper(volumeMapper);
+	//usVolume->SetProperty(volumeProperty);
+	//usVolume->SetOrigin(0, 0, 0);
+	//usVolume->SetPosition(0, 0, 0);
+	//cudaMapper->SetInputData(outputVolume);
+	//usVolume->Modified();	
+
+	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
+	ren->AddViewProp(usVolume);
+
+	int win_size[2] = { 640, 480 };
+	/*vtkCamera *cam = ren->GetActiveCamera();
+	cam->SetWindowCenter(win_size[0]/2.0, win_size[1]/2.0);
+	double viewAngle = 2 * atan((win_size[1] / 2.0) / 250) * 180 / (4 * atan(1.0));
+	cam->SetViewAngle(viewAngle);
+	cam->SetPosition(0, 0, 0);
+	cam->SetViewUp(0, -1, 0);
+	cam->SetFocalPoint(0, 0, 615);
+	cam->SetClippingRange(0.01, 1000.01);
+	cam->Modified(); */
+
+	vtkSmartPointer< vtkRenderWindow > renwin = vtkSmartPointer< vtkRenderWindow >::New();
+	//renwin->SetSize(win_size);
+	renwin->AddRenderer(ren);
+	//ren->ResetCamera();
+	//ren->ResetCameraClippingRange();
+
+	
+	vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
+	callback->trackedFrameList = trackedFrameList;
+	callback->reconstructor = recon;
+	callback->cudaMapper = cudaMapper;
+	callback->volumeMapper = volumeMapper;
+	callback->imgFlip = imgFlip;
+	callback->usVolume = usVolume;
+	callback->ren = ren;
+	callback->renwin = renwin;
+	callback->outputVolume = outputVolume;
+	callback->transformName = transformName;
+	callback->tFrame2Tracker = tFrame2Tracker;
+	callback->imagePose = pose; 
+
+	vtkSmartPointer< vtkRenderWindowInteractor > iren = vtkSmartPointer< vtkRenderWindowInteractor >::New();
+	iren->SetRenderWindow(renwin);
+
+	iren->AddObserver(vtkCommand::TimerEvent, callback);
+	iren->Initialize();
+
+	int timerID = iren->CreateRepeatingTimer(1000.0 / 30.0);
+	//renwin->Render();
+	iren->Start();
 
 	std::cout << "Reconstruction done. " << std::endl;
+	std::cout << "Writing output to file. " << std::endl;
+
+	writer->SetInputData(outputVolume);
+	writer->Write();
 
 	return 0;
 }

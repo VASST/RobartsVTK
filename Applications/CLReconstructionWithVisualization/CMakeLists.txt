@@ -1,7 +1,7 @@
-PROJECT( CLReconstruction )
+PROJECT( CLReconstructionWithVisualization )
 
 SET ( Module_SRCS 
-  CLReconstruction.cpp
+  main.cpp
 )
 
 # -----------------------------------------------------------------
@@ -13,6 +13,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkImagingCore
   vtkInteractionWidgets
   vtkIOImage
-  vtkPlusDataCollection
+  vtkCommonCore
+  vtkCudaCommon
+  vtkCudaVisualization
   vtkCLVolumeReconstruction
+  vtkPlusDataCollection
   )
