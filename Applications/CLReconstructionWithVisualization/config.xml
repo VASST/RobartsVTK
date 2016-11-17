@@ -7,26 +7,18 @@
       Id="TrackedVideoDevice"
       Type="SavedDataSource"
       SequenceFile="tracked_us_video.mha"
-	  AcquisitionRate = "30"
+	  AcquisitionRate = "60"
       UseData="IMAGE_AND_TRANSFORM"
       UseOriginalTimestamps="TRUE"
       RepeatEnabled="TRUE" >
       <DataSources>
-        <DataSource Type="Video" Id="Video" BufferSize="200" ClipRectangleOrigin="159 41 0" ClipRectangleSize="504 534 1" />
+        <DataSource Type="Video" Id="Video" PortUsImageOrientation="MF"  />
       </DataSources>
       <OutputChannels>
         <OutputChannel Id="TrackedVideoStream" VideoDataSourceId="Video" />
       </OutputChannels>
     </Device>
-    <Device
-      Id="CaptureDevice"
-      Type="VirtualDiscCapture"
-      BaseFilename="RecordingTest.nrrd"
-      EnableCapturingOnStart="FALSE" >
-      <InputChannels>
-        <InputChannel Id="TrackedVideoStream" />
-      </InputChannels>
-    </Device>
+
     <Device
       Id="VolumeReconstructorDevice"
       Type="VirtualVolumeReconstructor"
@@ -66,27 +58,5 @@
         NumberOfSticksToUse="1" />
     </HoleFilling>
   </VolumeReconstruction>		
-    
-  <PlusOpenIGTLinkServer 
-    MaxNumberOfIgtlMessagesToSend="1" 
-    MaxTimeSpentWithProcessingMs="50" 
-    ListeningPort="18944" 
-    SendValidTransformsOnly="true" 
-    OutputChannelId="TrackedVideoStream" > 
-    <DefaultClientInfo> 
-      <MessageTypes> 
-        <Message Type="IMAGE" />
-        <Message Type="TRANSFORM" />
-      </MessageTypes>
-      <TransformNames> 
-        <Transform Name="ProbeToTracker" /> 
-        <Transform Name="ReferenceToTracker" /> 
-    <Transform Name="ProbeToReference" />
-      </TransformNames>
-    <ImageNames>
-      <Image Name="Image" EmbeddedTransformToFrame="Reference" />
-    </ImageNames>
-    </DefaultClientInfo>
-  </PlusOpenIGTLinkServer>
     
 </PlusConfiguration>

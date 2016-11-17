@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // For timing
 #include <Windows.h>
 #include <stdint.h>
+#include <chrono>
 
 // Use PLUS just to read data from sequence meta file
 #include <vtkPlusSequenceIO.h>
@@ -79,25 +80,20 @@ public:
 
 	virtual void Execute(vtkObject *caller, unsigned long eventID, void *vtkNotUsed(callData))
 	{
+		auto t_start = std::chrono::high_resolution_clock::now();
+
 		if (idx == trackedFrameList->GetNumberOfTrackedFrames() - 1)
 			idx = 0;
 
 		// Set Image Dada
 		PlusTrackedFrame *trackedFrame = trackedFrameList->GetTrackedFrame(idx);
-		imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
-		imgFlip->Modified();
-		imgFlip->Update();
-		//reconstructor->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
 
 		// Set pose Data
 		trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
-		//reconstructor->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
-
 
 		imagePose->SetMatrix(tFrame2Tracker);
-		reconstructor->SetInputData(imgFlip->GetOutput());
+		reconstructor->SetInputData(trackedFrame->GetImageData()->GetImage());
 		reconstructor->Update();
-
 
 		// Update Reconstruction
 		//reconstructor->UpdateReconstruction();
@@ -111,6 +107,11 @@ public:
 		// Update rendering pipeline
 		renwin->Render();
 		idx++;
+
+		auto t_end = std::chrono::high_resolution_clock::now();
+		std::cout << "Elapsed time (Reconstruction + Rendering ) : "
+			<< std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()
+			<< " us." << std::endl;
 	}
 
 private:
@@ -120,7 +121,6 @@ public:
 	vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList;
 	vtkSmartPointer< vtkCLVolumeReconstruction > reconstructor;
 	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper;
-	vtkSmartPointer< vtkImageFlip > imgFlip;
 	vtkSmartPointer< vtkVolume > usVolume;
 	vtkSmartPointer< vtkRenderer > ren;
 	vtkSmartPointer< vtkRenderWindow > renwin;
@@ -159,10 +159,6 @@ int main(){
 	vtkPlusSequenceIO::Read(std::string("tracked_us_video.mha"), trackedFrameList);
 	PlusTransformName transformName = PlusTransformName("Probe", "Tracker");
 	vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker = vtkSmartPointer< vtkMatrix4x4 >::New();
-
-	vtkSmartPointer< vtkImageFlip > imgFlip = vtkSmartPointer< vtkImageFlip >::New();
-	imgFlip->SetFilteredAxis(1);
-
 
 	// Initialize PLUS VolumeReconstructor
 	std::string inputConfigFileName = "config.xml";
@@ -238,8 +234,9 @@ int main(){
 	int volume_depth = extent[5] - extent[4];
 	outputVolume->SetDimensions(volume_width, volume_height, volume_depth);
 	outputVolume->SetSpacing(output_spacing, output_spacing, output_spacing);
+	outputVolume->SetOrigin(0, 0, 0);
 	outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-	memset(outputVolume->GetScalarPointer(), 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+	memset(outputVolume->GetScalarPointer(), 10, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 	outputVolume->DataHasBeenGenerated();
 	outputVolume->Modified();
 
@@ -288,15 +285,19 @@ int main(){
 	usVolume->SetPosition(0, -50, 100);
 	usVolume->Modified();	
 
+	//int win_size[2] = { 1920, 1080 }; // 1080p aspect ratio
+	int win_size[2] = { 640, 480 };
 	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
 	ren->AddViewProp(usVolume);
-
-	int win_size[2] = { 640, 480 };
+	vtkCamera *cam = ren->GetActiveCamera();
+	cam->SetPosition(0, 0, 0);
+	cam->SetFocalPoint(0, 0, 10);
+	cam->SetViewUp(0, -1, 0);
+	
 
 	vtkSmartPointer< vtkRenderWindow > renwin = vtkSmartPointer< vtkRenderWindow >::New();
 	renwin->SetSize(win_size);
 	renwin->AddRenderer(ren);
-	ren->ResetCameraClippingRange();
 
 	
 	vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
@@ -304,7 +305,6 @@ int main(){
 	callback->reconstructor = recon;
 	callback->cudaMapper = cudaMapper;
 	//callback->volumeMapper = volumeMapper;
-	callback->imgFlip = imgFlip;
 	callback->usVolume = usVolume;
 	callback->ren = ren;
 	callback->renwin = renwin;
