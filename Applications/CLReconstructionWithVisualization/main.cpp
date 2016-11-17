@@ -95,7 +95,6 @@ public:
 
 
 		imagePose->SetMatrix(tFrame2Tracker);
-		//imagePose->Modified();
 		reconstructor->SetInputData(imgFlip->GetOutput());
 		reconstructor->Update();
 
@@ -106,15 +105,11 @@ public:
 		//outputVolume->Modified();
 
 		// Visualize
-		//cudaMapper->SetInputData(reconstructor->GetOutput());
+		cudaMapper->SetInputData(reconstructor->GetOutput());
 		//volumeMapper->SetInputData(reconstructor->GetOutput());
 
-
 		// Update rendering pipeline
-		ren->Render();
-
-		std::cout << "Rendered.. " << std::endl;
-
+		renwin->Render();
 		idx++;
 	}
 
@@ -201,18 +196,6 @@ int main(){
 	}
 
 
-
-
-	// Set-up visualization pipeline
-	vtkMetaImageReader *reader = vtkMetaImageReader::New();
-	reader->SetFileName("3DUS.mhd");
-	reader->Update();
-
-	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
-	cudaMapper->UseCUDAOpenGLInteroperability();
-	cudaMapper->SetBlendModeToComposite();
-	cudaMapper->SetInputData(reader->GetOutput()); 
-
 	// Create vtkCLVolumeReconstructor
 	vtkSmartPointer< vtkCLVolumeReconstruction > recon = vtkSmartPointer< vtkCLVolumeReconstruction >::New();
 	recon->SetDevice(0);
@@ -250,19 +233,35 @@ int main(){
 
 	vtkImageData *outputVolume = vtkImageData::New();
 	outputVolume->SetExtent(extent);
-	outputVolume->SetDimensions(extent[1] - extent[0],
-		extent[3] - extent[2],
-		extent[5] - extent[4]);
+	int volume_width = extent[1] - extent[0];
+	int volume_height = extent[3] - extent[2];
+	int volume_depth = extent[5] - extent[4];
+	outputVolume->SetDimensions(volume_width, volume_height, volume_depth);
 	outputVolume->SetSpacing(output_spacing, output_spacing, output_spacing);
 	outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-	//recon->GetOutputVolume(outputVolume);	
+	memset(outputVolume->GetScalarPointer(), 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+	outputVolume->DataHasBeenGenerated();
 	outputVolume->Modified();
-	recon->SetOutput(outputVolume);
 
+	recon->SetOutput(outputVolume); 
 
-	vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
-	volumeMapper->SetBlendModeToComposite();
-	volumeMapper->SetInputData(outputVolume); 
+	// Set-up visualization pipeline
+	vtkMetaImageReader *reader = vtkMetaImageReader::New();
+	reader->SetFileName("3DUS.mhd");
+	reader->Update();
+
+	//outputVolume->DeepCopy(reader->GetOutput());
+	/* Note: For some reason the vtkCuda1DVolumeMapper needs an initial image to render correctly. Otherwise, it does not render the updated output */
+	memcpy(outputVolume->GetScalarPointer(), reader->GetOutput()->GetScalarPointer(), sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+
+	vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
+	cudaMapper->UseFullVTKCompatibility();
+	cudaMapper->SetBlendModeToComposite();
+	cudaMapper->SetInputData(outputVolume);
+
+	//vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
+	//volumeMapper->SetBlendModeToComposite();
+	//volumeMapper->SetInputData(outputVolume); 
 
 	vtkSmartPointer< vtkVolumeProperty > volumeProperty = vtkSmartPointer< vtkVolumeProperty >::New();
 	volumeProperty->ShadeOff();
@@ -284,38 +283,27 @@ int main(){
 	vtkSmartPointer< vtkVolume > usVolume = vtkSmartPointer< vtkVolume >::New();
 	usVolume->SetMapper(cudaMapper);
 	//usVolume->SetMapper(volumeMapper);
-	//usVolume->SetProperty(volumeProperty);
-	//usVolume->SetOrigin(0, 0, 0);
-	//usVolume->SetPosition(0, 0, 0);
-	//cudaMapper->SetInputData(outputVolume);
-	//usVolume->Modified();	
+	usVolume->SetProperty(volumeProperty);
+	usVolume->SetOrigin(0, 0, 0);
+	usVolume->SetPosition(0, -50, 100);
+	usVolume->Modified();	
 
 	vtkSmartPointer< vtkRenderer > ren = vtkSmartPointer< vtkRenderer >::New();
 	ren->AddViewProp(usVolume);
 
 	int win_size[2] = { 640, 480 };
-	/*vtkCamera *cam = ren->GetActiveCamera();
-	cam->SetWindowCenter(win_size[0]/2.0, win_size[1]/2.0);
-	double viewAngle = 2 * atan((win_size[1] / 2.0) / 250) * 180 / (4 * atan(1.0));
-	cam->SetViewAngle(viewAngle);
-	cam->SetPosition(0, 0, 0);
-	cam->SetViewUp(0, -1, 0);
-	cam->SetFocalPoint(0, 0, 615);
-	cam->SetClippingRange(0.01, 1000.01);
-	cam->Modified(); */
 
 	vtkSmartPointer< vtkRenderWindow > renwin = vtkSmartPointer< vtkRenderWindow >::New();
-	//renwin->SetSize(win_size);
+	renwin->SetSize(win_size);
 	renwin->AddRenderer(ren);
-	//ren->ResetCamera();
-	//ren->ResetCameraClippingRange();
+	ren->ResetCameraClippingRange();
 
 	
 	vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
 	callback->trackedFrameList = trackedFrameList;
 	callback->reconstructor = recon;
 	callback->cudaMapper = cudaMapper;
-	callback->volumeMapper = volumeMapper;
+	//callback->volumeMapper = volumeMapper;
 	callback->imgFlip = imgFlip;
 	callback->usVolume = usVolume;
 	callback->ren = ren;
@@ -332,7 +320,6 @@ int main(){
 	iren->Initialize();
 
 	int timerID = iren->CreateRepeatingTimer(1000.0 / 30.0);
-	//renwin->Render();
 	iren->Start();
 
 	std::cout << "Reconstruction done. " << std::endl;

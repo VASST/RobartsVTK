@@ -177,104 +177,6 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
   }
 }
 
-/*
-//-----------------------------------------------------------------------------------------
-int vtkCLVolumeReconstruction::ProcessRequest(vtkInformation* request,
-												vtkInformationVector** inputVector,
-												vtkInformationVector* outputVector)
-{
-	// Create an output object of the correct type
-	if (request->Has(vtkDemandDrivenPipeline::REQUEST_DATA_OBJECT()))
-	{
-		return this->RequestDataObject(request, inputVector, outputVector);
-	}
-	// generate the data
-	if (request->Has(vtkDemandDrivenPipeline::REQUEST_DATA()))
-	{
-		return this->RequestData(request, inputVector, outputVector);
-	}
-
-	if (request->Has(vtkStreamingDemandDrivenPipeline::REQUEST_UPDATE_EXTENT()))
-	{
-		return this->RequestUpdateExtent(request, inputVector, outputVector);
-	}
-
-	// execute information
-	if (request->Has(vtkDemandDrivenPipeline::REQUEST_INFORMATION()))
-	{
-		return this->RequestInformation(request, inputVector, outputVector);
-	}
-
-	return this->Superclass::ProcessRequest(request, inputVector, outputVector);
-}
-
-//------------------------------------------------------------------------------------------
-int vtkCLVolumeReconstruction::FillOutputPortInformation(int vtkNotUsed(port),
-															vtkInformation* info)
-{
-	// Now add info
-	info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkImageData");
-	return 1;
-}
-
-//-------------------------------------------------------------------------------------------
-int vtkCLVolumeReconstruction::FillInputPortInformation(int vtkNotUsed(port), vtkInformation* info)
-{
-	info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
-	return 1;
-}
-
-int vtkCLVolumeReconstruction::RequestDataObject(vtkInformation* vtkNotUsed(request),
-												vtkInformationVector** vtkNotUsed(inputVector),
-												vtkInformationVector* outputVector)
-{
-	// RequestDataObject(RDO) is an earlier pipeline pass. 
-	// During RDO, each filter is supposed to produce and empty data object of proper type
-	vtkInformation* outInfo = outputVector->GetInformationObject(0);
-	vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(
-															vtkDataObject::DATA_OBJECT()));
-
-	if (!output)
-	{
-		output = vtkImageData::New();
-		outInfo->Set(vtkDataObject::DATA_OBJECT(), output);
-		output->FastDelete();
-
-		this->GetOutputPortInformation(0)->Set(
-			vtkDataObject::DATA_EXTENT_TYPE(), output->GetExtentType());
-	}
-
-	return 1;
-}
-
-//----------------------------------------------------------------------------------------------
-int vtkCLVolumeReconstruction::RequestInformation(vtkInformation* vtkNotUsed(request),
-														vtkInformationVector** vtkNotUsed(inputVector),
-														vtkInformationVector* vtkNotUsed(outputVector))
-{
-	// Do nothing: Let the superclass handle it. 
-	return 1;
-}
-
-//-----------------------------------------------------------------------------------------------------
-int vtkCLVolumeReconstruction::RequestUpdateExtent(vtkInformation* vtkNotUsed(Request),
-														vtkInformationVector** inputVector,
-														vtkInformationVector* outputVector)
-{
-	int numInputPorts = this->GetNumberOfInputPorts();
-	for (int i = 0; i < numInputPorts; i++)
-	{
-		int numInputConnections = this->GetNumberOfInputConnections(i);
-		for (int j = 0; j < numInputConnections; j++)
-		{
-			vtkInformation* inputInfo = inputVector[i]->GetInformationObject(j);
-			inputInfo->Set(vtkStreamingDemandDrivenPipeline::EXACT_EXTENT(), 1);
-		}
-	}
-	return 1;
-}
-*/
-
 //---------------------------------------------------------------------------------------------------------
 // This is the superclass style of Execute method. 
 int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
@@ -309,7 +211,8 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
 
 	output->ShallowCopy(reconstructedvolume);
 	memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
-
+	output->DataHasBeenGenerated();
+	output->Modified();
 
 	return 1;
 }
