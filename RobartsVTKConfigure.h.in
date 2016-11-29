@@ -28,6 +28,11 @@
   #define RobartsVTK_STATIC
 #endif
 
+#include <vtkType.h>
+#ifndef VTK_HAS_MTIME_TYPE
+typedef unsigned long int vtkMTimeType;
+#endif
+
 #include "vtkVersionMacros.h"
 
 #endif // __RobartsVTKConfigure_h
