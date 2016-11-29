@@ -1,0 +1,62 @@
+<PlusConfiguration version="2.1">
+  <DataCollection StartupDelaySec="1.0" >
+    <DeviceSet 
+      Name="PlusServer: Replay fCal phantom scan with Ultrasonix US (L14-5 probe) + Ascension3DG tracker (Probe, Reference, Stylus)"
+      Description="Free-hand probe motion, imaging 3 NWires, after spatial calibration. OpenIGTLink broadcasting through PlusServer of image and tool tracking data." />
+    <Device
+      Id="TrackedVideoDevice"
+      Type="SavedDataSource"
+      SequenceFile="tracked_us_video.mha"
+	  AcquisitionRate = "60"
+      UseData="IMAGE_AND_TRANSFORM"
+      UseOriginalTimestamps="TRUE"
+      RepeatEnabled="TRUE" >
+      <DataSources>
+        <DataSource Type="Video" Id="Video" PortUsImageOrientation="MF"  />
+      </DataSources>
+      <OutputChannels>
+        <OutputChannel Id="TrackedVideoStream" VideoDataSourceId="Video" />
+      </OutputChannels>
+    </Device>
+
+    <Device
+      Id="VolumeReconstructorDevice"
+      Type="VirtualVolumeReconstructor"
+      OutputVolDeviceName="RecVol_Reference">
+      <InputChannels>
+        <InputChannel Id="TrackedVideoStream" />
+      </InputChannels>
+      <VolumeReconstruction
+        ImageCoordinateFrame="Image" ReferenceCoordinateFrame="Reference"
+        Interpolation="LINEAR" Optimization="NONE" CompoundingMode="MEAN" FillHoles="OFF" NumberOfThreads="2"
+        ClipRectangleOrigin="0 0" ClipRectangleSize="820 616"
+        OutputOrigin="-30.03 -42.63 113.74" OutputExtent="0 300 0 300 0 300" OutputSpacing="0.15 0.15 0.15" />
+    </Device>
+  </DataCollection>
+  
+   <CoordinateDefinitions>
+    <Transform From="Image" To="Probe" 
+    Matrix="0.0727    0.0076   -0.0262  -12.6030
+			-0.0030    0.0118   -0.9873   -7.8930
+			-0.0069    0.0753    0.1568    1.0670
+			0         0         0    1.0000"
+			
+    Error="1.68149" Date="022312_110631"
+    />
+  </CoordinateDefinitions>
+
+  <VolumeReconstruction 
+	ImageCoordinateFrame="Image" ReferenceCoordinateFrame="Tracker"
+	OutputSpacing="0.5 0.5 0.5" 
+	ClipRectangleOrigin="0 0" ClipRectangleSize="820 616"
+    Interpolation="NEAREST_NEIGHBOR" Optimization="FULL"
+    CompoundingMode="MEAN" FillHoles="OFF" NumberOfThreads="1">
+    <HoleFilling>
+      <HoleFillingElement
+        Type="STICK"     
+        StickLengthLimit="9"
+        NumberOfSticksToUse="1" />
+    </HoleFilling>
+  </VolumeReconstruction>		
+    
+</PlusConfiguration>

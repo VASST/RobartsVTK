@@ -42,7 +42,7 @@ public:
 
 public:
   static vtkCudaMemoryTexture* New();
-  vtkTypeMacro( vtkCudaMemoryTexture, vtkObject );
+  vtkTypeMacro(vtkCudaMemoryTexture, vtkObject);
 
   void SetWidth(unsigned int width);
   void SetHeight(unsigned int height);
@@ -67,8 +67,8 @@ public:
 protected:
   vtkCudaMemoryTexture();
   ~vtkCudaMemoryTexture();
-  void Reinitialize(int withData = 0);
-  void Deinitialize(int withData = 0);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   unsigned char*  RenderDestination;
 

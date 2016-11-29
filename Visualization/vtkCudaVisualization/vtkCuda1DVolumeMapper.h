@@ -28,43 +28,37 @@ class vtkCudaVisualizationExport vtkCuda1DVolumeMapper : public vtkCudaVolumeMap
 {
 public:
 
-  vtkTypeMacro( vtkCuda1DVolumeMapper, vtkCudaVolumeMapper );
+  vtkTypeMacro(vtkCuda1DVolumeMapper, vtkCudaVolumeMapper);
 
   /** @brief VTK compatible constructor method
    *
    */
-  static vtkCuda1DVolumeMapper *New();
+  static vtkCuda1DVolumeMapper* New();
 
-  virtual void SetInputInternal( vtkImageData * image, int frame);
+  virtual void SetInputInternal(vtkImageData* image, int frame);
   virtual void ClearInputInternal();
   virtual void ChangeFrameInternal(int frame);
-  virtual void InternalRender (  vtkRenderer* ren, vtkVolume* vol,
-                                 const cudaRendererInformation& rendererInfo,
-                                 const cudaVolumeInformation& volumeInfo,
-                                 const cudaOutputImageInformation& outputInfo );
+  virtual void InternalRender(vtkRenderer* ren, vtkVolume* vol,
+                              const cudaRendererInformation& rendererInfo,
+                              const cudaVolumeInformation& volumeInfo,
+                              const cudaOutputImageInformation& outputInfo);
 
 protected:
-  /** @brief Constructor which initializes the number of frames, rendering type and other constants to safe initial values, and creates the required information handlers
-   *
-   */
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
+
+protected:
   vtkCuda1DVolumeMapper();
-
-  /** @brief Destructor which deallocates the various information handlers and matrices
-   *
-   */
   ~vtkCuda1DVolumeMapper();
-  virtual void Reinitialize(int withData = 0);
-  virtual void Deinitialize(int withData = 0);
 
-  vtkCuda1DTransferFunctionInformationHandler* transferFunctionInfoHandler;
-
-  static vtkMutexLock* tfLock;
-
-  cudaArray* SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
+protected:
+  vtkCuda1DTransferFunctionInformationHandler*  TransferFunctionInfoHandler;
+  static vtkMutexLock*                          TransferFunctionMutex;
+  cudaArray*                                    SourceData[ VTKCUDAVOLUMEMAPPER_UPPER_BOUND ];
 
 private:
-  vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&); /**< not implemented */
-  vtkCuda1DVolumeMapper(const vtkCuda1DVolumeMapper&); /**< not implemented */
+  vtkCuda1DVolumeMapper operator=(const vtkCuda1DVolumeMapper&);
+  vtkCuda1DVolumeMapper(const vtkCuda1DVolumeMapper&);
 
 };
 

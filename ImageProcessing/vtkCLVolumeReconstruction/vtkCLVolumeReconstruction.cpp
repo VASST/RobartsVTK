@@ -34,6 +34,13 @@
 #include "vector_math.h"
 #include "vtkCLVolumeReconstruction.h"
 #include "vtkObjectFactory.h"
+#include "vtkCommand.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkPointData.h"
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -55,39 +62,40 @@ namespace
 vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 {
 
-  size_t temp;
-  device_index = 0;
-  program_src = FileToString("./kernels.cl", "", &temp);
+	size_t temp;
+	device_index = 0;
+	program_src = FileToString("./kernels.cl", "", &temp);
 
-  // Default values for bscan size
-  bscan_w = 640;
-  bscan_h = 480;
+	// Default values for bscan size
+	bscan_w = 640;
+	bscan_h = 480;
 
-  // Default values for the output volume
-  volume_depth = volume_height = volume_width = 0;
-  volume_spacing = 0.5;
+	// Default values for the output volume
+	volume_depth = volume_height = volume_width = 0;
+	volume_spacing = 0.5;
+	
 
+	volume_origin[0] = 0;
+	volume_origin[1] = 0;
+	volume_origin[2] = 0;
 
-  volume_origin[0] = 0;
-  volume_origin[1] = 0;
-  volume_origin[2] = 0;
+	// Default value for cal_matrix is identity matrix
+	cal_matrix = (float *)malloc(sizeof(float)*16);
+	for(int i=0; i<4; i++)
+	{
+		for(int j=0; j<4; j++)
+		{
+			cal_matrix[4*i+j] = 0;
+			if (i == j)
+			{
+				cal_matrix[4 * i + j] = 1;
+			}
+		}	
+	}
 
-  // Default value for cal_matrix is identity matrix
-  cal_matrix = (float*)malloc(sizeof(float) * 16);
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      cal_matrix[4 * i + j] = 0;
-      if (i == j)
-      {
-        cal_matrix[4 * i + j] = 1;
-      }
-    }
-  }
-
-  imageData = vtkImageData::New();
-  poseData = vtkMatrix4x4::New();
+	imageData = vtkImageData::New();
+	poseData = vtkMatrix4x4::New();
+	mutex = vtkSmartPointer< vtkMutexLock >::New();
 
 #ifdef VCLVR_DEBUG
   // Print device information
@@ -167,6 +175,46 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << indent << "volume_extent[" << i << "]: " << volume_extent[i];
   }
+}
+
+//---------------------------------------------------------------------------------------------------------
+// This is the superclass style of Execute method. 
+int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
+											vtkInformationVector** inputVector,
+											vtkInformationVector* outputVector)
+{
+	// During RD each filter examines any inputs it has, then fills in that empty date object with real data
+	
+	vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+	vtkInformation* outInfo = outputVector->GetInformationObject(0);
+
+	vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+	vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+	//exit and throw error message if something is wrong with input configuration
+	if (!input)
+	{
+		vtkErrorMacro("This filter requires an input image.");
+		return -1;
+	}
+	if (input->GetScalarType() != VTK_UNSIGNED_CHAR)
+	{
+		vtkErrorMacro("The input must be of type unsigned char.");
+		return -1;
+	}
+	
+
+	// Setinput data
+	imageData = input;
+	imagePose->GetMatrix(poseData);	
+	this->UpdateReconstruction();
+
+	output->ShallowCopy(reconstructedvolume);
+	memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+	output->DataHasBeenGenerated();
+	output->Modified();
+
+	return 1;
 }
 
 //-----------------------------------------------------------------------------------
@@ -428,6 +476,12 @@ void vtkCLVolumeReconstruction::SetInputPoseData(double time, vtkMatrix4x4* mat)
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
+{
+	this->imagePose = t;
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::SetOutputSpacing(double spacing)
 {
 
@@ -520,15 +574,18 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
     // TODO
 
     // Update output volume. Copy GPU buffers to vtkImage buffer.
-    // A this if possible to save time.
-    UpdateOutputVolume();
+    // Remove this if possible to save time.
+    //UpdateOutputVolume();
   }
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 {
-  v->DeepCopy(reconstructedvolume);
+	//mutex->Lock();
+	v->ShallowCopy(reconstructedvolume);
+	memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+	//mutex->Unlock();
 }
 
 //--------------------------------------------------------------
@@ -633,7 +690,7 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   plane_points_queue = (plane_pts*) malloc(BSCAN_WINDOW * sizeof(plane_pts));
   mask = (unsigned char*)malloc(sizeof(unsigned char) * bscan_w * bscan_h);
   volume = (unsigned char*) malloc(sizeof(unsigned char) * volume_width * volume_height * volume_depth);
-  memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  memset(volume, '0', sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   reconstructedvolume = vtkSmartPointer< vtkImageData >::New();
   reconstructedvolume->SetOrigin((double)volume_origin[0], (double)volume_origin[1], (double)volume_origin[2]);
@@ -747,7 +804,7 @@ void vtkCLVolumeReconstruction::GrabInputData()
   matrixPtr2[10] = (float)matrixPtr[10];
   matrixPtr2[11] = (float)matrixPtr[11];
 
-  unsigned char* imgDataPtr = (unsigned char*)imageData_queue.front()->GetScalarPointer(0, 0, 0);
+  unsigned char* imgDataPtr = (unsigned char*)imageData_queue.front()->GetScalarPointer();
 
   // Copy data to buffers
   bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
@@ -763,7 +820,9 @@ void vtkCLVolumeReconstruction::UpdateOutputVolume()
 {
 
   // Copy volume to outptVolume
-  memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(0, 0, 0), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  //mutex->Lock();
+  memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+ // mutex->Lock();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------

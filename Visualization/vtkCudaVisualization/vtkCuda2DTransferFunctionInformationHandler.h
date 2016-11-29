@@ -25,7 +25,7 @@ class vtkCudaVisualizationExport vtkCuda2DTransferFunctionInformationHandler : p
 {
 public:
 
-  vtkTypeMacro( vtkCuda2DTransferFunctionInformationHandler, vtkObject );
+  vtkTypeMacro(vtkCuda2DTransferFunctionInformationHandler, vtkObject);
 
   /** @brief VTK compatible constructor method
    *
@@ -104,8 +104,8 @@ protected:
    */
   void UpdateTransferFunction();
 
-  void Deinitialize(int withData = 0);
-  void Reinitialize(int withData = 0);
+  virtual void Deinitialize(bool withData = false);
+  virtual void Reinitialize(bool withData = false);
 
 private:
   vtkCuda2DTransferFunctionInformationHandler& operator=(const vtkCuda2DTransferFunctionInformationHandler&); /**< Not implemented */

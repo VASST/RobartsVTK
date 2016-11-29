@@ -28,7 +28,7 @@ class vtkCudaVisualizationExport vtkCuda1DTransferFunctionInformationHandler : p
 {
 public:
 
-  vtkTypeMacro( vtkCuda1DTransferFunctionInformationHandler, vtkObject );
+  vtkTypeMacro(vtkCuda1DTransferFunctionInformationHandler, vtkObject);
 
   /** @brief VTK compatible constructor method
    *
@@ -108,8 +108,8 @@ protected:
    */
   void UpdateTransferFunction();
 
-  void Deinitialize(int withData = 0);
-  void Reinitialize(int withData = 0);
+  virtual void Deinitialize(bool withData = false);
+  virtual void Reinitialize(bool withData = false);
 
 protected:
   vtkImageData*                       InputData;    /**< The 3D image data currently being rendered */

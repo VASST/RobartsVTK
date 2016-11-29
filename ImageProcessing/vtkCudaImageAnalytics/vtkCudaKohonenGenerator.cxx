@@ -35,7 +35,7 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator()
   this->WeightsAlphaSchedule = vtkPiecewiseFunction::New();
   this->WeightsWidthSchedule = vtkPiecewiseFunction::New();
 
-  this->BatchPercent = 1.0/15.0;
+  this->BatchPercent = 1.0 / 15.0;
   this->UseAllVoxels = false;
   this->UseMask = false;
 
@@ -51,27 +51,27 @@ vtkCudaKohonenGenerator::vtkCudaKohonenGenerator()
 
 vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator()
 {
-  if(this->MeansAlphaSchedule)
+  if (this->MeansAlphaSchedule)
   {
     this->MeansAlphaSchedule->Delete();
   }
-  if(this->MeansWidthSchedule)
+  if (this->MeansWidthSchedule)
   {
     this->MeansWidthSchedule->Delete();
   }
-  if(this->VarsAlphaSchedule)
+  if (this->VarsAlphaSchedule)
   {
     this->VarsAlphaSchedule->Delete();
   }
-  if(this->VarsWidthSchedule)
+  if (this->VarsWidthSchedule)
   {
     this->VarsWidthSchedule->Delete();
   }
-  if(this->WeightsAlphaSchedule)
+  if (this->WeightsAlphaSchedule)
   {
     this->WeightsAlphaSchedule->Delete();
   }
-  if(this->WeightsWidthSchedule)
+  if (this->WeightsWidthSchedule)
   {
     this->WeightsWidthSchedule->Delete();
   }
@@ -87,13 +87,13 @@ vtkCudaKohonenGenerator::~vtkCudaKohonenGenerator()
         a[k][l]=h+s*(g-h*tau)
 #define VTK_MAX_ROTATIONS 20
 template<class T>
-int vtkJacobiN(T **a, int n, T *w, T **v)
+int vtkJacobiN(T** a, int n, T* w, T** v)
 {
   int i, j, k, iq, ip, numPos;
   T tresh, theta, tau, t, sm, s, h, g, c, tmp;
   T bspace[4], zspace[4];
-  T *b = bspace;
-  T *z = zspace;
+  T* b = bspace;
+  T* z = zspace;
 
   // only allocate memory if the matrix is large
   if (n > 4)
@@ -103,27 +103,27 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
   }
 
   // initialize
-  for (ip=0; ip<n; ip++)
+  for (ip = 0; ip < n; ip++)
   {
-    for (iq=0; iq<n; iq++)
+    for (iq = 0; iq < n; iq++)
     {
       v[ip][iq] = 0.0;
     }
     v[ip][ip] = 1.0;
   }
-  for (ip=0; ip<n; ip++)
+  for (ip = 0; ip < n; ip++)
   {
     b[ip] = w[ip] = a[ip][ip];
     z[ip] = 0.0;
   }
 
   // begin rotation sequence
-  for (i=0; i<VTK_MAX_ROTATIONS; i++)
+  for (i = 0; i < VTK_MAX_ROTATIONS; i++)
   {
     sm = 0.0;
-    for (ip=0; ip<n-1; ip++)
+    for (ip = 0; ip < n - 1; ip++)
     {
-      for (iq=ip+1; iq<n; iq++)
+      for (iq = ip + 1; iq < n; iq++)
       {
         sm += fabs(a[ip][iq]);
       }
@@ -135,75 +135,75 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
 
     if (i < 3)                                // first 3 sweeps
     {
-      tresh = 0.2*sm/(n*n);
+      tresh = 0.2 * sm / (n * n);
     }
     else
     {
       tresh = 0.0;
     }
 
-    for (ip=0; ip<n-1; ip++)
+    for (ip = 0; ip < n - 1; ip++)
     {
-      for (iq=ip+1; iq<n; iq++)
+      for (iq = ip + 1; iq < n; iq++)
       {
-        g = 100.0*fabs(a[ip][iq]);
+        g = 100.0 * fabs(a[ip][iq]);
 
         // after 4 sweeps
-        if (i > 3 && (fabs(w[ip])+g) == fabs(w[ip])
-            && (fabs(w[iq])+g) == fabs(w[iq]))
+        if (i > 3 && (fabs(w[ip]) + g) == fabs(w[ip])
+            && (fabs(w[iq]) + g) == fabs(w[iq]))
         {
           a[ip][iq] = 0.0;
         }
         else if (fabs(a[ip][iq]) > tresh)
         {
           h = w[iq] - w[ip];
-          if ( (fabs(h)+g) == fabs(h))
+          if ((fabs(h) + g) == fabs(h))
           {
             t = (a[ip][iq]) / h;
           }
           else
           {
-            theta = 0.5*h / (a[ip][iq]);
-            t = 1.0 / (fabs(theta)+sqrt(1.0+theta*theta));
+            theta = 0.5 * h / (a[ip][iq]);
+            t = 1.0 / (fabs(theta) + sqrt(1.0 + theta * theta));
             if (theta < 0.0)
             {
               t = -t;
             }
           }
-          c = 1.0 / sqrt(1+t*t);
-          s = t*c;
-          tau = s/(1.0+c);
-          h = t*a[ip][iq];
+          c = 1.0 / sqrt(1 + t * t);
+          s = t * c;
+          tau = s / (1.0 + c);
+          h = t * a[ip][iq];
           z[ip] -= h;
           z[iq] += h;
           w[ip] -= h;
           w[iq] += h;
-          a[ip][iq]=0.0;
+          a[ip][iq] = 0.0;
 
           // ip already shifted left by 1 unit
-          for (j = 0; j <= ip-1; j++)
+          for (j = 0; j <= ip - 1; j++)
           {
-            VTK_ROTATE(a,j,ip,j,iq);
+            VTK_ROTATE(a, j, ip, j, iq);
           }
           // ip and iq already shifted left by 1 unit
-          for (j = ip+1; j <= iq-1; j++)
+          for (j = ip + 1; j <= iq - 1; j++)
           {
-            VTK_ROTATE(a,ip,j,j,iq);
+            VTK_ROTATE(a, ip, j, j, iq);
           }
           // iq already shifted left by 1 unit
-          for (j=iq+1; j<n; j++)
+          for (j = iq + 1; j < n; j++)
           {
-            VTK_ROTATE(a,ip,j,iq,j);
+            VTK_ROTATE(a, ip, j, iq, j);
           }
-          for (j=0; j<n; j++)
+          for (j = 0; j < n; j++)
           {
-            VTK_ROTATE(v,j,ip,j,iq);
+            VTK_ROTATE(v, j, ip, j, iq);
           }
         }
       }
     }
 
-    for (ip=0; ip<n; ip++)
+    for (ip = 0; ip < n; ip++)
     {
       b[ip] += z[ip];
       w[ip] = b[ip];
@@ -212,7 +212,7 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
   }
 
   //// this is NEVER called
-  if ( i >= VTK_MAX_ROTATIONS )
+  if (i >= VTK_MAX_ROTATIONS)
   {
     vtkGenericWarningMacro(
       "vtkMath::Jacobi: Error extracting eigenfunctions");
@@ -220,11 +220,11 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
   }
 
   // sort eigenfunctions                 these changes do not affect accuracy
-  for (j=0; j<n-1; j++)                  // boundary incorrect
+  for (j = 0; j < n - 1; j++)            // boundary incorrect
   {
     k = j;
     tmp = w[k];
-    for (i=j+1; i<n; i++)                // boundary incorrect, shifted already
+    for (i = j + 1; i < n; i++)          // boundary incorrect, shifted already
     {
       if (w[i] >= tmp)                   // why exchage if same?
       {
@@ -236,7 +236,7 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
     {
       w[k] = w[j];
       w[j] = tmp;
-      for (i=0; i<n; i++)
+      for (i = 0; i < n; i++)
       {
         tmp = v[i][j];
         v[i][j] = v[i][k];
@@ -249,19 +249,19 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
   // reek havoc in hyperstreamline/other stuff. We will select the most
   // positive eigenvector.
   int ceil_half_n = (n >> 1) + (n & 1);
-  for (j=0; j<n; j++)
+  for (j = 0; j < n; j++)
   {
-    for (numPos=0, i=0; i<n; i++)
+    for (numPos = 0, i = 0; i < n; i++)
     {
-      if ( v[i][j] >= 0.0 )
+      if (v[i][j] >= 0.0)
       {
         numPos++;
       }
     }
-//    if ( numPos < ceil(double(n)/double(2.0)) )
-    if ( numPos < ceil_half_n)
+    //    if ( numPos < ceil(double(n)/double(2.0)) )
+    if (numPos < ceil_half_n)
     {
-      for(i=0; i<n; i++)
+      for (i = 0; i < n; i++)
       {
         v[i][j] *= -1.0;
       }
@@ -281,12 +281,12 @@ int vtkJacobiN(T **a, int n, T *w, T **v)
 //------------------------------------------------------------
 //Commands for CudaObject compatibility
 
-void vtkCudaKohonenGenerator::Reinitialize(int withData)
+void vtkCudaKohonenGenerator::Reinitialize(bool withData /*= false*/)
 {
   //TODO
 }
 
-void vtkCudaKohonenGenerator::Deinitialize(int withData)
+void vtkCudaKohonenGenerator::Deinitialize(bool withData /*= false*/)
 {
 }
 
@@ -301,7 +301,7 @@ Kohonen_Generator_Information& vtkCudaKohonenGenerator::GetCudaInformation()
 
 void vtkCudaKohonenGenerator::SetKohonenMapSize(int SizeX, int SizeY)
 {
-  if(SizeX < 1 || SizeY < 1)
+  if (SizeX < 1 || SizeY < 1)
   {
     return;
   }
@@ -317,7 +317,7 @@ bool vtkCudaKohonenGenerator::GetUseAllVoxelsFlag()
 
 void vtkCudaKohonenGenerator::SetUseAllVoxelsFlag(bool t)
 {
-  if( t != this->UseAllVoxels )
+  if (t != this->UseAllVoxels)
   {
     this->UseAllVoxels = t;
     this->Modified();
@@ -331,7 +331,7 @@ bool vtkCudaKohonenGenerator::GetUseMaskFlag()
 
 void vtkCudaKohonenGenerator::SetUseMaskFlag(bool t)
 {
-  if( t != this->UseMask )
+  if (t != this->UseMask)
   {
     this->UseMask = t;
     this->Modified();
@@ -342,7 +342,7 @@ void vtkCudaKohonenGenerator::SetUseMaskFlag(bool t)
 
 void vtkCudaKohonenGenerator::SetNumberOfIterations(int number)
 {
-  if( number >= 0 && this->MaxEpochs != number )
+  if (number >= 0 && this->MaxEpochs != number)
   {
     this->MaxEpochs = number;
     this->Modified();
@@ -356,7 +356,7 @@ int vtkCudaKohonenGenerator::GetNumberOfIterations()
 
 void vtkCudaKohonenGenerator::SetBatchSize(double fraction)
 {
-  if( fraction >= 0.0 && this->BatchPercent != fraction )
+  if (fraction >= 0.0 && this->BatchPercent != fraction)
   {
     this->BatchPercent = fraction;
     this->Modified();
@@ -373,16 +373,16 @@ double vtkCudaKohonenGenerator::GetBatchSize()
 int vtkCudaKohonenGenerator::FillInputPortInformation(int i, vtkInformation* info)
 {
   info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
-  return this->Superclass::FillInputPortInformation(i,info);
+  return this->Superclass::FillInputPortInformation(i, info);
 }
 
-void vtkCudaKohonenGenerator::SetInputConnection(int idx, vtkAlgorithmOutput *input)
+void vtkCudaKohonenGenerator::SetInputConnection(int idx, vtkAlgorithmOutput* input)
 {
   // Ask the superclass to connect the input.
   this->SetNthInputConnection(0, idx, (input ? input : 0));
 }
 
-vtkDataObject *vtkCudaKohonenGenerator::GetInput(int idx)
+vtkDataObject* vtkCudaKohonenGenerator::GetInput(int idx)
 {
   if (this->GetNumberOfInputConnections(0) <= idx)
   {
@@ -412,23 +412,23 @@ int vtkCudaKohonenGenerator::RequestUpdateExtent(
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-  for(int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
+  for (int i = 0; i < inputVector[0]->GetNumberOfInformationObjects(); i++)
   {
     vtkInformation* inputInfo = (inputVector[0])->GetInformationObject(i);
     vtkImageData* inData = vtkImageData::SafeDownCast(inputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inData->GetExtent(),6);
+    inputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inData->GetExtent(), 6);
   }
   return 1;
 }
 
-int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
-    vtkInformationVector **inputVector,
-    vtkInformationVector *outputVector)
+int vtkCudaKohonenGenerator::RequestData(vtkInformation* request,
+    vtkInformationVector** inputVector,
+    vtkInformationVector* outputVector)
 {
 
   //get general information
   int NumPictures = (inputVector[0])->GetNumberOfInformationObjects() / (this->UseMask ? 2 : 1);
-  if( NumPictures < 1 )
+  if (NumPictures < 1)
   {
     vtkErrorMacro("No pictures to train on.");
     return -1;
@@ -439,29 +439,29 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   //make sure that the number of components is constant and the input type is FLOAT, and collect volume sizes
   vtkImageData* inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(0)->Get(vtkDataObject::DATA_OBJECT()));
   vtkImageData* maskData = 0;
-  int* VolumeSize = new int[ 3*NumPictures ];
+  int* VolumeSize = new int[ 3 * NumPictures ];
   int SumSamples = 0;
   this->Info.NumberOfDimensions = inData->GetNumberOfScalarComponents();
-  for(int p = 0; p < NumPictures; p++)
+  for (int p = 0; p < NumPictures; p++)
   {
 
-    if( this->UseMask )
+    if (this->UseMask)
     {
-      inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
-      maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p+1)->Get(vtkDataObject::DATA_OBJECT()));
+      inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2 * p)->Get(vtkDataObject::DATA_OBJECT()));
+      maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2 * p + 1)->Get(vtkDataObject::DATA_OBJECT()));
     }
     else
     {
       inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
     }
 
-    inData->GetDimensions( &(VolumeSize[3*p]) );
-    int CurrentVolumeSize = VolumeSize[3*p]*VolumeSize[3*p+1]*VolumeSize[3*p+2];
-    if( this->UseMask )
+    inData->GetDimensions(&(VolumeSize[3 * p]));
+    int CurrentVolumeSize = VolumeSize[3 * p] * VolumeSize[3 * p + 1] * VolumeSize[3 * p + 2];
+    if (this->UseMask)
     {
       char* MaskPtr = (char*) maskData->GetScalarPointer();
-      for(int i = 0; i < CurrentVolumeSize; MaskPtr++, i++)
-        if(*MaskPtr)
+      for (int i = 0; i < CurrentVolumeSize; MaskPtr++, i++)
+        if (*MaskPtr)
         {
           SumSamples++;
         }
@@ -471,21 +471,21 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
       SumSamples += CurrentVolumeSize;
     }
 
-    if( inData->GetNumberOfScalarComponents() != this->Info.NumberOfDimensions )
+    if (inData->GetNumberOfScalarComponents() != this->Info.NumberOfDimensions)
     {
       vtkErrorMacro("Data objects need to have a consistant number of components");
       delete VolumeSize;
       return -1;
     }
-    if( inData->GetScalarType() != VTK_FLOAT )
+    if (inData->GetScalarType() != VTK_FLOAT)
     {
       vtkErrorMacro("Data objects need to be of type float");
       delete VolumeSize;
       return -1;
     }
-    if( this->UseMask && maskData->GetScalarType() != VTK_CHAR &&
+    if (this->UseMask && maskData->GetScalarType() != VTK_CHAR &&
         maskData->GetScalarType() != VTK_SIGNED_CHAR &&
-        maskData->GetScalarType() != VTK_UNSIGNED_CHAR )
+        maskData->GetScalarType() != VTK_UNSIGNED_CHAR)
     {
       std::cout << maskData->GetScalarType() << std::endl;
       vtkErrorMacro("Mask objects need to be of type char");
@@ -494,54 +494,54 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
     }
   }
 
-  int outputExtent[6] = {0, this->Info.KohonenMapSize[0]-1, 0, this->Info.KohonenMapSize[1]-1, 0, 0};
+  int outputExtent[6] = {0, this->Info.KohonenMapSize[0] - 1, 0, this->Info.KohonenMapSize[1] - 1, 0, 0};
   outData->SetExtent(outputExtent);
-  outData->AllocateScalars(VTK_FLOAT, 2*inData->GetNumberOfScalarComponents()+1);
+  outData->AllocateScalars(VTK_FLOAT, 2 * inData->GetNumberOfScalarComponents() + 1);
 
   //update information container
   int BatchSize = (this->UseAllVoxels) ? -1 : SumSamples * this->BatchPercent;
 
   //get range
-  double* Range = new double[2*(this->Info.NumberOfDimensions)];
-  for(int i = 0; i < this->Info.NumberOfDimensions; i++)
+  double* Range = new double[2 * (this->Info.NumberOfDimensions)];
+  for (int i = 0; i < this->Info.NumberOfDimensions; i++)
   {
-    Range[2*i] = DBL_MAX;
-    Range[2*i+1] = DBL_MIN;
-    for(int p = 0; p < NumPictures; p++)
+    Range[2 * i] = DBL_MAX;
+    Range[2 * i + 1] = DBL_MIN;
+    for (int p = 0; p < NumPictures; p++)
     {
       double tempRange[2];
-      if( this->UseMask )
+      if (this->UseMask)
       {
-        inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
+        inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2 * p)->Get(vtkDataObject::DATA_OBJECT()));
       }
       else
       {
         inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
       }
-      inData->GetPointData()->GetScalars()->GetRange(tempRange,i);
-      Range[2*i] = std::min( tempRange[0], Range[2*i] );
-      Range[2*i+1] = std::max( tempRange[1], Range[2*i+1] );
+      inData->GetPointData()->GetScalars()->GetRange(tempRange, i);
+      Range[2 * i] = std::min(tempRange[0], Range[2 * i]);
+      Range[2 * i + 1] = std::max(tempRange[1], Range[2 * i + 1]);
     }
   }
 
   //get scalar pointers
   float** inputDataPtr = new float* [NumPictures];
-  char** maskDataPtr = (this->UseMask) ? new char*[NumPictures]: 0;
+  char** maskDataPtr = (this->UseMask) ? new char* [NumPictures] : 0;
   int* FullVolumeSize = new int[NumPictures];
   int* SampleSize = new int[NumPictures];
-  for(int p = 0; p < NumPictures; p++)
+  for (int p = 0; p < NumPictures; p++)
   {
-    if( this->UseMask )
+    if (this->UseMask)
     {
-      inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p)->Get(vtkDataObject::DATA_OBJECT()));
+      inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2 * p)->Get(vtkDataObject::DATA_OBJECT()));
       inputDataPtr[p] = (float*) inData->GetScalarPointer();
-      maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2*p+1)->Get(vtkDataObject::DATA_OBJECT()));
+      maskData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(2 * p + 1)->Get(vtkDataObject::DATA_OBJECT()));
       maskDataPtr[p] = (char*) maskData->GetScalarPointer();
-      FullVolumeSize[p] = (inData->GetExtent()[1]-inData->GetExtent()[0]+1)*
-                          (inData->GetExtent()[3]-inData->GetExtent()[2]+1)*
-                          (inData->GetExtent()[5]-inData->GetExtent()[4]+1);
+      FullVolumeSize[p] = (inData->GetExtent()[1] - inData->GetExtent()[0] + 1) *
+                          (inData->GetExtent()[3] - inData->GetExtent()[2] + 1) *
+                          (inData->GetExtent()[5] - inData->GetExtent()[4] + 1);
       SampleSize[p] = 0;
-      for(int x = 0; x < FullVolumeSize[p]; x++)
+      for (int x = 0; x < FullVolumeSize[p]; x++)
       {
         SampleSize[p] += (maskDataPtr[p])[x] ? 1 : 0;
       }
@@ -551,9 +551,9 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
     {
       inData = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(p)->Get(vtkDataObject::DATA_OBJECT()));
       inputDataPtr[p] = (float*) inData->GetScalarPointer();
-      FullVolumeSize[p] = (inData->GetExtent()[1]-inData->GetExtent()[0]+1)*
-                          (inData->GetExtent()[3]-inData->GetExtent()[2]+1)*
-                          (inData->GetExtent()[5]-inData->GetExtent()[4]+1);
+      FullVolumeSize[p] = (inData->GetExtent()[1] - inData->GetExtent()[0] + 1) *
+                          (inData->GetExtent()[3] - inData->GetExtent()[2] + 1) *
+                          (inData->GetExtent()[5] - inData->GetExtent()[4] + 1);
       SampleSize[p] = FullVolumeSize[p];
     }
   }
@@ -561,67 +561,67 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   //find means
   int N = Info.NumberOfDimensions;
   double* Means = new double[N];
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
     Means[n] = 0.0;
   }
   int TotalVolumeSize = 0;
-  for(int p = 0; p < NumPictures; p++)
+  for (int p = 0; p < NumPictures; p++)
   {
     TotalVolumeSize += SampleSize[p];
-    for(int x = 0; x < FullVolumeSize[p]; x++)
-      for(int n = 0; n < N; n++)
+    for (int x = 0; x < FullVolumeSize[p]; x++)
+      for (int n = 0; n < N; n++)
       {
-        Means[n] += (!this->UseMask || (maskDataPtr[p])[x] > 0 ) ? (inputDataPtr[p])[x*N+n] : 0;
+        Means[n] += (!this->UseMask || (maskDataPtr[p])[x] > 0) ? (inputDataPtr[p])[x * N + n] : 0;
       }
   }
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
     Means[n] /= (double) TotalVolumeSize;
   }
 
   //find covariances
-  double* Covariance = new double[N*N];
-  for(int n = 0; n < N*N; n++)
+  double* Covariance = new double[N * N];
+  for (int n = 0; n < N * N; n++)
   {
     Covariance[n] = 0.0;
   }
-  for(int p = 0; p < NumPictures; p++)
-    for(int x = 0; x < FullVolumeSize[p]; x++)
-      for(int n1 = 0; n1 < N; n1++) for(int n2 = 0; n2 < N; n2++)
-          Covariance[n1*N+n2] += (!this->UseMask || (maskDataPtr[p])[x] > 0 ) ?
-                                 ((inputDataPtr[p])[x*N+n1]-Means[n1]) * ((inputDataPtr[p])[x*N+n2]-Means[n2]) : 0;
-  for(int n = 0; n < N*N; n++)
+  for (int p = 0; p < NumPictures; p++)
+    for (int x = 0; x < FullVolumeSize[p]; x++)
+      for (int n1 = 0; n1 < N; n1++) for (int n2 = 0; n2 < N; n2++)
+          Covariance[n1 * N + n2] += (!this->UseMask || (maskDataPtr[p])[x] > 0) ?
+                                     ((inputDataPtr[p])[x * N + n1] - Means[n1]) * ((inputDataPtr[p])[x * N + n2] - Means[n2]) : 0;
+  for (int n = 0; n < N * N; n++)
   {
     Covariance[n] /= (double) TotalVolumeSize;
   }
 
   //find primary and secondary eigenvectors
   double* Eigenvalues = new double[N];
-  double* Eigenvectors = new double[N*N];
+  double* Eigenvectors = new double[N * N];
   double** EigenvectorsDual = new double*[N];
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
-    EigenvectorsDual[n] = &(Eigenvectors[n*N]);
+    EigenvectorsDual[n] = &(Eigenvectors[n * N]);
   }
   double** CovarianceDual = new double*[N];
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
-    CovarianceDual[n] = &(Covariance[n*N]);
+    CovarianceDual[n] = &(Covariance[n * N]);
   }
-  vtkJacobiN<double>(CovarianceDual,N,Eigenvalues,EigenvectorsDual);
+  vtkJacobiN<double>(CovarianceDual, N, Eigenvalues, EigenvectorsDual);
   delete EigenvectorsDual;
   delete CovarianceDual;
 
   double* Eig1 = new double[N];
   double* Eig2 = new double[N];
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
-    Eig1[n] = sqrt(Eigenvalues[0])*Eigenvectors[n*N];
+    Eig1[n] = sqrt(Eigenvalues[0]) * Eigenvectors[n * N];
   }
-  for(int n = 0; n < N; n++)
+  for (int n = 0; n < N; n++)
   {
-    Eig2[n] = sqrt(Eigenvalues[1])*Eigenvectors[n*N+1];
+    Eig2[n] = sqrt(Eigenvalues[1]) * Eigenvectors[n * N + 1];
   }
 
   //create information holders
@@ -634,17 +634,17 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
 
   //get epsilon to prevent NaNs
   double RegularizationPercentage = 0.25;
-  this->Info.epsilon = RegularizationPercentage / (double)(this->Info.KohonenMapSize[0]*this->Info.KohonenMapSize[1]);
+  this->Info.epsilon = RegularizationPercentage / (double)(this->Info.KohonenMapSize[0] * this->Info.KohonenMapSize[1]);
 
   //pass information to CUDA
   this->ReserveGPU();
-  CUDAalgo_KSOMInitialize( Means, Covariance, Eig1, Eig2, this->Info, KMapSize,
-                           &device_KohonenMap, &device_tempSpace,
-                           &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
-                           this->MeansWidthSchedule->GetValue(0.0),
-                           this->VarsWidthSchedule->GetValue(0.0),
-                           this->WeightsWidthSchedule->GetValue(0.0),
-                           this->GetStream() );
+  CUDAalgo_KSOMInitialize(Means, Covariance, Eig1, Eig2, this->Info, KMapSize,
+                          &device_KohonenMap, &device_tempSpace,
+                          &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
+                          this->MeansWidthSchedule->GetValue(0.0),
+                          this->VarsWidthSchedule->GetValue(0.0),
+                          this->WeightsWidthSchedule->GetValue(0.0),
+                          this->GetStream());
   delete Covariance;
   delete Means;
   delete Eigenvectors;
@@ -652,18 +652,18 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   delete Eig1;
   delete Eig2;
 
-  for(int epoch = 0; epoch < this->MaxEpochs; epoch++)
-    CUDAalgo_KSOMIteration( inputDataPtr,  maskDataPtr, epoch, KMapSize,
-                            &device_KohonenMap, &device_tempSpace,
-                            &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
-                            VolumeSize, NumPictures, this->Info, BatchSize,
-                            this->MeansAlphaSchedule->GetValue(epoch), this->MeansWidthSchedule->GetValue(epoch),
-                            this->VarsAlphaSchedule->GetValue(epoch), this->VarsWidthSchedule->GetValue(epoch),
-                            this->WeightsAlphaSchedule->GetValue(epoch), this->WeightsWidthSchedule->GetValue(epoch),
-                            this->GetStream() );
-  CUDAalgo_KSOMOffLoad( (float*) outData->GetScalarPointer(), &device_KohonenMap, &device_tempSpace,
-                        &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
-                        this->Info, this->GetStream() );
+  for (int epoch = 0; epoch < this->MaxEpochs; epoch++)
+    CUDAalgo_KSOMIteration(inputDataPtr,  maskDataPtr, epoch, KMapSize,
+                           &device_KohonenMap, &device_tempSpace,
+                           &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
+                           VolumeSize, NumPictures, this->Info, BatchSize,
+                           this->MeansAlphaSchedule->GetValue(epoch), this->MeansWidthSchedule->GetValue(epoch),
+                           this->VarsAlphaSchedule->GetValue(epoch), this->VarsWidthSchedule->GetValue(epoch),
+                           this->WeightsAlphaSchedule->GetValue(epoch), this->WeightsWidthSchedule->GetValue(epoch),
+                           this->GetStream());
+  CUDAalgo_KSOMOffLoad((float*) outData->GetScalarPointer(), &device_KohonenMap, &device_tempSpace,
+                       &device_DistanceBuffer, &device_IndexBuffer, &device_WeightBuffer,
+                       this->Info, this->GetStream());
 
   //clean up temporaries
   delete Range;
@@ -671,7 +671,7 @@ int vtkCudaKohonenGenerator::RequestData(vtkInformation *request,
   delete FullVolumeSize;
   delete SampleSize;
   delete inputDataPtr;
-  if( this->UseMask )
+  if (this->UseMask)
   {
     delete maskDataPtr;
   }

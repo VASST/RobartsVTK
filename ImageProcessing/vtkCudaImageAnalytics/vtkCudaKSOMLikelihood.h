@@ -32,9 +32,9 @@ class vtkTransform;
 class vtkCudaImageAnalyticsExport vtkCudaKSOMLikelihood : public vtkImageAlgorithm, public CudaObject
 {
 public:
-  vtkTypeMacro( vtkCudaKSOMLikelihood, vtkImageAlgorithm );
+  vtkTypeMacro(vtkCudaKSOMLikelihood, vtkImageAlgorithm);
 
-  static vtkCudaKSOMLikelihood *New();
+  static vtkCudaKSOMLikelihood* New();
 
   void SetScale(double s);
   double GetScale();
@@ -44,22 +44,22 @@ public:
   // will be broken up, multiple threads will be spawned, and each thread
   // will call this method. It is public so that the thread functions
   // can call this method.
-  virtual int RequestData(vtkInformation *request,
-                          vtkInformationVector **inputVector,
-                          vtkInformationVector *outputVector);
-  virtual int RequestInformation( vtkInformation* request,
+  virtual int RequestData(vtkInformation* request,
+                          vtkInformationVector** inputVector,
+                          vtkInformationVector* outputVector);
+  virtual int RequestInformation(vtkInformation* request,
+                                 vtkInformationVector** inputVector,
+                                 vtkInformationVector* outputVector);
+  virtual int RequestUpdateExtent(vtkInformation* request,
                                   vtkInformationVector** inputVector,
                                   vtkInformationVector* outputVector);
-  virtual int RequestUpdateExtent( vtkInformation* request,
-                                   vtkInformationVector** inputVector,
-                                   vtkInformationVector* outputVector);
 
 protected:
   vtkCudaKSOMLikelihood();
   virtual ~vtkCudaKSOMLikelihood();
 
-  void Reinitialize(int withData);
-  void Deinitialize(int withData);
+  virtual void Reinitialize(bool withData = false);
+  virtual void Deinitialize(bool withData = false);
 
   KSOMLL_Information Info;
   double  Scale;

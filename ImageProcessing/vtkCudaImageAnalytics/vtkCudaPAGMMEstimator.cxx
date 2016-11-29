@@ -17,9 +17,9 @@ vtkCudaPAGMMEstimator::vtkCudaPAGMMEstimator()
 {
   //configure the IO ports
   this->SetNumberOfInputPorts(3);
-  this->SetNumberOfInputConnections(0,1);
-  this->SetNumberOfInputConnections(1,1);
-  this->SetNumberOfInputConnections(2,1);
+  this->SetNumberOfInputConnections(0, 1);
+  this->SetNumberOfInputConnections(1, 1);
+  this->SetNumberOfInputConnections(2, 1);
   this->SetNumberOfOutputPorts(1);
 
   //initialize conservativeness and scale
@@ -34,12 +34,12 @@ vtkCudaPAGMMEstimator::~vtkCudaPAGMMEstimator()
 //------------------------------------------------------------
 //Commands for CudaObject compatibility
 
-void vtkCudaPAGMMEstimator::Reinitialize(int withData)
+void vtkCudaPAGMMEstimator::Reinitialize(bool withData /*= false*/)
 {
   //TODO
 }
 
-void vtkCudaPAGMMEstimator::Deinitialize(int withData)
+void vtkCudaPAGMMEstimator::Deinitialize(bool withData /*= false*/)
 {
 }
 
@@ -48,7 +48,7 @@ void vtkCudaPAGMMEstimator::Deinitialize(int withData)
 
 void vtkCudaPAGMMEstimator::SetConservativeness(double q)
 {
-  if( q != this->Q && q >= 0.0 && q <= 1.0 )
+  if (q != this->Q && q >= 0.0 && q <= 1.0)
   {
     this->Q = q;
     this->Modified();
@@ -62,7 +62,7 @@ double vtkCudaPAGMMEstimator::GetConservativeness()
 
 void vtkCudaPAGMMEstimator::SetScale(double s)
 {
-  if( s != this->Scale && s >= 0.0 )
+  if (s != this->Scale && s >= 0.0)
   {
     this->Scale = s;
     this->Modified();
@@ -87,7 +87,7 @@ int vtkCudaPAGMMEstimator::RequestInformation(
   vtkInformation* outputGMMInfo = outputVector->GetInformationObject(0);
   vtkImageData* outGMMImage = vtkImageData::SafeDownCast(outputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-  vtkDataObject::SetPointDataActiveScalarInfo(outputGMMInfo,  VTK_FLOAT, seededImage->GetScalarRange()[1] );
+  vtkDataObject::SetPointDataActiveScalarInfo(outputGMMInfo,  VTK_FLOAT, seededImage->GetScalarRange()[1]);
   return 1;
 }
 
@@ -101,15 +101,15 @@ int vtkCudaPAGMMEstimator::RequestUpdateExtent(
   vtkInformation* inputGMMInfo = (inputVector[1])->GetInformationObject(0);
   vtkImageData* inputGMMImage = vtkImageData::SafeDownCast(inputGMMInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-  inputGMMInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputGMMImage->GetExtent(),6);
-  inputDataInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),inputDataImage->GetExtent(),6);
+  inputGMMInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inputGMMImage->GetExtent(), 6);
+  inputDataInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inputDataImage->GetExtent(), 6);
 
   return 1;
 }
 
-int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
-                                       vtkInformationVector **inputVector,
-                                       vtkInformationVector *outputVector)
+int vtkCudaPAGMMEstimator::RequestData(vtkInformation* request,
+                                       vtkInformationVector** inputVector,
+                                       vtkInformationVector* outputVector)
 {
   //collect input data information
   vtkInformation* inputDataInfo = (inputVector[0])->GetInformationObject(0);
@@ -130,25 +130,25 @@ int vtkCudaPAGMMEstimator::RequestData(vtkInformation *request,
   outputGMMImage->AllocateScalars(VTK_FLOAT, this->Info.NumberOfLabels);
 
   //get volume information for containers
-  inputDataImage->GetDimensions( this->Info.VolumeSize );
-  outputGMMImage->GetDimensions( this->Info.GMMSize );
+  inputDataImage->GetDimensions(this->Info.VolumeSize);
+  outputGMMImage->GetDimensions(this->Info.GMMSize);
 
   //get range for weight normalization
-  double* Range = new double[2*(this->Info.NumberOfDimensions)];
-  for(int i = 0; i < this->Info.NumberOfDimensions; i++)
+  double* Range = new double[2 * (this->Info.NumberOfDimensions)];
+  for (int i = 0; i < this->Info.NumberOfDimensions; i++)
   {
-    inputDataImage->GetPointData()->GetScalars()->GetRange(Range+2*i,i);
+    inputDataImage->GetPointData()->GetScalars()->GetRange(Range + 2 * i, i);
   }
 
   //calculate P according tot he Naive model
-  int N = this->Info.GMMSize[0]*this->Info.GMMSize[1];
-  float P = (Q > 0.0) ? this->Q / (1.0 - pow(1.0-this->Q,N)) : 1.0 / ((double)N);
+  int N = this->Info.GMMSize[0] * this->Info.GMMSize[1];
+  float P = (Q > 0.0) ? this->Q / (1.0 - pow(1.0 - this->Q, N)) : 1.0 / ((double)N);
 
   //run algorithm on CUDA
   this->ReserveGPU();
-  CUDAalgo_applyPAGMMModel( (float*) inputDataImage->GetScalarPointer(), (float*) inputGMMImage->GetScalarPointer(),
-                            (float*) outputGMMImage->GetScalarPointer(),
-                            (char*) seededDataImage->GetScalarPointer(), this->Info, P, this->Q, this->Scale, this->GetStream() );
+  CUDAalgo_applyPAGMMModel((float*) inputDataImage->GetScalarPointer(), (float*) inputGMMImage->GetScalarPointer(),
+                           (float*) outputGMMImage->GetScalarPointer(),
+                           (char*) seededDataImage->GetScalarPointer(), this->Info, P, this->Q, this->Scale, this->GetStream());
 
   return 1;
 }

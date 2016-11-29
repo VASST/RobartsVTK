@@ -29,7 +29,7 @@ class vtkCudaVisualizationExport vtkCudaOutputImageInformationHandler : public v
 {
 public:
 
-  vtkTypeMacro( vtkCudaOutputImageInformationHandler, vtkObject );
+  vtkTypeMacro(vtkCudaOutputImageInformationHandler, vtkObject);
 
   /** @brief VTK compatible constructor method
    *
@@ -90,8 +90,8 @@ public:
    */
   void Update();
 
-  vtkSetMacro(ImageFlipped,bool);
-  vtkGetMacro(ImageFlipped,bool);
+  vtkSetMacro(ImageFlipped, bool);
+  vtkGetMacro(ImageFlipped, bool);
 
   void SetTint(unsigned char RGBA[4]);
   void GetTint(unsigned char RGBA[4]);
@@ -108,8 +108,8 @@ protected:
    */
   ~vtkCudaOutputImageInformationHandler();
 
-  void Deinitialize(int withData = 0);
-  void Reinitialize(int withData = 0);
+  virtual void Deinitialize(bool withData = false);
+  virtual void Reinitialize(bool withData = false);
 
 private:
   vtkCudaOutputImageInformationHandler& operator=(const vtkCudaOutputImageInformationHandler&); /**< not implemented */

@@ -45,12 +45,12 @@ vtkCudaMemoryTexture::~vtkCudaMemoryTexture()
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaMemoryTexture::Deinitialize(int withData)
+void vtkCudaMemoryTexture::Deinitialize(bool withData /*= false*/)
 {
   this->ReserveGPU();
-  if(this->CudaOutputData)
+  if (this->CudaOutputData)
   {
-    cudaFree( (void*) this->CudaOutputData );
+    cudaFree((void*) this->CudaOutputData);
   }
   this->CudaOutputData = 0;
 
@@ -69,13 +69,13 @@ void vtkCudaMemoryTexture::Deinitialize(int withData)
 }
 
 //----------------------------------------------------------------------------
-void vtkCudaMemoryTexture::Reinitialize(int withData)
+void vtkCudaMemoryTexture::Reinitialize(bool withData /*= false*/)
 {
   this->Initialize();
-  if(!this->CudaOutputData)
+  if (!this->CudaOutputData)
   {
     this->ReserveGPU();
-    cudaMalloc( (void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height );
+    cudaMalloc((void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height);
     this->RebuildBuffer();
   }
 }
@@ -96,13 +96,13 @@ void vtkCudaMemoryTexture::Initialize()
   {
     // check for the RenderMode
     GLenum err = glewInit();
-    if(GLEW_OK != err)
+    if (GLEW_OK != err)
     {
       std::cerr << "GLEW Error. " << std::endl;
       return;
     }
 
-    if(GLEW_ARB_vertex_buffer_object)
+    if (GLEW_ARB_vertex_buffer_object)
     {
       vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
       this->CurrentRenderMode = RenderToTexture;
@@ -135,17 +135,17 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
     this->Height = height;
 
     this->ReserveGPU();
-    if(this->CudaOutputData)
+    if (this->CudaOutputData)
     {
-      cudaFree( (void*) this->CudaOutputData );
+      cudaFree((void*) this->CudaOutputData);
     }
-    if(this->LocalOutputData)
+    if (this->LocalOutputData)
     {
       delete this->LocalOutputData;
     }
 
     // Allocate Memory
-    cudaMalloc( (void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height );
+    cudaMalloc((void**) &this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height);
     this->LocalOutputData = new uchar4[this->Width * this->Height];
 
     this->RebuildBuffer();
@@ -186,7 +186,7 @@ void vtkCudaMemoryTexture::RebuildBuffer()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->Width, this->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*) this->LocalOutputData );
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->Width, this->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*) this->LocalOutputData);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   if (this->CurrentRenderMode == RenderToTexture)
@@ -248,7 +248,7 @@ void vtkCudaMemoryTexture::BindBuffer()
   }
   else
   {
-    this->RenderDestination = (unsigned char*) ( (void*) this->CudaOutputData );
+    this->RenderDestination = (unsigned char*)((void*) this->CudaOutputData);
   }
 }
 
@@ -274,8 +274,8 @@ void vtkCudaMemoryTexture::UnbindBuffer()
   else // (this->CurrentRenderMode == RenderToMemory)
   {
     this->ReserveGPU();
-    cudaMemcpyAsync( this->LocalOutputData, this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()) );
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (void*) LocalOutputData );
+    cudaMemcpyAsync(this->LocalOutputData, this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (void*) LocalOutputData);
   }
   this->RenderDestination = NULL;
 }
@@ -300,8 +300,8 @@ bool vtkCudaMemoryTexture::CopyToVtkImageData(vtkImageData* data)
   data->AllocateScalars(VTK_UNSIGNED_CHAR, 4);
 
   this->ReserveGPU();
-  cudaMemcpyAsync( (void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));
-  cudaStreamSynchronize( *(this->GetStream()) );
+  cudaMemcpyAsync((void*) data->GetScalarPointer(), (void*) this->CudaOutputData, sizeof(uchar4) * this->Width * this->Height, cudaMemcpyDeviceToHost, *(this->GetStream()));
+  cudaStreamSynchronize(*(this->GetStream()));
 
   return true;
 }
