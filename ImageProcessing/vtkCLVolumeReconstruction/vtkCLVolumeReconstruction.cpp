@@ -205,7 +205,9 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
 	
 
 	// Setinput data
-	imageData = input;
+	//imageData = input;
+
+	imageData->DeepCopy(input);
 	imagePose->GetMatrix(poseData);	
 	this->UpdateReconstruction();
 
