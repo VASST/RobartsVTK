@@ -173,8 +173,8 @@ int main(){
 	// Read in Data
 	vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList = vtkSmartPointer< vtkPlusTrackedFrameList >::New();
 	// Read Sequence Meta file in the tracked framelist
-	vtkPlusSequenceIO::Read(std::string("TrackedUS_20161129_192442.mha"), trackedFrameList);
-	PlusTransformName transformName = PlusTransformName("Probe", "Reference");
+	vtkPlusSequenceIO::Read(std::string("tracked_us_video.mha"), trackedFrameList);
+	PlusTransformName transformName = PlusTransformName("Probe", "Tracker");
 	vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker = vtkSmartPointer< vtkMatrix4x4 >::New();
 
 	// Initialize PLUS VolumeReconstructor
@@ -215,13 +215,13 @@ int main(){
 
 
 	// calibration matrix
-	float us_cal_mat[12] = { -0.0030062, -0.0010607, -0.99888, 0.089582,
-		0.0099514, -0.063586, 0.0098287, -28.791,
-		-0.067029, -0.0093927, 0.046259, -11.581 };
+	float us_cal_mat[12] = { 0.0727, 0.0076, -0.0262, -12.6030,
+		-0.0030, 0.0118, -0.9873, -7.8930,
+		-0.0069, 0.0753, 0.1568, 1.0670 };
 
-	recon->SetProgramSourcePath("./kernels.cl");
+	recon->SetProgramSourcePath("kernels.cl");
 	recon->SetBScanSize(820, 616);
-	recon->SetBScanSpacing(0.067, 0.064);
+	recon->SetBScanSpacing(0.077, 0.073);
 
 	int extent[6] = { 0, 0, 0, 0, 0, 0 };
 	double origin[3] = { 0, 0, 0 };
@@ -354,7 +354,7 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList *frameList, vtkPlusTrans
 	int * outputExtent, double * origin){
 
 	PlusTransformName imageToReferenceTransformName;
-	imageToReferenceTransformName = PlusTransformName("Image", "Reference");
+	imageToReferenceTransformName = PlusTransformName("Image", "Tracker");
 
 	if (frameList == NULL){
 		LOG_ERROR("Failed to set output extent from tracked frame list - input frame list is NULL");

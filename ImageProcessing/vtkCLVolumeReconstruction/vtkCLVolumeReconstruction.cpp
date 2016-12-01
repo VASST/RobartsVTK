@@ -93,8 +93,6 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 		}	
 	}
 
-	imageData = vtkImageData::New();
-	poseData = vtkMatrix4x4::New();
 	mutex = vtkSmartPointer< vtkMutexLock >::New();
 
 #ifdef VCLVR_DEBUG
@@ -205,7 +203,7 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
 	
 
 	// Setinput data
-	//imageData = input;
+	mutex->Lock();
 
 	imageData->DeepCopy(input);
 	imagePose->GetMatrix(poseData);	
@@ -215,6 +213,8 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
 	memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 	output->DataHasBeenGenerated();
 	output->Modified();
+
+	mutex->Unlock();
 
 	return 1;
 }
@@ -694,6 +694,12 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   volume = (unsigned char*) malloc(sizeof(unsigned char) * volume_width * volume_height * volume_depth);
   memset(volume, '0', sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
+  imageData = vtkImageData::New();
+  imageData->SetExtent(0, this->bscan_w, 0, this->bscan_h, 0, 0);
+  imageData->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+
+  poseData = vtkMatrix4x4::New();
+
   reconstructedvolume = vtkSmartPointer< vtkImageData >::New();
   reconstructedvolume->SetOrigin((double)volume_origin[0], (double)volume_origin[1], (double)volume_origin[2]);
   reconstructedvolume->SetSpacing((double)volume_spacing, (double)volume_spacing, (double)volume_spacing);
@@ -753,7 +759,7 @@ int vtkCLVolumeReconstruction::ShiftQueues()
   // Grab frame and insert it
   GrabInputData();
 
-  if (timestamp_queue.size() < BSCAN_WINDOW)
+  if (timestamp_queue.size() <= BSCAN_WINDOW)
   {
     // Queues are not full
 
@@ -781,6 +787,8 @@ int vtkCLVolumeReconstruction::ShiftQueues()
 //--------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GrabInputData()
 {
+ 
+  mutex->Lock();
 
   timestamp_queue.push(timestamp);
   imageData_queue.push(imageData);
@@ -791,7 +799,7 @@ void vtkCLVolumeReconstruction::GrabInputData()
   memset(bscans_queue[BSCAN_WINDOW - 1], '\0', sizeof(unsigned char)*bscan_w * bscan_h);
 
   // Convert to a floating point array
-  double* matrixPtr = poseData_queue.front()->Element[0];
+  double* matrixPtr = poseData->Element[0];
   float* matrixPtr2 = new float[12];
   matrixPtr2[0] = (float)matrixPtr[0];
   matrixPtr2[1] = (float)matrixPtr[1];
@@ -806,13 +814,15 @@ void vtkCLVolumeReconstruction::GrabInputData()
   matrixPtr2[10] = (float)matrixPtr[10];
   matrixPtr2[11] = (float)matrixPtr[11];
 
-  unsigned char* imgDataPtr = (unsigned char*)imageData_queue.front()->GetScalarPointer();
+  unsigned char* imgDataPtr = (unsigned char*)imageData->GetScalarPointer();
 
   // Copy data to buffers
   bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
   pos_timetags_queue[BSCAN_WINDOW - 1]   = timestamp_queue.front();
   memcpy(pos_matrices_queue[BSCAN_WINDOW - 1], matrixPtr2, sizeof(float) * 12);
   memcpy(bscans_queue[BSCAN_WINDOW - 1], imgDataPtr, sizeof(unsigned char)*bscan_h * bscan_w);
+
+  mutex->Unlock();
 
   // TODO: Interpolate the pos matrix to the timetag of the bscan
 }
