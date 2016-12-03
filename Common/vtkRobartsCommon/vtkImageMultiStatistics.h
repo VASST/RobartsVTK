@@ -23,9 +23,9 @@
 class vtkRobartsCommonExport vtkImageMultiStatistics : public vtkAlgorithm
 {
 public:
-  static vtkImageMultiStatistics *New();
+  static vtkImageMultiStatistics* New();
 
-  vtkTypeMacro(vtkImageMultiStatistics,vtkAlgorithm);
+  vtkTypeMacro(vtkImageMultiStatistics, vtkAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -75,16 +75,16 @@ public:
 
   void Update();
 
-  void SetInputData(int port, vtkImageData *input);
-  void SetInputData(vtkImageData *input)
+  void SetInputData(int port, vtkImageData* input);
+  void SetInputData(vtkImageData* input)
   {
-    SetInputData(0,input);
+    SetInputData(0, input);
   }
-  void SetInputConnection(int port, vtkAlgorithmOutput *input);
-  void SetInputConnection(vtkAlgorithmOutput  *input);
+  void SetInputConnection(int port, vtkAlgorithmOutput* input);
+  void SetInputConnection(vtkAlgorithmOutput*  input);
 
-  vtkImageData *GetInput(int port);
-  vtkImageData *GetInput();
+  vtkImageData* GetInput(int port);
+  vtkImageData* GetInput();
 
   int FillInputPortInformation(int i, vtkInformation* info);
 

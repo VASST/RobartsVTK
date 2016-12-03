@@ -224,9 +224,9 @@ int MainWindow::InitPLUSBypassPipeline()
   acceleratedVolumeReconstructor = vtkSmartPointer<vtkCLVolumeReconstruction>::New();
 
   // calibration matrix
-  float us_cal_mat[12] = {0.0727,    0.0076,   -0.0262,  -12.6030,
-                          -0.0030,    0.0118,   -0.9873,   -7.8930,
-                          -0.0069,    0.0753,    0.1568,    1.0670
+  float us_cal_mat[12] = { 0.0727f,    0.0076f,   -0.0262f,  -12.6030f,
+                           -0.0030f,    0.0118f,   -0.9873f,   -7.8930f,
+                           -0.0069f,    0.0753f,    0.1568f,    1.0670f
                          };
 
   acceleratedVolumeReconstructor->SetProgramSourcePath("kernels.cl");

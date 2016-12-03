@@ -23,14 +23,14 @@ vtkStandardNewMacro(vtkCuda2DInExLogicTransferFunctionInformationHandler);
 vtkCuda2DInExLogicTransferFunctionInformationHandler::vtkCuda2DInExLogicTransferFunctionInformationHandler()
 {
   this->Function = NULL;
-  this->inExFunction = NULL;
+  this->InExFunction = NULL;
   this->UseBlackKeyhole = false;
   this->TransInfo.useBlackKeyhole = false;
 
   this->FunctionSize = 512;
   this->LowGradient = 0;
   this->HighGradient = 10;
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
 
   this->InputData = NULL;
 
@@ -51,9 +51,9 @@ vtkCuda2DInExLogicTransferFunctionInformationHandler::~vtkCuda2DInExLogicTransfe
 {
   this->Deinitialize();
   this->SetInputData(NULL, 0);
-  if (this->inExFunction)
+  if (this->InExFunction)
   {
-    this->inExFunction->UnRegister(this);
+    this->InExFunction->UnRegister(this);
   }
   if (this->Function)
   {
@@ -69,7 +69,7 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::Deinitialize(bool wit
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::Reinitialize(bool withData /*= false*/)
 {
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->UpdateTransferFunction();
 }
 
@@ -101,7 +101,7 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetVisualizationTrans
   {
     this->Function->Register(this);
   }
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->Modified();
 }
 
@@ -112,26 +112,26 @@ vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler:
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::SetInExLogicTransferFunction(vtkCuda2DTransferFunction* f)
 {
-  if (this->inExFunction ==  f)
+  if (this->InExFunction ==  f)
   {
     return;
   }
-  if (this->inExFunction)
+  if (this->InExFunction)
   {
-    this->inExFunction->UnRegister(this);
+    this->InExFunction->UnRegister(this);
   }
-  this->inExFunction = f;
-  if (this->inExFunction)
+  this->InExFunction = f;
+  if (this->InExFunction)
   {
-    this->inExFunction->Register(this);
+    this->InExFunction->Register(this);
   }
-  this->lastModifiedTime = 0;
+  this->LastModifiedTime = 0;
   this->Modified();
 }
 
 vtkCuda2DTransferFunction* vtkCuda2DInExLogicTransferFunctionInformationHandler::GetInExLogicTransferFunction()
 {
-  return this->inExFunction;
+  return this->InExFunction;
 }
 
 void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunction()
@@ -141,13 +141,13 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
   {
     return;
   }
-  if (!this->Function || this->Function->GetMTime() <= lastModifiedTime ||
-      !this->inExFunction || this->inExFunction->GetMTime() <= lastModifiedTime)
+  if (!this->Function || this->Function->GetMTime() <= LastModifiedTime ||
+      !this->InExFunction || this->InExFunction->GetMTime() <= LastModifiedTime)
   {
     return;
   }
-  lastModifiedTime = (this->Function->GetMTime() < this->inExFunction->GetMTime()) ?
-                     this->inExFunction->GetMTime() : this->Function->GetMTime();
+  LastModifiedTime = (this->Function->GetMTime() < this->InExFunction->GetMTime()) ?
+                     this->InExFunction->GetMTime() : this->Function->GetMTime();
 
   //get the ranges from the transfer function
   double minIntensity = (this->InputData->GetScalarRange()[0] > this->Function->getMinIntensity()) ? this->InputData->GetScalarRange()[0] : this->Function->getMinIntensity();
@@ -158,8 +158,8 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
   //estimate the gradient ranges
   this->LowGradient = 0;
   this->HighGradient = abs(this->InputData->GetScalarRange()[0] - this->InputData->GetScalarRange()[1]) / std::min(this->InputData->GetSpacing()[0], std::min(this->InputData->GetSpacing()[1], this->InputData->GetSpacing()[2]));
-  minGradient = (minGradient > this->inExFunction->getMinGradient()) ? minGradient : this->inExFunction->getMinGradient();
-  maxGradient = (maxGradient < this->inExFunction->getMaxGradient()) ? maxGradient : this->inExFunction->getMaxGradient();
+  minGradient = (minGradient > this->InExFunction->getMinGradient()) ? minGradient : this->InExFunction->getMinGradient();
+  maxGradient = (maxGradient < this->InExFunction->getMaxGradient()) ? maxGradient : this->InExFunction->getMaxGradient();
   double gradientOffset = maxGradient * 0.8;
   maxGradient = (log(maxGradient * maxGradient + gradientOffset) - log(gradientOffset)) / log(2.0) + 1.0;
   minGradient = (log(minGradient * minGradient + gradientOffset) - log(gradientOffset)) / log(2.0);
@@ -187,7 +187,7 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::UpdateTransferFunctio
                                    this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
   this->Function->GetShadingTable(LocalAmbientTransferFunction, LocalDiffuseTransferFunction, LocalSpecularTransferFunction, LocalSpecularPowerTransferFunction,
                                   this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
-  this->inExFunction->GetTransferTable(0, 0, 0, LocalInExTransferFunction,
+  this->InExFunction->GetTransferTable(0, 0, 0, LocalInExTransferFunction,
                                        this->FunctionSize, this->FunctionSize, minIntensity, maxIntensity, 0, minGradient, maxGradient, gradientOffset, 2);
 
   //map the transfer functions to textures for fast access
@@ -223,7 +223,7 @@ void vtkCuda2DInExLogicTransferFunctionInformationHandler::Update()
   {
     this->Modified();
   }
-  if (this->Function && this->inExFunction)
+  if (this->Function && this->InExFunction)
   {
     this->UpdateTransferFunction();
     this->Modified();

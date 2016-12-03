@@ -35,12 +35,20 @@ OPTION(RobartsVTK_USE_OpenCL "Build the OpenCL modules" OFF)
 OPTION(RobartsVTK_USE_VISUALIZATION  "Build the visualization modules" ON)
 OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
 OPTION(BUILD_SHARED_LIBS "Build shared libraries." ON)
-OPTION(BUILD_TESTING "Build testing." OFF)
 OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
 
+#-----------------------------------------------------------------------------
+# Compiler options
+#-----------------------------------------------------------------------------
 IF(MSVC)
   add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 ENDIF()
+
+#-----------------------------------------------------------------------------
+# Testing
+#-----------------------------------------------------------------------------
+OPTION(BUILD_TESTING "Build test programs" ON)
+INCLUDE(CTest)
 
 #-----------------------------------------------------------------------------
 # RobartsVTK executable output path 
@@ -79,7 +87,7 @@ FIND_PACKAGE(OpenMP REQUIRED)
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK 7.0 REQUIRED NO_MODULE)
+FIND_PACKAGE(VTK 7 REQUIRED NO_MODULE)
 
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 

@@ -118,7 +118,7 @@ private:
 
   vtkCuda2DTransferFunction*          Function;    /**< The 2 dimensional transfer function used to colour the volume during rendering */
   vtkCuda2DTransferFunction*          KeyholeFunction;  /**< The 2 dimensional transfer function used to colour the volume during rendering within the keyhole */
-  unsigned long                       LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  vtkMTimeType                        LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
   int                                 FunctionSize;  /**< The size of the transfer function which is square */
   double                              HighGradient;  /**< The maximum gradient of the current image */
   double                              LowGradient;  /**< The minimum gradient of the current image */

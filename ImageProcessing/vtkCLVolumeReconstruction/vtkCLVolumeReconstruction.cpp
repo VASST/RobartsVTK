@@ -62,38 +62,38 @@ namespace
 vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 {
 
-	size_t temp;
-	device_index = 0;
-	program_src = FileToString("./kernels.cl", "", &temp);
+  size_t temp;
+  device_index = 0;
+  program_src = FileToString("./kernels.cl", "", &temp);
 
-	// Default values for bscan size
-	bscan_w = 640;
-	bscan_h = 480;
+  // Default values for bscan size
+  bscan_w = 640;
+  bscan_h = 480;
 
-	// Default values for the output volume
-	volume_depth = volume_height = volume_width = 0;
-	volume_spacing = 0.5;
-	
+  // Default values for the output volume
+  volume_depth = volume_height = volume_width = 0;
+  volume_spacing = 0.5;
 
-	volume_origin[0] = 0;
-	volume_origin[1] = 0;
-	volume_origin[2] = 0;
 
-	// Default value for cal_matrix is identity matrix
-	cal_matrix = (float *)malloc(sizeof(float)*16);
-	for(int i=0; i<4; i++)
-	{
-		for(int j=0; j<4; j++)
-		{
-			cal_matrix[4*i+j] = 0;
-			if (i == j)
-			{
-				cal_matrix[4 * i + j] = 1;
-			}
-		}	
-	}
+  volume_origin[0] = 0;
+  volume_origin[1] = 0;
+  volume_origin[2] = 0;
 
-	mutex = vtkSmartPointer< vtkMutexLock >::New();
+  // Default value for cal_matrix is identity matrix
+  cal_matrix = (float*)malloc(sizeof(float) * 16);
+  for (int i = 0; i < 4; i++)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      cal_matrix[4 * i + j] = 0;
+      if (i == j)
+      {
+        cal_matrix[4 * i + j] = 1;
+      }
+    }
+  }
+
+  mutex = vtkSmartPointer< vtkMutexLock >::New();
 
 #ifdef VCLVR_DEBUG
   // Print device information
@@ -176,47 +176,47 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //---------------------------------------------------------------------------------------------------------
-// This is the superclass style of Execute method. 
+// This is the superclass style of Execute method.
 int vtkCLVolumeReconstruction::RequestData(vtkInformation* request,
-											vtkInformationVector** inputVector,
-											vtkInformationVector* outputVector)
+    vtkInformationVector** inputVector,
+    vtkInformationVector* outputVector)
 {
-	// During RD each filter examines any inputs it has, then fills in that empty date object with real data
-	
-	vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-	vtkInformation* outInfo = outputVector->GetInformationObject(0);
+  // During RD each filter examines any inputs it has, then fills in that empty date object with real data
 
-	vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
-	vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
+  vtkInformation* outInfo = outputVector->GetInformationObject(0);
 
-	//exit and throw error message if something is wrong with input configuration
-	if (!input)
-	{
-		vtkErrorMacro("This filter requires an input image.");
-		return -1;
-	}
-	if (input->GetScalarType() != VTK_UNSIGNED_CHAR)
-	{
-		vtkErrorMacro("The input must be of type unsigned char.");
-		return -1;
-	}
-	
+  vtkImageData* input = vtkImageData::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkImageData* output = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-	// Setinput data
-	mutex->Lock();
+  //exit and throw error message if something is wrong with input configuration
+  if (!input)
+  {
+    vtkErrorMacro("This filter requires an input image.");
+    return -1;
+  }
+  if (input->GetScalarType() != VTK_UNSIGNED_CHAR)
+  {
+    vtkErrorMacro("The input must be of type unsigned char.");
+    return -1;
+  }
 
-	imageData->DeepCopy(input);
-	imagePose->GetMatrix(poseData);	
-	this->UpdateReconstruction();
 
-	output->ShallowCopy(reconstructedvolume);
-	memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
-	output->DataHasBeenGenerated();
-	output->Modified();
+  // Setinput data
+  mutex->Lock();
 
-	mutex->Unlock();
+  imageData->DeepCopy(input);
+  imagePose->GetMatrix(poseData);
+  this->UpdateReconstruction();
 
-	return 1;
+  output->ShallowCopy(reconstructedvolume);
+  memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  output->DataHasBeenGenerated();
+  output->Modified();
+
+  mutex->Unlock();
+
+  return 1;
 }
 
 //-----------------------------------------------------------------------------------
@@ -480,7 +480,7 @@ void vtkCLVolumeReconstruction::SetInputPoseData(double time, vtkMatrix4x4* mat)
 //---------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
 {
-	this->imagePose = t;
+  this->imagePose = t;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------------
@@ -584,10 +584,10 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
 //-----------------------------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 {
-	//mutex->Lock();
-	v->ShallowCopy(reconstructedvolume);
-	memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
-	//mutex->Unlock();
+  //mutex->Lock();
+  v->ShallowCopy(reconstructedvolume);
+  memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  //mutex->Unlock();
 }
 
 //--------------------------------------------------------------
@@ -609,32 +609,34 @@ void vtkCLVolumeReconstruction::GetSpacing(double spacing[3]) const
 //------------------------------------------------------------------------------------------------------------------------------------------
 char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* preamble, size_t* final_length)
 {
-
   FILE* file_stream = NULL;
   size_t source_length;
 
   // open the OpenCL source code file
-  if (fopen_s(&file_stream, filename, "rb") != 0) { return NULL; }
+  std::ifstream inputFile = std::ifstream(filename, std::ios::in | std::ios::binary);
+  if (!inputFile.is_open())
+  {
+    return nullptr;
+  }
 
   size_t preamble_length = strlen(preamble);
 
   // get the length of the source code
-  fseek(file_stream, 0, SEEK_END);
-  source_length = ftell(file_stream);
-  fseek(file_stream, 0, SEEK_SET);
+  inputFile.seekg(std::ios::end);
+  source_length = inputFile.tellg();
+  inputFile.seekg(std::ios::beg);
 
   // allocate a buffer for the source code string and read it in
   char* source_str = (char*)malloc(source_length + preamble_length + 1);
   memcpy(source_str, preamble, preamble_length);
-  if (fread((source_str) + preamble_length, source_length, 1, file_stream) != 1)
+  inputFile.read(source_str + preamble_length, source_length);
+  if (inputFile.bad())
   {
-    fclose(file_stream);
-    free(source_str);
-    return 0;
+    return nullptr;
   }
 
   // close the file and return the total length of the combined (preamble + source) string
-  fclose(file_stream);
+  inputFile.close();
   if (final_length != 0)
   {
     *final_length = source_length + preamble_length;
@@ -787,7 +789,7 @@ int vtkCLVolumeReconstruction::ShiftQueues()
 //--------------------------------------------------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GrabInputData()
 {
- 
+
   mutex->Lock();
 
   timestamp_queue.push(timestamp);
@@ -834,7 +836,7 @@ void vtkCLVolumeReconstruction::UpdateOutputVolume()
   // Copy volume to outptVolume
   //mutex->Lock();
   memcpy((unsigned char*)this->reconstructedvolume->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
- // mutex->Lock();
+  // mutex->Lock();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------

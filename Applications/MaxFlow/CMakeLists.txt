@@ -27,6 +27,7 @@ target_link_libraries(GHMFSegment
   vtkFiltersCore 
   vtkImagingCore 
   vtkIOCore 
+  vtkIOLegacy
   vtkIOImage 
   vtkCommonCore 
   vtkCudaCommon 

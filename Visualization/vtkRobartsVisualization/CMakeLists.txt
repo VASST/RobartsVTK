@@ -43,6 +43,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkRobartsCommon
   vtkInteractionStyle
   vtkRenderingFreeType
+  vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   vtkRendering${VTK_RENDERING_BACKEND}
   )
 GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

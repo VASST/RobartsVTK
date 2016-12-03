@@ -145,37 +145,37 @@ public:
     this->pinned = true;
   }
 
-  virtual void Execute( vtkObject* caller, unsigned long eventid, void* callData )
+  virtual void Execute(vtkObject* caller, unsigned long eventid, void* callData)
   {
 
-    vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::SafeDownCast( caller );
+    vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::SafeDownCast(caller);
 
-    if( eventid == vtkCommand::MouseMoveEvent && !this->pinned )
+    if (eventid == vtkCommand::MouseMoveEvent && !this->pinned)
     {
       x = iren->GetEventPosition()[0];
       y = iren->GetEventPosition()[1];
     }
-    if( eventid == vtkCommand::LeftButtonPressEvent )
+    if (eventid == vtkCommand::LeftButtonPressEvent)
     {
-      this->pinned = ( this->pinned == true ) ? false : true;
+      this->pinned = (this->pinned == true) ? false : true;
     }
-    if( eventid == vtkCommand::MouseWheelForwardEvent )
+    if (eventid == vtkCommand::MouseWheelForwardEvent)
     {
       this->size += 5;
     }
-    if( eventid == vtkCommand::MouseWheelBackwardEvent )
+    if (eventid == vtkCommand::MouseWheelBackwardEvent)
     {
       this->size -= 5;
     }
-    if( eventid == vtkCommand::RightButtonPressEvent )
+    if (eventid == vtkCommand::RightButtonPressEvent)
     {
       this->gamma += 0.5;
     }
-    if( eventid == vtkCommand::KeyPressEvent )
+    if (eventid == vtkCommand::KeyPressEvent)
     {
       // Reset everything
       char* c = iren->GetKeySym();
-      if( *c == 'r' )
+      if (*c == 'r')
       {
         this->size = 120;
         x = 256;
@@ -185,7 +185,7 @@ public:
     }
 
     // Set keyhole parameters.
-    keyholePass->SetKeyholeParameters( x, y, size, this->gamma );
+    keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
 
     iren->GetRenderWindow()->Render();
 
@@ -210,7 +210,7 @@ public:
     return new vtkUSEventCallback;
   }
 
-  virtual void Execute( vtkObject* caller, unsigned long, void* );
+  virtual void Execute(vtkObject* caller, unsigned long, void*);
 
   vtkPlusTrackedFrameList* PlusTrackedFrames;
   vtkPlusTransformRepository* repository;
@@ -246,7 +246,7 @@ public:
   vtkKeyholePass* _keyholePass;
   std::string current_mapper;
   bool sc_capture_on;
-  int index;
+  unsigned int index;
 };
 
 namespace Ui
@@ -259,17 +259,17 @@ class MainWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  explicit MainWindow( QWidget* parent = 0 );
+  explicit MainWindow(QWidget* parent = 0);
   ~MainWindow();
 
 public slots:
-  void onStartButtonClick( const QString& );
-  void onScanTypeRadioButtonClick( const QString& );
-  void onSaveVolumeButtonClick( const QString& );
-  void ontf1ButtonClick( const QString& );
-  void ontf2ButtonClick( const QString& );
-  void ontfInExButtonClick( const QString& );
-  void onScCaptureRadioButtonClick( const QString& );
+  void onStartButtonClick(const QString&);
+  void onScanTypeRadioButtonClick(const QString&);
+  void onSaveVolumeButtonClick(const QString&);
+  void ontf1ButtonClick(const QString&);
+  void ontf2ButtonClick(const QString&);
+  void ontfInExButtonClick(const QString&);
+  void onScCaptureRadioButtonClick(const QString&);
 
 protected:
   /* Initialize PLUS pipeline */
@@ -285,8 +285,8 @@ protected:
   int InitPLUSBypassPipeline();
 
   /* Setup VTK Camera from intrinsics */
-  void SetupVTKCamera( cv::Mat, double, double, vtkCamera* );
-  void SetupVTKCamera( cv::Mat, vtkCamera* );
+  void SetupVTKCamera(cv::Mat, double, double, vtkCamera*);
+  void SetupVTKCamera(cv::Mat, vtkCamera*);
 
   /* Setup Volume Rendering Pipeline */
   void SetupVolumeRenderingPipeline();
@@ -297,10 +297,10 @@ protected:
   /* Setup US Volume Reconstruction Pipeline */
   int SetupVolumeReconstructionPipeline();
 
-  int GetExtentFromTrackedFrameList( vtkPlusTrackedFrameList*, vtkPlusTransformRepository*,
-                                     double spacing, int*, double* );
+  int GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList*, vtkPlusTransformRepository*,
+                                    double spacing, int*, double*);
 
-  void GetFirstFramePosition( PlusTrackedFrame*,  vtkPlusTransformRepository*, double* );
+  void GetFirstFramePosition(PlusTrackedFrame*,  vtkPlusTransformRepository*, double*);
 
 protected:
   /* Structure to hold camera video properties */

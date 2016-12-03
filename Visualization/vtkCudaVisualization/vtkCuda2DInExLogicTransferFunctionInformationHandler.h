@@ -123,16 +123,16 @@ private:
 
 private:
 
-  vtkImageData*              InputData;    /**< The 3D image data currently being renderered */
-  cuda2DInExTransferFunctionInformation  TransInfo;    /**< The CUDA specific structure holding the required volume related information for rendering */
+  vtkImageData*                             InputData;        /**< The 3D image data currently being renderered */
+  cuda2DInExTransferFunctionInformation     TransInfo;        /**< The CUDA specific structure holding the required volume related information for rendering */
 
-  vtkCuda2DTransferFunction* Function;  /**< The 2 dimensional transfer function used to colour the volume during rendering */
-  vtkCuda2DTransferFunction* inExFunction;  /**< The 2 dimensional transfer function used for inclusion/exclusion logic */
-  unsigned long lastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
-  int            FunctionSize;  /**< The size of the transfer function which is square */
-  double          HighGradient;  /**< The maximum gradient of the current image */
-  double          LowGradient;  /**< The minimum gradient of the current image */
-  bool          UseBlackKeyhole;
+  vtkCuda2DTransferFunction*                Function;         /**< The 2 dimensional transfer function used to colour the volume during rendering */
+  vtkCuda2DTransferFunction*                InExFunction;     /**< The 2 dimensional transfer function used for inclusion/exclusion logic */
+  vtkMTimeType                              LastModifiedTime; /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  int                                       FunctionSize;     /**< The size of the transfer function which is square */
+  double                                    HighGradient;     /**< The maximum gradient of the current image */
+  double                                    LowGradient;      /**< The minimum gradient of the current image */
+  bool                                      UseBlackKeyhole;
 };
 
 #endif

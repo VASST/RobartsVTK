@@ -36,10 +36,12 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkCudaVisualization 
   vtkCudaImageAnalytics 
   vtkCudaCommon 
+  vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   vtkRenderingVolume${VTK_RENDERING_BACKEND}
   vtkRenderingCore 
   vtkFiltersCore 
   vtkImagingCore 
+  vtkImagingGeneral 
   vtkIOImage 
   vtkCommonCore 
   vtkGUISupportQt

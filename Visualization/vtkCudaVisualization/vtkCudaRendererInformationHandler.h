@@ -146,7 +146,7 @@ private:
   float                     WorldToVoxelsMatrix[16];  /**< Array representing the world to voxels transformation as a matrix */
   float                     VoxelsToWorldMatrix[16];  /**< Array representing the voxels to world transformation as a matrix */
   float*                    ZBuffer;          /**< Address of the Z Buffer in CPU space */
-  unsigned int              ClipModified;        /**< Determines whether the clipping plane set has been modified and needs reloading */
+  vtkMTimeType              ClipModifiedTime;        /**< Determines whether the clipping plane set has been modified and needs reloading */
 };
 
 #endif

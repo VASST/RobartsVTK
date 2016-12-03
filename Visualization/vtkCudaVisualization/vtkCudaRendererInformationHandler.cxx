@@ -46,7 +46,7 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 
   this->ZBuffer = 0;
 
-  this->ClipModified = 0;
+  this->ClipModifiedTime = 0;
 }
 
 void vtkCudaRendererInformationHandler::Deinitialize(bool withData /*= false*/)
@@ -140,7 +140,7 @@ void vtkCudaRendererInformationHandler::SetViewToVoxelsMatrix(vtkMatrix4x4* matr
 
 void vtkCudaRendererInformationHandler::SetWorldToVoxelsMatrix(vtkMatrix4x4* matrix)
 {
-  this->ClipModified = 0;
+  this->ClipModifiedTime = 0;
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
@@ -152,7 +152,7 @@ void vtkCudaRendererInformationHandler::SetWorldToVoxelsMatrix(vtkMatrix4x4* mat
 
 void vtkCudaRendererInformationHandler::SetVoxelsToWorldMatrix(vtkMatrix4x4* matrix)
 {
-  this->ClipModified = 0;
+  this->ClipModifiedTime = 0;
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
@@ -165,13 +165,13 @@ void vtkCudaRendererInformationHandler::SetVoxelsToWorldMatrix(vtkMatrix4x4* mat
 void vtkCudaRendererInformationHandler::SetClippingPlanes(vtkPlaneCollection* planes)
 {
   //see if we need to refigure the clipping planes
-  if (!planes || planes->GetMTime() < this->ClipModified)
+  if (!planes || planes->GetMTime() < this->ClipModifiedTime)
   {
     return;
   }
   else
   {
-    this->ClipModified = planes->GetMTime();
+    this->ClipModifiedTime = planes->GetMTime();
     this->FigurePlanes(planes, this->RendererInfo.ClippingPlanes,
                        &(this->RendererInfo.NumberOfClippingPlanes));
   }
@@ -180,13 +180,13 @@ void vtkCudaRendererInformationHandler::SetClippingPlanes(vtkPlaneCollection* pl
 void vtkCudaRendererInformationHandler::SetKeyholePlanes(vtkPlaneCollection* planes)
 {
   //see if we need to refigure the keyhole planes
-  if (!planes || planes->GetMTime() < this->ClipModified)
+  if (!planes || planes->GetMTime() < this->ClipModifiedTime)
   {
     return;
   }
   else
   {
-    this->ClipModified = planes->GetMTime();
+    this->ClipModifiedTime = planes->GetMTime();
     this->FigurePlanes(planes, this->RendererInfo.KeyholePlanes,
                        &(this->RendererInfo.NumberOfKeyholePlanes));
   }

@@ -214,8 +214,8 @@ protected:
   vtkPlaneCollection*                   KeyholePlanes;
 
   //modified time variables used to minimize setup
-  unsigned long                         RendererModifiedTimestamp;  // The last time the renderer object was modified
-  unsigned long                         VolumeModifiedTimestamp;    // The last time the volume object was modified
+  vtkMTimeType                          RendererModifiedTime;  // The last time the renderer object was modified
+  vtkMTimeType                          VolumeModifiedTime;    // The last time the volume object was modified
   int                                   CurrentFrame;               // The current frame being rendered
   int                                   FrameCount;                 // The total number of frames housed by the mapper
 

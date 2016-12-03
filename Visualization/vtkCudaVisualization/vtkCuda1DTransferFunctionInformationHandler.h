@@ -120,7 +120,7 @@ protected:
   vtkColorTransferFunction*           ColourFunction;
   bool                                UseGradientOpacity;
 
-  unsigned long                       LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
+  vtkMTimeType                        LastModifiedTime;      /**< The last time the transfer function was modified, used to determine when to repopulate the transfer function lookup tables */
   int                                 FunctionSize;  /**< The size of the transfer function which is square */
   double                              HighGradient;  /**< The maximum gradient of the current image */
   double                              LowGradient;  /**< The minimum gradient of the current image */
