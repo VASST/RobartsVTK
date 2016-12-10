@@ -10,7 +10,6 @@ IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
   )
 ENDIF()
 
-# TODO : try to determine if there is an OpenCL equivalent to the fucntions called by vector_math.h
 SET(${PROJECT_NAME}_INCLUDE_DIRS 
   ${CMAKE_SOURCE_DIR} 
   ${OpenCL_INCLUDE_DIRS} 
@@ -27,6 +26,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${OpenCL_INCLUDE_DIRS} 
   ${CUDA_INCLUDE_DIRS} 
   ${VTK_INCLUDE_DIRS}
+  )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  KERNEL_CL_LOCATION="${CMAKE_CURRENT_SOURCE_DIR}/kernels.cl"
   )
 target_link_libraries(${PROJECT_NAME} PUBLIC 
   OpenCL 

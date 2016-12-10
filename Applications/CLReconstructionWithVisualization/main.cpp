@@ -33,34 +33,36 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #include <iostream>
 #include <string>
+
 // For timing
 #include <Windows.h>
 #include <stdint.h>
 #include <chrono>
 
 // Use PLUS just to read data from sequence meta file
+#include <PlusTrackedFrame.h>
+#include <vtkCamera.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkCommand.h>
+#include <vtkImageData.h>
+#include <vtkImageFlip.h>
+#include <vtkMatrix4x4.h>
+#include <vtkMetaImageReader.h>
+#include <vtkMetaImageWriter.h>
+#include <vtkPiecewiseFunction.h>
 #include <vtkPlusSequenceIO.h>
 #include <vtkPlusTrackedFrameList.h>
-#include <vtkPlusVolumeReconstructor.h> // Use PLUS volume reconstructor for comparison purposes.
 #include <vtkPlusTransformRepository.h>
-#include <PlusTrackedFrame.h>
-#include <vtkSmartPointer.h>
-#include <vtkMatrix4x4.h>
-#include <vtkMetaImageWriter.h>
-#include <vtkImageFlip.h>
-#include <vtkVolumeProperty.h>
-#include <vtkColorTransferFunction.h>
-#include <vtkPiecewiseFunction.h>
-#include <vtkVolume.h>
-#include <vtkRenderer.h>
+#include <vtkPlusVolumeReconstructor.h> // Use PLUS volume reconstructor for comparison purposes.
+#include <vtkRenderWindow.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkRenderWindow.h>
+#include <vtkRenderer.h>
+#include <vtkSmartPointer.h>
 #include <vtkSmartVolumeMapper.h>
-#include <vtkImageData.h>
-#include <vtkCamera.h>
-#include <vtkCommand.h>
-#include <vtkMetaImageReader.h>
+#include <vtkTransform.h>
+#include <vtkVolume.h>
+#include <vtkVolumeProperty.h>
 
 #include <vtkCLVolumeReconstruction.h>
 #include <vtkCuda1DVolumeMapper.h>
@@ -83,7 +85,9 @@ public:
     auto t_start = std::chrono::high_resolution_clock::now();
 
     if (idx == trackedFrameList->GetNumberOfTrackedFrames() - 1)
-    { idx = 0; }
+    {
+      idx = 0;
+    }
 
     // Set Image Dada
     PlusTrackedFrame* trackedFrame = trackedFrameList->GetTrackedFrame(idx);
@@ -106,7 +110,6 @@ public:
       LOG_WARNING("Failed to get transform '" << strImageToReferenceTransformName << "' from transform repository!");
       return;
     }
-
 
     imagePose->SetMatrix(tFrame2Tracker);
     reconstructor->SetInputData(trackedFrame->GetImageData()->GetImage());
@@ -171,7 +174,6 @@ int gettimeofday(struct timeval* tp)
 
 int main()
 {
-
   // Read in Data
   vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList = vtkSmartPointer< vtkPlusTrackedFrameList >::New();
   // Read Sequence Meta file in the tracked framelist
@@ -239,7 +241,15 @@ int main()
   recon->SetOutputSpacing(output_spacing);
   recon->SetOutputOrigin(origin[0], origin[1], origin[2]);
   recon->SetCalMatrix(us_cal_mat);
-  recon->Initialize();
+  try
+  {
+    recon->Initialize();
+  }
+  catch (const std::exception& e)
+  {
+    LOG_ERROR("Unable to initialize OpenCL volume reconstruction. Aborting. Error: " << e.what());
+    exit(EXIT_FAILURE);
+  }
   recon->StartReconstruction();
   vtkTransform* pose = vtkTransform::New();
   recon->SetImagePoseTransform(pose);

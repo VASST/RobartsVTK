@@ -30,25 +30,35 @@
   THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGES.
   =========================================================================*/
+
 #ifndef _vtkCLVolumeReconstruction_h_
 #define _vtkCLVolumeReconstruction_h_
 
 #include "vtkCLVolumeReconstructionExport.h"
 
-#include "vtkImageAlgorithm.h"
-#include "vtkImageData.h"
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
-#include "vtkObject.h"
-#include "vtkSmartPointer.h"
-#include "vtkMutexLock.h"
+// OpenCL includes
 #include <CL/cl.h>
+
+// STL includes
 #include <algorithm>
-#include <omp.h>
+#include <array>
 #include <queue>
+
+// OpenMP includes
+#include <omp.h>
+
+// CUDA includes
 #include <vector_functions.h>
 #include <vector_types.h>
 
+// VTK includes
+#include <vtkImageAlgorithm.h>
+#include <vtkSmartPointer.h>
+
+class vtkImageData;
+class vtkMatrix4x4;
+class vtkTransform;
+class vtkMutexLock;
 class vtkDataSet;
 
 //# define KERNEL_DEBUG
@@ -67,13 +77,6 @@ public:
   vtkTypeMacro(vtkCLVolumeReconstruction, vtkAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description:
-  // See vtkAlgorithm for details
-  /*virtual int ProcessRequest(vtkInformation*,
-							  vtkInformationVector**,
-							  vtkInformationVector*); */
-
-  // ---- 
   /* Initializes devices */
   void Initialize();
 
@@ -133,14 +136,12 @@ public:
   void GetSpacing(double spacing[3]) const;
 
 protected:
-	vtkCLVolumeReconstruction();
-	~vtkCLVolumeReconstruction();
+  vtkCLVolumeReconstruction();
+  ~vtkCLVolumeReconstruction();
 
-	// Description:
-	// This is called by the superclass. 
-	virtual int RequestData(vtkInformation* request,
-								vtkInformationVector** inputVector,
-								vtkInformationVector* outputVector); 
+  virtual int RequestData(vtkInformation* request,
+                          vtkInformationVector** inputVector,
+                          vtkInformationVector* outputVector);
 
 protected:
   /* Utility functions */
@@ -173,8 +174,6 @@ protected:
   /* */
   void FillVoxels();
 
-  /* Stops realtime reconstruction */
-
   /* Shifts data queues. 1 - if the queues are full  0- otherwise */
   int ShiftQueues();
 
@@ -188,7 +187,6 @@ protected:
   void DumpMatrix(int, int, float*);
 
 protected:
-
   typedef struct
   {
     float4 corner0;
@@ -215,7 +213,7 @@ protected:
   cl_program program;
 
   /* OMP Lock */
-  omp_lock_t lock;
+  omp_lock_t cl_device_lock;
 
   /* Output volume width */
   int volume_width;
@@ -230,10 +228,10 @@ protected:
   float volume_spacing;
 
   /* Output volume origin */
-  float volume_origin[3];
+  std::array<float, 3> volume_origin;
 
   /* Output Extent */
-  int volume_extent[6];
+  std::array<int, 6> volume_extent;
 
   /* bscan width and height */
   int bscan_w, bscan_h;
@@ -242,10 +240,10 @@ protected:
   float bscan_spacing_x, bscan_spacing_y;
 
   /* Input Image Data */
-  vtkImageData* imageData;
+  vtkImageData* image_data;
 
   /* Input pose data matrix */
-  vtkMatrix4x4* poseData;
+  vtkMatrix4x4* pose_data;
 
   /* timestamp of input data */
   float timestamp;
@@ -259,55 +257,60 @@ protected:
   /* Private Constants */
   static const int BSCAN_WINDOW = 4; // must be >= 4 if PT
 
-  int intersections_size;
-  int volume_size;
-  int max_vol_dim;
-  int x_vector_queue_size;
-  int y_vector_queue_size;
-  int plane_points_queue_size;
-  int mask_size;
-  int bscans_queue_size;
-  int bscan_timetags_queue_size;
-  int bscan_plane_equation_queue_size;
-  size_t global_work_size[1];
-  size_t local_work_size[1];
+  // Host variables
+  int                         intersections_size;
+  int                         volume_size;
+  int                         max_vol_dim;
+  int                         x_vector_queue_size;
+  int                         y_vector_queue_size;
+  int                         plane_points_queue_size;
+  int                         mask_size;
+  int                         bscans_queue_size;
+  int                         bscan_timetags_queue_size;
+  int                         bscan_plane_equation_queue_size;
+  size_t                      global_work_size[1];
+  size_t                      local_work_size[1];
 
-  int dev_x_vector_queue_size;
-  int dev_y_vector_queue_size;
-  int dev_plane_points_queue_size;
+  // Host buffers
+  float4*                     x_vector_queue;
+  float4*                     y_vector_queue;
+  unsigned char**             bscans_queue;
+  float**                     pos_matrices_queue;
+  float*                      bscan_timetags_queue;
+  float*                      pos_timetags_queue;
+  float4*                     bscan_plane_equation_queue;
+  plane_pts*                  plane_points_queue;
+  unsigned char*              volume;  // Output volume
+  unsigned char*              mask;
+  std::queue<float>           timestamp_queue;
+  std::queue<vtkImageData*>   imageData_queue;
+  std::queue<vtkMatrix4x4*>   poseData_queue;
 
-  cl_mem dev_intersections;
-  cl_mem dev_volume;
-  cl_mem dev_x_vector_queue;
-  cl_mem dev_y_vector_queue;
-  cl_mem dev_plane_points_queue;
-  cl_mem dev_mask;
-  cl_mem dev_bscans_queue;
-  cl_mem dev_bscan_timetags_queue;
-  cl_mem dev_bscan_plane_equation_queue;
+  // Device variables
+  int                         dev_x_vector_queue_size;
+  int                         dev_y_vector_queue_size;
+  int                         dev_plane_points_queue_size;
 
-
-  /* Buffers */
-  float4* x_vector_queue;
-  float4* y_vector_queue;
-  unsigned char** bscans_queue;
-  float** pos_matrices_queue;
-  float* bscan_timetags_queue;
-  float* pos_timetags_queue;
-  float4* bscan_plane_equation_queue;
-  plane_pts* plane_points_queue;
-  unsigned char* volume;  // Output volume
-  unsigned char* mask;
-  std::queue< float > timestamp_queue;
-  std::queue< vtkImageData*> imageData_queue;
-  std::queue< vtkMatrix4x4*> poseData_queue;
+  // Devices buffers
+  cl_mem                      dev_intersections;
+  cl_mem                      dev_volume;
+  cl_mem                      dev_x_vector_queue;
+  cl_mem                      dev_y_vector_queue;
+  cl_mem                      dev_plane_points_queue;
+  cl_mem                      dev_mask;
+  cl_mem                      dev_bscans_queue;
+  cl_mem                      dev_bscan_timetags_queue;
+  cl_mem                      dev_bscan_plane_equation_queue;
 
   // cal_matrix is the 1x16 us calibration matrix
-  float* pos_timetags, * pos_matrices, * bscan_timetags, * cal_matrix;
+  float*                      pos_timetags;
+  float*                      pos_matrices;
+  float*                      bscan_timetags;
+  float*                      calibration_matrix;
 
-  vtkSmartPointer< vtkTransform > imagePose;
-  vtkSmartPointer< vtkImageData > reconstructedvolume;
-  vtkSmartPointer< vtkMutexLock > mutex;
+  vtkSmartPointer<vtkTransform> image_pose;
+  vtkSmartPointer<vtkImageData> reconstructed_volume;
+  vtkSmartPointer<vtkMutexLock> input_data_mutex;
 };
-#endif //_vtkCLVolumeReconstruction_h_
 
+#endif //_vtkCLVolumeReconstruction_h_
