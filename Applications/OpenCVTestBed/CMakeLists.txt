@@ -1,0 +1,39 @@
+PROJECT(OpenCVTestBed)
+
+FIND_PACKAGE(PlusLib REQUIRED)
+FIND_PACKAGE(OpenCV REQUIRED)
+
+SET(${PROJECT_NAME}_APPTYPE MACOSX_BUNDLE)
+IF(WIN32)
+  SET(${PROJECT_NAME}_APPTYPE WIN32)
+ENDIF()
+
+ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_APPTYPE}
+  main.cpp
+  OpenCVTestBedMainWindow.h
+  OpenCVTestBedMainWindow.cpp
+  Resources/OpenCVTestBedMainWindow.ui
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR} 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Resources
+  ${OpenCV_INCLUDE_DIRS}
+  )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} PRIVATE
+  opencv_core
+  opencv_imgproc
+  opencv_videoio
+  opencv_highgui
+  opencv_features2d
+  opencv_calib3d
+  vtkPlusCommon
+  vtkPlusDataCollection
+  vtkCommonCore
+  vtkRenderingCore
+  vtkGUISupportQt
+  Qt5::Widgets 
+  Qt5::Core 
+  Qt5::Gui 
+)
