@@ -12,13 +12,12 @@ ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_APPTYPE}
   main.cpp
   OpenCVTestBedMainWindow.h
   OpenCVTestBedMainWindow.cpp
-  Resources/OpenCVTestBedMainWindow.ui
+  OpenCVTestBedMainWindow.ui
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR} 
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/Resources
   ${OpenCV_INCLUDE_DIRS}
   )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} PRIVATE
