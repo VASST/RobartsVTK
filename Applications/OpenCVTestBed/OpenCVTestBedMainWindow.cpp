@@ -25,6 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 // PlusLib includes
 #include <PlusCommon.h>
+#include <PlusDeviceSetSelectorWidget.h>
 #include <vtkPlusDataCollector.h>
 #include <vtkPlusMmfVideoSource.h>
 #include <MediaFoundationVideoCaptureApi.h>
@@ -37,14 +38,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 //----------------------------------------------------------------------------
 OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
-  : collector(vtkSmartPointer<vtkPlusDataCollector>::New())
-  , videoDevice(nullptr)
-  , uiUpdateTimer(new QTimer())
+  : m_dataCollector(vtkSmartPointer<vtkPlusDataCollector>::New())
+  , m_videoDevice(nullptr)
+  , m_uiUpdateTimer(new QTimer())
 {
   mainWindow.setupUi(this);
 
   std::vector<std::wstring> deviceNames;
-  MfVideoCapture::MediaFoundationVideoCaptureApi::GetInstance().GetDeviceNames(deviceNames);
   MfVideoCapture::MediaFoundationVideoCaptureApi::GetInstance().GetDeviceNames(deviceNames);
 
   mainWindow.comboBox_device->clear();
@@ -55,56 +55,109 @@ OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
     i++;
   }
 
+  m_deviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(mainWindow.centralwidget);
+  QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(mainWindow.centralwidget->layout());
+  auto layoutItem = gridLayout->takeAt(1);
+  gridLayout->addWidget(m_deviceSetSelectorWidget, 1, 0);
+  gridLayout->addItem(layoutItem, 2, 0);
+
   CreateActions();
 
+  connect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
   connect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
   connect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
-  connect(uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
+  connect(m_uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
 
-  uiUpdateTimer->start(16);
+  m_uiUpdateTimer->start(16);
   OnDeviceComboBoxChanged(0);
 }
 
 //----------------------------------------------------------------------------
 OpenCVTestBedMainWindow::~OpenCVTestBedMainWindow()
 {
+  disconnect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
   disconnect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
   disconnect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
-  disconnect(uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
-  delete uiUpdateTimer;
+  disconnect(m_uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
+  delete m_uiUpdateTimer;
 }
 
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::CreateActions()
 {
-  exitAct = new QAction(tr("E&xit"), this);
-  exitAct->setShortcuts(QKeySequence::Quit);
-  exitAct->setStatusTip(tr("Exit the application"));
-  connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
+  m_exitAction = new QAction(tr("E&xit"), this);
+  m_exitAction->setShortcuts(QKeySequence::Quit);
+  m_exitAction->setStatusTip(tr("Exit the application"));
+  connect(m_exitAction, SIGNAL(triggered()), this, SLOT(close()));
 
-  aboutAppAct = new QAction(tr("&About this App"), this);
-  aboutAppAct->setStatusTip(tr("About Camera Calibration"));
-  connect(aboutAppAct, SIGNAL(triggered()), this, SLOT(AboutApp()));
+  m_aboutAppAction = new QAction(tr("&About this App"), this);
+  m_aboutAppAction->setStatusTip(tr("About Camera Calibration"));
+  connect(m_aboutAppAction, SIGNAL(triggered()), this, SLOT(AboutApp()));
 
-  aboutRobartsAct = new QAction(tr("About &Robarts"), this);
-  aboutAppAct->setStatusTip(tr("About Robarts Research Institute"));
-  connect(aboutRobartsAct, SIGNAL(triggered()), this, SLOT(AboutRobarts()));
+  m_aboutRobartsAction = new QAction(tr("About &Robarts"), this);
+  m_aboutAppAction->setStatusTip(tr("About Robarts Research Institute"));
+  connect(m_aboutRobartsAction, SIGNAL(triggered()), this, SLOT(AboutRobarts()));
 
-  fileMenu = menuBar()->addMenu(tr("&File"));
-  fileMenu->addSeparator();
-  fileMenu->addAction(exitAct);
+  m_fileMenu = menuBar()->addMenu(tr("&File"));
+  m_fileMenu->addSeparator();
+  m_fileMenu->addAction(m_exitAction);
 
   menuBar()->addSeparator();
 
-  helpMenu = menuBar()->addMenu(tr("&Help"));
-  helpMenu->addAction(aboutAppAct);
-  helpMenu->addAction(aboutRobartsAct);
+  m_helpMenu = menuBar()->addMenu(tr("&Help"));
+  m_helpMenu->addAction(m_aboutAppAction);
+  m_helpMenu->addAction(m_aboutRobartsAction);
+}
+
+//----------------------------------------------------------------------------
+void OpenCVTestBedMainWindow::PopulateChannelList()
+{
+  mainWindow.comboBox_channel->clear();
+  if (m_dataCollector != nullptr && m_dataCollector->IsStarted())
+  {
+    for (auto iter = m_dataCollector->GetDeviceConstIteratorBegin(); iter != m_dataCollector->GetDeviceConstIteratorEnd(); ++iter)
+    {
+      for (auto chanIter = (*iter)->GetOutputChannelsStart(); chanIter != (*iter)->GetOutputChannelsEnd(); ++chanIter)
+      {
+        mainWindow.comboBox_channel->addItem(QString::fromLatin1((*iter)->GetDeviceId()) + QString(" - ") + QString::fromLatin1((*chanIter)->GetChannelId()));
+      }
+    }
+  }
 }
 
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::OnUpdateTimerTimeout()
 {
+  if (!m_channelActive && m_dataCollector != nullptr && m_dataCollector->IsStarted() && mainWindow.comboBox_channel->currentText() != QString(""))
+  {
+    // Parse out device, and channel
+    QString text = mainWindow.comboBox_channel->currentText();
+    auto deviceId = text.left(text.indexOf(tr("-"))).trimmed();
+    auto channelId = text.mid(text.indexOf(tr("-")) + 1).trimmed();
 
+    vtkPlusDevice* device(nullptr);
+    if (m_dataCollector->GetDevice(device, deviceId.toStdString()) != PLUS_SUCCESS)
+    {
+      LOG_ERROR("Device not found.");
+      m_channelActive = false;
+      return;
+    }
+
+    vtkPlusChannel* channel(nullptr);
+    if (device->GetOutputChannelByName(channel, channelId.toStdString()) != PLUS_SUCCESS)
+    {
+      LOG_ERROR("Output channel not found.");
+      m_channelActive = false;
+      return;
+    }
+
+    m_currentChannel = channel;
+  }
+
+  if (m_channelActive)
+  {
+
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -125,12 +178,12 @@ void OpenCVTestBedMainWindow::OnDeviceComboBoxChanged(int deviceId)
   mainWindow.pushButton_startStop->setEnabled(false);
   mainWindow.pushButton_startStop->setText(tr("Start"));
 
-  if (videoDevice != nullptr)
+  if (m_videoDevice != nullptr)
   {
-    videoDevice->StopRecording();
-    videoDevice->Disconnect();
-    videoDevice->Delete();
-    videoDevice = nullptr;
+    m_videoDevice->StopRecording();
+    m_videoDevice->Disconnect();
+    m_videoDevice->Delete();
+    m_videoDevice = nullptr;
   }
 
   if (deviceId < 0 || deviceId >= MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetCount())
@@ -162,31 +215,122 @@ void OpenCVTestBedMainWindow::OnDeviceComboBoxChanged(int deviceId)
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
 {
+  m_channelActive = false;
+
   if (mainWindow.pushButton_startStop->text() == QString("Start"))
   {
+    m_deviceSetSelectorWidget->setEnabled(false);
     mainWindow.pushButton_startStop->setEnabled(false);
     mainWindow.pushButton_startStop->setText(tr("Stop"));
 
-    videoDevice = vtkSmartPointer<vtkPlusMmfVideoSource>::New();
-    videoDevice->SetDeviceId("WebCam1");
-    videoDevice->SetRequestedDeviceId(mainWindow.comboBox_device->currentIndex());
+    m_videoDevice = vtkSmartPointer<vtkPlusMmfVideoSource>::New();
+    m_videoDevice->SetDeviceId("WebCam1");
+    m_videoDevice->SetRequestedDeviceId(mainWindow.comboBox_device->currentIndex());
     auto streamIndex = mainWindow.comboBox_stream->currentData().toUInt() >> 16;
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
-    videoDevice->SetRequestedStreamIndex(streamIndex);
+    m_videoDevice->SetRequestedStreamIndex(streamIndex);
 
     mainWindow.pushButton_startStop->setEnabled(true);
   }
   else
   {
     mainWindow.pushButton_startStop->setEnabled(false);
-    if (videoDevice != nullptr)
+    if (m_videoDevice != nullptr)
     {
-      videoDevice->StopRecording();
-      videoDevice->Disconnect();
-      videoDevice->Delete();
-      videoDevice = nullptr;
+      m_videoDevice->StopRecording();
+      m_videoDevice->Disconnect();
+      m_videoDevice->Delete();
+      m_videoDevice = nullptr;
     }
     mainWindow.pushButton_startStop->setText(tr("Start"));
+    m_deviceSetSelectorWidget->setEnabled(true);
     mainWindow.pushButton_startStop->setEnabled(true);
   }
+}
+
+//----------------------------------------------------------------------------
+void OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked(std::string configFile)
+{
+  m_channelActive = false;
+  mainWindow.pushButton_startStop->setEnabled(false);
+
+  QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+
+  // If not empty, then try to connect; empty parameter string means disconnect
+  if (STRCASECMP(configFile.c_str(), "") != 0)
+  {
+    // Read configuration
+    vtkSmartPointer<vtkXMLDataElement> configRootElement = vtkSmartPointer<vtkXMLDataElement>::Take(vtkXMLUtilities::ReadElementFromFile(configFile.c_str()));
+    if (configRootElement == NULL)
+    {
+      LOG_ERROR("Unable to read configuration from file " << configFile);
+      mainWindow.statusbar->showMessage(tr("Unable to read configuration from file "));
+
+      m_deviceSetSelectorWidget->SetConnectionSuccessful(false);
+      QApplication::restoreOverrideCursor();
+
+      return;
+    }
+
+    LOG_INFO("Device set configuration is read from file: " << configFile);
+    mainWindow.statusbar->showMessage(tr("Device set configuration is read from file: ") + QString::fromStdString(configFile));
+
+    vtkPlusConfig::GetInstance()->SetDeviceSetConfigurationData(configRootElement);
+
+    // If connection has been successfully created then start data collection
+    if (!m_deviceSetSelectorWidget->GetConnectionSuccessful())
+    {
+      // Disable main window
+      this->setEnabled(false);
+
+      mainWindow.statusbar->showMessage(tr("Connecting to devices, please wait..."));
+
+      // Connect to devices
+      if (m_dataCollector->ReadConfiguration(vtkPlusConfig::GetInstance()->GetDeviceSetConfigurationData()) != PLUS_SUCCESS)
+      {
+        m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
+        LOG_ERROR("Unable to read configuration for data collector.");
+        mainWindow.statusbar->showMessage(tr("Unable to read configuration for data collector."));
+        m_deviceSetSelectorWidget->setEnabled(true);
+        mainWindow.pushButton_startStop->setEnabled(true);
+        m_deviceSetSelectorWidget->SetConnectionSuccessful(false);
+        this->setEnabled(true);
+        return;
+      }
+
+      if (m_dataCollector->Start() != PLUS_SUCCESS)
+      {
+        m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
+        LOG_ERROR("Unable to start data collector.");
+        mainWindow.statusbar->showMessage(tr("Unable to start data collector."));
+        m_deviceSetSelectorWidget->setEnabled(true);
+        mainWindow.pushButton_startStop->setEnabled(true);
+        m_deviceSetSelectorWidget->SetConnectionSuccessful(false);
+        this->setEnabled(true);
+        return;
+      }
+
+      mainWindow.statusbar->showMessage(tr("Connection successful."));
+
+      PopulateChannelList();
+
+      // Re-enable main window
+      this->setEnabled(true);
+      m_deviceSetSelectorWidget->SetConnectionSuccessful(true);
+    }
+  }
+  else // Disconnect
+  {
+    m_dataCollector->Stop();
+    m_dataCollector->Disconnect();
+    m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
+
+    mainWindow.comboBox_channel->clear();
+    mainWindow.pushButton_startStop->setEnabled(true);
+    m_deviceSetSelectorWidget->SetConnectionSuccessful(false);
+
+    mainWindow.statusbar->showMessage(tr("Disconnection successful."));
+  }
+
+  QApplication::restoreOverrideCursor();
 }

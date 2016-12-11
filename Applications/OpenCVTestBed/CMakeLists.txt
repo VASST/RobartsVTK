@@ -1,5 +1,6 @@
 PROJECT(OpenCVTestBed)
 
+FIND_PACKAGE(PlusApp REQUIRED)
 FIND_PACKAGE(PlusLib REQUIRED)
 FIND_PACKAGE(OpenCV REQUIRED)
 
@@ -13,6 +14,7 @@ ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_APPTYPE}
   OpenCVTestBedMainWindow.h
   OpenCVTestBedMainWindow.cpp
   OpenCVTestBedMainWindow.ui
+  ${PlusApp_CommonWidgets_QRC}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -27,6 +29,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} PRIVATE
   opencv_highgui
   opencv_features2d
   opencv_calib3d
+  PlusCommonWidgets
   vtkPlusCommon
   vtkPlusDataCollection
   vtkCommonCore

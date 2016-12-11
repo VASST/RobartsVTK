@@ -32,6 +32,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 // VTK includes
 #include <vtkSmartPointer.h>
 
+// STL includes
+#include <atomic>
+
+class PlusDeviceSetSelectorWidget;
 class QAction;
 class QMenu;
 class QTimer;
@@ -53,21 +57,26 @@ protected slots:
 
   void OnDeviceComboBoxChanged(int index);
   void OnStartStopButtonClicked();
+  void OnConnectToDevicesByConfigFileInvoked(std::string configFile);
 
 protected:
   void CreateActions();
+  void PopulateChannelList();
 
 protected:
-  QAction*    aboutAppAct;
-  QAction*    aboutRobartsAct;
-  QAction*    exitAct;
-  QMenu*      fileMenu;
-  QMenu*      patternMenu;
-  QMenu*      helpMenu;
-  QTimer*     uiUpdateTimer;
+  QAction*                                  m_aboutAppAction;
+  QAction*                                  m_aboutRobartsAction;
+  QAction*                                  m_exitAction;
+  QMenu*                                    m_fileMenu;
+  QMenu*                                    m_helpMenu;
+  QTimer*                                   m_uiUpdateTimer;
 
-  vtkSmartPointer<vtkPlusDataCollector> collector;
-  vtkSmartPointer<vtkPlusMmfVideoSource> videoDevice;
+  vtkSmartPointer<vtkPlusDataCollector>     m_dataCollector;
+  vtkSmartPointer<vtkPlusMmfVideoSource>    m_videoDevice;
+
+  vtkPlusChannel*                           m_currentChannel;
+  PlusDeviceSetSelectorWidget*              m_deviceSetSelectorWidget;
+  std::atomic_bool                          m_channelActive;
 
 private:
   Ui::MainWindow mainWindow;

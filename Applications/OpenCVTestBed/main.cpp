@@ -41,6 +41,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 int appMain(int argc, char* argv[])
 {
+  Q_INIT_RESOURCE(PlusCommonWidgets);
+
   // Check command line arguments.
   bool printHelp(false);
   std::string configFile;
