@@ -46,6 +46,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
   vtkRenderingCore
   vtkGUISupportQt
   PlusCommonWidgets
+  vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   ${OPENGL_LIBRARIES}
   Qt5::Concurrent
   Qt5::Widgets 

@@ -349,7 +349,6 @@ void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
     m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
     source->Delete();
     channel->Delete();
-    device->Delete();
     mainWindow.pushButton_startStop->setText(tr("Start"));
     m_deviceSetSelectorWidget->setEnabled(true);
     mainWindow.comboBox_channel->setEnabled(true);

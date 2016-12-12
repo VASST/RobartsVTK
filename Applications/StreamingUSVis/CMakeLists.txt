@@ -49,6 +49,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
   vtkCLVolumeReconstruction
   vtksys
   TFUICommon
+  vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
+  vtkFiltersTexture
   vtkInteractionWidgets
   vtkInteractionImage
   vtkGUISupportQt

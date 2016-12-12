@@ -34,6 +34,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} PRIVATE
   vtkCommonCore
   vtkRenderingCore
   vtkGUISupportQt
+  vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   Qt5::Widgets 
   Qt5::Core 
   Qt5::Gui 
