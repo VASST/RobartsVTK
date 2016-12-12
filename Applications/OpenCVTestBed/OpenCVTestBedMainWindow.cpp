@@ -24,11 +24,16 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include "OpenCVTestBedMainWindow.h"
 
 // PlusLib includes
+#include <MediaFoundationVideoCaptureApi.h>
+#include <MediaFoundationVideoDevice.h>
+#include <MediaFoundationVideoDevices.h>
 #include <PlusCommon.h>
 #include <PlusDeviceSetSelectorWidget.h>
+#include <vtkPlusChannel.h>
 #include <vtkPlusDataCollector.h>
+#include <vtkPlusDataSource.h>
 #include <vtkPlusMmfVideoSource.h>
-#include <MediaFoundationVideoCaptureApi.h>
+#include <vtkPlusTrackedFrameList.h>
 
 // QT includes
 #include <QActionGroup>
@@ -36,11 +41,71 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include <QMessageBox>
 #include <QTimer>
 
+// OpenCV includes
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+
+namespace
+{
+  // Let compiler perform return value optimization, copy is unlikely given modern compiler
+  cv::Mat VTKImageToOpenCVMat(vtkImageData& image)
+  {
+    int cvType(0);
+    // Determine type
+    switch (image.GetScalarType())
+    {
+    case VTK_UNSIGNED_CHAR:
+    {
+      cvType = CV_8UC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_SIGNED_CHAR:
+    {
+      cvType = CV_8SC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_UNSIGNED_SHORT:
+    {
+      cvType = CV_16UC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_SHORT:
+    {
+      cvType = CV_16SC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_INT:
+    {
+      cvType = CV_32SC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_FLOAT:
+    {
+      cvType = CV_32FC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    case VTK_DOUBLE:
+    {
+      cvType = CV_64FC(image.GetNumberOfScalarComponents());
+      break;
+    }
+    }
+
+    int* dimensions = image.GetDimensions();
+    // VTK images are continuous, so no need to pass in step details (they are automatically computed)
+    return cv::Mat((dimensions[2] > 1 ? 3 : 2), dimensions, cvType, image.GetScalarPointer());
+  }
+}
+
 //----------------------------------------------------------------------------
 OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
-  : m_dataCollector(vtkSmartPointer<vtkPlusDataCollector>::New())
+  : m_uiUpdateTimer(new QTimer())
+  , m_dataCollector(vtkSmartPointer<vtkPlusDataCollector>::New())
   , m_videoDevice(nullptr)
-  , m_uiUpdateTimer(new QTimer())
+  , m_trackedFrameList(vtkSmartPointer<vtkPlusTrackedFrameList>::New())
+  , m_mostRecentFrameTimestamp(UNDEFINED_TIMESTAMP)
+  , m_currentChannel(nullptr)
+  , m_deviceSetSelectorWidget(nullptr)
 {
   mainWindow.setupUi(this);
 
@@ -55,14 +120,13 @@ OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
     i++;
   }
 
-  m_deviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(mainWindow.centralwidget);
-  QGridLayout* gridLayout = dynamic_cast<QGridLayout*>(mainWindow.centralwidget->layout());
-  auto layoutItem = gridLayout->takeAt(1);
-  gridLayout->addWidget(m_deviceSetSelectorWidget, 1, 0);
-  gridLayout->addItem(layoutItem, 2, 0);
+  m_deviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(mainWindow.widget_controlContainer);
+  QVBoxLayout* layout = dynamic_cast<QVBoxLayout*>(mainWindow.widget_controlContainer->layout());
+  layout->insertWidget(1, m_deviceSetSelectorWidget);
 
   CreateActions();
 
+  connect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnChannelComboBoxChanged);
   connect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
   connect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
   connect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
@@ -75,6 +139,7 @@ OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
 //----------------------------------------------------------------------------
 OpenCVTestBedMainWindow::~OpenCVTestBedMainWindow()
 {
+  disconnect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnChannelComboBoxChanged);
   disconnect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
   disconnect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
   disconnect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
@@ -128,42 +193,25 @@ void OpenCVTestBedMainWindow::PopulateChannelList()
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::OnUpdateTimerTimeout()
 {
-  if (!m_channelActive && m_dataCollector != nullptr && m_dataCollector->IsStarted() && mainWindow.comboBox_channel->currentText() != QString(""))
+  if (m_currentChannel != nullptr)
   {
-    // Parse out device, and channel
-    QString text = mainWindow.comboBox_channel->currentText();
-    auto deviceId = text.left(text.indexOf(tr("-"))).trimmed();
-    auto channelId = text.mid(text.indexOf(tr("-")) + 1).trimmed();
+    m_trackedFrameList->Clear();
+    m_currentChannel->GetTrackedFrameList(m_mostRecentFrameTimestamp, m_trackedFrameList, 50);
 
-    vtkPlusDevice* device(nullptr);
-    if (m_dataCollector->GetDevice(device, deviceId.toStdString()) != PLUS_SUCCESS)
+    for (auto& frame : *m_trackedFrameList)
     {
-      LOG_ERROR("Device not found.");
-      m_channelActive = false;
-      return;
+      vtkImageData* image = frame->GetImageData()->GetImage();
+      cv::Mat cvImage = VTKImageToOpenCVMat(*image);
+
+      // TODO : your code here!
     }
-
-    vtkPlusChannel* channel(nullptr);
-    if (device->GetOutputChannelByName(channel, channelId.toStdString()) != PLUS_SUCCESS)
-    {
-      LOG_ERROR("Output channel not found.");
-      m_channelActive = false;
-      return;
-    }
-
-    m_currentChannel = channel;
-  }
-
-  if (m_channelActive)
-  {
-
   }
 }
 
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::AboutApp()
 {
-  QMessageBox::about(this, tr("About OpenCVTestBed"), tr("This application is for developers to prototype OpenCV & C++ features:\nAdam Rankin\narankin@robarts.ca"));
+  QMessageBox::about(this, tr("About OpenCVTestBed"), tr("This application is for developers to prototype OpenCV, PLUS, & C++ features:\nAdam Rankin\narankin@robarts.ca"));
 }
 
 //----------------------------------------------------------------------------
@@ -213,15 +261,44 @@ void OpenCVTestBedMainWindow::OnDeviceComboBoxChanged(int deviceId)
 }
 
 //----------------------------------------------------------------------------
+void OpenCVTestBedMainWindow::OnChannelComboBoxChanged(int index)
+{
+  m_currentChannel = nullptr;
+
+  // Parse out device, and channel
+  QString text = mainWindow.comboBox_channel->currentText();
+  auto deviceId = text.left(text.indexOf(tr("-"))).trimmed();
+  auto channelId = text.mid(text.indexOf(tr("-")) + 1).trimmed();
+
+  vtkPlusDevice* device(nullptr);
+  if (m_dataCollector->GetDevice(device, deviceId.toStdString()) != PLUS_SUCCESS)
+  {
+    LOG_ERROR("Device not found.");
+    return;
+  }
+
+  vtkPlusChannel* channel(nullptr);
+  if (device->GetOutputChannelByName(channel, channelId.toStdString()) != PLUS_SUCCESS)
+  {
+    LOG_ERROR("Output channel not found.");
+    return;
+  }
+
+  m_currentChannel = channel;
+}
+
+//----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
 {
-  m_channelActive = false;
+  m_currentChannel = nullptr;
 
   if (mainWindow.pushButton_startStop->text() == QString("Start"))
   {
     m_deviceSetSelectorWidget->setEnabled(false);
+    mainWindow.comboBox_device->setEnabled(false);
+    mainWindow.comboBox_stream->setEnabled(false);
+    mainWindow.comboBox_channel->setEnabled(false);
     mainWindow.pushButton_startStop->setEnabled(false);
-    mainWindow.pushButton_startStop->setText(tr("Stop"));
 
     m_videoDevice = vtkSmartPointer<vtkPlusMmfVideoSource>::New();
     m_videoDevice->SetDeviceId("WebCam1");
@@ -229,21 +306,55 @@ void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
     auto streamIndex = mainWindow.comboBox_stream->currentData().toUInt() >> 16;
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
     m_videoDevice->SetRequestedStreamIndex(streamIndex);
+    m_videoDevice->SetRequestedFormatIndex(formatIndex);
 
+    auto mediaType = MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetDevice(mainWindow.comboBox_device->currentIndex())->GetFormat(streamIndex, formatIndex);
+    vtkPlusDataSource* source = vtkPlusDataSource::New();
+    source->SetSourceId("videoSource");
+    source->SetInputFrameSize(mediaType.width, mediaType.height, 1U);
+    source->SetInputImageOrientation(US_IMG_ORIENT_MF);
+    source->SetOutputImageOrientation(US_IMG_ORIENT_MF);
+    source->SetNumberOfScalarComponents(3); // Default to colour
+    source->SetPixelType(VTK_UNSIGNED_CHAR);
+    source->SetImageType(US_IMG_BRIGHTNESS);
+    m_videoDevice->AddVideoSource(source);
+
+    vtkPlusChannel* channel = vtkPlusChannel::New();
+    channel->SetChannelId("VideoChannel");
+    channel->SetOwnerDevice(m_videoDevice);
+    channel->SetVideoSource(source);
+    m_videoDevice->AddOutputChannel(channel);
+
+    m_dataCollector->AddDevice(m_videoDevice);
+    m_dataCollector->Connect();
+    m_dataCollector->Start();
+
+    m_currentChannel = channel;
+
+    mainWindow.pushButton_startStop->setText(tr("Stop"));
     mainWindow.pushButton_startStop->setEnabled(true);
   }
   else
   {
+    m_currentChannel = nullptr;
     mainWindow.pushButton_startStop->setEnabled(false);
-    if (m_videoDevice != nullptr)
-    {
-      m_videoDevice->StopRecording();
-      m_videoDevice->Disconnect();
-      m_videoDevice->Delete();
-      m_videoDevice = nullptr;
-    }
+    vtkPlusDevice* device(nullptr);
+    m_dataCollector->GetDevice(device, "WebCam1");
+    vtkPlusChannel* channel(nullptr);
+    device->GetOutputChannelByName(channel, "VideoChannel");
+    vtkPlusDataSource* source(nullptr);
+    channel->GetVideoSource(source);
+    m_dataCollector->Stop();
+    m_dataCollector->Disconnect();
+    m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
+    source->Delete();
+    channel->Delete();
+    device->Delete();
     mainWindow.pushButton_startStop->setText(tr("Start"));
     m_deviceSetSelectorWidget->setEnabled(true);
+    mainWindow.comboBox_channel->setEnabled(true);
+    mainWindow.comboBox_device->setEnabled(true);
+    mainWindow.comboBox_stream->setEnabled(true);
     mainWindow.pushButton_startStop->setEnabled(true);
   }
 }
@@ -251,8 +362,10 @@ void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
 //----------------------------------------------------------------------------
 void OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked(std::string configFile)
 {
-  m_channelActive = false;
+  m_currentChannel = nullptr;
   mainWindow.pushButton_startStop->setEnabled(false);
+  mainWindow.comboBox_device->setEnabled(false);
+  mainWindow.comboBox_stream->setEnabled(false);
 
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
@@ -328,6 +441,8 @@ void OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked(std::string 
     mainWindow.comboBox_channel->clear();
     mainWindow.pushButton_startStop->setEnabled(true);
     m_deviceSetSelectorWidget->SetConnectionSuccessful(false);
+    mainWindow.comboBox_device->setEnabled(true);
+    mainWindow.comboBox_stream->setEnabled(true);
 
     mainWindow.statusbar->showMessage(tr("Disconnection successful."));
   }

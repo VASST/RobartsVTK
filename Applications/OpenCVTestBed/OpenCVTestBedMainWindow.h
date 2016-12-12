@@ -39,8 +39,10 @@ class PlusDeviceSetSelectorWidget;
 class QAction;
 class QMenu;
 class QTimer;
+class vtkPlusChannel;
 class vtkPlusDataCollector;
 class vtkPlusMmfVideoSource;
+class vtkPlusTrackedFrameList;
 
 class OpenCVTestBedMainWindow : public QMainWindow
 {
@@ -56,6 +58,7 @@ protected slots:
   void AboutRobarts();
 
   void OnDeviceComboBoxChanged(int index);
+  void OnChannelComboBoxChanged(int index);
   void OnStartStopButtonClicked();
   void OnConnectToDevicesByConfigFileInvoked(std::string configFile);
 
@@ -73,10 +76,11 @@ protected:
 
   vtkSmartPointer<vtkPlusDataCollector>     m_dataCollector;
   vtkSmartPointer<vtkPlusMmfVideoSource>    m_videoDevice;
+  vtkSmartPointer<vtkPlusTrackedFrameList>  m_trackedFrameList;
+  double                                    m_mostRecentFrameTimestamp;
 
   vtkPlusChannel*                           m_currentChannel;
   PlusDeviceSetSelectorWidget*              m_deviceSetSelectorWidget;
-  std::atomic_bool                          m_channelActive;
 
 private:
   Ui::MainWindow mainWindow;
