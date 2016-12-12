@@ -475,9 +475,9 @@ IF(RobartsVTK_BUILD_APPS)
     MESSAGE(STATUS "Using PlusApp available at: ${PlusApp_DIR}")
 
     ADD_SUBDIRECTORY(Applications/CameraCalibration)
-    ADD_SUBDIRECTORY(Applications/OpenCVTestBed)
+    ADD_SUBDIRECTORY(Applications/PLUSOpenCVExample)
     set_target_properties(CameraCalibration PROPERTIES FOLDER Applications)
-    set_target_properties(OpenCVTestBed PROPERTIES FOLDER Applications)
+    set_target_properties(PLUSOpenCVExample PROPERTIES FOLDER Applications)
   ENDIF()
   
   IF(OpenCV_FOUND)

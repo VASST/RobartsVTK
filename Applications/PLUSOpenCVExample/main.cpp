@@ -21,7 +21,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ====================================================================*/
 
 // Local includes
-#include "OpenCVTestBedMainWindow.h"
+#include "PLUSOpenCVExampleMainWindow.h"
 
 // QT includes
 #include <QApplication>
@@ -69,7 +69,7 @@ int appMain(int argc, char* argv[])
   app.setOrganizationName("Robarts Research Institute, Canada");
   app.setApplicationName("OpenCV Test Bed");
 
-  OpenCVTestBedMainWindow* mainWin = new OpenCVTestBedMainWindow();
+  PLUSOpenCVExampleMainWindow* mainWin = new PLUSOpenCVExampleMainWindow();
   mainWin->show();
   return app.exec();
 }

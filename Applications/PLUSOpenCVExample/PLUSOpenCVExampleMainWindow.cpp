@@ -21,7 +21,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ====================================================================*/
 
 // Local includes
-#include "OpenCVTestBedMainWindow.h"
+#include "PLUSOpenCVExampleMainWindow.h"
 
 // PlusLib includes
 #include <MediaFoundationVideoCaptureApi.h>
@@ -98,7 +98,7 @@ namespace
 }
 
 //----------------------------------------------------------------------------
-OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
+PLUSOpenCVExampleMainWindow::PLUSOpenCVExampleMainWindow()
   : m_uiUpdateTimer(new QTimer())
   , m_dataCollector(vtkSmartPointer<vtkPlusDataCollector>::New())
   , m_videoDevice(nullptr)
@@ -126,29 +126,29 @@ OpenCVTestBedMainWindow::OpenCVTestBedMainWindow()
 
   CreateActions();
 
-  connect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnChannelComboBoxChanged);
-  connect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
-  connect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
-  connect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
-  connect(m_uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
+  connect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnChannelComboBoxChanged);
+  connect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
+  connect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked);
+  connect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnDeviceComboBoxChanged);
+  connect(m_uiUpdateTimer, &QTimer::timeout, this, &PLUSOpenCVExampleMainWindow::OnUpdateTimerTimeout);
 
   m_uiUpdateTimer->start(16);
   OnDeviceComboBoxChanged(0);
 }
 
 //----------------------------------------------------------------------------
-OpenCVTestBedMainWindow::~OpenCVTestBedMainWindow()
+PLUSOpenCVExampleMainWindow::~PLUSOpenCVExampleMainWindow()
 {
-  disconnect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnChannelComboBoxChanged);
-  disconnect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked);
-  disconnect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &OpenCVTestBedMainWindow::OnStartStopButtonClicked);
-  disconnect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OpenCVTestBedMainWindow::OnDeviceComboBoxChanged);
-  disconnect(m_uiUpdateTimer, &QTimer::timeout, this, &OpenCVTestBedMainWindow::OnUpdateTimerTimeout);
+  disconnect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnChannelComboBoxChanged);
+  disconnect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
+  disconnect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked);
+  disconnect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnDeviceComboBoxChanged);
+  disconnect(m_uiUpdateTimer, &QTimer::timeout, this, &PLUSOpenCVExampleMainWindow::OnUpdateTimerTimeout);
   delete m_uiUpdateTimer;
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::CreateActions()
+void PLUSOpenCVExampleMainWindow::CreateActions()
 {
   m_exitAction = new QAction(tr("E&xit"), this);
   m_exitAction->setShortcuts(QKeySequence::Quit);
@@ -175,7 +175,7 @@ void OpenCVTestBedMainWindow::CreateActions()
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::PopulateChannelList()
+void PLUSOpenCVExampleMainWindow::PopulateChannelList()
 {
   mainWindow.comboBox_channel->clear();
   if (m_dataCollector != nullptr && m_dataCollector->IsStarted())
@@ -191,7 +191,7 @@ void OpenCVTestBedMainWindow::PopulateChannelList()
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::OnUpdateTimerTimeout()
+void PLUSOpenCVExampleMainWindow::OnUpdateTimerTimeout()
 {
   if (m_currentChannel != nullptr)
   {
@@ -209,19 +209,19 @@ void OpenCVTestBedMainWindow::OnUpdateTimerTimeout()
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::AboutApp()
+void PLUSOpenCVExampleMainWindow::AboutApp()
 {
-  QMessageBox::about(this, tr("About OpenCVTestBed"), tr("This application is for developers to prototype OpenCV, PLUS, & C++ features:\nAdam Rankin\narankin@robarts.ca"));
+  QMessageBox::about(this, tr("About PLUSOpenCVExample"), tr("This application is for developers to prototype OpenCV, PLUS, & C++ features:\nAdam Rankin\narankin@robarts.ca"));
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::AboutRobarts()
+void PLUSOpenCVExampleMainWindow::AboutRobarts()
 {
   QMessageBox::about(this, tr("About Robarts Research Institute"), tr("Robarts Research Institute\nLondon, Ontario\nCanada, N6A 5K8"));
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::OnDeviceComboBoxChanged(int deviceId)
+void PLUSOpenCVExampleMainWindow::OnDeviceComboBoxChanged(int deviceId)
 {
   mainWindow.pushButton_startStop->setEnabled(false);
   mainWindow.pushButton_startStop->setText(tr("Start"));
@@ -261,7 +261,7 @@ void OpenCVTestBedMainWindow::OnDeviceComboBoxChanged(int deviceId)
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::OnChannelComboBoxChanged(int index)
+void PLUSOpenCVExampleMainWindow::OnChannelComboBoxChanged(int index)
 {
   m_currentChannel = nullptr;
 
@@ -288,7 +288,7 @@ void OpenCVTestBedMainWindow::OnChannelComboBoxChanged(int index)
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
+void PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked()
 {
   m_currentChannel = nullptr;
 
@@ -305,10 +305,12 @@ void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
     m_videoDevice->SetRequestedDeviceId(mainWindow.comboBox_device->currentIndex());
     auto streamIndex = mainWindow.comboBox_stream->currentData().toUInt() >> 16;
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
-    m_videoDevice->SetRequestedStreamIndex(streamIndex);
-    m_videoDevice->SetRequestedFormatIndex(formatIndex);
-
     auto mediaType = MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetDevice(mainWindow.comboBox_device->currentIndex())->GetFormat(streamIndex, formatIndex);
+    m_videoDevice->SetRequestedStreamIndex(streamIndex);
+    m_videoDevice->SetRequestedFrameSize(mediaType.width, mediaType.height);
+    m_videoDevice->SetRequestedVideoFormat(mediaType.MF_MT_SUBTYPEName);
+    m_videoDevice->SetAcquisitionRate(1.0 * mediaType.MF_MT_FRAME_RATE);
+
     vtkPlusDataSource* source = vtkPlusDataSource::New();
     source->SetSourceId("videoSource");
     source->SetInputFrameSize(mediaType.width, mediaType.height, 1U);
@@ -359,7 +361,7 @@ void OpenCVTestBedMainWindow::OnStartStopButtonClicked()
 }
 
 //----------------------------------------------------------------------------
-void OpenCVTestBedMainWindow::OnConnectToDevicesByConfigFileInvoked(std::string configFile)
+void PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked(std::string configFile)
 {
   m_currentChannel = nullptr;
   mainWindow.pushButton_startStop->setEnabled(false);

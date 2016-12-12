@@ -1,4 +1,4 @@
-PROJECT(OpenCVTestBed)
+PROJECT(PLUSOpenCVExample)
 
 FIND_PACKAGE(PlusApp REQUIRED)
 FIND_PACKAGE(PlusLib REQUIRED)
@@ -11,9 +11,9 @@ ENDIF()
 
 ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_APPTYPE}
   main.cpp
-  OpenCVTestBedMainWindow.h
-  OpenCVTestBedMainWindow.cpp
-  OpenCVTestBedMainWindow.ui
+  PLUSOpenCVExampleMainWindow.h
+  PLUSOpenCVExampleMainWindow.cpp
+  PLUSOpenCVExampleMainWindow.ui
   ${PlusApp_CommonWidgets_QRC}
 )
 

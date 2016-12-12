@@ -20,11 +20,11 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ====================================================================*/
 
-#ifndef __OpenCVTestBedMainWindow_H__
-#define __OpenCVTestBedMainWindow_H__
+#ifndef __PLUSOpenCVExampleMainWindow_H__
+#define __PLUSOpenCVExampleMainWindow_H__
 
 // Local includes
-#include "ui_OpenCVTestBedMainWindow.h"
+#include "ui_PLUSOpenCVExampleMainWindow.h"
 
 // QT includes
 #include <QMainWindow>
@@ -44,13 +44,13 @@ class vtkPlusDataCollector;
 class vtkPlusMmfVideoSource;
 class vtkPlusTrackedFrameList;
 
-class OpenCVTestBedMainWindow : public QMainWindow
+class PLUSOpenCVExampleMainWindow : public QMainWindow
 {
   Q_OBJECT
 
 public:
-  OpenCVTestBedMainWindow();
-  ~OpenCVTestBedMainWindow();
+  PLUSOpenCVExampleMainWindow();
+  ~PLUSOpenCVExampleMainWindow();
 
 protected slots:
   void OnUpdateTimerTimeout();
