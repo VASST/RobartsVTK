@@ -61,3 +61,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
   opencv_imgproc
   opencv_videoio
   )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  KERNEL_CL_LOCATION="${CMAKE_CURRENT_SOURCE_DIR}/kernels.cl"
+  )

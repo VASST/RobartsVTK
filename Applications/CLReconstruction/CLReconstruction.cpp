@@ -130,7 +130,7 @@ int main()
                            -0.0069f, 0.0753f, 0.1568f, 1.0670f
                          };
 
-  recon->SetProgramSourcePath("kernels.cl");
+  recon->SetProgramSourcePath(KERNEL_CL_LOCATION);
   recon->SetBScanSize(820, 616);
   recon->SetBScanSpacing(0.077, 0.073);
 
@@ -154,7 +154,7 @@ int main()
 
   recon->StartReconstruction();
 
-  std::cout << "vtkCLReconstruction initialized. " << std::endl;
+  std::cout << "vtkCLReconstruction initialized." << std::endl;
 
   // Meta image writer
   vtkSmartPointer< vtkMetaImageWriter > writer = vtkSmartPointer< vtkMetaImageWriter >::New();
