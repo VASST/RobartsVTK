@@ -13,7 +13,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkImagingCore
   vtkInteractionWidgets
   vtkIOImage
+  vtksys
   vtkCommonCore
   vtkCudaCommon
   vtkCudaVisualization
+  )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  DEFAULT_VISUALIZATION_SEQ_FILE="${RobartsVTK_Data_DIR}/Sequences/3DUS.mha"
   )

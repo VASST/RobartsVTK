@@ -26,9 +26,14 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
   vtkRobartsVisualization
   ${OPENGL_LIBRARIES}
   vtkIOImage
+  vtksys
   vtkFiltersTexture
   opencv_core
   opencv_imgproc
   opencv_videoio
   opencv_imgcodecs
+  )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  DEFAULT_BACKGROUND_FILE="${RobartsVTK_Data_DIR}/Images/container.jpg"
+  DEFAULT_MASK_FILE="${RobartsVTK_Data_DIR}/Images/mask_2.png"
   )

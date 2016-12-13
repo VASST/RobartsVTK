@@ -90,7 +90,7 @@ public:
   void ReleaseDevices();
 
   /* Set program_src */
-  void SetProgramSourcePath(char*);
+  void SetProgramSourcePath(const std::string& fileName);
 
   /* Set BScan width and Height */
   void SetBScanSize(int, int);
@@ -145,7 +145,7 @@ protected:
 
 protected:
   /* Utility functions */
-  char* FileToString(const char*, const char*, size_t*);
+  std::string FileToString(const std::string& fileName, const std::string& header = "");
 
   /* creates the OpenCL kernel given the device */
   cl_kernel OpenCLKernelBuild(cl_program, cl_device_id, char*);
@@ -252,7 +252,7 @@ protected:
   int device_index;
 
   /* Path to the CL Program source */
-  char* program_src;
+  std::string program_src;
 
   /* Private Constants */
   static const int BSCAN_WINDOW = 4; // must be >= 4 if PT
