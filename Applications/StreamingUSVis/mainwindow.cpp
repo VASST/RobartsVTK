@@ -229,7 +229,7 @@ int MainWindow::InitPLUSBypassPipeline()
                            -0.0069f,    0.0753f,    0.1568f,    1.0670f
                          };
 
-  acceleratedVolumeReconstructor->SetProgramSourcePath("kernels.cl");
+  acceleratedVolumeReconstructor->SetProgramSourcePath(KERNEL_CL_LOCATION);
   acceleratedVolumeReconstructor->SetBScanSize(820, 616);
   acceleratedVolumeReconstructor->SetBScanSpacing(0.077, 0.073);
 

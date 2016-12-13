@@ -94,7 +94,6 @@ public:
 
     if (repository->SetTransforms(*trackedFrame) != PLUS_SUCCESS)
     {
-
       LOG_ERROR("Failed to update transform repository with tracked frame!");
       return;
     }
@@ -103,7 +102,6 @@ public:
     bool isMatrixValid;
     if (repository->GetTransform(transformName, tFrame2Tracker, &isMatrixValid) != PLUS_SUCCESS)
     {
-
       std::string strImageToReferenceTransformName;
       transformName.GetTransformName(strImageToReferenceTransformName);
 
@@ -138,18 +136,18 @@ private:
   int idx = 0;
 
 public:
-  vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList;
-  vtkSmartPointer< vtkPlusTransformRepository > repository;
-  vtkSmartPointer< vtkCLVolumeReconstruction > reconstructor;
-  vtkSmartPointer< vtkCuda1DVolumeMapper > cudaMapper;
-  vtkSmartPointer< vtkVolume > usVolume;
-  vtkSmartPointer< vtkRenderer > ren;
-  vtkSmartPointer< vtkRenderWindow > renwin;
-  vtkSmartPointer < vtkImageData > outputVolume;
+  vtkSmartPointer<vtkPlusTrackedFrameList> trackedFrameList;
+  vtkSmartPointer<vtkPlusTransformRepository> repository;
+  vtkSmartPointer<vtkCLVolumeReconstruction> reconstructor;
+  vtkSmartPointer<vtkCuda1DVolumeMapper> cudaMapper;
+  vtkSmartPointer<vtkVolume> usVolume;
+  vtkSmartPointer<vtkRenderer> ren;
+  vtkSmartPointer<vtkRenderWindow> renwin;
+  vtkSmartPointer<vtkImageData> outputVolume;
   PlusTransformName transformName;
-  vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker;
-  vtkSmartPointer< vtkTransform > imagePose;
-  vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper;
+  vtkSmartPointer<vtkMatrix4x4> tFrame2Tracker;
+  vtkSmartPointer<vtkTransform> imagePose;
+  vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper;
 };
 
 // This is for timing.
@@ -208,19 +206,16 @@ int main()
   }
 
   std::string errorDetail;
-  /* Set output Extent from the input data. During streaming a sout scan may be necessary to set the output
-  extent. */
+  /* Set output Extent from the input data. During streaming a scout scan may be necessary to set the output extent. */
   if (volumeReconstructor->SetOutputExtentFromFrameList(trackedFrameList, repository, errorDetail) != PLUS_SUCCESS)
   {
     LOG_ERROR("Setting up Output Extent from FrameList:" + errorDetail);
     exit(EXIT_FAILURE);
   }
 
-
   // Create vtkCLVolumeReconstructor
   vtkSmartPointer< vtkCLVolumeReconstruction > recon = vtkSmartPointer< vtkCLVolumeReconstruction >::New();
   recon->SetDevice(0);
-
 
   // calibration matrix
   float us_cal_mat[12] = { 0.0727f, 0.0076f, -0.0262f, -12.6030f,
@@ -228,7 +223,7 @@ int main()
                            -0.0069f, 0.0753f, 0.1568f, 1.0670f
                          };
 
-  recon->SetProgramSourcePath("kernels.cl");
+  recon->SetProgramSourcePath(KERNEL_CL_LOCATION);
   recon->SetBScanSize(820, 616);
   recon->SetBScanSpacing(0.077, 0.073);
 
@@ -255,7 +250,6 @@ int main()
   recon->SetImagePoseTransform(pose);
 
   std::cout << "vtkCLReconstruction initialized. " << std::endl;
-
 
   // Meta image writer
   vtkSmartPointer< vtkMetaImageWriter > writer = vtkSmartPointer< vtkMetaImageWriter >::New();
@@ -328,11 +322,9 @@ int main()
   cam->SetFocalPoint(0, 0, 10);
   cam->SetViewUp(0, -1, 0);
 
-
   vtkSmartPointer< vtkRenderWindow > renwin = vtkSmartPointer< vtkRenderWindow >::New();
   renwin->SetSize(win_size);
   renwin->AddRenderer(ren);
-
 
   vtkSmartPointer< vtkTimerCallback > callback = vtkSmartPointer< vtkTimerCallback >::New();
   callback->trackedFrameList = trackedFrameList;
@@ -366,11 +358,9 @@ int main()
   return 0;
 }
 
-
 int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTransformRepository* repository, double spacing,
                                 int* outputExtent, double* origin)
 {
-
   PlusTransformName imageToReferenceTransformName;
   imageToReferenceTransformName = PlusTransformName("Image", "Tracker");
 
@@ -382,14 +372,12 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
 
   if (frameList->GetNumberOfTrackedFrames() == 0)
   {
-
     LOG_ERROR("Failed to set output extent from tracked frame list - input frame list is empty");
     return -1;
   }
 
   if (repository == NULL)
   {
-
     LOG_ERROR("Failed to set output extent from tracked frame list - input transform repository is NULL");
     return -1;
   }
@@ -405,12 +393,10 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
   int numberOfValidFrames = 0;
   for (int frameIndex = 0; frameIndex < numberOfFrames; ++frameIndex)
   {
-
     PlusTrackedFrame* frame = frameList->GetTrackedFrame(frameIndex);
 
     if (repository->SetTransforms(*frame) != PLUS_SUCCESS)
     {
-
       LOG_ERROR("Failed to update transform repository with tracked frame!");
       continue;
     }
@@ -420,7 +406,6 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
     vtkSmartPointer<vtkMatrix4x4> imageToReferenceTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
     if (repository->GetTransform(imageToReferenceTransformName, imageToReferenceTransformMatrix, &isMatrixValid) != PLUS_SUCCESS)
     {
-
       std::string strImageToReferenceTransformName;
       imageToReferenceTransformName.GetTransformName(strImageToReferenceTransformName);
 
@@ -458,7 +443,6 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
       // Transform the corners to Reference and expand the extent if needed
       for (unsigned int corner = 0; corner < corners_ImagePix.size(); ++corner)
       {
-
         double corner_Ref[4] = { 0, 0, 0, 1 }; // position of the corner in the Reference coordinate system
         imageToReferenceTransformMatrix->MultiplyPoint(corners_ImagePix[corner], corner_Ref);
 
@@ -472,16 +456,13 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
 
           if (corner_Ref[axis] > extent_Ref[axis * 2 + 1])
           {
-
             // max extent along this coord axis has to be increased
             extent_Ref[axis * 2 + 1] = corner_Ref[axis];
           }
         }
       }
-
     }
   }
-
 
   // Set the output extent from the current min and max values, using the user-defined image resolution.
   outputExtent[1] = int((extent_Ref[1] - extent_Ref[0]) / spacing);
