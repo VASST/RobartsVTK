@@ -94,7 +94,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
   , pose_data(nullptr)
   , timestamp(0.f)
   , device_index(0)
-  , program_src(nullptr)
+  , program_src("")
   , dev_intersections(nullptr)
   , dev_volume(nullptr)
   , dev_x_vector_queue(nullptr)
@@ -109,7 +109,6 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
   , bscan_timetags(nullptr)
   , calibration_matrix(nullptr)
 {
-  size_t temp;
   device_index = 0;
 
   volume_origin = {0.f, 0.f, 0.f};
@@ -117,7 +116,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 
   // KERNEL_CL_LOCATION is populated by CMake as a target definition
   //  in Visual Studio, see Project Properties -> C/C++ -> Preprocessor
-  program_src = FileToString(KERNEL_CL_LOCATION, "", &temp);
+  program_src = FileToString(KERNEL_CL_LOCATION);
 
   // Default value for cal_matrix is identity matrix
   calibration_matrix = (float*)malloc(sizeof(float) * 16);
@@ -314,8 +313,12 @@ void vtkCLVolumeReconstruction::Initialize()
     throw std::exception(ss.str().c_str());
   }
 
+  char* program_src_c = new char[program_src.length() + 1];
+  memcpy(program_src_c, program_src.c_str(), program_src.length());
+  program_src_c[program_src.length()] = '\0';
   // Create CL Program
-  program = clCreateProgramWithSource(context, 1, (const char**)&program_src, 0, &err);
+  program = clCreateProgramWithSource(context, 1, (const char**) & program_src_c, 0, &err);
+  delete[] program_src_c;
 
 #ifdef KERNEL_DEBUG
   std::stringstream ss;
@@ -453,10 +456,9 @@ void vtkCLVolumeReconstruction::PrintInfo()
 }
 
 //----------------------------------------------------------------------------
-void vtkCLVolumeReconstruction::SetProgramSourcePath(char* path)
+void vtkCLVolumeReconstruction::SetProgramSourcePath(const std::string& fileName)
 {
-  size_t temp;
-  this->program_src = FileToString(path, "", &temp);
+  this->program_src = FileToString(fileName);
 }
 
 //----------------------------------------------------------------------------
@@ -636,43 +638,19 @@ void vtkCLVolumeReconstruction::GetSpacing(double spacing[3]) const
 }
 
 //----------------------------------------------------------------------------
-char* vtkCLVolumeReconstruction::FileToString(const char* filename, const char* preamble, size_t* final_length)
+std::string vtkCLVolumeReconstruction::FileToString(const std::string& filename, const std::string& preamble)
 {
-  FILE* file_stream = NULL;
-  size_t source_length;
-
-  // open the OpenCL source code file
   std::ifstream inputFile = std::ifstream(filename, std::ios::in | std::ios::binary);
   if (!inputFile.is_open())
   {
     return nullptr;
   }
 
-  size_t preamble_length = strlen(preamble);
-
-  // get the length of the source code
-  inputFile.seekg(std::ios::end);
-  source_length = inputFile.tellg();
-  inputFile.seekg(std::ios::beg);
-
-  // allocate a buffer for the source code string and read it in
-  char* source_str = (char*)malloc(source_length + preamble_length + 1);
-  memcpy(source_str, preamble, preamble_length);
-  inputFile.read(source_str + preamble_length, source_length);
-  if (inputFile.bad())
-  {
-    return nullptr;
-  }
-
-  // close the file and return the total length of the combined (preamble + source) string
+  std::string file_contents((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
+  file_contents.insert(0, preamble);
   inputFile.close();
-  if (final_length != 0)
-  {
-    *final_length = source_length + preamble_length;
-  }
-  source_str[source_length + preamble_length] = '\0';
 
-  return source_str;
+  return file_contents;
 }
 
 //----------------------------------------------------------------------------
@@ -765,7 +743,6 @@ void vtkCLVolumeReconstruction::OpenCLCheckError(int err, char* info)
 //----------------------------------------------------------------------------
 int vtkCLVolumeReconstruction::ShiftQueues()
 {
-
   // Shift it to left
   for (int i = 0; i < BSCAN_WINDOW - 1; i++)
   {

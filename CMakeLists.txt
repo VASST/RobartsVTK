@@ -72,8 +72,6 @@ MARK_AS_ADVANCED(CMAKE_RUNTIME_OUTPUT_DIRECTORY
   CMAKE_ARCHIVE_OUTPUT_DIRECTORY
   )
 
-SET(RobartsVTK_DATA_DIR ${CMAKE_SOURCE_DIR}/Data CACHE PATH "Location of the data directory.")
-
 #-----------------------------------------------------------------------------
 # Add configure file to included directories
 #-----------------------------------------------------------------------------
@@ -192,7 +190,6 @@ SET(RobartsVTK_Export_Template ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKExport.h.in
 #-----------------------------------------------------------------------------
 # PLUS configuration (optional)
 #-----------------------------------------------------------------------------
-OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
 IF(RobartsVTK_USE_PLUS)
     # PlusLib has been built already
   FIND_PACKAGE(PlusLib REQUIRED NO_MODULE)

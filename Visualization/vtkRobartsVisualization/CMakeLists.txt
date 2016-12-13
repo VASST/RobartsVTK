@@ -46,4 +46,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   vtkRendering${VTK_RENDERING_BACKEND}
   )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  SHADER_DIRECTORY="${CMAKE_SOURCE_DIR}/Visualization/Shaders/"
+  )
 GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})

@@ -31,16 +31,19 @@ THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 =========================================================================*/
 
+// STL includes
 #include <iostream>
 #include <string>
-
-// For timing
-#include <Windows.h>
-#include <stdint.h>
 #include <chrono>
 
-// Use PLUS just to read data from sequence meta file
+// PLUS includes
 #include <PlusTrackedFrame.h>
+#include <vtkPlusSequenceIO.h>
+#include <vtkPlusTrackedFrameList.h>
+#include <vtkPlusTransformRepository.h>
+#include <vtkPlusVolumeReconstructor.h>
+
+// VTK includes
 #include <vtkCamera.h>
 #include <vtkColorTransferFunction.h>
 #include <vtkCommand.h>
@@ -50,11 +53,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkMetaImageReader.h>
 #include <vtkMetaImageWriter.h>
 #include <vtkPiecewiseFunction.h>
-#include <vtkPlusSequenceIO.h>
-#include <vtkPlusTrackedFrameList.h>
-#include <vtkPlusTransformRepository.h>
-#include <vtkPlusVolumeReconstructor.h> // Use PLUS volume reconstructor for comparison purposes.
-#include <vtkRenderWindow.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
@@ -63,13 +61,14 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkTransform.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
+#include <vtksys/CommandLineArguments.hxx>
 
+// RobartsVTK includes
 #include <vtkCLVolumeReconstruction.h>
 #include <vtkCuda1DVolumeMapper.h>
 
 /* Sets output extent and origin from a vtkTrackedFrameList */
-int get_extent_from_trackedList(vtkPlusTrackedFrameList*, vtkPlusTransformRepository*,
-                                double spacing, int*, double*);
+bool get_extent_from_trackedList(vtkPlusTrackedFrameList*, vtkPlusTransformRepository*, double spacing, int*, double*);
 
 class vtkTimerCallback : public vtkCommand
 {
@@ -127,9 +126,9 @@ public:
     idx++;
 
     auto t_end = std::chrono::high_resolution_clock::now();
-    std::cout << "Elapsed time (Reconstruction + Rendering ) : "
+    LOG_DEBUG("Elapsed time (Reconstruction + Rendering ) : "
               << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()
-              << " us." << std::endl;
+              << " us.");
   }
 
 private:
@@ -150,55 +149,66 @@ public:
   vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper;
 };
 
-// This is for timing.
-int gettimeofday(struct timeval* tp)
+int main(int argc, char** argv)
 {
-  // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
-  static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+  std::string inputConfigFileName;
+  std::string reconCompareFileName;
+  std::string visualizationFileName;
 
-  SYSTEMTIME  system_time;
-  FILETIME    file_time;
-  uint64_t    time;
+  int verboseLevel = vtkPlusLogger::LOG_LEVEL_INFO;
 
-  GetSystemTime(&system_time);
-  SystemTimeToFileTime(&system_time, &file_time);
-  time = ((uint64_t)file_time.dwLowDateTime);
-  time += ((uint64_t)file_time.dwHighDateTime) << 32;
+  vtksys::CommandLineArguments args;
+  args.Initialize(argc, argv);
 
-  tp->tv_sec = (long)((time - EPOCH) / 10000000L);
-  tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
-  return 0;
-}
+  args.AddArgument("--config-file", vtksys::CommandLineArguments::EQUAL_ARGUMENT, &inputConfigFileName, "Name of the input configuration file.");
+  args.AddArgument("--recon-compare-seq-file", vtksys::CommandLineArguments::EQUAL_ARGUMENT, &reconCompareFileName, "Filename of the video sequence to use for reconstruction comparison");
+  args.AddArgument("--visualization-seq-file", vtksys::CommandLineArguments::EQUAL_ARGUMENT, &visualizationFileName, "Filename of the video sequence to use for reconstruction comparison");
+  args.AddArgument("--verbose", vtksys::CommandLineArguments::EQUAL_ARGUMENT, &verboseLevel, "Verbose level (1=error only, 2=warning, 3=info, 4=debug, 5=trace)");
 
-int main()
-{
-  // Read in Data
-  vtkSmartPointer< vtkPlusTrackedFrameList > trackedFrameList = vtkSmartPointer< vtkPlusTrackedFrameList >::New();
-  // Read Sequence Meta file in the tracked framelist
-  vtkPlusSequenceIO::Read(std::string("tracked_us_video.mha"), trackedFrameList);
+  // Input arguments error checking
+  if (!args.Parse())
+  {
+    std::cerr << "Problem parsing arguments" << std::endl;
+    std::cout << "Help: " << args.GetHelp() << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  if (inputConfigFileName.empty())
+  {
+    inputConfigFileName = DEFAULT_CONFIG_FILE;
+  }
+  if (reconCompareFileName.empty())
+  {
+    reconCompareFileName = DEFAULT_RECON_SEQ_FILE;
+  }
+  if (visualizationFileName.empty())
+  {
+    visualizationFileName = DEFAULT_VISUALIZATION_SEQ_FILE;
+  }
+
+  // Read Sequence Meta file in the tracked frame list
+  vtkSmartPointer<vtkPlusTrackedFrameList> trackedFrameList = vtkSmartPointer<vtkPlusTrackedFrameList>::New();
+  vtkPlusSequenceIO::Read(reconCompareFileName, trackedFrameList);
   PlusTransformName transformName = PlusTransformName("Probe", "Tracker");
-  vtkSmartPointer< vtkMatrix4x4 > tFrame2Tracker = vtkSmartPointer< vtkMatrix4x4 >::New();
+  vtkSmartPointer<vtkMatrix4x4> tFrame2Tracker = vtkSmartPointer<vtkMatrix4x4>::New();
 
   // Initialize PLUS VolumeReconstructor
-  std::string inputConfigFileName = "config.xml";
-  vtkSmartPointer< vtkXMLDataElement> configRootElement = vtkSmartPointer< vtkXMLDataElement >::New();
+  vtkSmartPointer<vtkXMLDataElement> configRootElement = vtkSmartPointer<vtkXMLDataElement>::New();
   if (PlusXmlUtils::ReadDeviceSetConfigurationFromFile(configRootElement, inputConfigFileName.c_str()) == PLUS_FAIL)
   {
     LOG_ERROR("Unable to read configuration from file " << inputConfigFileName.c_str());
     return EXIT_FAILURE;
   }
 
-  vtkSmartPointer< vtkPlusVolumeReconstructor > volumeReconstructor = vtkSmartPointer< vtkPlusVolumeReconstructor >::New();
+  vtkSmartPointer<vtkPlusVolumeReconstructor> volumeReconstructor = vtkSmartPointer<vtkPlusVolumeReconstructor>::New();
 
-  vtkSmartPointer< vtkPlusTransformRepository > repository = vtkSmartPointer< vtkPlusTransformRepository >::New();
-  /* Read Coordinate system definitions from XML data */
+  vtkSmartPointer<vtkPlusTransformRepository> repository = vtkSmartPointer<vtkPlusTransformRepository>::New();
   if (repository->ReadConfiguration(configRootElement) != PLUS_SUCCESS)
   {
     LOG_ERROR("Configuration incorrect for vtkTransformRepository.");
     exit(EXIT_FAILURE);
   }
 
-  /* Read Coordinate system definitions from XML data */
   if (volumeReconstructor->ReadConfiguration(configRootElement) != PLUS_SUCCESS)
   {
     LOG_ERROR("Configuration incorrect for vtkTransformRepository.");
@@ -249,7 +259,7 @@ int main()
   vtkTransform* pose = vtkTransform::New();
   recon->SetImagePoseTransform(pose);
 
-  std::cout << "vtkCLReconstruction initialized. " << std::endl;
+  LOG_DEBUG("vtkCLReconstruction initialized.");
 
   // Meta image writer
   vtkSmartPointer< vtkMetaImageWriter > writer = vtkSmartPointer< vtkMetaImageWriter >::New();
@@ -272,7 +282,7 @@ int main()
 
   // Set-up visualization pipeline
   vtkMetaImageReader* reader = vtkMetaImageReader::New();
-  reader->SetFileName("3DUS.mhd");
+  reader->SetFileName(visualizationFileName.c_str());
   reader->Update();
 
   //outputVolume->DeepCopy(reader->GetOutput());
@@ -358,8 +368,7 @@ int main()
   return 0;
 }
 
-int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTransformRepository* repository, double spacing,
-                                int* outputExtent, double* origin)
+bool get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTransformRepository* repository, double spacing, int* outputExtent, double* origin)
 {
   PlusTransformName imageToReferenceTransformName;
   imageToReferenceTransformName = PlusTransformName("Image", "Tracker");
@@ -367,19 +376,19 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
   if (frameList == NULL)
   {
     LOG_ERROR("Failed to set output extent from tracked frame list - input frame list is NULL");
-    return -1;
+    return false;
   }
 
   if (frameList->GetNumberOfTrackedFrames() == 0)
   {
     LOG_ERROR("Failed to set output extent from tracked frame list - input frame list is empty");
-    return -1;
+    return false;
   }
 
   if (repository == NULL)
   {
     LOG_ERROR("Failed to set output extent from tracked frame list - input transform repository is NULL");
-    return -1;
+    return false;
   }
 
   double extent_Ref[6] =
@@ -473,5 +482,5 @@ int get_extent_from_trackedList(vtkPlusTrackedFrameList* frameList, vtkPlusTrans
   origin[1] = extent_Ref[2];
   origin[2] = extent_Ref[4];
 
-  return 0;
+  return true;
 }
