@@ -349,8 +349,6 @@ void PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked()
     m_dataCollector->Stop();
     m_dataCollector->Disconnect();
     m_dataCollector = vtkSmartPointer<vtkPlusDataCollector>::New();
-    source->Delete();
-    channel->Delete();
     mainWindow.pushButton_startStop->setText(tr("Start"));
     m_deviceSetSelectorWidget->setEnabled(true);
     mainWindow.comboBox_channel->setEnabled(true);
