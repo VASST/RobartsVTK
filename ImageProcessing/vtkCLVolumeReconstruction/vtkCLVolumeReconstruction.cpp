@@ -313,8 +313,12 @@ void vtkCLVolumeReconstruction::Initialize()
     throw std::exception(ss.str().c_str());
   }
 
+  char* program_src_c = new char[program_src.length() + 1];
+  memcpy(program_src_c, program_src.c_str(), program_src.length());
+  program_src_c[program_src.length()] = '\0';
   // Create CL Program
-  program = clCreateProgramWithSource(context, 1, (const char**)&program_src, 0, &err);
+  program = clCreateProgramWithSource(context, 1, (const char**) & program_src_c, 0, &err);
+  delete[] program_src_c;
 
 #ifdef KERNEL_DEBUG
   std::stringstream ss;
