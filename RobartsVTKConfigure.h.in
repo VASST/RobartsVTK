@@ -22,7 +22,6 @@
 #endif
 
 #cmakedefine BUILD_SHARED_LIBS
-#define RobartsVTK_DATA_DIR "@RobartsVTK_DATA_DIR@"
 
 #ifndef BUILD_SHARED_LIBS
   #define RobartsVTK_STATIC
