@@ -502,6 +502,17 @@ CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/RobartsVTKConfigure.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfigure.h
   )
+IF(WIN32)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/BuildAndTest.bat.in
+    ${CMAKE_CURRENT_BINARY_DIR}/BuildAndTest.bat
+    )
+ELSE()
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/BuildAndTest.sh.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/BuildAndTest.sh
+    )
+ENDIF()
 
 #-----------------------------------------------------------------------------
 # Exports
