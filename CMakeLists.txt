@@ -1,6 +1,8 @@
 PROJECT(RobartsVTK)
 
+#-----------------------------------------------------------------------------
 # CMake version requirements
+#-----------------------------------------------------------------------------
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 cmake_policy(SET CMP0003 NEW)
 
@@ -18,7 +20,9 @@ ENDIF()
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/RobartsCommon.cmake)
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
 
+#-----------------------------------------------------------------------------
 # Options
+#-----------------------------------------------------------------------------
 OPTION(RobartsVTK_USE_QT "Build with QT enabled" OFF)
 OPTION(RobartsVTK_USE_ITK "Use ITK in RobartsITK" OFF)
 OPTION(RobartsVTK_USE_PLUS "Use the PLUSToolkit for data collection." OFF)
