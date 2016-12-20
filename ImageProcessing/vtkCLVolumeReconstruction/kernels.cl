@@ -328,36 +328,39 @@ __kernel void adv_fill_voxels(__global float4 * intersections,
 						for (int n = 0; n < BSCAN_WINDOW; n++) {
 							int q_idx = n;
 
-							float4 normal = {bscan_plane_equation_queue[q_idx].x, bscan_plane_equation_queue[q_idx].y, bscan_plane_equation_queue[q_idx].z, 0};
+							float4 normal = { bscan_plane_equation_queue[q_idx].x, bscan_plane_equation_queue[q_idx].y, bscan_plane_equation_queue[q_idx].z, 0 };
 
-							float dist0 = fabs(distance_pp(voxel_coord, bscan_plane_equation_queue[q_idx]));
+								float dist0 = fabs(distance_pp(voxel_coord, bscan_plane_equation_queue[q_idx]));
 							float4 p0 = voxel_coord + -dist0*normal - plane_points_queue[q_idx].corner0;
-							float px0 = dot(p0, x_vector_queue[q_idx])/bscan_spacing_x;
-							float py0 = dot(p0, y_vector_queue[q_idx])/bscan_spacing_y;
-							float xa = px0-floor(px0);
-							float ya = py0-floor(py0);
+								float px0 = dot(p0, x_vector_queue[q_idx]) / bscan_spacing_x;
+							float py0 = dot(p0, y_vector_queue[q_idx]) / bscan_spacing_y;
+							float xa = px0 - floor(px0);
+							float ya = py0 - floor(py0);
 							int xa0 = (int)px0;
 							int ya0 = (int)py0;
 
 							bool valid0 = false;
-							
-							if (inrange(xa0, 0, bscan_w) && inrange(ya0, 0, bscan_h) && inrange(xa0+1, 0, bscan_w) && inrange(ya0+1, 0, bscan_h)) {
-								if (mask[xa0 + ya0*bscan_w] != 0 && mask[xa0+1 + (ya0+1)*bscan_w] != 0 && mask[xa0+1 + ya0*bscan_w] != 0 && mask[xa0 + (ya0+1)*bscan_w] != 0) {
-									bilinears[n] = bscans_queue_a(q_idx,xa0,ya0)*(1-xa)*(1-ya) + bscans_queue_a(q_idx,xa0+1,ya0)*xa*(1-ya) + bscans_queue_a(q_idx,xa0,ya0+1)*(1-xa)*ya + bscans_queue_a(q_idx,xa0+1,ya0+1)*xa*ya;
+
+							if (inrange(xa0, 0, bscan_w) && inrange(ya0, 0, bscan_h) && inrange(xa0 + 1, 0, bscan_w) && inrange(ya0 + 1, 0, bscan_h)) {
+								if (mask[xa0 + ya0*bscan_w] != 0 && mask[xa0 + 1 + (ya0 + 1)*bscan_w] != 0 && mask[xa0 + 1 + ya0*bscan_w] != 0 && mask[xa0 + (ya0 + 1)*bscan_w] != 0) {
+									bilinears[n] = bscans_queue_a(q_idx, xa0, ya0)*(1 - xa)*(1 - ya) + bscans_queue_a(q_idx, xa0 + 1, ya0)*xa*(1 - ya) + bscans_queue_a(q_idx, xa0, ya0 + 1)*(1 - xa)*ya + bscans_queue_a(q_idx, xa0 + 1, ya0 + 1)*xa*ya;
 									valid0 = true;
 								}
 							}
 
 							valid &= valid0;
 							dists[n] = dist0;
+							if (dist0 == 0)
+								continue;
 
-							G += 1/dists[n];
-							contribution += bilinears[n]/dists[n];	
+							G += 1 / dists[n];
+							contribution += bilinears[n] / dists[n];
 						}
 
 						if (!valid) continue;
 
-						contribution /= G;
+						if (G != 0)
+							contribution /= G;
 						
 					} else { // PT
 						// Find virtual plane time stamp:
@@ -490,7 +493,11 @@ __kernel void trace_intersections(__global float4 * intersections,
 		float Vd = dot(Pn, Rd);
 		float V0 = -(dot(Pn, R0) + bscan_plane_equation_queue[i].w);
 		float t = V0/Vd;
-		if (Vd == 0) invalid = true;
+		if (Vd == 0)
+		{
+			invalid = true;
+			continue;
+		}
 
 		float4 intersection = R0 + t*Rd;
 		intersections[n*2 + f] = intersection;
