@@ -237,25 +237,33 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
         // Discard the first actor
         props->GetNextProp();
       }
-      else if (i == 1)
-      {
-        vtkActor* foregroundActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
-        this->ForegroundTexture = foregroundActor->GetTexture();
+	  else if (i == 1)
+	  {
+		  vtkActor* foregroundActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
+		  this->ForegroundTexture = foregroundActor->GetTexture();
 
 
-        imgData = this->ForegroundTexture->GetInput();
+		  imgData = this->ForegroundTexture->GetInput();
+		  imgData->GetDimensions(img_size);
 
-        imgData->GetDimensions(img_size);
-        this->components = imgData->GetNumberOfScalarComponents();
-        dataPtr = (unsigned char*)imgData->GetScalarPointer();
+		  if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] >0) // If texture is initialized
+		  {
+			  this->components = imgData->GetNumberOfScalarComponents();
+			  dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-        this->dimensions[0] = img_size[0];
-        this->dimensions[1] = img_size[1];
+			  this->dimensions[0] = img_size[0];
+			  this->dimensions[1] = img_size[1];
 
-        // Upload imagedata to pixel buffer object
-        this->ForegroundPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
-            dataPtr, this->dimensions,
-            this->components, increments);
+			  // Upload imagedata to pixel buffer object
+			  this->ForegroundPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+				  dataPtr, this->dimensions,
+				  this->components, increments);
+		  }
+		  else
+		  {
+			  std::cerr << "[vtkKeyholePass] Background texture is not initialized" << std::endl;
+			  return;
+		  }
       }
       else if (i == 2)
       {
@@ -264,17 +272,27 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 
         vtkImageData* imgData = this->MaskTexture->GetInput();
-        imgData->GetDimensions(img_size);
-        this->components = imgData->GetNumberOfScalarComponents();
-        dataPtr = (unsigned char*)imgData->GetScalarPointer();
+		imgData->GetDimensions(img_size);
 
-        this->dimensions[0] = img_size[0];
-        this->dimensions[1] = img_size[1];
+		if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] >0) // if texture is initialized
+		{
+			imgData->GetDimensions(img_size);
+			this->components = imgData->GetNumberOfScalarComponents();
+			dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
-        // Upload imagedata to pixel buffer object
-        this->MaskPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
-                                              dataPtr, this->dimensions,
-                                              this->components, increments);
+			this->dimensions[0] = img_size[0];
+			this->dimensions[1] = img_size[1];
+
+			// Upload imagedata to pixel buffer object
+			this->MaskPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+				dataPtr, this->dimensions,
+				this->components, increments);
+		}
+		else
+		{
+			std::cerr << "[vtkKeyholePass] Mask texture is not initialized" << std::endl;
+			return;
+		}
       }
     }
 
