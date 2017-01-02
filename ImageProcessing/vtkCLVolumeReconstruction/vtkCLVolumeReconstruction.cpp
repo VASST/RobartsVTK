@@ -787,41 +787,50 @@ int vtkCLVolumeReconstruction::ShiftQueues()
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GrabInputData()
 {
-  input_data_mutex->Lock();
-
-  timestamp_queue.push(timestamp);
-  imageData_queue.push(image_data);
-  poseData_queue.push(pose_data);
-
-  // Set this element to zero
-  memset(pos_matrices_queue[BSCAN_WINDOW - 1], '\0', sizeof(float) * 12);
-  memset(bscans_queue[BSCAN_WINDOW - 1], '\0', sizeof(unsigned char)*bscan_w * bscan_h);
-
-  // Convert to a floating point array
-  double* matrixPtr = pose_data->Element[0];
-  float* matrixPtr2 = new float[12];
-  matrixPtr2[0] = (float)matrixPtr[0];
-  matrixPtr2[1] = (float)matrixPtr[1];
-  matrixPtr2[2] = (float)matrixPtr[2];
-  matrixPtr2[3] = (float)matrixPtr[3];
-  matrixPtr2[4] = (float)matrixPtr[4];
-  matrixPtr2[5] = (float)matrixPtr[5];
-  matrixPtr2[6] = (float)matrixPtr[6];
-  matrixPtr2[7] = (float)matrixPtr[7];
-  matrixPtr2[8] = (float)matrixPtr[8];
-  matrixPtr2[9] = (float)matrixPtr[9];
-  matrixPtr2[10] = (float)matrixPtr[10];
-  matrixPtr2[11] = (float)matrixPtr[11];
-
+  // Get image data pointer.
   unsigned char* imgDataPtr = (unsigned char*)image_data->GetScalarPointer();
 
-  // Copy data to buffers
-  bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
-  pos_timetags_queue[BSCAN_WINDOW - 1]   = timestamp_queue.front();
-  memcpy(pos_matrices_queue[BSCAN_WINDOW - 1], matrixPtr2, sizeof(float) * 12);
-  memcpy(bscans_queue[BSCAN_WINDOW - 1], imgDataPtr, sizeof(unsigned char)*bscan_h * bscan_w);
+  if (imgDataPtr != NULL && pose_data != NULL)
+  {
 
-  input_data_mutex->Unlock();
+	  input_data_mutex->Lock();
+
+	  timestamp_queue.push(timestamp);
+	  imageData_queue.push(image_data);
+	  poseData_queue.push(pose_data);
+
+	  // Set this element to zero
+	  memset(pos_matrices_queue[BSCAN_WINDOW - 1], '\0', sizeof(float) * 12);
+	  memset(bscans_queue[BSCAN_WINDOW - 1], '\0', sizeof(unsigned char)*bscan_w * bscan_h);
+
+	  // Convert to a floating point array
+	  double* matrixPtr = pose_data->Element[0];
+	  float* matrixPtr2 = new float[12];
+	  matrixPtr2[0] = (float)matrixPtr[0];
+	  matrixPtr2[1] = (float)matrixPtr[1];
+	  matrixPtr2[2] = (float)matrixPtr[2];
+	  matrixPtr2[3] = (float)matrixPtr[3];
+	  matrixPtr2[4] = (float)matrixPtr[4];
+	  matrixPtr2[5] = (float)matrixPtr[5];
+	  matrixPtr2[6] = (float)matrixPtr[6];
+	  matrixPtr2[7] = (float)matrixPtr[7];
+	  matrixPtr2[8] = (float)matrixPtr[8];
+	  matrixPtr2[9] = (float)matrixPtr[9];
+	  matrixPtr2[10] = (float)matrixPtr[10];
+	  matrixPtr2[11] = (float)matrixPtr[11];
+
+	  // Copy data to buffers
+	  bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
+	  pos_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
+	  memcpy(pos_matrices_queue[BSCAN_WINDOW - 1], matrixPtr2, sizeof(float) * 12);
+	  memcpy(bscans_queue[BSCAN_WINDOW - 1], imgDataPtr, sizeof(unsigned char)*bscan_h * bscan_w);
+
+	  input_data_mutex->Unlock();
+  }
+  else
+  {
+	  std::cerr << "[vtkCLVolumeReconstruction]: NULL inputs" << std::endl;
+  }
 
   // TODO: Interpolate the pos matrix to the timetag of the bscan
 }
