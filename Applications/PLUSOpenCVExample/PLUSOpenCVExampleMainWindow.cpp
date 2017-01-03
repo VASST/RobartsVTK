@@ -28,7 +28,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 #include <MediaFoundationVideoDevice.h>
 #include <MediaFoundationVideoDevices.h>
 #include <PlusCommon.h>
-#include <PlusDeviceSetSelectorWidget.h>
+#include <QPlusDeviceSetSelectorWidget.h>
 #include <vtkPlusChannel.h>
 #include <vtkPlusDataCollector.h>
 #include <vtkPlusDataSource.h>
@@ -120,14 +120,14 @@ PLUSOpenCVExampleMainWindow::PLUSOpenCVExampleMainWindow()
     i++;
   }
 
-  m_deviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(mainWindow.widget_controlContainer);
+  m_deviceSetSelectorWidget = new QPlusDeviceSetSelectorWidget(mainWindow.widget_controlContainer);
   QVBoxLayout* layout = dynamic_cast<QVBoxLayout*>(mainWindow.widget_controlContainer->layout());
   layout->insertWidget(1, m_deviceSetSelectorWidget);
 
   CreateActions();
 
   connect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnChannelComboBoxChanged);
-  connect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
+  connect(m_deviceSetSelectorWidget, &QPlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
   connect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked);
   connect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnDeviceComboBoxChanged);
   connect(m_uiUpdateTimer, &QTimer::timeout, this, &PLUSOpenCVExampleMainWindow::OnUpdateTimerTimeout);
@@ -140,7 +140,7 @@ PLUSOpenCVExampleMainWindow::PLUSOpenCVExampleMainWindow()
 PLUSOpenCVExampleMainWindow::~PLUSOpenCVExampleMainWindow()
 {
   disconnect(mainWindow.comboBox_channel, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnChannelComboBoxChanged);
-  disconnect(m_deviceSetSelectorWidget, &PlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
+  disconnect(m_deviceSetSelectorWidget, &QPlusDeviceSetSelectorWidget::ConnectToDevicesByConfigFileInvoked, this, &PLUSOpenCVExampleMainWindow::OnConnectToDevicesByConfigFileInvoked);
   disconnect(mainWindow.pushButton_startStop, &QPushButton::clicked, this, &PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked);
   disconnect(mainWindow.comboBox_device, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &PLUSOpenCVExampleMainWindow::OnDeviceComboBoxChanged);
   disconnect(m_uiUpdateTimer, &QTimer::timeout, this, &PLUSOpenCVExampleMainWindow::OnUpdateTimerTimeout);
@@ -307,7 +307,8 @@ void PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked()
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
     auto mediaType = MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetDevice(mainWindow.comboBox_device->currentIndex())->GetFormat(streamIndex, formatIndex);
     m_videoDevice->SetRequestedStreamIndex(streamIndex);
-    m_videoDevice->SetRequestedFrameSize(mediaType.width, mediaType.height);
+    int frameSize[2] = { mediaType.width, mediaType.height };
+    m_videoDevice->SetRequestedFrameSize(frameSize);
     m_videoDevice->SetRequestedVideoFormat(mediaType.MF_MT_SUBTYPEName);
     m_videoDevice->SetAcquisitionRate(1.0 * mediaType.MF_MT_FRAME_RATE);
 

@@ -14,7 +14,7 @@ ADD_EXECUTABLE( ${PROJECT_NAME} ${${PROJECT_NAME}_APPTYPE}
   PLUSOpenCVExampleMainWindow.h
   PLUSOpenCVExampleMainWindow.cpp
   PLUSOpenCVExampleMainWindow.ui
-  ${PlusApp_CommonWidgets_QRC}
+  ${PLUSLIB_WIDGETS_QRC}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -28,7 +28,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} PRIVATE
   opencv_highgui
   opencv_features2d
   opencv_calib3d
-  PlusCommonWidgets
+  PlusWidgets
   vtkPlusCommon
   vtkPlusDataCollection
   vtkCommonCore

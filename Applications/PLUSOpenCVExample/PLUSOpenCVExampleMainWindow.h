@@ -35,7 +35,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 // STL includes
 #include <atomic>
 
-class PlusDeviceSetSelectorWidget;
+class QPlusDeviceSetSelectorWidget;
 class QAction;
 class QMenu;
 class QTimer;
@@ -80,7 +80,7 @@ protected:
   double                                    m_mostRecentFrameTimestamp;
 
   vtkPlusChannel*                           m_currentChannel;
-  PlusDeviceSetSelectorWidget*              m_deviceSetSelectorWidget;
+  QPlusDeviceSetSelectorWidget*             m_deviceSetSelectorWidget;
 
 private:
   Ui::MainWindow mainWindow;

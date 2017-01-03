@@ -84,9 +84,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <MediaFoundationVideoDevice.h>
 #include <MediaFoundationVideoDevices.h>
 #endif
-#include <PlusDeviceSetSelectorWidget.h>
-#include <PlusStatusIcon.h>
-#include <PlusToolStateDisplayWidget.h>
+#include <QPlusDeviceSetSelectorWidget.h>
+#include <QPlusStatusIcon.h>
+#include <QPlusToolStateDisplayWidget.h>
 #include <vtkPlusAccurateTimer.h>
 #include <vtkPlusChannel.h>
 #include <vtkPlusDataCollector.h>
@@ -155,11 +155,11 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
   // Set up UI
   ui.setupUi(this);
 
-  DeviceSetSelectorWidget = new PlusDeviceSetSelectorWidget(ui.groupBox_DataCollection);
+  DeviceSetSelectorWidget = new QPlusDeviceSetSelectorWidget(ui.groupBox_DataCollection);
   DeviceSetSelectorWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
   DeviceSetSelectorWidget->SetDeviceSetComboBoxMaximumSizeRatio(0.2);
   connect(DeviceSetSelectorWidget, SIGNAL(ConnectToDevicesByConfigFileInvoked(std::string)), this, SLOT(ConnectToDevicesByConfigFile(std::string)));
-  ToolStateDisplayWidget = new PlusToolStateDisplayWidget(ui.groupBox_DataCollection);
+  ToolStateDisplayWidget = new QPlusToolStateDisplayWidget(ui.groupBox_DataCollection);
   ToolStateDisplayWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
   QVBoxLayout* dataCollectionLayout = qobject_cast<QVBoxLayout*>(ui.groupBox_DataCollection->layout());
@@ -175,7 +175,7 @@ CameraCalibrationMainWidget::CameraCalibrationMainWidget(QWidget* parent)
     if (mainWindow != NULL)
     {
       StatusBar = mainWindow->statusBar();
-      StatusIcon = new PlusStatusIcon(mainWindow);
+      StatusIcon = new QPlusStatusIcon(mainWindow);
       StatusBar->addPermanentWidget(StatusIcon);
     }
   }

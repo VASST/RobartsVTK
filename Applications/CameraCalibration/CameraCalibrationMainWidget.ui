@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>CameraCalibrationMainWidget</class>
  <widget class="QWidget" name="CameraCalibrationMainWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1365</width>
+    <height>448</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Camera Calibration</string>
   </property>
@@ -168,7 +176,7 @@
             <string>Compute &amp;&amp; Save</string>
            </property>
            <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+            <iconset resource="../../../Deps/Plus-bin/PlusLib/src/PlusWidgets/PlusWidgets.qrc">
              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
            </property>
           </widget>
@@ -263,7 +271,7 @@
             <string>Compute &amp;&amp; Save</string>
            </property>
            <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+            <iconset resource="../../../Deps/Plus-bin/PlusLib/src/PlusWidgets/PlusWidgets.qrc">
              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
            </property>
           </widget>
@@ -316,7 +324,7 @@
             <string>Compute &amp;&amp; Save</string>
            </property>
            <property name="icon">
-            <iconset resource="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc">
+            <iconset resource="../../../Deps/Plus-bin/PlusLib/src/PlusWidgets/PlusWidgets.qrc">
              <normaloff>:/icons/Resources/icon_Save.png</normaloff>:/icons/Resources/icon_Save.png</iconset>
            </property>
           </widget>
@@ -337,7 +345,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../../Deps/Plus-bin/PlusApp/PlusCommonWidgets/PlusCommonWidgets.qrc"/>
+  <include location="../../../Deps/Plus-bin/PlusLib/src/PlusWidgets/PlusWidgets.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -41,7 +41,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 int appMain(int argc, char* argv[])
 {
-  Q_INIT_RESOURCE(PlusCommonWidgets);
+  Q_INIT_RESOURCE(PlusWidgets);
 
   // Check command line arguments.
   bool printHelp(false);
