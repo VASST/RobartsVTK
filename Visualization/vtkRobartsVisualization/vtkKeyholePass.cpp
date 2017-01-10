@@ -242,12 +242,12 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		  vtkActor* foregroundActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
 		  this->ForegroundTexture = foregroundActor->GetTexture();
 
-
 		  imgData = this->ForegroundTexture->GetInput();
 		  imgData->GetDimensions(img_size);
 
 		  if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] >0) // If texture is initialized
 		  {
+
 			  this->components = imgData->GetNumberOfScalarComponents();
 			  dataPtr = (unsigned char*)imgData->GetScalarPointer();
 
@@ -345,7 +345,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
     // Save the output of the first pass to a file for debugging
-    vtkPixelBufferObject* pbo = this->ForegroundTextureObject->Download();
+	vtkPixelBufferObject* pbo =  this->ForegroundTextureObject->Download();
 
     unsigned char* openglRawData = new unsigned char[4 * width * height];
     bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
