@@ -148,6 +148,7 @@ private:
   void operator=(const vtkKeyholePass&);  // Not implemented.
   void LoadShaders(std::string, std::string); // Load Shader programs from file.
   void GetForegroudGradient(vtkRenderer *);// perform sobel pass on foreground texture and save the results to foreground_grad_to
+  void UpdateTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
 };
 
 #endif // vtkKeyholePass_h

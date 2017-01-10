@@ -255,9 +255,17 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			  this->dimensions[1] = img_size[1];
 
 			  // Upload imagedata to pixel buffer object
-			  this->ForegroundPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+			  bool success = this->ForegroundPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
 				  dataPtr, this->dimensions,
 				  this->components, increments);
+
+#ifdef VTK_KEYHOLE_PASS_DEBUG2
+			  vtkPNGWriter *writer =  vtkPNGWriter::New();
+			  writer->SetInputData(imgData);
+			  writer->SetFileName("KeyholePass0.png");
+			  writer->Write();
+
+#endif
 		  }
 		  else
 		  {
@@ -300,9 +308,13 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
     if (this->ForegroundTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
         this->ForegroundTextureObject->GetHeight() != static_cast<unsigned int>(this->dimensions[1]))
     {
-      this->ForegroundTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
+		this->ForegroundTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
                                               this->ForegroundPixelBufferObject, false);
     }
+	else
+	{
+		UpdateTextureObject(renwin);
+	}
 
     // Create mask texture object.
     if (this->mask_img_available)
@@ -345,7 +357,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
     // Save the output of the first pass to a file for debugging
-	vtkPixelBufferObject* pbo =  this->ForegroundTextureObject->Download();
+	vtkPixelBufferObject* pbo = this->ForegroundTextureObject->Download();
 
     unsigned char* openglRawData = new unsigned char[4 * width * height];
     bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
@@ -521,6 +533,10 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
                                    this->KeyholeProgram->Program,
                                    this->KeyholeProgram->VAO);
     this->Pass2->Deactivate();
+
+	this->ForegroundTextureObject->Deactivate();
+	this->MaskTextureObject->Deactivate();
+	this->ForegroundGradientTextureObject->Deactivate();
   }
   else
   {
@@ -770,6 +786,44 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
   rgbatoRgb->Delete();
 #endif
 
+}
+
+//-----------------------------------------------------------------------------------------------------
+void vtkKeyholePass::UpdateTextureObject(vtkOpenGLRenderWindow *renwin)
+{
+	int vtktype = this->ForegroundPixelBufferObject->GetType();
+	GLenum type = this->ForegroundTextureObject->GetDefaultDataType(vtktype);
+
+	GLenum internalFormat = this->ForegroundTextureObject->GetInternalFormat(vtktype,
+		this->components,
+		false);
+	GLenum format = this->ForegroundTextureObject->GetFormat(vtktype,
+		this->components,
+		false);
+
+	int width = this->ForegroundTextureObject->GetWidth();
+	int height = this->ForegroundTextureObject->GetHeight();
+
+	renwin->ActivateTexture(this->ForegroundTextureObject);
+	this->ForegroundTextureObject->Bind();
+
+	this->ForegroundPixelBufferObject->Bind(vtkPixelBufferObject::UNPACKED_BUFFER);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	glTexImage2D(GL_TEXTURE_2D,
+		0,
+		internalFormat,
+		static_cast<GLsizei>(width),
+		static_cast<GLsizei>(height),
+		0,
+		format,
+		type,
+		0);
+
+	vtkOpenGLCheckErrorMacro("failed at glTexImage2D");
+
+	this->ForegroundPixelBufferObject->UnBind();
+	this->ForegroundTextureObject->Deactivate();
 }
 
 //-----------------------------------------------------------------------------------------------------

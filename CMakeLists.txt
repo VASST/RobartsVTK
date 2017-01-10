@@ -458,6 +458,8 @@ IF(RobartsVTK_BUILD_APPS)
       ENDIF()
       ADD_SUBDIRECTORY(Applications/KeyholeRendering)
       set_target_properties(KeyholeRendering PROPERTIES FOLDER Applications)
+	  ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithVideo)
+      set_target_properties(KeyholeRenderingWithVideo PROPERTIES FOLDER Applications)
     ENDIF()
   ENDIF()
 
