@@ -20,7 +20,7 @@ ADD_EXECUTABLE( ${PROJECT_NAME} ${CameraCalib_APPTYPE}
   Threads/QComputeThread.cpp
   Threads/QCaptureThread.h
   Threads/QCaptureThread.cpp
-  ${PlusApp_CommonWidgets_QRC}
+  ${PLUSLIB_WIDGETS_QRC}
 )
 IF(WIN32)
   # From PLUS, use MSMF capture library to query webcams
@@ -45,7 +45,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
   vtkCommonCore
   vtkRenderingCore
   vtkGUISupportQt
-  PlusCommonWidgets
+  PlusWidgets
   vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
   ${OPENGL_LIBRARIES}
   Qt5::Concurrent

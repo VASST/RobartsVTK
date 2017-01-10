@@ -82,9 +82,9 @@ class vtkPlusDataCollector;
 class vtkPlusTransformRepository;
 class vtkPlusChannel;
 class vtkPlusDataSource;
-class PlusDeviceSetSelectorWidget;
-class PlusToolStateDisplayWidget;
-class PlusStatusIcon;
+class QPlusDeviceSetSelectorWidget;
+class QPlusToolStateDisplayWidget;
+class QPlusStatusIcon;
 
 // VTK forward declaration
 class vtkActor;
@@ -117,7 +117,7 @@ protected:
   /// Start collecting data from the chosen device set
   bool StartDataCollection();
 
-  bool ComputeIntrinsicsAndDistortionAsync( int cameraIndex );
+  bool ComputeIntrinsicsAndDistortionAsync(int cameraIndex);
 
   int GetBoardWidthCalib() const;
   int GetBoardHeightCalib() const;
@@ -131,23 +131,23 @@ protected:
 
   void ShowStatusMessage(const std::string& message);
 
-  double ComputeReprojectionErrors( const std::vector<std::vector<cv::Point3f> >& objectPoints,
-                                    const std::vector<std::vector<cv::Point2f> >& imagePoints,
-                                    const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-                                    const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
-                                    std::vector<float>& perViewErrors);
+  double ComputeReprojectionErrors(const std::vector<std::vector<cv::Point3f> >& objectPoints,
+                                   const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                   const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                   const cv::Mat& cameraMatrix , const cv::Mat& distCoeffs,
+                                   std::vector<float>& perViewErrors);
 
-  void SaveMonoCameraParameters( const std::string& filename, const cv::Size& imageSize, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,
-                                 const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
-                                 const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
-                                 double totalAvgErr );
+  void SaveMonoCameraParameters(const std::string& filename, const cv::Size& imageSize, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,
+                                const std::vector<cv::Mat>& rvecs, const std::vector<cv::Mat>& tvecs,
+                                const std::vector<float>& reprojErrs, const std::vector<std::vector<cv::Point2f> >& imagePoints,
+                                double totalAvgErr);
 
-  void SaveStereoCameraParameters( const std::string& filename, const cv::Size& imageSize,
-                                   const cv::Mat& leftCameraMatrix, const cv::Mat& leftDistCoeffs,
-                                   const cv::Mat& rightCameraMatrix, const cv::Mat& rightDistCoeffs,
-                                   const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix,
-                                   const std::vector<std::vector<cv::Point2f> >& leftImagePoints, const std::vector<std::vector<cv::Point2f> >& rightImagePoints,
-                                   double reprojError, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix );
+  void SaveStereoCameraParameters(const std::string& filename, const cv::Size& imageSize,
+                                  const cv::Mat& leftCameraMatrix, const cv::Mat& leftDistCoeffs,
+                                  const cv::Mat& rightCameraMatrix, const cv::Mat& rightDistCoeffs,
+                                  const cv::Mat& rotationMatrix, const cv::Mat& translationMatrix,
+                                  const std::vector<std::vector<cv::Point2f> >& leftImagePoints, const std::vector<std::vector<cv::Point2f> >& rightImagePoints,
+                                  double reprojError, const cv::Mat& essentialMatrix, const cv::Mat& fundamentalMatrix);
 
   /// Load mono camera parameters from file
   void LoadMonoCameraParameters(int cameraIndex, const std::string& fileName);
@@ -187,8 +187,8 @@ protected slots:
   void OnRightBoardPatternProcessingFinished(int computeIndex, int cameraIndex, const std::vector<cv::Point2f>& outImagePoints, const cv::Mat& resultImage);
 
   // start the video feeds
-  void OnLeftCameraIndexChanged( int index );
-  void OnRightCameraIndexChanged( int index );
+  void OnLeftCameraIndexChanged(int index);
+  void OnRightCameraIndexChanged(int index);
 
   /// Capture and process images to find checkerboard corners
   void CaptureAndProcessStereoImagesAsync();
@@ -217,8 +217,8 @@ protected:
   std::map<int, cv::Mat> IntrinsicMatrix;
   std::map<int, cv::Mat> DistortionCoefficients;
   int StereoCaptureCount;
-  std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPoints;
-  std::map<int, std::vector<std::vector<cv::Point2f> > > ChessboardCornerPointsCount;
+  std::map<int, std::vector<std::vector<cv::Point2f>>> ChessboardCornerPoints;
+  std::map<int, std::vector<std::vector<cv::Point2f>>> ChessboardCornerPointsCount;
   int MinBoardNeeded;
   int LeftCameraIndex;
   int RightCameraIndex;
@@ -239,18 +239,18 @@ protected:
   bool RightIntrinsicAvailable;
   bool LeftDistortionAvailable;
   bool RightDistortionAvailable;
-  std::map<int, std::vector< std::vector< cv::Point2f > > > StereoImagePoints;
-  std::map<int, std::vector< std::vector< cv::Point2f > > > ReprojectionPoints;
-  std::map<int, std::vector< std::vector< cv::Point2f > > > HomographyPoints;
+  std::map<int, std::vector<std::vector<cv::Point2f>>> StereoImagePoints;
+  std::map<int, std::vector<std::vector<cv::Point2f>>> ReprojectionPoints;
+  std::map<int, std::vector<std::vector<cv::Point2f>>> HomographyPoints;
 
   /// PLUS related variables
   std::string TrackingDataChannelName;
-  vtkSmartPointer< vtkPlusDataCollector >       DataCollector;
+  vtkSmartPointer<vtkPlusDataCollector>         DataCollector;
   vtkPlusChannel*                               TrackingDataChannel;
-  vtkSmartPointer< vtkPlusTransformRepository > TransformRepository;
-  PlusDeviceSetSelectorWidget*                  DeviceSetSelectorWidget;
-  PlusToolStateDisplayWidget*                   ToolStateDisplayWidget;
-  PlusStatusIcon*                               StatusIcon;
+  vtkSmartPointer<vtkPlusTransformRepository>   TransformRepository;
+  QPlusDeviceSetSelectorWidget*                 DeviceSetSelectorWidget;
+  QPlusToolStateDisplayWidget*                  ToolStateDisplayWidget;
+  QPlusStatusIcon*                              StatusIcon;
 
 public:
   CameraCalibrationMainWidget(QWidget* parent = 0);
