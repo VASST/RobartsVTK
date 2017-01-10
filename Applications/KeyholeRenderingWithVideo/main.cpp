@@ -194,21 +194,6 @@ int main(int argc, char** argv)
   actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
   actor->GetProperty()->SetOpacity(1);
 
-  vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
-  vtkOpenGLRenderer* glRenderer = vtkOpenGLRenderer::SafeDownCast(ren);
-  glRenderer->AddActor(actor);
-
-  vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-
-  vtkOpenGLRenderWindow* glRenWin = vtkOpenGLRenderWindow::SafeDownCast(renderWindow);
-  glRenWin->AddRenderer(glRenderer);
-  glRenWin->SetWindowName("Keyhole_Rendering_Example");
-  glRenWin->SetSize(640, 480);
-  glRenWin->SetAlphaBitPlanes(1);
-
-  vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  renWindowInteractor->SetRenderWindow(renderWindow);
-
   // Read the background picture and the mask and set it .
   cv::VideoCapture capture = cv::VideoCapture(backgroundVideoFile);
   cv::Mat mask = cv::imread(maskImageFile);
@@ -218,7 +203,6 @@ int main(int argc, char** argv)
   uchar* backgroundData = new uchar[width*height*sizeof(unsigned char)* 4];
   cv::Mat background_RGBA(cv::Size(width, height), CV_8UC4, backgroundData);
   cv::Mat background = cv::Mat(width, height, CV_8UC3);
-  //cv::cvtColor(background, background_RGBA, CV_BGR2RGBA, 4);
 
   uchar* maskData = new uchar[mask.total() * 4];
   cv::Mat mask_RGBA(mask.size(), CV_8UC4, maskData);
@@ -262,15 +246,31 @@ int main(int argc, char** argv)
   texturedPlane->SetMapper(planeMapper);
   texturedPlane->SetTexture(forgroundTex);
 
+  vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
+  vtkOpenGLRenderer* glRenderer = vtkOpenGLRenderer::SafeDownCast(ren);
+  glRenderer->AddActor(actor);
+
+  vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+
+  vtkOpenGLRenderWindow* glRenWin = vtkOpenGLRenderWindow::SafeDownCast(renderWindow);
+  glRenWin->AddRenderer(glRenderer);
+  glRenWin->SetWindowName("Keyhole_Rendering_Example");
+  glRenWin->SetSize(width, height);
+  glRenWin->SetAlphaBitPlanes(1);
+
+  vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renWindowInteractor->SetRenderWindow(renderWindow);
+
+  // Add texturedPlane as an actor
   glRenderer->AddViewProp(texturedPlane);
 
-  // Test code
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
   keyholePass->SetKeyholeParameters(256, 256, 150, 5.0);
   keyholePass->SetHardKeyholeEdges(false);
 
+  // Set render passes.
   vtkSmartPointer<vtkLightsPass> lightsPass = vtkSmartPointer<vtkLightsPass>::New();
   vtkSmartPointer<vtkDefaultPass> defaultPass = vtkSmartPointer<vtkDefaultPass>::New();
   vtkSmartPointer<vtkCameraPass> cameraPass = vtkSmartPointer<vtkCameraPass>::New();
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
 
   renWindowInteractor->Initialize();
 
-  int interactorTimerID = renWindowInteractor->CreateRepeatingTimer(1000.0 / 10.0);
+  int interactorTimerID = renWindowInteractor->CreateRepeatingTimer(1000.0 / 30.0);
 
   renWindowInteractor->Start();
 
