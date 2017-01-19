@@ -230,14 +230,18 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
     increments[0] = 0;
     increments[1] = 0;
 
+	int maxRegularActorIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
+	int backgroundIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
+	int maskIDx = this->mask_img_available ? numActors - 1 : numActors+1;
+
     for (int i = 0; i < numActors; i++)
     {
-      if (i == 0)
+      if (i < maxRegularActorIDx )
       {
-        // Discard the first actor
+        // Disregard the first set of actors
         props->GetNextProp();
       }
-	  else if (i == 1)
+	  else if (i == backgroundIDx)
 	  {
 		  vtkActor* foregroundActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
 		  this->ForegroundTexture = foregroundActor->GetTexture();
@@ -273,7 +277,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			  return;
 		  }
       }
-      else if (i == 2)
+      else if (i == maskIDx && this->mask_img_available )
       {
         vtkActor* maskActor = vtkActor::SafeDownCast(props->GetNextProp());; // = actors->GetNextActor();
         this->MaskTexture = maskActor->GetTexture();

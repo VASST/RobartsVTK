@@ -194,6 +194,36 @@ int main(int argc, char** argv)
   actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
   actor->GetProperty()->SetOpacity(1);
 
+  // Second actor
+  vtkSmartPointer< vtkSphereSource > sphere2 = vtkSmartPointer< vtkSphereSource >::New();
+  sphere2->SetPhiResolution(100);
+  sphere2->SetThetaResolution(100);
+  sphere2->SetRadius(5);
+  sphere2->SetCenter(10, 0, 0);
+
+  vtkSmartPointer< vtkPolyDataMapper > mapper2 = vtkSmartPointer< vtkPolyDataMapper>::New();
+  mapper2->SetInputConnection(sphere2->GetOutputPort());
+
+  vtkSmartPointer< vtkActor > actor2 = vtkSmartPointer< vtkActor >::New();
+  actor2->SetMapper(mapper2);
+  actor2->GetProperty()->SetColor(0.0, 1.0, 0.0);
+  actor2->GetProperty()->SetOpacity(1);
+
+  // 3rd Actor
+  vtkSmartPointer< vtkSphereSource > sphere3 = vtkSmartPointer< vtkSphereSource >::New();
+  sphere3->SetPhiResolution(100);
+  sphere3->SetThetaResolution(100);
+  sphere3->SetRadius(5);
+  sphere3->SetCenter(5, sqrt(75), 0);
+
+  vtkSmartPointer< vtkPolyDataMapper > mapper3 = vtkSmartPointer< vtkPolyDataMapper>::New();
+  mapper3->SetInputConnection(sphere3->GetOutputPort());
+
+  vtkSmartPointer< vtkActor > actor3 = vtkSmartPointer< vtkActor >::New();
+  actor3->SetMapper(mapper3);
+  actor3->GetProperty()->SetColor(0.0, 0.0, 1.0);
+  actor3->GetProperty()->SetOpacity(1);
+
   // Read the background picture and the mask and set it .
   cv::VideoCapture capture = cv::VideoCapture(backgroundVideoFile);
   cv::Mat mask = cv::imread(maskImageFile);
@@ -249,6 +279,8 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
   vtkOpenGLRenderer* glRenderer = vtkOpenGLRenderer::SafeDownCast(ren);
   glRenderer->AddActor(actor);
+  glRenderer->AddActor(actor2);
+  glRenderer->AddActor(actor3);
 
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 
