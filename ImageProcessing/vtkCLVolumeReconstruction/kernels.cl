@@ -12,6 +12,9 @@
 #define COMPOUND_MAX 1
 #define COMPOUND_IFEMPTY 2
 #define COMPOUND_OVERWRITE 3
+#define COMPOUND_ALPHABLEND 4
+
+#define ALPHA 0.1
 
 #define COMPOUND_METHOD COMPOUND_AVG
 
@@ -443,6 +446,8 @@ __kernel void adv_fill_voxels(__global float4 * intersections,
 						if (volume_a(x,y,z) == 0) volume_a(x,y,z) = contribution;
 					if (COMPOUND_METHOD == COMPOUND_OVERWRITE)
 						volume_a(x,y,z) = contribution;
+					if (COMPOUND_METHOD == COMPOUND_ALPHABLEND)
+						if (volume_a(x, y, z) != 0) volume_a(x, y, z) = (1-ALPHA)*volume_a(x, y, z) + ALPHA*contribution;	else volume_a(x, y, z) = contribution;
 				}
 
 			}
