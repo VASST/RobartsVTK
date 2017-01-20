@@ -492,12 +492,12 @@ __kernel void trace_intersections(__global float4 * intersections,
 		float4 R0 = {x*volume_spacing, y*volume_spacing, z*volume_spacing, 0};
 		float Vd = dot(Pn, Rd);
 		float V0 = -(dot(Pn, R0) + bscan_plane_equation_queue[i].w);
-		float t = V0/Vd;
 		if (Vd == 0)
 		{
 			invalid = true;
 			continue;
 		}
+		float t = V0 / Vd;
 
 		float4 intersection = R0 + t*Rd;
 		intersections[n*2 + f] = intersection;

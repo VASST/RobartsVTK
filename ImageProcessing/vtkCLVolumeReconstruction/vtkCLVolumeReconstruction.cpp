@@ -935,7 +935,7 @@ void vtkCLVolumeReconstruction::InsertPlaneEquation()
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::FillVoxels()
 {
-  int axis = 2; // Use axis 2 ( along Z axis )
+  int axis = 0; // Use axis 2 ( along Z axis )
   int intersection_counter = FindIntersections(axis);
 
   omp_set_lock(&cl_device_lock);
