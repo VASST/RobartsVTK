@@ -113,6 +113,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
 
   volume_origin = {0.f, 0.f, 0.f};
   volume_extent = { 0, 0, 0, 0, 0, 0 };
+  this->axis = 2; // Default to Z axis
 
   // KERNEL_CL_LOCATION is populated by CMake as a target definition
   //  in Visual Studio, see Project Properties -> C/C++ -> Preprocessor
@@ -489,6 +490,12 @@ void vtkCLVolumeReconstruction::SetOutputOrigin(double x, double y, double z)
 void vtkCLVolumeReconstruction::SetCalMatrix(float* m)
 {
   memcpy(this->calibration_matrix, m, sizeof(float) * 12);
+}
+
+//----------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::SetReconstructionAxis(int val)
+{
+	this->axis = val;
 }
 
 //----------------------------------------------------------------------------
@@ -935,8 +942,7 @@ void vtkCLVolumeReconstruction::InsertPlaneEquation()
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::FillVoxels()
 {
-  int axis = 0; // Use axis 2 ( along Z axis )
-  int intersection_counter = FindIntersections(axis);
+  int intersection_counter = FindIntersections(this->axis);
 
   omp_set_lock(&cl_device_lock);
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_x_vector_queue, CL_TRUE, 0, dev_x_vector_queue_size, x_vector_queue, 0, 0, 0));

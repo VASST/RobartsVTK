@@ -104,6 +104,9 @@ public:
   /* Set US Calibration matrix. Default is identity matrix */
   void SetCalMatrix(float*);
 
+  /* Set Reconstruction axis. 0 - X axis, 1 - Y axis, 2 - Z axis */
+  void SetReconstructionAxis(int);
+
   /* Set input data */
   void SetInputImageData(double, vtkImageData*);
 
@@ -307,6 +310,7 @@ protected:
   float*                      pos_matrices;
   float*                      bscan_timetags;
   float*                      calibration_matrix;
+  int						  axis;
 
   vtkSmartPointer<vtkTransform> image_pose;
   vtkSmartPointer<vtkImageData> reconstructed_volume;
