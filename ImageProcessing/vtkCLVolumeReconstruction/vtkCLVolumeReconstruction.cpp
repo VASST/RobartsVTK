@@ -540,9 +540,9 @@ void vtkCLVolumeReconstruction::SetOutputExtent(int xmin, int xmax, int ymin, in
   this->volume_extent[4] = zmin;
   this->volume_extent[5] = zmax;
 
-  volume_width = this->volume_extent[1] - this->volume_extent[0];
-  volume_height = this->volume_extent[3] - this->volume_extent[2];
-  volume_depth = this->volume_extent[5] - this->volume_extent[4];
+  volume_width = this->volume_extent[1] - this->volume_extent[0] + 1;
+  volume_height = this->volume_extent[3] - this->volume_extent[2] + 1;
+  volume_depth = this->volume_extent[5] - this->volume_extent[4] + 1;
 }
 
 //----------------------------------------------------------------------------
@@ -565,7 +565,7 @@ void vtkCLVolumeReconstruction::StartReconstruction()
   local_work_size[0] = 256;
 
   // Initialize output volume to zero
-  memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  memset(volume, 10, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   // Set mask. Default is no mask (val 1 --> white). In mask Black is outside ROI while White is insite the ROI.
   memset(mask, 1, sizeof(unsigned char)*bscan_w * bscan_h);
@@ -711,7 +711,9 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   reconstructed_volume = vtkSmartPointer< vtkImageData >::New();
   reconstructed_volume->SetOrigin((double)volume_origin[0], (double)volume_origin[1], (double)volume_origin[2]);
   reconstructed_volume->SetSpacing((double)volume_spacing, (double)volume_spacing, (double)volume_spacing);
-  reconstructed_volume->SetDimensions(volume_width, volume_height, volume_depth);
+  reconstructed_volume->SetExtent(this->volume_extent[0], this->volume_extent[1],
+									 this->volume_extent[2], this->volume_extent[3],
+										this->volume_extent[4], this->volume_extent[5]); 
   reconstructed_volume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 }
 
@@ -918,6 +920,9 @@ void vtkCLVolumeReconstruction::InsertPlanePoints(float* pos_matrix)
     }
     memcpy(&foo[i], sums, 3 * sizeof(float));
     foo[i] = foo[i] - _volume_orig;
+#ifdef KERNEL_DEBUG
+	std::cout << foo[i].x << "," << foo[i].y << "," << foo[i].z << std::endl;
+#endif
   }
 }
 

@@ -138,10 +138,15 @@ int main(int argc, char** argv)
   recon->SetDevice(0);
 
   // calibration matrix
-  float us_cal_mat[12] = { 0.0727f, 0.0076f, -0.0262f, -12.6030f,
+  /*float us_cal_mat[12] = { 0.0727f, 0.0076f, -0.0262f, -12.6030f,
                            -0.0030f, 0.0118f, -0.9873f, -7.8930f,
                            -0.0069f, 0.0753f, 0.1568f, 1.0670f
-                         };
+                         }; */
+
+  /* NOTE: This is the US calibration without scaling. Scaling is specified separately */
+  float us_cal_mat[12] = { 0.9947,    0.0994, - 0.0262, - 12.6030,
+	  - 0.0413,    0.1535, - 0.9873, - 7.8930,
+	  - 0.0941,    0.9831,    0.1568,    1.0670};
 
   recon->SetProgramSourcePath(KERNEL_CL_LOCATION);
   recon->SetBScanSize(820, 616);

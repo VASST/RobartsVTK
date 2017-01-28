@@ -449,7 +449,6 @@ __kernel void adv_fill_voxels(__global float4 * intersections,
 					if (COMPOUND_METHOD == COMPOUND_ALPHABLEND)
 						if (volume_a(x, y, z) != 0) volume_a(x, y, z) = (1-ALPHA)*volume_a(x, y, z) + ALPHA*contribution;	else volume_a(x, y, z) = contribution;
 				}
-
 			}
 		}
 	}
