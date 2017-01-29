@@ -474,7 +474,6 @@ IF(RobartsVTK_BUILD_APPS)
     #-------------------------------------
     FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
 
-    FIND_PACKAGE(PlusApp REQUIRED)
     MESSAGE(STATUS "Using PlusApp available at: ${PlusApp_DIR}")
 
     ADD_SUBDIRECTORY(Applications/CameraCalibration)
