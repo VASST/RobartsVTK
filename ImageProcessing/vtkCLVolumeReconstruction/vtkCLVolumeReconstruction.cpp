@@ -565,7 +565,7 @@ void vtkCLVolumeReconstruction::StartReconstruction()
   local_work_size[0] = 256;
 
   // Initialize output volume to zero
-  memset(volume, 10, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   // Set mask. Default is no mask (val 1 --> white). In mask Black is outside ROI while White is insite the ROI.
   memset(mask, 1, sizeof(unsigned char)*bscan_w * bscan_h);
