@@ -54,41 +54,41 @@ namespace
     // Determine type
     switch (image.GetScalarType())
     {
-    case VTK_UNSIGNED_CHAR:
-    {
-      cvType = CV_8UC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_SIGNED_CHAR:
-    {
-      cvType = CV_8SC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_UNSIGNED_SHORT:
-    {
-      cvType = CV_16UC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_SHORT:
-    {
-      cvType = CV_16SC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_INT:
-    {
-      cvType = CV_32SC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_FLOAT:
-    {
-      cvType = CV_32FC(image.GetNumberOfScalarComponents());
-      break;
-    }
-    case VTK_DOUBLE:
-    {
-      cvType = CV_64FC(image.GetNumberOfScalarComponents());
-      break;
-    }
+      case VTK_UNSIGNED_CHAR:
+      {
+        cvType = CV_8UC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_SIGNED_CHAR:
+      {
+        cvType = CV_8SC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_UNSIGNED_SHORT:
+      {
+        cvType = CV_16UC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_SHORT:
+      {
+        cvType = CV_16SC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_INT:
+      {
+        cvType = CV_32SC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_FLOAT:
+      {
+        cvType = CV_32FC(image.GetNumberOfScalarComponents());
+        break;
+      }
+      case VTK_DOUBLE:
+      {
+        cvType = CV_64FC(image.GetNumberOfScalarComponents());
+        break;
+      }
     }
 
     int* dimensions = image.GetDimensions();
@@ -307,7 +307,7 @@ void PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked()
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
     auto mediaType = MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetDevice(mainWindow.comboBox_device->currentIndex())->GetFormat(streamIndex, formatIndex);
     m_videoDevice->SetRequestedStreamIndex(streamIndex);
-    int frameSize[2] = { mediaType.width, mediaType.height };
+    unsigned int frameSize[2] = { mediaType.width, mediaType.height };
     m_videoDevice->SetRequestedFrameSize(frameSize);
     m_videoDevice->SetRequestedVideoFormat(mediaType.MF_MT_SUBTYPEName);
     m_videoDevice->SetAcquisitionRate(1.0 * mediaType.MF_MT_FRAME_RATE);
