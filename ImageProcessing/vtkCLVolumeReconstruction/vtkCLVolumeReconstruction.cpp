@@ -157,7 +157,7 @@ vtkCLVolumeReconstruction::~vtkCLVolumeReconstruction()
   free(bscan_plane_equation_queue);
   free(plane_points_queue);
   free(mask);
-  free(volume);
+  //free(volume);
 }
 
 //----------------------------------------------------------------------------
@@ -185,7 +185,6 @@ void vtkCLVolumeReconstruction::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "mask_size: " << this->mask_size;
   os << indent << "global_work_size[1]: " << this->global_work_size[1];
   os << indent << "local_work_size[1]: " << this->local_work_size[1];
-  os << indent << "volume: " << this->volume;
   os << indent << "mask: " << this->mask;
   this->image_data->PrintSelf(os, indent);
   this->pose_data->PrintSelf(os, indent);
@@ -231,8 +230,7 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request, vtkInformati
   image_pose->GetMatrix(pose_data);
   this->UpdateReconstruction();
 
-  output->ShallowCopy(reconstructed_volume);
-  memcpy((unsigned char*)output->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  output->DeepCopy(reconstructed_volume);
   output->DataHasBeenGenerated();
   output->Modified();
 
@@ -262,7 +260,6 @@ void vtkCLVolumeReconstruction::ReleaseDevices()
   clReleaseMemObject(dev_bscans_queue);
   clReleaseMemObject(dev_bscan_plane_equation_queue);
   clReleaseMemObject(dev_bscan_timetags_queue);
-
   clReleaseProgram(program);
   clReleaseContext(context);
 }
@@ -565,6 +562,7 @@ void vtkCLVolumeReconstruction::StartReconstruction()
   local_work_size[0] = 256;
 
   // Initialize output volume to zero
+  unsigned char *volume = (unsigned char*)this->reconstructed_volume->GetScalarPointer();
   memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   // Set mask. Default is no mask (val 1 --> white). In mask Black is outside ROI while White is insite the ROI.
@@ -624,8 +622,8 @@ void vtkCLVolumeReconstruction::UpdateReconstruction()
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::GetOutputVolume(vtkImageData* v)
 {
-  v->ShallowCopy(reconstructed_volume);
-  memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  v->DeepCopy(reconstructed_volume);
+  //memcpy((unsigned char*)v->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 }
 
 //--------------------------------------------------------------
@@ -699,8 +697,6 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   bscan_plane_equation_queue = (float4*) malloc(BSCAN_WINDOW * sizeof(float4));
   plane_points_queue = (plane_pts*) malloc(BSCAN_WINDOW * sizeof(plane_pts));
   mask = (unsigned char*)malloc(sizeof(unsigned char) * bscan_w * bscan_h);
-  volume = (unsigned char*) malloc(sizeof(unsigned char) * volume_width * volume_height * volume_depth);
-  memset(volume, '0', sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   image_data = vtkImageData::New();
   image_data->SetExtent(0, this->bscan_w, 0, this->bscan_h, 0, 0);
@@ -848,7 +844,7 @@ void vtkCLVolumeReconstruction::GrabInputData()
 void vtkCLVolumeReconstruction::UpdateOutputVolume()
 {
   // Copy volume to outputVolume
-  memcpy((unsigned char*)this->reconstructed_volume->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  //memcpy((unsigned char*)this->reconstructed_volume->GetScalarPointer(), volume, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 }
 
 //----------------------------------------------------------------------------
@@ -1005,6 +1001,7 @@ void vtkCLVolumeReconstruction::FillVoxels()
 
   // Readout the device volume to local buffer
   omp_set_lock(&cl_device_lock);
+  unsigned char* volume = (unsigned char*)this->reconstructed_volume->GetScalarPointer();
   OpenCLCheckError(clEnqueueReadBuffer(reconstruction_cmd_queue, dev_volume, CL_TRUE, 0, volume_size, volume, 0, 0, 0));
   omp_unset_lock(&cl_device_lock);
 }

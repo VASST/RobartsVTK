@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkMatrix4x4.h>
 #include <vtkMetaImageWriter.h>
 #include <vtkSmartPointer.h>
+#include <vtkTransform.h>
 #include <vtksys/CommandLineArguments.hxx>
 
 /* Sets output extent and origin from a vtkTrackedFrameList */
@@ -177,13 +178,30 @@ int main(int argc, char** argv)
 
   recon->StartReconstruction();
 
+  vtkImageData* outputVolume = vtkImageData::New();
+  outputVolume->SetExtent(extent);
+  int volume_width = extent[1] - extent[0] + 1;
+  int volume_height = extent[3] - extent[2] + 1;
+  int volume_depth = extent[5] - extent[4] + 1;
+  outputVolume->SetExtent(extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]);
+  outputVolume->SetSpacing(output_spacing, output_spacing, output_spacing);
+  outputVolume->SetOrigin(0, 0, 0);
+  outputVolume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+  memset(outputVolume->GetScalarPointer(), 10, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
+  outputVolume->DataHasBeenGenerated();
+  outputVolume->Modified();
+
+  vtkTransform *pose = vtkTransform::New();
+  recon->SetImagePoseTransform(pose);
+
+  recon->SetOutput(outputVolume);
+
   LOG_DEBUG("vtkCLReconstruction initialized.");
 
   // Meta image writer
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
   writer->SetFileName("3DUS-output.mhd");
 
-  vtkImageData* outputVolume = vtkImageData::New();
 
   //---------------- Now reconstruct --------------------------------------------------------------------------
 
@@ -195,19 +213,18 @@ int main(int argc, char** argv)
     imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
     imgFlip->Modified();
     imgFlip->Update();
-    recon->SetInputImageData(trackedFrame->GetTimestamp(), imgFlip->GetOutput());
+	recon->SetInputData(imgFlip->GetOutput());
 
     // Set pose Data
     trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
-    recon->SetInputPoseData(trackedFrame->GetTimestamp(), tFrame2Tracker);
+	pose->SetMatrix(tFrame2Tracker);
 
     // Update Reconstruction
     LOG_DEBUG("Frame " << i << " : ");
 
     double startTime = vtkPlusAccurateTimer::GetSystemTime();
 
-    recon->UpdateReconstruction();
-    recon->GetOutputVolume(outputVolume);
+	recon->Update();
 
     double endTime = vtkPlusAccurateTimer::GetSystemTime();
     LOG_DEBUG("Elapsed time : " << endTime - startTime << " seconds.");

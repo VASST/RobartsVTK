@@ -283,7 +283,6 @@ protected:
   float*                      pos_timetags_queue;
   float4*                     bscan_plane_equation_queue;
   plane_pts*                  plane_points_queue;
-  unsigned char*              volume;  // Output volume
   unsigned char*              mask;
   std::queue<float>           timestamp_queue;
   std::queue<vtkImageData*>   imageData_queue;
