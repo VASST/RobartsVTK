@@ -114,6 +114,9 @@ public:
   void SetInputPoseData(double, vtkMatrix4x4*);
   void SetImagePoseTransform(vtkTransform*);
 
+  /* Clear buffers */
+  void ClearReconstruction();
+
   /* Set output Extent. This needs to be set. Otherwise the volume will be zero. */
   void SetOutputExtent(int, int, int, int, int, int);
 

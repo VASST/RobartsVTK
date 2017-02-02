@@ -522,6 +522,14 @@ void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
 }
 
 //----------------------------------------------------------------------------
+void vtkCLVolumeReconstruction::ClearReconstruction()
+{
+	unsigned char *volume = (unsigned char*)reconstructed_volume->GetScalarPointer();
+	memset(volume, 0, sizeof(unsigned char)*volume_width*volume_height*volume_depth);
+	this->reconstructed_volume->Modified();
+}
+
+//----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::SetOutputSpacing(double spacing)
 {
   this->volume_spacing = (float)spacing;
