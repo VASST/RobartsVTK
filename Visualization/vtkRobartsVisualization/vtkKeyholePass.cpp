@@ -84,7 +84,10 @@ vtkKeyholePass::vtkKeyholePass()
     Supported(false),
     SupportProbed(false),
     allow_hard_edges(false),
-    mask_img_available(false)
+    mask_img_available(false), 
+	background_r(0), 
+	background_g(0), 
+	background_b(128)
 {
 }
 
@@ -353,7 +356,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
     // Remove background texture
     r->SetTexturedBackground(false);
     // Now set a black background.
-    r->SetBackground(0, 0, 0);
+	r->SetBackground(this->background_r, this->background_g, this->background_b);
 
     // First pass
     this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,

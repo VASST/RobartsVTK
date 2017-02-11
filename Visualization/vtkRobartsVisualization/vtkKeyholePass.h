@@ -101,6 +101,16 @@ public:
     this->allow_hard_edges = t;
   }
 
+  // Description:
+  // Set the background color
+  // By default is is set to blue
+  void SetBackgroundColor(double r, double g, double b)
+  {
+	  this->background_r = r;
+	  this->background_g = g;
+	  this->background_b = b;
+  }
+
 protected:
   // Description:
   // Graphics resources.
@@ -131,6 +141,8 @@ protected:
   float gamma;
   bool allow_hard_edges;
   bool mask_img_available;
+
+  double background_r, background_g, background_b;
 
   bool Supported;
   bool SupportProbed;
