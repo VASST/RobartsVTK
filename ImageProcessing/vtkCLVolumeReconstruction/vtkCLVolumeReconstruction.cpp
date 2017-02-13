@@ -924,7 +924,7 @@ void vtkCLVolumeReconstruction::InsertPlanePoints(float* pos_matrix)
     }
     memcpy(&foo[i], sums, 3 * sizeof(float));
     foo[i] = foo[i] - _volume_orig;
-#ifdef KERNEL_DEBUG
+#ifdef VCLVR_DEBUG
 	std::cout << foo[i].x << "," << foo[i].y << "," << foo[i].z << std::endl;
 #endif
   }
