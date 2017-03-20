@@ -185,7 +185,7 @@ public:
     }
 
     // Set keyhole parameters.
-    keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+    keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
     iren->GetRenderWindow()->Render();
 

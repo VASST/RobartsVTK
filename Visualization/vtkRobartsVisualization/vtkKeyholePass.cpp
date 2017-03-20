@@ -552,8 +552,18 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		this->KeyholeProgram->Program->SetUniformi("_foreground_grad", texture3);
 
 		this->KeyholeProgram->Program->SetUniformf("th", 0.04);
-		this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->x0 * 1.0) / width));
-		this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->y0 * 1.0) / height));
+
+		if (r->GetActiveCamera()->GetLeftEye())
+		{
+			this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->xL * 1.0) / width));
+			this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->yL * 1.0) / height));
+		}
+		else
+		{
+			this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->xR * 1.0) / width));
+			this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->yR * 1.0) / height));
+		}
+
 		this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius * 1.0) / width));
 		this->KeyholeProgram->Program->SetUniformf("aspect_ratio", static_cast<float>(width * 1.0 / height));
 		this->KeyholeProgram->Program->SetUniformf("gamma", this->gamma);

@@ -120,7 +120,7 @@ public:
     }
 
     // Set keyhole parameters.
-    keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+    keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
     renWindowInteractor->GetRenderWindow()->Render();
   }
@@ -248,7 +248,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
-  keyholePass->SetKeyholeParameters(256, 256, 150, 5.0);
+  keyholePass->SetLeftKeyholeParameters(256, 256, 150, 5.0);
   keyholePass->SetHardKeyholeEdges(false);
 
   vtkSmartPointer<vtkLightsPass> lightsPass = vtkSmartPointer<vtkLightsPass>::New();

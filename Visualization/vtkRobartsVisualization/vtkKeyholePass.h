@@ -85,12 +85,20 @@ public:
 
   // Description:
   // Set mask parameters
-  void SetKeyholeParameters(int x, int y , int r, double g)
+  void SetLeftKeyholeParameters(int x, int y , int r, double g)
   {
-    this->x0 = x;
-    this->y0 = y;
+    this->xL = x;
+    this->yL = y;
     this->radius = r;
     this->gamma = static_cast<float>(g);
+  }
+
+  void SetRightKeyholeParameters(int x, int y, int r, double g)
+  {
+	  this->xR = x;
+	  this->yR = y;
+	  this->radius = r;
+	  this->gamma = static_cast<float>(g);
   }
 
   // Description:
@@ -131,8 +139,8 @@ protected:
   std::string FragmentShaderSource;
   std::string VertexShaderSource;
 
-  int x0;
-  int y0;
+  int xL, xR;
+  int yL, yR;
   int radius;
   int components;
   unsigned int dimensions[2];

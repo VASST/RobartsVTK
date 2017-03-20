@@ -908,7 +908,7 @@ void MainWindow::SetupARVolumeRenderingPipeline()
 
   keyholePass = vtkSmartPointer< vtkKeyholePass >::New();
   keyholePass->SetHardKeyholeEdges(false);
-  keyholePass->SetKeyholeParameters(320, 150, 150, 5.0);
+  keyholePass->SetLeftKeyholeParameters(320, 150, 150, 5.0);
 
   passCollection = vtkSmartPointer< vtkRenderPassCollection >::New();
   passCollection->AddItem(lightsPass);
