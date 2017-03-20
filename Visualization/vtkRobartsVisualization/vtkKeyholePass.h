@@ -1,6 +1,6 @@
 /*==========================================================================
 
-  Copyright (c) 2016 Uditha L. Jayarathne, ujayarat@robarts.ca
+  Copyright (c) 2017 Uditha L. Jayarathne, ujayarat@robarts.ca
 
   Use, modification and redistribution of the software, in source or
   binary forms, are permitted provided that the following terms and
@@ -117,11 +117,9 @@ protected:
   vtkFrameBufferObject* FrameBufferObject;
   vtkTextureObject* Pass1; // render target for the volume
   vtkTextureObject* Pass2; // render target for the horizontal pass
-  vtkTexture* ForegroundTexture;
-  vtkTexture* MaskTexture;
-  vtkPixelBufferObject* ForegroundPixelBufferObject;
+  vtkPixelBufferObject *leftPixelBufferObject, *rightPixelBufferObject;
   vtkPixelBufferObject* MaskPixelBufferObject;
-  vtkTextureObject* ForegroundTextureObject;
+  vtkTextureObject *leftTextureObject, *rightTextureObject;
   vtkTextureObject* MaskTextureObject;
   vtkTextureObject* ForegroundGradientTextureObject;
   vtkTextureObject* GX;
@@ -160,7 +158,9 @@ private:
   void operator=(const vtkKeyholePass&);  // Not implemented.
   void LoadShaders(std::string, std::string); // Load Shader programs from file.
   void GetForegroudGradient(vtkRenderer *);// perform sobel pass on foreground texture and save the results to foreground_grad_to
-  void UpdateTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
+  void UpdateLeftTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
+  void UpdateRightTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
+  void SetupDrawBuffers(vtkRenderer *);// convenience method to set up appropriate drawbuffers.
 };
 
 #endif // vtkKeyholePass_h

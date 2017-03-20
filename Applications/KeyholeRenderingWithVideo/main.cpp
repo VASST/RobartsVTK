@@ -299,7 +299,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
-  keyholePass->SetKeyholeParameters(256, 256, 150, 5.0);
+  keyholePass->SetKeyholeParameters(256, 256, 150, 2.0);
   keyholePass->SetHardKeyholeEdges(false);
   keyholePass->SetBackgroundColor(0, 0, 128);
 

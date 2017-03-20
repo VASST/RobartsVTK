@@ -63,7 +63,7 @@ float calc_mask(vec2 tcoord, float x0, float y0, float r, float ratio, float gam
             return 0;
         else
         {  
-            float base_opacity = 0.08; // base opacity value
+            float base_opacity = 0.15; // base opacity value
             return (base_opacity + pow(sqrt(ratio*x*x + y*y/ratio)/r, gamma));
         }
     }

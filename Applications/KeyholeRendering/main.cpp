@@ -186,6 +186,8 @@ int main(int argc, char** argv)
   glRenWin->SetWindowName("Keyhole_Rendering_Example");
   glRenWin->SetSize(512, 512);
   glRenWin->SetAlphaBitPlanes(1);
+  glRenWin->StereoCapableWindowOn();
+  glRenWin->SetStereoTypeToSplitViewportHorizontal();
 
   vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
   renWindowInteractor->SetRenderWindow(renderWindow);
