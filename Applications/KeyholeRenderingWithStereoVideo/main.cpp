@@ -40,11 +40,49 @@ public:
 	vtkWindowEventCallback()
 	{
 		this->frame_idx = 0;
+		this->size = 120;
+		this->gamma = 5.0;
+		x = y = 256;
+		this->pinned = true;
 	}
 
 	virtual void Execute(vtkObject* caller, unsigned long eventid, void* callData)
 	{
 		vtkRenderWindowInteractor* renWindowInteractor = vtkRenderWindowInteractor::SafeDownCast(caller);
+
+		if (eventid == vtkCommand::MouseMoveEvent && !this->pinned)
+		{
+			x = renWindowInteractor->GetEventPosition()[0];
+			y = renWindowInteractor->GetEventPosition()[1];
+		}
+		if (eventid == vtkCommand::LeftButtonPressEvent)
+		{
+			this->pinned = (this->pinned == true) ? false : true;
+		}
+		if (eventid == vtkCommand::MouseWheelForwardEvent)
+		{
+			this->size += 5;
+		}
+		if (eventid == vtkCommand::MouseWheelBackwardEvent)
+		{
+			this->size -= 5;
+		}
+		if (eventid == vtkCommand::RightButtonPressEvent)
+		{
+			this->gamma += 0.5;
+		}
+		if (eventid == vtkCommand::KeyPressEvent)
+		{
+			// Reset everything
+			char* c = renWindowInteractor->GetKeySym();
+			if (*c == 'r')
+			{
+				this->size = 120;
+				x = 256;
+				y = 256;
+				this->gamma = 5.0;
+			}
+		}
 
 		/* Read video and update background texture */
 		if (frame_idx == capture->get(CV_CAP_PROP_FRAME_COUNT))
@@ -76,6 +114,9 @@ public:
 		leftTexture->Modified();
 		rightTexture->Modified();
 
+		// Set keyhole parameters.
+		keyholePass->SetKeyholeParameters(x, y, size, this->gamma);
+
 
 		renWindowInteractor->GetRenderWindow()->Render();
 		frame_idx++;
@@ -91,11 +132,19 @@ public:
 
 	vtkImageImport *leftImageImport, *rightImageImport;
 	vtkTexture *leftTexture, *rightTexture;
+	vtkKeyholePass *keyholePass;
 	cv::VideoCapture* capture;
 	cv::Mat *background;
 	cv::Mat *background_RGBA;
 	cv::Mat *left_img, *right_img;
 	int frame_idx;
+
+private:
+	int size;
+	double gamma;
+	int x, y;
+
+	bool pinned;
 };
 
 
@@ -261,9 +310,16 @@ int main(int argc, char** argv)
 	call_back->right_img = &right_img;
 	call_back->leftTexture = leftImageTex;
 	call_back->rightTexture = rightImageTex;
+	call_back->keyholePass = keyholePass;
 
 
 	renWindowInteractor->AddObserver(vtkCommand::TimerEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::MouseWheelBackwardEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::MouseMoveEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::LeftButtonPressEvent, call_back);
+	renWindowInteractor->AddObserver(vtkCommand::RightButtonPressEvent, call_back);
 	renWindowInteractor->Initialize();
 
 	int interactorTimerID = renWindowInteractor->CreateRepeatingTimer(1000.0 / 30.0);
