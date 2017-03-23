@@ -251,6 +251,8 @@ int main(int argc, char** argv)
 
 	// Setup camera
 	vtkOpenGLCamera *cam = vtkOpenGLCamera::New();
+	cam->UseOffAxisProjectionOn(); // Use Off-axis Projection for stereo
+	cam->SetEyeSeparation(0.006); // Set eye separation approx. 6mm for the daVinci camera
 	glRenderer->SetActiveCamera(cam);
 
 	// Create an actor
