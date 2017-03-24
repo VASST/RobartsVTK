@@ -689,7 +689,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 		this->GradientProgram1 = new vtkOpenGLHelper;
 		// build the shader source code
 		std::string data_dir = std::string(SHADER_DIRECTORY);
-		LoadShaders(data_dir + "vtkKeyhole.fs", data_dir + "vtkKeyhole.vs");
+		LoadShaders(data_dir + "gradientMagPass1.fs", data_dir + "vtkKeyhole.vs");
 
 		std::string GSSource;
 		// compile and bind it if needed
@@ -808,13 +808,13 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	this->FrameBufferObject->SetActiveBuffer(0);
 	this->FrameBufferObject->Start(width, height, false);
 
-	// Set the shader program for the first pass of GX and GY
+	// Set the shader program for the second pass of GX and GY
 	if (this->KeyholeShader == NULL)
 	{
 		this->KeyholeShader = new vtkOpenGLHelper;
 		// build the shader source code
 		std::string data_dir = std::string(SHADER_DIRECTORY);
-		LoadShaders(data_dir + "vtkKeyhole.fs", data_dir + "vtkKeyhole.vs");
+		LoadShaders(data_dir + "gradientMagPass2.fs", data_dir + "vtkKeyhole.vs");
 
 		std::string GSSource;
 		// compile and bind it if needed
