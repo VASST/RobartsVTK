@@ -249,6 +249,9 @@ int main(int argc, char** argv)
 
   // Set keyhole parameters
   keyholePass->SetLeftKeyholeParameters(256, 256, 150, 5.0);
+  keyholePass->SetVisualizationMode(3);// Set keyhole mode
+  keyholePass->SetAlphaValue(1.0); // Only used for alpha blending
+  keyholePass->SetBackgroundColor(0, 0, 0);
   keyholePass->SetHardKeyholeEdges(false);
 
   vtkSmartPointer<vtkLightsPass> lightsPass = vtkSmartPointer<vtkLightsPass>::New();

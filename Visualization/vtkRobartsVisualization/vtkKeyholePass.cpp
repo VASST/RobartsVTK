@@ -89,7 +89,9 @@ vtkKeyholePass::vtkKeyholePass()
 	mask_img_available(false),
 	background_r(0),
 	background_g(0),
-	background_b(128)
+	background_b(128), 
+	mode(0), 
+	alpha(0.5)
 {
 }
 
@@ -564,6 +566,8 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			this->KeyholeProgram->Program->SetUniformf("y0", static_cast<float>((this->yR * 1.0) / height));
 		}
 
+		this->KeyholeProgram->Program->SetUniformi("mode", this->mode);
+		this->KeyholeProgram->Program->SetUniformf("alpha", this->alpha);
 		this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius * 1.0) / width));
 		this->KeyholeProgram->Program->SetUniformf("aspect_ratio", static_cast<float>(width * 1.0 / height));
 		this->KeyholeProgram->Program->SetUniformf("gamma", this->gamma);

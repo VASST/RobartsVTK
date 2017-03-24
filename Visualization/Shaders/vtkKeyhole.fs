@@ -12,8 +12,8 @@ uniform float th;
 uniform float x0,y0; // Center of the keyhole. Eventually this will be in 3D. This is normalized. 
 uniform float radius; // Radius of the keyhole. This is normalized. 
 uniform float gamma; // gamma variable to control distance fall off
-uniform int use_mask_texture, use_hard_edges; 
-uniform float aspect_ratio;
+uniform int use_mask_texture, use_hard_edges, mode; 
+uniform float aspect_ratio, alpha;
 
 float calc_mask(vec2, float, float, float, float, float, int);
 
@@ -26,29 +26,55 @@ void main(void)
 
   // Convert the edge map to gray-scale.
   float gray = 0.299*foreground_grad.r + 0.58*foreground_grad.g + 0.114*foreground_grad.b;
- 
-  if( use_mask_texture == 0)
-  {
-      // Compute the keyhole mask based on x0,y0, radius and gamma
-      float mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
-      
-      // keyhole effect
-      inside  = (1-mask)*volume.rgb;
-      outside = mask*foreground.rgb;
-      surface = (1-mask)*foreground_grad.rgb;
-  }
-  else
-  {
-      float m = texture2D(_mask, tcoordVC).r;
-      // keyhole effect
-      inside = (1-m)*volume.rgb;
-      outside = m*foreground.rgb;
-      surface = (1-m)*foreground_grad.rgb;
-  }
 
-  // Blend textures to get the final effect. 
-  color.rgb = inside + surface + outside;
-  color.a = 1.0;
+  if(mode == 0) // Just background image
+  {
+      color.rgb = foreground.rgb;
+      color.a = 1.0;
+  }
+  else if(mode == 1) // Alpha blending
+  {
+      if( volume.rgb == vec3(0, 0, 0) ) // Don't do alpha-blending for the background
+      {
+          color.rgb = foreground.rgb;
+          color.a = 1.0;
+      }
+      else
+      {
+          color.rgb = alpha*volume.rgb + (1-alpha)*foreground.rgb;
+          color.a = 1.0;
+      }
+  }
+  else if(mode == 2)  // Additive blending
+  {  
+      color.rgb = volume.rgb + foreground.rgb;
+      color.a = 1.0;
+  }
+  else if(mode == 3) // Keyhole blending
+  {   
+      if( use_mask_texture == 0)
+      {
+          // Compute the keyhole mask based on x0,y0, radius and gamma
+          float mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
+      
+          // keyhole effect
+          inside  = (1-mask)*volume.rgb;
+          outside = mask*foreground.rgb;
+          surface = (1-mask)*foreground_grad.rgb;
+      }
+      else
+      {
+          float m = texture2D(_mask, tcoordVC).r;
+          // keyhole effect
+          inside = (1-m)*volume.rgb;
+          outside = m*foreground.rgb;
+          surface = (1-m)*foreground_grad.rgb;
+      }
+
+      // Blend textures to get the final effect. 
+      color.rgb = inside + surface + outside;
+      color.a = 1.0;
+  }
 }
 
 // Calculates the mask

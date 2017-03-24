@@ -119,6 +119,21 @@ public:
 	  this->background_b = b;
   }
 
+  // Description:
+  // Set visualization mode: 0 - no keyhole, 1- alpha blending, 2- additive blending, 3 - keyhole
+  // By default this is set to no keyhole
+  void SetVisualizationMode(int _mode)
+  {
+	  this->mode = _mode;
+  }
+
+  // Description:
+  // Set alpha value for blending. The default value is 0.5
+  void SetAlphaValue(double _alpha)
+  {
+	  this->alpha = _alpha;
+  }
+
 protected:
   // Description:
   // Graphics resources.
@@ -141,6 +156,7 @@ protected:
 
   int xL, xR;
   int yL, yR;
+  int mode; // 0 - no keyhole, 1 - alpha blending, 3 - with keyhole
   int radius;
   int components;
   unsigned int dimensions[2];
@@ -149,6 +165,7 @@ protected:
   bool mask_img_available;
 
   double background_r, background_g, background_b;
+  double alpha;
 
   bool Supported;
   bool SupportProbed;
