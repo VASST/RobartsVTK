@@ -24,6 +24,7 @@
 #include <vtkPlaneSource.h>
 #include <vtkProperty.h>
 #include <vtkOpenGLCamera.h>
+#include <vtkMatrix4x4.h>
 #include <vtksys/CommandLineArguments.hxx>
 
 #include "vtkKeyholePass.h"
@@ -44,6 +45,13 @@ public:
 		this->gamma = 5.0;
 		x = y = 256;
 		this->pinned = true;
+
+		double m[16] = { 1, 0, 0, 0, 
+						 0, 1, 0, 0, 
+						 0, 0, 1, 100, 
+						 0, 0, 0, 1 };
+		mat = vtkMatrix4x4::New();
+		mat->DeepCopy(m);
 	}
 
 	virtual void Execute(vtkObject* caller, unsigned long eventid, void* callData)
@@ -117,6 +125,9 @@ public:
 		// Set keyhole parameters.
 		keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 		keyholePass->SetRightKeyholeParameters(x+10, y, size, this->gamma);
+		
+
+		sphere->SetUserMatrix(mat);
 
 
 		renWindowInteractor->GetRenderWindow()->Render();
@@ -134,6 +145,8 @@ public:
 	vtkImageImport *leftImageImport, *rightImageImport;
 	vtkTexture *leftTexture, *rightTexture;
 	vtkKeyholePass *keyholePass;
+	vtkActor *sphere;
+	vtkMatrix4x4 *mat;
 	cv::VideoCapture* capture;
 	cv::Mat *background;
 	cv::Mat *background_RGBA;
@@ -249,12 +262,6 @@ int main(int argc, char** argv)
 	glRenWin->StereoRenderOn();
 	glRenWin->SetStereoTypeToSplitViewportHorizontal();
 
-	// Setup camera
-	vtkOpenGLCamera *cam = vtkOpenGLCamera::New();
-	cam->UseOffAxisProjectionOn(); // Use Off-axis Projection for stereo
-	cam->SetEyeSeparation(0.0045); // Set eye separation approx. 4.5mm for the daVinci camera
-	glRenderer->SetActiveCamera(cam);
-
 	// Create an actor
 	vtkSmartPointer< vtkSphereSource > sphere = vtkSmartPointer< vtkSphereSource >::New();
 	sphere->SetPhiResolution(50);
@@ -266,7 +273,7 @@ int main(int argc, char** argv)
 
 	vtkSmartPointer< vtkActor > sphereActor = vtkSmartPointer< vtkActor >::New();
 	sphereActor->SetMapper(sphereMapper);
-	sphereActor->SetPosition(0, 0, -200); // Place the actor at a particular distance from the origin
+	sphereActor->SetPosition(0, 0, 0); // Place the actor at a particular distance from the origin
 	sphereActor->GetProperty()->SetColor(1, 0, 0);
 
 	glRenderer->AddActor(sphereActor);
@@ -275,9 +282,35 @@ int main(int argc, char** argv)
 	glRenderer->AddViewProp(leftTexturedPlane);
 	glRenderer->AddViewProp(rightTexturedPlane);
 
+	// Setup camera
+	double cx(width/4), cy(height / 2);
+	double f(775);
+	double viewAngle = 2 * atan((height / 2.0) / f) * 180 / (4 * atan(1.0));
+	double center_x = (width/2 - cx) / ((width/2 - 1) / 2.0) - 1;
+	double center_y = cy / ((height - 1) / 2.0) - 1;
+	double aspect = width/ height/2;
+	vtkCamera* cam = ren->GetActiveCamera();
+	cam->SetViewAngle(viewAngle);
+	cam->SetPosition(0, 0, 0);
+	cam->SetViewUp(0, -1, 0);
+	cam->SetFocalPoint(0, 0, f);
+	cam->SetWindowCenter(center_x, center_y);
+	cam->SetClippingRange(0.01, 1000.01);
+
+	// This is required for Off-axis Projection
+	cam->SetScreenBottomLeft(-cx, -(height-cy), f);
+	cam->SetScreenBottomRight(width/2-cx, -(height-cy), f);
+	cam->SetScreenTopRight(width/2 - cx, cy, f);
+	cam->UseOffAxisProjectionOn(); // Use Off-axis Projection for stereo
+
+	/* Set eye separation approx. 4.5mm for the daVinci camera. However, for some reason
+	   this value is devided by a factor of 10 in VTK (see ComputeOffAxisProjectionFrustum()). 
+	   Therefore, actual value is multiplied by 10 here. */
+	cam->SetEyeSeparation(4.5*10); 
+	cam->Modified();
+
 	vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 	renWindowInteractor->SetRenderWindow(glRenWin);
-
 
 	// Render Passes
 	vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
@@ -318,6 +351,7 @@ int main(int argc, char** argv)
 	call_back->leftTexture = leftImageTex;
 	call_back->rightTexture = rightImageTex;
 	call_back->keyholePass = keyholePass;
+	call_back->sphere = sphereActor;
 
 
 	renWindowInteractor->AddObserver(vtkCommand::TimerEvent, call_back);

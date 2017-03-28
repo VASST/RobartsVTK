@@ -58,6 +58,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkSphereSource.h>
 #include <vtkTexture.h>
 #include <vtkTextureMapToPlane.h>
+#include <vtkCamera.h> 
+#include <vtkOpenGLCamera.h>
+#include <vtkMatrix4x4.h>
 #include <vtksys/CommandLineArguments.hxx>
 
 // OpenCV includes
@@ -77,8 +80,13 @@ public:
   {
     this->size = 120;
     this->gamma = 5.0;
-    x = y = 256;
+	x = 320; 
+	y = 240;
     this->pinned = true;
+
+	double m[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 200, 0, 0, 0, 1 };
+	mat = vtkMatrix4x4::New();
+	mat->DeepCopy(m);
   }
 
   virtual void Execute(vtkObject* caller, unsigned long eventid, void* callData)
@@ -132,6 +140,10 @@ public:
 	texture->Modified();
 	actor->Modified();
 
+	sphere1->SetUserMatrix(mat);
+	sphere2->SetUserMatrix(mat);
+	sphere3->SetUserMatrix(mat);
+
     // Set keyhole parameters.
     keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
@@ -142,9 +154,10 @@ public:
   vtkImageImport* imgImport;
   vtkTexture* texture;
   cv::VideoCapture* capture;
+  vtkMatrix4x4 *mat;
   cv::Mat *background;
   cv::Mat *background_RGBA;
-  vtkActor* actor;
+  vtkActor *actor, *sphere1, *sphere2, *sphere3;
 
 private:
   int size;
@@ -185,6 +198,7 @@ int main(int argc, char** argv)
   sphere->SetPhiResolution(100);
   sphere->SetThetaResolution(100);
   sphere->SetRadius(5);
+  sphere->SetCenter(0, 0, 0);
 
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(sphere->GetOutputPort());
@@ -275,6 +289,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkActor> texturedPlane = vtkSmartPointer<vtkActor>::New();
   texturedPlane->SetMapper(planeMapper);
   texturedPlane->SetTexture(forgroundTex);
+  texturedPlane->SetVisibility(0);
 
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
   vtkOpenGLRenderer* glRenderer = vtkOpenGLRenderer::SafeDownCast(ren);
@@ -296,10 +311,23 @@ int main(int argc, char** argv)
   // Add texturedPlane as an actor
   glRenderer->AddViewProp(texturedPlane);
 
+  // Setup camera
+  double viewAngle = 2 * atan((480 / 2.0) / 775) * 180 / (4 * atan(1.0));
+  double center_x = (640 - 320) / ((640 - 1) / 2.0) - 1;
+  double center_y = 240 / ((480 - 1) / 2.0) - 1;
+  vtkOpenGLCamera *cam = vtkOpenGLCamera::SafeDownCast(glRenderer->GetActiveCamera());
+  cam->SetViewAngle(viewAngle);
+  cam->SetPosition(0, 0, 0);
+  cam->SetViewUp(0, -1, 0);
+  cam->SetFocalPoint(0, 0, 775);
+  cam->SetWindowCenter(center_x, center_y);
+  cam->SetClippingRange(0.01, 1000.01);
+
+
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
-  keyholePass->SetLeftKeyholeParameters(256, 256, 150, 2.0);
+  keyholePass->SetLeftKeyholeParameters(320, 240, 150, 2.0);
   keyholePass->SetHardKeyholeEdges(false);
   keyholePass->SetBackgroundColor(0, 0, 128);
   keyholePass->SetVisualizationMode(3); // Use keyhole rendering mode
@@ -329,6 +357,9 @@ int main(int argc, char** argv)
   call_back->imgImport = backgroundImport;
   call_back->texture = forgroundTex;
   call_back->actor = texturedPlane;
+  call_back->sphere1 = actor;
+  call_back->sphere2 = actor2;
+  call_back->sphere3 = actor3;
 
   renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent , call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);
