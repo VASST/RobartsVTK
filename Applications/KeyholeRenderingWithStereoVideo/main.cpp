@@ -285,22 +285,16 @@ int main(int argc, char** argv)
 	// Setup camera
 	double cx(width/4), cy(height / 2);
 	double f(775);
-	double viewAngle = 2 * atan((height / 2.0) / f) * 180 / (4 * atan(1.0));
-	double center_x = (width/2 - cx) / ((width/2 - 1) / 2.0) - 1;
-	double center_y = cy / ((height - 1) / 2.0) - 1;
-	double aspect = width/ height/2;
 	vtkCamera* cam = ren->GetActiveCamera();
-	cam->SetViewAngle(viewAngle);
 	cam->SetPosition(0, 0, 0);
-	cam->SetViewUp(0, -1, 0);
+	cam->SetViewUp(0, 1, 0);
 	cam->SetFocalPoint(0, 0, f);
-	cam->SetWindowCenter(center_x, center_y);
-	cam->SetClippingRange(0.01, 1000.01);
+	cam->SetThickness(1000.0);
 
 	// This is required for Off-axis Projection
 	cam->SetScreenBottomLeft(-cx, -(height-cy), f);
-	cam->SetScreenBottomRight(width/2-cx, -(height-cy), f);
-	cam->SetScreenTopRight(width/2 - cx, cy, f);
+	cam->SetScreenBottomRight(width/2.0 - cx, -(height-cy), f);
+	cam->SetScreenTopRight(width/2.0 - cx, cy, f);
 	cam->UseOffAxisProjectionOn(); // Use Off-axis Projection for stereo
 
 	/* Set eye separation approx. 4.5mm for the daVinci camera. However, for some reason

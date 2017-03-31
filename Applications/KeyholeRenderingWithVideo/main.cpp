@@ -84,7 +84,10 @@ public:
 	y = 240;
     this->pinned = true;
 
-	double m[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 200, 0, 0, 0, 1 };
+	double m[16] = { 1, 0, 0, 10, 
+					 0, 1, 0, 10, 
+					 0, 0, 1, 200, 
+					 0, 0, 0, 1 };
 	mat = vtkMatrix4x4::New();
 	mat->DeepCopy(m);
   }
