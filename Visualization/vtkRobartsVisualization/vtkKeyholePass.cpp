@@ -444,10 +444,39 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		r->SetTexturedBackground(false);
 		// Now set a black background.
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
+
+		GLint saved_viewport[4];
+		glGetIntegerv(GL_VIEWPORT, saved_viewport);
 		
 		// First pass
 		this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,
 			this->Pass1);
+
+		/* Test code */
+		/*this->FrameBufferObject->SetColorBuffer(0, this->Pass1);
+		GLint saved_viewport[4];
+		//glGetIntegerv(GL_VIEWPORT, saved_viewport);
+
+		// This method sets viewport to start at 0,0
+		this->FrameBufferObject->Start(width, height, false);
+
+		//glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
+		//	saved_viewport[3]);
+
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		this->FrameBufferObject->UnBind();
+
+		//glDrawBuffer(static_cast<GLenum>(savedDrawBuffer));
+		this->Pass1->Bind();
+		this->Pass1->CopyToFrameBuffer(0, 0, width - 1, height - 1,
+			0, 0, width, height,
+			NULL,
+			NULL);
+		this->Pass1->Deactivate();
+
+		return;
+		/* end test code */
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
 		// Save the output of the first pass to a file for debugging
@@ -652,6 +681,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 #endif
 
 		this->Pass2->Activate();
+
+		glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
+					saved_viewport[3]);
 		
 		// Copy Pass2 to a FBO
 		this->Pass2->CopyToFrameBuffer(0, 0, width - 1, height - 1,
@@ -1097,6 +1129,15 @@ void vtkKeyholePass::SetupDrawBuffers(vtkRenderer *ren)
 			// one buffer at a time.
 			glReadBuffer(static_cast<GLenum>(win->GetFrontBuffer()));
 		}
+	}
+
+	glViewport(lowerLeft[0], lowerLeft[1], usize, vsize);
+	glEnable(GL_SCISSOR_TEST);
+
+	if ((ren->GetRenderWindow())->GetErase() && ren->GetErase()
+		&& !ren->GetIsPicking())
+	{
+		ren->Clear();
 	}
 
 	vtkOpenGLCheckErrorMacro("failed after restore context");
