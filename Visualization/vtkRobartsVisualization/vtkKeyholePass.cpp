@@ -50,9 +50,6 @@
 #include "vtkTextureObject.h"
 #include "vtkTextureUnitManager.h"
 
-// To be able to dump intermediate passes into png images for debugging.
-//#define VTK_KEYHOLE_PASS_DEBUG
-
 #include "vtkCamera.h"
 #include "vtkImageExtractComponents.h"
 #include "vtkImageImport.h"
@@ -135,6 +132,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 	// find out if we should stereo render
 	bool stereo = r->GetRenderWindow()->GetStereoRender() == 1;
 
+	vtkOpenGLRenderWindow *win = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
+	win->MakeCurrent();
+
 	vtkOpenGLRenderWindow* renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
 	if (this->DelegatePass != NULL)
 	{
@@ -160,16 +160,32 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			}
 			if (supported)
 			{
-
+				vtkFrameBufferObject *fbo = vtkFrameBufferObject::SafeDownCast(s->GetFrameBuffer());
 				// FBO extension is supported. Is the specific FBO format supported?
-				if (this->FrameBufferObject == NULL)
+				if (fbo == 0)
 				{
-					this->FrameBufferObject = vtkFrameBufferObject::New();
-					this->FrameBufferObject->SetContext(renwin);
+					// get the viewport dimensions
+					r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight, &this->viewPortX, &this->viewPortY);
+					if (this->FrameBufferObject == NULL)
+					{
+						this->FrameBufferObject = vtkFrameBufferObject::New();
+						this->FrameBufferObject->SetContext(renwin);
 
-					/* Drawbuffers need to be set-up to be stereo here. vtkCameraPass assumes that FBO is setup appropriately. */
-					this->SetupDrawBuffers(r);
+						/* Drawbuffers need to be set-up to be stereo here. vtkCameraPass assumes that FBO is setup appropriately. */
+						this->SetupDrawBuffers(r);
+					}
 				}
+				else
+				{
+					this->FrameBufferObject = fbo;
+					int size[2];
+					s->GetWindowSize(size);
+					this->viewPortWidth = size[0];
+					this->viewPortHeight = size[1];
+					this->viewPortX = 0;
+					this->viewPortY = 0;
+				}
+
 				if (this->Pass1 == NULL)
 				{
 					this->Pass1 = vtkTextureObject::New();
@@ -217,6 +233,11 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 				this->FrameBufferObject->SetActiveBuffer(0);
 				this->FrameBufferObject->SetDepthBufferNeeded(true);
 
+#if GL_ES_VERSION_2_0 != 1
+				GLint savedCurrentDrawBuffer;
+				glGetIntegerv(GL_DRAW_BUFFER, &savedCurrentDrawBuffer);
+#endif
+
 				supported = this->FrameBufferObject->StartNonOrtho(64, 64, false);
 
 				if (!supported)
@@ -226,6 +247,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 				else
 				{
 					this->FrameBufferObject->UnBind();
+#if GL_ES_VERSION_2_0 != 1
+					glDrawBuffer(static_cast<GLenum>(savedCurrentDrawBuffer));
+#endif
 				}
 			}
 
@@ -393,31 +417,34 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 				this->MaskPixelBufferObject, false);
 		}
 
+#if GL_ES_VERSION_2_0 != 1
+		GLint savedDrawBuffer;
+		glGetIntegerv(GL_DRAW_BUFFER, &savedDrawBuffer);
+#endif
 		// 1. Create a new render state with FBO.
 		int width;
 		int height;
-		int size[2];
-		s->GetWindowSize(size);
-		width = size[0];
-		height = size[1];
+		int origin[2];
+		int win_size[2];
 
-		if (this->Pass1 == NULL)
-		{
-			this->Pass1 = vtkTextureObject::New();
-			this->Pass1->SetContext(renwin);
-		}
+		// Get the Window Size. This will be useful when multiple view ports are used.
+		int *wsize = r->GetRenderWindow()->GetActualSize();
+		win_size[0] = wsize[0];
+		win_size[1] = wsize[1];
 
-		if (this->FrameBufferObject == NULL)
-		{
-			this->FrameBufferObject = vtkFrameBufferObject::New();
-			this->FrameBufferObject->SetContext(renwin);
-		}
+		// Get ViewPort Size, not the window size
+		int *vsize = r->GetSize();
+		int *vorigin = r->GetOrigin();
+		width = vsize[0];
+		height = vsize[1];
+		origin[0] = vorigin[0];
+		origin[1] = vorigin[1];
 
 		// Remove background texture
 		r->SetTexturedBackground(false);
 		// Now set a black background.
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
-
+		
 		// First pass
 		this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,
 			this->Pass1);
@@ -513,6 +540,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 			//restore state
 			this->FrameBufferObject->UnBind();
+#if GL_ES_VERSION_2_0 != 1
+			glDrawBuffer(static_cast<GLenum>(savedDrawBuffer));
+#endif
 			return;
 		}
 
@@ -575,14 +605,15 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		this->KeyholeProgram->Program->SetUniformi("use_hard_edges", static_cast<int>(this->allow_hard_edges));
 
 		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_DEPTH_TEST);		
+
+#ifdef VTK_KEYHOLE_PASS_DEBUG
 
 		this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 			this->KeyholeProgram->Program,
 			this->KeyholeProgram->VAO);
 		this->Pass1->Deactivate();
 
-#ifdef VTK_KEYHOLE_PASS_DEBUG
 		// Save the output of the first pass to a file for debugging
 		pbo = this->Pass2->Download();
 
@@ -605,7 +636,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		rgbatoRgb->SetComponents(0, 1, 2);
 
 		writer = vtkPNGWriter::New();
-		writer->SetFileName("KeyholePass12.png");
+		writer->SetFileName("KeyholePass2.png");
 		writer->SetInputConnection(rgbatoRgb->GetOutputPort());
 		writer->Write();
 
@@ -613,10 +644,16 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		rgbatoRgb->Delete();
 		writer->Delete();
 #endif
+		// Render in the original FBO
 		this->FrameBufferObject->UnBind();
 
-		this->Pass2->Activate();
+#if GL_ES_VERSION_2_0 != 1
+		glGetIntegerv(GL_DRAW_BUFFER, &savedDrawBuffer);
+#endif
 
+		this->Pass2->Activate();
+		
+		// Copy Pass2 to a FBO
 		this->Pass2->CopyToFrameBuffer(0, 0, width - 1, height - 1,
 			0, 0, width, height,
 			this->KeyholeProgram->Program,
@@ -649,13 +686,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 {
 	vtkOpenGLRenderWindow* renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
-	int* size = renwin->GetSize();
-	int width = size[0];
-	int height = size[1];
-
-	/*const int extraPixels = 1; // one on each side
-	int w = width+2*extraPixels;
-	int h = height+2*extraPixels;*/
+	int *vsize = r->GetSize();
+	int width = vsize[0];
+	int height = vsize[1];
 
 	// Create new TOs and set FBO color attachments
 	if (this->GX == NULL)
@@ -759,7 +792,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	// Save the output for debugging
 	vtkPixelBufferObject* pbo = GX->Download();
 
-	unsigned int dims[2] = { size[0], size[1] };
+	unsigned int dims[2] = { width, height };
 
 	unsigned char* openglRawData = new unsigned char[4 * dims[0] * dims[1]];
 	vtkIdType incs[2];
@@ -805,7 +838,6 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 			VTK_UNSIGNED_CHAR, false);
 	}
 
-	this->FrameBufferObject->UnBind();
 	// Now bind foreground_grad_to to the FBO
 	this->FrameBufferObject->SetNumberOfRenderTargets(1);
 	this->FrameBufferObject->SetColorBuffer(0, ForegroundGradientTextureObject);

@@ -295,30 +295,35 @@ int main(int argc, char** argv)
   texturedPlane->SetVisibility(0);
 
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
-  vtkOpenGLRenderer* glRenderer = vtkOpenGLRenderer::SafeDownCast(ren);
-  glRenderer->AddActor(actor);
-  glRenderer->AddActor(actor2);
-  glRenderer->AddActor(actor3);
+  ren->SetViewport(0, 0, 0.5, 1);
+  ren->GetActiveCamera()->SetPosition(-1, 0, 5);
+  ren->AddActor(actor);
+  ren->AddActor(actor2);
+  ren->AddActor(actor3);
+
+  vtkSmartPointer< vtkRenderer > ren2 = vtkSmartPointer< vtkRenderer >::New();
+  ren2->SetViewport(0.5, 0, 1, 1);
+  ren2->GetActiveCamera()->SetPosition(1, 0, 5);
+  ren2->AddActor(actor);
 
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-
-  vtkOpenGLRenderWindow* glRenWin = vtkOpenGLRenderWindow::SafeDownCast(renderWindow);
-  glRenWin->AddRenderer(glRenderer);
-  glRenWin->SetWindowName("Keyhole_Rendering_Example");
-  glRenWin->SetSize(width, height);
-  glRenWin->SetAlphaBitPlanes(1);
+  renderWindow->AddRenderer(ren);
+  renderWindow->AddRenderer(ren2);
+  renderWindow->SetWindowName("Keyhole_Rendering_Example");
+  renderWindow->SetSize(width*2, height);
+  renderWindow->SetAlphaBitPlanes(1);
 
   vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
   renWindowInteractor->SetRenderWindow(renderWindow);
 
   // Add texturedPlane as an actor
-  glRenderer->AddViewProp(texturedPlane);
+  ren->AddViewProp(texturedPlane);
 
   // Setup camera
   double viewAngle = 2 * atan((480 / 2.0) / 775) * 180 / (4 * atan(1.0));
   double center_x = (640 - 320) / ((640 - 1) / 2.0) - 1;
   double center_y = 240 / ((480 - 1) / 2.0) - 1;
-  vtkOpenGLCamera *cam = vtkOpenGLCamera::SafeDownCast(glRenderer->GetActiveCamera());
+  vtkOpenGLCamera *cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
   cam->SetViewAngle(viewAngle);
   cam->SetPosition(0, 0, 0);
   cam->SetViewUp(0, -1, 0);
@@ -350,7 +355,7 @@ int main(int argc, char** argv)
   cameraPass->SetDelegatePass(sequencePass);
   keyholePass->SetDelegatePass(cameraPass);
 
-  glRenderer->SetPass(keyholePass);
+  ren->SetPass(keyholePass);
 
   vtkSmartPointer<vtkWindowEventCallback> call_back = vtkSmartPointer<vtkWindowEventCallback>::New();
   call_back->keyholePass = keyholePass;
