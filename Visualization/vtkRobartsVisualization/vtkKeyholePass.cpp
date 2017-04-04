@@ -112,7 +112,7 @@ vtkKeyholePass::~vtkKeyholePass()
 //----------------------------------------------------------------------------------------------------
 void vtkKeyholePass::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageProcessingPass::PrintSelf(os, indent);
+	vtkMultiViewportImageProcessingPass::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -1187,7 +1187,7 @@ void vtkKeyholePass::ReleaseGraphicsResources(vtkWindow* w)
 
 	assert("pre: w_exists" && w != NULL);
 
-	vtkImageProcessingPass::ReleaseGraphicsResources(w);
+	vtkMultiViewportImageProcessingPass::ReleaseGraphicsResources(w);
 
 	if (this->KeyholeProgram != NULL)
 	{

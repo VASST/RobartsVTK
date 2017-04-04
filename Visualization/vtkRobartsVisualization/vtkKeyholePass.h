@@ -38,7 +38,8 @@
 
 #include "vtkActorCollection.h"
 #include "vtkImageData.h"
-#include "vtkImageProcessingPass.h"
+#include "vtkMultiViewportImageProcessingPass.h" // Use this instead of vtkImageProcessingPass.h 
+									//  that comes with VTK if multiple view-ports are used.
 #include "vtkOpenGLHelper.h"
 #include "vtkPixelBufferObject.h"
 #include "vtkRenderer.h"
@@ -53,7 +54,7 @@ class vtkTextureObject;
 // To be able to dump intermediate passes into png images for debugging.
 //#define VTK_KEYHOLE_PASS_DEBUG
 
-class vtkRobartsVisualizationExport vtkKeyholePass : public vtkImageProcessingPass
+class vtkRobartsVisualizationExport vtkKeyholePass : public vtkMultiViewportImageProcessingPass
 {
 public:
 
@@ -65,7 +66,7 @@ public:
   };
 
   static vtkKeyholePass *New();
-  vtkTypeMacro(vtkKeyholePass, vtkImageProcessingPass);
+  vtkTypeMacro(vtkKeyholePass, vtkMultiViewportImageProcessingPass);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

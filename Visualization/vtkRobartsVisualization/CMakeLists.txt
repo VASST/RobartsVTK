@@ -2,11 +2,13 @@ PROJECT(vtkRobartsVisualization)
 
 SET ( ${PROJECT_NAME}_SRCS
   vtkKeyholePass.cpp
+  vtkMultiViewportImageProcessingPass.cxx
 )
 
 IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
   SET ( ${PROJECT_NAME}_HDRS 
     vtkKeyholePass.h
+	vtkMultiViewportImageProcessingPass.h
   )
 ENDIF()
 
