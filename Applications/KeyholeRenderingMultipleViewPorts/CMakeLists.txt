@@ -36,6 +36,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
   opencv_highgui
   )
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-  DEFAULT_BACKGROUND_FILE="${RobartsVTK_Data_DIR}/Images/CAP_201587T184044_UND.avi"
+  DEFAULT_BACKGROUND_FILE="${RobartsVTK_Data_DIR}/Images/stereo_video.avi"
   DEFAULT_MASK_FILE="${RobartsVTK_Data_DIR}/Images/mask_2.png"
   )

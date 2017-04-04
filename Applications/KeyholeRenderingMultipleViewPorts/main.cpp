@@ -78,6 +78,7 @@ public:
   }
   vtkWindowEventCallback()
   {
+	this->frame_idx = 0;
     this->size = 120;
     this->gamma = 5.0;
 	x = 320; 
@@ -131,13 +132,27 @@ public:
     }
 
 	/* Read video and update background texture */
+	if (frame_idx == capture->get(CV_CAP_PROP_FRAME_COUNT))
+	{
+		frame_idx = 0;
+		capture->set(CV_CAP_PROP_POS_FRAMES, frame_idx);
+	}
+
+	/* Read video and update background texture */
 	// TODO: texture update code goes here
 	capture->read(*background);
 	cv::flip(*background, *background, 0);
 	cv::cvtColor(*background, *background_RGBA, CV_BGR2RGBA, 4);
 
+	// split left and right images
+	int width = background->cols / 2;
+	int height = background->rows;
 
-	imgImport->SetImportVoidPointer((*background_RGBA).data);
+	cv::Rect roi(0, 0, width, height);
+	((*background_RGBA)(roi)).copyTo(*left_img);
+
+
+	imgImport->SetImportVoidPointer(left_img->data);
 	imgImport->Modified();
 
 	texture->Modified();
@@ -151,6 +166,7 @@ public:
     keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
 	renWindowInteractor->GetRenderWindow()->Render();
+	frame_idx++;
   }
 
   vtkKeyholePass* keyholePass;
@@ -160,7 +176,9 @@ public:
   vtkMatrix4x4 *mat;
   cv::Mat *background;
   cv::Mat *background_RGBA;
+  cv::Mat *left_img;
   vtkActor *actor, *sphere1, *sphere2, *sphere3;
+  int frame_idx;
 
 private:
   int size;
@@ -250,38 +268,25 @@ int main(int argc, char** argv)
   uchar* backgroundData = new uchar[width*height*sizeof(unsigned char)* 4];
   cv::Mat background_RGBA(cv::Size(width, height), CV_8UC4, backgroundData);
   cv::Mat background = cv::Mat(width, height, CV_8UC3);
+  cv::Mat left_img = cv::Mat(height, width / 2, CV_8UC4);
 
-  uchar* maskData = new uchar[mask.total() * 4];
-  cv::Mat mask_RGBA(mask.size(), CV_8UC4, maskData);
-  cv::cvtColor(mask, mask_RGBA, cv::COLOR_BGR2RGBA, 4);
-
-  vtkSmartPointer<vtkImageImport> backgroundImport = vtkSmartPointer<vtkImageImport>::New();
-  backgroundImport->SetDataOrigin(0, 0, 0);
-  backgroundImport->SetDataSpacing(1, 1, 1);
-  backgroundImport->SetWholeExtent(0, width - 1 , 0 , height - 1, 1, 1);
-  backgroundImport->SetDataExtentToWholeExtent();
-  backgroundImport->SetDataScalarTypeToUnsignedChar();
-  backgroundImport->SetNumberOfScalarComponents(4);
-  backgroundImport->SetImportVoidPointer(background_RGBA.data);
-  backgroundImport->Update();
-
-  vtkSmartPointer<vtkImageImport> maskImport = vtkSmartPointer<vtkImageImport>::New();
-  maskImport->SetDataOrigin(0, 0, 0);
-  maskImport->SetDataSpacing(1, 1, 1);
-  maskImport->SetWholeExtent(0, mask.cols - 1 , 0 , mask.rows - 1, 1, 1);
-  maskImport->SetDataExtentToWholeExtent();
-  maskImport->SetDataScalarTypeToUnsignedChar();
-  maskImport->SetNumberOfScalarComponents(4);
-  maskImport->SetImportVoidPointer(mask_RGBA.data);
-  maskImport->Update();
+  vtkSmartPointer<vtkImageImport> leftImgImport = vtkSmartPointer<vtkImageImport>::New();
+  leftImgImport->SetDataOrigin(0, 0, 0);
+  leftImgImport->SetDataSpacing(1, 1, 1);
+  leftImgImport->SetWholeExtent(0, width/2 - 1, 0, height - 1, 1, 1);
+  leftImgImport->SetDataExtentToWholeExtent();
+  leftImgImport->SetDataScalarTypeToUnsignedChar();
+  leftImgImport->SetNumberOfScalarComponents(4);
+  leftImgImport->SetImportVoidPointer(left_img.data);
+  leftImgImport->Update();
 
   vtkSmartPointer<vtkPlaneSource> plane = vtkSmartPointer<vtkPlaneSource>::New();
   plane->SetCenter(0.0, 0.0, 0.0);
   plane->SetNormal(0.0, 0.0, 1.0);
 
   // Apply Texture
-  vtkSmartPointer<vtkTexture> forgroundTex = vtkSmartPointer<vtkTexture>::New();
-  forgroundTex->SetInputConnection(backgroundImport->GetOutputPort());
+  vtkSmartPointer<vtkTexture> leftImgTex = vtkSmartPointer<vtkTexture>::New();
+  leftImgTex->SetInputConnection(leftImgImport->GetOutputPort());
 
   vtkSmartPointer<vtkTextureMapToPlane> texturePlane = vtkSmartPointer<vtkTextureMapToPlane>::New();
   texturePlane->SetInputConnection(plane->GetOutputPort());
@@ -289,10 +294,10 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   planeMapper->SetInputConnection(texturePlane->GetOutputPort());
 
-  vtkSmartPointer<vtkActor> texturedPlane = vtkSmartPointer<vtkActor>::New();
-  texturedPlane->SetMapper(planeMapper);
-  texturedPlane->SetTexture(forgroundTex);
-  texturedPlane->SetVisibility(0);
+  vtkSmartPointer<vtkActor> leftTexturedPlane = vtkSmartPointer<vtkActor>::New();
+  leftTexturedPlane->SetMapper(planeMapper);
+  leftTexturedPlane->SetTexture(leftImgTex);
+  leftTexturedPlane->SetVisibility(0);
 
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
   ren->SetViewport(0.5, 0, 1, 1);
@@ -312,14 +317,14 @@ int main(int argc, char** argv)
   renderWindow->AddRenderer(ren);
   renderWindow->AddRenderer(ren2);
   renderWindow->SetWindowName("Keyhole_Rendering_Example");
-  renderWindow->SetSize(width*2, height);
+  renderWindow->SetSize(width, height);
   renderWindow->SetAlphaBitPlanes(1);
 
   vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
   renWindowInteractor->SetRenderWindow(renderWindow);
 
   // Add texturedPlane as an actor
-  ren->AddViewProp(texturedPlane);
+  ren->AddViewProp(leftTexturedPlane);
 
   // Setup camera
   double viewAngle = 2 * atan((480 / 2.0) / 775) * 180 / (4 * atan(1.0));
@@ -365,12 +370,13 @@ int main(int argc, char** argv)
   call_back->capture = &capture;
   call_back->background = &background;
   call_back->background_RGBA = &background_RGBA;
-  call_back->imgImport = backgroundImport;
-  call_back->texture = forgroundTex;
-  call_back->actor = texturedPlane;
+  call_back->imgImport = leftImgImport;
+  call_back->texture = leftImgTex;
+  call_back->actor = leftTexturedPlane;
   call_back->sphere1 = actor;
   call_back->sphere2 = actor2;
   call_back->sphere3 = actor3;
+  call_back->left_img = &left_img;
 
   renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent , call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);
