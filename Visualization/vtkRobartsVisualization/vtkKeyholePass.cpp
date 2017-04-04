@@ -133,7 +133,11 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 	this->stereo = r->GetRenderWindow()->GetStereoRender() == 1;
 
 	vtkOpenGLRenderWindow* renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
-	if (this->DelegatePass != NULL)
+	if (this->DelegatePass == NULL)
+	{
+		vtkWarningMacro(<< "no delegate.");
+	}
+	else
 	{
 		if (!this->SupportProbed)
 		{
@@ -177,7 +181,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			}
 		}
 
-
 		// Create mask texture object.
 		if (this->mask_img_available)
 		{
@@ -193,23 +196,15 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		glGetIntegerv(GL_DRAW_BUFFER, &savedDrawBuffer);
 #endif
 		// 1. Create a new render state with FBO.
-		int width;
-		int height;
-		int origin[2];
-		int win_size[2];
-
-		// Get the Window Size. This will be useful when multiple view ports are used.
-		int *wsize = r->GetRenderWindow()->GetActualSize();
-		win_size[0] = wsize[0];
-		win_size[1] = wsize[1];
+		// Get viewport dimensions
+		r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight,
+			&this->viewPortX, &this->viewPortY);
 
 		// Get ViewPort Size, not the window size
-		int *vsize = r->GetSize();
-		int *vorigin = r->GetOrigin();
-		width = vsize[0];
-		height = vsize[1];
-		origin[0] = vorigin[0];
-		origin[1] = vorigin[1];
+		int width;
+		int height;
+		width = this->viewPortWidth;
+		height = this->viewPortHeight;
 
 		// Remove background texture
 		r->SetTexturedBackground(false);
@@ -217,8 +212,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
 
 		// Render in the correct viewport
-		r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight,
-			&this->viewPortX, &this->viewPortY);
 		glViewport(this->viewPortX, this->viewPortY, this->viewPortWidth, this->viewPortHeight);
 		
 		// First pass
@@ -449,10 +442,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 		this->MaskTextureObject->Deactivate();
 		this->ForegroundGradientTextureObject->Deactivate();
-	}
-	else
-	{
-		vtkWarningMacro(<< "no delegate.");
 	}
 
 	vtkOpenGLCheckErrorMacro("Failed after Render");
