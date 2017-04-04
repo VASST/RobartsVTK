@@ -303,8 +303,10 @@ int main(int argc, char** argv)
 
   vtkSmartPointer< vtkRenderer > ren2 = vtkSmartPointer< vtkRenderer >::New();
   ren2->SetViewport(0, 0, 0.5, 1);
-  ren2->GetActiveCamera()->SetPosition(1, 0, 5);
+  ren2->GetActiveCamera()->SetPosition(-1, 0, 5);
   ren2->AddActor(actor);
+  ren2->AddActor(actor2);
+  ren2->AddActor(actor3);
 
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
   renderWindow->AddRenderer(ren);

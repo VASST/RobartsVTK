@@ -686,10 +686,12 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 					saved_viewport[3]);
 		
 		// Copy Pass2 to a FBO
-		this->Pass2->CopyToFrameBuffer(0, 0, width - 1, height - 1,
+		this->CopyToFrameBuffer(0, 0, width - 1, height - 1,
 			0, 0, width, height,
+			this->Pass2,
 			this->KeyholeProgram->Program,
 			this->KeyholeProgram->VAO);
+
 		this->Pass2->Deactivate();
 
 		if (r->GetActiveCamera()->GetLeftEye())
@@ -807,9 +809,19 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	float fvalue = static_cast<float>(1.0 / width);
 	this->GradientProgram1->Program->SetUniformf("stepSize", fvalue);
 
+
+	// Save viewport state and render at (0, 0, width, height)
+	GLint saved_viewport[4];
+	glGetIntegerv(GL_VIEWPORT, saved_viewport);
+	glViewport(0, 0, width, height);
+
 	this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 		this->GradientProgram1->Program,
 		this->GradientProgram1->VAO);
+
+	// Restore viewport
+	glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
+		saved_viewport[3]);
 
 	if (r->GetActiveCamera()->GetLeftEye())
 	{
@@ -929,11 +941,19 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	fvalue = static_cast<float>(1.0 / height);
 	this->KeyholeShader->Program->SetUniformf("stepSize", fvalue);
 
+	// Save viewport state and render at (0, 0, width, height)
+	glGetIntegerv(GL_VIEWPORT, saved_viewport);
+	glViewport(0, 0, width, height);
+
 	this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 		this->KeyholeShader->Program,
 		this->KeyholeShader->VAO);
 	this->GX->Deactivate();
 	this->GY->Deactivate();
+
+	// Restore viewport
+	glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
+		saved_viewport[3]);
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
 	// Save the output for debugging
@@ -1042,6 +1062,62 @@ void vtkKeyholePass::UpdateRightTextureObject(vtkOpenGLRenderWindow *renwin)
 
 	this->rightPixelBufferObject->UnBind();
 	this->rightTextureObject->Deactivate();
+}
+
+//-----------------------------------------------------------------------------------------------------
+void vtkKeyholePass::CopyToFrameBuffer(
+	int srcXmin, int srcYmin,
+	int srcXmax, int srcYmax,
+	int dstXmin, int dstYmin,
+	int dstXmax, int dstYmax,
+	vtkTextureObject *to, 
+	vtkShaderProgram *program, vtkOpenGLVertexArrayObject *vao)
+{
+	assert("pre: positive_srcXmin" && srcXmin >= 0);
+	assert("pre: max_srcXmax" &&
+		static_cast<unsigned int>(srcXmax)<to->GetWidth());
+	assert("pre: increasing_x" && srcXmin <= srcXmax);
+	assert("pre: positive_srcYmin" && srcYmin >= 0);
+	assert("pre: max_srcYmax" &&
+		static_cast<unsigned int>(srcYmax)<to->GetHeight());
+	assert("pre: increasing_y" && srcYmin <= srcYmax);
+	assert("pre: positive_dstXmin" && dstXmin >= 0);
+	assert("pre: positive_dstYmin" && dstYmin >= 0);
+
+	float minXTexCoord = static_cast<float>(
+		static_cast<double>(srcXmin + 0.5) / to->GetWidth());
+	float minYTexCoord = static_cast<float>(
+		static_cast<double>(srcYmin + 0.5) / to->GetHeight());
+
+	float maxXTexCoord = static_cast<float>(
+		static_cast<double>(srcXmax + 0.5) / to->GetWidth());
+	float maxYTexCoord = static_cast<float>(
+		static_cast<double>(srcYmax + 0.5) / to->GetHeight());
+
+	// Save state
+	GLint saved_viewport[4];
+	glGetIntegerv(GL_VIEWPORT, saved_viewport);
+
+	float tcoords[] = {
+		minXTexCoord, minYTexCoord,
+		maxXTexCoord, minYTexCoord,
+		maxXTexCoord, maxYTexCoord,
+		minXTexCoord, maxYTexCoord };
+
+	float dstSizeX = static_cast<float>(dstXmin + srcXmax - srcXmin);
+	float dstSizeY = static_cast<float>(dstYmin + srcYmax - srcYmin);
+
+	float verts[] = {
+		2.0f*dstXmin / dstSizeX - 1.0f, 2.0f*dstYmin / dstSizeY - 1.0f, 0.0f,
+		2.0f*(dstXmax + 1.0f) / dstSizeX - 1.0f, 2.0f*dstYmin / dstSizeY - 1.0f, 0.0f,
+		2.0f*(dstXmax + 1.0f) / dstSizeX - 1.0f, 2.0f*(dstYmax + 1.0f) / dstSizeY - 1.0f, 0.0f,
+		2.0f*dstXmin / dstSizeX - 1.0f, 2.0f*(dstYmax + 1.0f) / dstSizeY - 1.0f, 0.0f };
+
+	to->CopyToFrameBuffer(tcoords, verts, program, vao);
+
+	// Restore state
+	glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
+		saved_viewport[3]);
 }
 
 //-----------------------------------------------------------------------------------------------------

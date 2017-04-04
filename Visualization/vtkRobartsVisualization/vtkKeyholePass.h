@@ -192,6 +192,13 @@ private:
   void UpdateLeftTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
   void UpdateRightTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
   void SetupDrawBuffers(vtkRenderer *);// convenience method to set up appropriate drawbuffers.
+  void CopyToFrameBuffer(int, int,
+	  int, int,
+	  int, int,
+	  int, int,
+	  vtkTextureObject *,
+	  vtkShaderProgram*, vtkOpenGLVertexArrayObject *); // This is a convenience method to update the framebuffer. vtkTextureObject has a similar method. 
+														// However, it has a minor bug in setting glViewPort. This method fixes that issue. 
 };
 
 #endif // vtkKeyholePass_h
