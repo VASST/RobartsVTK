@@ -295,24 +295,14 @@ int main(int argc, char** argv)
   texturedPlane->SetVisibility(0);
 
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
-  ren->SetViewport(0.5, 0, 1, 1);
-  ren->GetActiveCamera()->SetPosition(-1, 0, 5);
   ren->AddActor(actor);
   ren->AddActor(actor2);
   ren->AddActor(actor3);
 
-  vtkSmartPointer< vtkRenderer > ren2 = vtkSmartPointer< vtkRenderer >::New();
-  ren2->SetViewport(0, 0, 0.5, 1);
-  ren2->GetActiveCamera()->SetPosition(-1, 0, 5);
-  ren2->AddActor(actor);
-  ren2->AddActor(actor2);
-  ren2->AddActor(actor3);
-
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
   renderWindow->AddRenderer(ren);
-  renderWindow->AddRenderer(ren2);
   renderWindow->SetWindowName("Keyhole_Rendering_Example");
-  renderWindow->SetSize(width*2, height);
+  renderWindow->SetSize(width, height);
   renderWindow->SetAlphaBitPlanes(1);
 
   vtkSmartPointer<vtkRenderWindowInteractor> renWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
@@ -358,7 +348,6 @@ int main(int argc, char** argv)
   keyholePass->SetDelegatePass(cameraPass);
 
   ren->SetPass(keyholePass);
-  ren2->SetPass(cameraPass);
 
   vtkSmartPointer<vtkWindowEventCallback> call_back = vtkSmartPointer<vtkWindowEventCallback>::New();
   call_back->keyholePass = keyholePass;
