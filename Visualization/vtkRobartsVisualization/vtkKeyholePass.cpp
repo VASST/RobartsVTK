@@ -130,130 +130,14 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 	vtkRenderer* r = s->GetRenderer();
 
 	// find out if we should stereo render
-	bool stereo = r->GetRenderWindow()->GetStereoRender() == 1;
-
-	vtkOpenGLRenderWindow *win = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
-	win->MakeCurrent();
+	this->stereo = r->GetRenderWindow()->GetStereoRender() == 1;
 
 	vtkOpenGLRenderWindow* renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
 	if (this->DelegatePass != NULL)
 	{
 		if (!this->SupportProbed)
 		{
-			this->SupportProbed = true;
-
-			// Test hardware support. If not supported, just render the delegate.
-			bool supported = vtkFrameBufferObject::IsSupported(renwin);
-
-			if (!supported)
-			{
-				vtkErrorMacro("FBOs are not supported by the context. Cannot render keyhole. ");
-			}
-			if (supported)
-			{
-				supported = vtkTextureObject::IsSupported(renwin);
-
-				if (!supported)
-				{
-					vtkErrorMacro("Texture objects are not supported by the context. Cannot render keyhole. ");
-				}
-			}
-			if (supported)
-			{
-				vtkFrameBufferObject *fbo = vtkFrameBufferObject::SafeDownCast(s->GetFrameBuffer());
-				// FBO extension is supported. Is the specific FBO format supported?
-				if (fbo == 0)
-				{
-					// get the viewport dimensions
-					r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight, &this->viewPortX, &this->viewPortY);
-					if (this->FrameBufferObject == NULL)
-					{
-						this->FrameBufferObject = vtkFrameBufferObject::New();
-						this->FrameBufferObject->SetContext(renwin);
-
-						/* Drawbuffers need to be set-up to be stereo here. vtkCameraPass assumes that FBO is setup appropriately. */
-						this->SetupDrawBuffers(r);
-					}
-				}
-				else
-				{
-					this->FrameBufferObject = fbo;
-					int size[2];
-					s->GetWindowSize(size);
-					this->viewPortWidth = size[0];
-					this->viewPortHeight = size[1];
-					this->viewPortX = 0;
-					this->viewPortY = 0;
-				}
-
-				if (this->Pass1 == NULL)
-				{
-					this->Pass1 = vtkTextureObject::New();
-					this->Pass1->SetContext(renwin);
-				}
-				if (this->leftTextureObject == NULL)
-				{
-					this->leftTextureObject = vtkTextureObject::New();
-					this->leftTextureObject->SetContext(renwin);
-				}
-				if (this->rightTextureObject == NULL)
-				{
-					this->rightTextureObject = vtkTextureObject::New();
-					this->rightTextureObject->SetContext(renwin);
-				}
-				if (this->MaskTextureObject == NULL)
-				{
-					this->MaskTextureObject = vtkTextureObject::New();
-					this->MaskTextureObject->SetContext(renwin);
-				}
-				if (this->leftPixelBufferObject == NULL)
-				{
-					this->leftPixelBufferObject = vtkPixelBufferObject::New();
-					this->leftPixelBufferObject->SetContext(renwin);
-				}
-				if (this->rightPixelBufferObject == NULL)
-				{
-					this->rightPixelBufferObject = vtkPixelBufferObject::New();
-					this->rightPixelBufferObject->SetContext(renwin);
-				}
-				if (this->MaskPixelBufferObject == NULL)
-				{
-					this->MaskPixelBufferObject = vtkPixelBufferObject::New();
-					this->MaskPixelBufferObject->SetContext(renwin);
-				}
-				if (this->ForegroundGradientTextureObject == NULL)
-				{
-					this->ForegroundGradientTextureObject = vtkTextureObject::New();
-					this->ForegroundGradientTextureObject->SetContext(renwin);
-				}
-
-				this->Pass1->Create2D(64, 64, 4, VTK_UNSIGNED_CHAR, false);
-				this->FrameBufferObject->SetColorBuffer(0, this->Pass1);
-				this->FrameBufferObject->SetNumberOfRenderTargets(1);
-				this->FrameBufferObject->SetActiveBuffer(0);
-				this->FrameBufferObject->SetDepthBufferNeeded(true);
-
-#if GL_ES_VERSION_2_0 != 1
-				GLint savedCurrentDrawBuffer;
-				glGetIntegerv(GL_DRAW_BUFFER, &savedCurrentDrawBuffer);
-#endif
-
-				supported = this->FrameBufferObject->StartNonOrtho(64, 64, false);
-
-				if (!supported)
-				{
-					vtkErrorMacro("The requested FBO format is not supported by the context. Cannot render keyhole. ");
-				}
-				else
-				{
-					this->FrameBufferObject->UnBind();
-#if GL_ES_VERSION_2_0 != 1
-					glDrawBuffer(static_cast<GLenum>(savedCurrentDrawBuffer));
-#endif
-				}
-			}
-
-			this->Supported = supported;
+			this->ProbeSupport(s);
 		}
 
 		// If not supported.
@@ -266,122 +150,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			return;
 		}
 
-		// Read image data into pixelBuffers. Do this for the background and the mask.
-		vtkPropCollection* props = r->GetViewProps();
-		int numActors = props->GetNumberOfItems();
-		props->InitTraversal();
-
-		vtkImageData* imgData;
-		unsigned char* dataPtr;
-		int img_size[3], maxRegularActorIDx, backgroundIDx, maskIDx;
-		vtkIdType increments[2];
-		increments[0] = 0;
-		increments[1] = 0;
-
-		if (stereo)
-		{
-			maxRegularActorIDx = this->mask_img_available ? numActors - 3 : numActors - 2;
-			backgroundIDx = this->mask_img_available ? numActors - 3 : numActors - 2;
-		}
-		else
-		{
-			maxRegularActorIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
-			backgroundIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
-		}
-
-		maskIDx = this->mask_img_available ? numActors - 1 : numActors + 1;
-
-		for (int i = 0; i < numActors; i++)
-		{
-			if (i < maxRegularActorIDx)
-			{
-				// Disregard the first set of actors
-				props->GetNextProp();
-			}
-			else if (i == backgroundIDx)
-			{
-				vtkActor* leftImageActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
-				vtkTexture *leftImageTexture = leftImageActor->GetTexture();
-
-				imgData = leftImageTexture->GetInput();
-				imgData->GetDimensions(img_size);
-
-				if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] >0) // If texture is initialized
-				{
-
-					this->components = imgData->GetNumberOfScalarComponents();
-					dataPtr = (unsigned char*)imgData->GetScalarPointer();
-
-					this->dimensions[0] = img_size[0];
-					this->dimensions[1] = img_size[1];
-
-					// Upload imagedata to pixel buffer object
-					bool success = this->leftPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
-						dataPtr, this->dimensions,
-						this->components, increments);
-
-					if (stereo)
-					{
-						// Get right iamge texture
-						vtkActor *rightImageActor = vtkActor::SafeDownCast(props->GetNextProp());
-						vtkTexture *rightImageTexture = rightImageActor->GetTexture();
-						imgData = rightImageTexture->GetInput();
-
-						dataPtr = (unsigned char*)imgData->GetScalarPointer();
-
-						success = this->rightPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
-							dataPtr, this->dimensions,
-							this->components, increments);
-
-						// Now increment i so that mask texture can be acquired
-						i++;
-					}
-
-#ifdef VTK_KEYHOLE_PASS_DEBUG2
-					vtkPNGWriter *writer = vtkPNGWriter::New();
-					writer->SetInputData(imgData);
-					writer->SetFileName("KeyholePass0.png");
-					writer->Write();
-
-#endif
-				}
-				else
-				{
-					std::cerr << "[vtkKeyholePass] Background texture is not initialized" << std::endl;
-					return;
-				}
-			}
-			else if (i == maskIDx && this->mask_img_available)
-			{
-				vtkActor* maskActor = vtkActor::SafeDownCast(props->GetNextProp());; // = actors->GetNextActor();
-				vtkTexture *MaskTexture = maskActor->GetTexture();
-
-
-				vtkImageData* imgData = MaskTexture->GetInput();
-				imgData->GetDimensions(img_size);
-
-				if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] >0) // if texture is initialized
-				{
-					imgData->GetDimensions(img_size);
-					this->components = imgData->GetNumberOfScalarComponents();
-					dataPtr = (unsigned char*)imgData->GetScalarPointer();
-
-					this->dimensions[0] = img_size[0];
-					this->dimensions[1] = img_size[1];
-
-					// Upload imagedata to pixel buffer object
-					this->MaskPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
-						dataPtr, this->dimensions,
-						this->components, increments);
-				}
-				else
-				{
-					std::cerr << "[vtkKeyholePass] Mask texture is not initialized" << std::endl;
-					return;
-				}
-			}
-		}
-
+		// Read image data into pixelBuffers. 
+		this->ReadTextures(r);
+				
 		// Create Left & Right texture objects .
 		if (this->leftTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
 			this->leftTextureObject->GetHeight() != static_cast<unsigned int>(this->dimensions[1]))
@@ -389,7 +160,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			this->leftTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
 				this->leftPixelBufferObject, false);
 
-			if (stereo && (this->rightTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
+			if (this->stereo && (this->rightTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
 				this->rightTextureObject->GetHeight() != static_cast<unsigned int>(this->dimensions[1])))
 			{
 				this->rightTextureObject->Create2D(this->dimensions[0], this->dimensions[1], this->components,
@@ -400,7 +171,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		{
 			UpdateLeftTextureObject(renwin);
 
-			if (stereo)
+			if (this->stereo)
 			{
 				UpdateRightTextureObject(renwin);
 			}
@@ -445,38 +216,14 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		// Now set a black background.
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
 
-		GLint saved_viewport[4];
-		glGetIntegerv(GL_VIEWPORT, saved_viewport);
+		// Render in the correct viewport
+		r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight,
+			&this->viewPortX, &this->viewPortY);
+		glViewport(this->viewPortX, this->viewPortY, this->viewPortWidth, this->viewPortHeight);
 		
 		// First pass
 		this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,
 			this->Pass1);
-
-		/* Test code */
-		/*this->FrameBufferObject->SetColorBuffer(0, this->Pass1);
-		GLint saved_viewport[4];
-		//glGetIntegerv(GL_VIEWPORT, saved_viewport);
-
-		// This method sets viewport to start at 0,0
-		this->FrameBufferObject->Start(width, height, false);
-
-		//glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
-		//	saved_viewport[3]);
-
-		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		this->FrameBufferObject->UnBind();
-
-		//glDrawBuffer(static_cast<GLenum>(savedDrawBuffer));
-		this->Pass1->Bind();
-		this->Pass1->CopyToFrameBuffer(0, 0, width - 1, height - 1,
-			0, 0, width, height,
-			NULL,
-			NULL);
-		this->Pass1->Deactivate();
-
-		return;
-		/* end test code */
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
 		// Save the output of the first pass to a file for debugging
@@ -681,9 +428,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 #endif
 
 		this->Pass2->Activate();
-
-		glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
-					saved_viewport[3]);
 		
 		// Copy Pass2 to a FBO
 		this->CopyToFrameBuffer(0, 0, width - 1, height - 1,
@@ -1121,6 +865,242 @@ void vtkKeyholePass::CopyToFrameBuffer(
 }
 
 //-----------------------------------------------------------------------------------------------------
+void vtkKeyholePass::ProbeSupport(const vtkRenderState *s)
+{
+	vtkRenderer *r = s->GetRenderer();
+	vtkOpenGLRenderWindow *renwin = vtkOpenGLRenderWindow::SafeDownCast(r->GetRenderWindow());
+
+	// Test hardware support. If not supported, just render the delegate.
+	bool supported = vtkFrameBufferObject::IsSupported(renwin);
+
+	if (!supported)
+	{
+		vtkErrorMacro("FBOs are not supported by the context. Cannot render keyhole. ");
+	}
+	if (supported)
+	{
+		supported = vtkTextureObject::IsSupported(renwin);
+
+		if (!supported)
+		{
+			vtkErrorMacro("Texture objects are not supported by the context. Cannot render keyhole. ");
+		}
+	}
+	if (supported)
+	{
+		vtkFrameBufferObject *fbo = vtkFrameBufferObject::SafeDownCast(s->GetFrameBuffer());
+		// FBO extension is supported. Is the specific FBO format supported?
+		if (fbo == 0)
+		{
+			// get the viewport dimensions
+			r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight, &this->viewPortX, &this->viewPortY);
+			if (this->FrameBufferObject == NULL)
+			{
+				this->FrameBufferObject = vtkFrameBufferObject::New();
+				this->FrameBufferObject->SetContext(renwin);
+
+				/* Drawbuffers need to be set-up to be stereo here. vtkCameraPass assumes that FBO is setup appropriately. */
+				this->SetupDrawBuffers(r);
+			}
+		}
+		else
+		{
+			this->FrameBufferObject = fbo;
+		}
+
+		if (this->Pass1 == NULL)
+		{
+			this->Pass1 = vtkTextureObject::New();
+			this->Pass1->SetContext(renwin);
+		}
+		if (this->leftTextureObject == NULL)
+		{
+			this->leftTextureObject = vtkTextureObject::New();
+			this->leftTextureObject->SetContext(renwin);
+		}
+		if (this->rightTextureObject == NULL)
+		{
+			this->rightTextureObject = vtkTextureObject::New();
+			this->rightTextureObject->SetContext(renwin);
+		}
+		if (this->MaskTextureObject == NULL)
+		{
+			this->MaskTextureObject = vtkTextureObject::New();
+			this->MaskTextureObject->SetContext(renwin);
+		}
+		if (this->leftPixelBufferObject == NULL)
+		{
+			this->leftPixelBufferObject = vtkPixelBufferObject::New();
+			this->leftPixelBufferObject->SetContext(renwin);
+		}
+		if (this->rightPixelBufferObject == NULL)
+		{
+			this->rightPixelBufferObject = vtkPixelBufferObject::New();
+			this->rightPixelBufferObject->SetContext(renwin);
+		}
+		if (this->MaskPixelBufferObject == NULL)
+		{
+			this->MaskPixelBufferObject = vtkPixelBufferObject::New();
+			this->MaskPixelBufferObject->SetContext(renwin);
+		}
+		if (this->ForegroundGradientTextureObject == NULL)
+		{
+			this->ForegroundGradientTextureObject = vtkTextureObject::New();
+			this->ForegroundGradientTextureObject->SetContext(renwin);
+		}
+
+		this->Pass1->Create2D(64, 64, 4, VTK_UNSIGNED_CHAR, false);
+		this->FrameBufferObject->SetColorBuffer(0, this->Pass1);
+		this->FrameBufferObject->SetNumberOfRenderTargets(1);
+		this->FrameBufferObject->SetActiveBuffer(0);
+		this->FrameBufferObject->SetDepthBufferNeeded(true);
+
+#if GL_ES_VERSION_2_0 != 1
+		GLint savedCurrentDrawBuffer;
+		glGetIntegerv(GL_DRAW_BUFFER, &savedCurrentDrawBuffer);
+#endif
+
+		supported = this->FrameBufferObject->StartNonOrtho(64, 64, false);
+
+		if (!supported)
+		{
+			vtkErrorMacro("The requested FBO format is not supported by the context. Cannot render keyhole. ");
+		}
+		else
+		{
+			this->FrameBufferObject->UnBind();
+#if GL_ES_VERSION_2_0 != 1
+			glDrawBuffer(static_cast<GLenum>(savedCurrentDrawBuffer));
+#endif
+		}
+	}
+
+	this->Supported = supported;
+	this->SupportProbed = true;
+}
+
+//-----------------------------------------------------------------------------------------------------
+void vtkKeyholePass::ReadTextures(vtkRenderer *r)
+{
+	//Do this for the background and the mask.
+
+	vtkPropCollection* props = r->GetViewProps();
+	int numActors = props->GetNumberOfItems();
+	props->InitTraversal();
+
+	vtkImageData* imgData;
+	unsigned char* dataPtr;
+	int img_size[3], maxRegularActorIDx, backgroundIDx, maskIDx;
+	vtkIdType increments[2];
+	increments[0] = 0;
+	increments[1] = 0;
+
+	if (this->stereo)
+	{
+		maxRegularActorIDx = this->mask_img_available ? numActors - 3 : numActors - 2;
+		backgroundIDx = this->mask_img_available ? numActors - 3 : numActors - 2;
+	}
+	else
+	{
+		maxRegularActorIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
+		backgroundIDx = this->mask_img_available ? numActors - 2 : numActors - 1;
+	}
+
+	maskIDx = this->mask_img_available ? numActors - 1 : numActors + 1;
+
+	for (int i = 0; i < numActors; i++)
+	{
+		if (i < maxRegularActorIDx)
+		{
+			// Disregard the first set of actors
+			props->GetNextProp();
+		}
+		else if (i == backgroundIDx)
+		{
+			vtkActor* leftImageActor = vtkActor::SafeDownCast(props->GetNextProp()); // actors->GetNextActor();
+			vtkTexture *leftImageTexture = leftImageActor->GetTexture();
+
+			imgData = leftImageTexture->GetInput();
+			imgData->GetDimensions(img_size);
+
+			if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] > 0) // If texture is initialized
+			{
+
+				this->components = imgData->GetNumberOfScalarComponents();
+				dataPtr = (unsigned char*)imgData->GetScalarPointer();
+
+				this->dimensions[0] = img_size[0];
+				this->dimensions[1] = img_size[1];
+
+				// Upload imagedata to pixel buffer object
+				bool success = this->leftPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+					dataPtr, this->dimensions,
+					this->components, increments);
+
+				if (this->stereo)
+				{
+					// Get right iamge texture
+					vtkActor *rightImageActor = vtkActor::SafeDownCast(props->GetNextProp());
+					vtkTexture *rightImageTexture = rightImageActor->GetTexture();
+					imgData = rightImageTexture->GetInput();
+
+					dataPtr = (unsigned char*)imgData->GetScalarPointer();
+
+					success = this->rightPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+						dataPtr, this->dimensions,
+						this->components, increments);
+
+					// Now increment i so that mask texture can be acquired
+					i++;
+				}
+
+#ifdef VTK_KEYHOLE_PASS_DEBUG2
+				vtkPNGWriter *writer = vtkPNGWriter::New();
+				writer->SetInputData(imgData);
+				writer->SetFileName("KeyholePass0.png");
+				writer->Write();
+
+#endif
+			}
+			else
+			{
+				std::cerr << "[vtkKeyholePass] Background texture is not initialized" << std::endl;
+				return;
+			}
+		}
+		else if (i == maskIDx && this->mask_img_available)
+		{
+			vtkActor* maskActor = vtkActor::SafeDownCast(props->GetNextProp());; // = actors->GetNextActor();
+			vtkTexture *MaskTexture = maskActor->GetTexture();
+
+
+			vtkImageData* imgData = MaskTexture->GetInput();
+			imgData->GetDimensions(img_size);
+
+			if (img_size[0] > 0 && img_size[1] > 0 && img_size[2] > 0) // if texture is initialized
+			{
+				imgData->GetDimensions(img_size);
+				this->components = imgData->GetNumberOfScalarComponents();
+				dataPtr = (unsigned char*)imgData->GetScalarPointer();
+
+				this->dimensions[0] = img_size[0];
+				this->dimensions[1] = img_size[1];
+
+				// Upload imagedata to pixel buffer object
+				this->MaskPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
+					dataPtr, this->dimensions,
+					this->components, increments);
+			}
+			else
+			{
+				std::cerr << "[vtkKeyholePass] Mask texture is not initialized" << std::endl;
+				return;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------
 void vtkKeyholePass::SetupDrawBuffers(vtkRenderer *ren)
 {
 	vtkCamera *camera = ren->GetActiveCamera();
@@ -1128,13 +1108,11 @@ void vtkKeyholePass::SetupDrawBuffers(vtkRenderer *ren)
 	vtkOpenGLRenderWindow *win = vtkOpenGLRenderWindow::SafeDownCast(ren->GetRenderWindow());
 	win->MakeCurrent();
 
-	int lowerLeft[2];
-	int usize, vsize;
-
 	// find out if we should stereo render
 	bool stereo = win->GetStereoRender() == 1;
 
-	ren->GetTiledSizeAndOrigin(&usize, &vsize, lowerLeft, lowerLeft + 1);
+	ren->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight, 
+								&this->viewPortX, &this->viewPortY + 1);
 
 	// if were on a stereo renderer draw to special parts of screen
 	if (stereo)
@@ -1205,15 +1183,6 @@ void vtkKeyholePass::SetupDrawBuffers(vtkRenderer *ren)
 			// one buffer at a time.
 			glReadBuffer(static_cast<GLenum>(win->GetFrontBuffer()));
 		}
-	}
-
-	glViewport(lowerLeft[0], lowerLeft[1], usize, vsize);
-	glEnable(GL_SCISSOR_TEST);
-
-	if ((ren->GetRenderWindow())->GetErase() && ren->GetErase()
-		&& !ren->GetIsPicking())
-	{
-		ren->Clear();
 	}
 
 	vtkOpenGLCheckErrorMacro("failed after restore context");

@@ -150,13 +150,18 @@ public:
 
 	cv::Rect roi(0, 0, width, height);
 	((*background_RGBA)(roi)).copyTo(*left_img);
+	roi.x = width;
+	((*background_RGBA)(roi)).copyTo(*right_img);
 
 
-	imgImport->SetImportVoidPointer(left_img->data);
-	imgImport->Modified();
+	leftImgImport->SetImportVoidPointer(left_img->data);
+	leftImgImport->Modified();
 
-	texture->Modified();
-	actor->Modified();
+	rightImgImport->SetImportVoidPointer(right_img->data);
+	rightImgImport->Modified();
+
+	leftTexture->Modified();
+	rightTexture->Modified();
 
 	sphere1->SetUserMatrix(mat);
 	sphere2->SetUserMatrix(mat);
@@ -170,14 +175,14 @@ public:
   }
 
   vtkKeyholePass* keyholePass;
-  vtkImageImport* imgImport;
-  vtkTexture* texture;
+  vtkImageImport *leftImgImport, *rightImgImport;
+  vtkTexture *leftTexture, *rightTexture;
   cv::VideoCapture* capture;
   vtkMatrix4x4 *mat;
   cv::Mat *background;
   cv::Mat *background_RGBA;
-  cv::Mat *left_img;
-  vtkActor *actor, *sphere1, *sphere2, *sphere3;
+  cv::Mat *left_img, *right_img;
+  vtkActor *sphere1, *sphere2, *sphere3;
   int frame_idx;
 
 private:
@@ -269,6 +274,7 @@ int main(int argc, char** argv)
   cv::Mat background_RGBA(cv::Size(width, height), CV_8UC4, backgroundData);
   cv::Mat background = cv::Mat(width, height, CV_8UC3);
   cv::Mat left_img = cv::Mat(height, width / 2, CV_8UC4);
+  cv::Mat right_img = cv::Mat(height, width / 2, CV_8UC4);
 
   vtkSmartPointer<vtkImageImport> leftImgImport = vtkSmartPointer<vtkImageImport>::New();
   leftImgImport->SetDataOrigin(0, 0, 0);
@@ -280,6 +286,16 @@ int main(int argc, char** argv)
   leftImgImport->SetImportVoidPointer(left_img.data);
   leftImgImport->Update();
 
+  vtkSmartPointer<vtkImageImport> rightImageImport = vtkSmartPointer<vtkImageImport>::New();
+  rightImageImport->SetDataOrigin(0, 0, 0);
+  rightImageImport->SetDataSpacing(1, 1, 1);
+  rightImageImport->SetWholeExtent(0, width / 2 - 1, 0, height - 1, 1, 1);
+  rightImageImport->SetDataExtentToWholeExtent();
+  rightImageImport->SetDataScalarTypeToUnsignedChar();
+  rightImageImport->SetNumberOfScalarComponents(4);
+  rightImageImport->SetImportVoidPointer(right_img.data);
+  rightImageImport->Update();
+
   vtkSmartPointer<vtkPlaneSource> plane = vtkSmartPointer<vtkPlaneSource>::New();
   plane->SetCenter(0.0, 0.0, 0.0);
   plane->SetNormal(0.0, 0.0, 1.0);
@@ -287,6 +303,9 @@ int main(int argc, char** argv)
   // Apply Texture
   vtkSmartPointer<vtkTexture> leftImgTex = vtkSmartPointer<vtkTexture>::New();
   leftImgTex->SetInputConnection(leftImgImport->GetOutputPort());
+
+  vtkSmartPointer<vtkTexture> rightImageTex = vtkSmartPointer<vtkTexture>::New();
+  rightImageTex->SetInputConnection(rightImageImport->GetOutputPort());
 
   vtkSmartPointer<vtkTextureMapToPlane> texturePlane = vtkSmartPointer<vtkTextureMapToPlane>::New();
   texturePlane->SetInputConnection(plane->GetOutputPort());
@@ -299,15 +318,20 @@ int main(int argc, char** argv)
   leftTexturedPlane->SetTexture(leftImgTex);
   leftTexturedPlane->SetVisibility(0);
 
+  vtkSmartPointer<vtkActor> rightTexturedPlane = vtkSmartPointer<vtkActor>::New();
+  rightTexturedPlane->SetMapper(planeMapper);
+  rightTexturedPlane->SetTexture(rightImageTex);
+  rightTexturedPlane->GetProperty()->SetOpacity(0.0);
+
   vtkSmartPointer<vtkRenderer> ren = vtkSmartPointer<vtkRenderer>::New();
-  ren->SetViewport(0.5, 0, 1, 1);
+  ren->SetViewport(0, 0, 0.5, 1);
   ren->GetActiveCamera()->SetPosition(-1, 0, 5);
   ren->AddActor(actor);
   ren->AddActor(actor2);
   ren->AddActor(actor3);
 
   vtkSmartPointer< vtkRenderer > ren2 = vtkSmartPointer< vtkRenderer >::New();
-  ren2->SetViewport(0, 0, 0.5, 1);
+  ren2->SetViewport(0.5, 0, 1, 1);
   ren2->GetActiveCamera()->SetPosition(-1, 0, 5);
   ren2->AddActor(actor);
   ren2->AddActor(actor2);
@@ -325,6 +349,7 @@ int main(int argc, char** argv)
 
   // Add texturedPlane as an actor
   ren->AddViewProp(leftTexturedPlane);
+  ren2->AddViewProp(rightTexturedPlane);
 
   // Setup camera
   double viewAngle = 2 * atan((480 / 2.0) / 775) * 180 / (4 * atan(1.0));
@@ -337,7 +362,6 @@ int main(int argc, char** argv)
   cam->SetFocalPoint(0, 0, 775);
   cam->SetWindowCenter(center_x, center_y);
   cam->SetClippingRange(0.01, 1000.01);
-
 
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
@@ -363,20 +387,22 @@ int main(int argc, char** argv)
   keyholePass->SetDelegatePass(cameraPass);
 
   ren->SetPass(keyholePass);
-  ren2->SetPass(cameraPass);
+  ren2->SetPass(keyholePass);
 
   vtkSmartPointer<vtkWindowEventCallback> call_back = vtkSmartPointer<vtkWindowEventCallback>::New();
   call_back->keyholePass = keyholePass;
   call_back->capture = &capture;
   call_back->background = &background;
   call_back->background_RGBA = &background_RGBA;
-  call_back->imgImport = leftImgImport;
-  call_back->texture = leftImgTex;
-  call_back->actor = leftTexturedPlane;
+  call_back->leftImgImport = leftImgImport;
+  call_back->rightImgImport = rightImageImport;
+  call_back->leftTexture = leftImgTex;
+  call_back->rightTexture = rightImageTex;
   call_back->sphere1 = actor;
   call_back->sphere2 = actor2;
   call_back->sphere3 = actor3;
   call_back->left_img = &left_img;
+  call_back->right_img = &right_img;
 
   renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent , call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);

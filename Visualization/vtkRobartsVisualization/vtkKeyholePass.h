@@ -175,6 +175,7 @@ protected:
 
   bool Supported;
   bool SupportProbed;
+  bool stereo;
 
 private:
   // Description:
@@ -199,6 +200,8 @@ private:
 	  vtkTextureObject *,
 	  vtkShaderProgram*, vtkOpenGLVertexArrayObject *); // This is a convenience method to update the framebuffer. vtkTextureObject has a similar method. 
 														// However, it has a minor bug in setting glViewPort. This method fixes that issue. 
+  void ProbeSupport(const vtkRenderState *); // Probe for support
+  void ReadTextures(vtkRenderer *);
 };
 
 #endif // vtkKeyholePass_h
