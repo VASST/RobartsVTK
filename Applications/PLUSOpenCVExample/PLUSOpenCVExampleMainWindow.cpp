@@ -184,7 +184,7 @@ void PLUSOpenCVExampleMainWindow::PopulateChannelList()
     {
       for (auto chanIter = (*iter)->GetOutputChannelsStart(); chanIter != (*iter)->GetOutputChannelsEnd(); ++chanIter)
       {
-        mainWindow.comboBox_channel->addItem(QString::fromLatin1((*iter)->GetDeviceId()) + QString(" - ") + QString::fromLatin1((*chanIter)->GetChannelId()));
+        mainWindow.comboBox_channel->addItem(QString::fromStdString((*iter)->GetDeviceId()) + QString(" - ") + QString::fromStdString((*chanIter)->GetChannelId()));
       }
     }
   }
