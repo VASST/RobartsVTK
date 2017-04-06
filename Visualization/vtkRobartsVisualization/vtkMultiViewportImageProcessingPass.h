@@ -18,6 +18,8 @@
  * render pass.
  *
  * Abstract class with some convenient methods frequently used in subclasses.
+ * This class was a modification to the original vtkImageProcessingPass class to support
+ * rendering in multipve view-port. 
  *
  *
  * @sa
