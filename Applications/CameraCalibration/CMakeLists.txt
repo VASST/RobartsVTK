@@ -1,3 +1,11 @@
+FIND_PACKAGE(PlusLib REQUIRED)
+INCLUDE(${PlusLib_USE_FILE})
+
+IF(NOT PLUS_USE_MMF_VIDEO)
+  MESSAGE(STATUS "CameraCalibration requires PLUS_USE_MMF_VIDEO and it is not available.")
+  return()
+ENDIF()
+
 PROJECT( CameraCalibration )
 
 SET(CameraCalib_APPTYPE MACOSX_BUNDLE)
@@ -40,7 +48,6 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
   opencv_highgui
   opencv_features2d
   opencv_calib3d
-  vtkndicapi
   vtkPlusDataCollection
   vtkCommonCore
   vtkRenderingCore
