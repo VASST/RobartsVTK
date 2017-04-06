@@ -145,9 +145,10 @@ int main(int argc, char** argv)
                          }; */
 
   /* NOTE: This is the US calibration without scaling. Scaling is specified separately */
-  float us_cal_mat[12] = { 0.9947,    0.0994, - 0.0262, - 12.6030,
-	  - 0.0413,    0.1535, - 0.9873, - 7.8930,
-	  - 0.0941,    0.9831,    0.1568,    1.0670};
+  float us_cal_mat[12] = { 0.9947f,    0.0994f, -0.0262f, -12.6030f,
+                           -0.0413f,    0.1535f, -0.9873f, -7.8930f,
+                           -0.0941f,    0.9831f,    0.1568f,    1.0670f
+                         };
 
   recon->SetProgramSourcePath(KERNEL_CL_LOCATION);
   recon->SetBScanSize(820, 616);
@@ -191,7 +192,7 @@ int main(int argc, char** argv)
   outputVolume->DataHasBeenGenerated();
   outputVolume->Modified();
 
-  vtkTransform *pose = vtkTransform::New();
+  vtkTransform* pose = vtkTransform::New();
   recon->SetImagePoseTransform(pose);
 
   recon->SetOutput(outputVolume);
@@ -213,18 +214,18 @@ int main(int argc, char** argv)
     imgFlip->SetInputData(trackedFrame->GetImageData()->GetImage());
     imgFlip->Modified();
     imgFlip->Update();
-	recon->SetInputData(imgFlip->GetOutput());
+    recon->SetInputData(imgFlip->GetOutput());
 
     // Set pose Data
     trackedFrame->GetCustomFrameTransform(transformName, tFrame2Tracker);
-	pose->SetMatrix(tFrame2Tracker);
+    pose->SetMatrix(tFrame2Tracker);
 
     // Update Reconstruction
     LOG_DEBUG("Frame " << i << " : ");
 
     double startTime = vtkPlusAccurateTimer::GetSystemTime();
 
-	recon->Update();
+    recon->Update();
 
     double endTime = vtkPlusAccurateTimer::GetSystemTime();
     LOG_DEBUG("Elapsed time : " << endTime - startTime << " seconds.");

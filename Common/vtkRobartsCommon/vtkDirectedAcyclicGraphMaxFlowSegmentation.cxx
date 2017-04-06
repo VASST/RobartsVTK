@@ -1,13 +1,21 @@
 /*=========================================================================
 
-  Program:   Robarts Visualization Toolkit
-  Module:    vtkDirectedAcyclicGraphMaxFlowSegmentation.cxx
+Robarts Visualization Toolkit
 
-  Copyright (c) John SH Baxter, Robarts Research Institute
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
 
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 
 =========================================================================*/
 
@@ -48,11 +56,13 @@
 
 #define SQR(X) X*X
 
+//----------------------------------------------------------------------------
+
 vtkStandardNewMacro(vtkDirectedAcyclicGraphMaxFlowSegmentation);
 
+//----------------------------------------------------------------------------
 vtkDirectedAcyclicGraphMaxFlowSegmentation::vtkDirectedAcyclicGraphMaxFlowSegmentation()
 {
-
   //configure the IO ports
   this->SetNumberOfInputPorts(2);
   this->SetNumberOfOutputPorts(1);
@@ -79,12 +89,12 @@ vtkDirectedAcyclicGraphMaxFlowSegmentation::vtkDirectedAcyclicGraphMaxFlowSegmen
   this->SmoothnessScalars.clear();
   this->LeafMap.clear();
   this->BranchMap.clear();
-
 }
 
+//----------------------------------------------------------------------------
 vtkDirectedAcyclicGraphMaxFlowSegmentation::~vtkDirectedAcyclicGraphMaxFlowSegmentation()
 {
-  if( this->Structure )
+  if (this->Structure)
   {
     this->Structure->UnRegister(this);
   }
@@ -97,13 +107,12 @@ vtkDirectedAcyclicGraphMaxFlowSegmentation::~vtkDirectedAcyclicGraphMaxFlowSegme
   this->BranchMap.clear();
 }
 
-//------------------------------------------------------------
-
+//----------------------------------------------------------------------------
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType node, double value)
 {
-  if( value >= 0.0 )
+  if (value >= 0.0)
   {
-    this->SmoothnessScalars.insert(std::pair<vtkIdType,double>(node,value));
+    this->SmoothnessScalars.insert(std::pair<vtkIdType, double>(node, value));
     this->Modified();
   }
   else
@@ -112,92 +121,93 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::AddSmoothnessScalar(vtkIdType n
   }
 }
 
-//------------------------------------------------------------
-
+//----------------------------------------------------------------------------
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::Update()
 {
   this->SetOutputPortAmount();
   this->Superclass::Update();
 }
 
+//----------------------------------------------------------------------------
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::UpdateInformation()
 {
   this->SetOutputPortAmount();
   this->Superclass::UpdateInformation();
 }
 
+//----------------------------------------------------------------------------
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::UpdateWholeExtent()
 {
   this->SetOutputPortAmount();
   this->Superclass::UpdateWholeExtent();
 }
 
+//----------------------------------------------------------------------------
 void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetOutputPortAmount()
 {
-  int NumLeaves = 0;
+  int numLeaves = 0;
   vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
   iterator->SetDAG(this->Structure);
   iterator->SetRootVertex(this->Structure->GetRoot());
-  while( iterator->HasNext() )
+  while (iterator->HasNext())
   {
     vtkIdType currNode = iterator->Next();
-    if( this->Structure->IsLeaf(currNode) )
+    if (this->Structure->IsLeaf(currNode))
     {
-      NumLeaves++;
+      numLeaves++;
     }
   }
   iterator->Delete();
-  this->SetNumberOfOutputPorts(NumLeaves);
+  this->SetNumberOfOutputPorts(numLeaves);
 }
 
-//------------------------------------------------------------
 
+//----------------------------------------------------------------------------
 int vtkDirectedAcyclicGraphMaxFlowSegmentation::FillInputPortInformation(int i, vtkInformation* info)
 {
   info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
   info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
   info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
-  return this->Superclass::FillInputPortInformation(i,info);
+  return this->Superclass::FillInputPortInformation(i, info);
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputDataObject(int idx, vtkDataObject *input)
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputDataObject(int idx, vtkDataObject* input)
 {
-	//if we have no input data object, clear the corresponding input connection
-	if( input == NULL )
-	{
-	  this->SetDataInputConnection(idx,NULL);
-	  return;
-	}
-
-	//else, create a trivial producer to mimic a connection
-	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
-	trivProd->SetOutput(input);
-	this->SetDataInputConnection(idx,trivProd->GetOutputPort());
-	trivProd->Delete();
-}
-
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgorithmOutput *input)
-{
-
-  //we are adding/switching an input, so no need to resort list
-  if( input != NULL )
+  //if we have no input data object, clear the corresponding input connection
+  if (input == NULL)
   {
+    this->SetDataInputConnection(idx, NULL);
+    return;
+  }
 
+  //else, create a trivial producer to mimic a connection
+  vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+  trivProd->SetOutput(input);
+  this->SetDataInputConnection(idx, trivProd->GetOutputPort());
+  trivProd->Delete();
+}
+
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputConnection(int idx, vtkAlgorithmOutput* input)
+{
+  //we are adding/switching an input, so no need to resort list
+  if (input != NULL)
+  {
     //if their is no pair in the mapping, create one
-    if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
+    if (this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end())
     {
       int portNumber = this->FirstUnusedDataPort;
       this->FirstUnusedDataPort++;
-      this->InputDataPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
-      this->BackwardsInputDataPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+      this->InputDataPortMapping.insert(std::pair<vtkIdType, int>(idx, portNumber));
+      this->BackwardsInputDataPortMapping.insert(std::pair<vtkIdType, int>(portNumber, idx));
     }
-    this->SetNthInputConnection(0, this->InputDataPortMapping[idx], input );
-
+    this->SetNthInputConnection(0, this->InputDataPortMapping[idx], input);
   }
   else
   {
     //if their is no pair in the mapping, just exit, nothing to do
-    if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
+    if (this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end())
     {
       return;
     }
@@ -207,7 +217,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputConnection(int idx,
     this->BackwardsInputDataPortMapping.erase(this->BackwardsInputDataPortMapping.find(portNumber));
 
     //if we are the last input, no need to reshuffle
-    if(portNumber == this->FirstUnusedDataPort - 1)
+    if (portNumber == this->FirstUnusedDataPort - 1)
     {
       this->SetNthInputConnection(0, portNumber,  0);
 
@@ -216,61 +226,61 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetDataInputConnection(int idx,
     else
     {
       vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedDataPort - 1);
-      this->SetNthInputConnection(0, portNumber, swappedInput );
-      this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
+      this->SetNthInputConnection(0, portNumber, swappedInput);
+      this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0);
 
       //correct the mappings
       vtkIdType swappedId = this->BackwardsInputDataPortMapping[this->FirstUnusedDataPort - 1];
       this->InputDataPortMapping.erase(this->InputDataPortMapping.find(swappedId));
       this->BackwardsInputDataPortMapping.erase(this->BackwardsInputDataPortMapping.find(this->FirstUnusedDataPort - 1));
-      this->InputDataPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
-      this->BackwardsInputDataPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+      this->InputDataPortMapping.insert(std::pair<vtkIdType, int>(swappedId, portNumber));
+      this->BackwardsInputDataPortMapping.insert(std::pair<int, vtkIdType>(portNumber, swappedId));
 
     }
 
     //decrement the number of unused ports
     this->FirstUnusedDataPort--;
-
   }
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputDataObject(int idx, vtkDataObject *input)
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputDataObject(int idx, vtkDataObject* input)
 {
-	//if we have no input data object, clear the corresponding input connection
-	if( input == NULL )
-	{
-	  this->SetSmoothnessInputConnection(idx,NULL);
-	  return;
-	}
+  //if we have no input data object, clear the corresponding input connection
+  if (input == NULL)
+  {
+    this->SetSmoothnessInputConnection(idx, NULL);
+    return;
+  }
 
-	//else, create a trivial producer to mimic a connection
-	vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
-	trivProd->SetOutput(input);
-	this->SetSmoothnessInputConnection(idx,trivProd->GetOutputPort());
-	trivProd->Delete();
+  //else, create a trivial producer to mimic a connection
+  vtkTrivialProducer* trivProd = vtkTrivialProducer::New();
+  trivProd->SetOutput(input);
+  this->SetSmoothnessInputConnection(idx, trivProd->GetOutputPort());
+  trivProd->Delete();
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputConnection(int idx, vtkAlgorithmOutput *input)
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputConnection(int idx, vtkAlgorithmOutput* input)
 {
   //we are adding/switching an input, so no need to resort list
-  if( input != NULL )
+  if (input != NULL)
   {
-
     //if their is no pair in the mapping, create one
-    if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+    if (this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end())
     {
       int portNumber = this->FirstUnusedSmoothnessPort;
       this->FirstUnusedSmoothnessPort++;
-      this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(idx,portNumber));
-      this->BackwardsInputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
+      this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType, int>(idx, portNumber));
+      this->BackwardsInputSmoothnessPortMapping.insert(std::pair<vtkIdType, int>(portNumber, idx));
     }
-    this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], input );
+    this->SetNthInputConnection(1, this->InputSmoothnessPortMapping[idx], input);
 
   }
   else
   {
     //if their is no pair in the mapping, just exit, nothing to do
-    if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+    if (this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end())
     {
       return;
     }
@@ -280,7 +290,7 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputConnection(in
     this->BackwardsInputSmoothnessPortMapping.erase(this->BackwardsInputSmoothnessPortMapping.find(portNumber));
 
     //if we are the last input, no need to reshuffle
-    if(portNumber == this->FirstUnusedSmoothnessPort - 1)
+    if (portNumber == this->FirstUnusedSmoothnessPort - 1)
     {
       this->SetNthInputConnection(1, portNumber,  0);
 
@@ -289,65 +299,69 @@ void vtkDirectedAcyclicGraphMaxFlowSegmentation::SetSmoothnessInputConnection(in
     else
     {
       vtkAlgorithmOutput* swappedInput = this->GetInputConnection(0, this->FirstUnusedSmoothnessPort - 1);
-      this->SetNthInputConnection(0, portNumber, swappedInput );
-      this->SetNthInputConnection(1, this->FirstUnusedSmoothnessPort - 1, 0 );
+      this->SetNthInputConnection(0, portNumber, swappedInput);
+      this->SetNthInputConnection(1, this->FirstUnusedSmoothnessPort - 1, 0);
 
       //correct the mappings
       vtkIdType swappedId = this->BackwardsInputSmoothnessPortMapping[this->FirstUnusedSmoothnessPort - 1];
       this->InputSmoothnessPortMapping.erase(this->InputSmoothnessPortMapping.find(swappedId));
       this->BackwardsInputSmoothnessPortMapping.erase(this->BackwardsInputSmoothnessPortMapping.find(this->FirstUnusedSmoothnessPort - 1));
-      this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType,int>(swappedId,portNumber) );
-      this->BackwardsInputSmoothnessPortMapping.insert(std::pair<int,vtkIdType>(portNumber,swappedId) );
+      this->InputSmoothnessPortMapping.insert(std::pair<vtkIdType, int>(swappedId, portNumber));
+      this->BackwardsInputSmoothnessPortMapping.insert(std::pair<int, vtkIdType>(portNumber, swappedId));
 
     }
 
     //decrement the number of unused ports
     this->FirstUnusedSmoothnessPort--;
-
   }
 }
 
-vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputConnection(int idx)
+//----------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputConnection(int idx)
 {
-  if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
+  if (this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end())
   {
     return 0;
   }
   return this->GetInputConnection(0, this->InputDataPortMapping[idx]);
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputDataObject(int idx)
+//----------------------------------------------------------------------------
+vtkDataObject* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetDataInputDataObject(int idx)
 {
-  if( this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end() )
+  if (this->InputDataPortMapping.find(idx) == this->InputDataPortMapping.end())
   {
     return 0;
   }
   return this->GetExecutive()->GetInputData(0, this->InputDataPortMapping[idx]);
 }
 
-vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputConnection(int idx)
+//----------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputConnection(int idx)
 {
-  if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+  if (this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end())
   {
     return 0;
   }
   return this->GetInputConnection(1, this->InputSmoothnessPortMapping[idx]);
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputDataObject(int idx)
+//----------------------------------------------------------------------------
+vtkDataObject* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetSmoothnessInputDataObject(int idx)
 {
-  if( this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end() )
+  if (this->InputSmoothnessPortMapping.find(idx) == this->InputSmoothnessPortMapping.end())
   {
     return 0;
   }
   return this->GetExecutive()->GetInputData(1, this->InputSmoothnessPortMapping[idx]);
 }
 
-vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputDataObject(int idx)
+//----------------------------------------------------------------------------
+vtkDataObject* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputDataObject(int idx)
 {
   //look up port in mapping
-  std::map<vtkIdType,int>::iterator port = this->LeafMap.find(idx);
-  if( port == this->LeafMap.end() )
+  std::map<vtkIdType, int>::iterator port = this->LeafMap.find(idx);
+  if (port == this->LeafMap.end())
   {
     return 0;
   }
@@ -355,11 +369,12 @@ vtkDataObject *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputDataObject(i
   return this->GetExecutive()->GetOutputData(port->second);
 }
 
-vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputPort(int idx)
+//----------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputPort(int idx)
 {
   //look up port in mapping
-  std::map<vtkIdType,int>::iterator port = this->LeafMap.find(idx);
-  if( port == this->LeafMap.end() )
+  std::map<vtkIdType, int>::iterator port = this->LeafMap.find(idx);
+  if (port == this->LeafMap.end())
   {
     return 0;
   }
@@ -367,13 +382,12 @@ vtkAlgorithmOutput *vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputPort(in
   return this->vtkAlgorithm::GetOutputPort(port->second);
 }
 
+
 //----------------------------------------------------------------------------
-
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInformationVector** inputVector, int* Extent, int& NumNodes, int& NumLeaves, int& NumEdges )
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy(vtkInformationVector** inputVector, int* extent, int& numNodes, int& numLeaves, int& numEdges)
 {
-
   //check to make sure that the Structure is specified
-  if( !this->Structure )
+  if (!this->Structure)
   {
     vtkErrorMacro("Structure must be provided.");
     return -1;
@@ -383,43 +397,42 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
   this->BranchMap.clear();
 
   //check to make sure that there is an image associated with each leaf node
-  NumLeaves = 0;
-  NumNodes = 0;
-  NumEdges = 0;
-  Extent[0] = -1;
+  numLeaves = 0;
+  numNodes = 0;
+  numEdges = 0;
+  extent[0] = -1;
   vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
   iterator->SetDAG(this->Structure);
   iterator->SetRootVertex(this->Structure->GetRoot());
-  while( iterator->HasNext() )
+  while (iterator->HasNext())
   {
     vtkIdType node = iterator->Next();
-    NumNodes++;
+    numNodes++;
 
-    NumEdges += this->Structure->GetNumberOfChildren(node);
+    numEdges += this->Structure->GetNumberOfChildren(node);
 
-    if( this->Structure->IsLeaf(node) )
+    if (this->Structure->IsLeaf(node))
     {
       int value = (int) this->LeafMap.size();
       this->LeafMap[node] = value;
     }
-    else if(node != this->Structure->GetRoot())
+    else if (node != this->Structure->GetRoot())
     {
       int value = (int) this->BranchMap.size();
       this->BranchMap[node] = value;
     }
 
     //make sure all leaf nodes have a data term
-    if( this->Structure->IsLeaf(node) )
+    if (this->Structure->IsLeaf(node))
     {
-
-      NumLeaves++;
-      if( this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end() )
+      numLeaves++;
+      if (this->InputDataPortMapping.find(node) == this->InputDataPortMapping.end())
       {
         vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
       int inputPortNumber = this->InputDataPortMapping[node];
-      if( !(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
+      if (!(inputVector[0])->GetInformationObject(inputPortNumber) && (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()))
       {
         vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
@@ -427,37 +440,36 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
     }
 
     //check validity of data terms
-    if( this->InputDataPortMapping.find(node) != this->InputDataPortMapping.end() )
+    if (this->InputDataPortMapping.find(node) != this->InputDataPortMapping.end())
     {
       int inputPortNumber = this->InputDataPortMapping[node];
-      if( (inputVector[0])->GetInformationObject(inputPortNumber) &&
-          (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
+      if ((inputVector[0])->GetInformationObject(inputPortNumber) &&
+          (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()))
       {
-
         //check for right scalar type
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-        if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
+        if (CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1)
         {
           vtkErrorMacro("Data type must be FLOAT and only have one component.");
           return -1;
         }
-        if( CurrImage->GetScalarRange()[0] < 0.0 )
+        if (CurrImage->GetScalarRange()[0] < 0.0)
         {
           vtkErrorMacro("Data prior must be non-negative.");
           return -1;
         }
 
         //check to make sure that the sizes are consistent
-        if( Extent[0] == -1 )
+        if (extent[0] == -1)
         {
-          CurrImage->GetExtent(Extent);
+          CurrImage->GetExtent(extent);
         }
         else
         {
           int CurrExtent[6];
           CurrImage->GetExtent(CurrExtent);
-          if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
-              CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
+          if (CurrExtent[0] != extent[0] || CurrExtent[1] != extent[1] || CurrExtent[2] != extent[2] ||
+              CurrExtent[3] != extent[3] || CurrExtent[4] != extent[4] || CurrExtent[5] != extent[5])
           {
             vtkErrorMacro("Inconsistant object extent.");
             return -1;
@@ -467,37 +479,36 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
       }
     }
 
-    if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() )
+    if (this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end())
     {
       int inputPortNumber = this->InputSmoothnessPortMapping[node];
-      if( (inputVector[1])->GetInformationObject(inputPortNumber) &&
-          (inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()) )
+      if ((inputVector[1])->GetInformationObject(inputPortNumber) &&
+          (inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()))
       {
-
         //check for right scalar type
         vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-        if( CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1 )
+        if (CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1)
         {
           vtkErrorMacro("Smoothness type must be FLOAT and only have one component.");
           return -1;
         }
-        if( CurrImage->GetScalarRange()[0] < 0.0 )
+        if (CurrImage->GetScalarRange()[0] < 0.0)
         {
           vtkErrorMacro("Smoothness prior must be non-negative.");
           return -1;
         }
 
         //check to make sure that the sizes are consistent
-        if( Extent[0] == -1 )
+        if (extent[0] == -1)
         {
-          CurrImage->GetExtent(Extent);
+          CurrImage->GetExtent(extent);
         }
         else
         {
           int CurrExtent[6];
           CurrImage->GetExtent(CurrExtent);
-          if( CurrExtent[0] != Extent[0] || CurrExtent[1] != Extent[1] || CurrExtent[2] != Extent[2] ||
-              CurrExtent[3] != Extent[3] || CurrExtent[4] != Extent[4] || CurrExtent[5] != Extent[5] )
+          if (CurrExtent[0] != extent[0] || CurrExtent[1] != extent[1] || CurrExtent[2] != extent[2] ||
+              CurrExtent[3] != extent[3] || CurrExtent[4] != extent[4] || CurrExtent[5] != extent[5])
           {
             vtkErrorMacro("Inconsistant object extent.");
             return -1;
@@ -505,25 +516,22 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy( vtkInform
         }
       }
     }
-
   }
   iterator->Delete();
 
   //find edges based on \sum{degree(V)} = 2E
-  NumEdges = Structure->GetNumberOfEdges();
+  numEdges = Structure->GetNumberOfEdges();
 
   return 0;
 }
 
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestInformation(
-  vtkInformation* request,
-  vtkInformationVector** inputVector,
-  vtkInformationVector* outputVector)
+//----------------------------------------------------------------------------
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestInformation(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector)
 {
-  //check input for consistancy
-  int Extent[6];
-  int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
-  if( result || NumNodes == 0 )
+  //check input for consistency
+  int extent[6];
+  int result = CheckInputConsistancy(inputVector, extent, NumNodes, NumLeaves, NumEdges);
+  if (result || NumNodes == 0)
   {
     return -1;
   }
@@ -535,49 +543,46 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestInformation(
   return 1;
 }
 
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestUpdateExtent(
-  vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** inputVector,
-  vtkInformationVector* outputVector)
+//----------------------------------------------------------------------------
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestUpdateExtent(vtkInformation* vtkNotUsed(request), vtkInformationVector** inputVector, vtkInformationVector* outputVector)
 {
-  //check input for consistancy
+  //check input for consistency
   int Extent[6];
   int NumNodes;
   int NumLeaves;
   int NumEdges;
-  int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
-  if( result || NumNodes == 0 )
+  int result = CheckInputConsistancy(inputVector, Extent, NumNodes, NumLeaves, NumEdges);
+  if (result || NumNodes == 0)
   {
     return -1;
   }
 
   //set up the extents
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    vtkInformation *outputInfo = outputVector->GetInformationObject(i);
-    vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),Extent,6);
-    outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),Extent,6);
+    vtkInformation* outputInfo = outputVector->GetInformationObject(i);
+    vtkImageData* outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+    outputInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), Extent, 6);
+    outputInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), Extent, 6);
   }
 
   return 1;
 }
 
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *request,
-    vtkInformationVector **inputVector,
-    vtkInformationVector *outputVector)
-{
 
+//----------------------------------------------------------------------------
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector)
+{
   //check input consistency
-  int Extent[6];
-  int result = CheckInputConsistancy( inputVector, Extent, NumNodes, NumLeaves, NumEdges );
-  if( result || NumNodes == 0 )
+  int extent[6];
+  int result = CheckInputConsistancy(inputVector, extent, NumNodes, NumLeaves, NumEdges);
+  if (result || NumNodes == 0)
   {
     return -1;
   }
   NumBranches = NumNodes - NumLeaves - 1;
 
-  if( this->Debug )
+  if (this->Debug)
   {
     vtkDebugMacro("Starting input data preparation.");
   }
@@ -587,9 +592,9 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
   this->SetNumberOfOutputPorts(NumLeaves);
 
   //find the size of the volume
-  VX = (Extent[1] - Extent[0] + 1);
-  VY = (Extent[3] - Extent[2] + 1);
-  VZ = (Extent[5] - Extent[4] + 1);
+  VX = (extent[1] - extent[0] + 1);
+  VY = (extent[3] - extent[2] + 1);
+  VZ = (extent[5] - extent[4] + 1);
   VolumeSize = VX * VY * VZ;
 
   //make a container for the total number of memory buffers
@@ -597,136 +602,134 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
 
   //create relevant node identifier to buffer mappings
   this->BranchMap.clear();
-  vtkRootedDirectedAcyclicGraphForwardIterator* iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-  iterator->SetDAG(this->Structure);
-  iterator->SetRootVertex(this->Structure->GetRoot());
-  while( iterator->HasNext() )
+  vtkRootedDirectedAcyclicGraphForwardIterator* forward_iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+  forward_iterator->SetDAG(this->Structure);
+  forward_iterator->SetRootVertex(this->Structure->GetRoot());
+  while (forward_iterator->HasNext())
   {
-    vtkIdType node = iterator->Next();
-    if( node == this->Structure->GetRoot() )
+    vtkIdType node = forward_iterator->Next();
+    if (node == this->Structure->GetRoot())
     {
       continue;
     }
-    if( !this->Structure->IsLeaf(node) )
+    if (!this->Structure->IsLeaf(node))
     {
-      BranchMap.insert(std::pair<vtkIdType,int>(node,(int) this->BranchMap.size()));
+      BranchMap.insert(std::pair<vtkIdType, int>(node, (int) this->BranchMap.size()));
     }
   }
-  iterator->Delete();
+  forward_iterator->Delete();
 
   //get the data term buffers
-  this->leafDataTermBuffers = new float* [NumLeaves];
-  iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-  iterator->SetDAG(this->Structure);
-  while( iterator->HasNext() )
+  this->LeafDataTermBuffers = new float* [NumLeaves];
+  forward_iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+  forward_iterator->SetDAG(this->Structure);
+  while (forward_iterator->HasNext())
   {
-    vtkIdType node = iterator->Next();
-    if( this->Structure->IsLeaf(node) )
+    vtkIdType node = forward_iterator->Next();
+    if (this->Structure->IsLeaf(node))
     {
       int inputNumber = this->InputDataPortMapping[node];
       vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
-      leafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
+      LeafDataTermBuffers[this->LeafMap[node]] = (float*) CurrImage->GetScalarPointer();
 
       //add the data term buffer in and set it to read only
       TotalNumberOfBuffers++;
-
     }
   }
-  iterator->Delete();
+  forward_iterator->Delete();
 
   //get the smoothness term buffers
-  this->leafSmoothnessTermBuffers = new float* [NumLeaves];
-  this->branchSmoothnessTermBuffers = new float* [NumBranches];
-  iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-  iterator->SetDAG(this->Structure);
-  while( iterator->HasNext() )
+  this->LeafSmoothnessTermBuffers = new float* [NumLeaves];
+  this->BranchSmoothnessTermBuffers = new float* [NumBranches];
+  forward_iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+  forward_iterator->SetDAG(this->Structure);
+  while (forward_iterator->HasNext())
   {
-    vtkIdType node = iterator->Next();
-    if( node == this->Structure->GetRoot() )
+    vtkIdType node = forward_iterator->Next();
+    if (node == this->Structure->GetRoot())
     {
       continue;
     }
     vtkImageData* CurrImage = 0;
-    if( this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end() )
+    if (this->InputSmoothnessPortMapping.find(node) != this->InputSmoothnessPortMapping.end())
     {
       int inputNumber = this->InputSmoothnessPortMapping[node];
       CurrImage = vtkImageData::SafeDownCast((inputVector[1])->GetInformationObject(inputNumber)->Get(vtkDataObject::DATA_OBJECT()));
     }
-    if( this->Structure->IsLeaf(node) )
+    if (this->Structure->IsLeaf(node))
     {
-      leafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+      LeafSmoothnessTermBuffers[this->LeafMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
     }
     else
     {
-      branchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
+      BranchSmoothnessTermBuffers[this->BranchMap[node]] = CurrImage ? (float*) CurrImage->GetScalarPointer() : 0;
     }
 
     // add the smoothness buffer in as read only
-    if( CurrImage )
+    if (CurrImage)
     {
       TotalNumberOfBuffers++;
     }
   }
-  iterator->Delete();
+  forward_iterator->Delete();
 
   //get the output buffers
-  this->leafLabelBuffers = new float* [NumLeaves];
-  for(int i = 0; i < NumLeaves; i++ )
+  this->LeafLabelBuffers = new float* [NumLeaves];
+  for (int i = 0; i < NumLeaves; i++)
   {
-    vtkInformation *outputInfo = outputVector->GetInformationObject(i);
-    vtkImageData *outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    outputBuffer->SetExtent(Extent);
+    vtkInformation* outputInfo = outputVector->GetInformationObject(i);
+    vtkImageData* outputBuffer = vtkImageData::SafeDownCast(outputInfo->Get(vtkDataObject::DATA_OBJECT()));
+    outputBuffer->SetExtent(extent);
     outputBuffer->Modified();
     outputBuffer->AllocateScalars(outputInfo);
-    leafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
+    LeafLabelBuffers[i] = (float*) outputBuffer->GetScalarPointer();
     TotalNumberOfBuffers++;
   }
 
   //convert smoothness constants mapping to two mappings
-  iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-  iterator->SetDAG(this->Structure);
-  leafSmoothnessConstants = new float[NumLeaves];
-  branchSmoothnessConstants = new float[NumBranches];
-  while( iterator->HasNext() )
+  forward_iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+  forward_iterator->SetDAG(this->Structure);
+  LeafSmoothnessConstants = new float[NumLeaves];
+  BranchSmoothnessConstants = new float[NumBranches];
+  while (forward_iterator->HasNext())
   {
-    vtkIdType node = iterator->Next();
-    if( node == this->Structure->GetRoot() )
+    vtkIdType node = forward_iterator->Next();
+    if (node == this->Structure->GetRoot())
     {
       continue;
     }
-    if( this->Structure->IsLeaf(node) )
-      if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
+    if (this->Structure->IsLeaf(node))
+      if (this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end())
       {
-        leafSmoothnessConstants[this->LeafMap[node]] = this->SmoothnessScalars[node];
+        LeafSmoothnessConstants[this->LeafMap[node]] = this->SmoothnessScalars[node];
       }
       else
       {
-        leafSmoothnessConstants[this->LeafMap[node]] = 1.0f;
+        LeafSmoothnessConstants[this->LeafMap[node]] = 1.0f;
       }
-    else if( this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end() )
+    else if (this->SmoothnessScalars.find(node) != this->SmoothnessScalars.end())
     {
-      branchSmoothnessConstants[this->BranchMap[node]] = this->SmoothnessScalars[node];
+      BranchSmoothnessConstants[this->BranchMap[node]] = this->SmoothnessScalars[node];
     }
     else
     {
-      branchSmoothnessConstants[this->BranchMap[node]] = 1.0f;
+      BranchSmoothnessConstants[this->BranchMap[node]] = 1.0f;
     }
   }
-  iterator->Delete();
+  forward_iterator->Delete();
 
   //if verbose, print progress
-  if( this->Debug )
+  if (this->Debug)
   {
     vtkDebugMacro("Starting CPU buffer acquisition");
   }
 
-
-  //allocate required memory buffers for the brach nodes
-  int NumBuffersPerBranch = 8;
-  int NumBuffersPerLeaf = 6;
-  int NumBuffersSource = 2;
+  //allocate required memory buffers for the branch nodes
+  int numBuffersPerBranch = 8;
+  int numBuffersPerLeaf = 6;
+  int numBuffersSource = 2;
   //    buffers needed:
-  //      per brach node (not the root):
+  //      per branch node (not the root):
   //        1 label buffer
   //        3 spatial flow buffers
   //        1 divergence buffer
@@ -739,138 +742,138 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
   //        1 divergence buffer
   //        1 sink flow buffer
   //        1 incoming flow buffer
-  int NumberOfAdditionalCPUBuffersNeeded = 0;
+  int numberOfAdditionalCPUBuffersNeeded = 0;
 
   //source flow and working buffers
   std::list<float**> BufferPointerLocs;
-  NumberOfAdditionalCPUBuffersNeeded += NumBuffersSource;
-  TotalNumberOfBuffers += NumBuffersSource;
-  BufferPointerLocs.push_front(&sourceFlowBuffer);
-  BufferPointerLocs.push_front(&sourceWorkingBuffer);
+  numberOfAdditionalCPUBuffersNeeded += numBuffersSource;
+  TotalNumberOfBuffers += numBuffersSource;
+  BufferPointerLocs.push_front(&SourceFlowBuffer);
+  BufferPointerLocs.push_front(&SourceWorkingBuffer);
 
   //allocate those buffer pointers and put on list
-  NumberOfAdditionalCPUBuffersNeeded += NumBuffersPerBranch * NumBranches;
-  TotalNumberOfBuffers += NumBuffersPerBranch * NumBranches;
-  NumberOfAdditionalCPUBuffersNeeded += NumBuffersPerLeaf * NumLeaves;
-  TotalNumberOfBuffers += NumBuffersPerLeaf * NumLeaves;
-  float** bufferPointers = new float* [NumBuffersPerBranch * NumBranches + NumBuffersPerLeaf * NumLeaves];
+  numberOfAdditionalCPUBuffersNeeded += numBuffersPerBranch * NumBranches;
+  TotalNumberOfBuffers += numBuffersPerBranch * NumBranches;
+  numberOfAdditionalCPUBuffersNeeded += numBuffersPerLeaf * NumLeaves;
+  TotalNumberOfBuffers += numBuffersPerLeaf * NumLeaves;
+  float** bufferPointers = new float* [numBuffersPerBranch * NumBranches + numBuffersPerLeaf * NumLeaves];
   float** tempPtr = bufferPointers;
-  this->branchFlowXBuffers =    tempPtr;
+  this->BranchFlowXBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchFlowYBuffers =    tempPtr;
+  this->BranchFlowYBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchFlowZBuffers =    tempPtr;
+  this->BranchFlowZBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchDivBuffers =    tempPtr;
+  this->BranchDivBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchSourceBuffers =    tempPtr;
+  this->BranchSourceBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchSinkBuffers =    tempPtr;
+  this->BranchSinkBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchLabelBuffers =    tempPtr;
+  this->BranchLabelBuffers = tempPtr;
   tempPtr += NumBranches;
-  this->branchWorkingBuffers =  tempPtr;
+  this->BranchWorkingBuffers = tempPtr;
   tempPtr += NumBranches;
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchFlowXBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchFlowXBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchFlowYBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchFlowYBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchFlowZBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchFlowZBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchDivBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchDivBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchSinkBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchSinkBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchSourceBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchSourceBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchLabelBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchLabelBuffers[i]));
   }
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    BufferPointerLocs.push_front(&(branchWorkingBuffers[i]));
+    BufferPointerLocs.push_front(&(BranchWorkingBuffers[i]));
   }
-  this->leafFlowXBuffers =    tempPtr;
+  this->LeafFlowXBuffers = tempPtr;
   tempPtr += NumLeaves;
-  this->leafFlowYBuffers =    tempPtr;
+  this->LeafFlowYBuffers = tempPtr;
   tempPtr += NumLeaves;
-  this->leafFlowZBuffers =    tempPtr;
+  this->LeafFlowZBuffers = tempPtr;
   tempPtr += NumLeaves;
-  this->leafDivBuffers =      tempPtr;
+  this->LeafDivBuffers = tempPtr;
   tempPtr += NumLeaves;
-  this->leafSourceBuffers =    tempPtr;
+  this->LeafSourceBuffers = tempPtr;
   tempPtr += NumLeaves;
-  this->leafSinkBuffers =      tempPtr;
+  this->LeafSinkBuffers = tempPtr;
   tempPtr += NumLeaves;
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafFlowXBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafFlowXBuffers[i]));
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafFlowYBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafFlowYBuffers[i]));
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafFlowZBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafFlowZBuffers[i]));
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafDivBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafDivBuffers[i]));
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafSinkBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafSinkBuffers[i]));
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    BufferPointerLocs.push_front(&(leafSourceBuffers[i]));
+    BufferPointerLocs.push_front(&(LeafSourceBuffers[i]));
   }
 
   //try to obtain required CPU buffers
-  while( NumberOfAdditionalCPUBuffersNeeded > 0 )
+  while (numberOfAdditionalCPUBuffersNeeded > 0)
   {
-    int NumBuffersAcquired = (NumberOfAdditionalCPUBuffersNeeded < INT_MAX / VolumeSize) ?
-                             NumberOfAdditionalCPUBuffersNeeded : INT_MAX / VolumeSize;
-    for( ; NumBuffersAcquired > 0; NumBuffersAcquired--)
+    int numBuffersAcquired = (numberOfAdditionalCPUBuffersNeeded < INT_MAX / VolumeSize) ?
+                             numberOfAdditionalCPUBuffersNeeded : INT_MAX / VolumeSize;
+    for (; numBuffersAcquired > 0; numBuffersAcquired--)
     {
       try
       {
-        float* NewCPUBuffer = new float[VolumeSize*NumBuffersAcquired];
-        if( !NewCPUBuffer )
+        float* newCPUBuffer = new float[VolumeSize * numBuffersAcquired];
+        if (!newCPUBuffer)
         {
           continue;
         }
-        CPUBuffersAcquired.push_front( NewCPUBuffer );
-        CPUBuffersSize.push_front( NumBuffersAcquired );
-        NumberOfAdditionalCPUBuffersNeeded -= NumBuffersAcquired;
+        CPUBuffersAcquired.push_front(newCPUBuffer);
+        CPUBuffersSize.push_front(numBuffersAcquired);
+        numberOfAdditionalCPUBuffersNeeded -= numBuffersAcquired;
         break;
       }
-      catch( ... ) { };
+      catch (...) { };
     }
-    if( NumBuffersAcquired == 0 )
+    if (numBuffersAcquired == 0)
     {
       break;
     }
   }
 
   //if we cannot obtain all required buffers, return an error and exit
-  if( NumberOfAdditionalCPUBuffersNeeded > 0 )
+  if (numberOfAdditionalCPUBuffersNeeded > 0)
   {
-    while( CPUBuffersAcquired.size() > 0 )
+    while (CPUBuffersAcquired.size() > 0)
     {
       float* tempBuffer = CPUBuffersAcquired.front();
       delete[] tempBuffer;
@@ -884,117 +887,128 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
   std::list<float**>::iterator bufferNameIt = BufferPointerLocs.begin();
   std::list<float*>::iterator bufferAllocIt = CPUBuffersAcquired.begin();
   std::list<int>::iterator bufferSizeIt = CPUBuffersSize.begin();
-  for( ; bufferAllocIt != CPUBuffersAcquired.end(); bufferAllocIt++, bufferSizeIt++ )
+  for (; bufferAllocIt != CPUBuffersAcquired.end(); bufferAllocIt++, bufferSizeIt++)
   {
-    for( int i = 0; i < *bufferSizeIt; i++ )
+    for (int i = 0; i < *bufferSizeIt; i++)
     {
-      *(*bufferNameIt) = (*bufferAllocIt) + VolumeSize*i;
+      *(*bufferNameIt) = (*bufferAllocIt) + VolumeSize * i;
       bufferNameIt++;
     }
   }
 
   //if verbose, print progress
-  if( this->Debug )
+  if (this->Debug)
   {
     vtkDebugMacro("Relate parent sink with child source buffer pointers.");
   }
 
   //figure out weightings on tree
   BranchNumParents = new float[NumBranches];
-  for(int i = 0; i < NumBranches; i++)
+  for (int i = 0; i < NumBranches; i++)
   {
     BranchNumParents[i] = 0.0f;
   }
   BranchNumChildren = new float[NumBranches];
-  for(int i = 0; i < NumBranches; i++)
+  for (int i = 0; i < NumBranches; i++)
   {
     BranchNumChildren[i] = 0.0f;
   }
   BranchWeightedNumChildren = new float[NumBranches];
-  for(int i = 0; i < NumBranches; i++)
+  for (int i = 0; i < NumBranches; i++)
   {
     BranchWeightedNumChildren[i] = 0.0f;
   }
   LeafNumParents = new float[NumLeaves];
-  for(int i = 0; i < NumLeaves; i++)
+  for (int i = 0; i < NumLeaves; i++)
   {
     LeafNumParents[i] = 0.0f;
   }
+
   SourceNumChildren = 0.0f;
   SourceWeightedNumChildren = 0.0f;
-  vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
-  vtkRootedDirectedAcyclicGraphBackwardIterator* Iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-  Iterator->SetDAG(this->Structure);
-  Iterator->SetRootVertex(this->Structure->GetRoot());
-  while(Iterator->HasNext())
+  vtkFloatArray* weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
+  vtkRootedDirectedAcyclicGraphBackwardIterator* back_iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
+  back_iterator->SetDAG(this->Structure);
+  back_iterator->SetRootVertex(this->Structure->GetRoot());
+  while (back_iterator->HasNext())
   {
-    vtkIdType CurrNode = Iterator->Next();
+    vtkIdType currNode = back_iterator->Next();
 
     //find the number of parents
-    if(this->Structure->IsLeaf(CurrNode))
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+    if (this->Structure->IsLeaf(currNode))
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfParents(currNode); i++)
       {
-        LeafNumParents[LeafMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0;
+        LeafNumParents[LeafMap[currNode]] += weights ? weights->GetValue(this->Structure->GetInEdge(currNode, i).Id) : 1.0;
       }
-    else if(this->Structure->GetRoot() != CurrNode)
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+    }
+    else if (this->Structure->GetRoot() != currNode)
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfParents(currNode); i++)
       {
-        BranchNumParents[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0;
+        BranchNumParents[BranchMap[currNode]] += weights ? weights->GetValue(this->Structure->GetInEdge(currNode, i).Id) : 1.0;
       }
+    }
 
     //find the number of children
-    if(this->Structure->GetRoot() == CurrNode)
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+    if (this->Structure->GetRoot() == currNode)
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
       {
-        SourceNumChildren += Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0;
+        SourceNumChildren += weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0;
       }
+    }
     else
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
       {
-        BranchNumChildren[BranchMap[CurrNode]] += Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0;
+        BranchNumChildren[BranchMap[currNode]] += weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0;
       }
-
+    }
   }
-  Iterator->Restart();
-  while(Iterator->HasNext())
+  back_iterator->Restart();
+  while (back_iterator->HasNext())
   {
-    vtkIdType CurrNode = Iterator->Next();
+    vtkIdType currNode = back_iterator->Next();
 
     //find the number of children weighted
-    if(this->Structure->GetRoot() == CurrNode)
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+    if (this->Structure->GetRoot() == currNode)
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
       {
-        float temp = (Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
-                     (this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]] :
-                      BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]] );
-        SourceWeightedNumChildren += temp*temp;
+        float temp = (weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0) /
+                     (this->Structure->IsLeaf(this->Structure->GetChild(currNode, i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(currNode, i)]] :
+                      BranchNumParents[BranchMap[this->Structure->GetChild(currNode, i)]]);
+        SourceWeightedNumChildren += temp * temp;
       }
+    }
     else
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+    {
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
       {
-        float temp = (Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0 ) /
-                     (this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]] :
-                      BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]] );
-        BranchWeightedNumChildren[BranchMap[CurrNode]] += temp*temp;
+        float temp = (weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0) /
+                     (this->Structure->IsLeaf(this->Structure->GetChild(currNode, i)) ? LeafNumParents[LeafMap[this->Structure->GetChild(currNode, i)]] :
+                      BranchNumParents[BranchMap[this->Structure->GetChild(currNode, i)]]);
+        BranchWeightedNumChildren[BranchMap[currNode]] += temp * temp;
       }
-
+    }
   }
-  Iterator->Delete();
+  back_iterator->Delete();
 
   //run algorithm proper
-  if( this->Debug )
+  if (this->Debug)
   {
     vtkDebugMacro("Starting initialization");
   }
   this->InitializeAlgorithm();
-  if( this->Debug )
+  if (this->Debug)
   {
     vtkDebugMacro("Starting max-flow algorithm.");
   }
   this->RunAlgorithm();
 
   //deallocate CPU buffers
-  while( CPUBuffersAcquired.size() > 0 )
+  while (CPUBuffersAcquired.size() > 0)
   {
     float* tempBuffer = CPUBuffersAcquired.front();
     delete[] tempBuffer;
@@ -1016,25 +1030,22 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestData(vtkInformation *requ
   return 1;
 }
 
-int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(
-  vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** inputVector ,
-  vtkInformationVector* outputVector)
+//----------------------------------------------------------------------------
+int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(vtkInformation* vtkNotUsed(request), vtkInformationVector** inputVector, vtkInformationVector* outputVector)
 {
-
   vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
   if (!inInfo)
   {
     return 0;
   }
-  vtkImageData *input = vtkImageData::SafeDownCast(inInfo->Get(vtkImageData::DATA_OBJECT()));
+  vtkImageData* input = vtkImageData::SafeDownCast(inInfo->Get(vtkImageData::DATA_OBJECT()));
 
   if (input)
   {
-    for(int i=0; i < outputVector->GetNumberOfInformationObjects(); ++i)
+    for (int i = 0; i < outputVector->GetNumberOfInformationObjects(); ++i)
     {
       vtkInformation* info = outputVector->GetInformationObject(0);
-      vtkDataSet *output = vtkDataSet::SafeDownCast(
+      vtkDataSet* output = vtkDataSet::SafeDownCast(
                              info->Get(vtkDataObject::DATA_OBJECT()));
 
       return 1;
@@ -1043,339 +1054,348 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::RequestDataObject(
   return 0;
 }
 
+//----------------------------------------------------------------------------
 int vtkDirectedAcyclicGraphMaxFlowSegmentation::InitializeAlgorithm()
 {
-
-  //initalize all spatial flows and divergences to zero
-  for(int i = 0; i < NumBranches; i++ )
+  //initialize all spatial flows and divergences to zero
+  for (int i = 0; i < NumBranches; i++)
   {
-    zeroOutBuffer(branchFlowXBuffers[i], VolumeSize);
-    zeroOutBuffer(branchFlowYBuffers[i], VolumeSize);
-    zeroOutBuffer(branchFlowZBuffers[i], VolumeSize);
-    zeroOutBuffer(branchDivBuffers[i], VolumeSize);
+    zeroOutBuffer(BranchFlowXBuffers[i], VolumeSize);
+    zeroOutBuffer(BranchFlowYBuffers[i], VolumeSize);
+    zeroOutBuffer(BranchFlowZBuffers[i], VolumeSize);
+    zeroOutBuffer(BranchDivBuffers[i], VolumeSize);
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    zeroOutBuffer(leafFlowXBuffers[i], VolumeSize);
-    zeroOutBuffer(leafFlowYBuffers[i], VolumeSize);
-    zeroOutBuffer(leafFlowZBuffers[i], VolumeSize);
-    zeroOutBuffer(leafDivBuffers[i], VolumeSize);
+    zeroOutBuffer(LeafFlowXBuffers[i], VolumeSize);
+    zeroOutBuffer(LeafFlowYBuffers[i], VolumeSize);
+    zeroOutBuffer(LeafFlowZBuffers[i], VolumeSize);
+    zeroOutBuffer(LeafDivBuffers[i], VolumeSize);
   }
 
   //initialize all leak sink flows to their constraints
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    copyBuffer(leafSinkBuffers[i], leafDataTermBuffers[i], VolumeSize);
+    copyBuffer(LeafSinkBuffers[i], LeafDataTermBuffers[i], VolumeSize);
   }
 
   //find the minimum sink flow
-  for(int i = 1; i < NumLeaves; i++ )
+  for (int i = 1; i < NumLeaves; i++)
   {
-    minBuffer(leafSinkBuffers[0], leafSinkBuffers[i], VolumeSize);
+    minBuffer(LeafSinkBuffers[0], LeafSinkBuffers[i], VolumeSize);
   }
 
   //copy minimum sink flow over all leaves and sum the resulting labels into the source flow buffer
-  lblBuffer(leafLabelBuffers[0], leafSinkBuffers[0], leafDataTermBuffers[0], VolumeSize);
-  copyBuffer(sourceFlowBuffer, leafLabelBuffers[0], VolumeSize);
-  for(int i = 1; i < NumLeaves; i++ )
+  lblBuffer(LeafLabelBuffers[0], LeafSinkBuffers[0], LeafDataTermBuffers[0], VolumeSize);
+  copyBuffer(SourceFlowBuffer, LeafLabelBuffers[0], VolumeSize);
+  for (int i = 1; i < NumLeaves; i++)
   {
-    copyBuffer(leafSinkBuffers[i], leafSinkBuffers[0], VolumeSize);
-    copyBuffer(leafSourceBuffers[i], leafSinkBuffers[0], VolumeSize);
-    lblBuffer(leafLabelBuffers[i], leafSinkBuffers[i], leafDataTermBuffers[i], VolumeSize);
-    sumBuffer(sourceFlowBuffer, leafLabelBuffers[i], VolumeSize);
+    copyBuffer(LeafSinkBuffers[i], LeafSinkBuffers[0], VolumeSize);
+    copyBuffer(LeafSourceBuffers[i], LeafSinkBuffers[0], VolumeSize);
+    lblBuffer(LeafLabelBuffers[i], LeafSinkBuffers[i], LeafDataTermBuffers[i], VolumeSize);
+    sumBuffer(SourceFlowBuffer, LeafLabelBuffers[i], VolumeSize);
   }
 
   //divide the labels out to constrain them to validity
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    divBuffer(leafLabelBuffers[i], sourceFlowBuffer, VolumeSize);
+    divBuffer(LeafLabelBuffers[i], SourceFlowBuffer, VolumeSize);
   }
 
   //apply minimal sink flow over the remaining Structure
-  for(int i = 0; i < NumBranches; i++ )
+  for (int i = 0; i < NumBranches; i++)
   {
-    copyBuffer(branchSinkBuffers[i], leafSinkBuffers[0], VolumeSize);
-    copyBuffer(branchSourceBuffers[i], leafSinkBuffers[0], VolumeSize);
+    copyBuffer(BranchSinkBuffers[i], LeafSinkBuffers[0], VolumeSize);
+    copyBuffer(BranchSourceBuffers[i], LeafSinkBuffers[0], VolumeSize);
   }
-  for(int i = 0; i < NumLeaves; i++ )
+  for (int i = 0; i < NumLeaves; i++)
   {
-    copyBuffer(leafSourceBuffers[i], leafSinkBuffers[0], VolumeSize);
+    copyBuffer(LeafSourceBuffers[i], LeafSinkBuffers[0], VolumeSize);
   }
-  copyBuffer(sourceFlowBuffer, leafSinkBuffers[0], VolumeSize);
+  copyBuffer(SourceFlowBuffer, LeafSinkBuffers[0], VolumeSize);
 
-  //propogate labels up the Structure
-  PropogateLabels( );
+  //propagate labels up the Structure
+  PropogateLabels();
 
   return 1;
 }
 
+//----------------------------------------------------------------------------
 int vtkDirectedAcyclicGraphMaxFlowSegmentation::RunAlgorithm()
 {
   //Solve maximum flow problem in an iterative bottom-up manner
-  for( int iteration = 0; iteration < this->NumberOfIterations; iteration++ )
+  for (int iteration = 0; iteration < this->NumberOfIterations; iteration++)
   {
     SolveMaxFlow();
-    if( this->Debug )
+    if (this->Debug)
     {
-      vtkDebugMacro("Finished iteration " << (iteration+1) << ".");
+      vtkDebugMacro("Finished iteration " << (iteration + 1) << ".");
     }
   }
   return 1;
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels( )
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::PropogateLabels()
 {
+  vtkFloatArray* weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 
-  vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
-
-  vtkRootedDirectedAcyclicGraphBackwardIterator* Iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-  Iterator->SetDAG(this->Structure);
-  Iterator->SetRootVertex(this->Structure->GetRoot());
-  while(Iterator->HasNext())
+  vtkRootedDirectedAcyclicGraphBackwardIterator* iterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
+  iterator->SetDAG(this->Structure);
+  iterator->SetRootVertex(this->Structure->GetRoot());
+  while (iterator->HasNext())
   {
-    vtkIdType CurrNode = Iterator->Next();
+    vtkIdType currNode = iterator->Next();
 
     //if we are a leaf or root label, we are finished and can therefore leave
-    if(this->Structure->IsLeaf(CurrNode) || this->Structure->GetRoot() == CurrNode )
+    if (this->Structure->IsLeaf(currNode) || this->Structure->GetRoot() == currNode)
     {
       continue;
     }
 
     //clear own label buffer
-    zeroOutBuffer(branchLabelBuffers[BranchMap[CurrNode]],VolumeSize);
+    zeroOutBuffer(BranchLabelBuffers[BranchMap[currNode]], VolumeSize);
 
     //sum in weighted version of child's label
-    for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++ )
+    for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
     {
-      float W = Weights ? Weights->GetValue(this->Structure->GetOutEdge(CurrNode,i).Id) : 1.0f;
-      if(this->Structure->IsLeaf(this->Structure->GetChild(CurrNode,i)))
-        sumScaledBuffer(branchLabelBuffers[BranchMap[CurrNode]],
-                        leafLabelBuffers[LeafMap[this->Structure->GetChild(CurrNode,i)]],
-                        W / LeafNumParents[LeafMap[this->Structure->GetChild(CurrNode,i)]],
+      float W = weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0f;
+      if (this->Structure->IsLeaf(this->Structure->GetChild(currNode, i)))
+      {
+        sumScaledBuffer(BranchLabelBuffers[BranchMap[currNode]],
+                        LeafLabelBuffers[LeafMap[this->Structure->GetChild(currNode, i)]],
+                        W / LeafNumParents[LeafMap[this->Structure->GetChild(currNode, i)]],
                         VolumeSize);
+      }
       else
-        sumScaledBuffer(branchLabelBuffers[BranchMap[CurrNode]],
-                        branchLabelBuffers[BranchMap[this->Structure->GetChild(CurrNode,i)]],
-                        W / BranchNumParents[BranchMap[this->Structure->GetChild(CurrNode,i)]],
+      {
+        sumScaledBuffer(BranchLabelBuffers[BranchMap[currNode]],
+                        BranchLabelBuffers[BranchMap[this->Structure->GetChild(currNode, i)]],
+                        W / BranchNumParents[BranchMap[this->Structure->GetChild(currNode, i)]],
                         VolumeSize);
+      }
     }
 
   }
-  Iterator->Delete();
+  iterator->Delete();
 }
 
-void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow( )
+//----------------------------------------------------------------------------
+void vtkDirectedAcyclicGraphMaxFlowSegmentation::SolveMaxFlow()
 {
-  vtkRootedDirectedAcyclicGraphForwardIterator* ForIterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
-  vtkRootedDirectedAcyclicGraphBackwardIterator* BackIterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
-  ForIterator->SetDAG(this->Structure);
-  BackIterator->SetDAG(this->Structure);
-  vtkFloatArray* Weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
+  vtkRootedDirectedAcyclicGraphForwardIterator* forIterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
+  vtkRootedDirectedAcyclicGraphBackwardIterator* backIterator = vtkRootedDirectedAcyclicGraphBackwardIterator::New();
+  forIterator->SetDAG(this->Structure);
+  backIterator->SetDAG(this->Structure);
+  vtkFloatArray* weights = vtkFloatArray::SafeDownCast(this->Structure->GetEdgeData()->GetArray("Weights"));
 
-  //update spatial flows (order independant)
-  ForIterator->SetRootVertex(this->Structure->GetRoot());
-  ForIterator->Restart();
-  while(ForIterator->HasNext())
+  //update spatial flows (order independent)
+  forIterator->SetRootVertex(this->Structure->GetRoot());
+  forIterator->Restart();
+  while (forIterator->HasNext())
   {
-    vtkIdType currNode = ForIterator->Next();
-    if( this->Structure->IsLeaf(currNode) )
+    vtkIdType currNode = forIterator->Next();
+    if (this->Structure->IsLeaf(currNode))
     {
-
       //compute the gradient step amount (store in div buffer for now)
       //std::cout << currNode << "\t Find gradient descent step size" << std::endl;
-      dagmf_flowGradientStep(leafSinkBuffers[LeafMap[currNode]], leafSourceBuffers[LeafMap[currNode]],
-                             leafDivBuffers[LeafMap[currNode]], leafLabelBuffers[LeafMap[currNode]],
+      dagmf_flowGradientStep(LeafSinkBuffers[LeafMap[currNode]], LeafSourceBuffers[LeafMap[currNode]],
+                             LeafDivBuffers[LeafMap[currNode]], LeafLabelBuffers[LeafMap[currNode]],
                              StepSize, CC, VolumeSize);
 
       //apply gradient descent to the flows
       //std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
-      dagmf_applyStep(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
-                      leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
+      dagmf_applyStep(LeafDivBuffers[LeafMap[currNode]], LeafFlowXBuffers[LeafMap[currNode]],
+                      LeafFlowYBuffers[LeafMap[currNode]], LeafFlowZBuffers[LeafMap[currNode]],
                       VX, VY, VZ, VolumeSize);
 
       //std::cout << currNode << "\t Find Projection multiplier" << std::endl;
-      dagmf_computeFlowMag(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
-                           leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
-                           leafSmoothnessTermBuffers[LeafMap[currNode]], leafSmoothnessConstants[LeafMap[currNode]],
+      dagmf_computeFlowMag(LeafDivBuffers[LeafMap[currNode]], LeafFlowXBuffers[LeafMap[currNode]],
+                           LeafFlowYBuffers[LeafMap[currNode]], LeafFlowZBuffers[LeafMap[currNode]],
+                           LeafSmoothnessTermBuffers[LeafMap[currNode]], LeafSmoothnessConstants[LeafMap[currNode]],
                            VX, VY, VZ, VolumeSize);
 
       //project onto set and recompute the divergence
       //std::cout << currNode << "\t Project flows into valid range and compute divergence" << std::endl;
-      dagmf_projectOntoSet(leafDivBuffers[LeafMap[currNode]], leafFlowXBuffers[LeafMap[currNode]],
-                           leafFlowYBuffers[LeafMap[currNode]], leafFlowZBuffers[LeafMap[currNode]],
+      dagmf_projectOntoSet(LeafDivBuffers[LeafMap[currNode]], LeafFlowXBuffers[LeafMap[currNode]],
+                           LeafFlowYBuffers[LeafMap[currNode]], LeafFlowZBuffers[LeafMap[currNode]],
                            VX, VY, VZ, VolumeSize);
-
     }
-    else if( currNode != this->Structure->GetRoot() )
+    else if (currNode != this->Structure->GetRoot())
     {
-
       //std::cout << currNode << "\t Find gradient descent step size" << std::endl;
-      dagmf_flowGradientStep(branchSinkBuffers[BranchMap[currNode]], branchSourceBuffers[BranchMap[currNode]],
-                             branchDivBuffers[BranchMap[currNode]], branchLabelBuffers[BranchMap[currNode]],
-                             StepSize, CC,VolumeSize);
+      dagmf_flowGradientStep(BranchSinkBuffers[BranchMap[currNode]], BranchSourceBuffers[BranchMap[currNode]],
+                             BranchDivBuffers[BranchMap[currNode]], BranchLabelBuffers[BranchMap[currNode]],
+                             StepSize, CC, VolumeSize);
 
       //std::cout << currNode << "\t Update spatial flows part 1" << std::endl;
-      dagmf_applyStep(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
-                      branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
+      dagmf_applyStep(BranchDivBuffers[BranchMap[currNode]], BranchFlowXBuffers[BranchMap[currNode]],
+                      BranchFlowYBuffers[BranchMap[currNode]], BranchFlowZBuffers[BranchMap[currNode]],
                       VX, VY, VZ, VolumeSize);
 
       //compute the multiplier for projecting back onto the feasible flow set (and store in div buffer)
       //std::cout << currNode << "\t Find Projection multiplier" << std::endl;
-      dagmf_computeFlowMag(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
-                           branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
-                           branchSmoothnessTermBuffers[BranchMap[currNode]], branchSmoothnessConstants[BranchMap[currNode]],
+      dagmf_computeFlowMag(BranchDivBuffers[BranchMap[currNode]], BranchFlowXBuffers[BranchMap[currNode]],
+                           BranchFlowYBuffers[BranchMap[currNode]], BranchFlowZBuffers[BranchMap[currNode]],
+                           BranchSmoothnessTermBuffers[BranchMap[currNode]], BranchSmoothnessConstants[BranchMap[currNode]],
                            VX, VY, VZ, VolumeSize);
 
       //project onto set and recompute the divergence
-      dagmf_projectOntoSet(branchDivBuffers[BranchMap[currNode]], branchFlowXBuffers[BranchMap[currNode]],
-                           branchFlowYBuffers[BranchMap[currNode]], branchFlowZBuffers[BranchMap[currNode]],
+      dagmf_projectOntoSet(BranchDivBuffers[BranchMap[currNode]], BranchFlowXBuffers[BranchMap[currNode]],
+                           BranchFlowYBuffers[BranchMap[currNode]], BranchFlowZBuffers[BranchMap[currNode]],
                            VX, VY, VZ, VolumeSize);
     }
   }
 
   //clear source buffers working down
-  ForIterator->SetRootVertex(this->Structure->GetRoot());
-  ForIterator->Restart();
-  while(ForIterator->HasNext())
+  forIterator->SetRootVertex(this->Structure->GetRoot());
+  forIterator->Restart();
+  while (forIterator->HasNext())
   {
-    vtkIdType currNode = ForIterator->Next();
-    if(this->Structure->IsLeaf(currNode))
+    vtkIdType currNode = forIterator->Next();
+    if (this->Structure->IsLeaf(currNode))
     {
-      zeroOutBuffer(leafSourceBuffers[LeafMap[currNode]],VolumeSize);
+      zeroOutBuffer(LeafSourceBuffers[LeafMap[currNode]], VolumeSize);
     }
-    else if(currNode != this->Structure->GetRoot() )
+    else if (currNode != this->Structure->GetRoot())
     {
-      zeroOutBuffer(branchSourceBuffers[BranchMap[currNode]],VolumeSize);
+      zeroOutBuffer(BranchSourceBuffers[BranchMap[currNode]], VolumeSize);
     }
   }
 
   //populate source for root's children
-  for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(this->Structure->GetRoot()); i++)
+  for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(this->Structure->GetRoot()); i++)
   {
-    vtkIdType Child = this->Structure->GetChild(this->Structure->GetRoot(),i);
-    float W = Weights ? Weights->GetValue( this->Structure->GetOutEdge(this->Structure->GetRoot(),i).Id ) : 1.0f;
-    if(this->Structure->IsLeaf(Child))
-      sumScaledBuffer(leafSourceBuffers[LeafMap[Child]],
-                      sourceFlowBuffer, W/this->LeafNumParents[LeafMap[Child]], VolumeSize);
+    vtkIdType Child = this->Structure->GetChild(this->Structure->GetRoot(), i);
+    float W = weights ? weights->GetValue(this->Structure->GetOutEdge(this->Structure->GetRoot(), i).Id) : 1.0f;
+    if (this->Structure->IsLeaf(Child))
+      sumScaledBuffer(LeafSourceBuffers[LeafMap[Child]],
+                      SourceFlowBuffer, W / this->LeafNumParents[LeafMap[Child]], VolumeSize);
     else
-      sumScaledBuffer(branchSourceBuffers[BranchMap[Child]],
-                      sourceFlowBuffer, W/this->BranchNumParents[BranchMap[Child]], VolumeSize);
+      sumScaledBuffer(BranchSourceBuffers[BranchMap[Child]],
+                      SourceFlowBuffer, W / this->BranchNumParents[BranchMap[Child]], VolumeSize);
   }
 
-  //propogate source for all other children
-  ForIterator->SetRootVertex(this->Structure->GetRoot());
-  ForIterator->Restart();
-  while(ForIterator->HasNext())
+  //propagate source for all other children
+  forIterator->SetRootVertex(this->Structure->GetRoot());
+  forIterator->Restart();
+  while (forIterator->HasNext())
   {
-    vtkIdType CurrNode = ForIterator->Next();
-    if(CurrNode == this->Structure->GetRoot())
+    vtkIdType currNode = forIterator->Next();
+    if (currNode == this->Structure->GetRoot())
     {
       continue;
     }
-    for(vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(CurrNode); i++)
+    for (vtkIdType i = 0; i < this->Structure->GetNumberOfChildren(currNode); i++)
     {
-      vtkIdType Child = this->Structure->GetChild(CurrNode,i);
-      float W = Weights ? Weights->GetValue( this->Structure->GetOutEdge(CurrNode,i).Id ) : 1.0f;
-      if(this->Structure->IsLeaf(Child))
-        sumScaledBuffer(leafSourceBuffers[LeafMap[Child]], branchSinkBuffers[BranchMap[CurrNode]],
-                        W/this->LeafNumParents[LeafMap[Child]], VolumeSize);
+      vtkIdType Child = this->Structure->GetChild(currNode, i);
+      float W = weights ? weights->GetValue(this->Structure->GetOutEdge(currNode, i).Id) : 1.0f;
+      if (this->Structure->IsLeaf(Child))
+      {
+        sumScaledBuffer(LeafSourceBuffers[LeafMap[Child]], BranchSinkBuffers[BranchMap[currNode]],
+                        W / this->LeafNumParents[LeafMap[Child]], VolumeSize);
+      }
       else
-        sumScaledBuffer(branchSourceBuffers[BranchMap[Child]], branchSinkBuffers[BranchMap[CurrNode]],
-                        W/this->BranchNumParents[BranchMap[Child]], VolumeSize);
+      {
+        sumScaledBuffer(BranchSourceBuffers[BranchMap[Child]], BranchSinkBuffers[BranchMap[currNode]],
+                        W / this->BranchNumParents[BranchMap[Child]], VolumeSize);
+      }
     }
   }
 
   //clear working buffers
-  translateBuffer(sourceWorkingBuffer,sourceFlowBuffer,1.0/this->CC,SourceWeightedNumChildren, VolumeSize);
-  ForIterator->SetRootVertex(this->Structure->GetRoot());
-  ForIterator->Restart();
-  while(ForIterator->HasNext())
+  translateBuffer(SourceWorkingBuffer, SourceFlowBuffer, 1.0 / this->CC, SourceWeightedNumChildren, VolumeSize);
+  forIterator->SetRootVertex(this->Structure->GetRoot());
+  forIterator->Restart();
+  while (forIterator->HasNext())
   {
-    vtkIdType CurrNode = ForIterator->Next();
-    if(CurrNode == this->Structure->GetRoot() || this->Structure->IsLeaf(CurrNode))
+    vtkIdType currNode = forIterator->Next();
+    if (currNode == this->Structure->GetRoot() || this->Structure->IsLeaf(currNode))
     {
       continue;
     }
-    dagmf_storeSinkFlowInBuffer(branchWorkingBuffers[BranchMap[CurrNode]], branchSourceBuffers[BranchMap[CurrNode]],
-                                branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
-                                branchSinkBuffers[BranchMap[CurrNode]],this->BranchWeightedNumChildren[BranchMap[CurrNode]],
+    dagmf_storeSinkFlowInBuffer(BranchWorkingBuffers[BranchMap[currNode]], BranchSourceBuffers[BranchMap[currNode]],
+                                BranchDivBuffers[BranchMap[currNode]], BranchLabelBuffers[BranchMap[currNode]],
+                                BranchSinkBuffers[BranchMap[currNode]], this->BranchWeightedNumChildren[BranchMap[currNode]],
                                 CC, VolumeSize);
   }
 
   //update sink flows and labels working up
-  BackIterator->SetRootVertex(this->Structure->GetRoot());
-  BackIterator->Restart();
-  while(BackIterator->HasNext())
+  backIterator->SetRootVertex(this->Structure->GetRoot());
+  backIterator->Restart();
+  while (backIterator->HasNext())
   {
-    vtkIdType CurrNode = BackIterator->Next();
-    if(this->Structure->IsLeaf(CurrNode))
+    vtkIdType currNode = backIterator->Next();
+    if (this->Structure->IsLeaf(currNode))
     {
-
       //update state at this location (source, sink, labels)
-      updateLeafSinkFlow(leafSinkBuffers[LeafMap[CurrNode]], leafSourceBuffers[LeafMap[CurrNode]],
-                         leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
-                         CC, VolumeSize);
-      constrainBuffer(leafSinkBuffers[LeafMap[CurrNode]], leafDataTermBuffers[LeafMap[CurrNode]],
-                      VolumeSize);
+      updateLeafSinkFlow(LeafSinkBuffers[LeafMap[currNode]], LeafSourceBuffers[LeafMap[currNode]],
+                         LeafDivBuffers[LeafMap[currNode]], LeafLabelBuffers[LeafMap[currNode]], CC, VolumeSize);
+      constrainBuffer(LeafSinkBuffers[LeafMap[currNode]], LeafDataTermBuffers[LeafMap[currNode]], VolumeSize);
 
       //push up sink capacities
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfParents(currNode); i++)
       {
-        vtkIdType Parent = this->Structure->GetParent(CurrNode,i);
-        float W = Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0f;
-        if(Parent == this->Structure->GetRoot() )
-          dagmf_storeSourceFlowInBuffer(sourceWorkingBuffer, leafSinkBuffers[LeafMap[CurrNode]],
-                                        leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
-                                        leafSourceBuffers[LeafMap[CurrNode]],sourceFlowBuffer,
-                                        CC, W/LeafNumParents[LeafMap[CurrNode]], VolumeSize);
+        vtkIdType Parent = this->Structure->GetParent(currNode, i);
+        float W = weights ? weights->GetValue(this->Structure->GetInEdge(currNode, i).Id) : 1.0f;
+        if (Parent == this->Structure->GetRoot())
+        {
+          dagmf_storeSourceFlowInBuffer(SourceWorkingBuffer, LeafSinkBuffers[LeafMap[currNode]],
+                                        LeafDivBuffers[LeafMap[currNode]], LeafLabelBuffers[LeafMap[currNode]],
+                                        LeafSourceBuffers[LeafMap[currNode]], SourceFlowBuffer,
+                                        CC, W / LeafNumParents[LeafMap[currNode]], VolumeSize);
+        }
         else
-          dagmf_storeSourceFlowInBuffer(branchWorkingBuffers[BranchMap[Parent]], leafSinkBuffers[LeafMap[CurrNode]],
-                                        leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
-                                        leafSourceBuffers[LeafMap[CurrNode]],branchSinkBuffers[BranchMap[Parent]],
-                                        CC, W/LeafNumParents[LeafMap[CurrNode]], VolumeSize);
+        {
+          dagmf_storeSourceFlowInBuffer(BranchWorkingBuffers[BranchMap[Parent]], LeafSinkBuffers[LeafMap[currNode]],
+                                        LeafDivBuffers[LeafMap[currNode]], LeafLabelBuffers[LeafMap[currNode]],
+                                        LeafSourceBuffers[LeafMap[currNode]], BranchSinkBuffers[BranchMap[Parent]],
+                                        CC, W / LeafNumParents[LeafMap[currNode]], VolumeSize);
+        }
       }
 
-      updateLabel(leafSinkBuffers[LeafMap[CurrNode]], leafSourceBuffers[LeafMap[CurrNode]],
-                  leafDivBuffers[LeafMap[CurrNode]], leafLabelBuffers[LeafMap[CurrNode]],
-                  CC, VolumeSize);
+      updateLabel(LeafSinkBuffers[LeafMap[currNode]], LeafSourceBuffers[LeafMap[currNode]],
+                  LeafDivBuffers[LeafMap[currNode]], LeafLabelBuffers[LeafMap[currNode]], CC, VolumeSize);
 
     }
-    else if(CurrNode != this->Structure->GetRoot())
+    else if (currNode != this->Structure->GetRoot())
     {
-
       //update state at this location (source, sink, labels)
-      divAndStoreBuffer(branchSinkBuffers[BranchMap[CurrNode]],branchWorkingBuffers[BranchMap[CurrNode]],
-                        this->BranchWeightedNumChildren[BranchMap[CurrNode]]+1.0f,VolumeSize);
+      divAndStoreBuffer(BranchSinkBuffers[BranchMap[currNode]], BranchWorkingBuffers[BranchMap[currNode]],
+                        this->BranchWeightedNumChildren[BranchMap[currNode]] + 1.0f, VolumeSize);
 
       //push up sink capacities
-      for(vtkIdType i = 0; i < this->Structure->GetNumberOfParents(CurrNode); i++)
+      for (vtkIdType i = 0; i < this->Structure->GetNumberOfParents(currNode); i++)
       {
-        vtkIdType Parent = this->Structure->GetParent(CurrNode,i);
-        float W = Weights ? Weights->GetValue(this->Structure->GetInEdge(CurrNode,i).Id) : 1.0f;
-        if(Parent == this->Structure->GetRoot() )
-          dagmf_storeSourceFlowInBuffer(sourceWorkingBuffer, branchSinkBuffers[BranchMap[CurrNode]],
-                                        branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
-                                        branchSourceBuffers[BranchMap[CurrNode]],sourceFlowBuffer,
-                                        CC, W/BranchNumParents[BranchMap[CurrNode]], VolumeSize);
+        vtkIdType parent = this->Structure->GetParent(currNode, i);
+        float W = weights ? weights->GetValue(this->Structure->GetInEdge(currNode, i).Id) : 1.0f;
+        if (parent == this->Structure->GetRoot())
+        {
+          dagmf_storeSourceFlowInBuffer(SourceWorkingBuffer, BranchSinkBuffers[BranchMap[currNode]],
+                                        BranchDivBuffers[BranchMap[currNode]], BranchLabelBuffers[BranchMap[currNode]],
+                                        BranchSourceBuffers[BranchMap[currNode]], SourceFlowBuffer,
+                                        CC, W / BranchNumParents[BranchMap[currNode]], VolumeSize);
+        }
         else
-          dagmf_storeSourceFlowInBuffer(branchWorkingBuffers[BranchMap[Parent]], branchSinkBuffers[BranchMap[CurrNode]],
-                                        branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
-                                        branchSourceBuffers[BranchMap[CurrNode]],branchSinkBuffers[BranchMap[Parent]],
-                                        CC, W/BranchNumParents[BranchMap[CurrNode]], VolumeSize);
+        {
+          dagmf_storeSourceFlowInBuffer(BranchWorkingBuffers[BranchMap[parent]], BranchSinkBuffers[BranchMap[currNode]],
+                                        BranchDivBuffers[BranchMap[currNode]], BranchLabelBuffers[BranchMap[currNode]],
+                                        BranchSourceBuffers[BranchMap[currNode]], BranchSinkBuffers[BranchMap[parent]],
+                                        CC, W / BranchNumParents[BranchMap[currNode]], VolumeSize);
+        }
       }
 
-      updateLabel(branchSinkBuffers[BranchMap[CurrNode]], branchSourceBuffers[BranchMap[CurrNode]],
-                  branchDivBuffers[BranchMap[CurrNode]], branchLabelBuffers[BranchMap[CurrNode]],
-                  CC, VolumeSize);
+      updateLabel(BranchSinkBuffers[BranchMap[currNode]], BranchSourceBuffers[BranchMap[currNode]],
+                  BranchDivBuffers[BranchMap[currNode]], BranchLabelBuffers[BranchMap[currNode]], CC, VolumeSize);
 
     }
     else
     {
-      divAndStoreBuffer(sourceFlowBuffer,sourceWorkingBuffer, this->SourceWeightedNumChildren,VolumeSize);
+      divAndStoreBuffer(SourceFlowBuffer, SourceWorkingBuffer, this->SourceWeightedNumChildren, VolumeSize);
     }
 
   }
 
-  ForIterator->Delete();
-  BackIterator->Delete();
+  forIterator->Delete();
+  backIterator->Delete();
 }

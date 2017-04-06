@@ -133,7 +133,7 @@ class TFUICommonExport vtkImageHackedPlaneWidget : public vtkPolyDataSourceWidge
 public:
   // Description:
   // Instantiate the object.
-  static vtkImageHackedPlaneWidget *New();
+  static vtkImageHackedPlaneWidget* New();
   vtkTypeMacro(vtkImageHackedPlaneWidget, vtkPolyDataSourceWidget);
   void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -148,7 +148,7 @@ public:
   void PlaceWidget(double xmin, double xmax, double ymin, double ymax,
                    double zmin, double zmax)
   {
-    this->Superclass::PlaceWidget(xmin,xmax,ymin,ymax,zmin,zmax);
+    this->Superclass::PlaceWidget(xmin, xmax, ymin, ymax, zmin, zmax);
   }
 
   // Description:
@@ -213,7 +213,7 @@ public:
   // Description:
   // Set the interpolation to use when texturing the plane.
   void SetResliceInterpolate(int);
-  vtkGetMacro(ResliceInterpolate,int);
+  vtkGetMacro(ResliceInterpolate, int);
   void SetResliceInterpolateToNearestNeighbour()
   {
     this->SetResliceInterpolate(VTK_NEAREST_RESLICE);
@@ -238,33 +238,33 @@ public:
   // Description:
   // Make sure that the plane remains within the volume.
   // Default is On.
-  vtkSetMacro(RestrictPlaneToVolume,int);
-  vtkGetMacro(RestrictPlaneToVolume,int);
-  vtkBooleanMacro(RestrictPlaneToVolume,int);
+  vtkSetMacro(RestrictPlaneToVolume, int);
+  vtkGetMacro(RestrictPlaneToVolume, int);
+  vtkBooleanMacro(RestrictPlaneToVolume, int);
 
   // Description:
   // Let the user control the lookup table. NOTE: apply this method BEFORE
   // applying the SetLookupTable method.
   // Default is Off.
-  vtkSetMacro(UserControlledLookupTable,int);
-  vtkGetMacro(UserControlledLookupTable,int);
-  vtkBooleanMacro(UserControlledLookupTable,int);
+  vtkSetMacro(UserControlledLookupTable, int);
+  vtkGetMacro(UserControlledLookupTable, int);
+  vtkBooleanMacro(UserControlledLookupTable, int);
 
   // Description:
   // Specify whether to interpolate the texture or not. When off, the
   // reslice interpolation is nearest neighbour regardless of how the
   // interpolation is set through the API. Set before setting the
   // vtkImageData input. Default is On.
-  vtkSetMacro(TextureInterpolate,int);
-  vtkGetMacro(TextureInterpolate,int);
-  vtkBooleanMacro(TextureInterpolate,int);
+  vtkSetMacro(TextureInterpolate, int);
+  vtkGetMacro(TextureInterpolate, int);
+  vtkBooleanMacro(TextureInterpolate, int);
 
   // Description:
   // Control the visibility of the actual texture mapped reformatted plane.
   // in some cases you may only want the plane outline for example.
   virtual void SetTextureVisibility(int);
-  vtkGetMacro(TextureVisibility,int);
-  vtkBooleanMacro(TextureVisibility,int);
+  vtkGetMacro(TextureVisibility, int);
+  vtkBooleanMacro(TextureVisibility, int);
 
   // Description:
   // Grab the polydata (including points) that defines the plane.  The
@@ -273,7 +273,7 @@ public:
   // are guaranteed to be up-to-date when either the InteractionEvent or
   // EndInteraction events are invoked. The user provides the vtkPolyData and
   // the points and polygons are added to it.
-  void GetPolyData(vtkPolyData *pd);
+  void GetPolyData(vtkPolyData* pd);
 
   // Description:
   // Satisfies superclass API.  This returns a pointer to the underlying
@@ -290,7 +290,7 @@ public:
   // Description:
   // Convenience method to get the texture used by this widget.  This can be
   // used in external slice viewers.
-  vtkTexture *GetTexture();
+  vtkTexture* GetTexture();
 
   // Description:
   // Convenience method to get the vtkImageMapToColors filter used by this
@@ -298,21 +298,21 @@ public:
   // scene by calling the filter's SetOutputFormatToRGB and
   // PassAlphaToOutputOff.
   vtkGetObjectMacro(ColorMap, vtkImageMapToColors);
-  virtual void SetColorMap(vtkImageMapToColors *);
+  virtual void SetColorMap(vtkImageMapToColors*);
 
   // Description:
   // Set/Get the plane's outline properties. The properties of the plane's
   // outline when selected and unselected can be manipulated.
   virtual void SetPlaneProperty(vtkProperty*);
-  vtkGetObjectMacro(PlaneProperty,vtkProperty);
+  vtkGetObjectMacro(PlaneProperty, vtkProperty);
   virtual void SetSelectedPlaneProperty(vtkProperty*);
-  vtkGetObjectMacro(SelectedPlaneProperty,vtkProperty);
+  vtkGetObjectMacro(SelectedPlaneProperty, vtkProperty);
 
   // Description:
   // Convenience method sets the plane orientation normal to the
   // x, y, or z axes.  Default is XAxes (0).
   void SetPlaneOrientation(int);
-  vtkGetMacro(PlaneOrientation,int);
+  vtkGetMacro(PlaneOrientation, int);
   void SetPlaneOrientationToXAxes()
   {
     this->SetPlaneOrientation(0);
@@ -340,31 +340,31 @@ public:
   // window-levelling is performed uniformly among planes.  The default
   // internal lut can be re- set/allocated by setting to 0 (NULL).
   virtual void SetLookupTable(vtkLookupTable*);
-  vtkGetObjectMacro(LookupTable,vtkLookupTable);
+  vtkGetObjectMacro(LookupTable, vtkLookupTable);
 
   // Description:
   // Enable/disable text display of window-level, image coordinates and
   // scalar values in a render window.
-  vtkSetMacro(DisplayText,int);
-  vtkGetMacro(DisplayText,int);
-  vtkBooleanMacro(DisplayText,int);
+  vtkSetMacro(DisplayText, int);
+  vtkGetMacro(DisplayText, int);
+  vtkBooleanMacro(DisplayText, int);
 
   // Description:
   // Set the properties of the cross-hair cursor.
   virtual void SetCursorProperty(vtkProperty*);
-  vtkGetObjectMacro(CursorProperty,vtkProperty);
+  vtkGetObjectMacro(CursorProperty, vtkProperty);
 
   // Description:
   // Set the properties of the margins.
   virtual void SetMarginProperty(vtkProperty*);
-  vtkGetObjectMacro(MarginProperty,vtkProperty);
+  vtkGetObjectMacro(MarginProperty, vtkProperty);
 
   // Description:
   // Set the size of the margins based on a percentage of the
   // plane's width and height, limited between 0 and 50%.
-  vtkSetClampMacro(MarginSizeX,double, 0.0, 0.5);
+  vtkSetClampMacro(MarginSizeX, double, 0.0, 0.5);
   vtkGetMacro(MarginSizeX, double);
-  vtkSetClampMacro(MarginSizeY,double, 0.0, 0.5);
+  vtkSetClampMacro(MarginSizeY, double, 0.0, 0.5);
   vtkGetMacro(MarginSizeY, double);
 
   // Description:
@@ -375,7 +375,7 @@ public:
   // Description:
   // Set/Get the property for the resliced image.
   virtual void SetTexturePlaneProperty(vtkProperty*);
-  vtkGetObjectMacro(TexturePlaneProperty,vtkProperty);
+  vtkGetObjectMacro(TexturePlaneProperty, vtkProperty);
 
   // Description:
   // Set/Get the current window and level values.  SetWindowLevel should
@@ -407,13 +407,13 @@ public:
   // Description:
   // Get the current cursor position.  To be used in conjunction with
   // GetCursorDataStatus.
-  vtkGetVectorMacro(CurrentCursorPosition,double,3);
+  vtkGetVectorMacro(CurrentCursorPosition, double, 3);
 
   // Description:
   // Get the current image value at the current cursor position.  To
   // be used in conjunction with GetCursorDataStatus.  The value is
   // VTK_DOUBLE_MAX when the data is invalid.
-  vtkGetMacro(CurrentImageValue,double);
+  vtkGetMacro(CurrentImageValue, double);
 
   // Description:
   // Choose between voxel centered or continuous cursor probing.  With voxel
@@ -421,15 +421,15 @@ public:
   // cursor coordinates are extent based.  With continuous probing, voxel data
   // is interpolated using vtkDataSetAttributes' InterpolatePoint method and
   // the reported coordinates are 3D spatial continuous.
-  vtkSetMacro(UseContinuousCursor,int);
-  vtkGetMacro(UseContinuousCursor,int);
-  vtkBooleanMacro(UseContinuousCursor,int);
+  vtkSetMacro(UseContinuousCursor, int);
+  vtkGetMacro(UseContinuousCursor, int);
+  vtkBooleanMacro(UseContinuousCursor, int);
 
   // Description:
   // Enable/disable mouse interaction so the widget remains on display.
   void SetInteraction(int interact);
-  vtkGetMacro(Interaction,int);
-  vtkBooleanMacro(Interaction,int);
+  vtkGetMacro(Interaction, int);
+  vtkBooleanMacro(Interaction, int);
 
   // Description:
   // Set action associated to buttons.
@@ -441,11 +441,11 @@ public:
     VTK_WINDOW_LEVEL_ACTION = 2
   };
   //ETX
-  vtkSetClampMacro(LeftButtonAction,int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
+  vtkSetClampMacro(LeftButtonAction, int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
   vtkGetMacro(LeftButtonAction, int);
-  vtkSetClampMacro(MiddleButtonAction,int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
+  vtkSetClampMacro(MiddleButtonAction, int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
   vtkGetMacro(MiddleButtonAction, int);
-  vtkSetClampMacro(RightButtonAction,int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
+  vtkSetClampMacro(RightButtonAction, int, VTK_CURSOR_ACTION, VTK_WINDOW_LEVEL_ACTION);
   vtkGetMacro(RightButtonAction, int);
 
   // Description:
@@ -463,11 +463,11 @@ public:
     VTK_CONTROL_MODIFIER    = 2
   };
   //ETX
-  vtkSetClampMacro(LeftButtonAutoModifier,int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
+  vtkSetClampMacro(LeftButtonAutoModifier, int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
   vtkGetMacro(LeftButtonAutoModifier, int);
-  vtkSetClampMacro(MiddleButtonAutoModifier,int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
+  vtkSetClampMacro(MiddleButtonAutoModifier, int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
   vtkGetMacro(MiddleButtonAutoModifier, int);
-  vtkSetClampMacro(RightButtonAutoModifier,int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
+  vtkSetClampMacro(RightButtonAutoModifier, int, VTK_NO_MODIFIER, VTK_CONTROL_MODIFIER);
   vtkGetMacro(RightButtonAutoModifier, int);
 
 protected:
@@ -499,7 +499,7 @@ protected:
   int State;
   enum WidgetState
   {
-    Start=0,
+    Start = 0,
     Cursoring,
     WindowLevelling,
     Pushing,
@@ -556,10 +556,10 @@ protected:
   int    UserControlledLookupTable;
   int    DisplayText;
 
-  // The geometric represenation of the plane and it's outline
-  vtkPlaneSource    *PlaneSource;
-  vtkPolyData       *PlaneOutlinePolyData;
-  vtkActor          *PlaneOutlineActor;
+  // The geometric representation of the plane and it's outline
+  vtkPlaneSource*    PlaneSource;
+  vtkPolyData*       PlaneOutlinePolyData;
+  vtkActor*          PlaneOutlineActor;
   void               HighlightPlane(int highlight);
   void               GeneratePlaneOutline();
 
@@ -567,40 +567,40 @@ protected:
   void BuildRepresentation();
 
   // Do the picking
-  vtkAbstractPropPicker *PlanePicker;
+  vtkAbstractPropPicker* PlanePicker;
 
   // for negative window values.
   void InvertTable();
 
   // Methods to manipulate the plane
   void WindowLevel(int X, int Y);
-  void Push(double *p1, double *p2);
-  void Spin(double *p1, double *p2);
-  void Rotate(double *p1, double *p2, double *vpn);
-  void Scale(double *p1, double *p2, int X, int Y);
-  void Translate(double *p1, double *p2);
+  void Push(double* p1, double* p2);
+  void Spin(double* p1, double* p2);
+  void Rotate(double* p1, double* p2, double* vpn);
+  void Scale(double* p1, double* p2, int X, int Y);
+  void Translate(double* p1, double* p2);
 
-  vtkImageData         *ImageData;
-  vtkImageReslice      *ResliceR;
-  vtkImageReslice      *ResliceG;
-  vtkImageReslice      *ResliceB;
-  vtkMatrix4x4         *ResliceAxes;
-  vtkTransform         *Transform;
-  vtkActor             *TexturePlaneActor;
-  vtkImageMapToColors  *ColorMap;
-  vtkTexture           *Texture;
-  vtkLookupTable       *LookupTable;
-  vtkLookupTable       *CreateDefaultLookupTable();
+  vtkImageData*         ImageData;
+  vtkImageReslice*      ResliceR;
+  vtkImageReslice*      ResliceG;
+  vtkImageReslice*      ResliceB;
+  vtkMatrix4x4*         ResliceAxes;
+  vtkTransform*         Transform;
+  vtkActor*             TexturePlaneActor;
+  vtkImageMapToColors*  ColorMap;
+  vtkTexture*           Texture;
+  vtkLookupTable*       LookupTable;
+  vtkLookupTable*       CreateDefaultLookupTable();
 
   // Properties used to control the appearance of selected objects and
   // the manipulator in general.  The plane property is actually that for
   // the outline.  The TexturePlaneProperty can be used to control the
   // lighting etc. of the resliced image data.
-  vtkProperty   *PlaneProperty;
-  vtkProperty   *SelectedPlaneProperty;
-  vtkProperty   *CursorProperty;
-  vtkProperty   *MarginProperty;
-  vtkProperty   *TexturePlaneProperty;
+  vtkProperty*   PlaneProperty;
+  vtkProperty*   SelectedPlaneProperty;
+  vtkProperty*   CursorProperty;
+  vtkProperty*   MarginProperty;
+  vtkProperty*   TexturePlaneProperty;
   void           CreateDefaultProperties();
 
   // Reslice and texture management
@@ -608,20 +608,20 @@ protected:
   void GenerateTexturePlane();
 
   // The cross-hair cursor
-  vtkPolyData       *CursorPolyData;
-  vtkActor          *CursorActor;
+  vtkPolyData*       CursorPolyData;
+  vtkActor*          CursorActor;
   double             CurrentCursorPosition[3];
   double             CurrentImageValue; // Set to VTK_DOUBLE_MAX when invalid
   void               GenerateCursor();
-  void               UpdateCursor(int,int);
+  void               UpdateCursor(int, int);
   void               ActivateCursor(int);
-  int                UpdateContinuousCursor(double *q);
-  int                UpdateDiscreteCursor(double *q);
+  int                UpdateContinuousCursor(double* q);
+  int                UpdateDiscreteCursor(double* q);
   int                UseContinuousCursor;
 
   // The text to display W/L, image data
-  vtkTextActor *TextActor;
-  char          TextBuff[128];
+  vtkTextActor* TextActor;
+  std::string   TextBuff;
   void          GenerateText();
   void          ManageTextDisplay();
   void          ActivateText(int);
@@ -632,8 +632,8 @@ protected:
   void  AdjustState();
 
   // Visible margins to assist user interaction
-  vtkPolyData       *MarginPolyData;
-  vtkActor          *MarginActor;
+  vtkPolyData*       MarginPolyData;
+  vtkActor*          MarginActor;
   int                MarginSelectMode;
   void               GenerateMargins();
   void               UpdateMargins();

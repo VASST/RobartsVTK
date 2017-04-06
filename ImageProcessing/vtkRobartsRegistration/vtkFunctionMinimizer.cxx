@@ -1,218 +1,255 @@
+/*=========================================================================
+
+Robarts Visualization Toolkit
+
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+=========================================================================*/
+
 #include "vtkFunctionMinimizer.h"
 #include "vtkObjectFactory.h"
 
-static double amotry(double **p, double *y, double *ptry, double *psum,
-                     int ndim, void (*funk)(void *data), void *data,
-                     double *result, int ihi, double fac)
-{
-  int j;
-  double fac1,fac2,ytry;
+// PlusLib includes
+#include "PlusCommon.h"
 
-  fac1 = (1.0-fac)/(double)ndim;
-  fac2 = fac1-fac;
-  for (j = 0; j < ndim; j++)
+namespace
+{
+  //----------------------------------------------------------------------------
+  static double amotry(std::vector<std::vector<double>>& p,
+                       std::vector<double>& y,
+                       std::vector<double>& ptry,
+                       std::vector<double>& psum,
+                       int ndim,
+                       void(*funk)(void* data),
+                       void* data,
+                       double* result,
+                       int ihi,
+                       double fac)
   {
-    ptry[j] = psum[j]*fac1 - p[ihi][j]*fac2;
-  }
-  (*funk)(data);
-  ytry = *result;
-  if (ytry < y[ihi])
-  {
-    y[ihi] = ytry;
+    int j;
+    double fac1, fac2, ytry;
+
+    fac1 = (1.0 - fac) / (double)ndim;
+    fac2 = fac1 - fac;
     for (j = 0; j < ndim; j++)
     {
-      psum[j] += ptry[j]-p[ihi][j];
-      p[ihi][j] = ptry[j];
+      ptry[j] = psum[j] * fac1 - p[ihi][j] * fac2;
     }
-  }
-  return ytry;
-}
-
-static int amoeba(double **p, double *y, double *ptry, int ndim, double ftol,
-                  void (*funk)(void *data), void *data, double *result,
-                  int *nfunk, int maxnfunk)
-{
-  int i,ihi,ilo,inhi,j,mpts;
-  double rtol,sum,swap,ysave,ytry;
-  double *psum = new double[ndim];
-
-  mpts = ndim+1;
-  *nfunk = 0;
-
-  for (j = 0; j < ndim; j++)
-  {
-    sum = 0.0;
-    for (i = 0; i < mpts; i++)
+    (*funk)(data);
+    ytry = *result;
+    if (ytry < y[ihi])
     {
-      sum += p[i][j];
+      y[ihi] = ytry;
+      for (j = 0; j < ndim; j++)
+      {
+        psum[j] += ptry[j] - p[ihi][j];
+        p[ihi][j] = ptry[j];
+      }
     }
-    psum[j] = sum;
+    return ytry;
   }
 
-  for (;;)
+  //----------------------------------------------------------------------------
+  static int amoeba(std::vector<std::vector<double>>& p,
+                    std::vector<double>& y,
+                    std::vector<double>& ptry,
+                    int ndim,
+                    double ftol,
+                    void(*funk)(void* data),
+                    void* data,
+                    double* result,
+                    int* nfunk,
+                    int maxnfunk)
   {
-    ilo = 0;
-    if (y[0] > y[1])
+    int i, ihi, ilo, inhi, j, mpts;
+    double rtol, sum, swap, ysave, ytry;
+    std::vector<double> psum(ndim);
+
+    mpts = ndim + 1;
+    *nfunk = 0;
+
+    for (j = 0; j < ndim; j++)
     {
-      ihi = 0;
-      inhi = 1;
-    }
-    else
-    {
-      ihi = 1;
-      inhi = 0;
-    }
-    for (i = 0; i < mpts; i++)
-    {
-      if (y[i] <= y[ilo])
+      sum = 0.0;
+      for (i = 0; i < mpts; i++)
       {
-        ilo = i;
+        sum += p[i][j];
       }
-      if (y[i] > y[ihi])
-      {
-        inhi = ihi;
-        ihi = i;
-      }
-      else if (y[i] > y[inhi] && i != ihi)
-      {
-        inhi = i;
-      }
+      psum[j] = sum;
     }
 
-    if (fabs(y[ihi])+fabs(y[ilo]) < ftol)
+    for (;;)
     {
-      rtol = double(2.0*fabs(y[ihi]-y[ilo]));
-    }
-    else
-    {
-      rtol = double(2.0*fabs(y[ihi]-y[ilo])/(fabs(y[ihi])+fabs(y[ilo])));
-    }
-
-    if (rtol < ftol)
-    {
-      swap = y[1];
-      y[1] = y[ilo];
-      y[ilo] = swap;
-      for (i = 0; i < ndim; i++)
+      ilo = 0;
+      if (y[0] > y[1])
       {
-        swap = p[0][i];
-        p[0][i] = p[ilo][i];
-        p[ilo][i] = swap;
+        ihi = 0;
+        inhi = 1;
       }
-      break;
-    }
-    if (*nfunk >= maxnfunk)
-    {
-      delete [] psum;
-      return -1;      /* break if greater than max number of func evals */
-    }
-
-    *nfunk += 2;
-    ytry = amotry(p,y,ptry,psum,ndim,funk,data,result,ihi,double(-1.0));
-    if (ytry <= y[ilo])
-    {
-      ytry = amotry(p,y,ptry,psum,ndim,funk,data,result,ihi,double(2.0));
-    }
-    else if (ytry >= y[inhi])
-    {
-      ysave = y[ihi];
-      ytry = amotry(p,y,ptry,psum,ndim,funk,data,result,ihi,double(0.5));
-      if (ytry >= ysave)
+      else
       {
-        for (i = 0; i < mpts; i++)
+        ihi = 1;
+        inhi = 0;
+      }
+      for (i = 0; i < mpts; i++)
+      {
+        if (y[i] <= y[ilo])
         {
-          if (i != ilo)
-          {
-            for (j = 0; j < ndim; j++)
-            {
-              p[i][j] = ptry[j] = psum[j] = (p[i][j] + p[ilo][j])/double(2.0);
-            }
-            (*funk)(data);
-            y[i] = *result;
-          }
+          ilo = i;
         }
-        *nfunk += ndim;
-
-        for (j = 0; j < ndim; j++)
+        if (y[i] > y[ihi])
         {
-          sum = 0;
+          inhi = ihi;
+          ihi = i;
+        }
+        else if (y[i] > y[inhi] && i != ihi)
+        {
+          inhi = i;
+        }
+      }
+
+      if (fabs(y[ihi]) + fabs(y[ilo]) < ftol)
+      {
+        rtol = double(2.0 * fabs(y[ihi] - y[ilo]));
+      }
+      else
+      {
+        rtol = double(2.0 * fabs(y[ihi] - y[ilo]) / (fabs(y[ihi]) + fabs(y[ilo])));
+      }
+
+      if (rtol < ftol)
+      {
+        swap = y[1];
+        y[1] = y[ilo];
+        y[ilo] = swap;
+        for (i = 0; i < ndim; i++)
+        {
+          swap = p[0][i];
+          p[0][i] = p[ilo][i];
+          p[ilo][i] = swap;
+        }
+        break;
+      }
+      if (*nfunk >= maxnfunk)
+      {
+        return -1;      /* break if greater than max number of func evals */
+      }
+
+      *nfunk += 2;
+      ytry = amotry(p, y, ptry, psum, ndim, funk, data, result, ihi, double(-1.0));
+      if (ytry <= y[ilo])
+      {
+        ytry = amotry(p, y, ptry, psum, ndim, funk, data, result, ihi, double(2.0));
+      }
+      else if (ytry >= y[inhi])
+      {
+        ysave = y[ihi];
+        ytry = amotry(p, y, ptry, psum, ndim, funk, data, result, ihi, double(0.5));
+        if (ytry >= ysave)
+        {
           for (i = 0; i < mpts; i++)
           {
-            sum += p[i][j];
+            if (i != ilo)
+            {
+              for (j = 0; j < ndim; j++)
+              {
+                p[i][j] = ptry[j] = psum[j] = (p[i][j] + p[ilo][j]) / double(2.0);
+              }
+              (*funk)(data);
+              y[i] = *result;
+            }
           }
-          psum[j] = sum;
+          *nfunk += ndim;
+
+          for (j = 0; j < ndim; j++)
+          {
+            sum = 0;
+            for (i = 0; i < mpts; i++)
+            {
+              sum += p[i][j];
+            }
+            psum[j] = sum;
+          }
         }
       }
+      else
+      {
+        --(*nfunk);
+      }
     }
-    else
-    {
-      --(*nfunk);
-    }
+
+    return 0;
   }
 
-  delete [] psum;
+  //----------------------------------------------------------------------------
+  static double minimize(std::vector<double>& parameters,
+                         std::vector<std::vector<double>> vertices,
+                         int ndim,
+                         void(*function)(void* data),
+                         void* data,
+                         double* result,
+                         double tolerance,
+                         int maxiterations,
+                         int* iterations)
+  {
+    std::vector<double> y(ndim + 1);
 
-  return 0;
+    for (int k = 0; k < ndim + 1; k++)
+    {
+      for (int l = 0; l < ndim; l++)
+      {
+        parameters[l] = vertices[k][l];
+      }
+
+      (*function)(data);
+      y[k] = *result;
+    }
+
+    amoeba(vertices, y, parameters, ndim, tolerance, function, data, result, iterations, maxiterations);
+    *result = y[1]; // copy the lowest result in the *result
+
+    //set x equal to lowest of amoeba vertices
+    for (int j = 0; j < ndim; j++)
+    {
+      parameters[j] = vertices[0][j];
+    }
+
+    return *result;
+  }
 }
 
-static double minimize(double *parameters, double **vertices, int ndim,
-                       void (*funk)(void *data), void *data, double *result,
-                       double tolerance, int maxiterations, int *iterations)
+//----------------------------------------------------------------------------
+
+vtkStandardNewMacro(vtkFunctionMinimizer);
+
+//----------------------------------------------------------------------------
+void vtkFunctionMinimizerFunction(void* data)
 {
-  double *y = new double[ndim+1];
-
-  for (int k = 0; k < ndim+1; k++)
-  {
-    for (int l = 0; l < ndim; l++)
-    {
-      parameters[l] = vertices[k][l];
-    }
-
-    (*funk)(data);
-    y[k] = *result;
-  }
-
-  amoeba(vertices,y,parameters,ndim,tolerance,funk,data,result,
-         iterations,maxiterations);
-  *result = y[1]; // copy the lowest result in the *result
-  delete [] y;
-
-  //set x equal to lowest of amoeba vertices
-  for (int j = 0; j < ndim; j++)
-  {
-    parameters[j] = vertices[0][j];
-  }
-
-  return *result;
-}
-
-void vtkFunctionMinimizerFunction(void *data)
-{
-  vtkFunctionMinimizer *self = (vtkFunctionMinimizer *)data;
-  /* old code for when a vtkFunctionParser was used
-  for (int i = 0; i < self->NumberOfParameters; i++)
-    {
-    self->Function->SetScalarVariableValue(self->ParameterIndices[i],
-    }
-  self->ScalarResult = self->Function->GetScalarResult();
-  */
+  vtkFunctionMinimizer* self = (vtkFunctionMinimizer*)data;
   if (self->Function)
   {
     self->Function(self->FunctionArg);
   }
 }
 
-vtkStandardNewMacro(vtkFunctionMinimizer);
-
 //----------------------------------------------------------------------------
 vtkFunctionMinimizer::vtkFunctionMinimizer()
   : Function(NULL)
   , FunctionArg(NULL)
   , FunctionArgDelete(NULL)
-  , NumberOfParameters(0)
-  , ParameterNames(NULL)
-  , Parameters(NULL)
-  , ParameterBrackets(NULL)
   , ScalarResult(0.0)
   , Tolerance(0.005)
   , MaxIterations(1000)
@@ -228,45 +265,6 @@ vtkFunctionMinimizer::~vtkFunctionMinimizer()
   {
     (*this->FunctionArgDelete)(this->FunctionArg);
   }
-  this->FunctionArg = NULL;
-  this->FunctionArgDelete = NULL;
-  this->Function = NULL;
-
-  if (this->ParameterNames)
-  {
-    for (int i = 0; i < this->NumberOfParameters; i++)
-    {
-      if (this->ParameterNames[i])
-      {
-        delete [] this->ParameterNames[i];
-      }
-    }
-    delete [] this->ParameterNames;
-    this->ParameterNames = NULL;
-  }
-  if (this->ParameterIndices)
-  {
-    delete [] this->ParameterIndices;
-    this->ParameterIndices = NULL;
-  }
-  if (this->Parameters)
-  {
-    delete [] this->Parameters;
-    this->Parameters = NULL;
-  }
-  if (this->ParameterBrackets)
-  {
-    delete [] this->ParameterBrackets;
-    this->ParameterBrackets = NULL;
-  }
-  if (this->Vertices)
-  {
-    delete [] *this->Vertices;
-    delete [] this->Vertices;
-    this->Vertices = NULL;
-  }
-
-  this->NumberOfParameters = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -280,11 +278,11 @@ void vtkFunctionMinimizer::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
-void vtkFunctionMinimizer::SetFunction(void (*f)(void *), void *arg)
+void vtkFunctionMinimizer::SetFunction(void (*f)(void*), void* arg)
 {
-  if ( f != this->Function || arg != this->FunctionArg )
+  if (f != this->Function || arg != this->FunctionArg)
   {
-    // delete the current arg if there is one and a delete meth
+    // delete the current arg if there is one and a delete method
     if ((this->FunctionArg) && (this->FunctionArgDelete))
     {
       (*this->FunctionArgDelete)(this->FunctionArg);
@@ -296,9 +294,9 @@ void vtkFunctionMinimizer::SetFunction(void (*f)(void *), void *arg)
 }
 
 //----------------------------------------------------------------------------
-void vtkFunctionMinimizer::SetFunctionArgDelete(void (*f)(void *))
+void vtkFunctionMinimizer::SetFunctionArgDelete(void (*f)(void*))
 {
-  if ( f != this->FunctionArgDelete)
+  if (f != this->FunctionArgDelete)
   {
     this->FunctionArgDelete = f;
     this->Modified();
@@ -306,34 +304,34 @@ void vtkFunctionMinimizer::SetFunctionArgDelete(void (*f)(void *))
 }
 
 //----------------------------------------------------------------------------
-double *vtkFunctionMinimizer::GetScalarVariableBracket(const char *name)
+std::pair<double, double> vtkFunctionMinimizer::GetScalarVariableBracket(const std::string& name)
 {
   static double errval[2] = { 0.0, 0.0 };
 
-  for (int i = 0; i < this->NumberOfParameters; i++)
+  for (int i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (strcmp(name,this->ParameterNames[i]) == 0)
+    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
     {
       return this->ParameterBrackets[i];
     }
   }
 
   vtkErrorMacro("GetScalarVariableBracket: no parameter named " << name);
-  return errval;
+  return std::pair<double, double>(-1.0, -1.0);
 }
 
 //----------------------------------------------------------------------------
-double *vtkFunctionMinimizer::GetScalarVarPtr()
+void vtkFunctionMinimizer::GetScalarVariableBracket(const std::string& name, std::pair<double, double>& range)
 {
-  return this->Parameters;
+  range = this->GetScalarVariableBracket(name);
 }
 
 //----------------------------------------------------------------------------
-double vtkFunctionMinimizer::GetScalarVariableValue(const char *name)
+double vtkFunctionMinimizer::GetScalarVariableValue(const std::string& name)
 {
-  for (int i = 0; i < this->NumberOfParameters; i++)
+  for (int i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (strcmp(name,this->ParameterNames[i]) == 0)
+    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
     {
       return this->Parameters[i];
     }
@@ -348,23 +346,24 @@ int vtkFunctionMinimizer::Initialize()
 {
   if (!this->Function)
   {
-    vtkErrorMacro("Initialize: Funtion is NULL");
+    vtkErrorMacro("Initialize: Function is NULL");
     return 0;
   }
 
-  for (int l = 0; l < this->NumberOfParameters; l++)
+  this->Vertices.resize(this->ParameterNames.size());
+  for (int l = 0; l < this->ParameterNames.size(); l++)
   {
+    this->Vertices[l] = std::vector<double>(this->ParameterNames.size());
     // initial parameter values are middle of bracket
-    this->Vertices[0][l] = 0.5*(this->ParameterBrackets[l][0] +
-                                this->ParameterBrackets[l][1]);
+    this->Vertices[0][l] = 0.5 * (this->ParameterBrackets[l].first + this->ParameterBrackets[l].second);
 
     // set up the simplex vertices
-    for (int m = 1; m <= this->NumberOfParameters; m++)
+    for (int m = 1; m <= this->ParameterNames.size(); m++)
     {
       this->Vertices[m][l] = this->Vertices[0][l];
-      if ((m-1)==l)
+      if ((m - 1) == l)
       {
-        this->Vertices[m][l]=this->ParameterBrackets[l][1];
+        this->Vertices[m][l] = this->ParameterBrackets[l].second;
       }
     }
   }
@@ -375,20 +374,16 @@ int vtkFunctionMinimizer::Initialize()
 }
 
 //----------------------------------------------------------------------------
-void vtkFunctionMinimizer::SetScalarVariableBracket(const char *name,
-    double bmin, double bmax)
+void vtkFunctionMinimizer::SetScalarVariableBracket(const std::string& name, double bmin, double bmax)
 {
-  int i;
-
-  for (i = 0; i < this->NumberOfParameters; i++)
+  for (auto i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (strcmp(name,this->ParameterNames[i]) == 0)
+    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
     {
-      if (this->ParameterBrackets[i][0] != bmin ||
-          this->ParameterBrackets[i][1] != bmax)
+      if (this->ParameterBrackets[i].first != bmin || this->ParameterBrackets[i].second != bmax)
       {
-        this->ParameterBrackets[i][0] = bmin;
-        this->ParameterBrackets[i][1] = bmax;
+        this->ParameterBrackets[i].first = bmin;
+        this->ParameterBrackets[i].second = bmax;
 
         this->Modified();
       }
@@ -396,60 +391,18 @@ void vtkFunctionMinimizer::SetScalarVariableBracket(const char *name,
     }
   }
 
-  int n = this->NumberOfParameters + 1;
-  char **newParameterNames = new char *[n];
-  int *newParameterIndices = new int[n];
-  double *newParameters = new double[n];
-  double (*newParameterBrackets)[2] = new double[n][2];
-  double **newVertices = new double *[n+1];
-  double *mem = new double[n*(n+1)];
-
-  for (i = 0; i < this->NumberOfParameters; i++)
-  {
-    newParameterNames[i] = this->ParameterNames[i];
-    newParameterBrackets[i][0] = this->ParameterBrackets[i][0];
-    newParameterBrackets[i][1] = this->ParameterBrackets[i][1];
-    newVertices[i] = &mem[n*i];
-  }
-
-  char *cp = new char[strlen(name)+8];
-  strcpy(cp,name);
-  newParameterNames[n-1] = cp;
-  newParameterBrackets[n-1][0] = bmin;
-  newParameterBrackets[n-1][1] = bmax;
-  newVertices[n-1] = &mem[n*(n-1)];
-  newVertices[n] = &mem[n*n];
-
-  if (this->ParameterNames)
-  {
-    delete [] this->ParameterNames;
-  }
-  if (this->ParameterIndices)
-  {
-    delete [] this->ParameterIndices;
-  }
-  if (this->Parameters)
-  {
-    delete [] this->Parameters;
-  }
-  if (this->ParameterBrackets)
-  {
-    delete [] this->ParameterBrackets;
-  }
-  if (this->Vertices)
-  {
-    delete [] *this->Vertices;
-    delete [] this->Vertices;
-  }
-
-  this->NumberOfParameters = n;
-  this->ParameterNames = newParameterNames;
-  this->ParameterIndices = newParameterIndices;
-  this->Parameters = newParameters;
-  this->ParameterBrackets = newParameterBrackets;
-  this->Vertices = newVertices;
+  this->ParameterNames.push_back(name);
+  this->ParameterBrackets.push_back(std::pair<double, double>(bmin, bmax));
+  this->Parameters.push_back(0.0);
+  this->Vertices.push_back(std::vector<double>(this->ParameterNames.size()));
 
   this->Modified();
+}
+
+//----------------------------------------------------------------------------
+void vtkFunctionMinimizer::SetScalarVariableBracket(const std::string& name, const std::pair<double, double>& range)
+{
+  this->SetScalarVariableBracket(name, range.first, range.second);
 }
 
 //----------------------------------------------------------------------------
@@ -459,8 +412,6 @@ void vtkFunctionMinimizer::Minimize()
   {
     return;
   }
-  minimize(this->Parameters, this->Vertices, this->NumberOfParameters,
-           &vtkFunctionMinimizerFunction, this, &this->ScalarResult,
-           this->Tolerance, this->MaxIterations, &this->Iterations);
+  minimize(this->Parameters, this->Vertices, this->ParameterNames.size(), &vtkFunctionMinimizerFunction, this, &this->ScalarResult, this->Tolerance, this->MaxIterations, &this->Iterations);
 }
 

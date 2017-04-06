@@ -27,11 +27,11 @@ class qHistogramHolderLabel : public QLabel
 public:
   qHistogramHolderLabel(qTransferFunctionDefinitionWidget* parent, vtkCuda2DTransferFunction* f);
   ~qHistogramHolderLabel();
-  void paintEvent( QPaintEvent * );
+  void paintEvent(QPaintEvent*);
   void setObject(vtkCudaFunctionPolygon* object);
   void setSize(unsigned int size);
 
-  void giveHistogramDimensions(float maxI1,float minI1, float maxI2, float minI2);
+  void giveHistogramDimensions(float maxI1, float minI1, float maxI2, float minI2);
 
   void mouseMoveEvent(QMouseEvent*);
   void mousePressEvent(QMouseEvent*);
@@ -40,7 +40,7 @@ public:
   void keyPressEvent(QKeyEvent* e);
   void keyReleaseEvent(QKeyEvent* e);
 
-  void setZoomSquare(float maxI1,float minI1, float maxI2, float minI2);
+  void setZoomSquare(float maxI1, float minI1, float maxI2, float minI2);
   void setAutoUpdate(bool au);
 
   void visualizeAllObjects(bool b);
@@ -80,7 +80,7 @@ private:
   bool scaling;
   bool vertexDragging;
   bool autoUpdate;
-  unsigned int vertexInUse;
+  size_t vertexInUse;
 };
 
 #endif

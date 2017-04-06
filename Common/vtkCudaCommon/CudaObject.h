@@ -41,14 +41,14 @@ typedef struct CUstream_st cudaStream;
 class vtkCudaCommonExport CudaObject
 {
 public:
-  void SetDevice(int d, int withData = 0);
+  void SetDevice(int d, bool withData = false);
   int GetDevice();
 
   void ReserveGPU();
   void CallSyncThreads();
   cudaStream_t* GetStream();
 
-  void ReplicateObject(CudaObject* object, int withData = 0);
+  void ReplicateObject(CudaObject* object, bool withData = false);
 
 protected:
   CudaObject(int d = 0);

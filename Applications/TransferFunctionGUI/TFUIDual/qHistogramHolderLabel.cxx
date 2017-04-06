@@ -65,7 +65,7 @@ void qHistogramHolderLabel::setAutoUpdate(bool au)
   autoUpdate = au;
 }
 
-void qHistogramHolderLabel::giveHistogramDimensions(float maxI1,float minI1, float maxI2, float minI2)
+void qHistogramHolderLabel::giveHistogramDimensions(float maxI1, float minI1, float maxI2, float minI2)
 {
   histogram = true;
   maxIntensity1 = maxI1;
@@ -74,7 +74,7 @@ void qHistogramHolderLabel::giveHistogramDimensions(float maxI1,float minI1, flo
   minIntensity2 = minI2;
 }
 
-void qHistogramHolderLabel::setZoomSquare(float maxI1,float minI1, float maxI2, float minI2)
+void qHistogramHolderLabel::setZoomSquare(float maxI1, float minI1, float maxI2, float minI2)
 {
   hasZoomSquare = true;
   zoomMaxIntensity1 = maxI1;
@@ -90,19 +90,19 @@ void qHistogramHolderLabel::setObject(vtkCudaFunctionPolygon* object)
 
 void qHistogramHolderLabel::setSize(unsigned int s)
 {
-  QWidget::setMaximumSize(s,s);
-  QWidget::setMinimumSize(s,s);
+  QWidget::setMaximumSize(s, s);
+  QWidget::setMinimumSize(s, s);
   size = s;
 }
 
 
 void qHistogramHolderLabel::keyPressEvent(QKeyEvent* e)
 {
-  if(e->key() == Qt::Key::Key_Shift)
+  if (e->key() == Qt::Key::Key_Shift)
   {
     shiftHeld = true;
   }
-  if(e->key() == Qt::Key::Key_Control)
+  if (e->key() == Qt::Key::Key_Control)
   {
     ctrlHeld = true;
   }
@@ -110,11 +110,11 @@ void qHistogramHolderLabel::keyPressEvent(QKeyEvent* e)
 
 void qHistogramHolderLabel::keyReleaseEvent(QKeyEvent* e)
 {
-  if(e->key() == Qt::Key::Key_Shift)
+  if (e->key() == Qt::Key::Key_Shift)
   {
     shiftHeld = false;
   }
-  if(e->key() == Qt::Key::Key_Control)
+  if (e->key() == Qt::Key::Key_Control)
   {
     ctrlHeld = false;
   }
@@ -123,35 +123,35 @@ void qHistogramHolderLabel::keyReleaseEvent(QKeyEvent* e)
 void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
 {
   //if we do not have a histogram or object, this has no meaning
-  if(!histogram || !object)
+  if (!histogram || !object)
   {
     return;
   }
 
   //grab mouse position and translate to a gradient and intensity amount
-  float intensity1 = (float) e->x() / size * (maxIntensity1-minIntensity1) + minIntensity1;
-  float intensity2 = (float) e->y() / size * (maxIntensity2-minIntensity2) + minIntensity2;
+  float intensity1 = (float) e->x() / size * (maxIntensity1 - minIntensity1) + minIntensity1;
+  float intensity2 = (float) e->y() / size * (maxIntensity2 - minIntensity2) + minIntensity2;
 
   //grab original click location
   origClickI1 = intensity1;
   origClickI2 = intensity2;
 
   //if the shift was held, we are translating the entire polygon
-  if(shiftHeld)
+  if (shiftHeld)
   {
     translating = true;
     return;
   }
 
   //if control is held, we are scaling the object
-  if(ctrlHeld)
+  if (ctrlHeld)
   {
     scaling = true;
 
     //calculate the centroid
     centroidI1 = 0.0f;
     centroidI2 = 0.0f;
-    for(int i = 0; i < object->GetNumVertices(); i++)
+    for (int i = 0; i < object->GetNumVertices(); i++)
     {
       centroidI1 += object->GetVertexIntensity(i);
       centroidI2 += object->GetVertexGradient(i);
@@ -168,17 +168,17 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
   }
 
   //if the right click was held, we are removing a vertex (if we have enough to do so)
-  if(e->buttons() == Qt::RightButton && object->GetNumVertices() > 3)
+  if (e->buttons() == Qt::RightButton && object->GetNumVertices() > 3)
   {
     //find the closest vertex
     vertexInUse = 0;
-    float minDist = (object->GetVertexIntensity(0) - intensity1)*(object->GetVertexIntensity(0) - intensity1) +
-                    (object->GetVertexGradient(0) - intensity2)*(object->GetVertexGradient(0) - intensity2);
-    for(int i = 1; i < object->GetNumVertices(); i++)
+    float minDist = (object->GetVertexIntensity(0) - intensity1) * (object->GetVertexIntensity(0) - intensity1) +
+                    (object->GetVertexGradient(0) - intensity2) * (object->GetVertexGradient(0) - intensity2);
+    for (int i = 1; i < object->GetNumVertices(); i++)
     {
-      float vertDist = (object->GetVertexIntensity(i) - intensity1)*(object->GetVertexIntensity(i) - intensity1) +
-                       (object->GetVertexGradient(i) - intensity2)*(object->GetVertexGradient(i) - intensity2);
-      if(vertDist < minDist)
+      float vertDist = (object->GetVertexIntensity(i) - intensity1) * (object->GetVertexIntensity(i) - intensity1) +
+                       (object->GetVertexGradient(i) - intensity2) * (object->GetVertexGradient(i) - intensity2);
+      if (vertDist < minDist)
       {
         minDist = vertDist;
         vertexInUse = i;
@@ -186,10 +186,10 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     }
 
     //if the vertex is less than the radius distance away, choose it
-    unsigned int intensity1Location = size * (object->GetVertexIntensity(vertexInUse) - minIntensity1) / (maxIntensity1-minIntensity1);
-    unsigned int intensity2Location = size * (object->GetVertexGradient(vertexInUse) - minIntensity2) / (maxIntensity2-minIntensity2);
-    float pictDistance = (e->x() - intensity1Location)*(e->x() - intensity1Location) + (e->y() - intensity2Location) * (e->y() - intensity2Location);
-    if( pictDistance < closenessRadius )
+    unsigned int intensity1Location = size * (object->GetVertexIntensity(vertexInUse) - minIntensity1) / (maxIntensity1 - minIntensity1);
+    unsigned int intensity2Location = size * (object->GetVertexGradient(vertexInUse) - minIntensity2) / (maxIntensity2 - minIntensity2);
+    float pictDistance = (e->x() - intensity1Location) * (e->x() - intensity1Location) + (e->y() - intensity2Location) * (e->y() - intensity2Location);
+    if (pictDistance < closenessRadius)
     {
       object->RemoveVertex(vertexInUse);
     }
@@ -199,20 +199,20 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
   }
 
   //else, we are moving a single vertex
-  if(e->buttons() == Qt::LeftButton)
+  if (e->buttons() == Qt::LeftButton)
   {
     //assume we've missed all vertices
     vertexDragging = false;
 
     //find the closest vertex
     vertexInUse = 0;
-    float minDist = (object->GetVertexIntensity(0) - intensity1)*(object->GetVertexIntensity(0) - intensity1) +
-                    (object->GetVertexGradient(0) - intensity2)*(object->GetVertexGradient(0) - intensity2);
-    for(int i = 1; i < object->GetNumVertices(); i++)
+    float minDist = (object->GetVertexIntensity(0) - intensity1) * (object->GetVertexIntensity(0) - intensity1) +
+                    (object->GetVertexGradient(0) - intensity2) * (object->GetVertexGradient(0) - intensity2);
+    for (int i = 1; i < object->GetNumVertices(); i++)
     {
-      float vertDist = (object->GetVertexIntensity(i) - intensity1)*(object->GetVertexIntensity(i) - intensity1) +
-                       (object->GetVertexGradient(i) - intensity2)*(object->GetVertexGradient(i) - intensity2);
-      if(vertDist < minDist)
+      float vertDist = (object->GetVertexIntensity(i) - intensity1) * (object->GetVertexIntensity(i) - intensity1) +
+                       (object->GetVertexGradient(i) - intensity2) * (object->GetVertexGradient(i) - intensity2);
+      if (vertDist < minDist)
       {
         minDist = vertDist;
         vertexInUse = i;
@@ -220,10 +220,10 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     }
 
     //if the vertex is less than the radius distance away, choose it
-    unsigned int intensity1Location = size * (object->GetVertexIntensity(vertexInUse) - minIntensity1) / (maxIntensity1-minIntensity1);
-    unsigned int intensity2Location = size * (object->GetVertexGradient(vertexInUse) - minIntensity2) / (maxIntensity2-minIntensity2);
-    float pictDistance = (e->x() - intensity1Location)*(e->x() - intensity1Location) + (e->y() - intensity2Location) * (e->y() - intensity2Location);
-    if( pictDistance < closenessRadius )
+    unsigned int intensity1Location = size * (object->GetVertexIntensity(vertexInUse) - minIntensity1) / (maxIntensity1 - minIntensity1);
+    unsigned int intensity2Location = size * (object->GetVertexGradient(vertexInUse) - minIntensity2) / (maxIntensity2 - minIntensity2);
+    float pictDistance = (e->x() - intensity1Location) * (e->x() - intensity1Location) + (e->y() - intensity2Location) * (e->y() - intensity2Location);
+    if (pictDistance < closenessRadius)
     {
       vertexDragging = true;
       return;
@@ -238,7 +238,7 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
     size_t placeIndex = 0;
     size_t belowIndex = 0;
     size_t aboveIndex = object->GetNumVertices() - 1;
-    for(size_t i = 0; i < object->GetNumVertices(); i++)
+    for (size_t i = 0; i < object->GetNumVertices(); i++)
     {
 
       //define the line and direct vectors in the intensity gradient scale
@@ -246,48 +246,48 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
       float lineY = object->GetVertexGradient(belowIndex) - object->GetVertexGradient(aboveIndex);
       float directX = intensity1 - object->GetVertexIntensity(aboveIndex);
       float directY = intensity2 - object->GetVertexGradient(aboveIndex);
-      float lineMagSquared = lineX*lineX+lineY*lineY;
-      float lineMag = sqrt(lineX*lineX+lineY*lineY);
-      float directMag = sqrt(directX*directX+directY*directY);
+      float lineMagSquared = lineX * lineX + lineY * lineY;
+      float lineMag = sqrt(lineX * lineX + lineY * lineY);
+      float directMag = sqrt(directX * directX + directY * directY);
 
       //get the closest point on the line
-      float pointX = (directX*lineX+directY*lineY) * lineX / lineMagSquared + object->GetVertexIntensity(aboveIndex);
-      float pointY = (directX*lineX+directY*lineY) * lineY / lineMagSquared + object->GetVertexGradient(aboveIndex);
+      float pointX = (directX * lineX + directY * lineY) * lineX / lineMagSquared + object->GetVertexIntensity(aboveIndex);
+      float pointY = (directX * lineX + directY * lineY) * lineY / lineMagSquared + object->GetVertexGradient(aboveIndex);
 
       //find the distance components in pixels from the point to the line
-      float pixDistX = size * (intensity1-pointX) / (maxIntensity1- minIntensity1);
-      float pixDistY = size * (intensity2-pointY) / (maxIntensity2- minIntensity2);
-      float pixDist = pixDistX*pixDistX+pixDistY*pixDistY;
+      float pixDistX = size * (intensity1 - pointX) / (maxIntensity1 - minIntensity1);
+      float pixDistY = size * (intensity2 - pointY) / (maxIntensity2 - minIntensity2);
+      float pixDist = pixDistX * pixDistX + pixDistY * pixDistY;
 
       //if we are close enough, create a new point here, provided that the point falls in the line segment
-      if(pixDist < minDist )
+      if (pixDist < minDist)
       {
 
         //verify that the point is in the line segment and not off it
-        float distToAbove= (pointX-object->GetVertexIntensity(aboveIndex))*(pointX-object->GetVertexIntensity(aboveIndex))
-                           + (pointY-object->GetVertexGradient(aboveIndex))*(pointY-object->GetVertexGradient(aboveIndex));
-        float distToBelow = (pointX-object->GetVertexIntensity(belowIndex))*(pointX-object->GetVertexIntensity(belowIndex))
-                            + (pointY-object->GetVertexGradient(belowIndex))*(pointY-object->GetVertexGradient(belowIndex));
+        float distToAbove = (pointX - object->GetVertexIntensity(aboveIndex)) * (pointX - object->GetVertexIntensity(aboveIndex))
+                            + (pointY - object->GetVertexGradient(aboveIndex)) * (pointY - object->GetVertexGradient(aboveIndex));
+        float distToBelow = (pointX - object->GetVertexIntensity(belowIndex)) * (pointX - object->GetVertexIntensity(belowIndex))
+                            + (pointY - object->GetVertexGradient(belowIndex)) * (pointY - object->GetVertexGradient(belowIndex));
 
-        if(distToBelow < lineMagSquared && distToAbove < lineMagSquared)
+        if (distToBelow < lineMagSquared && distToAbove < lineMagSquared)
         {
           minDist = pixDist;
           minPointX = pointX;
           minPointY = pointY;
-          placeIndex = aboveIndex+1;
+          placeIndex = aboveIndex + 1;
           placeIndexFound = true;
         }
       }
 
       //go to the next line
-      belowIndex = i+1;
+      belowIndex = i + 1;
       aboveIndex = i;
     }
 
     //if we have a proper point
-    if(placeIndexFound)
+    if (placeIndexFound)
     {
-      object->AddVertex(minPointX,minPointY,placeIndex);
+      object->AddVertex(minPointX, minPointY, placeIndex);
       vertexInUse = placeIndex;
       vertexDragging = true;
       return;
@@ -301,7 +301,7 @@ void qHistogramHolderLabel::mousePressEvent(QMouseEvent* e)
 void qHistogramHolderLabel::mouseReleaseEvent(QMouseEvent* e)
 {
   //if we do not have a histogram or object, this has no meaning
-  if(!histogram)
+  if (!histogram)
   {
     return;
   }
@@ -321,22 +321,22 @@ void qHistogramHolderLabel::mouseReleaseEvent(QMouseEvent* e)
 void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
 {
   //if we do not have a histogram, this has no meaning
-  if(!histogram || !object)
+  if (!histogram || !object)
   {
     return;
   }
 
   //grab mouse position and translate to a gradient and intensity amount
-  double intensity1 = (double) e->x() / size * (maxIntensity1-minIntensity1) + minIntensity1;
-  double intensity2 = (double) e->y() / size * (maxIntensity2-minIntensity2) + minIntensity2;
+  double intensity1 = (double) e->x() / size * (maxIntensity1 - minIntensity1) + minIntensity1;
+  double intensity2 = (double) e->y() / size * (maxIntensity2 - minIntensity2) + minIntensity2;
   size_t numVertices = object->GetNumVertices();
 
   //if we are translating, then translate!
-  if(translating)
+  if (translating)
   {
-    float intensityDifference = intensity1-origClickI1;
-    float gradientDifference = intensity2-origClickI2;
-    for(unsigned int i = 0; i < numVertices; i++)
+    float intensityDifference = intensity1 - origClickI1;
+    float gradientDifference = intensity2 - origClickI2;
+    for (unsigned int i = 0; i < numVertices; i++)
     {
       object->ModifyVertex(object->GetVertexIntensity(i) + intensityDifference, object->GetVertexGradient(i) + gradientDifference, i);
     }
@@ -345,27 +345,27 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
 
     //if we are scaling, scale this instance of the polygon
   }
-  else if(scaling)
+  else if (scaling)
   {
 
     //calculate the distances from the last click to the centroid and from the current click to the centroid
-    float centroidLastDist = 1.0f + sqrt( ((origClickI1 - centroidI1)*(origClickI1 - centroidI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
-                                          + ((origClickI2 - centroidI2)*(origClickI2 - centroidI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)) );
-    float centroidCurrDist = 1.0f + sqrt( ((intensity1 - centroidI1)*(intensity1 - centroidI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
-                                          + ((intensity2 - centroidI2)*(intensity2 - centroidI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)) );
+    float centroidLastDist = 1.0f + sqrt(((origClickI1 - centroidI1) * (origClickI1 - centroidI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
+                                         + ((origClickI2 - centroidI2) * (origClickI2 - centroidI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)));
+    float centroidCurrDist = 1.0f + sqrt(((intensity1 - centroidI1) * (intensity1 - centroidI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
+                                         + ((intensity2 - centroidI2) * (intensity2 - centroidI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)));
 
     //calculate the distances from the last click to the centroid and from the current click to the centroid and the ratio to scale by
-    float lastDist = 1.0f + sqrt( ((origClickI1 - rotationCentreI1)*(origClickI1 - rotationCentreI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
-                                  + ((origClickI2 - rotationCentreI2)*(origClickI2 - rotationCentreI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)) );
-    float currDist = 1.0f + sqrt( ((intensity1 - rotationCentreI1)*(intensity1 - rotationCentreI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
-                                  + ((intensity2 - rotationCentreI2)*(intensity2 - rotationCentreI2))  / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)) );
+    float lastDist = 1.0f + sqrt(((origClickI1 - rotationCentreI1) * (origClickI1 - rotationCentreI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
+                                 + ((origClickI2 - rotationCentreI2) * (origClickI2 - rotationCentreI2)) / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)));
+    float currDist = 1.0f + sqrt(((intensity1 - rotationCentreI1) * (intensity1 - rotationCentreI1)) / ((maxIntensity1 - minIntensity1) * (maxIntensity1 - minIntensity1))
+                                 + ((intensity2 - rotationCentreI2) * (intensity2 - rotationCentreI2))  / ((maxIntensity2 - minIntensity2) * (maxIntensity2 - minIntensity2)));
     float ratio = currDist / lastDist;
 
     //determine whether to scale up or down
     bool scaleUp = (currDist > centroidCurrDist) && (currDist > lastDist);
 
     //take the reciprocal of the ratio in order to make it congruent with the direction of scaling
-    if( ((ratio < 1.0f) || scaleUp) && !((ratio < 1.0f) && scaleUp) )
+    if (((ratio < 1.0f) || scaleUp) && !((ratio < 1.0f) && scaleUp))
     {
       ratio = 1.0f / ratio;
     }
@@ -375,7 +375,7 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
     centroidI2 = ratio * (centroidI2 - rotationCentreI2) + rotationCentreI2;
 
     //update each of the vertices by a factor of the calculated ratio
-    for(unsigned int i = 0; i < numVertices; i++)
+    for (unsigned int i = 0; i < numVertices; i++)
     {
       float posI = ratio * (object->GetVertexIntensity(i) - rotationCentreI1) + rotationCentreI1;
       float posG = ratio * (object->GetVertexGradient(i)  - rotationCentreI2) + rotationCentreI2;
@@ -388,7 +388,7 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
 
     //else, we are moving a single vertex
   }
-  else if(vertexDragging)
+  else if (vertexDragging)
   {
     object->ModifyVertex(intensity1, intensity2, vertexInUse);
 
@@ -400,7 +400,7 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
   }
 
   //update the transfer function and screen if appropriate, else, just update the histograms
-  if(autoUpdate)
+  if (autoUpdate)
   {
     manager->updateFunction();
   }
@@ -410,9 +410,9 @@ void qHistogramHolderLabel::mouseMoveEvent(QMouseEvent* e)
   }
 }
 
-void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
+void qHistogramHolderLabel::paintEvent(QPaintEvent* e)
 {
-  if(!histogram)
+  if (!histogram)
   {
     return;
   }
@@ -423,21 +423,21 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
   QPainter painter(this);
 
   //if we have a function, draw it
-  if(!func)
+  if (!func)
   {
     return;
   }
   unsigned int i = 0;
-  while(true)
+  while (true)
   {
     //get the next object to be painted
     vtkCudaFunctionPolygon* paintedObject = (vtkCudaFunctionPolygon*) func->GetFunctionObject(i);
     i++;
-    if(!paintedObject)
+    if (!paintedObject)
     {
       break;
     }
-    if( !visAll && paintedObject != object )
+    if (!visAll && paintedObject != object)
     {
       continue;
     }
@@ -452,23 +452,23 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
 
     //collect the number of vertices, and if we have less than 3 (not a polyhedron) then return
     size_t numVertices = paintedObject->GetNumVertices();
-    if(numVertices < 3 )
+    if (numVertices < 3)
     {
       return;
     }
 
     //create a polygon from the vertex information
-    int rectangleDim = sqrt(this->closenessRadius)+0.5;
-    QPolygon polygon(numVertices);
+    int rectangleDim = sqrt(this->closenessRadius) + 0.5;
+    QPolygon polygon(static_cast<int>(numVertices));
     polygon.clear();
-    for(unsigned int i = 0; i < numVertices; i++)
+    for (auto i = 0; i < numVertices; i++)
     {
-      unsigned int intensityLocation = size * (paintedObject->GetVertexIntensity(i) - minIntensity1) / (maxIntensity1-minIntensity1);
-      unsigned int gradientLocation = size * (paintedObject->GetVertexGradient(i) - minIntensity2) / (maxIntensity2-minIntensity2);
-      polygon.putPoints(i,1,intensityLocation,gradientLocation);
+      unsigned int intensityLocation = size * (paintedObject->GetVertexIntensity(i) - minIntensity1) / (maxIntensity1 - minIntensity1);
+      unsigned int gradientLocation = size * (paintedObject->GetVertexGradient(i) - minIntensity2) / (maxIntensity2 - minIntensity2);
+      polygon.putPoints(i, 1, intensityLocation, gradientLocation);
       QRect rectangle;
-      rectangle.setRect(intensityLocation-rectangleDim/2, gradientLocation-rectangleDim/2, rectangleDim, rectangleDim);
-      if(paintedObject == object)
+      rectangle.setRect(intensityLocation - rectangleDim / 2, gradientLocation - rectangleDim / 2, rectangleDim, rectangleDim);
+      if (paintedObject == object)
       {
         painter.drawEllipse(rectangle);
       }
@@ -479,7 +479,7 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
   }
 
   //draw the zoom square
-  if(hasZoomSquare)
+  if (hasZoomSquare)
   {
     QColor colour;
     colour.setAlpha(255);
@@ -487,10 +487,10 @@ void qHistogramHolderLabel::paintEvent( QPaintEvent * e)
     colour.setGreen(255);
     colour.setBlue(255);
     painter.setPen(colour);
-    painter.drawRect( size * (zoomMinIntensity1 - minIntensity1) / (maxIntensity1-minIntensity1),
-                      size * (zoomMinIntensity2 - minIntensity2) / (maxIntensity2-minIntensity2),
-                      size * (zoomMaxIntensity1 - zoomMinIntensity1) / (maxIntensity1-minIntensity1),
-                      size * (zoomMaxIntensity2 - zoomMinIntensity2) / (maxIntensity2-minIntensity2));
+    painter.drawRect(size * (zoomMinIntensity1 - minIntensity1) / (maxIntensity1 - minIntensity1),
+                     size * (zoomMinIntensity2 - minIntensity2) / (maxIntensity2 - minIntensity2),
+                     size * (zoomMaxIntensity1 - zoomMinIntensity1) / (maxIntensity1 - minIntensity1),
+                     size * (zoomMaxIntensity2 - zoomMinIntensity2) / (maxIntensity2 - minIntensity2));
   }
 }
 
