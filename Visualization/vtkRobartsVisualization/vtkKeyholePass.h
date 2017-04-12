@@ -52,7 +52,7 @@ class vtkShaderProgram2;
 class vtkTextureObject;
 
 // To be able to dump intermediate passes into png images for debugging.
-//#define VTK_KEYHOLE_PASS_DEBUG
+#define VTK_KEYHOLE_PASS_DEBUG
 
 class vtkRobartsVisualizationExport vtkKeyholePass : public vtkMultiViewportImageProcessingPass
 {
@@ -202,7 +202,7 @@ private:
 	  vtkShaderProgram*, vtkOpenGLVertexArrayObject *); // This is a convenience method to update the framebuffer. vtkTextureObject has a similar method. 
 														// However, it has a minor bug in setting glViewPort. This method fixes that issue. 
   void ProbeSupport(const vtkRenderState *); // Probe for support
-  void ReadTextures(vtkRenderer *);
+  int ReadTextures(vtkRenderer *);
 };
 
 #endif // vtkKeyholePass_h

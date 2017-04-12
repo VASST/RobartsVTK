@@ -155,7 +155,10 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		}
 
 		// Read image data into pixelBuffers. 
-		this->ReadTextures(r);
+		if (this->ReadTextures(r) == -1)
+		{
+			return;
+		}
 				
 		// Create Left & Right texture objects .
 		if (this->leftTextureObject->GetWidth() != static_cast<unsigned int>(this->dimensions[0]) ||
@@ -197,6 +200,11 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 #endif
 		// 1. Create a new render state with FBO.
 		// Get viewport dimensions
+
+		// Save State
+		GLint saved_viewport[4];
+		glGetIntegerv(GL_VIEWPORT, saved_viewport);
+
 		r->GetTiledSizeAndOrigin(&this->viewPortWidth, &this->viewPortHeight,
 			&this->viewPortX, &this->viewPortY);
 
@@ -211,9 +219,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		// Now set a black background.
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
 
-		// Render in the correct viewport
-		glViewport(this->viewPortX, this->viewPortY, this->viewPortWidth, this->viewPortHeight);
-		
 		// First pass
 		this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,
 			this->Pass1);
@@ -221,6 +226,13 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 #ifdef VTK_KEYHOLE_PASS_DEBUG
 		// Save the output of the first pass to a file for debugging
 		vtkPixelBufferObject* pbo = this->Pass1->Download();
+
+		vtkIdType increments[2];
+		increments[0] = 0;
+		increments[1] = 0;
+
+		this->dimensions[0] = width;
+		this->dimensions[1] = height;
 
 		unsigned char* openglRawData = new unsigned char[4 * width * height];
 		bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, openglRawData, this->dimensions, 4, increments);
@@ -421,6 +433,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 #endif
 
 		this->Pass2->Activate();
+
+		// Render in the correct viewport
+		glViewport(this->viewPortX, this->viewPortY, this->viewPortWidth, this->viewPortHeight);
 		
 		// Copy Pass2 to a FBO
 		this->CopyToFrameBuffer(0, 0, width - 1, height - 1,
@@ -428,6 +443,9 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 			this->Pass2,
 			this->KeyholeProgram->Program,
 			this->KeyholeProgram->VAO);
+
+		// Restore state
+		glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],saved_viewport[3]);
 
 		this->Pass2->Deactivate();
 
@@ -456,6 +474,9 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	int *vsize = r->GetSize();
 	int width = vsize[0];
 	int height = vsize[1];
+
+	GLint saved_viewport[4];
+	glGetIntegerv(GL_VIEWPORT, saved_viewport);
 
 	// Create new TOs and set FBO color attachments
 	if (this->GX == NULL)
@@ -544,9 +565,9 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 
 
 	// Save viewport state and render at (0, 0, width, height)
-	GLint saved_viewport[4];
-	glGetIntegerv(GL_VIEWPORT, saved_viewport);
-	glViewport(0, 0, width, height);
+	//GLint saved_viewport[4];
+	//glGetIntegerv(GL_VIEWPORT, saved_viewport);
+	//glViewport(0, 0, width, height);
 
 	this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 		this->GradientProgram1->Program,
@@ -675,8 +696,8 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	this->KeyholeShader->Program->SetUniformf("stepSize", fvalue);
 
 	// Save viewport state and render at (0, 0, width, height)
-	glGetIntegerv(GL_VIEWPORT, saved_viewport);
-	glViewport(0, 0, width, height);
+	//glGetIntegerv(GL_VIEWPORT, saved_viewport);
+	//glViewport(0, 0, width, height);
 
 	this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 		this->KeyholeShader->Program,
@@ -969,7 +990,7 @@ void vtkKeyholePass::ProbeSupport(const vtkRenderState *s)
 }
 
 //-----------------------------------------------------------------------------------------------------
-void vtkKeyholePass::ReadTextures(vtkRenderer *r)
+int vtkKeyholePass::ReadTextures(vtkRenderer *r)
 {
 	//Do this for the background and the mask.
 
@@ -1054,7 +1075,7 @@ void vtkKeyholePass::ReadTextures(vtkRenderer *r)
 			else
 			{
 				std::cerr << "[vtkKeyholePass] Background texture is not initialized" << std::endl;
-				return;
+				return -1;
 			}
 		}
 		else if (i == maskIDx && this->mask_img_available)
@@ -1083,10 +1104,12 @@ void vtkKeyholePass::ReadTextures(vtkRenderer *r)
 			else
 			{
 				std::cerr << "[vtkKeyholePass] Mask texture is not initialized" << std::endl;
-				return;
+				return -1;
 			}
 		}
 	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------------------------------
