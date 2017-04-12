@@ -92,7 +92,7 @@ CudaObject::~CudaObject()
 }
 
 //----------------------------------------------------------------------------
-void CudaObject::SetDevice(int d, int withData)
+void CudaObject::SetDevice(int d, bool withData)
 {
   int numberOfDevices = this->DeviceManager->GetNumberOfDevices();
 
@@ -198,7 +198,7 @@ cudaStream_t* CudaObject::GetStream()
 }
 
 //----------------------------------------------------------------------------
-void CudaObject::ReplicateObject(CudaObject* object, int withData)
+void CudaObject::ReplicateObject(CudaObject* object, bool withData)
 {
   int oldDeviceNumber = this->DeviceNumber;
   this->SetDevice(object->DeviceNumber, withData);

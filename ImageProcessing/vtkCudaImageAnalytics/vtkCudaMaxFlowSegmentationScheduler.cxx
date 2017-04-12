@@ -1,3 +1,24 @@
+/*=========================================================================
+
+Robarts Visualization Toolkit
+
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+=========================================================================*/
+
 #include "vtkCudaMaxFlowSegmentationScheduler.h"
 #include "vtkCudaMaxFlowSegmentationTask.h"
 #include "vtkCudaMaxFlowSegmentationWorker.h"
@@ -33,27 +54,26 @@ void vtkCudaMaxFlowSegmentationScheduler::Clear()
   this->Overwritten.clear();
 
   //clear workers
-  for(std::set<vtkCudaMaxFlowSegmentationTask*>::iterator taskIterator = FinishedTasks.begin(); taskIterator != FinishedTasks.end(); taskIterator++)
+  for (std::set<vtkCudaMaxFlowSegmentationTask*>::iterator taskIterator = FinishedTasks.begin(); taskIterator != FinishedTasks.end(); taskIterator++)
   {
     delete *taskIterator;
   }
 
   //cleat tasks
   FinishedTasks.clear();
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
+  for (std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
   {
     delete *workerIterator;
   }
   Workers.clear();
-
 }
 
 //----------------------------------------------------------------------------
 int vtkCudaMaxFlowSegmentationScheduler::CreateWorker(int GPU, double usage)
 {
-  vtkCudaMaxFlowSegmentationWorker* newWorker = new vtkCudaMaxFlowSegmentationWorker( GPU, usage, this );
-  this->Workers.insert( newWorker );
-  if(newWorker->NumBuffers < 8)
+  vtkCudaMaxFlowSegmentationWorker* newWorker = new vtkCudaMaxFlowSegmentationWorker(GPU, usage, this);
+  this->Workers.insert(newWorker);
+  if (newWorker->NumBuffers < 8)
   {
     return -1;
   }
@@ -64,7 +84,7 @@ int vtkCudaMaxFlowSegmentationScheduler::CreateWorker(int GPU, double usage)
 void vtkCudaMaxFlowSegmentationScheduler::ReturnLeaves()
 {
   SyncWorkers();
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
+  for (std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIterator = Workers.begin(); workerIterator != Workers.end(); workerIterator++)
   {
     (*workerIterator)->ReturnLeafLabels();
   }
@@ -73,54 +93,54 @@ void vtkCudaMaxFlowSegmentationScheduler::ReturnLeaves()
 //----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::ReturnBufferGPU2CPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream)
 {
-  if( !CPUBuffer )
+  if (!CPUBuffer)
   {
     return;
   }
-  if( ReadOnly.find(CPUBuffer) != ReadOnly.end() )
+  if (ReadOnly.find(CPUBuffer) != ReadOnly.end())
   {
     return;
   }
-  if( Overwritten[CPUBuffer] == 0 )
+  if (Overwritten[CPUBuffer] == 0)
   {
     return;
   }
   Overwritten[CPUBuffer] = 0;
   caller->ReserveGPU();
   LastBufferUse[CPUBuffer] = caller;
-  if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() )
+  if (NoCopyBack.find(CPUBuffer) != NoCopyBack.end())
   {
     return;
   }
-  CUDA_CopyBufferToCPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
+  CUDA_CopyBufferToCPU(GPUBuffer, CPUBuffer, VolumeSize, stream);
   NumMemCpies++;
 }
 
 //----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::MoveBufferCPU2GPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream)
 {
-  if( !CPUBuffer )
+  if (!CPUBuffer)
   {
     return;
   }
   caller->ReserveGPU();
-  if( LastBufferUse[CPUBuffer] )
+  if (LastBufferUse[CPUBuffer])
   {
     LastBufferUse[CPUBuffer]->CallSyncThreads();
   }
   LastBufferUse[CPUBuffer] = 0;
-  if( NoCopyBack.find(CPUBuffer) != NoCopyBack.end() )
+  if (NoCopyBack.find(CPUBuffer) != NoCopyBack.end())
   {
     return;
   }
-  CUDA_CopyBufferToGPU( GPUBuffer, CPUBuffer, VolumeSize, stream);
+  CUDA_CopyBufferToGPU(GPUBuffer, CPUBuffer, VolumeSize, stream);
   NumMemCpies++;
 }
 
 //----------------------------------------------------------------------------
 void vtkCudaMaxFlowSegmentationScheduler::SyncWorkers()
 {
-  for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
+  for (std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
   {
     (*workerIt)->CallSyncThreads();
   }
@@ -135,16 +155,15 @@ bool vtkCudaMaxFlowSegmentationScheduler::CanRunAlgorithmIteration()
 //----------------------------------------------------------------------------
 int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
 {
-
   int MinWeight = INT_MAX;
   int MinUnConflictWeight = INT_MAX;
   std::vector<vtkCudaMaxFlowSegmentationTask*> MinTasks;
   std::vector<vtkCudaMaxFlowSegmentationTask*> MinUnConflictTasks;
   std::vector<vtkCudaMaxFlowSegmentationWorker*> MinWorkers;
   std::vector<vtkCudaMaxFlowSegmentationWorker*> MinUnConflictWorkers;
-  for(std::set<vtkCudaMaxFlowSegmentationTask*>::iterator taskIt = CurrentTasks.begin(); MinWeight > 0 && taskIt != CurrentTasks.end(); taskIt++)
+  for (std::set<vtkCudaMaxFlowSegmentationTask*>::iterator taskIt = CurrentTasks.begin(); MinWeight > 0 && taskIt != CurrentTasks.end(); taskIt++)
   {
-    if( !(*taskIt)->CanDo() )
+    if (!(*taskIt)->CanDo())
     {
       continue;
     }
@@ -152,9 +171,9 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
     //find if the task is conflicted and put in appropriate contest
     vtkCudaMaxFlowSegmentationWorker* possibleWorker = 0;
     int conflictWeight = (*taskIt)->Conflicted(&possibleWorker);
-    if( conflictWeight )
+    if (conflictWeight)
     {
-      if( conflictWeight < MinUnConflictWeight )
+      if (conflictWeight < MinUnConflictWeight)
       {
         MinUnConflictWeight = conflictWeight;
         MinUnConflictTasks.clear();
@@ -162,7 +181,7 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
         MinUnConflictWorkers.clear();
         MinUnConflictWorkers.push_back(possibleWorker);
       }
-      else if(conflictWeight == MinUnConflictWeight)
+      else if (conflictWeight == MinUnConflictWeight)
       {
         MinUnConflictTasks.push_back(*taskIt);
         MinUnConflictWorkers.push_back(possibleWorker);
@@ -170,10 +189,10 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
       continue;
     }
 
-    if( possibleWorker )  //only one worker can do this task
+    if (possibleWorker)   //only one worker can do this task
     {
       int weight = (*taskIt)->CalcWeight(possibleWorker);
-      if( weight < MinWeight )
+      if (weight < MinWeight)
       {
         MinWeight = weight;
         MinTasks.clear();
@@ -181,7 +200,7 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
         MinWorkers.clear();
         MinWorkers.push_back(possibleWorker);
       }
-      else if( weight == MinWeight )
+      else if (weight == MinWeight)
       {
         MinTasks.push_back(*taskIt);
         MinWorkers.push_back(possibleWorker);
@@ -189,10 +208,10 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
     }
     else   //all workers have a chance, find the emptiest one
     {
-      for(std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
+      for (std::set<vtkCudaMaxFlowSegmentationWorker*>::iterator workerIt = Workers.begin(); workerIt != Workers.end(); workerIt++)
       {
         int weight = (*taskIt)->CalcWeight(*workerIt);
-        if( weight < MinWeight )
+        if (weight < MinWeight)
         {
           MinWeight = weight;
           MinTasks.clear();
@@ -200,7 +219,7 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
           MinWorkers.clear();
           MinWorkers.push_back(*workerIt);
         }
-        else if( weight == MinWeight )
+        else if (weight == MinWeight)
         {
           MinTasks.push_back(*taskIt);
           MinWorkers.push_back(*workerIt);
@@ -210,7 +229,7 @@ int vtkCudaMaxFlowSegmentationScheduler::RunAlgorithmIteration()
   }
 
   //figure out if it is cheaper to run a conflicted or non-conflicted task
-  if( MinUnConflictWeight >= MinWeight )
+  if (MinUnConflictWeight >= MinWeight)
   {
     int taskIdx = rand() % MinTasks.size();
     MinTasks[taskIdx]->Perform(MinWorkers[taskIdx]);

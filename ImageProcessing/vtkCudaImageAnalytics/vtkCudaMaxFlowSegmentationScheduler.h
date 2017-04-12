@@ -1,13 +1,21 @@
 /*=========================================================================
 
-  Program:   Robarts Visualization Toolkit
-  Module:    vtkHierarchicalMaxFlowSegmentation2Task.cxx
+Robarts Visualization Toolkit
 
-  Copyright (c) John SH Baxter, Robarts Research Institute
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
 
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 
 =========================================================================*/
 
@@ -44,50 +52,54 @@ private:
 
   friend class vtkCudaHierarchicalMaxFlowSegmentation2;
   friend class vtkCudaDirectedAcyclicGraphMaxFlowSegmentation;
+  friend class vtkCudaMaxFlowSegmentationTask;
+  friend class vtkCudaMaxFlowSegmentationWorker;
+
   void Clear();
   int RunAlgorithmIteration();
   bool CanRunAlgorithmIteration();
 
-  friend class vtkCudaMaxFlowSegmentationWorker;
   int CreateWorker(int GPU, double MaxUsage);
   void SyncWorkers();
   void ReturnLeaves();
-  std::set<vtkCudaMaxFlowSegmentationWorker*> Workers;
 
   //Mappings for CPU-GPU buffer sharing
   void ReturnBufferGPU2CPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
   void MoveBufferCPU2GPU(vtkCudaMaxFlowSegmentationWorker* caller, float* CPUBuffer, float* GPUBuffer, cudaStream_t* stream);
-  std::map<float*,vtkCudaMaxFlowSegmentationWorker*> LastBufferUse;
-  std::map<float*,int> Overwritten;
 
-  std::set<float*> CPUInUse;
-  std::map<float*,int> CPU2PriorityMap;
+private:
+  std::set<vtkCudaMaxFlowSegmentationWorker*>         Workers;
 
-  int TotalNumberOfBuffers;
-  int NumLeaves;
+  std::map<float*, vtkCudaMaxFlowSegmentationWorker*> LastBufferUse;
+  std::map<float*, int>                               Overwritten;
+
+  std::set<float*>                                    CPUInUse;
+  std::map<float*, int>                               CPU2PriorityMap;
+
+  int                                                 TotalNumberOfBuffers;
+  int                                                 NumLeaves;
 
   //Mappings for task management
-  friend class vtkCudaMaxFlowSegmentationTask;
-  std::set<vtkCudaMaxFlowSegmentationTask*> CurrentTasks;
-  std::set<vtkCudaMaxFlowSegmentationTask*> BlockedTasks;
-  std::set<vtkCudaMaxFlowSegmentationTask*> FinishedTasks;
+  std::set<vtkCudaMaxFlowSegmentationTask*>           CurrentTasks;
+  std::set<vtkCudaMaxFlowSegmentationTask*>           BlockedTasks;
+  std::set<vtkCudaMaxFlowSegmentationTask*>           FinishedTasks;
 
-  std::set< float* > ReadOnly;
-  std::set< float* > NoCopyBack;
+  std::set<float*>                                    ReadOnly;
+  std::set<float*>                                    NoCopyBack;
 
-  int    NumMemCpies;
-  int    NumKernelRuns;
-  int    NumTasksGoingToHappen;
+  int                                                 NumMemCpies;
+  int                                                 NumKernelRuns;
+  int                                                 NumTasksGoingToHappen;
 
-  int    VolumeSize;
-  int    VX;
-  int    VY;
-  int    VZ;
+  int                                                 VolumeSize;
+  int                                                 VX;
+  int                                                 VY;
+  int                                                 VZ;
 
-  float** leafLabelBuffers;
+  float**                                             LeafLabelBuffers;
 
-  float CC;
-  float StepSize;
+  float                                               CC;
+  float                                               StepSize;
 };
 
 #endif

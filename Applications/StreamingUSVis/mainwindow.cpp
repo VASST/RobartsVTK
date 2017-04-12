@@ -361,7 +361,7 @@ int MainWindow::InitVTKPipeline()
 
   this->ui->US_View->GetInteractor()->AddObserver(vtkCommand::TimerEvent, us_callback);
   vtkRenderWindowInteractor* iRen = augmentedRenWin->GetInteractor();
-  iRen->AddObserver(vtkCommand::KeyPressEvent , eventCallBack);
+  iRen->AddObserver(vtkCommand::KeyPressEvent, eventCallBack);
   iRen->AddObserver(vtkCommand::MouseWheelForwardEvent, eventCallBack);
   iRen->AddObserver(vtkCommand::MouseWheelBackwardEvent, eventCallBack);
   iRen->AddObserver(vtkCommand::MouseMoveEvent, eventCallBack);
@@ -460,7 +460,6 @@ void MainWindow::onSaveVolumeButtonClick(const QString& str)
 {
   if (str == "SAVEVOL_BTN")
   {
-
     vtkImageData* data = vtkImageData::New();
     acceleratedVolumeReconstructor->GetOutputVolume(data);
 
@@ -696,8 +695,8 @@ void MainWindow::SetupVolumeRenderingPipeline()
 
   color = vtkSmartPointer< vtkColorTransferFunction >::New();
   /* TODO: Get these values from the UI */
-  color->AddRGBPoint(0.0  , 0.0, 0.0, 1.0);
-  color->AddRGBPoint(40.0  , 0.0, 0.1, 0.0);
+  color->AddRGBPoint(0.0, 0.0, 0.0, 1.0);
+  color->AddRGBPoint(40.0, 0.0, 0.1, 0.0);
   color->AddRGBPoint(255.0, 1.0, 0.0, 0.0);
   volumeProperty->SetColor(color);
 
@@ -832,8 +831,8 @@ void MainWindow::SetupARVolumeRenderingPipeline()
 
   color = vtkSmartPointer< vtkColorTransferFunction >::New();
   /* TODO: Get these values from the UI */
-  color->AddRGBPoint(0.0  , 0.0, 0.0, 1.0);
-  color->AddRGBPoint(40.0  , 0.0, 0.1, 0.0);
+  color->AddRGBPoint(0.0, 0.0, 0.0, 1.0);
+  color->AddRGBPoint(40.0, 0.0, 0.1, 0.0);
   color->AddRGBPoint(255.0, 1.0, 0.0, 0.0);
   volumeProperty->SetColor(color);
 

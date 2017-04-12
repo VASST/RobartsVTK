@@ -1,3 +1,24 @@
+/*=========================================================================
+
+Robarts Visualization Toolkit
+
+Copyright (c) 2016 Virtual Augmentation and Simulation for Surgery and Therapy, Robarts Research Institute
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+=========================================================================*/
+
 #ifndef __vtkFunctionMinimizer_h
 #define __vtkFunctionMinimizer_h
 
@@ -5,41 +26,36 @@
 
 #include "vtkObject.h"
 
+// STL includes
+#include <vector>
+
 class vtkRobartsRegistrationExport vtkFunctionMinimizer : public vtkObject
 {
 public:
-  static vtkFunctionMinimizer *New();
-
-  vtkTypeMacro(vtkFunctionMinimizer,vtkObject);
+  static vtkFunctionMinimizer* New();
+  vtkTypeMacro(vtkFunctionMinimizer, vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Specify the function to be minimized.
-  void SetFunction(void (*f)(void *), void *arg);
+  void SetFunction(void (*f)(void*), void* arg);
 
   // Description:
   // Set a function to call when a void* argument is being discarded.
-  void SetFunctionArgDelete(void (*f)(void *));
+  void SetFunctionArgDelete(void (*f)(void*));
 
   // Description:
   // Specify a variable to modify during the minimization.  Only the
   // variable you specify will be modified.  You must specify estimated
-  // min and max possible values for each variable.  
-  void SetScalarVariableBracket(const char *name, double min, double max);
-  void SetScalarVariableBracket(const char *name, const double range[2]) {
-    this->SetScalarVariableBracket(name,range[0],range[1]); };
-  double *GetScalarVariableBracket(const char *name);
-  void GetScalarVariableBracket(const char *name, double range[2]) {
-    double *r = this->GetScalarVariableBracket(name);
-    range[0] = r[0]; range[1] = r[1]; };
+  // min and max possible values for each variable.
+  void SetScalarVariableBracket(const std::string& name, double min, double max);
+  void SetScalarVariableBracket(const std::string& name, const std::pair<double, double>& range);
+  std::pair<double, double> GetScalarVariableBracket(const std::string& name);
+  void GetScalarVariableBracket(const std::string& name, std::pair<double, double>& range);
 
   // Description:
   // Get the value of a variable at the current stage of the minimization.
-  double GetScalarVariableValue(const char *name);
-
-  // Description:
-  // Get a pointer to the scalar var array
-  double *GetScalarVarPtr();
+  double GetScalarVariableValue(const std::string& name);
 
   // Description:
   // Iterate until the minimum is found to within the specified tolerance.
@@ -51,51 +67,43 @@ public:
   int Initialize();
 
   // Description:
-  // Perform one iteration of minimization.
-  // void Iterate();
-
-  // Description:
   // Get the current value resulting from the minimization.
-  // 
-  vtkSetMacro(ScalarResult,double); 
+  //
+  vtkSetMacro(ScalarResult, double);
   double GetScalarResult() { return this->ScalarResult; };
 
   // Description:
   // Specify the fractional tolerance to aim for during the minimization.
-  vtkSetMacro(Tolerance,double);
-  vtkGetMacro(Tolerance,double);
+  vtkSetMacro(Tolerance, double);
+  vtkGetMacro(Tolerance, double);
 
   // Description:
-  // Specify the maximum number of iterations to try before 
+  // Specify the maximum number of iterations to try before
   // printing an error and aborting.
-  vtkSetMacro(MaxIterations,int);
-  vtkGetMacro(MaxIterations,int);
+  vtkSetMacro(MaxIterations, int);
+  vtkGetMacro(MaxIterations, int);
 
   // Description:
-  // Return the number of interations required for the last
+  // Return the number of iterations required for the last
   // minimization that was performed.
-  vtkGetMacro(Iterations,int);
+  vtkGetMacro(Iterations, int);
 
 protected:
   vtkFunctionMinimizer();
   ~vtkFunctionMinimizer();
+
+protected:
   vtkFunctionMinimizer(const vtkFunctionMinimizer&) {};
   void operator=(const vtkFunctionMinimizer&) {};
 
-//BTX  
-  void (*Function)(void *);
-  void (*FunctionArgDelete)(void *);
-  void *FunctionArg;
-//ETX
+  void (*Function)(void*);
+  void (*FunctionArgDelete)(void*);
+  void* FunctionArg;
 
-  int NumberOfParameters;
-  char **ParameterNames;
-  int *ParameterIndices;
-  double *Parameters;
-//BTX
-  double (*ParameterBrackets)[2];
-//ETX
-  double **Vertices;
+  std::vector<std::string> ParameterNames;
+  std::vector<double> Parameters;
+  std::vector<std::pair<double, double>> ParameterBrackets;
+  std::vector<std::vector<double>> Vertices;
 
   double ScalarResult;
 
@@ -103,9 +111,7 @@ protected:
   int MaxIterations;
   int Iterations;
 
-//BTX
-  friend void vtkFunctionMinimizerFunction(void *data);
-//ETX
+  friend void vtkFunctionMinimizerFunction(void* data);
 };
 
 #endif

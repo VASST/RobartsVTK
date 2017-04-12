@@ -71,6 +71,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${VTK_INCLUDE_DIRS}
   )
 target_link_libraries(${PROJECT_NAME} PUBLIC
+  vtkPlusCommon
   vtkImagingHybrid 
   vtkImagingCore
   vtkImagingStatistics
