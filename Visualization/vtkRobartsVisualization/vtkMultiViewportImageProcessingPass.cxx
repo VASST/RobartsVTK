@@ -174,8 +174,8 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   GLint saved_scissor_box[4];
   glGetIntegerv(GL_SCISSOR_BOX, saved_scissor_box);
 
-  glViewport(0, 0, newWidth, newHeight);
-  glScissor(0, 0, newWidth, newHeight);
+  //glViewport(0, 0, newWidth, newHeight);
+  //glScissor(0, 0, newWidth, newHeight);
 
   // 2. Delegate render in FBO
   glEnable(GL_DEPTH_TEST);
