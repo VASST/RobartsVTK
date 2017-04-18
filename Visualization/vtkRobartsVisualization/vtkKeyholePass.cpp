@@ -848,10 +848,6 @@ void vtkKeyholePass::CopyToFrameBuffer(
 	float maxYTexCoord = static_cast<float>(
 		static_cast<double>(srcYmax + 0.5) / to->GetHeight());
 
-	// Save state
-	GLint saved_viewport[4];
-	glGetIntegerv(GL_VIEWPORT, saved_viewport);
-
 	float tcoords[] = {
 		minXTexCoord, minYTexCoord,
 		maxXTexCoord, minYTexCoord,
@@ -868,10 +864,6 @@ void vtkKeyholePass::CopyToFrameBuffer(
 		2.0f*dstXmin / dstSizeX - 1.0f, 2.0f*(dstYmax + 1.0f) / dstSizeY - 1.0f, 0.0f };
 
 	to->CopyToFrameBuffer(tcoords, verts, program, vao);
-
-	// Restore state
-	glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
-		saved_viewport[3]);
 }
 
 //-----------------------------------------------------------------------------------------------------

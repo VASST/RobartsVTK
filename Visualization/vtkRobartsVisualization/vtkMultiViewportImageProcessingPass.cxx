@@ -23,6 +23,9 @@
 #include "vtkFrameBufferObject.h"
 #include "vtkTextureObject.h"
 #include "vtkOpenGLRenderWindow.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkImageImport.h"
+#include "vtkPNGWriter.h"
 
 // to be able to dump intermediate passes into png files for debugging.
 // only for vtkMultiViewportImageProcessingPass developers.
@@ -193,32 +196,33 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   dims[1]=static_cast<unsigned int>(newHeight);
   continuousInc[0]=0;
   continuousInc[1]=0;
-  continuousInc[2]=0;
 
   int byteSize=newWidth*newHeight*4*sizeof(float);
   float *buffer=new float[newWidth*newHeight*4];
-  pbo->Download2D(VTK_FLOAT,buffer,dims,4,continuousInc);
-
-  vtkImageImport *importer=vtkImageImport::New();
-  importer->CopyImportVoidPointer(buffer,static_cast<int>(byteSize));
-  importer->SetDataScalarTypeToFloat();
-  importer->SetNumberOfScalarComponents(4);
-  importer->SetWholeExtent(0,newWidth-1,0,newHeight-1,0,0);
-  importer->SetDataExtentToWholeExtent();
-
-  importer->Update();
-
-  vtkPNGWriter *writer=vtkPNGWriter::New();
-  writer->SetFileName("ip.png");
-  writer->SetInputConnection(importer->GetOutputPort());
-  importer->Delete();
-  cout << "Writing " << writer->GetFileName() << endl;
-  writer->Write();
-  cout << "Wrote " << writer->GetFileName() << endl;
-  writer->Delete();
-
+  bool status = pbo->Download2D(VTK_FLOAT, buffer, dims, 4, continuousInc);
+  assert("check" && status);
   pbo->Delete();
+
+  vtkImageImport* importer = vtkImageImport::New();
+  importer->CopyImportVoidPointer(buffer, 4 * width * height * sizeof(unsigned char));
+  importer->SetDataScalarTypeToUnsignedChar();
+  importer->SetNumberOfScalarComponents(4);
+  importer->SetWholeExtent(0, width - 1, 0, height - 1, 0, 0);
+  importer->SetDataExtentToWholeExtent();
   delete[] buffer;
+
+  vtkImageExtractComponents* rgbatoRgb = vtkImageExtractComponents::New();
+  rgbatoRgb->SetInputConnection(importer->GetOutputPort());
+  rgbatoRgb->SetComponents(0, 1, 2);
+
+  vtkPNGWriter* writer = vtkPNGWriter::New();
+  writer->SetFileName("mvp_pass.png");
+  writer->SetInputConnection(rgbatoRgb->GetOutputPort());
+  writer->Write();
+
+  importer->Delete();
+  rgbatoRgb->Delete();
+  writer->Delete();
 #endif
 
   glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],

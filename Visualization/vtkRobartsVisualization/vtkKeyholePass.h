@@ -52,7 +52,7 @@ class vtkShaderProgram2;
 class vtkTextureObject;
 
 // To be able to dump intermediate passes into png images for debugging.
-#define VTK_KEYHOLE_PASS_DEBUG
+//#define VTK_KEYHOLE_PASS_DEBUG
 
 class vtkRobartsVisualizationExport vtkKeyholePass : public vtkMultiViewportImageProcessingPass
 {
