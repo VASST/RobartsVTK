@@ -29,7 +29,7 @@
 
 // to be able to dump intermediate passes into png files for debugging.
 // only for vtkMultiViewportImageProcessingPass developers.
-//#define VTK_IMAGE_PROCESSING_PASS_DEBUG
+#define VTK_IMAGE_PROCESSING_PASS_DEBUG
 
 #include "vtkPixelBufferObject.h"
 #include "vtkCamera.h"
@@ -182,6 +182,7 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
 
   // 2. Delegate render in FBO
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_SCISSOR_TEST);
   this->DelegatePass->Render(&s2);
   this->NumberOfRenderedProps+=
     this->DelegatePass->GetNumberOfRenderedProps();
@@ -197,9 +198,8 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   continuousInc[0]=0;
   continuousInc[1]=0;
 
-  int byteSize=newWidth*newHeight*4*sizeof(float);
-  float *buffer=new float[newWidth*newHeight*4];
-  bool status = pbo->Download2D(VTK_FLOAT, buffer, dims, 4, continuousInc);
+  unsigned char *buffer = new unsigned char[newWidth*newHeight * 4];
+  bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, buffer, dims, 4, continuousInc);
   assert("check" && status);
   pbo->Delete();
 
