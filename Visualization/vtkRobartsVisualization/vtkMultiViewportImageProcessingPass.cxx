@@ -29,7 +29,7 @@
 
 // to be able to dump intermediate passes into png files for debugging.
 // only for vtkMultiViewportImageProcessingPass developers.
-#define VTK_IMAGE_PROCESSING_PASS_DEBUG
+//#define VTK_IMAGE_PROCESSING_PASS_DEBUG
 
 #include "vtkPixelBufferObject.h"
 #include "vtkCamera.h"
@@ -177,15 +177,13 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   GLint saved_scissor_box[4];
   glGetIntegerv(GL_SCISSOR_BOX, saved_scissor_box);
 
-  //glViewport(0, 0, newWidth, newHeight);
-  //glScissor(0, 0, newWidth, newHeight);
-
   // 2. Delegate render in FBO
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_SCISSOR_TEST);
   this->DelegatePass->Render(&s2);
   this->NumberOfRenderedProps+=
     this->DelegatePass->GetNumberOfRenderedProps();
+
+  fbo->UnBind();
 
 #ifdef VTK_IMAGE_PROCESSING_PASS_DEBUG
   vtkPixelBufferObject *pbo=target->Download();
@@ -202,6 +200,7 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   bool status = pbo->Download2D(VTK_UNSIGNED_CHAR, buffer, dims, 4, continuousInc);
   assert("check" && status);
   pbo->Delete();
+  //glReadPixels(0, 0, newWidth, newHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
   vtkImageImport* importer = vtkImageImport::New();
   importer->CopyImportVoidPointer(buffer, 4 * width * height * sizeof(unsigned char));

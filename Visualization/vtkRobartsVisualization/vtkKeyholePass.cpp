@@ -194,10 +194,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 				this->MaskPixelBufferObject, false);
 		}
 
-#if GL_ES_VERSION_2_0 != 1
-		GLint savedDrawBuffer;
-		glGetIntegerv(GL_DRAW_BUFFER, &savedDrawBuffer);
-#endif
 		// 1. Create a new render state with FBO.
 		// Get viewport dimensions
 
@@ -282,6 +278,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 				VTK_UNSIGNED_CHAR, false);
 		}
 
+		this->FrameBufferObject->Bind();
 		this->FrameBufferObject->SetColorBuffer(0, this->Pass2);
 		this->FrameBufferObject->Start(width, height, false);
 
@@ -321,9 +318,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 
 			//restore state
 			this->FrameBufferObject->UnBind();
-#if GL_ES_VERSION_2_0 != 1
-			glDrawBuffer(static_cast<GLenum>(savedDrawBuffer));
-#endif
 			return;
 		}
 
@@ -428,10 +422,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		// Render in the original FBO
 		this->FrameBufferObject->UnBind();
 
-#if GL_ES_VERSION_2_0 != 1
-		glGetIntegerv(GL_DRAW_BUFFER, &savedDrawBuffer);
-#endif
-
 		this->Pass2->Activate();
 
 		// Render in the correct viewport
@@ -501,6 +491,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 		this->GY->Create2D(width, height, 4, VTK_UNSIGNED_CHAR, false);
 	}
 
+	this->FrameBufferObject->Bind();
 	this->FrameBufferObject->SetNumberOfRenderTargets(2);
 	this->FrameBufferObject->SetColorBuffer(0, this->GX);
 	this->FrameBufferObject->SetColorBuffer(1, this->GY);
@@ -573,6 +564,8 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 		this->GradientProgram1->Program,
 		this->GradientProgram1->VAO);
 
+	this->FrameBufferObject->UnBind();
+
 	// Restore viewport
 	glViewport(saved_viewport[0], saved_viewport[1], saved_viewport[2],
 		saved_viewport[3]);
@@ -637,6 +630,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	}
 
 	// Now bind foreground_grad_to to the FBO
+	this->FrameBufferObject->Bind();
 	this->FrameBufferObject->SetNumberOfRenderTargets(1);
 	this->FrameBufferObject->SetColorBuffer(0, ForegroundGradientTextureObject);
 	this->FrameBufferObject->SetActiveBuffer(0);
@@ -702,6 +696,7 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 	this->FrameBufferObject->RenderQuad(0, width - 1, 0, height - 1,
 		this->KeyholeShader->Program,
 		this->KeyholeShader->VAO);
+	this->FrameBufferObject->UnBind();
 	this->GX->Deactivate();
 	this->GY->Deactivate();
 
@@ -957,23 +952,16 @@ void vtkKeyholePass::ProbeSupport(const vtkRenderState *s)
 		this->FrameBufferObject->SetActiveBuffer(0);
 		this->FrameBufferObject->SetDepthBufferNeeded(true);
 
-#if GL_ES_VERSION_2_0 != 1
-		GLint savedCurrentDrawBuffer;
-		glGetIntegerv(GL_DRAW_BUFFER, &savedCurrentDrawBuffer);
-#endif
-
 		supported = this->FrameBufferObject->StartNonOrtho(64, 64, false);
 
 		if (!supported)
 		{
 			vtkErrorMacro("The requested FBO format is not supported by the context. Cannot render keyhole. ");
+			this->FrameBufferObject->UnBind();
 		}
 		else
 		{
 			this->FrameBufferObject->UnBind();
-#if GL_ES_VERSION_2_0 != 1
-			glDrawBuffer(static_cast<GLenum>(savedCurrentDrawBuffer));
-#endif
 		}
 	}
 

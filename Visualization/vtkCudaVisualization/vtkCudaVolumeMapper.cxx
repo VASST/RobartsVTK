@@ -300,6 +300,7 @@ bool vtkCudaVolumeMapper::GetImageFlipped()
 //----------------------------------------------------------------------------
 void vtkCudaVolumeMapper::Render(vtkRenderer* renderer, vtkVolume* volume)
 {
+
   //prepare the 3 main information handlers
   if (volume != this->VolumeInfoHandler->GetVolume()) { this->VolumeInfoHandler->SetVolume(volume); }
   this->VolumeInfoHandler->Update();

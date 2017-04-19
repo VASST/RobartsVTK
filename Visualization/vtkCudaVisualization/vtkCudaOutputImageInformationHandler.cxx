@@ -36,6 +36,9 @@
 #include "vtkRenderer.h"
 #include "vtkSetGet.h"
 #include "vtkVolume.h"
+#include "vtkImageImport.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkPNGWriter.h"
 
 vtkStandardNewMacro(vtkCudaOutputImageInformationHandler);
 
@@ -258,6 +261,24 @@ void vtkCudaOutputImageInformationHandler::Display(vtkVolume* volume, vtkRendere
     imageMemorySize[1] = this->OutputImageInfo.resolution.y;
     int imageOrigin[2] = {0, 0};
     this->Displayer->RenderTexture(volume, renderer, imageMemorySize, imageMemorySize, imageMemorySize, imageOrigin, 0.001, (unsigned char*) this->HostOutputImage);
+
+	/* This is for debugging */ 
+	/*
+	vtkImageImport* importer = vtkImageImport::New();
+	importer->CopyImportVoidPointer(this->HostOutputImage, 4 * imageMemorySize[0]* imageMemorySize[1] * sizeof(unsigned char));
+	importer->SetDataScalarTypeToUnsignedChar();
+	importer->SetNumberOfScalarComponents(4);
+	importer->SetWholeExtent(0, imageMemorySize[0] - 1, 0, imageMemorySize[1] - 1, 0, 0);
+	importer->SetDataExtentToWholeExtent();
+
+	vtkImageExtractComponents* rgbatoRgb = vtkImageExtractComponents::New();
+	rgbatoRgb->SetInputConnection(importer->GetOutputPort());
+	rgbatoRgb->SetComponents(0, 1, 2);
+
+	vtkPNGWriter* writer = vtkPNGWriter::New();
+	writer->SetFileName("cudaOutput_pass.png");
+	writer->SetInputConnection(rgbatoRgb->GetOutputPort());
+	writer->Write(); */
 
   }
   else if (this->OutputImageInfo.renderType == 2)
