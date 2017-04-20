@@ -166,8 +166,6 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState *s
   // buffers, force this pass to use 1, to avoid side effects from the
   // render of the previous frame.
   fbo->SetActiveBuffer(0);
-
-  fbo->SetDepthBufferNeeded(true);
   fbo->StartNonOrtho(newWidth,newHeight,false);
 
   GLint saved_viewport[4];

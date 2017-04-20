@@ -910,6 +910,7 @@ void vtkKeyholePass::ProbeSupport(const vtkRenderState *s)
 			this->Pass1 = vtkTextureObject::New();
 			this->Pass1->SetContext(renwin);
 		}
+
 		if (this->leftTextureObject == NULL)
 		{
 			this->leftTextureObject = vtkTextureObject::New();
@@ -1226,8 +1227,6 @@ void vtkKeyholePass::ReleaseGraphicsResources(vtkWindow* w)
 		this->rightPixelBufferObject->Delete();
 		this->rightPixelBufferObject = 0;
 	}
-
-
 
 	if (this->leftTextureObject != NULL)
 	{

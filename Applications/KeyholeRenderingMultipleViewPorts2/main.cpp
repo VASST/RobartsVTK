@@ -91,9 +91,9 @@ public:
 	y = 240;
     this->pinned = true;
 
-	double m[16] = { 1, 0, 0, 10, 
-					 0, 1, 0, 10, 
-					 0, 0, 1, 200, 
+	double m[16] = { 1, 0, 0, 0, 
+					 0, 1, 0, 0, 
+					 0, 0, 1, 1000, 
 					 0, 0, 0, 1 };
 	mat1 = vtkMatrix4x4::New();
 	mat2 = vtkMatrix4x4::New();
@@ -261,8 +261,8 @@ int main(int argc, char** argv)
   volumeMapper2->SetBlendModeToComposite();
   volumeMapper2->SetInputData(volumeReader->GetOutput());
   volumeMapper2->Modified();
-  /* Use VTK Mapper 
-  vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
+  /* Use VTK Mapper */ 
+  /*vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
   volumeMapper->SetInputData(volumeReader->GetOutput());
   volumeMapper->SetRequestedRenderModeToGPU();
   volumeMapper->Modified(); */
@@ -298,7 +298,7 @@ int main(int argc, char** argv)
   leftVolume->Update();
 
   vtkSmartPointer< vtkVolume > rightVolume = vtkSmartPointer< vtkVolume >::New();
-  rightVolume->SetMapper(volumeMapper2);
+  rightVolume->SetMapper(volumeMapper);
   rightVolume->SetProperty(volumeProperty);
   //rightVolume->SetOrigin(0, 0, 0);
   rightVolume->Update();
@@ -384,7 +384,7 @@ int main(int argc, char** argv)
 
   vtkOpenGLCamera *cam2 = vtkOpenGLCamera::SafeDownCast(ren2->GetActiveCamera());
   cam2->SetViewAngle(viewAngle);
-  cam2->SetPosition(0.5, 0, 0);
+  cam2->SetPosition(5, 0, 0);
   cam2->SetViewUp(0, -1, 0);
   cam2->SetFocalPoint(0, 0, 775);
   cam2->SetWindowCenter(center_x, center_y);
