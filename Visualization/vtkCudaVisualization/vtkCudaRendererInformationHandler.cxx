@@ -194,21 +194,33 @@ void vtkCudaRendererInformationHandler::SetKeyholePlanes(vtkPlaneCollection* pla
 
 void vtkCudaRendererInformationHandler::LoadZBuffer()
 {
-  //image origin in pixels
-  int x1 = this->Renderer->GetOrigin()[0];
-  int y1 = this->Renderer->GetOrigin()[1];
-  int x2 = x1 + this->RendererInfo.actualResolution.x - 1;
-  int y2 = y1 + this->RendererInfo.actualResolution.y - 1;
+	//image origin in pixels
+	int x1, x2, y1, y2;
+	if (this->Renderer->GetRenderWindow()->GetOffScreenRendering())
+	{
+		// If Off-screen rendering on, assume that the renderer origin is always at (0,0).
+		x1 = 0;
+		y1 = 0;
+		x2 = this->RendererInfo.actualResolution.x - 1;
+		y2 = this->RendererInfo.actualResolution.y - 1;
+	}
+	else
+	{
+		x1 = this->Renderer->GetOrigin()[0];
+		y1 = this->Renderer->GetOrigin()[1];
+		x2 = x1 + this->RendererInfo.actualResolution.x - 1;
+		y2 = y1 + this->RendererInfo.actualResolution.y - 1;
+	}
 
-  //remove old zBuffer and get a new one
-  if (this->ZBuffer)
-  {
-    delete this->ZBuffer;
-  }
-  this->ZBuffer = new float[(abs(x2 - x1) + 1) * (abs(y2 - y1) + 1)];
-  this->Renderer->GetRenderWindow()->GetZbufferData(x1, y1, x2, y2, this->ZBuffer);
-  this->ReserveGPU();
-  CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y, this->GetStream());
+	//remove old zBuffer and get a new one
+	if (this->ZBuffer)
+	{
+		delete this->ZBuffer;
+	}
+	this->ZBuffer = new float[(abs(x2 - x1) + 1) * (abs(y2 - y1) + 1)];
+	this->Renderer->GetRenderWindow()->GetZbufferData(x1, y1, x2, y2, this->ZBuffer);
+	this->ReserveGPU();
+	CUDA_vtkCudaVolumeMapper_renderAlgo_loadZBuffer(this->ZBuffer, this->RendererInfo.actualResolution.x, this->RendererInfo.actualResolution.y, this->GetStream());
 }
 
 void vtkCudaRendererInformationHandler::FigurePlanes(vtkPlaneCollection* planes, float* planesArray, int* numberOfPlanes)

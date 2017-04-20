@@ -184,12 +184,6 @@ public:
     keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
 	renWindowInteractor->GetRenderWindow()->Render();
-	//vtkRendererCollection *ren_col = renWindowInteractor->GetRenderWindow()->GetRenderers();
-	//ren_col->GetFirstRenderer()->Render();
-	//vtkRenderer *ren = ren_col->GetFirstRenderer();
-	//ren->Render();
-	//int n = ren_col->GetNumberOfItems();
-	//vtkImageData *output = vtkCudaVolumeMapper::SafeDownCast(rightVolume->GetMapper())->GetOutput();
 	frame_idx++;
   }
 
@@ -255,17 +249,6 @@ int main(int argc, char** argv)
   volumeMapper->SetBlendModeToComposite();
   volumeMapper->SetInputData(volumeReader->GetOutput());
   volumeMapper->Modified(); 
-
-  vtkSmartPointer< vtkCuda1DVolumeMapper > volumeMapper2 = vtkSmartPointer< vtkCuda1DVolumeMapper >::New();
-  volumeMapper2->UseFullVTKCompatibility();
-  volumeMapper2->SetBlendModeToComposite();
-  volumeMapper2->SetInputData(volumeReader->GetOutput());
-  volumeMapper2->Modified();
-  /* Use VTK Mapper */ 
-  /*vtkSmartPointer< vtkSmartVolumeMapper > volumeMapper = vtkSmartPointer< vtkSmartVolumeMapper >::New();
-  volumeMapper->SetInputData(volumeReader->GetOutput());
-  volumeMapper->SetRequestedRenderModeToGPU();
-  volumeMapper->Modified(); */
 
   vtkSmartPointer< vtkVolumeProperty > volumeProperty = vtkSmartPointer< vtkVolumeProperty >::New();
   volumeProperty->ShadeOff();
@@ -410,13 +393,13 @@ int main(int argc, char** argv)
   // Set keyhole parameters
   keyholePass->SetLeftKeyholeParameters(320, 240, 150, 2.0);
   keyholePass->SetHardKeyholeEdges(false);
-  keyholePass->SetBackgroundColor(0, 1, 0);
+  keyholePass->SetBackgroundColor(0, 0, 0);
   keyholePass->SetVisualizationMode(2); // Use Overlay mode
   keyholePass->SetAlphaValue(0.3);
 
   keyholePass2->SetLeftKeyholeParameters(320, 240, 150, 2.0);
   keyholePass2->SetHardKeyholeEdges(false);
-  keyholePass2->SetBackgroundColor(0, 0, 1);
+  keyholePass2->SetBackgroundColor(0, 0, 0);
   keyholePass2->SetVisualizationMode(2); // Use Overlay mode
   keyholePass2->SetAlphaValue(0.3);
 
