@@ -196,21 +196,11 @@ void vtkCudaRendererInformationHandler::LoadZBuffer()
 {
 	//image origin in pixels
 	int x1, x2, y1, y2;
-	if (this->Renderer->GetRenderWindow()->GetOffScreenRendering())
-	{
-		// If Off-screen rendering on, assume that the renderer origin is always at (0,0).
-		x1 = 0;
-		y1 = 0;
-		x2 = this->RendererInfo.actualResolution.x - 1;
-		y2 = this->RendererInfo.actualResolution.y - 1;
-	}
-	else
-	{
-		x1 = this->Renderer->GetOrigin()[0];
-		y1 = this->Renderer->GetOrigin()[1];
-		x2 = x1 + this->RendererInfo.actualResolution.x - 1;
-		y2 = y1 + this->RendererInfo.actualResolution.y - 1;
-	}
+
+	x1 = 0;
+	y1 = 0;
+	x2 = this->RendererInfo.actualResolution.x - 1;
+	y2 = this->RendererInfo.actualResolution.y - 1;
 
 	//remove old zBuffer and get a new one
 	if (this->ZBuffer)

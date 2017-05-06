@@ -216,11 +216,8 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		r->SetBackground(this->background_r, this->background_g, this->background_b);
 
 		// First pass
-		// Turn on Off-screen rendering so that volume mappers know which part of the depth buffer to read-in
-		r->GetRenderWindow()->OffScreenRenderingOn();
 		this->RenderDelegate(s, width, height, width, height, this->FrameBufferObject,
 			this->Pass1);
-		r->GetRenderWindow()->OffScreenRenderingOff();
 
 #ifdef VTK_KEYHOLE_PASS_DEBUG
 		// Save the output of the first pass to a file for debugging
@@ -770,7 +767,7 @@ void vtkKeyholePass::UpdateLeftTextureObject(vtkOpenGLRenderWindow *renwin)
 		0,
 		format,
 		type,
-		0);
+		0); 
 
 	vtkOpenGLCheckErrorMacro("failed at glTexImage2D");
 
@@ -1029,7 +1026,7 @@ int vtkKeyholePass::ReadTextures(vtkRenderer *r)
 				// Upload imagedata to pixel buffer object
 				bool success = this->leftPixelBufferObject->Upload2D(VTK_UNSIGNED_CHAR,
 					dataPtr, this->dimensions,
-					this->components, increments);
+					this->components, increments); 
 
 				if (this->stereo)
 				{
