@@ -327,9 +327,9 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
-  keyholePass->SetLeftKeyholeParameters(320, 240, 150, 2.0);
+  keyholePass->SetLeftKeyholeParameters(320, 240, 150, 0.02);
   keyholePass->SetHardKeyholeEdges(false);
-  keyholePass->SetBackgroundColor(0, 0, 128);
+  keyholePass->SetBackgroundColor(0, 0, 0);
   keyholePass->SetVisualizationMode(3); // Use keyhole rendering mode
 
   // Set render passes.

@@ -14,6 +14,7 @@ uniform float radius; // Radius of the keyhole. This is normalized.
 uniform float gamma; // gamma variable to control distance fall off
 uniform int use_mask_texture, use_hard_edges, mode; 
 uniform float aspect_ratio, alpha;
+//uniform float d1, d2;
 
 float calc_mask(vec2, float, float, float, float, float, int);
 
@@ -52,10 +53,11 @@ void main(void)
   }
   else if(mode == 3) // Keyhole blending
   {   
+	  float mask;
       if( use_mask_texture == 0)
       {
           // Compute the keyhole mask based on x0,y0, radius and gamma
-          float mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
+          mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
       
           // keyhole effect
           inside  = (1-mask)*volume.rgb;
@@ -64,15 +66,16 @@ void main(void)
       }
       else
       {
-          float m = texture2D(_mask, tcoordVC).r;
+         mask = texture2D(_mask, tcoordVC).r;
           // keyhole effect
-          inside = (1-m)*volume.rgb;
-          outside = m*foreground.rgb;
-          surface = (1-m)*foreground_grad.rgb;
+          inside = (1-mask)*volume.rgb;
+          outside = mask*foreground.rgb;
+          surface = (1-mask)*foreground_grad.rgb;
       }
-
+	  
+	  float opacity = gray + mask;
       // Blend textures to get the final effect. 
-      color.rgb = inside + surface + outside;
+      color.rgb = volume.rgb*(1-opacity) + foreground.rgb*opacity;
       color.a = 1.0;
   }
 }
@@ -83,16 +86,22 @@ float calc_mask(vec2 tcoord, float x0, float y0, float r, float ratio, float gam
     float x = tcoord.x - x0;
     float y = tcoord.y - y0;
 
-    if( pow(sqrt(ratio*x*x + y*y/ratio)/r, gamma) <= 1.0)
-    {
-        if( t == 1 )
-            return 0;
-        else
-        {  
-            float base_opacity = 0.08; // base opacity value
-            return (base_opacity + pow(sqrt(ratio*x*x + y*y/ratio)/r, gamma));
-        }
-    }
-    else 
-        return 1;
+	float d1 = 0.0/640;
+	float d2 = r;
+
+	float distance = sqrt(ratio*x*x + y*y/ratio);
+	
+	if(distance <= d1)
+	{
+		return 0;
+	}
+	else if (d1<distance && distance <=d2)
+	{
+		float val = pow((distance-d1)/(d2-d1),2);
+		return 1-exp(-val/0.25);
+	}
+	else
+	{
+		return 1;
+	}
 }
