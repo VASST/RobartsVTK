@@ -88,7 +88,8 @@ vtkKeyholePass::vtkKeyholePass()
 	background_g(0),
 	background_b(128), 
 	mode(0), 
-	alpha(0.5)
+	alpha(0.5), 
+	d1(0.0)
 {
 }
 
@@ -358,8 +359,6 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		this->KeyholeProgram->Program->SetUniformi("_foreground_grad", texture3);
 
-		this->KeyholeProgram->Program->SetUniformf("th", 0.04);
-
 		if (r->GetActiveCamera()->GetLeftEye())
 		{
 			this->KeyholeProgram->Program->SetUniformf("x0", static_cast<float>((this->xL * 1.0) / width));
@@ -376,6 +375,7 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
 		this->KeyholeProgram->Program->SetUniformf("radius", static_cast<float>((this->radius * 1.0) / width));
 		this->KeyholeProgram->Program->SetUniformf("aspect_ratio", static_cast<float>(width * 1.0 / height));
 		this->KeyholeProgram->Program->SetUniformf("gamma", this->gamma);
+		this->KeyholeProgram->Program->SetUniformf("d1", static_cast<float>(this->d1*1.0/width));
 		this->KeyholeProgram->Program->SetUniformi("use_mask_texture", 0);
 		this->KeyholeProgram->Program->SetUniformi("use_hard_edges", static_cast<int>(this->allow_hard_edges));
 

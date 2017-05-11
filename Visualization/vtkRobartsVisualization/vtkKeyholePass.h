@@ -138,6 +138,13 @@ public:
 	  this->alpha = _alpha;
   }
 
+  // Description:
+  // Set d1 value for the opacity function
+  void SetD1Value(double _d1)
+  {
+	  this->d1 = _d1;
+  }
+
 protected:
   // Description:
   // Graphics resources.
@@ -163,6 +170,7 @@ protected:
   int mode; // 0 - no keyhole, 1 - alpha blending, 3 - with keyhole
   int radius;
   int components;
+  double d1;
   unsigned int dimensions[2];
   float gamma;
   bool allow_hard_edges;

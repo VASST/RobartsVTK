@@ -6,7 +6,6 @@ in vec2 tcoordVC;
 layout(location = 0) out vec4 color;
 
 uniform sampler2D _volume, _mask, _foreground, _foreground_grad;
-uniform float th;
 
 // Parameters for keyhole
 uniform float x0,y0; // Center of the keyhole. Eventually this will be in 3D. This is normalized. 
@@ -14,9 +13,9 @@ uniform float radius; // Radius of the keyhole. This is normalized.
 uniform float gamma; // gamma variable to control distance fall off
 uniform int use_mask_texture, use_hard_edges, mode; 
 uniform float aspect_ratio, alpha;
-//uniform float d1, d2;
+uniform float d1;
 
-float calc_mask(vec2, float, float, float, float, float, int);
+float calc_mask(vec2, float, float, float, float, float, float, int);
 
 void main(void)
 {
@@ -27,6 +26,7 @@ void main(void)
 
   // Convert the edge map to gray-scale.
   float gray = 0.299*foreground_grad.r + 0.58*foreground_grad.g + 0.114*foreground_grad.b;
+  float factor = 3;
 
   if(mode == 0) // Just background image
   {
@@ -57,37 +57,27 @@ void main(void)
       if( use_mask_texture == 0)
       {
           // Compute the keyhole mask based on x0,y0, radius and gamma
-          mask = calc_mask( tcoordVC, x0, y0, radius, aspect_ratio, gamma, use_hard_edges);
-      
-          // keyhole effect
-          inside  = (1-mask)*volume.rgb;
-          outside = mask*foreground.rgb;
-          surface = (1-mask)*foreground_grad.rgb;
+          mask = calc_mask( tcoordVC, x0, y0, d1, radius, aspect_ratio, gamma, use_hard_edges);
       }
       else
       {
          mask = texture2D(_mask, tcoordVC).r;
-          // keyhole effect
-          inside = (1-mask)*volume.rgb;
-          outside = mask*foreground.rgb;
-          surface = (1-mask)*foreground_grad.rgb;
       }
 	  
-	  float opacity = gray + mask;
+	  float opacity = gray*factor + mask;
+	  surface = (1-mask)*vec3(gray*factor, gray*factor, gray*factor) + mask*foreground.rgb;
       // Blend textures to get the final effect. 
-      color.rgb = volume.rgb*(1-opacity) + foreground.rgb*opacity;
+
+      color.rgb = max(volume.rgb*(1-opacity), surface);
       color.a = 1.0;
   }
 }
 
 // Calculates the mask
-float calc_mask(vec2 tcoord, float x0, float y0, float r, float ratio, float gamma, int t)
+float calc_mask(vec2 tcoord, float x0, float y0, float d1, float r, float ratio, float gamma, int t)
 {
     float x = tcoord.x - x0;
     float y = tcoord.y - y0;
-
-	float d1 = 0.0/640;
-	float d2 = r;
 
 	float distance = sqrt(ratio*x*x + y*y/ratio);
 	
@@ -95,13 +85,13 @@ float calc_mask(vec2 tcoord, float x0, float y0, float r, float ratio, float gam
 	{
 		return 0;
 	}
-	else if (d1<distance && distance <=d2)
+	else if (d1<distance && distance <=r)
 	{
-		float val = pow((distance-d1)/(d2-d1),2);
+		float val = pow((distance-d1)/(r-d1),2);
 		return 1-exp(-val/0.25);
 	}
 	else
 	{
-		return 1;
+		return 1.0;
 	}
 }

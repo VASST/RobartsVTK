@@ -78,7 +78,7 @@ public:
   }
   vtkWindowEventCallback()
   {
-    this->size = 120;
+    this->size = 250;
     this->gamma = 5.0;
 	x = 320; 
 	y = 240;
@@ -123,7 +123,7 @@ public:
       char* c = renWindowInteractor->GetKeySym();
       if (*c == 'r')
       {
-        this->size = 120;
+        this->size = 250;
         x = 256;
         y = 256;
         this->gamma = 5.0;
@@ -327,9 +327,10 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkKeyholePass> keyholePass = vtkSmartPointer<vtkKeyholePass>::New();
 
   // Set keyhole parameters
-  keyholePass->SetLeftKeyholeParameters(320, 240, 150, 0.02);
+  keyholePass->SetLeftKeyholeParameters(320, 240, 250, 0.02);
   keyholePass->SetHardKeyholeEdges(false);
   keyholePass->SetBackgroundColor(0, 0, 0);
+  keyholePass->SetD1Value(10);
   keyholePass->SetVisualizationMode(3); // Use keyhole rendering mode
 
   // Set render passes.
