@@ -26,7 +26,7 @@ void main(void)
 
   // Convert the edge map to gray-scale.
   float gray = 0.299*foreground_grad.r + 0.58*foreground_grad.g + 0.114*foreground_grad.b;
-  float factor = 3;
+  float factor = 5;
 
   if(mode == 0) // Just background image
   {
