@@ -50,7 +50,7 @@ public:
   // Set the hierarchical model used in the segmentation. Leaves in the tree correspond
   // to disjoint labels in the output image. Branches correspond to super-objects,
   // collections of these labels
-  vtkSetObjectMacro(Structure,vtkTree)
+  virtual void SetStructure(vtkTree*);
   vtkGetObjectMacro(Structure,vtkTree)
   
   // Description:
@@ -113,25 +113,10 @@ public:
   virtual int RequestInformation( vtkInformation* request,
                vtkInformationVector** inputVector,
                vtkInformationVector* outputVector);
-  virtual int RequestUpdateExtent( vtkInformation* request,
-               vtkInformationVector** inputVector,
-               vtkInformationVector* outputVector);
   virtual int RequestDataObject( vtkInformation* request,
                vtkInformationVector** inputVector,
                vtkInformationVector* outputVector);
   virtual int FillInputPortInformation(int i, vtkInformation* info);
-
-  // Description:
-  // Bring this algorithm's outputs up-to-date.
-  virtual void Update();
-
-  // Description:
-  // Backward compatibility method to invoke UpdateInformation on executive.
-  virtual void UpdateInformation();
-
-  // Description:
-  // Bring this algorithm's outputs up-to-date.
-  virtual void UpdateWholeExtent();
 
 protected:
   vtkHierarchicalMaxFlowSegmentation();
@@ -149,7 +134,8 @@ protected:
   
   vtkTree* Structure;
   std::map<vtkIdType,double> SmoothnessScalars;
-  std::map<vtkIdType,int> LeafMap;
+  std::map<vtkIdType, int> LeafMap;
+  std::map<int, vtkIdType> BackwardsLeafMap;
   std::map<vtkIdType,int> BranchMap;
   int    NumLeaves;
   int    NumBranches;
@@ -162,8 +148,6 @@ protected:
   int VolumeSize;
   int VX, VY, VZ;
   
-  std::map<vtkIdType,int> InputDataPortMapping;
-  std::map<int,vtkIdType> BackwardsInputDataPortMapping;
   int FirstUnusedDataPort;
   std::map<vtkIdType,int> InputSmoothnessPortMapping;
   std::map<int,vtkIdType> BackwardsInputSmoothnessPortMapping;

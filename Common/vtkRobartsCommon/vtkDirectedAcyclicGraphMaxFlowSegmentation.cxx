@@ -345,8 +345,8 @@ vtkAlgorithmOutput* vtkDirectedAcyclicGraphMaxFlowSegmentation::GetOutputPort(in
   {
     return 0;
   }
-  vtkAlgorithmOutput* retVal = this->vtkAlgorithm::GetOutputPort(port->second);
-  return retVal;
+
+  return this->vtkAlgorithm::GetOutputPort(port->second);;
 }
 
 
@@ -359,9 +359,6 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy(vtkInforma
     vtkErrorMacro("Structure must be provided.");
     return -1;
   }
-
-  //this->LeafMap.clear();
-  //this->BranchMap.clear();
 
   //check to make sure that there is an image associated with each leaf node
   numLeaves = 0;
@@ -390,42 +387,41 @@ int vtkDirectedAcyclicGraphMaxFlowSegmentation::CheckInputConsistancy(vtkInforma
         vtkErrorMacro("Missing data prior for leaf node.");
         return -1;
       }
-    }
 
-    //check validity of data terms
-    int inputPortNumber = this->LeafMap[node];
-    if ((inputVector[0])->GetInformationObject(inputPortNumber) &&
-        (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()))
-    {
-      //check for right scalar type
-      vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
-      if (CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1)
+      //check validity of data terms
+      if ((inputVector[0])->GetInformationObject(inputPortNumber) &&
+          (inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()))
       {
-        vtkErrorMacro("Data type must be FLOAT and only have one component.");
-        return -1;
-      }
-      if (CurrImage->GetScalarRange()[0] < 0.0)
-      {
-        vtkErrorMacro("Data prior must be non-negative.");
-        return -1;
-      }
-
-	  //check to make sure that the sizes are consistent
-      if (extent[0] == -1)
-      {
-        CurrImage->GetExtent(extent);
-      }
-      else
-      {
-        int CurrExtent[6];
-        CurrImage->GetExtent(CurrExtent);
-        if (CurrExtent[0] != extent[0] || CurrExtent[1] != extent[1] || CurrExtent[2] != extent[2] ||
-            CurrExtent[3] != extent[3] || CurrExtent[4] != extent[4] || CurrExtent[5] != extent[5])
+        //check for right scalar type
+        vtkImageData* CurrImage = vtkImageData::SafeDownCast((inputVector[0])->GetInformationObject(inputPortNumber)->Get(vtkDataObject::DATA_OBJECT()));
+        if (CurrImage->GetScalarType() != VTK_FLOAT || CurrImage->GetNumberOfScalarComponents() != 1)
         {
-          vtkErrorMacro("Inconsistant object extent.");
+          vtkErrorMacro("Data type must be FLOAT and only have one component.");
           return -1;
         }
-      }
+        if (CurrImage->GetScalarRange()[0] < 0.0)
+        {
+          vtkErrorMacro("Data prior must be non-negative.");
+          return -1;
+        }
+
+        //check to make sure that the sizes are consistent
+        if (extent[0] == -1)
+        {
+          CurrImage->GetExtent(extent);
+        }
+        else
+        {
+          int CurrExtent[6];
+          CurrImage->GetExtent(CurrExtent);
+          if (CurrExtent[0] != extent[0] || CurrExtent[1] != extent[1] || CurrExtent[2] != extent[2] ||
+              CurrExtent[3] != extent[3] || CurrExtent[4] != extent[4] || CurrExtent[5] != extent[5])
+          {
+            vtkErrorMacro("Inconsistant object extent.");
+            return -1;
+          }
+        }
+	  }
 
     }
 
