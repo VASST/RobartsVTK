@@ -6,7 +6,7 @@ This file is a utility for applying the GHMF solver. It will take a brief descri
 of the GHMF hierarchy with associated smoothness/data terms and alphas as well as
 identifiers and output values
 
-Usage:\t TreeFilename NumberOfIterations [OutputFilename]
+Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN [OutputFilename]
 
 The tree is saved in a VTK file with the following attributes:
 "DataTerm": (mandatory) filename for the data term
@@ -18,8 +18,8 @@ The tree is saved in a VTK file with the following attributes:
 
 //------------------------------------------------------------------------------*/
 
-#include "vtkDirectedAcyclicGraphMaxFlowSegmentation.h"
-#include "vtkImageVote.h"
+#include "vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h"
+#include "vtkCudaImageVote.h"
 #include "vtkMetaImageReader.h"
 #include "vtkMetaImageWriter.h"
 
@@ -40,7 +40,7 @@ The tree is saved in a VTK file with the following attributes:
 
 void showHelpMessage()
 {
-  std::cerr << "Usage:\t TreeFilename NumberOfIterations " <<
+  std::cerr << "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN " <<
             "[-output OutputFilename] [-step StepSize] [-cc VanishingRatio]" << std::endl;
 }
 
@@ -52,7 +52,7 @@ void showLongHelpMessage()
             "of the GHMF hierarchy with associated smoothness/data terms and alphas as well as" <<
             "identifiers and output values" << std::endl <<
             std::endl <<
-            "Usage:\t TreeFilename NumberOfIterations " <<
+            "Usage:\t TreeFilename NumberOfIterations NumberOfDevices Device1 ... DeviceN " <<
             "[-output OutputFilename] [-step StepSize] [-cc VanishingRatio]" << std::endl <<
             "The tree is saved in a VTK file with the following attributes:" << std::endl <<
             "\"DataTerm\": (mandatory) filename for the data term" << std::endl <<
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   }
 
   //make sure there are enough arguments
-  if(argc < 3)
+  if(argc < 5)
   {
     showHelpMessage();
     return 0;
@@ -91,7 +91,8 @@ int main(int argc, char** argv)
 
   //check number of iterations
   int NumIts = std::atoi(argv[2]);
-  int NumFlags = (argc - 3) / 2;
+  int NumDev = std::atoi(argv[3]);
+  int NumFlags = (argc - (3+NumDev) - 1) / 2;
   double Tau = 0.1;
   double CC = 0.25;
   bool hasOutput = false;
@@ -100,19 +101,19 @@ int main(int argc, char** argv)
   //read in flags
   for(int i = 0; i < NumFlags; i++)
   {
-    std::string command = std::string(argv[3+2*i]);
+    std::string command = std::string(argv[4+NumDev+2*i]);
     if( !command.compare("-output") )
     {
       hasOutput = true;
-      OutFileBase = std::string(argv[4+2*i]);
+      OutFileBase = std::string(argv[5+NumDev+2*i]);
     }
     else if( !command.compare("-step") )
     {
-      Tau = std::atof(argv[4+2*i]);
+      Tau = std::atof(argv[5+NumDev+2*i]);
     }
     else if( !command.compare("-cc") )
     {
-      CC = std::atof(argv[4+2*i]);
+      CC = std::atof(argv[5+NumDev+2*i]);
     }
     else
     {
@@ -141,7 +142,20 @@ int main(int argc, char** argv)
   }
 
   //create segmenter
-  vtkDirectedAcyclicGraphMaxFlowSegmentation* Segmenter = vtkDirectedAcyclicGraphMaxFlowSegmentation::New();
+  vtkDirectedAcyclicGraphMaxFlowSegmentation* Segmenter;
+  if(NumDev > 0)
+  {
+    Segmenter = vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::New();
+    ((vtkCudaDirectedAcyclicGraphMaxFlowSegmentation*) Segmenter)->ClearDevices();
+    for(int i = 0; i < NumDev; i++)
+    {
+      ((vtkCudaDirectedAcyclicGraphMaxFlowSegmentation*) Segmenter)->AddDevice(std::atoi(argv[4+i]));
+    }
+  }
+  else
+  {
+    Segmenter = vtkDirectedAcyclicGraphMaxFlowSegmentation::New();
+  }
   Segmenter->SetStructure(Tree);
   Segmenter->SetNumberOfIterations(NumIts);
   Segmenter->SetStepSize(Tau);
@@ -231,7 +245,8 @@ int main(int argc, char** argv)
     std::string OutFileMHD = OutFileBase + ".mhd";
     std::string OutFileRAW = OutFileBase + ".raw";
 
-    vtkImageVote* Voter = vtkImageVote::New();
+    vtkCudaImageVote* Voter = vtkCudaImageVote::New();
+    Voter->SetDevice(std::atoi(argv[4]));
     Voter->SetOutputDataType(VTK_INT);
     Iterator = vtkRootedDirectedAcyclicGraphForwardIterator::New();
     Iterator->SetDAG(Tree);
@@ -255,7 +270,7 @@ int main(int argc, char** argv)
     Writer->Delete();
     Voter->Delete();
   }
-  else if(argv[4])
+  else if(argv[4+NumDev])
   {
     std::cerr << "Identifiers not given in tree file. (No field named \"Identifier\".) " << std::endl;
   }

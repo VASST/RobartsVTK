@@ -89,8 +89,10 @@ FIND_PACKAGE(OpenMP REQUIRED)
 #-----------------------------------------------------------------------------
 # Look for a VTK build directory
 #-----------------------------------------------------------------------------
-FIND_PACKAGE(VTK 7 REQUIRED NO_MODULE)
-
+FIND_PACKAGE(VTK REQUIRED NO_MODULE)
+IF ( ${VTK_VERSION} VERSION_LESS "7" )
+	MESSAGE( SEND_ERROR "VTK must be version 7 or higher.") 
+ENDIF()
 MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 
 #-----------------------------------------------------------------------------
@@ -371,16 +373,16 @@ ENDIF()
 OPTION (RobartsVTK_USE_VISUALIZATION "Build the Robarts Visualization modules" OFF)
 IF(RobartsVTK_USE_VISUALIZATION)
   FIND_PACKAGE(OpenGL REQUIRED)
-  FIND_PACKAGE(FFTW REQUIRED)
-  MESSAGE(STATUS "Using FFTW available at: ${FFTW_ROOT_DIR}")
+  #FIND_PACKAGE(FFTW REQUIRED)
+  #MESSAGE(STATUS "Using FFTW available at: ${FFTW_ROOT_DIR}")
 
-  IF(NOT PNG_CMAKE_FILE)
-    MESSAGE(FATAL_ERROR "libpng include file not specified. Unable to find PNG library. Please set PNG_CMAKE_FILE:FILEPATH to the location of libpng16.cmake")
-  ENDIF()
-  INCLUDE(${PNG_CMAKE_FILE})
+  #IF(NOT PNG_CMAKE_FILE)
+  #  MESSAGE(FATAL_ERROR "libpng include file not specified. Unable to find PNG library. Please set PNG_CMAKE_FILE:FILEPATH to the location of libpng16.cmake")
+  #ENDIF()
+  #INCLUDE(${PNG_CMAKE_FILE})
   
-  MESSAGE(STATUS "Using libpng available at: ${PNG_CMAKE_FILE}")
-  MESSAGE(STATUS "Using zlib available at: ${ZLIB_ROOT}")
+  #MESSAGE(STATUS "Using libpng available at: ${PNG_CMAKE_FILE}")
+  #MESSAGE(STATUS "Using zlib available at: ${ZLIB_ROOT}")
 
   ADD_SUBDIRECTORY(Visualization/vtkRobartsVisualization)
 
@@ -469,9 +471,13 @@ IF(RobartsVTK_BUILD_APPS)
     ENDIF()
   ENDIF()
 
-  IF(RobartsVTK_USE_COMMON AND RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS)
+  IF(RobartsVTK_USE_COMMON )
     ADD_SUBDIRECTORY(Applications/MaxFlow)
-    set_target_properties(MaxFlow GHMFSegment KSOMTrain KSOMApply PROPERTIES FOLDER Applications)
+    set_target_properties(MaxFlow GHMFSegment PROPERTIES FOLDER Applications)
+	IF ( RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS )
+		ADD_SUBDIRECTORY(Applications/CudaMaxFlow)
+		set_target_properties(MaxFlow GHMFSegment KSOMTrain KSOMApply PROPERTIES FOLDER Applications)
+	ENDIF()
   ENDIF()
   
   IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT)

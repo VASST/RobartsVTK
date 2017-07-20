@@ -12,7 +12,7 @@ PURPOSE.  See the above copyright notice for more information.
 
 #include "vtkBMPReader.h"
 #include "vtkDataSetAttributes.h"
-#include "vtkDirectedAcyclicGraphMaxFlowSegmentation.h"
+#include "vtkCudaDirectedAcyclicGraphMaxFlowSegmentation.h"
 #include "vtkFloatArray.h"
 #include "vtkImageCast.h"
 #include "vtkImageData.h"
@@ -92,7 +92,6 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkBMPReader> cost3 = vtkSmartPointer<vtkBMPReader>::New();
   cost3->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/cost3.bmp").c_str());
 
-
   vtkSmartPointer<vtkImageExtractComponents> extract0 = vtkSmartPointer<vtkImageExtractComponents>::New();
   extract0->SetComponents(0);
   extract0->SetInputConnection(cost0->GetOutputPort());
@@ -118,13 +117,8 @@ int main(int argc, char** argv)
   cast3->SetOutputScalarTypeToFloat();
   cast3->SetInputConnection(extract3->GetOutputPort());
 
-  //cast0->Update();
-  //cast1->Update();
-  //cast2->Update();
-  //cast3->Update();
-
-  vtkSmartPointer<vtkDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
-    vtkSmartPointer<vtkDirectedAcyclicGraphMaxFlowSegmentation>::New();
+  vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
+    vtkSmartPointer<vtkCudaDirectedAcyclicGraphMaxFlowSegmentation>::New();
   dagmf->SetStructure(DAG);
   dagmf->SetDataInputConnection(bkg,cast0->GetOutputPort());
   dagmf->SetDataInputConnection(l1,cast1->GetOutputPort());
@@ -139,27 +133,36 @@ int main(int argc, char** argv)
   dagmf->SetCC(0.01);
   dagmf->SetStepSize(0.1);
   dagmf->SetNumberOfIterations(100);
-  //dagmf->Update();
+  dagmf->Update();
+
+  vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
+  test0->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(bkg));
+  vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();
+  test1->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l1));
+  vtkSmartPointer<vtkImageData> test2 = vtkSmartPointer<vtkImageData>::New();
+  test2->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l2));
+  vtkSmartPointer<vtkImageData> test3 = vtkSmartPointer<vtkImageData>::New();
+  test3->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l3));
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-  writer->SetInputConnection(dagmf->GetOutputPort(bkg));
-  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l0.mhd").c_str());
-  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l0.raw").c_str());
+  writer->SetInputData(test0);
+  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.mhd").c_str());
+  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputConnection(dagmf->GetOutputPort(l1));
-  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l1.mhd").c_str());
-  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l1.raw").c_str());
+  writer->SetInputData(test1);
+  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.mhd").c_str());
+  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputConnection(dagmf->GetOutputPort(l2));
-  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l2.mhd").c_str());
-  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l2.raw").c_str());
+  writer->SetInputData(test2);
+  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.mhd").c_str());
+  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputConnection(dagmf->GetOutputPort(l3));
-  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l3.mhd").c_str());
-  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "\\l3.raw").c_str());
+  writer->SetInputData(test3);
+  writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.mhd").c_str());
+  writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.raw").c_str());
   writer->Update();
   writer->Write();
 
