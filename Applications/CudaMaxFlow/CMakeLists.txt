@@ -1,7 +1,7 @@
 PROJECT( CudaMaxFlow )
 
 SET ( ${PROJECT_NAME}_SRCS 
-  MaxFlow.cxx
+  CudaMaxFlow.cxx
 )
 
 # -----------------------------------------------------------------
@@ -21,9 +21,9 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC
   
 # -----------------------------------------------------------------
 # Build the GHMF_Segment executable
-SET ( Module_SRCS GHMF_Segment.cxx)
-ADD_EXECUTABLE(GHMFSegment ${Module_SRCS})
-target_link_libraries(GHMFSegment
+SET ( Module_SRCS CUDA_GHMF_Segment.cxx)
+ADD_EXECUTABLE(CUDAGHMFSegment ${Module_SRCS})
+target_link_libraries(CUDAGHMFSegment
   vtkFiltersCore 
   vtkImagingCore 
   vtkIOCore 

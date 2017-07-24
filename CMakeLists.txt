@@ -476,7 +476,7 @@ IF(RobartsVTK_BUILD_APPS)
     set_target_properties(MaxFlow GHMFSegment PROPERTIES FOLDER Applications)
 	IF ( RobartsVTK_USE_CUDA AND RobartsVTK_USE_CUDA_ANALYTICS )
 		ADD_SUBDIRECTORY(Applications/CudaMaxFlow)
-		set_target_properties(MaxFlow GHMFSegment KSOMTrain KSOMApply PROPERTIES FOLDER Applications)
+		set_target_properties(CudaMaxFlow CUDAGHMFSegment KSOMTrain KSOMApply PROPERTIES FOLDER Applications)
 	ENDIF()
   ENDIF()
   
