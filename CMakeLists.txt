@@ -98,6 +98,7 @@ MESSAGE(STATUS "Using VTK available at: ${VTK_DIR}")
 #-----------------------------------------------------------------------------
 # Confirm that VTK was built with Qt if requested
 #-----------------------------------------------------------------------------
+OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
 IF(RobartsVTK_USE_QT)
   IF (NOT TARGET vtkGUISupportQt)
     MESSAGE( SEND_ERROR "You have to build VTK with VTK_USE_QT flag ON if you need to use RobartsVTK_USE_QT.")
@@ -107,7 +108,6 @@ ENDIF()
 #-----------------------------------------------------------------------------
 # Qt
 #-----------------------------------------------------------------------------
-OPTION (RobartsVTK_USE_QT "Build with QT enabled" OFF)
 IF (RobartsVTK_USE_QT)
   IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
     SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent Xml)
@@ -423,52 +423,56 @@ IF (RobartsVTK_USE_OpenCL)
   ENDIF()
 ENDIF()
 
+
+#-------------------------------------
+# OpenCV Dependencies
+#-------------------------------------
+OPTION(RobartsVTK_USE_OPENCV "Use OpenCV in applications." ON)
+IF(RobartsVTK_USE_OPENCV)
+	FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+ENDIF()
+
 #-----------------------------------------------------------------------------
 # Applications
 #-----------------------------------------------------------------------------
 OPTION(RobartsVTK_BUILD_APPS "Build RobartsVTK applications." OFF)
 IF(RobartsVTK_BUILD_APPS)
-  IF(RobartsVTK_USE_CUDA)
-    ADD_SUBDIRECTORY(Applications/Cuda2DTFVolumeRendering)
-    set_target_properties(Cuda2DTFVolumeRendering PROPERTIES FOLDER Applications)
-    IF(RobartsVTK_USE_QT)
-      ADD_SUBDIRECTORY(Applications/FluoroPredViz)
-      set_target_properties(FluoroPredViz PROPERTIES FOLDER Applications)
-      ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
-      set_target_properties(TFUIDual PROPERTIES FOLDER Applications)
-      set_target_properties(TFUIGradient PROPERTIES FOLDER Applications)
-      set_target_properties(TFUIKohonen PROPERTIES FOLDER Applications)
-    ENDIF()
-  ENDIF()
+	IF(RobartsVTK_USE_CUDA)
+	ADD_SUBDIRECTORY(Applications/Cuda2DTFVolumeRendering)
+	set_target_properties(Cuda2DTFVolumeRendering PROPERTIES FOLDER Applications)
+	IF(RobartsVTK_USE_QT AND RobartsVTK_USE_CUDA_VISUALIZATION)
+		ADD_SUBDIRECTORY(Applications/FluoroPredViz)
+		set_target_properties(FluoroPredViz PROPERTIES FOLDER Applications)
+		ADD_SUBDIRECTORY(Applications/TransferFunctionGUI)
+		set_target_properties(TFUIDual PROPERTIES FOLDER Applications)
+		set_target_properties(TFUIGradient PROPERTIES FOLDER Applications)
+		set_target_properties(TFUIKohonen PROPERTIES FOLDER Applications)
+	ENDIF()
   
-  IF(RobartsVTK_USE_CL_VOLUMERECONSTRUCTION AND RobartsVTK_USE_PLUS)
-    #-------------------------------------
-    # Find OpenCV
-    #-------------------------------------
-    FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
-
-    IF(RobartsVTK_USE_VISUALIZATION)
-      IF(RobartsVTK_USE_CUDA_VISUALIZATION)
-        ADD_SUBDIRECTORY(Applications/StreamingUSVis)
-        set_target_properties(StreamingUSVis PROPERTIES FOLDER Applications)
-        ADD_SUBDIRECTORY(Applications/Cuda1DTFVolumeRendering)
-        set_target_properties(Cuda1DTFVolumeRendering PROPERTIES FOLDER Applications)
-        ADD_SUBDIRECTORY(Applications/CLReconstruction)
-        set_target_properties(CLReconstruction PROPERTIES FOLDER Applications)
-        ADD_SUBDIRECTORY(Applications/CLReconstructionWithVisualization)
-        set_target_properties(CLReconstructionWithVisualization PROPERTIES FOLDER Applications)
-      ENDIF()
-      ADD_SUBDIRECTORY(Applications/KeyholeRendering)
-      set_target_properties(KeyholeRendering PROPERTIES FOLDER Applications)
-	  ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts)
-      set_target_properties(KeyholeRenderingMultipleViewPorts PROPERTIES FOLDER Applications)
-	  ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts2)
-      set_target_properties(KeyholeRenderingMultipleViewPorts2 PROPERTIES FOLDER Applications)
-	  ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithVideo)
-      set_target_properties(KeyholeRenderingWithVideo PROPERTIES FOLDER Applications)
-	  ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithStereoVideo)
-	  set_target_properties(KeyholeRenderingWithStereoVideo PROPERTIES FOLDER Applications)
-    ENDIF()
+    IF( RobartsVTK_USE_OPENCV )
+		IF(RobartsVTK_USE_VISUALIZATION)
+		  IF(RobartsVTK_USE_CUDA_VISUALIZATION)
+			ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+			set_target_properties(StreamingUSVis PROPERTIES FOLDER Applications)
+			ADD_SUBDIRECTORY(Applications/Cuda1DTFVolumeRendering)
+			set_target_properties(Cuda1DTFVolumeRendering PROPERTIES FOLDER Applications)
+			ADD_SUBDIRECTORY(Applications/CLReconstruction)
+			set_target_properties(CLReconstruction PROPERTIES FOLDER Applications)
+			ADD_SUBDIRECTORY(Applications/CLReconstructionWithVisualization)
+			set_target_properties(CLReconstructionWithVisualization PROPERTIES FOLDER Applications)
+		  ENDIF()
+		  ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+		  set_target_properties(KeyholeRendering PROPERTIES FOLDER Applications)
+		  ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts)
+		  set_target_properties(KeyholeRenderingMultipleViewPorts PROPERTIES FOLDER Applications)
+		  ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts2)
+		  set_target_properties(KeyholeRenderingMultipleViewPorts2 PROPERTIES FOLDER Applications)
+		  ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithVideo)
+		  set_target_properties(KeyholeRenderingWithVideo PROPERTIES FOLDER Applications)
+		  ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithStereoVideo)
+		  set_target_properties(KeyholeRenderingWithStereoVideo PROPERTIES FOLDER Applications)
+		ENDIF()
+	  ENDIF()
   ENDIF()
 
   IF(RobartsVTK_USE_COMMON )
@@ -480,11 +484,7 @@ IF(RobartsVTK_BUILD_APPS)
 	ENDIF()
   ENDIF()
   
-  IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT)
-    #-------------------------------------
-    # Find OpenCV
-    #-------------------------------------
-    FIND_PACKAGE(OpenCV 3.1.0 REQUIRED NO_MODULE)
+  IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT AND RobartsVTK_USE_OPENCV)
 
     MESSAGE(STATUS "Using PlusApp available at: ${PlusApp_DIR}")
 
