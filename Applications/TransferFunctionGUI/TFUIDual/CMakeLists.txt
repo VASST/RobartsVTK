@@ -26,6 +26,7 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
 # -----------------------------------------------------------------
 # Build the executable
 ADD_EXECUTABLE(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+include(${VTK_USE_FILE})
 target_include_directories(${PROJECT_NAME} PUBLIC 
   ${VTK_INCLUDE_DIRS}
   ${${PROJECT_NAME}_INCLUDE_DIRS}
