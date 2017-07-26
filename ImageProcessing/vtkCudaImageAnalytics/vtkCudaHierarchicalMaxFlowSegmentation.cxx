@@ -26,7 +26,6 @@
 #include "vtkCudaHierarchicalMaxFlowSegmentation.h"
 #include "vtkObjectFactory.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkTreeDFSIterator.h"
 #include <assert.h>
 #include <float.h>
 #include <limits.h>
