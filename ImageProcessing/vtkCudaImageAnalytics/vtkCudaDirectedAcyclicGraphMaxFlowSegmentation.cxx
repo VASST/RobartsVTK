@@ -650,6 +650,7 @@ void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::CreateUpdateLabelsTasks()
       newTask->AddBuffer(BranchLabelBuffers[BranchMap[Node]]);
     }
   }
+  forIterator->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -680,6 +681,7 @@ void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::CreateClearSourceBufferTask
       newTask->AddBuffer(BranchSourceBuffers[BranchMap[Node]]);
     }
   }
+  forIterator->Delete();
 }
 
 //Index
@@ -838,6 +840,7 @@ void vtkCudaDirectedAcyclicGraphMaxFlowSegmentation::AssociateFinishSignals()
       }
     }
   }
+  forIterator->Delete();
 }
 
 //----------------------------------------------------------------------------
