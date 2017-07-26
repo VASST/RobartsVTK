@@ -133,34 +133,24 @@ int main(int argc, char** argv)
   dagmf->SetCC(0.01);
   dagmf->SetStepSize(0.1);
   dagmf->SetNumberOfIterations(100);
-  dagmf->Update();
-
-  vtkSmartPointer<vtkImageData> test0 = vtkSmartPointer<vtkImageData>::New();
-  test0->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(bkg));
-  vtkSmartPointer<vtkImageData> test1 = vtkSmartPointer<vtkImageData>::New();
-  test1->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l1));
-  vtkSmartPointer<vtkImageData> test2 = vtkSmartPointer<vtkImageData>::New();
-  test2->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l2));
-  vtkSmartPointer<vtkImageData> test3 = vtkSmartPointer<vtkImageData>::New();
-  test3->ShallowCopy((vtkImageData*) dagmf->GetOutputDataObject(l3));
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-  writer->SetInputData(test0);
+  writer->SetInputConnection(dagmf->GetOutputPort(bkg));
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l0.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputData(test1);
+  writer->SetInputConnection(dagmf->GetOutputPort(l1));
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l1.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputData(test2);
+  writer->SetInputConnection(dagmf->GetOutputPort(l2));
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l2.raw").c_str());
   writer->Update();
   writer->Write();
-  writer->SetInputData(test3);
+  writer->SetInputConnection(dagmf->GetOutputPort(l3));
   writer->SetFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.mhd").c_str());
   writer->SetRAWFileName(std::string(vtksys::SystemTools::GetFilenamePath(outputDirectory) + "/l3.raw").c_str());
   writer->Update();
