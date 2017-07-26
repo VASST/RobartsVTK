@@ -118,11 +118,6 @@ int main(int argc, char** argv)
   cast3->SetOutputScalarTypeToFloat();
   cast3->SetInputConnection(extract3->GetOutputPort());
 
-  //cast0->Update();
-  //cast1->Update();
-  //cast2->Update();
-  //cast3->Update();
-
   vtkSmartPointer<vtkDirectedAcyclicGraphMaxFlowSegmentation> dagmf =
     vtkSmartPointer<vtkDirectedAcyclicGraphMaxFlowSegmentation>::New();
   dagmf->SetStructure(DAG);
@@ -139,7 +134,6 @@ int main(int argc, char** argv)
   dagmf->SetCC(0.01);
   dagmf->SetStepSize(0.1);
   dagmf->SetNumberOfIterations(100);
-  //dagmf->Update();
 
   vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
   writer->SetInputConnection(dagmf->GetOutputPort(bkg));
