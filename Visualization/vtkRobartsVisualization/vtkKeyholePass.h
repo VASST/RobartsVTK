@@ -36,16 +36,23 @@
 
 #include "vtkRobartsVisualizationExport.h"
 
+#include <vtkVersionMacros.h>
 #include "vtkActorCollection.h"
 #include "vtkImageData.h"
 #include "vtkMultiViewportImageProcessingPass.h" // Use this instead of vtkImageProcessingPass.h 
-									//  that comes with VTK if multiple view-ports are used.
+//  that comes with VTK if multiple view-ports are used.
 #include "vtkOpenGLHelper.h"
 #include "vtkPixelBufferObject.h"
 #include "vtkRenderer.h"
 #include "vtkTexture.h"
 
-class vtkFrameBufferObject;
+#if VTK_MAJOR_VERSION >= 8
+  class vtkOpenGLFramebufferObject;
+  typedef vtkOpenGLFramebufferObject RobartsVTKFrameBufferObject;
+#else
+  class vtkFrameBufferObject;
+  typedef vtkFrameBufferObject RobartsVTKFrameBufferObject;
+#endif
 class vtkOpenGLRenderWindow;
 class vtkShader2;
 class vtkShaderProgram2;
@@ -57,7 +64,12 @@ class vtkTextureObject;
 class vtkRobartsVisualizationExport vtkKeyholePass : public vtkMultiViewportImageProcessingPass
 {
 public:
-
+  enum RenderingMode
+  {
+    MODE_NO_KEYHOLE,
+    MODE_ALPHA_BLENDING,
+    MODE_KEYHOLE
+  };
   enum vtkKeyholePass_Texture_Index
   {
     BACKGROUND,
@@ -65,152 +77,125 @@ public:
     MASK
   };
 
-  static vtkKeyholePass *New();
+  static vtkKeyholePass* New();
   vtkTypeMacro(vtkKeyholePass, vtkMultiViewportImageProcessingPass);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // Perform rendering according to a render state \p s.
   // \pre s_exists: s!=0
-  virtual void Render(const vtkRenderState *s);
+  virtual void Render(const vtkRenderState* s);
 
   // Description:
   // Release graphics resources and ask components to release their own
   // resources.
   // \pre w_exists: w!=0
-  void ReleaseGraphicsResources(vtkWindow *w);
+  void ReleaseGraphicsResources(vtkWindow* w);
 
   // Description:
   // Use an image as the mask
-  void UseMaskImage( bool t )
-  {
-    this->mask_img_available = t;
-  }
+  void UseMaskImage(bool t);
 
   // Description:
   // Set mask parameters
-  void SetLeftKeyholeParameters(int x, int y , int r, double g)
-  {
-    this->xL = x;
-    this->yL = y;
-    this->radius = r;
-    this->gamma = static_cast<float>(g);
-  }
-
-  void SetRightKeyholeParameters(int x, int y, int r, double g)
-  {
-	  this->xR = x;
-	  this->yR = y;
-	  this->radius = r;
-	  this->gamma = static_cast<float>(g);
-  }
+  void SetLeftKeyholeParameters(int x, int y, int r, double g);
+  void SetRightKeyholeParameters(int x, int y, int r, double g);
 
   // Description:
   // Set whether the keyhole has hard edges/soft(blurred) edges.
   // By default it is set to false.
-  void SetHardKeyholeEdges(bool t)
-  {
-    this->allow_hard_edges = t;
-  }
+  void SetHardKeyholeEdges(bool t);
 
   // Description:
   // Set the background color
   // By default is is set to blue
-  void SetBackgroundColor(double r, double g, double b)
-  {
-	  this->background_r = r;
-	  this->background_g = g;
-	  this->background_b = b;
-  }
+  void SetBackgroundColor(double r, double g, double b);
 
   // Description:
   // Set visualization mode: 0 - no keyhole, 1- alpha blending, 2- additive blending, 3 - keyhole
   // By default this is set to no keyhole
-  void SetVisualizationMode(int _mode)
-  {
-	  this->mode = _mode;
-  }
+  void SetVisualizationMode(RenderingMode _mode);
 
   // Description:
   // Set alpha value for blending. The default value is 0.5
-  void SetAlphaValue(double _alpha)
-  {
-	  this->alpha = _alpha;
-  }
+  void SetAlpha(double _alpha);
 
   // Description:
   // Set d1 value for the opacity function
-  void SetD1Value(double _d1)
-  {
-	  this->d1 = _d1;
-  }
+  void SetD1(double _d1);
 
 protected:
   // Description:
   // Graphics resources.
-  vtkFrameBufferObject* FrameBufferObject;
-  vtkTextureObject* Pass1; // render target for the volume
-  vtkTextureObject* Pass2; // render target for the horizontal pass
-  vtkPixelBufferObject *leftPixelBufferObject, *rightPixelBufferObject;
-  vtkPixelBufferObject* MaskPixelBufferObject;
-  vtkTextureObject *leftTextureObject, *rightTextureObject;
-  vtkTextureObject* MaskTextureObject;
-  vtkTextureObject* ForegroundGradientTextureObject;
-  vtkTextureObject* GX;
-  vtkTextureObject* GY;
-  vtkOpenGLHelper* KeyholeProgram;
-  vtkOpenGLHelper* GradientProgram1;
-  vtkOpenGLHelper* KeyholeShader; // keyhole shader
+  RobartsVTKFrameBufferObject*  FrameBufferObject;
+  vtkTextureObject*             Pass1; // render target for the volume
+  vtkTextureObject*             Pass2; // render target for the horizontal pass
+  vtkPixelBufferObject*         LeftPixelBufferObject;
+  vtkPixelBufferObject*         RightPixelBufferObject;
+  vtkPixelBufferObject*         MaskPixelBufferObject;
+  vtkTextureObject*             LeftTextureObject;
+  vtkTextureObject*             RightTextureObject;
+  vtkTextureObject*             MaskTextureObject;
+  vtkTextureObject*             ForegroundGradientTextureObject;
+  vtkTextureObject*             GX;
+  vtkTextureObject*             GY;
+  vtkOpenGLHelper*              KeyholeProgram;
+  vtkOpenGLHelper*              GradientProgram1;
+  vtkOpenGLHelper*              KeyholeShader;
 
-  std::string FragmentShaderSource;
-  std::string VertexShaderSource;
+  std::string                   FragmentShaderSource;
+  std::string                   VertexShaderSource;
 
-  int xL, xR;
-  int yL, yR;
-  int mode; // 0 - no keyhole, 1 - alpha blending, 3 - with keyhole
-  int radius;
-  int components;
-  double d1;
-  unsigned int dimensions[2];
-  float gamma;
-  bool allow_hard_edges;
-  bool mask_img_available;
+  int                           xL;
+  int                           xR;
+  int                           yL;
+  int                           yR;
+  RenderingMode                 Mode; // 0 - no keyhole, 1 - alpha blending, 3 - with keyhole
+  int                           Radius;
+  int                           Components;
+  double                        D1;
+  unsigned int                  Dimensions[2];
+  float                         Gamma;
+  bool                          AllowHardEdges;
+  bool                          MaskImageAvailable;
 
-  int viewPortWidth, viewPortHeight;
-  int viewPortX, viewPortY;
+  int                           ViewPortWidth;
+  int                           ViewPortHeight;
+  int                           ViewPortX;
+  int                           ViewPortY;
 
-  double background_r, background_g, background_b;
-  double alpha;
+  double                        BackgroundRed;
+  double                        BackgroundGreen;
+  double                        BackgroundBlue;
+  double                        BackgroundAlpha;
 
-  bool Supported;
-  bool SupportProbed;
-  bool stereo;
+  bool                          Supported;
+  bool                          SupportProbed;
+  bool                          Stereo;
 
-private:
-  // Description:
+protected:
   // Default constructor. DelegatePass is set to NULL.
   vtkKeyholePass();
-
-  // Description:
-  // Destructor.
   virtual ~vtkKeyholePass();
 
+  void LoadShaders(std::string, std::string); // Load Shader programs from file.
+  void GetForegroudGradient(vtkRenderer*); // perform sobel pass on foreground texture and save the results to foreground_grad_to
+  void UpdateLeftTextureObject(vtkOpenGLRenderWindow*);  // convenience method to update texture object when new data is available.
+  void UpdateRightTextureObject(vtkOpenGLRenderWindow*);  // convenience method to update texture object when new data is available.
+  void SetupDrawBuffers(vtkRenderer*); // convenience method to set up appropriate drawbuffers.
+  void CopyToFrameBuffer(int, int,
+                         int, int,
+                         int, int,
+                         int, int,
+                         vtkTextureObject*,
+                         vtkShaderProgram*, vtkOpenGLVertexArrayObject*);  // This is a convenience method to update the framebuffer. vtkTextureObject has a similar method.
+  // However, it has a minor bug in setting glViewPort. This method fixes that issue.
+  void ProbeSupport(const vtkRenderState*);  // Probe for support
+  int ReadTextures(vtkRenderer*);
+
+private:
   vtkKeyholePass(const vtkKeyholePass&);  // Not implemented.
   void operator=(const vtkKeyholePass&);  // Not implemented.
-  void LoadShaders(std::string, std::string); // Load Shader programs from file.
-  void GetForegroudGradient(vtkRenderer *);// perform sobel pass on foreground texture and save the results to foreground_grad_to
-  void UpdateLeftTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
-  void UpdateRightTextureObject(vtkOpenGLRenderWindow *); // convenience method to update texture object when new data is available.
-  void SetupDrawBuffers(vtkRenderer *);// convenience method to set up appropriate drawbuffers.
-  void CopyToFrameBuffer(int, int,
-	  int, int,
-	  int, int,
-	  int, int,
-	  vtkTextureObject *,
-	  vtkShaderProgram*, vtkOpenGLVertexArrayObject *); // This is a convenience method to update the framebuffer. vtkTextureObject has a similar method. 
-														// However, it has a minor bug in setting glViewPort. This method fixes that issue. 
-  void ProbeSupport(const vtkRenderState *); // Probe for support
-  int ReadTextures(vtkRenderer *);
 };
 
 #endif // vtkKeyholePass_h

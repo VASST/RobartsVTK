@@ -207,7 +207,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkImageImport> backgroundImport = vtkSmartPointer<vtkImageImport>::New();
   backgroundImport->SetDataOrigin(0, 0, 0);
   backgroundImport->SetDataSpacing(1, 1, 1);
-  backgroundImport->SetWholeExtent(0, background.cols - 1 , 0 , background.rows - 1, 1, 1);
+  backgroundImport->SetWholeExtent(0, background.cols - 1, 0, background.rows - 1, 1, 1);
   backgroundImport->SetDataExtentToWholeExtent();
   backgroundImport->SetDataScalarTypeToUnsignedChar();
   backgroundImport->SetNumberOfScalarComponents(4);
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkImageImport> maskImport = vtkSmartPointer<vtkImageImport>::New();
   maskImport->SetDataOrigin(0, 0, 0);
   maskImport->SetDataSpacing(1, 1, 1);
-  maskImport->SetWholeExtent(0, mask.cols - 1 , 0 , mask.rows - 1, 1, 1);
+  maskImport->SetWholeExtent(0, mask.cols - 1, 0, mask.rows - 1, 1, 1);
   maskImport->SetDataExtentToWholeExtent();
   maskImport->SetDataScalarTypeToUnsignedChar();
   maskImport->SetNumberOfScalarComponents(4);
@@ -249,8 +249,8 @@ int main(int argc, char** argv)
 
   // Set keyhole parameters
   keyholePass->SetLeftKeyholeParameters(256, 256, 150, 5.0);
-  keyholePass->SetVisualizationMode(3);// Set keyhole mode
-  keyholePass->SetAlphaValue(1.0); // Only used for alpha blending
+  keyholePass->SetVisualizationMode(vtkKeyholePass::MODE_KEYHOLE);
+  keyholePass->SetAlpha(1.0); // Only used for alpha blending
   keyholePass->SetBackgroundColor(0, 0, 0);
   keyholePass->SetHardKeyholeEdges(false);
 
@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 
   vtkSmartPointer<vtkWindowEventCallback> call_back = vtkSmartPointer<vtkWindowEventCallback>::New();
   call_back->keyholePass = keyholePass;
-  renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent , call_back);
+  renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelBackwardEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseMoveEvent, call_back);

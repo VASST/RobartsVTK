@@ -19,7 +19,7 @@
  *
  * Abstract class with some convenient methods frequently used in subclasses.
  * This class was a modification to the original vtkImageProcessingPass class to support
- * rendering in multipve view-port. 
+ * rendering in multiple view-port.
  *
  *
  * @sa
@@ -30,17 +30,26 @@
 #define vtkMultiViewportImageProcessingPass_h
 
 #include "vtkRobartsVisualizationExport.h" // For export macro
-#include "vtkRenderPass.h"
+
+// VTK includes
+#include <vtkRenderPass.h>
+#include <vtkVersionMacros.h>
 
 class vtkOpenGLRenderWindow;
 class vtkDepthPeelingPassLayerList; // Pimpl
-class vtkFrameBufferObject;
+#if VTK_MAJOR_VERSION >= 8
+  class vtkOpenGLFramebufferObject;
+  typedef vtkOpenGLFramebufferObject RobartsVTKFrameBufferObject;
+#else
+  class vtkFrameBufferObject;
+  typedef vtkFrameBufferObject RobartsVTKFrameBufferObject;
+#endif
 class vtkTextureObject;
 
 class vtkRobartsVisualizationExport vtkMultiViewportImageProcessingPass : public vtkRenderPass
 {
 public:
-  vtkTypeMacro(vtkMultiViewportImageProcessingPass,vtkRenderPass);
+  vtkTypeMacro(vtkMultiViewportImageProcessingPass, vtkRenderPass);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   /**
@@ -48,7 +57,7 @@ public:
    * resources.
    * \pre w_exists: w!=0
    */
-  void ReleaseGraphicsResources(vtkWindow *w);
+  void ReleaseGraphicsResources(vtkWindow* w);
 
   //@{
   /**
@@ -57,11 +66,11 @@ public:
    * It is usually set to a vtkCameraPass or to a post-processing pass.
    * Initial value is a NULL pointer.
    */
-  vtkGetObjectMacro(DelegatePass,vtkRenderPass);
-  virtual void SetDelegatePass(vtkRenderPass *delegatePass);
+  vtkGetObjectMacro(DelegatePass, vtkRenderPass);
+  virtual void SetDelegatePass(vtkRenderPass* delegatePass);
   //@}
 
- protected:
+protected:
   /**
    * Default constructor. DelegatePass is set to NULL.
    */
@@ -81,18 +90,17 @@ public:
    * \pre target_exists: target!=0
    * \pre target_has_context: target->GetContext()!=0
    */
-  void RenderDelegate(const vtkRenderState *s,
+  void RenderDelegate(const vtkRenderState* s,
                       int width,
                       int height,
                       int newWidth,
                       int newHeight,
-                      vtkFrameBufferObject *fbo,
-                      vtkTextureObject *target);
+                      RobartsVTKFrameBufferObject* fbo,
+                      vtkTextureObject* target);
 
+  vtkRenderPass* DelegatePass;
 
-  vtkRenderPass *DelegatePass;
-
- private:
+private:
   vtkMultiViewportImageProcessingPass(const vtkMultiViewportImageProcessingPass&) VTK_DELETE_FUNCTION;
   void operator=(const vtkMultiViewportImageProcessingPass&) VTK_DELETE_FUNCTION;
 };

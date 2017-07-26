@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <vtkSmartPointer.h>
 #include <vtkTexture.h>
 #include <vtkTextureMapToPlane.h>
-#include <vtkCamera.h> 
+#include <vtkCamera.h>
 #include <vtkOpenGLCamera.h>
 #include <vtkMatrix4x4.h>
 #include <vtkMetaImageReader.h>
@@ -84,22 +84,23 @@ public:
   }
   vtkWindowEventCallback()
   {
-	this->frame_idx = 0;
+    this->frame_idx = 0;
     this->size = 120;
     this->gamma = 5.0;
-	x = 320; 
-	y = 240;
+    x = 320;
+    y = 240;
     this->pinned = true;
 
-	double m[16] = { 1, 0, 0, 0, 
-					 0, 1, 0, 0, 
-					 0, 0, 1, 1000, 
-					 0, 0, 0, 1 };
-	mat1 = vtkMatrix4x4::New();
-	mat2 = vtkMatrix4x4::New();
-	mat1->DeepCopy(m);
-	mat2->DeepCopy(m);
-	mat2->SetElement(0, 3, mat2->Element[0][3] + 1);
+    double m[16] = { 1, 0, 0, 0,
+                     0, 1, 0, 0,
+                     0, 0, 1, 1000,
+                     0, 0, 0, 1
+                   };
+    mat1 = vtkMatrix4x4::New();
+    mat2 = vtkMatrix4x4::New();
+    mat1->DeepCopy(m);
+    mat2->DeepCopy(m);
+    mat2->SetElement(0, 3, mat2->Element[0][3] + 1);
   }
 
   virtual void Execute(vtkObject* caller, unsigned long eventid, void* callData)
@@ -140,62 +141,62 @@ public:
       }
     }
 
-	/* Read video and update background texture */
-	if (frame_idx == capture->get(CV_CAP_PROP_FRAME_COUNT))
-	{
-		frame_idx = 0;
-		capture->set(CV_CAP_PROP_POS_FRAMES, frame_idx);
-	}
+    /* Read video and update background texture */
+    if (frame_idx == capture->get(CV_CAP_PROP_FRAME_COUNT))
+    {
+      frame_idx = 0;
+      capture->set(CV_CAP_PROP_POS_FRAMES, frame_idx);
+    }
 
-	/* Read video and update background texture */
-	// TODO: texture update code goes here
-	capture->read(*background);
-	cv::flip(*background, *background, 0);
-	cv::cvtColor(*background, *background_RGBA, CV_BGR2RGBA, 4);
+    /* Read video and update background texture */
+    // TODO: texture update code goes here
+    capture->read(*background);
+    cv::flip(*background, *background, 0);
+    cv::cvtColor(*background, *background_RGBA, CV_BGR2RGBA, 4);
 
-	// split left and right images
-	int width = background->cols / 2;
-	int height = background->rows;
+    // split left and right images
+    int width = background->cols / 2;
+    int height = background->rows;
 
-	cv::Rect roi(0, 0, width, height);
-	((*background_RGBA)(roi)).copyTo(*left_img);
-	roi.x = width;
-	((*background_RGBA)(roi)).copyTo(*right_img);
+    cv::Rect roi(0, 0, width, height);
+    ((*background_RGBA)(roi)).copyTo(*left_img);
+    roi.x = width;
+    ((*background_RGBA)(roi)).copyTo(*right_img);
 
 
-	leftImgImport->SetImportVoidPointer(left_img->data);
-	leftImgImport->Modified();
+    leftImgImport->SetImportVoidPointer(left_img->data);
+    leftImgImport->Modified();
 
-	rightImgImport->SetImportVoidPointer(right_img->data);
-	rightImgImport->Modified();
+    rightImgImport->SetImportVoidPointer(right_img->data);
+    rightImgImport->Modified();
 
-	leftTexture->Modified();
-	rightTexture->Modified();
+    leftTexture->Modified();
+    rightTexture->Modified();
 
-	mat1->SetElement(1, 3, mat1->Element[1][3] + 1);
-	leftVolume->SetUserMatrix(mat1);
-	leftVolume->Update();
+    mat1->SetElement(1, 3, mat1->Element[1][3] + 1);
+    leftVolume->SetUserMatrix(mat1);
+    leftVolume->Update();
 
-	mat2->SetElement(0, 3, mat2->Element[0][3] + 1);
-	rightVolume->SetUserMatrix(mat2);
-	rightVolume->Update();
+    mat2->SetElement(0, 3, mat2->Element[0][3] + 1);
+    rightVolume->SetUserMatrix(mat2);
+    rightVolume->Update();
 
     // Set keyhole parameters.
     keyholePass->SetLeftKeyholeParameters(x, y, size, this->gamma);
 
-	renWindowInteractor->GetRenderWindow()->Render();
-	frame_idx++;
+    renWindowInteractor->GetRenderWindow()->Render();
+    frame_idx++;
   }
 
   vtkKeyholePass* keyholePass;
-  vtkImageImport *leftImgImport, *rightImgImport;
-  vtkTexture *leftTexture, *rightTexture;
+  vtkImageImport* leftImgImport, *rightImgImport;
+  vtkTexture* leftTexture, *rightTexture;
   cv::VideoCapture* capture;
-  vtkMatrix4x4 *mat1, *mat2;
-  cv::Mat *background;
-  cv::Mat *background_RGBA;
-  cv::Mat *left_img, *right_img;
-  vtkVolume *leftVolume, *rightVolume;
+  vtkMatrix4x4* mat1, *mat2;
+  cv::Mat* background;
+  cv::Mat* background_RGBA;
+  cv::Mat* left_img, *right_img;
+  vtkVolume* leftVolume, *rightVolume;
   int frame_idx;
 
 private:
@@ -236,7 +237,7 @@ int main(int argc, char** argv)
   }
   if (volumeFile.empty())
   {
-	  volumeFile = DEFAULT_VOLUME_FILE;
+    volumeFile = DEFAULT_VOLUME_FILE;
   }
 
   // Read-in the volume
@@ -248,7 +249,7 @@ int main(int argc, char** argv)
   volumeMapper->UseFullVTKCompatibility();
   volumeMapper->SetBlendModeToComposite();
   volumeMapper->SetInputData(volumeReader->GetOutput());
-  volumeMapper->Modified(); 
+  volumeMapper->Modified();
 
   vtkSmartPointer< vtkVolumeProperty > volumeProperty = vtkSmartPointer< vtkVolumeProperty >::New();
   volumeProperty->ShadeOff();
@@ -292,7 +293,7 @@ int main(int argc, char** argv)
   int width = capture.get(CV_CAP_PROP_FRAME_WIDTH);
   int height = capture.get(CV_CAP_PROP_FRAME_HEIGHT);
 
-  uchar* backgroundData = new uchar[width*height*sizeof(unsigned char)* 4];
+  uchar* backgroundData = new uchar[width * height * sizeof(unsigned char) * 4];
   cv::Mat background_RGBA(cv::Size(width, height), CV_8UC4, backgroundData);
   cv::Mat background = cv::Mat(width, height, CV_8UC3);
   cv::Mat left_img = cv::Mat(height, width / 2, CV_8UC4);
@@ -301,7 +302,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkImageImport> leftImgImport = vtkSmartPointer<vtkImageImport>::New();
   leftImgImport->SetDataOrigin(0, 0, 0);
   leftImgImport->SetDataSpacing(1, 1, 1);
-  leftImgImport->SetWholeExtent(0, width/2 - 1, 0, height - 1, 1, 1);
+  leftImgImport->SetWholeExtent(0, width / 2 - 1, 0, height - 1, 1, 1);
   leftImgImport->SetDataExtentToWholeExtent();
   leftImgImport->SetDataScalarTypeToUnsignedChar();
   leftImgImport->SetNumberOfScalarComponents(4);
@@ -357,7 +358,7 @@ int main(int argc, char** argv)
   double viewAngle = 2 * atan((480 / 2.0) / 775) * 180 / (4 * atan(1.0));
   double center_x = (640 - 320) / ((640 - 1) / 2.0) - 1;
   double center_y = 240 / ((480 - 1) / 2.0) - 1;
-  vtkOpenGLCamera *cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
+  vtkOpenGLCamera* cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
   cam->SetViewAngle(viewAngle);
   cam->SetPosition(0, 0, 0);
   cam->SetViewUp(0, -1, 0);
@@ -365,7 +366,7 @@ int main(int argc, char** argv)
   cam->SetWindowCenter(center_x, center_y);
   cam->SetClippingRange(0.01, 1000.01);
 
-  vtkOpenGLCamera *cam2 = vtkOpenGLCamera::SafeDownCast(ren2->GetActiveCamera());
+  vtkOpenGLCamera* cam2 = vtkOpenGLCamera::SafeDownCast(ren2->GetActiveCamera());
   cam2->SetViewAngle(viewAngle);
   cam2->SetPosition(5, 0, 0);
   cam2->SetViewUp(0, -1, 0);
@@ -394,14 +395,14 @@ int main(int argc, char** argv)
   keyholePass->SetLeftKeyholeParameters(320, 240, 150, 2.0);
   keyholePass->SetHardKeyholeEdges(false);
   keyholePass->SetBackgroundColor(0, 0, 0);
-  keyholePass->SetVisualizationMode(2); // Use Overlay mode
-  keyholePass->SetAlphaValue(0.3);
+  keyholePass->SetVisualizationMode(vtkKeyholePass::MODE_ALPHA_BLENDING); // Use Overlay mode
+  keyholePass->SetAlpha(0.3);
 
   keyholePass2->SetLeftKeyholeParameters(320, 240, 150, 2.0);
   keyholePass2->SetHardKeyholeEdges(false);
   keyholePass2->SetBackgroundColor(0, 0, 0);
-  keyholePass2->SetVisualizationMode(2); // Use Overlay mode
-  keyholePass2->SetAlphaValue(0.3);
+  keyholePass2->SetVisualizationMode(vtkKeyholePass::MODE_ALPHA_BLENDING); // Use Overlay mode
+  keyholePass2->SetAlpha(0.3);
 
   // Set render passes.
   vtkSmartPointer<vtkLightsPass> lightsPass = vtkSmartPointer<vtkLightsPass>::New();
@@ -436,7 +437,7 @@ int main(int argc, char** argv)
   call_back->left_img = &left_img;
   call_back->right_img = &right_img;
 
-  renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent , call_back);
+  renWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelForwardEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseWheelBackwardEvent, call_back);
   renWindowInteractor->AddObserver(vtkCommand::MouseMoveEvent, call_back);

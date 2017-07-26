@@ -21,6 +21,7 @@
 #include "RobartsVTKConfigure.h"
 
 // FIXED ORDER
+#include "vtkObject.h"
 #include "vtkOpenGLError.h"
 #include "vtkOpenGL.h"
 #include "cuda_runtime_api.h"
