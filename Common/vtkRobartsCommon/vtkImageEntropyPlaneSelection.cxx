@@ -93,7 +93,7 @@ void vtkImageEntropyPlaneSelection::SetInput(int idx, vtkDataObject *input)
       this->BackwardsInputDataPortMapping[portNumber] = idx;
     }
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-    tp->SetInputDataObject(input);
+    tp->SetOutput(input);
     this->SetNthInputConnection(0, this->InputDataPortMapping[idx], tp->GetOutputPort() );
   }
   else
@@ -119,7 +119,7 @@ void vtkImageEntropyPlaneSelection::SetInput(int idx, vtkDataObject *input)
     {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedDataPort - 1));
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-      tp->SetInputDataObject(swappedInput);
+      tp->SetOutput(swappedInput);
       this->SetNthInputConnection(0, portNumber, tp->GetOutputPort() );
       this->SetNthInputConnection(0, this->FirstUnusedDataPort - 1, 0 );
 

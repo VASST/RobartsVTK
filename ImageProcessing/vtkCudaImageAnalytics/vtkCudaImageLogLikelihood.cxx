@@ -43,6 +43,7 @@ vtkCudaImageLogLikelihood::vtkCudaImageLogLikelihood()
   this->HistogramSize = 512;
   this->RequiredAgreement = 0.8;
   this->SetNumberOfInputPorts(2);
+  this->SetNumberOfOutputPorts(1);
 }
 
 vtkCudaImageLogLikelihood::~vtkCudaImageLogLikelihood()

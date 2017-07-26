@@ -91,7 +91,7 @@ void vtkImageVote::SetInput(int idx, vtkDataObject *input)
       this->BackwardsInputPortMapping.insert(std::pair<vtkIdType,int>(portNumber,idx));
     }
     vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-    tp->SetInputDataObject(input);
+    tp->SetOutput(input);
     this->SetNthInputConnection(0, this->InputPortMapping.find(idx)->second, tp->GetOutputPort() );
   }
   else
@@ -117,7 +117,7 @@ void vtkImageVote::SetInput(int idx, vtkDataObject *input)
     {
       vtkImageData* swappedInput = vtkImageData::SafeDownCast( this->GetExecutive()->GetInputData(0, this->FirstUnusedPort - 1));
       vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-      tp->SetInputDataObject(swappedInput);
+      tp->SetOutput(swappedInput);
       this->SetNthInputConnection(0, portNumber, tp->GetOutputPort() );
       this->SetNthInputConnection(0, this->FirstUnusedPort - 1, 0 );
 

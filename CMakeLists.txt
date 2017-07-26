@@ -109,7 +109,7 @@ ENDIF()
 # Qt
 #-----------------------------------------------------------------------------
 IF (RobartsVTK_USE_QT)
-  IF(RobartsVTK_USE_VISUALIZATION AND RobartsVTK_BUILD_APPS)
+  IF( (RobartsVTK_USE_VISUALIZATION OR RobartsVTK_USE_CUDA_ANALYTICS) AND RobartsVTK_BUILD_APPS)
     SET(RobartsVTK_VIS_QT_COMPONENTS Test Concurrent Xml)
   ENDIF()
 
@@ -438,6 +438,11 @@ IF(RobartsVTK_BUILD_APPS)
       set_target_properties(TFUIDual PROPERTIES FOLDER Applications)
       set_target_properties(TFUIGradient PROPERTIES FOLDER Applications)
       set_target_properties(TFUIKohonen PROPERTIES FOLDER Applications)
+    ENDIF()
+  
+    IF(RobartsVTK_USE_QT AND RobartsVTK_USE_CUDA_ANALYTICS)
+      ADD_SUBDIRECTORY(Applications/SEGUE)
+      set_target_properties(SEGUE PROPERTIES FOLDER Applications)
     ENDIF()
   
     IF( RobartsVTK_USE_OPENCV )
