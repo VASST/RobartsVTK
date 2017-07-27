@@ -433,6 +433,12 @@ IF(RobartsVTK_BUILD_APPS)
       SET_TARGET_PROPERTIES(TFUIKohonen PROPERTIES FOLDER Applications)
     ENDIF()
 
+    IF(RobartsVTK_USE_QT AND RobartsVTK_USE_CUDA_ANALYTICS)
+      #J you forgot something!
+      #ADD_SUBDIRECTORY(Applications/SEGUE)
+      #SET_TARGET_PROPERTIES(SEGUE PROPERTIES FOLDER Applications)
+    ENDIF()
+
     IF(RobartsVTK_USE_OPENCV)
       IF(RobartsVTK_USE_VISUALIZATION)
         IF(RobartsVTK_USE_CUDA_VISUALIZATION)
