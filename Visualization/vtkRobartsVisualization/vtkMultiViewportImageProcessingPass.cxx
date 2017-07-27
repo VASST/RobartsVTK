@@ -164,14 +164,23 @@ void vtkMultiViewportImageProcessingPass::RenderDelegate(const vtkRenderState* s
     target->Create2D(newWidth, newHeight, 4, VTK_UNSIGNED_CHAR, false);
   }
 
+#if VTK_MAJOR_VERSION >= 8
+  fbo->AddColorAttachment(GL_FRAMEBUFFER, 0, target);
+#else
   fbo->SetNumberOfRenderTargets(1);
   fbo->SetColorBuffer(0, target);
+#endif
 
   // because the same FBO can be used in another pass but with several color
   // buffers, force this pass to use 1, to avoid side effects from the
   // render of the previous frame.
+#if VTK_MAJOR_VERSION >= 8
+  fbo->ActivateDrawBuffer(0);
+  fbo->StartNonOrtho(newWidth, newHeight);
+#else
   fbo->SetActiveBuffer(0);
   fbo->StartNonOrtho(newWidth, newHeight, false);
+#endif
 
   GLint saved_viewport[4];
   glGetIntegerv(GL_VIEWPORT, saved_viewport);

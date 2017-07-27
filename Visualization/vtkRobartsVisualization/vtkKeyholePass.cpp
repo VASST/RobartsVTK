@@ -288,8 +288,13 @@ void vtkKeyholePass::Render(const vtkRenderState* s)
     }
 
     this->FrameBufferObject->Bind();
+#if VTK_MAJOR_VERSION >= 8
+    this->FrameBufferObject->AddColorAttachment(GL_FRAMEBUFFER, 0, this->Pass2);
+    this->FrameBufferObject->Start(width, height);
+#else
     this->FrameBufferObject->SetColorBuffer(0, this->Pass2);
     this->FrameBufferObject->Start(width, height, false);
+#endif
 
     // Now use the shader to do composition.
     if (this->KeyholeProgram == NULL)
@@ -500,12 +505,20 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
   }
 
   this->FrameBufferObject->Bind();
+#if VTK_MAJOR_VERSION >= 8
+  this->FrameBufferObject->AddColorAttachment(GL_FRAMEBUFFER, 0, this->GX);
+  this->FrameBufferObject->AddColorAttachment(GL_FRAMEBUFFER, 1, this->GY);
+  unsigned int indices[2] = { 0, 1 };
+  this->FrameBufferObject->ActivateDrawBuffers(indices, 2);
+  this->FrameBufferObject->Start(width, height);
+#else
   this->FrameBufferObject->SetNumberOfRenderTargets(2);
   this->FrameBufferObject->SetColorBuffer(0, this->GX);
   this->FrameBufferObject->SetColorBuffer(1, this->GY);
   unsigned int indices[2] = { 0, 1 };
   this->FrameBufferObject->SetActiveBuffers(2, indices);
   this->FrameBufferObject->Start(width, height, false);
+#endif
 
   // Set the shader program for the first pass of GX and GY
   if (this->GradientProgram1 == NULL)
@@ -639,10 +652,16 @@ void vtkKeyholePass::GetForegroudGradient(vtkRenderer* r)
 
   // Now bind foreground_grad_to to the FBO
   this->FrameBufferObject->Bind();
+#if VTK_MAJOR_VERSION >= 8
+  this->FrameBufferObject->AddColorAttachment(GL_FRAMEBUFFER, 0, this->ForegroundGradientTextureObject);
+  this->FrameBufferObject->ActivateBuffer(0);
+  this->FrameBufferObject->Start(width, height);
+#else
   this->FrameBufferObject->SetNumberOfRenderTargets(1);
-  this->FrameBufferObject->SetColorBuffer(0, ForegroundGradientTextureObject);
+  this->FrameBufferObject->SetColorBuffer(0, this->ForegroundGradientTextureObject);
   this->FrameBufferObject->SetActiveBuffer(0);
   this->FrameBufferObject->Start(width, height, false);
+#endif
 
   // Set the shader program for the second pass of GX and GY
   if (this->KeyholeShader == NULL)
@@ -960,12 +979,19 @@ void vtkKeyholePass::ProbeSupport(const vtkRenderState* s)
     }
 
     this->Pass1->Create2D(64, 64, 4, VTK_UNSIGNED_CHAR, false);
+#if VTK_MAJOR_VERSION >= 8
+    this->FrameBufferObject->AddColorAttachment(GL_FRAMEBUFFER, 0, this->Pass1);
+    this->FrameBufferObject->AddDepthAttachment(GL_FRAMEBUFFER);
+    this->FrameBufferObject->ActivateBuffer(0);
+    supported = this->FrameBufferObject->StartNonOrtho(64, 64);
+#else
     this->FrameBufferObject->SetColorBuffer(0, this->Pass1);
     this->FrameBufferObject->SetNumberOfRenderTargets(1);
     this->FrameBufferObject->SetActiveBuffer(0);
     this->FrameBufferObject->SetDepthBufferNeeded(true);
 
     supported = this->FrameBufferObject->StartNonOrtho(64, 64, false);
+#endif
 
     if (!supported)
     {

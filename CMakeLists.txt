@@ -496,6 +496,7 @@ IF(RobartsVTK_BUILD_APPS)
 ENDIF()
 
 SET(RobartsVTK_INCLUDE_DIRS ${CMAKE_BINARY_DIR})
+LIST(REMOVE_DUPLICATES RobartsVTK_LIBRARIES)
 
 #-----------------------------------------------------------------------------
 # Populate export variables
@@ -514,12 +515,12 @@ CONFIGURE_FILE(
   ${CMAKE_CURRENT_BINARY_DIR}/RobartsVTKConfigure.h
   )
 IF(WIN32)
-  configure_file(
+  CONFIGURE_FILE(
     ${CMAKE_CURRENT_SOURCE_DIR}/BuildAndTest.bat.in
     ${CMAKE_CURRENT_BINARY_DIR}/BuildAndTest.bat
     )
 ELSE()
-  configure_file(
+  CONFIGURE_FILE(
     ${CMAKE_CURRENT_SOURCE_DIR}/BuildAndTest.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/BuildAndTest.sh
     )

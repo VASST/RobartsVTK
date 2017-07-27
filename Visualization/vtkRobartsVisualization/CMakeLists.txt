@@ -13,7 +13,6 @@ IF(MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
 ENDIF()
 
 SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
-SET(${PROJECT_NAME}_LIBRARIES ${OPENGL_LIBRARIES})
 
 # -----------------------------------------------------------------
 # Build the library
@@ -26,7 +25,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC 
-  ${_${PROJECT_NAME}_LIBRARIES}
+  ${OPENGL_LIBRARIES}
   vtkRobartsCommon
   vtkInteractionStyle
   vtkRenderingFreeType
