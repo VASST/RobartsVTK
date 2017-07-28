@@ -434,9 +434,8 @@ IF(RobartsVTK_BUILD_APPS)
     ENDIF()
 
     IF(RobartsVTK_USE_QT AND RobartsVTK_USE_CUDA_ANALYTICS)
-      #J you forgot something!
-      #ADD_SUBDIRECTORY(Applications/SEGUE)
-      #SET_TARGET_PROPERTIES(SEGUE PROPERTIES FOLDER Applications)
+      ADD_SUBDIRECTORY(Applications/SEGUE)
+      SET_TARGET_PROPERTIES(SEGUE PROPERTIES FOLDER Applications)
     ENDIF()
 
     IF(RobartsVTK_USE_OPENCV)
