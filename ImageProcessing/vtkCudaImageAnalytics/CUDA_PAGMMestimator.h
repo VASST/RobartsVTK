@@ -1,7 +1,7 @@
 #ifndef __PAGMMESTIMATOR_H__
 #define __PAGMMESTIMATOR_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 #define MAX_DIMENSIONALITY 16
 

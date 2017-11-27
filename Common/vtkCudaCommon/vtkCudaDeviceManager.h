@@ -26,7 +26,7 @@
 #include "vtkCudaCommonExport.h"
 
 #include "vtkObject.h"
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 #include <map>
 

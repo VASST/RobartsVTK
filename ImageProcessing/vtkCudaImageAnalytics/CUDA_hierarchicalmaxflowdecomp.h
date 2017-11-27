@@ -1,7 +1,7 @@
 #ifndef __CUDA_HIERARCHICALMAXFLOWDECOMP_H__
 #define __CUDA_HIERARCHICALMAXFLOWECOMP_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 double CUDA_GHMFD_DataTermForLabel(float* data, float* label, int size, cudaStream_t* stream);
 double CUDA_GHMFD_LeafSmoothnessForLabel(float* smoothness, float* label, int x, int y, int z, int size, float* GPUParentLabel, float* devGradientBuffer, cudaStream_t* stream);

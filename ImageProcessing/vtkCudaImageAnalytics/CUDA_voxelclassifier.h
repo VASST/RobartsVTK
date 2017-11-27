@@ -1,7 +1,7 @@
 #ifndef __CUDA_VOXELCLASSIFIER_H__
 #define __CUDA_VOXELCLASSIFIER_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 #define MAX_DIMENSIONALITY 16
 

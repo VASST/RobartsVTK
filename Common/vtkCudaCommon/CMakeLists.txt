@@ -15,6 +15,7 @@ SET ( ${PROJECT_NAME}_SRCS
 IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
   SET ( ${PROJECT_NAME}_HDRS 
     CudaObject.h
+    CudaCommon.h
     vtkCudaDeviceManager.h
     vtkCudaMemoryTexture.h
     vtkCuda2DTransferFunction.h

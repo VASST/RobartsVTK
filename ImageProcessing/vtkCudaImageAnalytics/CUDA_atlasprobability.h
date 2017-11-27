@@ -25,7 +25,7 @@
 #ifndef __CUDA_ATLASPROBABILITY_H__
 #define __CUDA_ATLASPROBABILITY_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 void CUDA_GetRelevantBuffers(short** agreement, float** output, int size, cudaStream_t* stream);
 void CUDA_ConvertInformation(short* agreement, float* output, float maxOut, int size, short max, short flags, int gaussWidth[], int imageDims[], cudaStream_t* stream);

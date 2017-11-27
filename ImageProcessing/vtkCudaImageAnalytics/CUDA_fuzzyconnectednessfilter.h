@@ -1,7 +1,7 @@
 #ifndef __FUZZYCONNECTEDNESSFILTER_H__
 #define __FUZZYCONNECTEDNESSFILTER_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 typedef struct __align__(16)
 {

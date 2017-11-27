@@ -12,7 +12,7 @@
 #ifndef __CUDA_HIERARCHICALMAXFLOW_H__
 #define __CUDA_HIERARCHICALMAXFLOW_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 void CUDA_GetGPUBuffers( int maxNumber, double maxPercent, float** buffer, int pad, int volSize, int* numberAcquired, double* percentAcquired );
 void CUDA_ReturnGPUBuffers(float* buffer);

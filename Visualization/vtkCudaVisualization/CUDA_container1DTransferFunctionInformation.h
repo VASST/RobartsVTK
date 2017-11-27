@@ -12,7 +12,7 @@
 #ifndef __CUDA1DTRANSFERFUNCTIONINFORMATION_H__
 #define __CUDA1DTRANSFERFUNCTIONINFORMATION_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the volume being renderered.
  *

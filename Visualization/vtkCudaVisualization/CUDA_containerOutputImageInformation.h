@@ -12,7 +12,7 @@
 #ifndef __CUDAOUTPUTIMAGEINFORMATION_H__
 #define __CUDAOUTPUTIMAGEINFORMATION_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the output image.
  *

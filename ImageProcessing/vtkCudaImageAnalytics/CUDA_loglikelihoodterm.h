@@ -25,7 +25,7 @@
 #ifndef __CUDA_LOGLIKELIHOOD_H__
 #define __CUDA_LOGLIKELIHOOD_H__
 
-#include "vector_types.h"
+#include "CudaCommon.h"
 
 void CUDA_ILLT_GetRelevantBuffers(short** agreement, int size, cudaStream_t* stream);
 void CUDA_ILLT_CopyBackResult(float* GPUBuffer, float* CPUBuffer, int size, cudaStream_t* stream);
