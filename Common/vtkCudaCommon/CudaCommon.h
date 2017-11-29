@@ -19,5 +19,5 @@ DEALINGS IN THE SOFTWARE.
 
 =========================================================================*/
 
-#include <cuda_runtime>
-#include <vector_types>
+#include <cuda_runtime.h>
+#include <vector_types.h>
