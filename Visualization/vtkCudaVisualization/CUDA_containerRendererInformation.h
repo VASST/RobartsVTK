@@ -12,7 +12,8 @@
 #ifndef __CUDARENDERERINFORMATION_H__
 #define __CUDARENDERERINFORMATION_H__
 
-#include "CudaCommon.h"
+#include <cuda_runtime.h>
+#include <vector_types.h>
 
 /** @brief A stucture located on the CUDA hardware that holds all the information required about the renderer.
  *

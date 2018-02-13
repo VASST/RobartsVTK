@@ -12,9 +12,10 @@
 #ifndef __CUDADUALIMAGETRANSFERFUNCTIONINFORMATION_H__
 #define __CUDADUALIMAGETRANSFERFUNCTIONINFORMATION_H__
 
-#include "CudaCommon.h"
+#include <cuda_runtime.h>
+#include <vector_types.h>
 
-/** @brief A stucture located on the CUDA hardware that holds all the information required about the volume being renderered.
+/** @brief A structure located on the CUDA hardware that holds all the information required about the volume being renderered.
  *
  */
 typedef struct __align__(16) {

@@ -20,10 +20,10 @@ DEALINGS IN THE SOFTWARE.
 =========================================================================*/
 
 #include "vtkFunctionMinimizer.h"
-#include "vtkObjectFactory.h"
+#include "vtkRobartsCommon.h"
 
-// PlusLib includes
-#include "PlusCommon.h"
+// VTK includes
+#include <vtkObjectFactory.h>
 
 namespace
 {
@@ -310,7 +310,7 @@ std::pair<double, double> vtkFunctionMinimizer::GetScalarVariableBracket(const s
 
   for (int i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
+    if (IsEqualInsensitive(name, this->ParameterNames[i]))
     {
       return this->ParameterBrackets[i];
     }
@@ -331,7 +331,7 @@ double vtkFunctionMinimizer::GetScalarVariableValue(const std::string& name)
 {
   for (int i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
+    if (IsEqualInsensitive(name, this->ParameterNames[i]))
     {
       return this->Parameters[i];
     }
@@ -378,7 +378,7 @@ void vtkFunctionMinimizer::SetScalarVariableBracket(const std::string& name, dou
 {
   for (auto i = 0; i < this->ParameterNames.size(); i++)
   {
-    if (PlusCommon::IsEqualInsensitive(name, this->ParameterNames[i]))
+    if (IsEqualInsensitive(name, this->ParameterNames[i]))
     {
       if (this->ParameterBrackets[i].first != bmin || this->ParameterBrackets[i].second != bmax)
       {

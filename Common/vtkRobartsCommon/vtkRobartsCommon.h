@@ -34,27 +34,14 @@
 #ifndef __vtkRobartsCommon_h__
 #define __vtkRobartsCommon_h__
 
-#include "vtkSetGet.h"
+#include "vtkRobartsCommonExport.h"
 
-int CompareValues( const void *x, const void *y )
-{
-  double dx, dy;
+#include <string>
 
-  dx = *(double*) x;
-  dy = *(double*) y;
+//----------------------------------------------------------------------------
+int CompareValues( const void *x, const void *y );
 
-  if (dx < dy)
-  {
-    return -1;
-  }
-  else if (dx > dy)
-  {
-    return +1;
-  }
-
-  return 0;
-}
-
+//----------------------------------------------------------------------------
 template<class T>
 void SplitImageIntoChannels(unsigned char *data_in, int img_size, T* R, T* G, T* B )
 {
@@ -66,6 +53,7 @@ void SplitImageIntoChannels(unsigned char *data_in, int img_size, T* R, T* G, T*
   }
 }
 
+//----------------------------------------------------------------------------
 template<class T>
 void RGBToGreyscale( T* R, T* G, T* B, int img_size, T* gray )
 {
@@ -75,6 +63,7 @@ void RGBToGreyscale( T* R, T* G, T* B, int img_size, T* gray )
   }
 }
 
+//----------------------------------------------------------------------------
 template<class T>
 void RGBToRGBCuchar(T* R, T* G, T* B, unsigned char *output, int img_size )
 {
@@ -85,5 +74,11 @@ void RGBToRGBCuchar(T* R, T* G, T* B, unsigned char *output, int img_size )
     output[2*img_size + i] = (unsigned char)( B[i] + 0.5f );
   }
 }
+
+//----------------------------------------------------------------------------
+bool vtkRobartsCommonExport IsEqualInsensitive(std::string const& a, std::string const& b);
+
+//----------------------------------------------------------------------------
+bool vtkRobartsCommonExport IsEqualInsensitive(std::wstring const& a, std::wstring const& b);
 
 #endif //__vtkRobartsCommon_h__

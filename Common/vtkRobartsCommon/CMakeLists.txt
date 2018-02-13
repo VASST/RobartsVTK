@@ -1,7 +1,7 @@
 PROJECT(vtkRobartsCommon)
 
 SET ( ${PROJECT_NAME}_SRCS
-  vtkRobartsCommon.h
+  vtkRobartsCommon.cxx
   vtkReadWriteLock.cxx
   vtkBarrierLock.cxx
   vtkImagePipe.cxx
@@ -27,6 +27,7 @@ SET ( ${PROJECT_NAME}_SRCS
 
 IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
   SET ( ${PROJECT_NAME}_HDRS 
+    vtkRobartsCommon.h
     vtkReadWriteLock.h
     vtkBarrierLock.h
     vtkImagePipe.h

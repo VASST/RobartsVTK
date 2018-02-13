@@ -12,9 +12,10 @@
 #ifndef __CUDA2DTRANSFERFUNCTIONINFORMATION_H__
 #define __CUDA2DTRANSFERFUNCTIONINFORMATION_H__
 
-#include "CudaCommon.h"
+#include <cuda_runtime.h>
+#include <vector_types.h>
 
-/** @brief A stucture located on the CUDA hardware that holds all the information required about the volume being renderered.
+/** @brief A structure located on the CUDA hardware that holds all the information required about the volume being renderered.
  *
  */
 typedef struct __align__(16) {
@@ -26,7 +27,7 @@ typedef struct __align__(16) {
   float      gradientOffset;      /**< The offset for the logarithmic scaling of the gradient indexes */
   unsigned int  functionSize;      /**< The size of the lookup table */
 
-  //opague memory back for the transfer function
+  //opaque memory back for the transfer function
   cudaArray* alphaTransferArray2D;
   cudaArray* ambientTransferArray2D;
   cudaArray* diffuseTransferArray2D;
@@ -36,7 +37,7 @@ typedef struct __align__(16) {
   cudaArray* colorGTransferArray2D;
   cudaArray* colorBTransferArray2D;
 
-  //opague memory back for the keyhole transfer function
+  //opaque memory back for the keyhole transfer function
   bool useSecondTransferFunction;
   cudaArray* K_alphaTransferArray2D;
   cudaArray* K_ambientTransferArray2D;

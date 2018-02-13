@@ -45,7 +45,7 @@ OPTION(BUILD_DOCUMENTATION "Build Documentation" OFF)
 # Compiler options
 #-----------------------------------------------------------------------------
 IF(MSVC)
-  add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
+  OPTION(CMAKE_CXX_MP_FLAG "Build with /MP flag enabled" OFF)
 ENDIF()
 
 #-----------------------------------------------------------------------------
