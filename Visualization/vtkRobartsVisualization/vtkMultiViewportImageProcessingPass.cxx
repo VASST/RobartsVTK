@@ -17,7 +17,6 @@
 #include "vtkMultiViewportImageProcessingPass.h"
 
 // VTK includes
-#include <vtk_glew.h>
 #include <vtkCamera.h>
 #if VTK_MAJOR_VERSION >= 8
   #include <vtkOpenGLFramebufferObject.h>
