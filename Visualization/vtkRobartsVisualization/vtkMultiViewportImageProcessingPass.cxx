@@ -21,6 +21,7 @@
 #if VTK_MAJOR_VERSION >= 8
   #include <vtkOpenGLFramebufferObject.h>
   typedef vtkOpenGLFramebufferObject RobartsVTKFrameBufferObject;
+  #include <vtkOpenGLRenderUtilities.h> // For GL*
 #else
   #include <vtkFrameBufferObject.h>
   typedef vtkFrameBufferObject RobartsVTKFrameBufferObject;
