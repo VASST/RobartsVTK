@@ -25,6 +25,7 @@
 #else
   #include <vtkFrameBufferObject.h>
   typedef vtkFrameBufferObject RobartsVTKFrameBufferObject;
+  #include <vtkOpenGL.h>
 #endif
 #include <vtkImageExtractComponents.h>
 #include <vtkImageImport.h>

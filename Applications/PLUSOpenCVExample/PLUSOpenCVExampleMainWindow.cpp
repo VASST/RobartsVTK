@@ -307,7 +307,7 @@ void PLUSOpenCVExampleMainWindow::OnStartStopButtonClicked()
     auto formatIndex = mainWindow.comboBox_stream->currentData().toUInt() & 0x0000FFFF;
     auto mediaType = MfVideoCapture::MediaFoundationVideoDevices::GetInstance().GetDevice(mainWindow.comboBox_device->currentIndex())->GetFormat(streamIndex, formatIndex);
     m_videoDevice->SetRequestedStreamIndex(streamIndex);
-    unsigned int frameSize[2] = { mediaType.width, mediaType.height };
+    FrameSizeType frameSize = { mediaType.width, mediaType.height, 1 };
     m_videoDevice->SetRequestedFrameSize(frameSize);
     m_videoDevice->SetRequestedVideoFormat(mediaType.MF_MT_SUBTYPEName);
     m_videoDevice->SetAcquisitionRate(1.0 * mediaType.MF_MT_FRAME_RATE);

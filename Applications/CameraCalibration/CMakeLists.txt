@@ -1,6 +1,8 @@
 FIND_PACKAGE(PlusLib REQUIRED)
 INCLUDE(${PlusLib_USE_FILE})
 
+FIND_PACKAGE(OpenCV REQUIRED)
+
 IF(NOT PLUS_USE_MMF_VIDEO)
   MESSAGE(STATUS "CameraCalibration requires PLUS_USE_MMF_VIDEO and it is not available.")
   return()
