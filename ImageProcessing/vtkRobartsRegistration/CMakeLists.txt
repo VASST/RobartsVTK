@@ -1,4 +1,4 @@
-PROJECT(vtkRobartsRegistration)
+PROJECT(RobartsRegistration)
 
 SET ( ${PROJECT_NAME}_SRCS
   vtkShapeBasedInterpolation.cxx
@@ -64,13 +64,13 @@ ENDIF()
 
 # -----------------------------------------------------------------
 # Build the library
-ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(${PROJECT_NAME} PUBLIC 
+ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(vtk${PROJECT_NAME} PUBLIC 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR} 
   ${VTK_INCLUDE_DIRS}
   )
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(vtk${PROJECT_NAME} PUBLIC
   vtkRobartsCommon
   vtkImagingHybrid 
   vtkImagingCore
@@ -81,4 +81,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkCommonDataModel
   vtkFiltersGeneral
   )
-GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
+GENERATE_EXPORT_DIRECTIVE_FILE(vtk${PROJECT_NAME})
+
+RobartsVTKInstallLibrary(vtk${PROJECT_NAME} ${PROJECT_NAME})

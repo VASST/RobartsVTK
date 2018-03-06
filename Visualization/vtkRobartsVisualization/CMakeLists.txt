@@ -1,4 +1,4 @@
-PROJECT(vtkRobartsVisualization)
+PROJECT(RobartsVisualization)
 
 SET(${PROJECT_NAME}_SRCS
   vtkMultiViewportImageProcessingPass.cxx
@@ -21,15 +21,15 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS ${VTK_INCLUDE_DIRS})
 
 # -----------------------------------------------------------------
 # Build the library
-ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
 
-target_include_directories(${PROJECT_NAME} PUBLIC 
+target_include_directories(vtk${PROJECT_NAME} PUBLIC 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR} 
   ${${PROJECT_NAME}_INCLUDE_DIRS}
   )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC 
+target_link_libraries(vtk${PROJECT_NAME} PUBLIC 
   ${OPENGL_LIBRARIES}
   vtkRobartsCommon
   vtkInteractionStyle
@@ -39,13 +39,15 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   )
 
 IF(NOT ${VTK_RENDERING_BACKEND} STREQUAL "OpenGL")
-  target_link_libraries(${PROJECT_NAME} PUBLIC
+  target_link_libraries(vtk${PROJECT_NAME} PUBLIC
     vtkRenderingGL2PS${VTK_RENDERING_BACKEND}
     )
 ENDIF()
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC
+target_compile_definitions(vtk${PROJECT_NAME} PUBLIC
   SHADER_DIRECTORY="${CMAKE_SOURCE_DIR}/Visualization/Shaders/"
   )
 
-GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
+GENERATE_EXPORT_DIRECTIVE_FILE(vtk${PROJECT_NAME})
+
+RobartsVTKInstallLibrary(vtk${PROJECT_NAME} ${PROJECT_NAME})

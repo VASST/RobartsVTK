@@ -1,4 +1,4 @@
-PROJECT(vtkCudaCommon)
+PROJECT(CudaCommon)
 
 SET ( ${PROJECT_NAME}_SRCS
   CudaObject.cxx
@@ -35,13 +35,13 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
 
 # -----------------------------------------------------------------
 # Build the library
-ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(${PROJECT_NAME} PUBLIC 
+ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(vtk${PROJECT_NAME} PUBLIC 
   ${${PROJECT_NAME}_INCLUDE_DIRS}
   ${VTK_INCLUDE_DIRS} 
   ${CUDA_INCLUDE_DIRS}
   )
-target_link_libraries(${PROJECT_NAME} PUBLIC 
+target_link_libraries(vtk${PROJECT_NAME} PUBLIC 
   ${CUDA_LIBRARIES}
   ${OPENGL_LIBRARIES}
   vtkCommonCore
@@ -50,4 +50,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   vtkRenderingFreeType
   vtkInteractionStyle
   )
-GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
+GENERATE_EXPORT_DIRECTIVE_FILE(vtk${PROJECT_NAME})
+
+RobartsVTKInstallLibrary(vtk${PROJECT_NAME} ${PROJECT_NAME})

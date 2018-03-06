@@ -1,4 +1,4 @@
-PROJECT(vtkCudaCommonStatic)
+PROJECT(CudaCommonStatic)
 
 IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
   SET ( ${PROJECT_NAME}_HDRS
@@ -41,12 +41,14 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
 # -----------------------------------------------------------------
 # Build the library
 # Override shared libs settings, due to template functions in CUDA file, dll linkage is not possible
-ADD_LIBRARY(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(${PROJECT_NAME} PUBLIC 
+ADD_LIBRARY(vtk${PROJECT_NAME} STATIC ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
+target_include_directories(vtk${PROJECT_NAME} PUBLIC 
   ${${PROJECT_NAME}_INCLUDE_DIRS}
   ${VTK_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
   )
-target_link_libraries(${PROJECT_NAME} PUBLIC ${CUDA_LIBRARIES})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-GENERATE_EXPORT_DIRECTIVE_FILE(${PROJECT_NAME})
+target_link_libraries(vtk${PROJECT_NAME} PUBLIC ${CUDA_LIBRARIES})
+set_target_properties(vtk${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+GENERATE_EXPORT_DIRECTIVE_FILE(vtk${PROJECT_NAME})
+
+RobartsVTKInstallLibrary(vtk${PROJECT_NAME} ${PROJECT_NAME})
