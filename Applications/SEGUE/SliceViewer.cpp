@@ -257,9 +257,7 @@ bool SliceViewer::eventFilter( QObject *o, QEvent *e )
 	else if(e->type() == QEvent::MouseButtonRelease)
 		this->state = 0;
 
-    return FALSE;
-
-
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////////

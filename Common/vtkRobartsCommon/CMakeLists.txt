@@ -26,7 +26,7 @@ SET ( ${PROJECT_NAME}_SRCS
 )
 
 IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
-  SET ( ${PROJECT_NAME}_HDRS 
+  SET ( ${PROJECT_NAME}_HDRS
     vtkRobartsCommon.h
     vtkReadWriteLock.h
     vtkBarrierLock.h
@@ -51,26 +51,30 @@ IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
     vtkImageFrangiFilter.h
   )
 ENDIF()
- 
+
 IF(WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio" AND NOT "${CMAKE_GENERATOR}" MATCHES "x64")
   # No idea why, but turning on optimization in robarts common in 32 bit causes an internal compiler crash
   STRING(REPLACE "/O2" "/Od" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 ENDIF()
 
+SET(vtk${PROJECT_NAME}_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${VTK_INCLUDE_DIRS}
+  )
+
 # -----------------------------------------------------------------
 # Build the library
 ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(vtk${PROJECT_NAME} PUBLIC 
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR} 
-  ${VTK_INCLUDE_DIRS}
+target_include_directories(vtk${PROJECT_NAME} PUBLIC
+  ${vtk${PROJECT_NAME}_INCLUDE_DIRS}
   )
-target_link_libraries(vtk${PROJECT_NAME} PUBLIC 
-  vtkCommonCore 
+target_link_libraries(vtk${PROJECT_NAME} PUBLIC
+  vtkCommonCore
   vtkCommonSystem
   vtkParallelCore
   vtkImagingCore
-  vtkFiltersParallel 
+  vtkFiltersParallel
   vtkFiltersCore
   )
 GENERATE_EXPORT_DIRECTIVE_FILE(vtk${PROJECT_NAME})

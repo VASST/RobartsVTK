@@ -15,6 +15,8 @@
 #include "vtkImageReader2.h"
 #include <map>
 
+class QShortcut;
+
 class SEGUEMainWindow : public QMainWindow {
 	Q_OBJECT
 

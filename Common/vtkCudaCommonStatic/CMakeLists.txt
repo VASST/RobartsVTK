@@ -15,10 +15,12 @@ IF(BUILD_SHARED_LIBS)
 ENDIF()
 
 # Enable other dependencies to include the files necessary for cuda builds
-SET(${PROJECT_NAME}_INCLUDE_DIRS 
+SET(vtk${PROJECT_NAME}_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR} 
-  CACHE INTERNAL "${PROJECT_NAME}_INCLUDE_DIRS")
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${VTK_INCLUDE_DIRS}
+  ${CUDA_INCLUDE_DIRS}
+  CACHE INTERNAL "vtk${PROJECT_NAME}_INCLUDE_DIRS")
 
 REMOVE_VTK_DEFINITIONS()
 
@@ -32,20 +34,12 @@ endforeach()
 cuda_compile(${PROJECT_NAME}_CUDA_C_SRCS ${${PROJECT_NAME}_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
 SET(${PROJECT_NAME}_SRCS ${${PROJECT_NAME}_CUDA_C_SRCS})
 
-# Enable other dependencies to include the files necessary for cuda builds
-SET(${PROJECT_NAME}_INCLUDE_DIRS 
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR} 
-  CACHE INTERNAL "${PROJECT_NAME}_INCLUDE_DIRS")
-
 # -----------------------------------------------------------------
 # Build the library
 # Override shared libs settings, due to template functions in CUDA file, dll linkage is not possible
 ADD_LIBRARY(vtk${PROJECT_NAME} STATIC ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(vtk${PROJECT_NAME} PUBLIC 
-  ${${PROJECT_NAME}_INCLUDE_DIRS}
-  ${VTK_INCLUDE_DIRS}
-  ${CUDA_INCLUDE_DIRS}
+target_include_directories(vtk${PROJECT_NAME} PUBLIC
+  ${vtk${PROJECT_NAME}_INCLUDE_DIRS}
   )
 target_link_libraries(vtk${PROJECT_NAME} PUBLIC ${CUDA_LIBRARIES})
 set_target_properties(vtk${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)

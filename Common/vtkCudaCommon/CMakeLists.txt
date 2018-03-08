@@ -28,7 +28,7 @@ IF( MSVC OR ${CMAKE_GENERATOR} MATCHES "Xcode")
 ENDIF()
 
 # Enable other dependencies to include the files necessary for cuda builds
-SET(${PROJECT_NAME}_INCLUDE_DIRS 
+SET(vtk${PROJECT_NAME}_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR} 
   CACHE INTERNAL "${PROJECT_NAME}_INCLUDE_DIRS")

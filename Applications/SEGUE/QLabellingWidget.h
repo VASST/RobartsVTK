@@ -6,9 +6,9 @@
 
 #include <set>
 
-#include "QTreeView.h"
-#include "QStandardItemModel.h"
-#include "QBoxLayout.h"
+#include <QTreeView>
+#include <QStandardItemModel>
+#include <QBoxLayout>
 
 #include "vtkImageReader2.h"
 

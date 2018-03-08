@@ -312,7 +312,7 @@ protected:
   float*                      pos_matrices;
   float*                      bscan_timetags;
   float*                      calibration_matrix;
-  int						  axis;
+  int                         axis;
 
   vtkSmartPointer<vtkTransform> image_pose;
   vtkSmartPointer<vtkImageData> reconstructed_volume;

@@ -7,9 +7,9 @@
 #include <map>
 #include <string>
 
-#include "QTreeView.h"
-#include "QStandardItemModel.h"
-#include "QBoxLayout.h"
+#include <QTreeView>
+#include <QStandardItemModel>
+#include <QBoxLayout>
 #include "qtcolortriangle.h"
 
 #include "vtkTree.h"

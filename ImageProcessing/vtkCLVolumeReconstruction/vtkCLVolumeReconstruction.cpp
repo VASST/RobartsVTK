@@ -81,7 +81,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
   , device(nullptr)
   , context(nullptr)
   , program(nullptr)
-  , cl_device_lock(nullptr)
+  , cl_device_lock()
   , volume_width(0)
   , volume_height(0)
   , volume_depth(0)
@@ -308,7 +308,7 @@ void vtkCLVolumeReconstruction::Initialize()
   {
     std::stringstream ss;
     ss << "[vtkCLVolumeReconstruction] ERROR clCreateCommandQueue: " << err;
-    throw std::exception(ss.str().c_str());
+    throw std::runtime_error(ss.str().c_str());
   }
 
   char* program_src_c = new char[program_src.length() + 1];
@@ -335,7 +335,7 @@ void vtkCLVolumeReconstruction::Initialize()
 
     std::stringstream ss;
     ss << "[vtkCLVolumeReconstruction] ERROR: Failed to build program on device " << device << ". Error code: " << err << ". " << buffer;
-    throw std::exception(ss.str().c_str());
+    throw std::runtime_error(ss.str().c_str());
   }
 
   // Now build kernels
@@ -524,9 +524,9 @@ void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::ClearReconstruction()
 {
-	unsigned char *volume = (unsigned char*)reconstructed_volume->GetScalarPointer();
-	memset(volume, 0, sizeof(unsigned char)*volume_width*volume_height*volume_depth);
-	this->reconstructed_volume->Modified();
+  unsigned char *volume = (unsigned char*)reconstructed_volume->GetScalarPointer();
+  memset(volume, 0, sizeof(unsigned char)*volume_width*volume_height*volume_depth);
+  this->reconstructed_volume->Modified();
 }
 
 //----------------------------------------------------------------------------
@@ -681,7 +681,7 @@ cl_kernel vtkCLVolumeReconstruction::OpenCLKernelBuild(cl_program program, cl_de
     clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
 
     ss << buffer << std::endl;
-    throw std::exception(ss.str().c_str());
+    throw std::runtime_error(ss.str().c_str());
   }
   return kernel;
 }
@@ -697,7 +697,7 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   for (int i = 0; i < BSCAN_WINDOW; i++)
   {
     pos_matrices_queue[i] = (float*)malloc(sizeof(float) * 12);
-    bscans_queue[i]     = (unsigned char*)malloc(bscan_w * bscan_h * sizeof(unsigned char));
+    bscans_queue[i] = (unsigned char*)malloc(bscan_w * bscan_h * sizeof(unsigned char));
   }
 
   bscan_timetags_queue = (float*) malloc(BSCAN_WINDOW * sizeof(float));
@@ -716,8 +716,8 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   reconstructed_volume->SetOrigin((double)volume_origin[0], (double)volume_origin[1], (double)volume_origin[2]);
   reconstructed_volume->SetSpacing((double)volume_spacing, (double)volume_spacing, (double)volume_spacing);
   reconstructed_volume->SetExtent(this->volume_extent[0], this->volume_extent[1],
-									 this->volume_extent[2], this->volume_extent[3],
-										this->volume_extent[4], this->volume_extent[5]); 
+                                  this->volume_extent[2], this->volume_extent[3],
+                                  this->volume_extent[4], this->volume_extent[5]); 
   reconstructed_volume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 }
 

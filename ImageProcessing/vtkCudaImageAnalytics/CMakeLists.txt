@@ -83,7 +83,7 @@ LIST(APPEND ${PROJECT_NAME}_SRCS ${${PROJECT_NAME}_CUDA_C_SRCS})
 # -----------------------------------------------------------------
 # Build the library
 ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
-target_include_directories(vtk${PROJECT_NAME} PUBLIC 
+target_include_directories(vtk${PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${VTK_INCLUDE_DIRS} 
