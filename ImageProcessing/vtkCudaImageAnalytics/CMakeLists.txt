@@ -72,11 +72,12 @@ REMOVE_VTK_DEFINITIONS()
 # -----------------------------------------------------------------
 # Generate the cuda sources
 foreach(dir ${vtkCudaCommon_INCLUDE_DIRS})
-  LIST(APPEND CUDA_NVCC_FLAGS -I${dir})
+  LIST(APPEND CUDA_NVCC_FLAGS -I"${dir}")
 endforeach()
 foreach(dir ${vtkCudaCommonStatic_INCLUDE_DIRS})
-  LIST(APPEND CUDA_NVCC_FLAGS -I${dir})
+  LIST(APPEND CUDA_NVCC_FLAGS -I"${dir}")
 endforeach()
+LIST(REMOVE_DUPLICATES CUDA_NVCC_FLAGS)
 cuda_compile(${PROJECT_NAME}_CUDA_C_SRCS ${${PROJECT_NAME}_CUDA_SRCS} ${GPGPU_BUILD_TYPE})
 LIST(APPEND ${PROJECT_NAME}_SRCS ${${PROJECT_NAME}_CUDA_C_SRCS})
 

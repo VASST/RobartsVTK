@@ -30,16 +30,16 @@ ENDIF()
 # Enable other dependencies to include the files necessary for cuda builds
 SET(vtk${PROJECT_NAME}_INCLUDE_DIRS 
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR} 
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${VTK_INCLUDE_DIRS} 
+  ${CUDA_INCLUDE_DIRS}
   CACHE INTERNAL "${PROJECT_NAME}_INCLUDE_DIRS")
 
 # -----------------------------------------------------------------
 # Build the library
 ADD_LIBRARY(vtk${PROJECT_NAME} ${${PROJECT_NAME}_HDRS} ${${PROJECT_NAME}_SRCS})
 target_include_directories(vtk${PROJECT_NAME} PUBLIC 
-  ${${PROJECT_NAME}_INCLUDE_DIRS}
-  ${VTK_INCLUDE_DIRS} 
-  ${CUDA_INCLUDE_DIRS}
+  ${vtk${PROJECT_NAME}_INCLUDE_DIRS}
   )
 target_link_libraries(vtk${PROJECT_NAME} PUBLIC 
   ${CUDA_LIBRARIES}
