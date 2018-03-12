@@ -573,14 +573,12 @@ void MainWindow::onScCaptureRadioButtonClick(const QString& str)
 {
   if (str == "SCCAPTURE_BTN")
   {
-
     if (this->ui->scCaptureButton->isChecked())
     {
-
       // Setup for screen capturing
       windowToImage = vtkSmartPointer< vtkWindowToImageFilter >::New();
       windowToImage->SetInput(augmentedRenWin);
-      windowToImage->SetMagnification(1);
+      windowToImage->SetScale(1);
       windowToImage->SetInputBufferTypeToRGB();
       windowToImage->ReadFrontBufferOff();
 
@@ -609,7 +607,6 @@ void MainWindow::SetupVTKCamera(cv::Mat mat, double win_width, double win_height
 
   if (win_height != cam_video_prop.frame_height || cam_video_prop.frame_width != win_width)
   {
-
     double factor = static_cast<double>(win_height) / static_cast<double>(cam_video_prop.frame_height);
     fy = fy * factor;
 
@@ -618,7 +615,6 @@ void MainWindow::SetupVTKCamera(cv::Mat mat, double win_width, double win_height
     int expectedWinSize = cvRound(factor * static_cast<double>(cam_video_prop.frame_width));
     if (expectedWinSize != win_width)
     {
-
       int diff = (win_width - expectedWinSize) / 2;
       cx = cx + diff;
     }
@@ -976,14 +972,12 @@ int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList* frameList
 
   if (frameList->GetNumberOfTrackedFrames() == 0)
   {
-
     LOG_ERROR("Failed to set output extent from tracked frame list - input frame list is empty");
     return -1;
   }
 
   if (repository == NULL)
   {
-
     LOG_ERROR("Failed to set output extent from tracked frame list - input transform repository is NULL");
     return -1;
   }
@@ -999,12 +993,10 @@ int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList* frameList
   int numberOfValidFrames = 0;
   for (int frameIndex = 0; frameIndex < numberOfFrames; ++frameIndex)
   {
-
     PlusTrackedFrame* frame = frameList->GetTrackedFrame(frameIndex);
 
     if (repository->SetTransforms(*frame) != PLUS_SUCCESS)
     {
-
       LOG_ERROR("Failed to update transform repository with tracked frame!");
       continue;
     }
@@ -1014,7 +1006,6 @@ int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList* frameList
     vtkSmartPointer<vtkMatrix4x4> imageToReferenceTransformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
     if (repository->GetTransform(imageToReferenceTransformName, imageToReferenceTransformMatrix, &isMatrixValid) != PLUS_SUCCESS)
     {
-
       std::string strImageToReferenceTransformName;
       imageToReferenceTransformName.GetTransformName(strImageToReferenceTransformName);
 
@@ -1052,7 +1043,6 @@ int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList* frameList
       // Transform the corners to Reference and expand the extent if needed
       for (unsigned int corner = 0; corner < corners_ImagePix.size(); ++corner)
       {
-
         double corner_Ref[ 4 ] = { 0, 0, 0, 1 }; // position of the corner in the Reference coordinate system
         imageToReferenceTransformMatrix->MultiplyPoint(corners_ImagePix[corner], corner_Ref);
 
@@ -1066,7 +1056,6 @@ int MainWindow::GetExtentFromTrackedFrameList(vtkPlusTrackedFrameList* frameList
 
           if (corner_Ref[axis] > extent_Ref[axis * 2 + 1])
           {
-
             // max extent along this coord axis has to be increased
             extent_Ref[axis * 2 + 1] = corner_Ref[axis];
           }
@@ -1223,10 +1212,8 @@ void vtkUSEventCallback::Execute(vtkObject* caller, unsigned long, void*)
     std::ostringstream ss;
     ss.precision(2);
     TrackedFrameFieldStatus status;
-    if (PlusTrackedFrame->GetCustomFrameTransformStatus(TransformName, status) == PLUS_SUCCESS
-        && status == FIELD_OK)
+    if (PlusTrackedFrame->GetCustomFrameTransformStatus(TransformName, status) == PLUS_SUCCESS && status == FIELD_OK)
     {
-
       PlusTrackedFrame->GetCustomFrameTransform(TransformName, tFrame2Tracker);
 
       if (!std::strcmp(current_mapper.c_str(), "INEX_MAPPER"))
@@ -1288,7 +1275,6 @@ void vtkUSEventCallback::Execute(vtkObject* caller, unsigned long, void*)
 
     _imgImport->SetImportVoidPointer(camImage_RGBA.data);
     _imgImport->Update();
-
 
     _camImgTexture->Update();
 

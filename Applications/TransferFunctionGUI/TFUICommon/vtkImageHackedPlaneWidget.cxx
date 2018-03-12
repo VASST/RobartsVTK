@@ -2882,7 +2882,7 @@ void vtkImageHackedPlaneWidget::GenerateTexturePlane()
   texturePlaneMapper->SetInputConnection(this->PlaneSource->GetOutputPort());
 
   this->Texture->SetQualityTo32Bit();
-  this->Texture->MapColorScalarsThroughLookupTableOff();
+  this->Texture->SetColorModeToMapScalars();
   this->Texture->SetInterpolate(this->TextureInterpolate);
   this->Texture->RepeatOff();
   this->Texture->SetLookupTable(this->LookupTable);
