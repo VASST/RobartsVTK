@@ -246,113 +246,20 @@ IF(RobartsVTK_USE_CUDA)
   IF(${CUDA_VERSION} VERSION_LESS "7.0.0")
     SET(_generations "Fermi" "Kepler" "Maxwell")
   ELSE()
-    SET(_generations "Fermi" "Kepler" "Maxwell" "Pascal")
+    SET(_generations "Fermi" "Kepler" "Maxwell" "Pascal" "Volta")
   ENDIF()
 
   SET(CUDA_GENERATION "" CACHE STRING "Build CUDA device code only for specific GPU architecture. Leave empty to build for all architectures.")
-  IF(CMAKE_VERSION VERSION_GREATER "2.8" )
-    SET_PROPERTY( CACHE CUDA_GENERATION PROPERTY STRINGS "" ${_generations} )
-  ENDIF()
-
-  IF(CUDA_GENERATION)
-    IF(NOT ";${_generations};" MATCHES ";${CUDA_GENERATION};")
-      STRING(REPLACE ";" ", " _generations "${_generations}")
-      message(FATAL_ERROR "ERROR: ${_generations} Generations are suppered.")
-    ENDIF()
-    UNSET(CUDA_ARCH_BIN CACHE)
-    UNSET(CUDA_ARCH_PTX CACHE)
-  ENDIF()
-
-  SET(__cuda_arch_ptx "")
-  IF(CUDA_GENERATION STREQUAL "Fermi")
-    SET(__cuda_arch_bin "2.0")
-  ELSEIF(CUDA_GENERATION STREQUAL "Kepler")
-    SET(__cuda_arch_bin "3.0 3.5 3.7")
-  ELSEIF(CUDA_GENERATION STREQUAL "Maxwell")
-    SET(__cuda_arch_bin "5.0")
-  ELSEIF(CUDA_GENERATION STREQUAL "Pascal")
-    SET(__cuda_arch_bin "6.0")
-  ENDIF()
-
-  IF(NOT DEFINED __cuda_arch_bin)
-    IF(ARM)
-      SET(__cuda_arch_bin "3.2")
-      SET(__cuda_arch_ptx "")
-    ELSEIF(AARCH64)
-      SET(__cuda_arch_bin "5.3")
-      SET(__cuda_arch_ptx "")
-    else()
-      IF(${CUDA_VERSION} VERSION_LESS "8.0")
-        SET(__cuda_arch_bin "2.0 3.0 3.5 3.7 5.0")
-      else()
-        SET(__cuda_arch_bin "2.0 3.0 3.5 3.7 5.0 6.0")
-      ENDIF()
-      SET(__cuda_arch_ptx "")
-    ENDIF()
-  ENDIF()
-
-  SET(CUDA_ARCH_BIN ${__cuda_arch_bin} CACHE STRING "Specify 'real' GPU architectures to build binaries for, BIN(PTX) format is supported")
-  SET(CUDA_ARCH_PTX ${__cuda_arch_ptx} CACHE STRING "Specify 'virtual' PTX architectures to build PTX intermediate code for")
-
-  STRING(REGEX REPLACE "\\." "" ARCH_BIN_NO_POINTS "${CUDA_ARCH_BIN}")
-  STRING(REGEX REPLACE "\\." "" ARCH_PTX_NO_POINTS "${CUDA_ARCH_PTX}")
-  
-  # Ckeck if user specified 1.0 compute capability: we don't support it
-  STRING(REGEX MATCH "1.0" HAS_ARCH_10 "${CUDA_ARCH_BIN} ${CUDA_ARCH_PTX}")
-  SET(CUDA_ARCH_BIN_OR_PTX_10 0)
-  IF(NOT ${HAS_ARCH_10} STREQUAL "")
-    SET(CUDA_ARCH_BIN_OR_PTX_10 1)
-  ENDIF()
-
-  # NVCC flags to be SET
-  SET(NVCC_FLAGS_EXTRA "")
-
-  # These vars will be passed into the templates
-  SET(RobartsVTK_CUDA_ARCH_BIN "")
-  SET(RobartsVTK_CUDA_ARCH_PTX "")
-  SET(RobartsVTK_CUDA_ARCH_FEATURES "")
-
-  # Tell NVCC to add binaries for the specified GPUs
-  STRING(REGEX MATCHALL "[0-9()]+" ARCH_LIST "${ARCH_BIN_NO_POINTS}")
-  FOREACH(ARCH IN LISTS ARCH_LIST)
-    IF(ARCH MATCHES "([0-9]+)\\(([0-9]+)\\)")
-      # User explicitly specIFied PTX for the concrete BIN
-      SET(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${CMAKE_MATCH_2},code=sm_${CMAKE_MATCH_1})
-      SET(RobartsVTK_CUDA_ARCH_BIN "${RobartsVTK_CUDA_ARCH_BIN} ${CMAKE_MATCH_1}")
-      SET(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${CMAKE_MATCH_2}")
-    else()
-      # User didn't explicitly specIFy PTX for the concrete BIN, we assume PTX=BIN
-      SET(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${ARCH},code=sm_${ARCH})
-      SET(RobartsVTK_CUDA_ARCH_BIN "${RobartsVTK_CUDA_ARCH_BIN} ${ARCH}")
-      SET(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${ARCH}")
-    ENDIF()
-  ENDFOREACH()
-  SET(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -D_FORCE_INLINES)
-
-  # Tell NVCC to add PTX intermediate code for the specIFied architectures
-  STRING(REGEX MATCHALL "[0-9]+" ARCH_LIST "${ARCH_PTX_NO_POINTS}")
-  FOREACH(ARCH IN LISTS ARCH_LIST)
-    SET(NVCC_FLAGS_EXTRA ${NVCC_FLAGS_EXTRA} -gencode arch=compute_${ARCH},code=compute_${ARCH})
-    SET(RobartsVTK_CUDA_ARCH_PTX "${RobartsVTK_CUDA_ARCH_PTX} ${ARCH}")
-    SET(RobartsVTK_CUDA_ARCH_FEATURES "${RobartsVTK_CUDA_ARCH_FEATURES} ${ARCH}")
-  ENDFOREACH()
-
-  # These vars will be processed in other scripts
-  SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} ${NVCC_FLAGS_EXTRA})
-  SET(RobartsVTK_CUDA_CC "${NVCC_FLAGS_EXTRA}")
-
-  MESSAGE(STATUS "CUDA NVCC target flags: ${CUDA_NVCC_FLAGS}")
+  SET_PROPERTY( CACHE CUDA_GENERATION PROPERTY STRINGS "" ${_generations} )
 
   # Look for OpenGL
   FIND_PACKAGE(OpenGL REQUIRED)
 
   # Add Robart's CUDA libraries
   ADD_SUBDIRECTORY(Common/vtkCudaCommon)
-
   LIST(APPEND RobartsVTK_LIBRARIES vtkCudaCommon)
 
   ADD_SUBDIRECTORY(Common/vtkCudaCommonStatic)
-
   LIST(APPEND RobartsVTK_LIBRARIES vtkCudaCommonStatic)
 ENDIF()
 
@@ -440,32 +347,29 @@ IF(RobartsVTK_BUILD_APPS)
       SET_TARGET_PROPERTIES(SEGUE PROPERTIES FOLDER Applications)
     ENDIF()
 
-    IF(RobartsVTK_USE_OPENCV)
-      IF(RobartsVTK_USE_VISUALIZATION)
-        IF(RobartsVTK_USE_CUDA_VISUALIZATION)
-          ADD_SUBDIRECTORY(Applications/StreamingUSVis)
-          SET_TARGET_PROPERTIES(StreamingUSVis PROPERTIES FOLDER Applications)
-          ADD_SUBDIRECTORY(Applications/Cuda1DTFVolumeRendering)
-          SET_TARGET_PROPERTIES(Cuda1DTFVolumeRendering PROPERTIES FOLDER Applications)
-          ADD_SUBDIRECTORY(Applications/CLReconstruction)
-          SET_TARGET_PROPERTIES(CLReconstruction PROPERTIES FOLDER Applications)
-          ADD_SUBDIRECTORY(Applications/CLReconstructionWithVisualization)
-          SET_TARGET_PROPERTIES(CLReconstructionWithVisualization PROPERTIES FOLDER Applications)
-        ENDIF()
-
-        ADD_SUBDIRECTORY(Applications/KeyholeRendering)
-        ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts2)
-        ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithVideo)
-        ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithStereoVideo)
-        ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts)
-        SET_TARGET_PROPERTIES(KeyholeRenderingWithStereoVideo
-                              KeyholeRenderingWithVideo
-                              KeyholeRenderingMultipleViewPorts2
-                              KeyholeRendering
-                              KeyholeRenderingMultipleViewPorts
-                              PROPERTIES FOLDER Applications)
-        
+    IF(RobartsVTK_USE_VISUALIZATION)
+      IF(RobartsVTK_USE_CUDA_VISUALIZATION)
+        ADD_SUBDIRECTORY(Applications/StreamingUSVis)
+        SET_TARGET_PROPERTIES(StreamingUSVis PROPERTIES FOLDER Applications)
+        ADD_SUBDIRECTORY(Applications/Cuda1DTFVolumeRendering)
+        SET_TARGET_PROPERTIES(Cuda1DTFVolumeRendering PROPERTIES FOLDER Applications)
+        ADD_SUBDIRECTORY(Applications/CLReconstruction)
+        SET_TARGET_PROPERTIES(CLReconstruction PROPERTIES FOLDER Applications)
+        ADD_SUBDIRECTORY(Applications/CLReconstructionWithVisualization)
+        SET_TARGET_PROPERTIES(CLReconstructionWithVisualization PROPERTIES FOLDER Applications)
       ENDIF()
+
+      ADD_SUBDIRECTORY(Applications/KeyholeRendering)
+      ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts2)
+      ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithVideo)
+      ADD_SUBDIRECTORY(Applications/KeyholeRenderingWithStereoVideo)
+      ADD_SUBDIRECTORY(Applications/KeyholeRenderingMultipleViewPorts)
+      SET_TARGET_PROPERTIES(KeyholeRenderingWithStereoVideo
+                            KeyholeRenderingWithVideo
+                            KeyholeRenderingMultipleViewPorts2
+                            KeyholeRendering
+                            KeyholeRenderingMultipleViewPorts
+                            PROPERTIES FOLDER Applications)
     ENDIF()
   ENDIF()
 
@@ -478,7 +382,7 @@ IF(RobartsVTK_BUILD_APPS)
     ENDIF()
   ENDIF()
 
-  IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT AND RobartsVTK_USE_OPENCV)
+  IF(RobartsVTK_USE_PLUS AND RobartsVTK_USE_QT AND RobartsVTK_BUILD_APPS)
     MESSAGE(STATUS "Using PlusApp available at: ${PlusApp_DIR}")
 
     ADD_SUBDIRECTORY(Applications/CameraCalibration)
