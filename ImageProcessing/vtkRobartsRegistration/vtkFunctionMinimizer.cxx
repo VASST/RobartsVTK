@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 namespace
 {
   //----------------------------------------------------------------------------
-  static double amotry(std::vector<std::vector<double>>& p,
+  static double amotry(std::vector<std::vector<double> >& p,
                        std::vector<double>& y,
                        std::vector<double>& ptry,
                        std::vector<double>& psum,
@@ -63,7 +63,7 @@ namespace
   }
 
   //----------------------------------------------------------------------------
-  static int amoeba(std::vector<std::vector<double>>& p,
+  static int amoeba(std::vector<std::vector<double> >& p,
                     std::vector<double>& y,
                     std::vector<double>& ptry,
                     int ndim,
@@ -196,7 +196,7 @@ namespace
 
   //----------------------------------------------------------------------------
   static double minimize(std::vector<double>& parameters,
-                         std::vector<std::vector<double>> vertices,
+                         std::vector<std::vector<double> > vertices,
                          int ndim,
                          void(*function)(void* data),
                          void* data,
@@ -376,7 +376,7 @@ int vtkFunctionMinimizer::Initialize()
 //----------------------------------------------------------------------------
 void vtkFunctionMinimizer::SetScalarVariableBracket(const std::string& name, double bmin, double bmax)
 {
-  for (auto i = 0; i < this->ParameterNames.size(); i++)
+  for (std::vector<std::string>::size_type i = 0; i < this->ParameterNames.size(); i++)
   {
     if (IsEqualInsensitive(name, this->ParameterNames[i]))
     {

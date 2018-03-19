@@ -100,10 +100,10 @@ protected:
   void (*FunctionArgDelete)(void*);
   void* FunctionArg;
 
-  std::vector<std::string> ParameterNames;
-  std::vector<double> Parameters;
-  std::vector<std::pair<double, double>> ParameterBrackets;
-  std::vector<std::vector<double>> Vertices;
+  std::vector<std::string>                ParameterNames;
+  std::vector<double>                     Parameters;
+  std::vector<std::pair<double, double> > ParameterBrackets;
+  std::vector<std::vector<double> >       Vertices;
 
   double ScalarResult;
 

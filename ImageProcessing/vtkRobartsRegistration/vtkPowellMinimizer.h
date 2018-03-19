@@ -104,7 +104,7 @@ protected:
 
   std::vector<std::string>                ParameterNames;
   std::vector<double>                     Parameters;
-  std::vector<std::pair<double, double>>  ParameterBrackets;
+  std::vector<std::pair<double, double> > ParameterBrackets;
 
   double                                  ScalarResult;
 

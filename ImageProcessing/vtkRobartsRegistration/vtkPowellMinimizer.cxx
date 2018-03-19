@@ -297,7 +297,7 @@ static void linmin(std::vector<double>& p, std::vector<double>& xi, int n, doubl
 }
 
 //----------------------------------------------------------------------------
-static void powell(std::vector<double>& p, std::vector<std::vector<double>>& xi, int n, double ftol,
+static void powell(std::vector<double>& p, std::vector<std::vector<double> >& xi, int n, double ftol,
                    int* iter, double* retParm, void (*funk)(void* data),
                    std::vector<double>& parms, void* data)
 {
@@ -518,7 +518,7 @@ double vtkPowellMinimizer::GetScalarResult()
 //----------------------------------------------------------------------------
 void vtkPowellMinimizer::SetScalarVariableBracket(const std::string& name, double bmin, double bmax)
 {
-  for (auto i = 0; i < this->ParameterNames.size(); ++i)
+  for (std::vector<std::string>::size_type i = 0; i < this->ParameterNames.size(); ++i)
   {
     if (IsEqualInsensitive(name, this->ParameterNames[i]))
     {
@@ -554,7 +554,7 @@ void vtkPowellMinimizer::Minimize()
     return;
   }
 
-  std::vector<std::vector<double>> vertices;
+  std::vector<std::vector<double> > vertices;
   for (unsigned int l = 0; l < this->ParameterNames.size(); l++)
   {
     // initial parameter values are bottom of bracket
