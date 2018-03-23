@@ -42,10 +42,8 @@
 // STL includes
 #include <algorithm>
 #include <array>
+#include <mutex>
 #include <queue>
-
-// OpenMP includes
-#include <omp.h>
 
 // CUDA includes
 #include <vector_functions.h>
@@ -58,7 +56,6 @@
 class vtkImageData;
 class vtkMatrix4x4;
 class vtkTransform;
-class vtkMutexLock;
 class vtkDataSet;
 
 //# define KERNEL_DEBUG
@@ -218,8 +215,8 @@ protected:
   /* CL Program */
   cl_program program;
 
-  /* OMP Lock */
-  omp_lock_t cl_device_lock;
+  /* device Lock */
+  std::mutex cl_device_lock;
 
   /* Output volume width */
   int volume_width;
@@ -316,7 +313,7 @@ protected:
 
   vtkSmartPointer<vtkTransform> image_pose;
   vtkSmartPointer<vtkImageData> reconstructed_volume;
-  vtkSmartPointer<vtkMutexLock> input_data_mutex;
+  std::mutex                    input_data_mutex;
 };
 
 #endif //_vtkCLVolumeReconstruction_h_

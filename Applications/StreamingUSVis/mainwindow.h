@@ -34,6 +34,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+// OpenCV includes
+#include <opencv2/videoio.hpp>
+
 // Qt includes
 #include <QMainWindow>
 #include <QLabel>
@@ -111,6 +114,7 @@
 // RobartsVTK includes
 #include "qTransferFunctionDefinitionWidget.h"
 #include "qTransferFunctionWindowWidget.h"
+#include "vtkCLVolumeReconstruction.h"
 #include "vtkCuda1DVolumeMapper.h"
 #include "vtkCuda2DInExLogicVolumeMapper.h"
 #include "vtkCuda2DTransferFunction.h"
@@ -118,11 +122,7 @@
 #include "vtkCudaFunctionPolygonReader.h"
 #include "vtkKeyholePass.h"
 
-// OpenCV includes
-#include <opencv2/videoio.hpp>
-
-#include "vtkCLVolumeReconstruction.h"
-
+// STL includes
 #include <iostream>
 #include <chrono> // For timing
 
@@ -200,7 +200,6 @@ private:
 
   bool pinned;
 };
-
 
 class vtkUSEventCallback : public vtkCommand
 {

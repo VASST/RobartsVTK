@@ -80,11 +80,11 @@ public:
   void SetInputData(vtkImageData* image, int frame);
   virtual void SetInputInternal(vtkImageData* image, int frame) = 0;
 
-  /** @brief Sets the 3D image data for the first frame in the 4D sequence */
+  /** @brief Gets the 3D image data for the first frame in the 4D sequence */
   virtual vtkImageData* GetInput();
 
   /** @brief Gets the 3D image data for a particular frame in the 4D sequence */
-  vtkImageData* GetInput(int frame);
+  virtual vtkImageData* GetInput(const int frame);
 
   /** @brief Clears all the frames in the 4D sequence */
   void ClearInput();

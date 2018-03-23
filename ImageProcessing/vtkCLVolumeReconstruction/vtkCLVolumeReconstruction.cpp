@@ -41,7 +41,6 @@
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkMatrix4x4.h>
-#include <vtkMutexLock.h>
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
@@ -108,6 +107,7 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
   , pos_matrices(nullptr)
   , bscan_timetags(nullptr)
   , calibration_matrix(nullptr)
+  , input_data_mutex()
 {
   device_index = 0;
 
@@ -132,8 +132,6 @@ vtkCLVolumeReconstruction::vtkCLVolumeReconstruction()
       }
     }
   }
-
-  input_data_mutex = vtkSmartPointer<vtkMutexLock>::New();
 
 #ifdef VCLVR_DEBUG
   // Print device information
@@ -224,7 +222,7 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request, vtkInformati
   }
 
   // Set input data
-  input_data_mutex->Lock();
+  input_data_mutex.lock();
 
   image_data->DeepCopy(input);
   image_pose->GetMatrix(pose_data);
@@ -234,7 +232,7 @@ int vtkCLVolumeReconstruction::RequestData(vtkInformation* request, vtkInformati
   output->DataHasBeenGenerated();
   output->Modified();
 
-  input_data_mutex->Unlock();
+  input_data_mutex.unlock();
 
   return 1;
 }
@@ -348,8 +346,6 @@ void vtkCLVolumeReconstruction::Initialize()
 
   // Initialize Buffers
   InitializeBuffers();
-
-  omp_init_lock(&cl_device_lock);
 }
 
 //----------------------------------------------------------------------------
@@ -492,7 +488,7 @@ void vtkCLVolumeReconstruction::SetCalMatrix(float* m)
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::SetReconstructionAxis(int val)
 {
-	this->axis = val;
+  this->axis = val;
 }
 
 //----------------------------------------------------------------------------
@@ -524,8 +520,8 @@ void vtkCLVolumeReconstruction::SetImagePoseTransform(vtkTransform* t)
 //----------------------------------------------------------------------------
 void vtkCLVolumeReconstruction::ClearReconstruction()
 {
-  unsigned char *volume = (unsigned char*)reconstructed_volume->GetScalarPointer();
-  memset(volume, 0, sizeof(unsigned char)*volume_width*volume_height*volume_depth);
+  unsigned char* volume = (unsigned char*)reconstructed_volume->GetScalarPointer();
+  memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
   this->reconstructed_volume->Modified();
 }
 
@@ -570,7 +566,7 @@ void vtkCLVolumeReconstruction::StartReconstruction()
   local_work_size[0] = 256;
 
   // Initialize output volume to zero
-  unsigned char *volume = (unsigned char*)this->reconstructed_volume->GetScalarPointer();
+  unsigned char* volume = (unsigned char*)this->reconstructed_volume->GetScalarPointer();
   memset(volume, 0, sizeof(unsigned char)*volume_width * volume_height * volume_depth);
 
   // Set mask. Default is no mask (val 1 --> white). In mask Black is outside ROI while White is insite the ROI.
@@ -717,7 +713,7 @@ void vtkCLVolumeReconstruction::InitializeBuffers()
   reconstructed_volume->SetSpacing((double)volume_spacing, (double)volume_spacing, (double)volume_spacing);
   reconstructed_volume->SetExtent(this->volume_extent[0], this->volume_extent[1],
                                   this->volume_extent[2], this->volume_extent[3],
-                                  this->volume_extent[4], this->volume_extent[5]); 
+                                  this->volume_extent[4], this->volume_extent[5]);
   reconstructed_volume->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 }
 
@@ -806,43 +802,43 @@ void vtkCLVolumeReconstruction::GrabInputData()
   if (imgDataPtr != NULL && pose_data != NULL)
   {
 
-	  input_data_mutex->Lock();
+    input_data_mutex.lock();
 
-	  timestamp_queue.push(timestamp);
-	  imageData_queue.push(image_data);
-	  poseData_queue.push(pose_data);
+    timestamp_queue.push(timestamp);
+    imageData_queue.push(image_data);
+    poseData_queue.push(pose_data);
 
-	  // Set this element to zero
-	  memset(pos_matrices_queue[BSCAN_WINDOW - 1], '\0', sizeof(float) * 12);
-	  memset(bscans_queue[BSCAN_WINDOW - 1], '\0', sizeof(unsigned char)*bscan_w * bscan_h);
+    // Set this element to zero
+    memset(pos_matrices_queue[BSCAN_WINDOW - 1], '\0', sizeof(float) * 12);
+    memset(bscans_queue[BSCAN_WINDOW - 1], '\0', sizeof(unsigned char)*bscan_w * bscan_h);
 
-	  // Convert to a floating point array
-	  double* matrixPtr = pose_data->Element[0];
-	  float* matrixPtr2 = new float[12];
-	  matrixPtr2[0] = (float)matrixPtr[0];
-	  matrixPtr2[1] = (float)matrixPtr[1];
-	  matrixPtr2[2] = (float)matrixPtr[2];
-	  matrixPtr2[3] = (float)matrixPtr[3];
-	  matrixPtr2[4] = (float)matrixPtr[4];
-	  matrixPtr2[5] = (float)matrixPtr[5];
-	  matrixPtr2[6] = (float)matrixPtr[6];
-	  matrixPtr2[7] = (float)matrixPtr[7];
-	  matrixPtr2[8] = (float)matrixPtr[8];
-	  matrixPtr2[9] = (float)matrixPtr[9];
-	  matrixPtr2[10] = (float)matrixPtr[10];
-	  matrixPtr2[11] = (float)matrixPtr[11];
+    // Convert to a floating point array
+    double* matrixPtr = pose_data->Element[0];
+    float* matrixPtr2 = new float[12];
+    matrixPtr2[0] = (float)matrixPtr[0];
+    matrixPtr2[1] = (float)matrixPtr[1];
+    matrixPtr2[2] = (float)matrixPtr[2];
+    matrixPtr2[3] = (float)matrixPtr[3];
+    matrixPtr2[4] = (float)matrixPtr[4];
+    matrixPtr2[5] = (float)matrixPtr[5];
+    matrixPtr2[6] = (float)matrixPtr[6];
+    matrixPtr2[7] = (float)matrixPtr[7];
+    matrixPtr2[8] = (float)matrixPtr[8];
+    matrixPtr2[9] = (float)matrixPtr[9];
+    matrixPtr2[10] = (float)matrixPtr[10];
+    matrixPtr2[11] = (float)matrixPtr[11];
 
-	  // Copy data to buffers
-	  bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
-	  pos_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
-	  memcpy(pos_matrices_queue[BSCAN_WINDOW - 1], matrixPtr2, sizeof(float) * 12);
-	  memcpy(bscans_queue[BSCAN_WINDOW - 1], imgDataPtr, sizeof(unsigned char)*bscan_h * bscan_w);
+    // Copy data to buffers
+    bscan_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
+    pos_timetags_queue[BSCAN_WINDOW - 1] = timestamp_queue.front();
+    memcpy(pos_matrices_queue[BSCAN_WINDOW - 1], matrixPtr2, sizeof(float) * 12);
+    memcpy(bscans_queue[BSCAN_WINDOW - 1], imgDataPtr, sizeof(unsigned char)*bscan_h * bscan_w);
 
-	  input_data_mutex->Unlock();
+    input_data_mutex.unlock();
   }
   else
   {
-	  std::cerr << "[vtkCLVolumeReconstruction]: NULL inputs" << std::endl;
+    std::cerr << "[vtkCLVolumeReconstruction]: NULL inputs" << std::endl;
   }
 
   // TODO: Interpolate the pos matrix to the timetag of the bscan
@@ -925,7 +921,7 @@ void vtkCLVolumeReconstruction::InsertPlanePoints(float* pos_matrix)
     memcpy(&foo[i], sums, 3 * sizeof(float));
     foo[i] = foo[i] - _volume_orig;
 #ifdef VCLVR_DEBUG
-	std::cout << foo[i].x << "," << foo[i].y << "," << foo[i].z << std::endl;
+    std::cout << foo[i].x << "," << foo[i].y << "," << foo[i].z << std::endl;
 #endif
   }
 }
@@ -953,21 +949,21 @@ void vtkCLVolumeReconstruction::FillVoxels()
 {
   int intersection_counter = FindIntersections(this->axis);
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_x_vector_queue, CL_TRUE, 0, dev_x_vector_queue_size, x_vector_queue, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_y_vector_queue, CL_TRUE, 0, dev_y_vector_queue_size, y_vector_queue, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_plane_points_queue, CL_TRUE, 0, dev_plane_points_queue_size, plane_points_queue, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_mask, CL_TRUE, 0, mask_size, mask, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
   unsigned char* temp = (unsigned char*) malloc(bscans_queue_size);
   for (int i = 0; i < BSCAN_WINDOW; i++)
@@ -975,14 +971,14 @@ void vtkCLVolumeReconstruction::FillVoxels()
     memcpy(&temp[bscan_w * bscan_h * i], bscans_queue[i], sizeof(unsigned char) * bscan_w * bscan_h);
   }
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscans_queue, CL_TRUE, 0, bscans_queue_size, temp, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
   free(temp);
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_timetags_queue, CL_TRUE, 0, bscan_timetags_queue_size, bscan_timetags_queue, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
   clSetKernelArg(adv_fill_voxels, 0, sizeof(cl_mem), &dev_intersections);
   clSetKernelArg(adv_fill_voxels, 1, sizeof(cl_mem), &dev_volume);
@@ -1003,23 +999,23 @@ void vtkCLVolumeReconstruction::FillVoxels()
   clSetKernelArg(adv_fill_voxels, 16, sizeof(cl_mem), &dev_bscan_timetags_queue);
   clSetKernelArg(adv_fill_voxels, 17, sizeof(cl_int), &intersection_counter);
 
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, adv_fill_voxels, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
   // Readout the device volume to local buffer
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   unsigned char* volume = (unsigned char*)this->reconstructed_volume->GetScalarPointer();
   OpenCLCheckError(clEnqueueReadBuffer(reconstruction_cmd_queue, dev_volume, CL_TRUE, 0, volume_size, volume, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 }
 
 //----------------------------------------------------------------------------
 int vtkCLVolumeReconstruction::FindIntersections(int axis)
 {
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueWriteBuffer(reconstruction_cmd_queue, dev_bscan_plane_equation_queue, CL_TRUE, 0, bscan_plane_equation_queue_size, bscan_plane_equation_queue, 0, 0, 0));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
   clSetKernelArg(trace_intersections, 0, sizeof(cl_mem), &dev_intersections);
   clSetKernelArg(trace_intersections, 1, sizeof(cl_int), &volume_width);
@@ -1028,9 +1024,9 @@ int vtkCLVolumeReconstruction::FindIntersections(int axis)
   clSetKernelArg(trace_intersections, 4, sizeof(cl_float), &volume_spacing);
   clSetKernelArg(trace_intersections, 5, sizeof(cl_mem), &dev_bscan_plane_equation_queue);
   clSetKernelArg(trace_intersections, 6, sizeof(cl_int), &axis);
-  omp_set_lock(&cl_device_lock);
+  cl_device_lock.lock();
   OpenCLCheckError(clEnqueueNDRangeKernel(reconstruction_cmd_queue, trace_intersections, 1, NULL, global_work_size, local_work_size, NULL, NULL, NULL));
-  omp_unset_lock(&cl_device_lock);
+  cl_device_lock.unlock();
 
   return max_vol_dim * max_vol_dim;
 }

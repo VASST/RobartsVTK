@@ -30,7 +30,7 @@ class FluoroPredViz : public QWidget
   Q_OBJECT
 
 public:
-  FluoroPredViz( QWidget* parent = 0 );
+  FluoroPredViz(QWidget* parent = 0);
   ~FluoroPredViz();
 
   bool GetSuccessInit();

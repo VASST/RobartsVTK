@@ -3,10 +3,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 PROJECT(StreamingUSVis)
 
 FIND_PACKAGE(OpenCV REQUIRED)
-FIND_PACKAGE(OpenMP REQUIRED)
-
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 #-------------------------------------
 # Retrieve source files
