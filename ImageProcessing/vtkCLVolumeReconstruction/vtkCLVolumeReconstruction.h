@@ -62,8 +62,6 @@ class vtkDataSet;
 //# define VCLVR_DEBUG
 
 #define max3(a,b,c) std::max(a, std::max(b, c))
-#define distance(v, plane) (plane.x*v.x + plane.y*v.y + plane.z*v.z + plane.w)/sqrt(plane.x*plane.x + plane.y*plane.y + plane.z*plane.z)
-#define inrange(x,a,b) ((x) >= (a) && (x) < (b))
 
 #define pos_matrix_a(x,y) (pos_matrix[(y)*4 + (x)])
 
